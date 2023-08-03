@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.BufferProvider;
@@ -28,6 +29,8 @@ import com.mongodb.connection.Stream;
 import org.bson.ByteBuf;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,8 +39,13 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
+import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -75,6 +83,16 @@ public class SocketStream implements Stream {
     }
 
     protected Socket initializeSocket() throws IOException {
+        ProxySettings proxySettings = settings.getProxySettings();
+        if (proxySettings.getHost() != null) {
+            if (sslSettings.isEnabled()) {
+                assertTrue(socketFactory instanceof SSLSocketFactory);
+                SSLSocketFactory sslSocketFactory = (SSLSocketFactory) socketFactory;
+                return initializeSslSocketOverSocksProxy(sslSocketFactory);
+            }
+            return initializeSocketOverSocksProxy();
+        }
+
         Iterator<InetSocketAddress> inetSocketAddresses = address.getSocketAddresses().iterator();
         while (inetSocketAddresses.hasNext()) {
             Socket socket = socketFactory.createSocket();
@@ -89,6 +107,32 @@ public class SocketStream implements Stream {
         }
 
         throw new MongoSocketException("Exception opening socket", getAddress());
+    }
+
+    private SSLSocket initializeSslSocketOverSocksProxy(final SSLSocketFactory sslSocketFactory) throws IOException {
+        String serverHost = address.getHost();
+        int serverPort = address.getPort();
+
+        SocksSocket socksProxy = new SocksSocket(null, settings.getProxySettings());
+        configureSocket(socksProxy, settings);
+        InetSocketAddress inetSocketAddress = InetSocketAddress.createUnresolved(serverHost, serverPort);
+        socksProxy.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
+
+        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
+        //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
+        //So it is possible to set SSL parameters before handshake is done.
+        configureSslSocket(sslSocket, sslSettings, inetSocketAddress);
+        return sslSocket;
+    }
+
+    private Socket initializeSocketOverSocksProxy() throws IOException {
+        Socket createdSocket = socketFactory.createSocket();
+        SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
+        configureSocket(createdSocket, settings);
+
+        socksProxy.connect(InetSocketAddress.createUnresolved(address.getHost(), address.getPort()),
+                settings.getConnectTimeout(TimeUnit.MILLISECONDS));
+        return createdSocket;
     }
 
     @Override
@@ -168,6 +212,10 @@ public class SocketStream implements Stream {
      */
     SocketSettings getSettings() {
         return settings;
+    }
+
+    SocketFactory getSocketFactory() {
+        return socketFactory;
     }
 
     @Override

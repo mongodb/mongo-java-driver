@@ -283,6 +283,10 @@ public class ConnectionString {
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
+    private String proxyHost;
+    private Integer proxyPort;
+    private String proxyUsername;
+    private String proxyPassword;
     private String requiredReplicaSetName;
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
@@ -461,6 +465,8 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
+        validateProxyParameters();
+
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
@@ -494,6 +500,12 @@ public class ConnectionString {
         // option will supersede the sslinvalidhostnameallowed option when both are set
         GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
         GENERAL_OPTIONS_KEYS.add("tlsallowinvalidhostnames");
+
+        //Socks5 proxy settings
+        GENERAL_OPTIONS_KEYS.add("proxyhost");
+        GENERAL_OPTIONS_KEYS.add("proxyport");
+        GENERAL_OPTIONS_KEYS.add("proxyusername");
+        GENERAL_OPTIONS_KEYS.add("proxypassword");
 
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
@@ -606,6 +618,18 @@ public class ConnectionString {
                     break;
                 case "ssl":
                     initializeSslEnabled("ssl", value);
+                    break;
+                case "proxyhost":
+                    proxyHost = value;
+                    break;
+                case "proxyport":
+                    proxyPort = parseInteger(value, "proxyPort");
+                    break;
+                case "proxyusername":
+                    proxyUsername = value;
+                    break;
+                case "proxypassword":
+                    proxyPassword = value;
                     break;
                 case "tls":
                     initializeSslEnabled("tls", value);
@@ -1151,6 +1175,31 @@ public class ConnectionString {
         }
     }
 
+    private void validateProxyParameters() {
+        if (proxyHost == null) {
+            if (proxyPort != null) {
+                throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
+            } else if (proxyUsername != null) {
+                throw new IllegalArgumentException("proxyUsername can only be specified with proxyHost");
+            } else if (proxyPassword != null) {
+                throw new IllegalArgumentException("proxyPassword can only be specified with proxyHost");
+            }
+        }
+        if (proxyPort != null && proxyPort < 0) {
+            throw new IllegalArgumentException("proxyPort should be equal or greater than 0");
+        }
+        if (proxyUsername != null && proxyUsername.isEmpty()) {
+            throw new IllegalArgumentException("proxyUsername cannot be empty");
+        }
+        if (proxyPassword != null && proxyPassword.isEmpty()) {
+            throw new IllegalArgumentException("proxyPassword cannot be empty");
+        }
+        if (proxyUsername == null ^ proxyPassword == null) {
+            throw new IllegalArgumentException(
+                    "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
+        }
+    }
+
     private int countOccurrences(final String haystack, final String needle) {
         return haystack.length() - haystack.replace(needle, "").length();
     }
@@ -1439,6 +1488,25 @@ public class ConnectionString {
         return sslEnabled;
     }
 
+    @Nullable
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    @Nullable
+    public Integer getProxyPort() {
+        return proxyPort;
+    }
+
+    @Nullable
+    public String getProxyUsername() {
+        return proxyUsername;
+    }
+
+    @Nullable
+    public String getProxyPassword() {
+        return proxyPassword;
+    }
     /**
      * Gets the SSL invalidHostnameAllowed value specified in the connection string.
      *

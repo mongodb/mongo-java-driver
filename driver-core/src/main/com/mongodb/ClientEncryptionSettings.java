@@ -17,6 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.connection.ProxySettings;
+import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
 import java.util.HashMap;
@@ -43,6 +45,12 @@ public final class ClientEncryptionSettings {
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
     /**
+     * Proxy setting used for connecting to Key Management Service via a SOCKS5 proxy server.
+     */
+    @Nullable
+    private final ProxySettings proxySettings;
+
+    /**
      * A builder for {@code ClientEncryptionSettings} so that {@code ClientEncryptionSettings} can be immutable, and to support easier
      * construction through chaining.
      */
@@ -53,6 +61,10 @@ public final class ClientEncryptionSettings {
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        /**
+         * Proxy setting used for connecting to Key Management Service via a SOCKS5 proxy server.
+         */
+        private ProxySettings proxySettings;
 
         /**
          * Sets the {@link MongoClientSettings} that will be used to access the key vault.
@@ -63,6 +75,20 @@ public final class ClientEncryptionSettings {
          */
         public Builder keyVaultMongoClientSettings(final MongoClientSettings keyVaultMongoClientSettings) {
             this.keyVaultMongoClientSettings = notNull("keyVaultMongoClientSettings", keyVaultMongoClientSettings);
+            return this;
+        }
+
+        /**
+         * Sets the {@link ProxySettings} used for connecting to Key Management Service via a SOCKS5 proxy server.
+         *
+         * @param proxySettings {@link ProxySettings} to set.
+         * @return this.
+         * @see #getProxySettings()
+         * @since 4.11
+         */
+        public Builder proxySettings(final ProxySettings proxySettings) {
+            notNull("proxySettings", proxySettings);
+            this.proxySettings = proxySettings;
             return this;
         }
 
@@ -149,6 +175,17 @@ public final class ClientEncryptionSettings {
      */
     public MongoClientSettings getKeyVaultMongoClientSettings() {
         return keyVaultMongoClientSettings;
+    }
+
+    /**
+     * Gets the proxy settings used for connecting to Key Management Service via a SOCKS5 proxy server.
+     *
+     * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
+     * @since 4.11
+     */
+    @Nullable
+    public ProxySettings getProxySettings() {
+        return proxySettings;
     }
 
     /**
@@ -259,6 +296,7 @@ public final class ClientEncryptionSettings {
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.proxySettings = builder.proxySettings;
     }
 
 }

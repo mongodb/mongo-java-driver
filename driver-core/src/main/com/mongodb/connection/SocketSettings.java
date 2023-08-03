@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 
@@ -35,9 +36,14 @@ public final class SocketSettings {
     private final long readTimeoutMS;
     private final int receiveBufferSize;
     private final int sendBufferSize;
+    /**
+     * NOTE: This setting is only applicable to the synchronous variant of MongoClient.
+     */
+    private final ProxySettings proxySettings;
 
     /**
      * Gets a builder for an instance of {@code SocketSettings}.
+     *
      * @return the builder
      */
     public static Builder builder() {
@@ -63,6 +69,7 @@ public final class SocketSettings {
         private long readTimeoutMS;
         private int receiveBufferSize;
         private int sendBufferSize;
+        private ProxySettings.Builder proxySettingsBuilder = ProxySettings.builder();
 
         private Builder() {
         }
@@ -82,6 +89,7 @@ public final class SocketSettings {
             readTimeoutMS = socketSettings.readTimeoutMS;
             receiveBufferSize = socketSettings.receiveBufferSize;
             sendBufferSize = socketSettings.sendBufferSize;
+            proxySettingsBuilder.applySettings(socketSettings.getProxySettings());
             return this;
         }
 
@@ -133,6 +141,21 @@ public final class SocketSettings {
         }
 
         /**
+         * Applies the {@link ProxySettings.Builder} block and then sets the {@link SocketSettings#proxySettings}.
+         *
+         * <p>
+         * NOTE: This setting is only applicable to the synchronous variant of MongoClient.
+         *
+         * @param block the block to apply to the {@link ProxySettings}.
+         * @return this
+         * @see SocketSettings#getProxySettings()
+         */
+        public SocketSettings.Builder applyToProxySettings(final Block<ProxySettings.Builder> block) {
+            notNull("block", block).apply(proxySettingsBuilder);
+            return this;
+        }
+
+        /**
          * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
          * @param connectionString the connection string containing details of how to connect to MongoDB
@@ -150,6 +173,8 @@ public final class SocketSettings {
             if (socketTimeout != null) {
                 this.readTimeout(socketTimeout, MILLISECONDS);
             }
+
+            proxySettingsBuilder.applyConnectionString(connectionString);
 
             return this;
         }
@@ -185,7 +210,17 @@ public final class SocketSettings {
     }
 
     /**
+     * Gets the proxy settings used for connecting to MongoDB via a SOCKS5 proxy server.
+     *
+     * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
+     */
+    public ProxySettings getProxySettings() {
+        return proxySettings;
+    }
+
+    /**
      * Gets the receive buffer size. Defaults to the operating system default.
+     *
      * @return the receive buffer size
      */
     public int getReceiveBufferSize() {
@@ -240,11 +275,11 @@ public final class SocketSettings {
     @Override
     public String toString() {
         return "SocketSettings{"
-               + "connectTimeoutMS=" + connectTimeoutMS
-               + ", readTimeoutMS=" + readTimeoutMS
-               + ", receiveBufferSize=" + receiveBufferSize
-               + ", sendBufferSize=" + sendBufferSize
-               + '}';
+                + "connectTimeoutMS=" + connectTimeoutMS
+                + ", readTimeoutMS=" + readTimeoutMS
+                + ", receiveBufferSize=" + receiveBufferSize
+                + ", proxySettings=" + proxySettings
+                + '}';
     }
 
     private SocketSettings(final Builder builder) {
@@ -252,5 +287,6 @@ public final class SocketSettings {
         readTimeoutMS = builder.readTimeoutMS;
         receiveBufferSize = builder.receiveBufferSize;
         sendBufferSize = builder.sendBufferSize;
+        proxySettings = builder.proxySettingsBuilder.build();
     }
 }

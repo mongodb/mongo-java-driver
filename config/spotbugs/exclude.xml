@@ -192,8 +192,15 @@
 
     <!-- Spotbugs assumes that SSLSocket#getSSLParameters never returns null, when that is not the case for all JDKs -->
     <Match>
-        <Class name="com.mongodb.internal.connection.SocketStreamHelper"/>
+        <Class name="com.mongodb.internal.connection.SslHelper"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
+    <!-- FindBugs currently does not prune infeasible exception paths, this is a false warning.-->
+    <Match>
+        <Class name="com.mongodb.internal.connection.SocksSocket"/>
+        <Method name="getPort"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
     </Match>
 
     <Match>

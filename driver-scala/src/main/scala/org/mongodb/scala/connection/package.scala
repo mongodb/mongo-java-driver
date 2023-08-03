@@ -42,6 +42,12 @@ package object connection {
   type SocketSettings = com.mongodb.connection.SocketSettings
 
   /**
+   * Settings for connecting to MongoDB via proxy server.
+   * NOTE: This setting is only applicable to the synchronous variant of MongoClient and Key Management Service settings.
+   */
+  type ProxySettings = com.mongodb.connection.ProxySettings
+
+  /**
    * Settings for connecting to MongoDB via SSL.
    */
   type SslSettings = com.mongodb.connection.SslSettings

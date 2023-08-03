@@ -378,6 +378,29 @@ class ConnectionStringSpecification extends Specification {
     }
 
     @Unroll
+    def 'should throw IllegalArgumentException when the proxy settings are invalid'() {
+        when:
+        new ConnectionString(connectionString)
+
+        then:
+        IllegalArgumentException exception = thrown(IllegalArgumentException)
+        assert exception.message == cause
+
+        where:
+
+        cause                                                 | connectionString
+        'proxyPort can only be specified with proxyHost'      | 'mongodb://localhost:27017/?proxyPort=1'
+        'proxyPort should be equal or greater than 0'         | 'mongodb://localhost:27017/?proxyHost=a&proxyPort=-1'
+        'proxyUsername can only be specified with proxyHost'  | 'mongodb://localhost:27017/?proxyUsername=1'
+        'proxyUsername cannot be empty'                       | 'mongodb://localhost:27017/?proxyHost=a&proxyUsername='
+        'proxyPassword can only be specified with proxyHost'  | 'mongodb://localhost:27017/?proxyPassword=1'
+        'proxyPassword cannot be empty'                       | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword='
+        'Both proxyUsername' +
+                ' and proxyPassword must be set together.' +
+                ' They cannot be set individually'            | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword=1'
+    }
+
+    @Unroll
     def 'should throw IllegalArgumentException when the string #cause'() {
         when:
         new ConnectionString(connectionString)
