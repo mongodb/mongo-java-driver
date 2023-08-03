@@ -481,7 +481,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @return the split event
      * @since 4.11
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0.9
      */
     @Nullable
     public SplitEvent getSplitEvent() {
