@@ -26,7 +26,6 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
-import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -44,8 +43,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncReadConnection;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnectionSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -182,7 +181,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(binding, (CallableWithSource<BatchCursor<T>>) source -> {
+        return withReadConnectionSource(binding, source -> {
             AggregateResponseBatchCursor<RawBsonDocument> cursor =
                     (AggregateResponseBatchCursor<RawBsonDocument>) wrapped.execute(binding);
             return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
@@ -199,7 +198,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
             } else {
                 AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor =
                         (AsyncAggregateResponseBatchCursor<RawBsonDocument>) result;
-                withAsyncReadConnection(binding, (source, t1) -> {
+                withAsyncReadConnectionSource(binding, (source, t1) -> {
                     if (t1 != null) {
                         callback.onResult(null, t1);
                     } else {

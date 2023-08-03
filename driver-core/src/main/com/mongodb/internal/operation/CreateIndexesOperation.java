@@ -47,17 +47,17 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.IndexHelper.generateIndexName;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -147,7 +147,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
                 try {
                     executeCommandAsync(binding, namespace.getDatabaseName(),
-                            getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
+                            getCommand(connection.getDescription()), connection, writeConcernErrorTransformerAsync(),
                             (result, t12) -> wrappedCallback.onResult(null, translateException(t12)));
                 } catch (Throwable t1) {
                     wrappedCallback.onResult(null, t1);
