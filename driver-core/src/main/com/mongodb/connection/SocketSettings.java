@@ -17,7 +17,9 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.ProxyAddress;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -35,9 +37,13 @@ public final class SocketSettings {
     private final long readTimeoutMS;
     private final int receiveBufferSize;
     private final int sendBufferSize;
+    private final ProxyAddress proxyAddress;
+    private final String proxyUsername;
+    private final String proxyPassword;
 
     /**
      * Gets a builder for an instance of {@code SocketSettings}.
+     *
      * @return the builder
      */
     public static Builder builder() {
@@ -63,6 +69,9 @@ public final class SocketSettings {
         private long readTimeoutMS;
         private int receiveBufferSize;
         private int sendBufferSize;
+        private ProxyAddress proxyAddress;
+        private String proxyUsername;
+        private String proxyPassword;
 
         private Builder() {
         }
@@ -82,6 +91,9 @@ public final class SocketSettings {
             readTimeoutMS = socketSettings.readTimeoutMS;
             receiveBufferSize = socketSettings.receiveBufferSize;
             sendBufferSize = socketSettings.sendBufferSize;
+            proxyAddress = socketSettings.proxyAddress;
+            proxyUsername = socketSettings.proxyUsername;
+            proxyPassword = socketSettings.proxyPassword;
             return this;
         }
 
@@ -132,6 +144,21 @@ public final class SocketSettings {
             return this;
         }
 
+        public Builder proxyAddress(final ProxyAddress proxyAddress) {
+            this.proxyAddress = proxyAddress;
+            return this;
+        }
+
+        public Builder proxyUsername(final String proxyUsername) {
+            this.proxyUsername = proxyUsername;
+            return this;
+        }
+
+        public Builder proxyPassword(final String proxyPassword) {
+            this.proxyPassword = proxyPassword;
+            return this;
+        }
+
         /**
          * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
@@ -149,6 +176,22 @@ public final class SocketSettings {
             Integer socketTimeout = connectionString.getSocketTimeout();
             if (socketTimeout != null) {
                 this.readTimeout(socketTimeout, MILLISECONDS);
+            }
+
+            String proxyHost = connectionString.getProxyHost();
+            Integer proxyPort = connectionString.getProxyPort();
+            if (proxyHost != null && proxyPort != null) {
+                proxyAddress = proxyPort == null ? new ProxyAddress(proxyHost) : new ProxyAddress(proxyHost, proxyPort);
+            }
+
+            String proxyUsername = connectionString.getProxyUsername();
+            if (proxyUsername != null) {
+                this.proxyUsername(proxyUsername);
+            }
+
+            String proxyPassword = connectionString.getProxyPassword();
+            if (proxyPassword != null) {
+                this.proxyPassword(proxyPassword);
             }
 
             return this;
@@ -182,6 +225,21 @@ public final class SocketSettings {
      */
     public int getReadTimeout(final TimeUnit timeUnit) {
         return (int) timeUnit.convert(readTimeoutMS, MILLISECONDS);
+    }
+
+    @Nullable
+    public ProxyAddress getProxyAddress() {
+        return proxyAddress;
+    }
+
+    @Nullable
+    public String getProxyUsername() {
+        return proxyUsername;
+    }
+
+    @Nullable
+    public String getProxyPassword() {
+        return proxyPassword;
     }
 
     /**
@@ -240,11 +298,13 @@ public final class SocketSettings {
     @Override
     public String toString() {
         return "SocketSettings{"
-               + "connectTimeoutMS=" + connectTimeoutMS
-               + ", readTimeoutMS=" + readTimeoutMS
-               + ", receiveBufferSize=" + receiveBufferSize
-               + ", sendBufferSize=" + sendBufferSize
-               + '}';
+                + "connectTimeoutMS=" + connectTimeoutMS
+                + ", readTimeoutMS=" + readTimeoutMS
+                + ", receiveBufferSize=" + receiveBufferSize
+                + ", proxyAddress=" + proxyAddress
+                + ", proxyUsername=" + proxyUsername
+                + ", proxyPassword=" + proxyPassword
+                + '}';
     }
 
     private SocketSettings(final Builder builder) {
@@ -252,5 +312,8 @@ public final class SocketSettings {
         readTimeoutMS = builder.readTimeoutMS;
         receiveBufferSize = builder.receiveBufferSize;
         sendBufferSize = builder.sendBufferSize;
+        proxyAddress = builder.proxyAddress;
+        proxyUsername = builder.proxyUsername;
+        proxyPassword = builder.proxyPassword;
     }
 }
