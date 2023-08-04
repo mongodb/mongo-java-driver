@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.WithWrapper.withWrapper;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ClientMetadataHelper.getOperatingSystemType;
@@ -320,13 +321,5 @@ public class ClientMetadataHelperProseTest {
         result.add(first);
         result.addAll(rest);
         return String.join(separator, result);
-    }
-
-    public static String repeat(final int times, final String s) {
-        StringBuilder builder = new StringBuilder(times);
-        for (int i = 0; i < times; i++) {
-            builder.append(s);
-        }
-        return builder.toString();
     }
 }
