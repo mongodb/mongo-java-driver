@@ -2162,7 +2162,7 @@ buildvariants:
 containers:
   - name: test-container
     working_dir: /
-    image: "557821124784.dkr.ecr.us-east-1.amazonaws.com/evergreen/mongo-java-driver:latest"
+    image: "557821124784.dkr.ecr.us-east-1.amazonaws.com/evergreen/mongo-java-driver:1e8c5b7b88296ed53462d5606ff2debdb5df2820"
     resources:
       cpu: 4096
       memory_mb: 8192
