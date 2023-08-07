@@ -46,12 +46,11 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.createReadCommandAndExecute;
-import static com.mongodb.internal.operation.CommandOperationHelper.createReadCommandAndExecuteAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.decorateReadWithRetries;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
@@ -59,10 +58,12 @@ import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncSourceAndConnection;
-import static com.mongodb.internal.operation.OperationHelper.withSourceAndConnection;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
+import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
+import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 
 /**
  * An operation that queries a collection using the provided criteria.
@@ -337,8 +338,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
-        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = CommandOperationHelper.<AsyncBatchCursor<T>>decorateReadWithRetries(
-                retryState, binding.getOperationContext(), funcCallback ->
+        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
+                retryState, binding.getOperationContext(), (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                             (source, connection, releasingCallback) -> {
                                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
@@ -470,7 +471,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return cursorType == CursorType.TailableAwait;
     }
 
-    private CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>> transformer() {
+    private CommandReadTransformer<BsonDocument, QueryBatchCursor<T>> transformer() {
         return (result, source, connection) -> {
             QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                     connection.getDescription().getServerAddress());

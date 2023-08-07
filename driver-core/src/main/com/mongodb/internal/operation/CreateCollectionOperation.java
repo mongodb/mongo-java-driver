@@ -45,18 +45,18 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfFalse;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionSevenDotZero;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -240,8 +240,8 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return withConnection(binding, connection -> {
             checkEncryptedFieldsSupported(connection.getDescription());
             getCommandFunctions().forEach(commandCreator ->
-                executeCommand(binding, databaseName, commandCreator.get(), connection,
-                        writeConcernErrorTransformer())
+               executeCommand(binding, databaseName, commandCreator.get(), connection,
+                      writeConcernErrorTransformer())
             );
             return null;
         });
@@ -425,7 +425,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 finalCallback.onResult(null, null);
             } else {
                 executeCommandAsync(binding, databaseName, nextCommandFunction.get(),
-                        connection, writeConcernErrorWriteTransformer(), this);
+                        connection, writeConcernErrorTransformerAsync(), this);
             }
         }
     }

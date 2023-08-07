@@ -21,7 +21,6 @@ import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.operation.OperationHelper.CallableWithSource;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -35,7 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
-import static com.mongodb.internal.operation.OperationHelper.withReadConnectionSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final ReadBinding binding;
@@ -195,7 +194,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             }
             wrapped.close();
 
-            withReadConnectionSource(binding, (CallableWithSource<Void>) source -> {
+            withReadConnectionSource(binding, source -> {
                 changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
                 return null;
             });
