@@ -220,7 +220,7 @@ functions:
             . ./activate-authawsvenv.sh
             python ./lib/aws_assign_instance_profile.py
           fi
-          
+
   "run tests":
     - command: shell.exec
       type: test
@@ -2151,3 +2151,21 @@ buildvariants:
   tasks:
     - name: testazurekms_task_group
       batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+- name: container-variant
+  display_name: "Container Variant"
+  run_on:
+    - test-container
+  tasks:
+    - static-analysis
+
+containers:
+  - name: test-container
+    working_dir: /
+    image: "557821124784.dkr.ecr.us-east-1.amazonaws.com/evergreen/mongo-java-driver:latest"
+    resources:
+      cpu: 4096
+      memory_mb: 8192
+    system:
+      cpu_architecture: x86_64
+      operating_system: linux
