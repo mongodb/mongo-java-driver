@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -29,8 +30,6 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -50,23 +49,19 @@ import static java.util.Collections.singletonList;
  */
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private boolean retryReads;
-    private long maxTimeMS;
     private BsonValue comment;
 
-    public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
+    public EstimatedDocumentCountOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
+            final MongoNamespace namespace) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
     }
 
     public EstimatedDocumentCountOperation retryReads(final boolean retryReads) {
         this.retryReads = retryReads;
-        return this;
-    }
-
-    public EstimatedDocumentCountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -83,8 +78,9 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     @Override
     public Long execute(final ReadBinding binding) {
         try {
-            return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                    CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), transformer(), retryReads);
+            return executeRetryableRead(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                    getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
+                    transformer(), retryReads);
         } catch (MongoCommandException e) {
             return assertNotNull(rethrowIfNotNamespaceError(e, 0L));
         }
@@ -92,8 +88,9 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")), asyncTransformer(), retryReads,
+        executeRetryableReadAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
+                asyncTransformer(), retryReads,
                 (result, t) -> {
                     if (isNamespaceError(t)) {
                         callback.onResult(0L, null);
@@ -116,10 +113,10 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> {
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
-            putIfNotZero(document, "maxTimeMS", maxTimeMS);
+            putIfNotZero(document, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
             if (comment != null) {
                 document.put("comment", comment);
             }

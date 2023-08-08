@@ -29,6 +29,7 @@ import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -51,7 +52,8 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         getCollectionHelper().insertDocuments([trueXDocument, falseXDocument])
 
         def pipeline = [new BsonDocument('$match', trueXDocument)]
-        def operation = new CreateViewOperation(getDatabaseName(), viewName, viewOn, pipeline, WriteConcern.ACKNOWLEDGED)
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), viewName, viewOn, pipeline,
+                WriteConcern.ACKNOWLEDGED)
 
         when:
         execute(operation, async)
@@ -79,7 +81,8 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         assert !collectionNameExists(viewOn)
         assert !collectionNameExists(viewName)
 
-        def operation = new CreateViewOperation(getDatabaseName(), viewName, viewOn, [], WriteConcern.ACKNOWLEDGED)
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), viewName, viewOn, [],
+                WriteConcern.ACKNOWLEDGED)
                 .collation(defaultCollation)
 
         when:
@@ -100,7 +103,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
     @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw if server version is not 3.4 or greater'() {
         given:
-        def operation = new CreateViewOperation(getDatabaseName(), getCollectionName() + '-view',
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), getCollectionName() + '-view',
                 getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
 
         when:
@@ -120,7 +123,8 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
         assert !collectionNameExists(viewName)
 
-        def operation = new CreateViewOperation(getDatabaseName(), viewName, getCollectionName(), [], new WriteConcern(5))
+        def operation = new CreateViewOperation(CSOT_NO_TIMEOUT.get(), getDatabaseName(), viewName, getCollectionName(), [],
+                new WriteConcern(5))
 
         when:
         execute(operation, async)
@@ -138,7 +142,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
     }
 
     def getCollectionInfo(String collectionName) {
-        new ListCollectionsOperation(databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
+        new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
                 new BsonString(collectionName))).execute(getBinding()).tryNext()?.head()
     }
 

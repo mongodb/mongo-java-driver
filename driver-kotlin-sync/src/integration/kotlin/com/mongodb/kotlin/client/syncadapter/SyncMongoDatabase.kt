@@ -28,6 +28,7 @@ import com.mongodb.client.MongoIterable
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
 import com.mongodb.kotlin.client.MongoDatabase
+import java.util.concurrent.TimeUnit
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
@@ -43,6 +44,8 @@ internal class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
 
     override fun getReadConcern(): ReadConcern = wrapped.readConcern
 
+    override fun getTimeout(timeUnit: TimeUnit): Long? = wrapped.timeout(timeUnit)
+
     override fun withCodecRegistry(codecRegistry: CodecRegistry): SyncMongoDatabase =
         SyncMongoDatabase(wrapped.withCodecRegistry(codecRegistry))
 
@@ -54,6 +57,9 @@ internal class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
 
     override fun withReadConcern(readConcern: ReadConcern): SyncMongoDatabase =
         SyncMongoDatabase(wrapped.withReadConcern(readConcern))
+
+    override fun withTimeout(timeout: Long, timeUnit: TimeUnit): SyncMongoDatabase =
+        SyncMongoDatabase(wrapped.withTimeout(timeout, timeUnit))
 
     override fun getCollection(collectionName: String): MongoCollection<Document> =
         SyncMongoCollection(wrapped.getCollection(collectionName, Document::class.java))

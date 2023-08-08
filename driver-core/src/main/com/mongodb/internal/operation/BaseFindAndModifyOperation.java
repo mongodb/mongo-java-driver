@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -33,8 +34,6 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 import org.bson.conversions.Bson;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableWriteAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
@@ -43,7 +42,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.OperationHelper.validateHintForFindAndModify;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableWrite;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Abstract base class for findAndModify-based operations
@@ -51,7 +49,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
-
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
@@ -60,15 +58,15 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
-    private long maxTimeMS;
     private Collation collation;
     private Bson hint;
     private String hintString;
     private BsonValue comment;
     private BsonDocument variables;
 
-    protected BaseFindAndModifyOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
-                                         final boolean retryWrites, final Decoder<T> decoder) {
+    protected BaseFindAndModifyOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
@@ -77,7 +75,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeRetryableWrite(binding, getDatabaseName(), null, getFieldNameValidator(),
+        return executeRetryableWrite(clientSideOperationTimeout, binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()),
                 FindAndModifyHelper.transformer(),
@@ -86,7 +84,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableWriteAsync(binding, getDatabaseName(), null, getFieldNameValidator(),
+        executeRetryableWriteAsync(clientSideOperationTimeout, binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
                 getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
     }
@@ -122,17 +120,6 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     public BaseFindAndModifyOperation<T> projection(@Nullable final BsonDocument projection) {
         this.projection = projection;
-        return this;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, MILLISECONDS);
-    }
-
-    public BaseFindAndModifyOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -198,7 +185,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     protected abstract void specializeCommand(BsonDocument initialCommand, ConnectionDescription connectionDescription);
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> {
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
             BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
             putIfNotNull(commandDocument, "query", getFilter());
             putIfNotNull(commandDocument, "fields", getProjection());
@@ -206,7 +193,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
             specializeCommand(commandDocument, connectionDescription);
 
-            putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+            putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
             if (getWriteConcern().isAcknowledged() && !getWriteConcern().isServerDefault() && !sessionContext.hasActiveTransaction()) {
                 commandDocument.put("writeConcern", getWriteConcern().asDocument());
             }

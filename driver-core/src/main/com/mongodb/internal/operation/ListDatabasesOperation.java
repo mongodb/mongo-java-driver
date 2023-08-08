@@ -17,20 +17,17 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -38,6 +35,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTra
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -49,28 +47,17 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final Decoder<T> decoder;
     private boolean retryReads;
-
-    private long maxTimeMS;
     private BsonDocument filter;
     private Boolean nameOnly;
     private Boolean authorizedDatabasesOnly;
     private BsonValue comment;
 
-    public ListDatabasesOperation(final Decoder<T> decoder) {
+    public ListDatabasesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final Decoder<T> decoder) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.decoder = notNull("decoder", decoder);
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public ListDatabasesOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
     }
 
     public ListDatabasesOperation<T> filter(@Nullable final BsonDocument filter) {
@@ -121,13 +108,13 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, "admin", getCommandCreator(),
+        return executeRetryableRead(clientSideOperationTimeout, binding, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, "admin", getCommandCreator(),
+        executeRetryableReadAsync(clientSideOperationTimeout, binding, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "databases"), asyncTransformer(),
                 retryReads, errorHandlingCallback(callback, LOGGER));
     }
@@ -147,24 +134,14 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     private CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> getCommand();
-    }
-
-    private BsonDocument getCommand() {
-        BsonDocument command = new BsonDocument("listDatabases", new BsonInt32(1));
-        if (maxTimeMS > 0) {
-            command.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        if (filter != null) {
-            command.put("filter", filter);
-        }
-        if (nameOnly != null) {
-            command.put("nameOnly", new BsonBoolean(nameOnly));
-        }
-        if (authorizedDatabasesOnly != null) {
-            command.put("authorizedDatabases", new BsonBoolean(authorizedDatabasesOnly));
-        }
-        putIfNotNull(command, "comment", comment);
-        return command;
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+            BsonDocument command = new BsonDocument("listDatabases", new BsonInt32(1));
+            putIfNotNull(command, "filter", filter);
+            putIfNotNull(command, "nameOnly", nameOnly);
+            putIfNotNull(command, "authorizedDatabases", authorizedDatabasesOnly);
+            putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+            putIfNotNull(command, "comment", comment);
+            return command;
+        };
     }
 }

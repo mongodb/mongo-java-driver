@@ -54,6 +54,25 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
         get() = wrapped.writeConcern
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+     * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`
+     *
+     * -`null` means that the timeout mechanism for operations will defer to using: -`waitQueueTimeoutMS`: The maximum
+     * wait time in milliseconds that a thread may wait for a connection to become available -`socketTimeoutMS`: How
+     * long a send or receive on a socket can take before timing out. -`wTimeoutMS`: How long the server will wait for
+     * the write concern to be fulfilled before timing out. -`maxTimeMS`: The time limit for processing operations on a
+     * cursor. See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.
+     * -`maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute. -`0`
+     * means infinite timeout. -`> 0` The time limit to use for the full execution of an operation.
+     *
+     * @return the optional timeout duration
+     * @since 4.x
+     */
+    public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
+
+    /**
      * Create a new MongoDatabase instance with a different codec registry.
      *
      * The [CodecRegistry] configured by this method is effectively treated by the driver as an instance of
@@ -95,6 +114,20 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      */
     public fun withWriteConcern(newWriteConcern: WriteConcern): MongoDatabase =
         MongoDatabase(wrapped.withWriteConcern(newWriteConcern))
+
+    /**
+     * Create a new MongoDatabase instance with the set time limit for the full execution of an operation.
+     * - `0` means an infinite timeout
+     * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit, defaults to Milliseconds
+     * @return a new MongoDatabase instance with the set time limit for operations
+     * @see [MongoDatabase.timeout]
+     * @since 4.x
+     */
+    public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoDatabase =
+        MongoDatabase(wrapped.withTimeout(timeout, timeUnit))
 
     /**
      * Gets a collection.

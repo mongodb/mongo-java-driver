@@ -74,6 +74,8 @@ import reactor.core.publisher.MonoSink;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -95,22 +97,22 @@ public final class MongoOperationPublisher<T> {
             final Class<T> documentClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
             final UuidRepresentation uuidRepresentation, @Nullable final AutoEncryptionSettings autoEncryptionSettings,
-            final OperationExecutor executor) {
+            @Nullable final Long timeoutMS, final OperationExecutor executor) {
         this(new MongoNamespace("_ignored", "_ignored"), documentClass,
              codecRegistry, readPreference, readConcern, writeConcern, retryWrites, retryReads,
-             uuidRepresentation, autoEncryptionSettings, executor);
+             uuidRepresentation, autoEncryptionSettings, timeoutMS, executor);
     }
 
     MongoOperationPublisher(
             final MongoNamespace namespace, final Class<T> documentClass, final CodecRegistry codecRegistry,
             final ReadPreference readPreference, final ReadConcern readConcern, final WriteConcern writeConcern,
             final boolean retryWrites, final boolean retryReads, final UuidRepresentation uuidRepresentation,
-            @Nullable final AutoEncryptionSettings autoEncryptionSettings,
+            @Nullable final AutoEncryptionSettings autoEncryptionSettings,  @Nullable final Long timeoutMS,
             final OperationExecutor executor) {
         this.operations = new AsyncOperations<>(namespace, notNull("documentClass", documentClass),
                                            notNull("readPreference", readPreference), notNull("codecRegistry", codecRegistry),
                                            notNull("readConcern", readConcern), notNull("writeConcern", writeConcern),
-                                           retryWrites, retryReads);
+                                           retryWrites, retryReads, timeoutMS);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.executor = notNull("executor", executor);
@@ -144,6 +146,11 @@ public final class MongoOperationPublisher<T> {
         return operations.isRetryReads();
     }
 
+    @Nullable
+    public Long getTimeoutMS() {
+        return operations.getTimeoutMS();
+    }
+
     Class<T> getDocumentClass() {
         return operations.getDocumentClass();
     }
@@ -175,15 +182,15 @@ public final class MongoOperationPublisher<T> {
             return (MongoOperationPublisher<D>) this;
         }
         return new MongoOperationPublisher<>(notNull("namespace", namespace), notNull("documentClass", documentClass),
-                                             getCodecRegistry(), getReadPreference(), getReadConcern(), getWriteConcern(),
-                                             getRetryWrites(), getRetryReads(), uuidRepresentation, autoEncryptionSettings, executor);
+                getCodecRegistry(), getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
+                uuidRepresentation, autoEncryptionSettings, getTimeoutMS(), executor);
     }
 
     MongoOperationPublisher<T> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
-                                             withUuidRepresentation(notNull("codecRegistry", codecRegistry), uuidRepresentation),
-                                             getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                                             uuidRepresentation, autoEncryptionSettings, executor);
+                withUuidRepresentation(notNull("codecRegistry", codecRegistry), uuidRepresentation),
+                getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
+                uuidRepresentation, autoEncryptionSettings, getTimeoutMS(), executor);
     }
 
     MongoOperationPublisher<T> withReadPreference(final ReadPreference readPreference) {
@@ -191,9 +198,8 @@ public final class MongoOperationPublisher<T> {
             return this;
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(),
-                                             notNull("readPreference", readPreference),
-                                             getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                                             uuidRepresentation, autoEncryptionSettings, executor);
+                notNull("readPreference", readPreference), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
+                uuidRepresentation, autoEncryptionSettings, getTimeoutMS(), executor);
     }
 
     MongoOperationPublisher<T> withWriteConcern(final WriteConcern writeConcern) {
@@ -201,8 +207,8 @@ public final class MongoOperationPublisher<T> {
             return this;
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(), getReadPreference(), getReadConcern(),
-                                             notNull("writeConcern", writeConcern),
-                                             getRetryWrites(), getRetryReads(), uuidRepresentation, autoEncryptionSettings, executor);
+                notNull("writeConcern", writeConcern), getRetryWrites(), getRetryReads(), uuidRepresentation, autoEncryptionSettings,
+                getTimeoutMS(), executor);
     }
 
     MongoOperationPublisher<T> withReadConcern(final ReadConcern readConcern) {
@@ -210,9 +216,20 @@ public final class MongoOperationPublisher<T> {
             return this;
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
-                                             getCodecRegistry(), getReadPreference(), notNull("readConcern", readConcern),
-                                             getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
-                                             autoEncryptionSettings, executor);
+                getCodecRegistry(), getReadPreference(), notNull("readConcern", readConcern),
+                getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
+                autoEncryptionSettings, getTimeoutMS(), executor);
+    }
+
+    MongoOperationPublisher<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
+        long timeoutMS = notNull("timeUnit", timeUnit).toMillis(timeout);
+        if (Objects.equals(getTimeoutMS(), timeoutMS)) {
+            return this;
+        }
+        return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
+                getCodecRegistry(), getReadPreference(), getReadConcern(),
+                getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
+                autoEncryptionSettings, getTimeoutMS(), executor);
     }
 
     Publisher<Void> dropDatabase(@Nullable final ClientSession clientSession) {

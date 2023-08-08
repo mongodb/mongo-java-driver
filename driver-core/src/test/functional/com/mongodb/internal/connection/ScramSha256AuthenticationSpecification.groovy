@@ -35,6 +35,7 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.createAsyncCluster
 import static com.mongodb.ClusterFixture.createCluster
 import static com.mongodb.ClusterFixture.getBinding
@@ -88,14 +89,14 @@ class ScramSha256AuthenticationSpecification extends Specification {
                 .append('pwd', password)
                 .append('roles', ['root'])
                 .append('mechanisms', mechanisms)
-        new CommandReadOperation<>('admin',
+        new CommandReadOperation<>(CSOT_NO_TIMEOUT.get(), 'admin',
                 new BsonDocumentWrapper<Document>(createUserCommand, new DocumentCodec()), new DocumentCodec())
                 .execute(getBinding())
     }
 
     def dropUser(final String userName) {
-        new CommandReadOperation<>('admin', new BsonDocument('dropUser', new BsonString(userName)),
-            new BsonDocumentCodec()).execute(getBinding())
+        new CommandReadOperation<>(CSOT_NO_TIMEOUT.get(), 'admin', new BsonDocument('dropUser', new BsonString(userName)),
+                new BsonDocumentCodec()).execute(getBinding())
     }
 
     def 'test authentication and authorization'() {
@@ -103,7 +104,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         def cluster = createCluster(credential)
 
         when:
-        new CommandReadOperation<Document>('admin',
+        new CommandReadOperation<Document>(CSOT_NO_TIMEOUT.get(), 'admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
                 .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
                         IgnorableRequestContext.INSTANCE))
@@ -125,7 +126,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
 
         when:
         // make this synchronous
-        new CommandReadOperation<Document>('admin',
+        new CommandReadOperation<Document>(CSOT_NO_TIMEOUT.get(), 'admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
                 .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
                         IgnorableRequestContext.INSTANCE),
@@ -147,7 +148,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         def cluster = createCluster(credential)
 
         when:
-        new CommandReadOperation<Document>('admin',
+        new CommandReadOperation<Document>(CSOT_NO_TIMEOUT.get(), 'admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
                 .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
                         IgnorableRequestContext.INSTANCE))
@@ -168,7 +169,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         when:
-        new CommandReadOperation<Document>('admin',
+        new CommandReadOperation<Document>(CSOT_NO_TIMEOUT.get(), 'admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
                 .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
                         IgnorableRequestContext.INSTANCE), callback)
@@ -189,7 +190,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         def cluster = createCluster(credential)
 
         when:
-        new CommandReadOperation<Document>('admin',
+        new CommandReadOperation<Document>(CSOT_NO_TIMEOUT.get(), 'admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
                 .execute(new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
                         IgnorableRequestContext.INSTANCE))
@@ -210,7 +211,7 @@ class ScramSha256AuthenticationSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         when:
-        new CommandReadOperation<Document>('admin',
+        new CommandReadOperation<Document>(CSOT_NO_TIMEOUT.get(), 'admin',
                 new BsonDocumentWrapper<Document>(new Document('dbstats', 1), new DocumentCodec()), new DocumentCodec())
                 .executeAsync(new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
                         IgnorableRequestContext.INSTANCE), callback)

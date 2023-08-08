@@ -103,6 +103,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
                                                                      settings.getUuidRepresentation(),
                                                                      settings.getAutoEncryptionSettings(),
+                                                                     null, // TODO JAVA-4064
                                                                      this.executor);
         this.closed = new AtomicBoolean();
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);

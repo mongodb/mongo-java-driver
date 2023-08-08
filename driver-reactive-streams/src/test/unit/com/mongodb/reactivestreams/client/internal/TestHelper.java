@@ -96,7 +96,7 @@ public class TestHelper {
         return new MongoOperationPublisher<>(NAMESPACE, Document.class,
                                              getDefaultCodecRegistry(), ReadPreference.primary(), ReadConcern.DEFAULT,
                                              WriteConcern.ACKNOWLEDGED, true, true,
-                                             UuidRepresentation.STANDARD, null, executor);
+                                             UuidRepresentation.STANDARD, null, null, executor);
     }
 
 

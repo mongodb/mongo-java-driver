@@ -25,9 +25,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ListIndexesPublisherImplTest extends TestHelper {
@@ -43,7 +44,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
         ListIndexesPublisher<Document> publisher = new ListIndexesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
         ListIndexesOperation<Document> expectedOperation =
-                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                new ListIndexesOperation<>(CSOT_NO_TIMEOUT.get(), NAMESPACE, getDefaultCodecRegistry().get(Document.class))
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
@@ -54,13 +55,13 @@ public class ListIndexesPublisherImplTest extends TestHelper {
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
 
         // Should apply settings
-        publisher
-                .batchSize(100)
-                .maxTime(10, SECONDS);
+        publisher.batchSize(100)
+                .maxTime(100, MILLISECONDS);
 
-        expectedOperation
-                .batchSize(100)
-                .maxTime(10, SECONDS);
+        expectedOperation =
+                new ListIndexesOperation<>(CSOT_NO_TIMEOUT.get(), NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                        .batchSize(100)
+                        .retryReads(true);
 
         configureBatchCursor();
         Flux.from(publisher).blockFirst();

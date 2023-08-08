@@ -16,13 +16,13 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
+import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.ConnectionDescription
@@ -46,6 +46,9 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
@@ -53,7 +56,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
 
@@ -61,7 +63,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return empty set if database does not exist'() {
         given:
-        def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), madeUpDatabase, new DocumentCodec())
 
         when:
         def cursor = operation.execute(getBinding())
@@ -76,7 +78,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return empty cursor if database does not exist asynchronously'() {
         given:
-        def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), madeUpDatabase, new DocumentCodec())
 
         when:
         def cursor = executeAsync(operation)
@@ -92,7 +94,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return collection names if a collection exists'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
         def codec = new DocumentCodec()
@@ -113,7 +115,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     @IgnoreIf({ serverVersionAtLeast(3, 0) })
     def 'should throw if filtering on name with something other than a string'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
                 .filter(new BsonDocument('name', new BsonRegularExpression('^[^$]*$')))
 
         when:
@@ -125,7 +127,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter collection names if a name filter is specified'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
                 .filter(new BsonDocument('name', new BsonString('collection2')))
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
@@ -145,7 +147,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter capped collections'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
                 .filter(new BsonDocument('options.capped', BsonBoolean.TRUE))
         def helper = getCollectionHelper()
         getCollectionHelper().create('collection3', new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -165,7 +167,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
     def 'should get all fields when nameOnly is not requested'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
         getCollectionHelper().create('collection4', new CreateCollectionOptions())
 
         when:
@@ -179,7 +181,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should only get collection names when nameOnly is requested'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
                 .nameOnly(true)
         getCollectionHelper().create('collection5', new CreateCollectionOptions())
 
@@ -194,7 +196,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
     def 'should only get all field names when nameOnly is requested on server versions that do not support nameOnly'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
                 .nameOnly(true)
         getCollectionHelper().create('collection6', new CreateCollectionOptions())
 
@@ -209,7 +211,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return collection names if a collection exists asynchronously'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec())
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
         def codec = new DocumentCodec()
@@ -230,9 +232,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes when calling hasNext before next'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).batchSize(2)
 
         when:
         def cursor = operation.execute(getBinding())
@@ -246,9 +248,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes without calling hasNext before next'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).batchSize(2)
 
         when:
         def cursor = operation.execute(getBinding())
@@ -268,9 +270,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes when calling hasNext before tryNext'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).batchSize(2)
 
         when:
         def cursor = operation.execute(getBinding())
@@ -290,9 +292,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes without calling hasNext before tryNext'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).batchSize(2)
 
         when:
         def cursor = operation.execute(getBinding())
@@ -307,9 +309,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter indexes asynchronously'() {
         given:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED).execute(getBinding())
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).batchSize(2)
 
         when:
         def cursor = executeAsync(operation)
@@ -322,7 +324,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the set batchSize of collections'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).batchSize(2)
         def codec = new DocumentCodec()
         getCollectionHelper().insertDocuments(codec, ['a': 1] as Document)
         getCollectionHelper(new MongoNamespace(databaseName, 'collection2')).insertDocuments(codec, ['a': 1] as Document)
@@ -354,7 +356,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the set batchSize of collections asynchronously'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).batchSize(2)
         def codec = new DocumentCodec()
         getCollectionHelper().insertDocuments(codec, ['a': 1] as Document)
         getCollectionHelper(new MongoNamespace(databaseName, 'collection2')).insertDocuments(codec, ['a': 1] as Document)
@@ -384,40 +386,24 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
+    def 'should throw execution timeout exception'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).maxTime(1000, MILLISECONDS)
+        def operation = new ListCollectionsOperation(CSOT_MAX_TIME.get(), databaseName, new DocumentCodec())
 
         enableMaxTimeFailPoint()
 
         when:
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(MongoExecutionTimeoutException)
 
         cleanup:
         disableMaxTimeFailPoint()
-    }
 
-
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from executeAsync'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).maxTime(1000, MILLISECONDS)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        executeAsync(operation)
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
+        where:
+        async << [true, false]
     }
 
     def 'should use the readPreference to set secondaryOk'() {
@@ -433,7 +419,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
             getReadPreference() >> readPreference
             getServerApi() >> null
         }
-        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), helper.dbName, helper.decoder)
 
         when: '3.6.0'
         operation.execute(readBinding)
@@ -460,7 +446,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
             getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
-        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
+        def operation = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), helper.dbName, helper.decoder)
 
         when: '3.6.0'
         operation.executeAsync(readBinding, Stub(SingleResultCallback))

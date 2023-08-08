@@ -93,8 +93,8 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public MongoDatabase getDatabase(final String databaseName) {
         return new MongoDatabaseImpl(databaseName, delegate.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
-                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(),
-                settings.getUuidRepresentation(), settings.getAutoEncryptionSettings(), delegate.getOperationExecutor());
+                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(), settings.getUuidRepresentation(),
+                settings.getAutoEncryptionSettings(), getTimeoutMS(), delegate.getOperationExecutor());
     }
 
     @Override
@@ -206,8 +206,8 @@ public final class MongoClientImpl implements MongoClient {
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<>(clientSession, "admin", delegate.getCodecRegistry(), settings.getReadPreference(),
-                settings.getReadConcern(), delegate.getOperationExecutor(),
-                pipeline, resultClass, ChangeStreamLevel.CLIENT, settings.getRetryReads());
+                settings.getReadConcern(), delegate.getOperationExecutor(), pipeline, resultClass, ChangeStreamLevel.CLIENT,
+                settings.getRetryReads(), getTimeoutMS());
     }
 
     public Cluster getCluster() {
@@ -241,7 +241,7 @@ public final class MongoClientImpl implements MongoClient {
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
-                delegate.getOperationExecutor(), settings.getRetryReads());
+                delegate.getOperationExecutor(), settings.getRetryReads(), getTimeoutMS());
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
@@ -262,5 +262,9 @@ public final class MongoClientImpl implements MongoClient {
 
     public MongoDriverInformation getMongoDriverInformation() {
         return mongoDriverInformation;
+    }
+
+    private @Nullable Long getTimeoutMS() {
+        return null; // TODO - JAVA-4064
     }
 }

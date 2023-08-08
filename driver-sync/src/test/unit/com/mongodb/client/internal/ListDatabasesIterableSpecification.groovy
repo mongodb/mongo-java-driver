@@ -30,6 +30,8 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -45,8 +47,8 @@ class ListDatabasesIterableSpecification extends Specification {
     def 'should build the expected listCollectionOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null, null])
-        def listDatabaseIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor)
-                .maxTime(1000, MILLISECONDS)
+        def listDatabaseIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor, true,
+                null)
 
         when: 'default input should be as expected'
         listDatabaseIterable.iterator()
@@ -55,26 +57,26 @@ class ListDatabasesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(1000, MILLISECONDS)
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(CSOT_NO_TIMEOUT.get(), new DocumentCodec())
                 .retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
-        listDatabaseIterable.maxTime(999, MILLISECONDS).filter(Document.parse('{a: 1}')).nameOnly(true).iterator()
+        listDatabaseIterable.maxTime(100, MILLISECONDS).filter(Document.parse('{a: 1}')).nameOnly(true).iterator()
 
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(999, MILLISECONDS)
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(CSOT_MAX_TIME.get(), new DocumentCodec())
                 .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).retryReads(true))
 
         when: 'overriding initial options'
-        listDatabaseIterable.maxTime(101, MILLISECONDS).filter(Document.parse('{a: 1}')).authorizedDatabasesOnly(true).iterator()
+        listDatabaseIterable.filter(Document.parse('{a: 1}')).authorizedDatabasesOnly(true).iterator()
 
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(101, MILLISECONDS)
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(CSOT_MAX_TIME.get(), new DocumentCodec())
                 .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).authorizedDatabasesOnly(true).retryReads(true))
     }
 
@@ -99,7 +101,7 @@ class ListDatabasesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
-        def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor, true, null)
 
         when:
         def results = mongoIterable.first()
@@ -143,7 +145,7 @@ class ListDatabasesIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true, null)
 
         then:
         mongoIterable.getBatchSize() == null

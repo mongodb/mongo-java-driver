@@ -69,10 +69,10 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     MapReduceIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final String mapFunction, final String reduceFunction) {
-        super(clientSession, executor, readConcern, readPreference, false);
+                          final String mapFunction, final String reduceFunction, @Nullable final Long timeoutMS) {
+        super(clientSession, executor, readConcern, readPreference, false, timeoutMS);
         this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                false, false);
+                false, false, timeoutMS);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.mapFunction = notNull("mapFunction", mapFunction);

@@ -45,6 +45,7 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
@@ -60,7 +61,7 @@ class GridFSBucketSpecification extends Specification {
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
         new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern,
-                JAVA_LEGACY, null, executor)
+                JAVA_LEGACY, null, null, executor)
     }
 
     def 'should return the correct bucket name'() {
@@ -155,7 +156,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                false, false, readConcern, JAVA_LEGACY, null, new TestOperationExecutor([]))
+                false, false, readConcern, JAVA_LEGACY, null, null, new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)
@@ -583,8 +584,8 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == primary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(new BsonDocument()))
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_NO_TIMEOUT.get(),
+                new MongoNamespace('test.fs.files'), decoder).filter(new BsonDocument()))
 
         when:
         def filter = new BsonDocument('filename', new BsonString('filename'))
@@ -593,8 +594,8 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == secondary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(filter))
+        expect executor.getReadOperation(), isTheSameAs(
+                new FindOperation<GridFSFile>(CSOT_NO_TIMEOUT.get(), new MongoNamespace('test.fs.files'), decoder).filter(filter))
     }
 
     def 'should throw an exception if file not found when opening by name'() {

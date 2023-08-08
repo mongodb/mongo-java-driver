@@ -63,28 +63,22 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Bson variables;
 
     AggregateIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TDocument> documentClass,
-                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
+            final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+            final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+            final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
+            @Nullable final Long timeoutMS) {
         this(clientSession, new MongoNamespace(databaseName, "ignored"), documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, aggregationLevel, true);
-    }
-
-    AggregateIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TDocument> documentClass,
-                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads) {
-        this(clientSession, new MongoNamespace(databaseName, "ignored"), documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads);
+                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads, timeoutMS);
     }
 
     AggregateIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
-                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads) {
-        super(clientSession, executor, readConcern, readPreference, retryReads);
+            final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+            final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+            final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
+            @Nullable final Long timeoutMS) {
+        super(clientSession, executor, readConcern, readPreference, retryReads, timeoutMS);
         this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                true, retryReads);
+                true, retryReads, timeoutMS);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);

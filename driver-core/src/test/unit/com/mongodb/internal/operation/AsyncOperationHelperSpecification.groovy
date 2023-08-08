@@ -36,6 +36,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync
@@ -54,7 +55,7 @@ class AsyncOperationHelperSpecification extends Specification {
             getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0, 0])
             getServerType() >> ServerType.REPLICA_SET_PRIMARY
         }
-        def commandCreator = { serverDesc, connectionDesc -> command }
+        def commandCreator = { csot, serverDesc, connectionDesc -> command }
         def callback = new SingleResultCallback() {
             def result
             def throwable
@@ -89,7 +90,7 @@ class AsyncOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableWriteAsync(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
+        executeRetryableWriteAsync(CSOT_NO_TIMEOUT.get(), asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
                 commandCreator, FindAndModifyHelper.asyncTransformer(), { cmd -> cmd }, callback)
 
         then:
@@ -129,7 +130,7 @@ class AsyncOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = new BsonDocument('fakeCommandName', BsonNull.VALUE)
-        def commandCreator = { serverDescription, connectionDescription -> command }
+        def commandCreator = { csot, serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
         def function = Stub(CommandReadTransformerAsync)
@@ -146,7 +147,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableReadAsync(asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
+        executeRetryableReadAsync(CSOT_NO_TIMEOUT.get(), asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

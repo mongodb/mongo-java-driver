@@ -22,6 +22,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -40,10 +41,8 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
@@ -73,6 +72,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
 public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String FIRST_BATCH = "firstBatch";
 
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -80,8 +80,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private int batchSize;
     private int limit;
     private BsonDocument projection;
-    private long maxTimeMS;
-    private long maxAwaitTimeMS;
     private int skip;
     private BsonDocument sort;
     private CursorType cursorType = CursorType.NonTailable;
@@ -98,7 +96,9 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private boolean showRecordId;
     private Boolean allowDiskUse;
 
-    public FindOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+    public FindOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final Decoder<T> decoder) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -144,30 +144,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     public FindOperation<T> projection(@Nullable final BsonDocument projection) {
         this.projection = projection;
-        return this;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public FindOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxTime >= 0", maxTime >= 0);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public FindOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxAwaitTime >= 0", maxAwaitTime >= 0);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -322,7 +298,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(clientSideOperationTimeout, retryState, binding, source, namespace.getDatabaseName(),
                             getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                             transformer(), connection);
                 } catch (MongoCommandException e) {
@@ -347,7 +323,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                     return;
                                 }
                                 SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
-                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
+                                createReadCommandAndExecuteAsync(clientSideOperationTimeout, retryState, binding, source, namespace.getDatabaseName(),
                                         getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                         asyncTransformer(), connection, wrappedCallback);
                             })
@@ -374,20 +350,21 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     @Override
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                        final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
+        return new CommandReadOperation<>(clientSideOperationTimeout, getNamespace().getDatabaseName(),
+                asExplainCommand(getCommand(clientSideOperationTimeout, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
 
     @Override
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
+        return new CommandReadOperation<>(clientSideOperationTimeout, getNamespace().getDatabaseName(),
+                asExplainCommand(getCommand(clientSideOperationTimeout, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
+    private BsonDocument getCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final SessionContext sessionContext,
+            final int maxWireVersion) {
         BsonDocument commandDocument = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
 
         appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
@@ -411,6 +388,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (limit < 0 || batchSize < 0) {
             commandDocument.put("singleBatch", BsonBoolean.TRUE);
         }
+        long maxTimeMS = clientSideOperationTimeout.getMaxTimeMS();
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }
@@ -460,7 +438,8 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) ->
+                getCommand(clientSideOperationTimeout, sessionContext, connectionDescription.getMaxWireVersion());
     }
 
     private boolean isTailableCursor() {
@@ -481,7 +460,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private long getMaxTimeForCursor() {
-        return cursorType == CursorType.TailableAwait ? maxAwaitTimeMS : 0;
+        return cursorType == CursorType.TailableAwait ? clientSideOperationTimeout.getMaxAwaitTimeMS() : 0;
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {

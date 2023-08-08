@@ -38,6 +38,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -82,6 +83,12 @@ public final class MongoDatabaseImpl implements MongoDatabase {
         return mongoOperationPublisher.getReadConcern();
     }
 
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        Long timeoutMS = mongoOperationPublisher.getTimeoutMS();
+        return (timeoutMS != null) ? notNull("timeUnit", timeUnit).convert(timeoutMS, TimeUnit.MILLISECONDS) : null;
+    }
+
     MongoOperationPublisher<Document> getMongoOperationPublisher() {
         return mongoOperationPublisher;
     }
@@ -104,6 +111,11 @@ public final class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
         return new MongoDatabaseImpl(mongoOperationPublisher.withReadConcern(readConcern));
+    }
+
+    @Override
+    public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new MongoDatabaseImpl(mongoOperationPublisher.withTimeout(timeout, timeUnit));
     }
 
     @Override

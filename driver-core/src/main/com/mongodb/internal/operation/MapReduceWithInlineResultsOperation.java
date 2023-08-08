@@ -20,6 +20,7 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -33,8 +34,6 @@ import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -50,7 +49,6 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -62,6 +60,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
                                                                ReadOperation<MapReduceBatchCursor<T>> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -73,11 +72,11 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private int limit;
     private boolean jsMode;
     private boolean verbose;
-    private long maxTimeMS;
     private Collation collation;
 
-    public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final BsonJavaScript mapFunction,
-                                               final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
+    public MapReduceWithInlineResultsOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -172,31 +171,18 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return this;
     }
 
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, MILLISECONDS);
-    }
-
-
-    public MapReduceWithInlineResultsOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-
     @Override
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+        return executeRetryableRead(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()),
                 CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
         SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                CommandResultDocumentCodec.create(decoder, "results"),
+        executeRetryableReadAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
+                getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, "results"),
                 asyncTransformer(), false, errHandlingCallback);
     }
 
@@ -209,8 +195,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(namespace.getDatabaseName(),
-                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+        return new CommandReadOperation<>(clientSideOperationTimeout, namespace.getDatabaseName(),
+                asExplainCommand(getCommand(clientSideOperationTimeout, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
                         explainVerbosity), new BsonDocumentCodec());
     }
 
@@ -225,10 +211,12 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) ->
+                getCommand(clientSideOperationTimeout, sessionContext, connectionDescription.getMaxWireVersion());
     }
 
-    private BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
+    private BsonDocument getCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final SessionContext sessionContext,
+            final int maxWireVersion) {
         BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
                                            .append("map", getMapFunction())
                                            .append("reduce", getReduceFunction())
@@ -241,7 +229,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         putIfTrue(commandDocument, "verbose", isVerbose());
         appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
         putIfNotZero(commandDocument, "limit", getLimit());
-        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+        putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         putIfTrue(commandDocument, "jsMode", isJsMode());
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());

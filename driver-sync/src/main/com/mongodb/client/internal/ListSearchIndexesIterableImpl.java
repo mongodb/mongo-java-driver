@@ -55,11 +55,11 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     ListSearchIndexesIterableImpl(final MongoNamespace namespace, final OperationExecutor executor,
                                          final ReadConcern readConcern, final Class<TResult> resultClass,
                                          final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                         final boolean retryReads) {
-        super(null, executor, readConcern, readPreference, retryReads);
+                                         final boolean retryReads, @Nullable final Long timeoutMS) {
+        super(null, executor, readConcern, readPreference, retryReads, timeoutMS);
 
         this.resultClass = resultClass;
-        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads);
+        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutMS);
         this.codecRegistry = codecRegistry;
     }
 

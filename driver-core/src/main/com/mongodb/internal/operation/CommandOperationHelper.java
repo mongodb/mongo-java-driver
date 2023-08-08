@@ -28,6 +28,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
@@ -48,7 +49,8 @@ final class CommandOperationHelper {
 
 
     interface CommandCreator {
-        BsonDocument create(ServerDescription serverDescription, ConnectionDescription connectionDescription);
+        BsonDocument create(ClientSideOperationTimeout clientSideOperationTimeout, ServerDescription serverDescription,
+                ConnectionDescription connectionDescription);
     }
 
 

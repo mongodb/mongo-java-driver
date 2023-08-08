@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
@@ -35,7 +36,6 @@ import org.bson.conversions.Bson;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
@@ -54,16 +54,16 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private Boolean bypassDocumentValidation;
     private List<BsonDocument> arrayFilters;
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final BsonDocument update) {
-        super(namespace, writeConcern, retryWrites, decoder);
+    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final BsonDocument update) {
+        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
         this.update = notNull("update", update);
         this.updatePipeline = null;
     }
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final List<BsonDocument> update) {
-        super(namespace, writeConcern, retryWrites, decoder);
+    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final List<BsonDocument> update) {
+        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
         this.updatePipeline = update;
         this.update = null;
     }
@@ -123,12 +123,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     @Override
     public FindAndUpdateOperation<T> projection(@Nullable final BsonDocument projection) {
         super.projection(projection);
-        return this;
-    }
-
-    @Override
-    public FindAndUpdateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        super.maxTime(maxTime, timeUnit);
         return this;
     }
 
