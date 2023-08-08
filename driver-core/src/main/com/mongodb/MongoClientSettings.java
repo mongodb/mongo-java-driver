@@ -1067,9 +1067,7 @@ public final class MongoClientSettings {
                 .connectTimeout(builder.heartbeatConnectTimeoutMS == 0
                                 ? socketSettings.getConnectTimeout(MILLISECONDS) : builder.heartbeatConnectTimeoutMS,
                         MILLISECONDS)
-                .proxyAddress(socketSettings.getProxyAddress())
-                .proxyUsername(socketSettings.getProxyUsername())
-                .proxyPassword(socketSettings.getProxyPassword())
+                .applyToProxySettings(proxyBuilder -> proxyBuilder.applySettings(socketSettings.getProxySettings()))
                 .build();
         heartbeatSocketTimeoutSetExplicitly = builder.heartbeatSocketTimeoutMS != 0;
         heartbeatConnectTimeoutSetExplicitly = builder.heartbeatConnectTimeoutMS != 0;

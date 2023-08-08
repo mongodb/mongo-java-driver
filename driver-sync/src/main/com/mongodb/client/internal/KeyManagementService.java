@@ -16,12 +16,14 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.ProxySettings;
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.SocksSocket;
+import com.mongodb.internal.connection.SslHelper;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.connection.SslHelper;
+import com.mongodb.lang.Nullable;
 
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
@@ -41,10 +43,14 @@ class KeyManagementService {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final Map<String, SSLContext> kmsProviderSslContextMap;
     private final int timeoutMillis;
+    @Nullable
+    private final ProxySettings proxySettings;
 
-    KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, final int timeoutMillis) {
+    KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, @Nullable final ProxySettings proxySettings,
+                         final int timeoutMillis) {
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
         this.timeoutMillis = timeoutMillis;
+        this.proxySettings = proxySettings;
     }
 
     public InputStream stream(final String kmsProvider, final String host, final ByteBuffer message) throws IOException {
@@ -52,17 +58,26 @@ class KeyManagementService {
 
         LOGGER.info("Connecting to KMS server at " + serverAddress);
         SSLContext sslContext = kmsProviderSslContextMap.get(kmsProvider);
+        SSLSocketFactory sslSocketFactory = sslContext == null
+                ? (SSLSocketFactory) SSLSocketFactory.getDefault() : sslContext.getSocketFactory();
 
-        SocketFactory sslSocketFactory = sslContext == null
-                    ? SSLSocketFactory.getDefault() : sslContext.getSocketFactory();
-        SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket();
-        enableHostNameVerification(socket);
-
+        Socket socket = null;
         try {
-            socket.setSoTimeout(timeoutMillis);
-            socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()), timeoutMillis);
+            if (isProxyEnabled()) {
+                socket = new SocksSocket(proxySettings);
+                socket.setSoTimeout(timeoutMillis);
+                socket.connect(InetSocketAddress.createUnresolved(host, serverAddress.getPort()), timeoutMillis);
+                socket = sslSocketFactory.createSocket(socket, host, serverAddress.getPort(), true);
+            } else {
+                socket = sslSocketFactory.createSocket();
+                socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()),
+                        timeoutMillis);
+            }
+            enableHostNameVerification((SSLSocket) socket);
         } catch (IOException e) {
-            closeSocket(socket);
+            if (socket != null) {
+                closeSocket(socket);
+            }
             throw e;
         }
 
@@ -84,6 +99,10 @@ class KeyManagementService {
             closeSocket(socket);
             throw e;
         }
+    }
+
+    private boolean isProxyEnabled() {
+        return proxySettings != null && proxySettings.getHost() != null;
     }
 
     private void enableHostNameVerification(final SSLSocket socket) {

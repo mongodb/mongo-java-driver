@@ -20,10 +20,12 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ProxySettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.crypt.capi.MongoCrypt;
 import com.mongodb.crypt.capi.MongoCrypts;
+import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
 import java.util.Map;
@@ -48,10 +50,14 @@ public final class Crypts {
         MongoClient keyVaultClient = keyVaultMongoClientSettings == null
                 ? sharedInternalClient : MongoClients.create(keyVaultMongoClientSettings);
         MongoCrypt mongoCrypt = MongoCrypts.create(createMongoCryptOptions(settings));
+
+        ProxySettings kmsProxySettings = settings.getProxySettings() == null ?
+                client.getSettings().getSocketSettings().getProxySettings();
+
         return new Crypt(
                 mongoCrypt,
                 createKeyRetriever(keyVaultClient, settings.getKeyVaultNamespace()),
-                createKeyManagementService(settings.getKmsProviderSslContextMap()),
+                createKeyManagementService(settings.getKmsProviderSslContextMap(), kmsProxySettings),
                 settings.getKmsProviders(),
                 settings.getKmsProviderPropertySuppliers(),
                 settings.isBypassAutoEncryption(),
@@ -63,7 +69,7 @@ public final class Crypts {
     static Crypt create(final MongoClient keyVaultClient, final ClientEncryptionSettings settings) {
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(settings)),
                 createKeyRetriever(keyVaultClient, settings.getKeyVaultNamespace()),
-                createKeyManagementService(settings.getKmsProviderSslContextMap()),
+                createKeyManagementService(settings.getKmsProviderSslContextMap(), settings.getProxySettings()),
                 settings.getKmsProviders(),
                 settings.getKmsProviderPropertySuppliers()
         );
@@ -73,8 +79,9 @@ public final class Crypts {
         return new KeyRetriever(keyVaultClient, new MongoNamespace(keyVaultNamespaceString));
     }
 
-    private static KeyManagementService createKeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap) {
-        return new KeyManagementService(kmsProviderSslContextMap, 10000);
+    private static KeyManagementService createKeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap,
+                                                                   @Nullable final ProxySettings proxySettings) {
+        return new KeyManagementService(kmsProviderSslContextMap, proxySettings, 10000);
     }
 
     private Crypts() {

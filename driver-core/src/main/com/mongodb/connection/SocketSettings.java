@@ -16,10 +16,10 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
-import com.mongodb.ProxyAddress;
+import com.mongodb.ProxySettings;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,9 +37,7 @@ public final class SocketSettings {
     private final long readTimeoutMS;
     private final int receiveBufferSize;
     private final int sendBufferSize;
-    private final ProxyAddress proxyAddress;
-    private final String proxyUsername;
-    private final String proxyPassword;
+    private final ProxySettings proxySettings;
 
     /**
      * Gets a builder for an instance of {@code SocketSettings}.
@@ -69,9 +67,7 @@ public final class SocketSettings {
         private long readTimeoutMS;
         private int receiveBufferSize;
         private int sendBufferSize;
-        private ProxyAddress proxyAddress;
-        private String proxyUsername;
-        private String proxyPassword;
+        private ProxySettings.Builder proxySettingsBuilder = ProxySettings.builder();
 
         private Builder() {
         }
@@ -91,9 +87,7 @@ public final class SocketSettings {
             readTimeoutMS = socketSettings.readTimeoutMS;
             receiveBufferSize = socketSettings.receiveBufferSize;
             sendBufferSize = socketSettings.sendBufferSize;
-            proxyAddress = socketSettings.proxyAddress;
-            proxyUsername = socketSettings.proxyUsername;
-            proxyPassword = socketSettings.proxyPassword;
+            proxySettingsBuilder.applySettings(socketSettings.getProxySettings());
             return this;
         }
 
@@ -144,18 +138,15 @@ public final class SocketSettings {
             return this;
         }
 
-        public Builder proxyAddress(final ProxyAddress proxyAddress) {
-            this.proxyAddress = proxyAddress;
-            return this;
-        }
-
-        public Builder proxyUsername(final String proxyUsername) {
-            this.proxyUsername = proxyUsername;
-            return this;
-        }
-
-        public Builder proxyPassword(final String proxyPassword) {
-            this.proxyPassword = proxyPassword;
+        /**
+         * Applies the {@link ProxySettings.Builder} block and then sets the {@link SocketSettings#proxySettings}.
+         *
+         * @param block the block to apply to the {@link ProxySettings}.
+         * @return this
+         * @see SocketSettings#getProxySettings()
+         */
+        public SocketSettings.Builder applyToProxySettings(final Block<ProxySettings.Builder> block) {
+            notNull("block", block).apply(proxySettingsBuilder);
             return this;
         }
 
@@ -178,21 +169,7 @@ public final class SocketSettings {
                 this.readTimeout(socketTimeout, MILLISECONDS);
             }
 
-            String proxyHost = connectionString.getProxyHost();
-            Integer proxyPort = connectionString.getProxyPort();
-            if (proxyHost != null && proxyPort != null) {
-                proxyAddress = proxyPort == null ? new ProxyAddress(proxyHost) : new ProxyAddress(proxyHost, proxyPort);
-            }
-
-            String proxyUsername = connectionString.getProxyUsername();
-            if (proxyUsername != null) {
-                this.proxyUsername(proxyUsername);
-            }
-
-            String proxyPassword = connectionString.getProxyPassword();
-            if (proxyPassword != null) {
-                this.proxyPassword(proxyPassword);
-            }
+            proxySettingsBuilder.applyConnectionString(connectionString);
 
             return this;
         }
@@ -227,23 +204,18 @@ public final class SocketSettings {
         return (int) timeUnit.convert(readTimeoutMS, MILLISECONDS);
     }
 
-    @Nullable
-    public ProxyAddress getProxyAddress() {
-        return proxyAddress;
-    }
-
-    @Nullable
-    public String getProxyUsername() {
-        return proxyUsername;
-    }
-
-    @Nullable
-    public String getProxyPassword() {
-        return proxyPassword;
+    /**
+     * Gets the proxy settings used for connecting to MongoDB via a SOCKS5 proxy server.
+     *
+     * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
+     */
+    public ProxySettings getProxySettings() {
+        return proxySettings;
     }
 
     /**
      * Gets the receive buffer size. Defaults to the operating system default.
+     *
      * @return the receive buffer size
      */
     public int getReceiveBufferSize() {
@@ -301,9 +273,7 @@ public final class SocketSettings {
                 + "connectTimeoutMS=" + connectTimeoutMS
                 + ", readTimeoutMS=" + readTimeoutMS
                 + ", receiveBufferSize=" + receiveBufferSize
-                + ", proxyAddress=" + proxyAddress
-                + ", proxyUsername=" + proxyUsername
-                + ", proxyPassword=" + proxyPassword
+                + ", proxySettings=" + proxySettings
                 + '}';
     }
 
@@ -312,8 +282,6 @@ public final class SocketSettings {
         readTimeoutMS = builder.readTimeoutMS;
         receiveBufferSize = builder.receiveBufferSize;
         sendBufferSize = builder.sendBufferSize;
-        proxyAddress = builder.proxyAddress;
-        proxyUsername = builder.proxyUsername;
-        proxyPassword = builder.proxyPassword;
+        proxySettings = builder.proxySettingsBuilder.build();
     }
 }
