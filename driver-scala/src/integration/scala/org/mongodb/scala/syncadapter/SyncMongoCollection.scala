@@ -19,14 +19,21 @@ package org.mongodb.scala.syncadapter
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.model._
 import com.mongodb.client.result.{ DeleteResult, UpdateResult }
-import com.mongodb.client.{ ChangeStreamIterable, ClientSession, MongoCollection => JMongoCollection }
+import com.mongodb.client.{
+  ChangeStreamIterable,
+  ClientSession,
+  ListSearchIndexesIterable,
+  MongoCollection => JMongoCollection
+}
 import com.mongodb.{ MongoNamespace, ReadConcern, ReadPreference, WriteConcern }
+import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 import org.mongodb.scala.MongoCollection
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.result.{ InsertManyResult, InsertOneResult }
 
+import java.util
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
@@ -534,21 +541,36 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
   override def dropIndex(clientSession: ClientSession, keys: Bson, dropIndexOptions: DropIndexOptions): Unit =
     wrapped.dropIndex(unwrap(clientSession), keys, dropIndexOptions).toFuture().get()
 
-  override def dropIndexes(): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndexes(): Unit = wrapped.dropIndexes().toFuture().get()
+  override def dropIndexes(clientSession: ClientSession): Unit =
+    wrapped.dropIndexes(unwrap(clientSession)).toFuture().get()
 
-  override def dropIndexes(clientSession: ClientSession): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndexes(dropIndexOptions: DropIndexOptions): Unit =
+    wrapped.dropIndexes(dropIndexOptions).toFuture().get()
 
-  override def dropIndexes(dropIndexOptions: DropIndexOptions): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def dropIndexes(clientSession: ClientSession, dropIndexOptions: DropIndexOptions): Unit =
+    wrapped.dropIndexes(unwrap(clientSession), dropIndexOptions).toFuture().get()
 
-  override def dropIndexes(clientSession: ClientSession, dropIndexOptions: DropIndexOptions): Unit = {
-    throw new UnsupportedOperationException
-  }
+  override def createSearchIndex(indexName: String, definition: Bson): String =
+    wrapped.createSearchIndex(indexName, definition).toFuture().get()
+
+  override def createSearchIndex(definition: Bson): String = wrapped.createSearchIndex(definition).toFuture().get()
+
+  override def createSearchIndexes(searchIndexModels: util.List[SearchIndexModel]): util.List[String] =
+    wrapped.createSearchIndexes(searchIndexModels.asScala.toList).toFuture().get().asJava
+
+  override def updateSearchIndex(indexName: String, definition: Bson): Unit =
+    wrapped.updateSearchIndex(indexName, definition)
+
+  override def dropSearchIndex(indexName: String): Unit = wrapped.dropSearchIndex(indexName)
+
+  override def listSearchIndexes(): ListSearchIndexesIterable[Document] =
+    SyncListSearchIndexesIterable(wrapped.listSearchIndexes())
+
+  override def listSearchIndexes[T](resultClass: Class[T]): ListSearchIndexesIterable[T] =
+    SyncListSearchIndexesIterable(
+      wrapped.listSearchIndexes[T]()(DefaultsTo.overrideDefault[T, org.mongodb.scala.Document], ClassTag(resultClass))
+    )
 
   override def renameCollection(newCollectionNamespace: MongoNamespace): Unit = {
     throw new UnsupportedOperationException
