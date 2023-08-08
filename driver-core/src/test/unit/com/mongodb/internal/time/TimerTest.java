@@ -20,7 +20,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,9 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 final class TimerTest {
     @Test
     void useless() {
-        assertAll(
-                () -> assertDoesNotThrow(Timer::useless),
-                () -> assertDoesNotThrow(() -> Timer.useless().oneOff().memoizeAndGet(NANOSECONDS)));
+        assertDoesNotThrow(Timer::useless);
     }
 
     @ParameterizedTest
@@ -60,15 +57,6 @@ final class TimerTest {
         long elapsedNanosUpperBound = System.nanoTime() - startNanosLowerBound;
         assertTrue(elapsedNanos >= elapsedNanosLowerBound, "elapsed nanos is too low");
         assertTrue(elapsedNanos <= elapsedNanosUpperBound, "elapsed nanos is too high");
-    }
-
-    @Test
-    void oneOff() throws InterruptedException {
-        Timer.OneOff oneOffTimer = Timer.start().oneOff();
-        Thread.sleep(7);
-        long expectedElapsedNanos = oneOffTimer.memoizeAndGet(NANOSECONDS);
-        Thread.sleep(11);
-        assertEquals(expectedElapsedNanos, oneOffTimer.memoizeAndGet(NANOSECONDS));
     }
 
     private TimerTest() {

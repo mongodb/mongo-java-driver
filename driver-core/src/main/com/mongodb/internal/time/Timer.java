@@ -16,7 +16,6 @@
 package com.mongodb.internal.time;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.VisibleForTesting;
 
 import java.util.concurrent.TimeUnit;
@@ -63,13 +62,6 @@ public final class Timer {
      */
     public long elapsed(final TimeUnit unit) {
         return unit.convert(elapsedNanos(System.nanoTime()), NANOSECONDS);
-    }
-
-    /**
-     * Creates a new {@link OneOff}.
-     */
-    public OneOff oneOff() {
-        return new OneOff(this);
     }
 
     /**
@@ -141,42 +133,5 @@ public final class Timer {
         return "Timer{"
                 + "startNanos=" + startNanos
                 + '}';
-    }
-
-    /**
-     * A timer only capable for a one-off measurement.
-     * <p>
-     * This class is not part of the public API and may be removed or changed at any time.</p>
-     */
-    @NotThreadSafe
-    public static final class OneOff {
-        private static final long UNKNOWN = -1;
-
-        private final Timer timer;
-        private long value;
-
-        OneOff(final Timer timer) {
-            this.timer = timer;
-            value = UNKNOWN;
-        }
-
-        /**
-         * Does a one-off {@linkplain Timer#elapsed(TimeUnit) measurement}.
-         * The result is memoized and is returned by all {@link #memoizeAndGet(TimeUnit)} operations.
-         */
-        public long memoizeAndGet(final TimeUnit unit) {
-            if (value == UNKNOWN) {
-                value = timer.elapsed(unit);
-            }
-            return value;
-        }
-
-        @Override
-        public String toString() {
-            return "OneOff{"
-                    + "timer=" + timer
-                    + ", value=" + value
-                    + '}';
-        }
     }
 }
