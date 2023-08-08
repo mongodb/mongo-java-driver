@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.connection.SocketSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -73,6 +74,14 @@ public final class AutoEncryptionSettings {
     private final boolean bypassAutoEncryption;
     private final Map<String, BsonDocument> encryptedFieldsMap;
     private final boolean bypassQueryAnalysis;
+    /**
+     * Proxy setting used for connecting to Key Management Service via a SOCKS5 proxy server.
+     * <p>
+     * NOTE: If this field is left unset, the default behavior is to utilize the {@link SocketSettings#getProxySettings()}
+     * from the {@link MongoClientSettings} where the {@link AutoEncryptionSettings} are specified.
+     */
+    @Nullable
+    private final ProxySettings proxySettings;
 
     /**
      * A builder for {@code AutoEncryptionSettings} so that {@code AutoEncryptionSettings} can be immutable, and to support easier
@@ -90,6 +99,10 @@ public final class AutoEncryptionSettings {
         private boolean bypassAutoEncryption;
         private Map<String, BsonDocument> encryptedFieldsMap = Collections.emptyMap();
         private boolean bypassQueryAnalysis;
+        /**
+         * Proxy setting used for connecting to Key Management Service via a SOCKS5 proxy server.
+         */
+        private ProxySettings proxySettings;
 
         /**
          * Sets the key vault settings.
@@ -100,6 +113,24 @@ public final class AutoEncryptionSettings {
          */
         public Builder keyVaultMongoClientSettings(final MongoClientSettings keyVaultMongoClientSettings) {
             this.keyVaultMongoClientSettings = keyVaultMongoClientSettings;
+            return this;
+        }
+
+        /**
+         * Sets the {@link ProxySettings} used for connecting to Key Management Service via a SOCKS5 proxy server.
+         *
+         * <p>
+         * NOTE: If this field is left unset, the default behavior is to utilize the {@link SocketSettings#getProxySettings()}
+         * from the {@link MongoClientSettings} where the {@link AutoEncryptionSettings} are specified.
+         *
+         * @param proxySettings {@link ProxySettings} to set.
+         * @return this.
+         * @see #getProxySettings()
+         * @since 4.11
+         */
+        public Builder proxySettings(final ProxySettings proxySettings) {
+            notNull("proxySettings", proxySettings);
+            this.proxySettings = proxySettings;
             return this;
         }
 
@@ -273,6 +304,17 @@ public final class AutoEncryptionSettings {
     @Nullable
     public MongoClientSettings getKeyVaultMongoClientSettings() {
         return keyVaultMongoClientSettings;
+    }
+
+    /**
+     * Gets the proxy settings used for connecting to Key Management Service via a SOCKS5 proxy server.
+     *
+     * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
+     * @since 4.11
+     */
+    @Nullable
+    public ProxySettings getProxySettings() {
+        return proxySettings;
     }
 
     /**
@@ -493,6 +535,7 @@ public final class AutoEncryptionSettings {
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
         this.encryptedFieldsMap = builder.encryptedFieldsMap;
         this.bypassQueryAnalysis = builder.bypassQueryAnalysis;
+        this.proxySettings = builder.proxySettings;
     }
 
     @Override

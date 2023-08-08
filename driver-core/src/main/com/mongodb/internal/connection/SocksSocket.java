@@ -1,6 +1,22 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.mongodb.internal.connection;
 
-import com.mongodb.assertions.Assertions;
+import com.mongodb.ProxySettings;
+import com.mongodb.internal.Timeout;
 import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
@@ -12,74 +28,225 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 
-public class SocksSocket extends Socket {
-
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public final class SocksSocket extends Socket {
     private static final byte SOCKS_VERSION = 5;
     private static final byte RESERVED = 0x00;
+    private static final int PORT_SIZE = 2;
     private static final byte AUTHENTICATION_SUCCEEDED_STATUS = 0x00;
-    static final int REQUEST_OK = 0;
-    static final int GENERAL_FAILURE = 1;
-    static final int NOT_ALLOWED = 2;
-    static final int NET_UNREACHABLE = 3;
-    static final int HOST_UNREACHABLE = 4;
-    static final int CONN_REFUSED = 5;
-    static final int TTL_EXPIRED = 6;
-    static final int CMD_NOT_SUPPORTED = 7;
-    static final int ADDR_TYPE_NOT_SUP = 8;
-    static final int IPV4 = 1;
-    static final int DOMAIN_NAME = 3;
-    static final int IPV6 = 4;
-    private InetSocketAddress proxyAddress;
-    private InetSocketAddress remoteAddress;
-    private String proxyUsername;
-    private String proxyPassword;
+    private static final int REQUEST_OK = 0;
+    private static final int DOMAIN_NAME = 3;
+    private static final int IPV4 = 1;
+    private static final int IPV6 = 4;
     private final SocksAuthenticationMethod[] authenticationMethods;
+    private final InetSocketAddress proxyAddress;
+    private InetSocketAddress remoteAddress;
+    @Nullable
+    private String proxyUsername;
+    @Nullable
+    private String proxyPassword;
+    @Nullable
     private final Socket socket;
     private InputStream inputStream;
     private OutputStream outputStream;
 
 
-    public SocksSocket(@Nullable final Socket socket, final InetSocketAddress proxyAddress, final String proxyUsername,
-                       final String proxyPassword) {
-        this.authenticationMethods = new SocksAuthenticationMethod[]{
-                SocksAuthenticationMethod.NO_AUTH,
-                SocksAuthenticationMethod.USERNAME_PASSWORD};
-        this.proxyUsername = proxyUsername;
-        this.proxyPassword = proxyPassword;
-        this.proxyAddress = proxyAddress;
-        this.socket = socket;
+    public SocksSocket(final ProxySettings proxySettings) {
+        this(null, proxySettings);
     }
 
-    public SocksSocket(@Nullable final Socket socket, final InetSocketAddress proxyAddress) {
-        this.authenticationMethods = new SocksAuthenticationMethod[]{SocksAuthenticationMethod.NO_AUTH};
-        this.proxyAddress = proxyAddress;
+    public SocksSocket(@Nullable final Socket socket, final ProxySettings proxySettings) {
+        int port = proxySettings.getPort() == null ? 1080 : proxySettings.getPort();
+        assertTrue(proxySettings.getHost() != null);
+        assertTrue(port >= 0);
+
+        this.proxyAddress = new InetSocketAddress(proxySettings.getHost(), port);
         this.socket = socket;
+
+        if (proxySettings.getUsername() != null && proxySettings.getPassword() != null) {
+            this.authenticationMethods = new SocksAuthenticationMethod[]{
+                    SocksAuthenticationMethod.NO_AUTH,
+                    SocksAuthenticationMethod.USERNAME_PASSWORD};
+            this.proxyUsername = proxySettings.getUsername();
+            this.proxyPassword = proxySettings.getPassword();
+        } else {
+            this.authenticationMethods = new SocksAuthenticationMethod[]{SocksAuthenticationMethod.NO_AUTH};
+        }
     }
 
-    private static int remainingMillis(final long deadlineMillis) throws IOException {
-        if (deadlineMillis == 0L) {
+
+    @Override
+    public void connect(final SocketAddress endpoint) throws IOException {
+        connect(endpoint, 0);
+    }
+
+    @Override
+    public void connect(final SocketAddress endpoint, final int timeoutMs) throws IOException {
+        try {
+            Timeout timeout = toTimeout(timeoutMs);
+            InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
+            assertTrue(unresolvedAddress.isUnresolved());
+            this.remoteAddress = unresolvedAddress;
+            if (socket != null && !socket.isConnected()) {
+                socket.connect(proxyAddress, remainingMillis(timeout));
+                inputStream = socket.getInputStream();
+                outputStream = socket.getOutputStream();
+            } else {
+                super.connect(proxyAddress, remainingMillis(timeout));
+                inputStream = getInputStream();
+                outputStream = getOutputStream();
+            }
+            SocksAuthenticationMethod authenticationMethod = performHandshake(timeout);
+            authenticate(authenticationMethod, timeout);
+            sendConnect(timeout);
+        } catch (SocketException socketException) {
+            close();
+            throw socketException;
+        }
+    }
+
+
+    private void sendConnect(final Timeout timeout) throws IOException {
+        String host = remoteAddress.getHostName();
+        int port = remoteAddress.getPort();
+
+        final int lengthOfHost = host.getBytes().length;
+        final byte[] bufferSent = new byte[7 + lengthOfHost];
+
+        bufferSent[0] = SOCKS_VERSION;
+        bufferSent[1] = (byte) SocksCommand.CONNECT.getCommandNumber();
+        bufferSent[2] = RESERVED;
+        bufferSent[3] = DOMAIN_NAME;  //TODO chose appropriate type. Currently it is DOMAIN NAME ;
+        bufferSent[4] = (byte) lengthOfHost;
+        byte[] bytesOfHost = host.getBytes();
+        System.arraycopy(bytesOfHost, 0, bufferSent, 5, lengthOfHost);
+        bufferSent[5 + host.length()] = (byte) ((port & 0xff00) >> 8);
+        bufferSent[6 + host.length()] = (byte) (port & 0xff);
+
+        outputStream.write(bufferSent);
+        outputStream.flush();
+
+        checkServerReply(timeout);
+    }
+
+    private void checkServerReply(final Timeout timeout) throws IOException {
+        byte[] data = readSocksReply(inputStream, 4, timeout);
+        byte status = data[1];
+
+        if (status == REQUEST_OK) {
+            switch (data[3]) {
+                case IPV4:
+                    readSocksReply(inputStream, 4 + PORT_SIZE, timeout);
+                    break;
+                case DOMAIN_NAME:
+                    byte hostNameLength = readSocksReply(inputStream, 1, timeout)[0];
+                    readSocksReply(inputStream, hostNameLength + PORT_SIZE, timeout);
+                    break;
+                case IPV6:
+                    readSocksReply(inputStream, 16 + PORT_SIZE, timeout);
+                    break;
+                default:
+                    throw new ConnectException("Reply from SOCKS proxy server contains wrong code");
+            }
+            return;
+        }
+
+        for (ServerErrorReply serverErrorReply : ServerErrorReply.values()) {
+            if (status == serverErrorReply.getReplyNumber()) {
+                throw new ConnectException("SOCKS: " + serverErrorReply.getMessage());
+            }
+        }
+        throw new ConnectException("SOCKS: Unknown status");
+    }
+
+    private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
+        if (authenticationMethod == SocksAuthenticationMethod.USERNAME_PASSWORD) {
+            final int usernameLength = proxyUsername.getBytes().length;
+            final int passwordLength = proxyPassword.getBytes().length;
+            final byte[] bytesOfUsername = proxyUsername.getBytes();
+            final byte[] bytesOfPassword = proxyPassword.getBytes();
+            final byte[] command = new byte[3 + usernameLength + passwordLength];
+
+            command[0] = 0x01;
+            command[1] = (byte) proxyUsername.getBytes().length;
+            System.arraycopy(bytesOfUsername, 0, command, 2, usernameLength);
+            command[2 + usernameLength] = (byte) passwordLength;
+            System.arraycopy(bytesOfPassword, 0, command, 3 + usernameLength,
+                    passwordLength);
+            outputStream.write(command);
+            outputStream.flush();
+
+            byte[] authenticationResult = readSocksReply(inputStream, 2, timeout);
+
+            if (authenticationResult[1] != AUTHENTICATION_SUCCEEDED_STATUS) {
+                  /* RFC 1929 specifies that the connection MUST be closed if
+                   authentication fails */
+                throw new ConnectException("Username or password is incorrect");
+            }
+        }
+    }
+
+    private SocksAuthenticationMethod performHandshake(final Timeout timeout) throws IOException {
+        int methodsCount = authenticationMethods.length;
+
+        byte[] bufferSent = new byte[2 + methodsCount];
+        bufferSent[0] = SOCKS_VERSION;
+        bufferSent[1] = (byte) methodsCount;
+        for (int i = 0; i < methodsCount; i++) {
+            bufferSent[2 + i] = (byte) authenticationMethods[i].getMethodNumber();
+        }
+        outputStream.write(bufferSent);
+        outputStream.flush();
+
+        byte[] handshakeReply = readSocksReply(inputStream, 2, timeout);
+
+        if (handshakeReply[0] != SOCKS_VERSION) {
+            throw new ConnectException("Remote server doesn't support SOCKS5");
+        }
+        if (handshakeReply[1] == (byte) 0xFF) {
+            throw new ConnectException("None of the authentication methods listed are acceptable");
+        }
+        if (handshakeReply[1] == SocksAuthenticationMethod.NO_AUTH.getMethodNumber()) {
+            return SocksAuthenticationMethod.NO_AUTH;
+        }
+
+        return SocksAuthenticationMethod.USERNAME_PASSWORD;
+    }
+
+    private static Timeout toTimeout(final int timeoutMs) {
+        if (timeoutMs == 0) {
+            return Timeout.infinite();
+        }
+        return Timeout.startNow(timeoutMs, TimeUnit.MILLISECONDS);
+    }
+
+    private static int remainingMillis(final Timeout timeout) throws IOException {
+        if (timeout.isInfinite()) {
             return 0;
         }
 
-        final long remaining = deadlineMillis - System.currentTimeMillis();
+        final int remaining = (int) timeout.remaining(TimeUnit.MILLISECONDS);
         if (remaining > 0) {
-            return (int) remaining;
+            return remaining;
         }
 
         throw new SocketTimeoutException("Socket connection timed out");
     }
 
-
-    private byte[] readSocksReply(final InputStream in, final int length, final long deadlineMillis) throws IOException {
+    private byte[] readSocksReply(final InputStream in, final int length, final Timeout timeout) throws IOException {
         byte[] data = new byte[length];
         int received = 0;
         int originalTimeout = getSoTimeout();
         try {
             while (received < length) {
                 int count;
-                int remaining = remainingMillis(deadlineMillis);
+                int remaining = remainingMillis(timeout);
                 setSoTimeout(remaining);
                 try {
                     count = in.read(data, received, length - received);
@@ -110,170 +277,6 @@ public class SocksSocket extends Socket {
     }
 
     @Override
-    public void connect(final SocketAddress endpoint) throws IOException {
-        connect(endpoint, 0);
-    }
-
-    @Override
-    public void connect(final SocketAddress endpoint, final int timeout) throws IOException {
-        try {
-            remoteAddress = ((InetSocketAddress) endpoint);
-            Assertions.assertTrue(remoteAddress.isUnresolved());
-
-            final long deadlineMillis = getDeadlineMillis(timeout);
-            if (socket != null && !socket.isConnected()) {
-                socket.connect(proxyAddress, timeout); //TCP connect
-                inputStream = socket.getInputStream();
-                outputStream = socket.getOutputStream();
-            } else {
-                super.connect(proxyAddress, timeout);
-                inputStream = getInputStream();
-                outputStream = getOutputStream();
-            }
-            SocksAuthenticationMethod authenticationMethod = doHandshake(deadlineMillis);
-            authenticate(authenticationMethod, deadlineMillis);
-            sendConnect(deadlineMillis);
-        } catch (SocketException socketException) {
-            close();
-        }
-    }
-
-    private void sendConnect(final long deadlineMillis) throws IOException {
-        String host = remoteAddress.getHostName();
-        int port = remoteAddress.getPort();
-
-        final int lengthOfHost = host.getBytes().length;
-        final byte[] bufferSent = new byte[7 + lengthOfHost];
-
-        bufferSent[0] = SOCKS_VERSION;
-        bufferSent[1] = (byte) SocksCommand.CONNECT.getCommandNumber();
-        bufferSent[2] = RESERVED;
-        bufferSent[3] = DOMAIN_NAME;  //TODO chose appropriate type. Currently it is DOMAIN NAME ;
-        bufferSent[4] = (byte) lengthOfHost;
-        byte[] bytesOfHost = host.getBytes();
-        System.arraycopy(bytesOfHost, 0, bufferSent, 5, lengthOfHost);
-        bufferSent[5 + host.length()] = (byte) ((port & 0xff00) >> 8);
-        bufferSent[6 + host.length()] = (byte) (port & 0xff);
-
-        outputStream.write(bufferSent);
-        outputStream.flush();
-
-        checkServerReply(deadlineMillis);
-    }
-
-    private void checkServerReply(final long deadlineMillis) throws IOException {
-        byte[] data = readSocksReply(inputStream, 4, deadlineMillis);
-        byte status = data[1];
-        switch (status) {
-            case REQUEST_OK:
-                int portSize = 2;
-                switch (data[3]) {
-                    case IPV4:
-                        readSocksReply(inputStream, 4 + portSize, deadlineMillis);
-                        break;
-                    case DOMAIN_NAME:
-                        byte hostNameLength = readSocksReply(inputStream, 1, deadlineMillis)[0];
-                        readSocksReply(inputStream, hostNameLength + portSize, deadlineMillis);
-                        break;
-                    case IPV6:
-                        readSocksReply(inputStream, 16 + portSize, deadlineMillis);
-                        break;
-                    default:
-                        throw new ConnectException("Reply from SOCKS proxy server contains wrong code");
-                }
-                break;
-            case GENERAL_FAILURE:
-                throw new ConnectException("SOCKS: Proxy server general failure");
-            case NOT_ALLOWED:
-                throw new ConnectException("SOCKS: Connection not allowed by ruleset");
-            case NET_UNREACHABLE:
-                throw new ConnectException("SOCKS: Network unreachable");
-            case HOST_UNREACHABLE:
-                throw new ConnectException("SOCKS: Host unreachable");
-            case CONN_REFUSED:
-                throw new ConnectException("SOCKS: Connection refused");
-            case TTL_EXPIRED:
-                throw new ConnectException("SOCKS: TTL expired");
-            case CMD_NOT_SUPPORTED:
-                throw new ConnectException("SOCKS: Command not supported");
-            case ADDR_TYPE_NOT_SUP:
-                throw new ConnectException("SOCKS: Address type not supported");
-            default:
-                throw new ConnectException("SOCKS: Unknown status");
-        }
-    }
-
-    private void authenticate(final SocksAuthenticationMethod authenticationMethod, final long deadlineMillis) throws IOException {
-        if (authenticationMethod == SocksAuthenticationMethod.USERNAME_PASSWORD) {
-
-            final int usernameLength = proxyUsername.getBytes().length;
-            final int passwordLength = proxyPassword.getBytes().length;
-            final byte[] bytesOfUsername = proxyUsername.getBytes();
-            final byte[] bytesOfPassword = proxyPassword.getBytes();
-            final byte[] command = new byte[3 + usernameLength + passwordLength];
-
-            command[0] = 0x01;
-            command[1] = (byte) proxyUsername.getBytes().length;
-            System.arraycopy(bytesOfUsername, 0, command, 2, usernameLength);
-            command[2 + usernameLength] = (byte) passwordLength;
-            System.arraycopy(bytesOfPassword, 0, command, 3 + usernameLength,
-                    passwordLength);
-            outputStream.write(command);
-            outputStream.flush();
-
-            byte[] authenticationResult = readSocksReply(inputStream, 2, deadlineMillis);
-
-            if (authenticationResult[1] != AUTHENTICATION_SUCCEEDED_STATUS) {
-                  /* RFC 1929 specifies that the connection MUST be closed if
-                   authentication fails */
-                close(); //TODO close in and out streams. Maybe override close and close them there
-                throw new ConnectException("Username or password is incorrect");
-            }
-        }
-    }
-
-    private SocksAuthenticationMethod doHandshake(final long deadlineMillis) throws IOException {
-        int methodsCount = authenticationMethods.length;
-
-        byte[] bufferSent = new byte[2 + methodsCount];
-        bufferSent[0] = SOCKS_VERSION;
-        bufferSent[1] = (byte) methodsCount;
-        for (int i = 0; i < methodsCount; i++) {
-            bufferSent[2 + i] = (byte) authenticationMethods[i].getMethodNumber();
-        }
-        outputStream.write(bufferSent);
-        outputStream.flush();
-
-        byte[] handshakeReply = readSocksReply(inputStream, 2, deadlineMillis);
-
-        if (handshakeReply[0] != SOCKS_VERSION) {
-            close();
-            throw new ConnectException("Remote server don't support SOCKS5");
-        }
-        if (handshakeReply[1] == (byte) 0xFF) {
-            close();
-            throw new ConnectException("None of the authentication methods listed are acceptable");
-        }
-
-        if (handshakeReply[1] == SocksAuthenticationMethod.NO_AUTH.getMethodNumber()) {
-            return SocksAuthenticationMethod.NO_AUTH;
-        }
-
-        return SocksAuthenticationMethod.USERNAME_PASSWORD;
-    }
-
-    private static long getDeadlineMillis(final int timeout) {
-        final long deadlineMillis;
-        if (timeout == 0) {
-            deadlineMillis = 0L;
-        } else {
-            long finish = System.currentTimeMillis() + timeout;
-            deadlineMillis = finish < 0 ? Long.MAX_VALUE : finish;
-        }
-        return deadlineMillis;
-    }
-
-    @Override
     public synchronized void close() throws IOException {
         if (socket != null) {
             socket.close();
@@ -293,19 +296,25 @@ public class SocksSocket extends Socket {
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return inputStream;
+        if (socket != null) {
+            return socket.getInputStream();
+        }
+        return super.getInputStream();
     }
 
     @Override
-    public OutputStream getOutputStream() {
-        return outputStream;
+    public OutputStream getOutputStream() throws IOException {
+        if (socket != null) {
+            return socket.getOutputStream();
+        }
+        return super.getOutputStream();
     }
 
     private enum SocksCommand {
 
         CONNECT(0x01);
 
-        private int value;
+        private final int value;
 
         SocksCommand(final int value) {
             this.value = value;
@@ -320,7 +329,7 @@ public class SocksSocket extends Socket {
         NO_AUTH(0x00),
         USERNAME_PASSWORD(0x02);
 
-        private int methodNumber;
+        private final int methodNumber;
 
         SocksAuthenticationMethod(final int methodNumber) {
             this.methodNumber = methodNumber;
@@ -330,5 +339,32 @@ public class SocksSocket extends Socket {
             return methodNumber;
         }
 
+    }
+
+    private enum ServerErrorReply {
+        GENERAL_FAILURE(1, "Remote server doesn't support SOCKS5"),
+        NOT_ALLOWED(2, "Proxy server general failure"),
+        NET_UNREACHABLE(3, "Connection not allowed by ruleset"),
+        HOST_UNREACHABLE(4, "Network is unreachable"),
+        CONN_REFUSED(5, "Host is unreachable"),
+        TTL_EXPIRED(6, "Connection has been refused"),
+        CMD_NOT_SUPPORTED(7, "TTL expired"),
+        ADDR_TYPE_NOT_SUP(8, "Address type not supported");
+
+        private final int replyNumber;
+        private final String message;
+
+        ServerErrorReply(final int replyNumber, final String message) {
+            this.replyNumber = replyNumber;
+            this.message = message;
+        }
+
+        public int getReplyNumber() {
+            return replyNumber;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }

@@ -465,16 +465,19 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
-        if (proxyHost == null && proxyPort != null){
-            throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
+        if (proxyHost == null) {
+            if (proxyPort != null) {
+                throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
+            } else if (proxyUsername != null) {
+                throw new IllegalArgumentException("proxyUsername can only be specified with proxyHost");
+            } else if (proxyPassword != null) {
+                throw new IllegalArgumentException("proxyPassword can only be specified with proxyHost");
+            }
         }
 
-        if (proxyHost == null && proxyUsername != null){
-            throw new IllegalArgumentException("proxyUsername can only be specified with proxyHost");
-        }
-
-        if (proxyUsername == null ^ proxyPassword == null){
-            throw new IllegalArgumentException("If either proxyUsername or proxyPassword is provided, both must be specified.");
+        if (proxyUsername == null ^ proxyPassword == null) {
+            throw new IllegalArgumentException(
+                    "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
         }
 
         credential = createCredentials(combinedOptionsMaps, userName, password);

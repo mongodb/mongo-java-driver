@@ -19,14 +19,13 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
-import com.mongodb.ProxyAddress;
+import com.mongodb.ProxySettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
-import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,11 +84,11 @@ public class SocketStream implements Stream {
     }
 
     protected Socket initializeSocket() throws IOException {
-        if (settings.getProxyAddress() != null) {
+        ProxySettings proxySettings = settings.getProxySettings();
+        if (proxySettings.getHost() != null) {
             if (sslSettings.isEnabled()) {
                 assertTrue(socketFactory instanceof SSLSocketFactory);
                 SSLSocketFactory sslSocketFactory = (SSLSocketFactory) socketFactory;
-
                 return initializeSslSocketOverSocksProxy(sslSocketFactory);
             }
             return initializeSocketOverSocksProxy();
@@ -113,39 +112,29 @@ public class SocketStream implements Stream {
 
     @NotNull
     private SSLSocket initializeSslSocketOverSocksProxy(final SSLSocketFactory sslSocketFactory) throws IOException {
-        SocksSocket socksProxy = createSocksProxy(null, settings);
-        configureSocket(socket, settings);
+        String serverHost = address.getHost();
+        int serverPort = address.getPort();
 
-        InetSocketAddress unresolved = InetSocketAddress.createUnresolved(address.getHost(), address.getPort());
-        socksProxy.connect(unresolved, settings.getConnectTimeout(MILLISECONDS));
+        SocksSocket socksProxy = new SocksSocket(null, settings.getProxySettings());
+        configureSocket(socksProxy, settings);
+        InetSocketAddress inetSocketAddress = InetSocketAddress.createUnresolved(serverHost, serverPort);
+        socksProxy.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
 
-        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, address.getHost(), address.getPort(), true);
-
+        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
         //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
         //So it is possible to set SSL parameters before handshake is done.
-        configureSslSocket(sslSocket, sslSettings, unresolved);
+        configureSslSocket(sslSocket, sslSettings, inetSocketAddress);
         return sslSocket;
     }
 
     private Socket initializeSocketOverSocksProxy() throws IOException {
-        Socket socket = socketFactory.createSocket();
-        SocksSocket socksProxy = createSocksProxy(socket, settings);
-        configureSocket(socket, settings);
+        Socket createdSocket = socketFactory.createSocket();
+        SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
+        configureSocket(createdSocket, settings);
 
         socksProxy.connect(InetSocketAddress.createUnresolved(address.getHost(), address.getPort()),
                 settings.getConnectTimeout(TimeUnit.MILLISECONDS));
-        return socket;
-    }
-
-    protected static SocksSocket createSocksProxy(@Nullable final Socket socket, final SocketSettings socketSetting) {
-        ProxyAddress proxyAddress = socketSetting.getProxyAddress();
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(proxyAddress.getHost(), proxyAddress.getPort());
-
-        if (socketSetting.getProxyUsername() == null || socketSetting.getProxyPassword() == null) {
-            return new SocksSocket(socket, inetSocketAddress);
-        }
-        return new SocksSocket(socket, inetSocketAddress,
-                socketSetting.getProxyUsername(), socketSetting.getProxyPassword());
+        return createdSocket;
     }
 
     @Override
