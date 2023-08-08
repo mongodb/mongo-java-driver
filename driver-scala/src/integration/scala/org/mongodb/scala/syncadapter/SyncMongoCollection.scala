@@ -569,7 +569,10 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
 
   override def listSearchIndexes[TResult](resultClass: Class[TResult]): ListSearchIndexesIterable[TResult] =
     SyncListSearchIndexesIterable(
-      wrapped.listSearchIndexes[TResult]()(DefaultsTo.overrideDefault[TResult, org.mongodb.scala.Document], ClassTag(resultClass))
+      wrapped.listSearchIndexes[TResult]()(
+        DefaultsTo.overrideDefault[TResult, org.mongodb.scala.Document],
+        ClassTag(resultClass)
+      )
     )
 
   override def renameCollection(newCollectionNamespace: MongoNamespace): Unit = {
