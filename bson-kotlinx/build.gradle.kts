@@ -115,7 +115,7 @@ spotbugs { showProgress.set(true) }
 // ===========================
 //     Test Configuration
 // ===========================
-tasks.create("kCheck") {
+tasks.create("kotlinCheck") {
     description = "Runs all the kotlin checks"
     group = "verification"
 
