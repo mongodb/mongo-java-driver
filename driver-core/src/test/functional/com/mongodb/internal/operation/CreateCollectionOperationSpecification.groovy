@@ -26,13 +26,13 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
+import static java.util.Collections.singletonList
 
 class CreateCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -160,9 +160,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         collectionNameExists(getCollectionName())
 
         when:
-        def stats = new CommandReadOperation<>(getDatabaseName(),
-                new BsonDocument('collStats', new BsonString(getCollectionName())),
-                new BsonDocumentCodec()).execute(getBinding())
+        def stats = storageStats()
 
         then:
         stats.getBoolean('capped').getValue()
@@ -186,10 +184,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         execute(operation, async)
 
         then:
-        new CommandReadOperation<>(getDatabaseName(),
-                new BsonDocument('collStats', new BsonString(getCollectionName())),
-                new DocumentCodec()).execute(getBinding())
-                .getInteger('nindexes') == expectedNumberOfIndexes
+        storageStats().getInt32('nindexes').intValue() == expectedNumberOfIndexes
 
         where:
         autoIndex | expectedNumberOfIndexes | async
@@ -290,5 +285,22 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
 
     def collectionNameExists(String collectionName) {
         getCollectionInfo(collectionName) != null
+    }
+
+    BsonDocument storageStats() {
+        if (serverVersionLessThan(6, 2)) {
+            return new CommandReadOperation<>(getDatabaseName(),
+                    new BsonDocument('collStats', new BsonString(getCollectionName())),
+                    new BsonDocumentCodec()).execute(getBinding())
+        }
+        BatchCursor<BsonDocument> cursor = new AggregateOperation(
+                getNamespace(),
+                singletonList(new BsonDocument('$collStats', new BsonDocument('storageStats', new BsonDocument()))),
+                new BsonDocumentCodec()).execute(getBinding())
+        try {
+            return cursor.next().first().getDocument('storageStats')
+        } finally {
+            cursor.close()
+        }
     }
 }

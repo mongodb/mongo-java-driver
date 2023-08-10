@@ -58,11 +58,13 @@ import org.bson.UuidRepresentation
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.UuidCodec
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
 import static Fixture.getMongoClient
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForDelete
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForUpdate
@@ -260,6 +262,7 @@ class DBCollectionSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    @IgnoreIf({ serverVersionAtLeast(6, 2) })
     def 'getStats should execute the expected command with the collection default read preference'() {
         given:
         def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonInt32(1))])

@@ -35,8 +35,10 @@ import org.bson.BsonDouble
 import spock.lang.Specification
 
 import static Fixture.getMongoClient
+import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
+import static org.junit.Assume.assumeTrue
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBSpecification extends Specification {
@@ -202,6 +204,9 @@ class DBSpecification extends Specification {
     }
 
     def 'should use provided read preference for obedient commands'() {
+        if (cmd.get('collStats') != null) {
+            assumeTrue(serverVersionLessThan(6, 2))
+        }
         given:
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
