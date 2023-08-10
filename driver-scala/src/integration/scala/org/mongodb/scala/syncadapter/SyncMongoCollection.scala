@@ -480,14 +480,17 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
     wrapped.createSearchIndex(definition).toFuture().get()
 
   override def createSearchIndexes(searchIndexModels: java.util.List[SearchIndexModel]) =
-    throw new UnsupportedOperationException()
+    wrapped.createSearchIndexes(searchIndexModels.asScala.toList).toFuture().get().asJava
 
   def updateSearchIndex(indexName: String, definition: Bson) =
     wrapped.updateSearchIndex(indexName, definition).toFuture().get()
 
   def dropSearchIndex(indexName: String) = wrapped.dropSearchIndex(indexName).toFuture().get()
 
-  override def listSearchIndexes() = throw new UnsupportedOperationException()
+  override def listSearchIndexes() = SyncListSearchIndexesIterable(
+    wrapped
+      .listSearchIndexes()
+  )
 
   override def listSearchIndexes[TResult](resultClass: Class[TResult]) =
     SyncListSearchIndexesIterable[TResult](
