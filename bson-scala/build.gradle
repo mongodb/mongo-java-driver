@@ -39,6 +39,17 @@ tasks.withType(Test) {
     }
 }
 
+// ===================
+//     Scala checks
+// ===================
+tasks.register("scalaCheck") {
+    description = "Runs all the Scala checks"
+    group = "verification"
+
+    dependsOn("clean", "compileTestScala", "check")
+    tasks.findByName("check").mustRunAfter("clean")
+}
+
 ext {
     pomName = 'Mongo Scala Bson Library'
 }

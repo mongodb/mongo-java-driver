@@ -155,7 +155,7 @@ val integrationTest =
         classpath = sourceSets["integrationTest"].runtimeClasspath
     }
 
-tasks.create("kCheck") {
+tasks.create("kotlinCheck") {
     description = "Runs all the kotlin checks"
     group = "verification"
 
