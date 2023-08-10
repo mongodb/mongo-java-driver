@@ -35,6 +35,10 @@ public final class SplitEvent {
     private final int fragment;
     private final int of;
 
+    /**
+     * @param fragment the fragment number
+     * @param of the total number of fragments
+     */
     @BsonCreator
     public SplitEvent(
             @BsonProperty("fragment") final int fragment,
