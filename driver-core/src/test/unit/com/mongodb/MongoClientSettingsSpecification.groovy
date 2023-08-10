@@ -62,6 +62,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.contextProvider == null
         settings.dnsClient == null
         settings.inetAddressResolver == null
+        settings.getTimeout(TimeUnit.MILLISECONDS) == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -149,6 +150,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .contextProvider(contextProvider)
                 .dnsClient(dnsClient)
                 .inetAddressResolver(inetAddressResolver)
+                .timeout(1000, TimeUnit.SECONDS)
                 .build()
 
         then:
@@ -170,6 +172,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getContextProvider() == contextProvider
         settings.getDnsClient() == dnsClient
         settings.getInetAddressResolver() == inetAddressResolver
+        settings.getTimeout(TimeUnit.MILLISECONDS) == 1_000_000
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -211,6 +214,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .contextProvider(contextProvider)
                 .dnsClient(dnsClient)
                 .inetAddressResolver(inetAddressResolver)
+                .timeout(0, TimeUnit.SECONDS)
                 .build()
 
         then:
@@ -237,6 +241,21 @@ class MongoClientSettingsSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should throw an exception if the timeout is set and negative'() {
+        when:
+        MongoClientSettings.builder().timeout(-1, TimeUnit.SECONDS).build()
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost/?timeoutMS=-1')
+        MongoClientSettings.builder().applyConnectionString(connectionString).build()
+
+        then:
+        thrown(IllegalStateException)
     }
 
     def 'should add command listeners'() {
@@ -306,6 +325,7 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&readConcernLevel=majority'
                 + '&compressors=zlib&zlibCompressionLevel=5'
                 + '&uuidRepresentation=standard'
+                + '&timeoutMS=10000'
         )
         MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(connectionString).build()
         MongoClientSettings expected = MongoClientSettings.builder()
@@ -358,6 +378,7 @@ class MongoClientSettingsSpecification extends Specification {
             .retryWrites(true)
             .retryReads(true)
             .uuidRepresentation(UuidRepresentation.STANDARD)
+            .timeout(10000, TimeUnit.MILLISECONDS)
             .build()
 
         then:
@@ -482,7 +503,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'loggerSettingsBuilder',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
-                        'streamFactoryFactory', 'uuidRepresentation', 'writeConcern']
+                        'streamFactoryFactory', 'timeoutMS', 'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected
@@ -497,7 +518,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
                         'compressorList', 'contextProvider', 'credential', 'dnsClient', 'heartbeatConnectTimeoutMS',
                         'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'readConcern', 'readPreference', 'retryReads', 'retryWrites',
-                        'serverApi', 'streamFactoryFactory', 'uuidRepresentation', 'writeConcern']
+                        'serverApi', 'streamFactoryFactory', 'timeout', 'uuidRepresentation', 'writeConcern']
         then:
         actual == expected
     }
