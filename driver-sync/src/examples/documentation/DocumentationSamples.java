@@ -721,13 +721,6 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // Start runCommand Example 1
         database.runCommand(new Document("buildInfo", 1));
         // End runCommand Example 1
-
-        database.getCollection("restaurants").drop();
-        database.createCollection("restaurants");
-
-        // Start runCommand Example 2
-        database.runCommand(new Document("collStats", "restaurants"));
-        // End runCommand Example 2
     }
 
     @Test
