@@ -57,15 +57,17 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * The time limit for the full execution of an operation.
      *
      * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
-     * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`
+     * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
      *
-     * -`null` means that the timeout mechanism for operations will defer to using: -`waitQueueTimeoutMS`: The maximum
-     * wait time in milliseconds that a thread may wait for a connection to become available -`socketTimeoutMS`: How
-     * long a send or receive on a socket can take before timing out. -`wTimeoutMS`: How long the server will wait for
-     * the write concern to be fulfilled before timing out. -`maxTimeMS`: The time limit for processing operations on a
-     * cursor. See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.
-     * -`maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute. -`0`
-     * means infinite timeout. -`> 0` The time limit to use for the full execution of an operation.
+     *   - `null` means that the timeout mechanism for operations will defer to using:
+     *      - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to become available
+     *      - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+     *      - `wTimeoutMS`: How long the server will wait for  the write concern to be fulfilled before timing out.
+     *      - `maxTimeMS`: The time limit for processing operations on a cursor.
+     *        See: [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+     *      - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+     *   - `0` means infinite timeout.
+     *   - `> 0` The time limit to use for the full execution of an operation.
      *
      * @return the optional timeout duration
      * @since 4.x
