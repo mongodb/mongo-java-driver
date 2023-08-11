@@ -568,7 +568,7 @@ public class DB {
 
     @Nullable
     Long getTimeoutMS() {
-        return null; // TODO - JAVA-4064
+        return null; // TODO (CSOT) - JAVA-4064
     }
 
     private static final Set<String> OBEDIENT_COMMANDS = new HashSet<>();

@@ -59,7 +59,7 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
                 (result, source, connection) -> result, false, callback);
     }
 
-    // TODO - JAVA-5098 - should the command be modified for CSOT?
+    // TODO (CSOT) - JAVA-5098 - should the command be modified for CSOT?
     private CommandCreator getCommandCreator() {
         return (clientSideOperationTimeout, serverDescription, connectionDescription) -> command;
     }

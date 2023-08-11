@@ -146,7 +146,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
             return executor.execute(
                     new CommitTransactionOperation(
-                            // TODO - JAVA-4067
+                            // TODO (CSOT) - JAVA-4067
                             ClientSideOperationTimeouts.withMaxCommitMS(null, transactionOptions.getMaxCommitTime(MILLISECONDS)),
                             assertNotNull(transactionOptions.getWriteConcern()), alreadyCommitted)
                             .recoveryToken(getRecoveryToken()),
@@ -180,7 +180,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             }
             return executor.execute(
                     new AbortTransactionOperation(
-                            // TODO - JAVA-4067
+                            // TODO (CSOT) - JAVA-4067
                             ClientSideOperationTimeouts.withMaxCommitMS(null, transactionOptions.getMaxCommitTime(MILLISECONDS)),
                             assertNotNull(transactionOptions.getWriteConcern()))
                             .recoveryToken(getRecoveryToken()),

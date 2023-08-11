@@ -148,7 +148,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 commitInProgress = true;
                 delegate.getOperationExecutor().execute(
                         new CommitTransactionOperation(
-                                // TODO - JAVA-4067
+                                // TODO (CSOT) - JAVA-4067
                                 ClientSideOperationTimeouts.withMaxCommitMS(null, transactionOptions.getMaxCommitTime(MILLISECONDS)),
                                 assertNotNull(transactionOptions.getWriteConcern()),
                         transactionState == TransactionState.COMMITTED)
@@ -182,7 +182,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 delegate.getOperationExecutor().execute(new AbortTransactionOperation(
-                        // TODO - JAVA-4067
+                        // TODO (CSOT) - JAVA-4067
                         ClientSideOperationTimeouts.withMaxCommitMS(null, transactionOptions.getMaxCommitTime(MILLISECONDS)),
                         assertNotNull(transactionOptions.getWriteConcern()))
                         .recoveryToken(getRecoveryToken()), readConcern, this);

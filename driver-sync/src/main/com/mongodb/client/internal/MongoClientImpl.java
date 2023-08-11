@@ -265,6 +265,6 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private @Nullable Long getTimeoutMS() {
-        return null; // TODO - JAVA-4064
+        return null; // TODO (CSOT) - JAVA-4064
     }
 }
