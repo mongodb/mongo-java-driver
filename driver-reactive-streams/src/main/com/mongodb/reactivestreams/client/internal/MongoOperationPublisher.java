@@ -229,7 +229,7 @@ public final class MongoOperationPublisher<T> {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                 getCodecRegistry(), getReadPreference(), getReadConcern(),
                 getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
-                autoEncryptionSettings, getTimeoutMS(), executor);
+                autoEncryptionSettings, timeoutMS, executor);
     }
 
     Publisher<Void> dropDatabase(@Nullable final ClientSession clientSession) {
