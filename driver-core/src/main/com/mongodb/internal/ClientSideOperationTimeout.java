@@ -20,6 +20,7 @@ import com.mongodb.lang.Nullable;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -43,6 +44,7 @@ public class ClientSideOperationTimeout {
                                       final long maxAwaitTimeMS,
                                       final long maxTimeMS,
                                       final long maxCommitTimeMS) {
+        isTrueArgument("timeoutMS must be >= 0", timeoutMS == null || timeoutMS >= 0);
         this.timeoutMS = timeoutMS;
         this.maxAwaitTimeMS = maxAwaitTimeMS;
         this.maxTimeMS = timeoutMS == null ? maxTimeMS : 0;
