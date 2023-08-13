@@ -51,6 +51,7 @@ public final class SocksSocket extends Socket {
     private static final byte ADDRESS_TYPE_DOMAIN_NAME = 3;
     private static final byte ADDRESS_TYPE_IPV4 = 1;
     private static final byte ADDRESS_TYPE_IPV6 = 4;
+    private static final int DEFAULT_PORT = 1080;
     private final SocksAuthenticationMethod[] authenticationMethods;
     private final InetSocketAddress proxyAddress;
     private InetSocketAddress remoteAddress;
@@ -69,7 +70,7 @@ public final class SocksSocket extends Socket {
     }
 
     public SocksSocket(@Nullable final Socket socket, final ProxySettings proxySettings) {
-        int port = proxySettings.getPort() == null ? 1080 : proxySettings.getPort();
+        int port = proxySettings.getPort() == null ? DEFAULT_PORT : proxySettings.getPort();
         assertTrue(proxySettings.getHost() != null);
         assertTrue(port >= 0);
 
@@ -136,19 +137,19 @@ public final class SocksSocket extends Socket {
                 bufferSent[3] = ADDRESS_TYPE_DOMAIN_NAME;
                 bufferSent[4] = (byte) hostLength;
                 byte[] bytesOfHost = host.getBytes();
-                System.arraycopy(bytesOfHost, 0, bufferSent, 5, hostLength);// copy host bytes.
+                System.arraycopy(bytesOfHost, 0, bufferSent, 5, hostLength);
                 bufferSent[5 + host.length()] = (byte) ((port & 0xff00) >> 8);
                 bufferSent[6 + host.length()] = (byte) (port & 0xff);
                 break;
             case ADDRESS_TYPE_IPV4:
                 bufferSent[3] = ADDRESS_TYPE_IPV4;
-                System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);// copy address bytes
+                System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);
                 bufferSent[4 + ipAddress.length] = (byte) ((port & 0xff00) >> 8);
                 bufferSent[5 + ipAddress.length] = (byte) (port & 0xff);
                 break;
             case ADDRESS_TYPE_IPV6:
                 bufferSent[3] = ADDRESS_TYPE_IPV6;
-                System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);// copy address bytes
+                System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);
                 bufferSent[4 + ipAddress.length] = (byte) ((port & 0xff00) >> 8);
                 bufferSent[5 + ipAddress.length] = (byte) (port & 0xff);
                 break;

@@ -624,7 +624,6 @@ public class ConnectionString {
                     break;
                 case "proxyport":
                     proxyPort = parseInteger(value, "proxyPort");
-                    //TODO validatePort(proxyPort);
                     break;
                 case "proxyusername":
                     proxyUsername = value;

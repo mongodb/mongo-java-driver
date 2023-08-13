@@ -32,14 +32,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 @Immutable
 public class ProxySettings {
 
-    /**
-     * The proxy host.
-     */
     @Nullable
     private final String host;
-    /**
-     * The proxy port.
-     */
+
     @Nullable
     private final Integer port;
 
