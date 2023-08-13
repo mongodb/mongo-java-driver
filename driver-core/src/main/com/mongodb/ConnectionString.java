@@ -465,20 +465,7 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
-        if (proxyHost == null) {
-            if (proxyPort != null) {
-                throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
-            } else if (proxyUsername != null) {
-                throw new IllegalArgumentException("proxyUsername can only be specified with proxyHost");
-            } else if (proxyPassword != null) {
-                throw new IllegalArgumentException("proxyPassword can only be specified with proxyHost");
-            }
-        }
-
-        if (proxyUsername == null ^ proxyPassword == null) {
-            throw new IllegalArgumentException(
-                    "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
-        }
+        validateProxyParameters();
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
@@ -1186,6 +1173,31 @@ public class ConnectionString {
         if (invalidPort) {
             throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
                     + "The port '%s' is not a valid, it must be an integer between 0 and 65535", host, port));
+        }
+    }
+
+    private void validateProxyParameters() {
+        if (proxyHost == null) {
+            if (proxyPort != null) {
+                throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
+            } else if (proxyUsername != null) {
+                throw new IllegalArgumentException("proxyUsername can only be specified with proxyHost");
+            } else if (proxyPassword != null) {
+                throw new IllegalArgumentException("proxyPassword can only be specified with proxyHost");
+            }
+        }
+        if (proxyPort != null && proxyPort < 0) {
+            throw new IllegalArgumentException("proxyPort should be equal or greater than 0");
+        }
+        if (proxyUsername!=null && proxyUsername.isEmpty()) {
+            throw new IllegalArgumentException("proxyUsername cannot be empty");
+        }
+        if (proxyPassword!=null && proxyPassword.isEmpty()) {
+            throw new IllegalArgumentException("proxyPassword cannot be empty");
+        }
+        if (proxyUsername == null ^ proxyPassword == null) {
+            throw new IllegalArgumentException(
+                    "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
         }
     }
 

@@ -51,8 +51,8 @@ public final class Crypts {
                 ? sharedInternalClient : MongoClients.create(keyVaultMongoClientSettings);
         MongoCrypt mongoCrypt = MongoCrypts.create(createMongoCryptOptions(settings));
 
-        ProxySettings kmsProxySettings = settings.getProxySettings() == null ?
-                client.getSettings().getSocketSettings().getProxySettings();
+        ProxySettings kmsProxySettings = settings.getProxySettings() == null ? client.getSettings()
+                .getSocketSettings().getProxySettings() : settings.getProxySettings();
 
         return new Crypt(
                 mongoCrypt,
