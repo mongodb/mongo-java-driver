@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoInternalException;
@@ -110,6 +111,9 @@ public final class MongoClients {
      */
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         if (settings.getStreamFactoryFactory() == null) {
+            if (settings.getSocketSettings().getProxySettings().getHost() != null){
+                throw new MongoClientException("Proxy is not supported for reactive clients");
+            }
             if (settings.getSslSettings().isEnabled()) {
                 return createWithTlsChannel(settings, mongoDriverInformation);
             } else {

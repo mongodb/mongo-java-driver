@@ -17,17 +17,22 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ProxySettings;
 import com.mongodb.internal.Timeout;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -36,14 +41,16 @@ import static com.mongodb.assertions.Assertions.assertTrue;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class SocksSocket extends Socket {
+    private static final byte LENGTH_OF_IPV4 = 4;
+    private static final byte LENGTH_OF_IPV6 = 16;
     private static final byte SOCKS_VERSION = 5;
     private static final byte RESERVED = 0x00;
-    private static final int PORT_SIZE = 2;
+    private static final byte PORT_SIZE = 2;
     private static final byte AUTHENTICATION_SUCCEEDED_STATUS = 0x00;
-    private static final int REQUEST_OK = 0;
-    private static final int DOMAIN_NAME = 3;
-    private static final int IPV4 = 1;
-    private static final int IPV6 = 4;
+    private static final byte REQUEST_OK = 0;
+    private static final byte ADDRESS_TYPE_DOMAIN_NAME = 3;
+    private static final byte ADDRESS_TYPE_IPV4 = 1;
+    private static final byte ADDRESS_TYPE_IPV6 = 4;
     private final SocksAuthenticationMethod[] authenticationMethods;
     private final InetSocketAddress proxyAddress;
     private InetSocketAddress remoteAddress;
@@ -111,28 +118,100 @@ public final class SocksSocket extends Socket {
         }
     }
 
-
     private void sendConnect(final Timeout timeout) throws IOException {
         String host = remoteAddress.getHostName();
         int port = remoteAddress.getPort();
+        final int hostLength = host.getBytes().length;
 
-        final int lengthOfHost = host.getBytes().length;
-        final byte[] bufferSent = new byte[7 + lengthOfHost];
+        byte[] bufferSent;
+        byte[] ipAddress = createByteArrayFromIpAddress(remoteAddress);
+        byte addressType = determineAddressType(ipAddress);
+        bufferSent = createBuffer(addressType, hostLength);
 
         bufferSent[0] = SOCKS_VERSION;
         bufferSent[1] = (byte) SocksCommand.CONNECT.getCommandNumber();
         bufferSent[2] = RESERVED;
-        bufferSent[3] = DOMAIN_NAME;  //TODO chose appropriate type. Currently it is DOMAIN NAME ;
-        bufferSent[4] = (byte) lengthOfHost;
-        byte[] bytesOfHost = host.getBytes();
-        System.arraycopy(bytesOfHost, 0, bufferSent, 5, lengthOfHost);
-        bufferSent[5 + host.length()] = (byte) ((port & 0xff00) >> 8);
-        bufferSent[6 + host.length()] = (byte) (port & 0xff);
-
+        switch (addressType) {
+            case ADDRESS_TYPE_DOMAIN_NAME:
+                bufferSent[3] = ADDRESS_TYPE_DOMAIN_NAME;
+                bufferSent[4] = (byte) hostLength;
+                byte[] bytesOfHost = host.getBytes();
+                System.arraycopy(bytesOfHost, 0, bufferSent, 5, hostLength);// copy host bytes.
+                bufferSent[5 + host.length()] = (byte) ((port & 0xff00) >> 8);
+                bufferSent[6 + host.length()] = (byte) (port & 0xff);
+                break;
+            case ADDRESS_TYPE_IPV4:
+                bufferSent[3] = ADDRESS_TYPE_IPV4;
+                System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);// copy address bytes
+                bufferSent[4 + ipAddress.length] = (byte) ((port & 0xff00) >> 8);
+                bufferSent[5 + ipAddress.length] = (byte) (port & 0xff);
+                break;
+            case ADDRESS_TYPE_IPV6:
+                bufferSent[3] = ADDRESS_TYPE_IPV6;
+                System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);// copy address bytes
+                bufferSent[4 + ipAddress.length] = (byte) ((port & 0xff00) >> 8);
+                bufferSent[5 + ipAddress.length] = (byte) (port & 0xff);
+                break;
+        }
         outputStream.write(bufferSent);
         outputStream.flush();
-
         checkServerReply(timeout);
+    }
+
+    @Nullable
+    private static byte[] createByteArrayFromIpAddress(final InetSocketAddress remoteAddress) throws SocketException, UnknownHostException {
+        InetAddress inetAddress = identifyAddressType(remoteAddress);
+        if (inetAddress instanceof Inet4Address) {
+            return inetAddress.getAddress();
+        }
+        if (inetAddress instanceof Inet6Address) {
+            return inetAddress.getAddress();
+        }
+        return null;
+    }
+
+    @Nullable
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public static InetAddress identifyAddressType(final InetSocketAddress remoteAddress) throws SocketException, UnknownHostException {
+        String host = remoteAddress.getHostName();
+        if (host.contains(":") || (host.contains(".") && !hasAlphabeticCharacters(host))) {
+            try {
+                return InetAddress.getByName(host);
+            } catch (UnknownHostException e) {
+                //invalid IP address
+            }
+        }
+        return null;
+    }
+
+    private static boolean hasAlphabeticCharacters(final String input) {
+        for (int i = 0; i < input.length(); i++) {
+            if (Character.isAlphabetic(input.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private byte determineAddressType(@Nullable final byte[] ipAddress) {
+        if (ipAddress == null) {
+            return ADDRESS_TYPE_DOMAIN_NAME;
+        } else if (ipAddress.length == LENGTH_OF_IPV4) {
+            return ADDRESS_TYPE_IPV4;
+        }
+        return ADDRESS_TYPE_IPV6;
+    }
+
+    private static byte[] createBuffer(final byte addressType, final int hostLength) throws ConnectException {
+        switch (addressType) {
+            case ADDRESS_TYPE_DOMAIN_NAME:
+                return new byte[7 + hostLength];
+            case ADDRESS_TYPE_IPV4:
+                return new byte[6 + LENGTH_OF_IPV4];
+            case ADDRESS_TYPE_IPV6:
+                return new byte[6 + LENGTH_OF_IPV6];
+        }
+        throw new ConnectException("Unknown address type");
     }
 
     private void checkServerReply(final Timeout timeout) throws IOException {
@@ -141,14 +220,14 @@ public final class SocksSocket extends Socket {
 
         if (status == REQUEST_OK) {
             switch (data[3]) {
-                case IPV4:
+                case ADDRESS_TYPE_IPV4:
                     readSocksReply(inputStream, 4 + PORT_SIZE, timeout);
                     break;
-                case DOMAIN_NAME:
+                case ADDRESS_TYPE_DOMAIN_NAME:
                     byte hostNameLength = readSocksReply(inputStream, 1, timeout)[0];
                     readSocksReply(inputStream, hostNameLength + PORT_SIZE, timeout);
                     break;
-                case IPV6:
+                case ADDRESS_TYPE_IPV6:
                     readSocksReply(inputStream, 16 + PORT_SIZE, timeout);
                     break;
                 default:
@@ -159,10 +238,10 @@ public final class SocksSocket extends Socket {
 
         for (ServerErrorReply serverErrorReply : ServerErrorReply.values()) {
             if (status == serverErrorReply.getReplyNumber()) {
-                throw new ConnectException("SOCKS: " + serverErrorReply.getMessage());
+                throw new ConnectException(serverErrorReply.getMessage());
             }
         }
-        throw new ConnectException("SOCKS: Unknown status");
+        throw new ConnectException("Unknown status");
     }
 
     private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
@@ -187,7 +266,7 @@ public final class SocksSocket extends Socket {
             if (authenticationResult[1] != AUTHENTICATION_SUCCEEDED_STATUS) {
                   /* RFC 1929 specifies that the connection MUST be closed if
                    authentication fails */
-                throw new ConnectException("Username or password is incorrect");
+                throw new ConnectException("Authentication failed");
             }
         }
     }

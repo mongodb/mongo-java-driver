@@ -227,12 +227,12 @@ public class ProxySettings {
 
     private ProxySettings(final ProxySettings.Builder builder) {
         if (builder.host == null) {
+            isTrue("proxyPort can only be specified with proxyHost",
+                    builder.port == null);
             isTrue("proxyPassword can only be specified with proxyHost",
                     builder.password == null);
             isTrue("proxyUsername can only be specified with proxyHost",
                     builder.username == null);
-            isTrue("proxyPort can only be specified with proxyHost",
-                    builder.port == null);
         }
         isTrue("Both proxyUsername and proxyPassword must be set together. They cannot be set individually",
                 (builder.username == null) == (builder.password == null));
