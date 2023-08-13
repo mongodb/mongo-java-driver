@@ -2165,12 +2165,6 @@ buildvariants:
   tasks:
     - name: "csfle-tests-with-mongocryptd"
 
-#- matrix_name: "csfle-tests-with-mongocryptd"
-#  matrix_spec: { os: "linux", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "latest" ], topology: ["replicaset"] }
-#  display_name: "CSFLE with mongocryptd: ${version}"
-#  tasks:
-#    - name: "csfle-tests-with-mongocryptd"
-
 - matrix_name: "socks5-tests"
   matrix_spec: { os: "linux", ssl: ["nossl", "ssl"], version: [ "latest" ], topology: ["replicaset"] }
   display_name: "Socks5: ${version} ${topology} ${ssl} ${jdk} ${os}"

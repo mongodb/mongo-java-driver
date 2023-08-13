@@ -5,7 +5,6 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
-# Compute path to socks5 fake server script in a way that works on Windows
 SOCKS5_SERVER_SCRIPT="$DRIVERS_TOOLS/.evergreen/socks5srv.py"
 PYTHON_BINARY=${PYTHON_BINARY:-python3}
 # Grab a connection string that only refers to *one* of the hosts in MONGODB_URI
@@ -14,16 +13,12 @@ FIRST_HOST=$(echo "$MONGODB_URI" | awk -F[/:,] '{print $4":"$5}')
 # we configure the Socks5 proxy server script to redirect from this to FIRST_HOST
 export MONGODB_URI_SINGLEHOST="mongodb://127.0.0.1:12345"
 
-if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROVIDER}" != "" ]; then
-  readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
-fi
-
 if [ "${SSL}" = "ssl" ]; then
    MONGODB_URI="${MONGODB_URI}&ssl=true&sslInvalidHostNameAllowed=true"
    MONGODB_URI_SINGLEHOST="${MONGODB_URI_SINGLEHOST}/?ssl=true&sslInvalidHostNameAllowed=true"
 fi
 
-# Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
+# Compute path to socks5 fake server script in a way that works on Windows
 if [ "Windows_NT" == "$OS" ]; then
    SOCKS5_SERVER_SCRIPT=$(cygpath -m $DRIVERS_TOOLS)
 fi
@@ -52,8 +47,10 @@ provision_ssl () {
 #            Main Program                  #
 ############################################
 
-# Set up keystore/truststore regardless, as they are required for testing KMIP
-provision_ssl
+# Set up keystore/truststore
+if [ "${SSL}" = "ssl" ]; then
+  provision_ssl
+fi
 
 # First, test with Socks5 + authentication required
 echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks5 auth enabled"
