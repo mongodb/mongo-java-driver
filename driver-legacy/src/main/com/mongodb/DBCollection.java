@@ -73,6 +73,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForDelete;
@@ -137,9 +139,10 @@ public class DBCollection {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
+    private final Lock factoryAndCodecLock = new ReentrantLock();
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
-    private DBCollectionObjectFactory objectFactory;
+    private volatile DBCollectionObjectFactory objectFactory;
     private volatile CompoundDBObjectCodec objectCodec;
 
 
@@ -1798,8 +1801,14 @@ public class DBCollection {
      *
      * @return the factory
      */
-    public synchronized DBDecoderFactory getDBDecoderFactory() {
-        return decoderFactory;
+    public DBDecoderFactory getDBDecoderFactory() {
+        factoryAndCodecLock.lock();
+        try {
+            return decoderFactory;
+        } finally {
+            factoryAndCodecLock.unlock();
+        }
+
     }
 
     /**
@@ -1807,15 +1816,20 @@ public class DBCollection {
      *
      * @param factory the factory to set.
      */
-    public synchronized void setDBDecoderFactory(@Nullable final DBDecoderFactory factory) {
-        this.decoderFactory = factory;
+    public void setDBDecoderFactory(@Nullable final DBDecoderFactory factory) {
+        factoryAndCodecLock.lock();
+        try {
+            this.decoderFactory = factory;
 
-        //Are we are using default factory?
-        // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
-        Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
-                                    ? getDefaultDBObjectCodec()
-                                    : new DBDecoderAdapter(factory.create(), this, PowerOfTwoBufferPool.DEFAULT);
-        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
+            //Are we are using default factory?
+            // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
+            Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
+                    ? getDefaultDBObjectCodec()
+                    : new DBDecoderAdapter(factory.create(), this, PowerOfTwoBufferPool.DEFAULT);
+            this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
+        } finally {
+            factoryAndCodecLock.unlock();
+        }
     }
 
     /**
@@ -1823,8 +1837,13 @@ public class DBCollection {
      *
      * @return the factory
      */
-    public synchronized DBEncoderFactory getDBEncoderFactory() {
-        return this.encoderFactory;
+    public DBEncoderFactory getDBEncoderFactory() {
+        factoryAndCodecLock.lock();
+        try {
+            return this.encoderFactory;
+        } finally {
+            factoryAndCodecLock.unlock();
+        }
     }
 
     /**
@@ -1832,15 +1851,20 @@ public class DBCollection {
      *
      * @param factory the factory to set.
      */
-    public synchronized void setDBEncoderFactory(@Nullable final DBEncoderFactory factory) {
-        this.encoderFactory = factory;
+    public void setDBEncoderFactory(@Nullable final DBEncoderFactory factory) {
+        factoryAndCodecLock.lock();
+        try {
+            this.encoderFactory = factory;
 
-        //Are we are using default factory?
-        // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
-        Encoder<DBObject> encoder = (factory == null || factory == DefaultDBEncoder.FACTORY)
-                                    ? getDefaultDBObjectCodec()
-                                    : new DBEncoderFactoryAdapter(encoderFactory);
-        this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
+            //Are we are using default factory?
+            // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
+            Encoder<DBObject> encoder = (factory == null || factory == DefaultDBEncoder.FACTORY)
+                    ? getDefaultDBObjectCodec()
+                    : new DBEncoderFactoryAdapter(encoderFactory);
+            this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
+        } finally {
+            factoryAndCodecLock.unlock();
+        }
     }
 
     /**
@@ -1974,13 +1998,23 @@ public class DBCollection {
         return "DBCollection{database=" + database + ", name='" + name + '\'' + '}';
     }
 
-    synchronized DBObjectFactory getObjectFactory() {
-        return this.objectFactory;
+    DBObjectFactory getObjectFactory() {
+        factoryAndCodecLock.lock();
+        try {
+            return this.objectFactory;
+        } finally {
+            factoryAndCodecLock.unlock();
+        }
     }
 
-    synchronized void setObjectFactory(final DBCollectionObjectFactory factory) {
-        this.objectFactory = factory;
-        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), getDefaultDBObjectCodec());
+    void setObjectFactory(final DBCollectionObjectFactory factory) {
+        factoryAndCodecLock.lock();
+        try {
+            this.objectFactory = factory;
+            this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), getDefaultDBObjectCodec());
+        } finally {
+            factoryAndCodecLock.unlock();
+        }
     }
 
     /**

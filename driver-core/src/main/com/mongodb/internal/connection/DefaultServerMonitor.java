@@ -244,11 +244,8 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (Throwable t) {
                 averageRoundTripTime.reset();
-                InternalConnection localConnection;
-                synchronized (this) {
-                    localConnection = connection;
-                    connection = null;
-                }
+                InternalConnection localConnection = connection;
+                connection = null;
                 if (localConnection != null) {
                     localConnection.close();
                 }
@@ -310,14 +307,9 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         public void cancelCurrentCheck() {
-            InternalConnection localConnection = null;
-            synchronized (this) {
-                if (connection != null && !currentCheckCancelled) {
-                    localConnection = connection;
-                    currentCheckCancelled = true;
-                }
-            }
-            if (localConnection != null) {
+            InternalConnection localConnection = connection;
+            if (localConnection != null && !currentCheckCancelled) {
+                currentCheckCancelled = true;
                 localConnection.close();
             }
         }

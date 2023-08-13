@@ -16,32 +16,37 @@
 
 package com.mongodb.internal.connection;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 
 class ExponentiallyWeightedMovingAverage {
+    private static final long EMPTY = -1;
+
     private final double alpha;
-    private long average = -1;
+    private final AtomicLong average;
 
     ExponentiallyWeightedMovingAverage(final double alpha) {
         isTrueArgument("alpha >= 0.0 and <= 1.0", alpha >= 0.0 && alpha <= 1.0);
         this.alpha = alpha;
+        average = new AtomicLong(EMPTY);
     }
 
-    synchronized void reset() {
-        average = -1;
+    void reset() {
+        average.set(EMPTY);
     }
 
-    synchronized long addSample(final long sample) {
-        if (average == -1) {
-            average = sample;
-        } else {
-            average = (long) (alpha * sample + (1 - alpha) * average);
-        }
-
-        return average;
+    long addSample(final long sample) {
+        return average.accumulateAndGet(sample, (average, givenSample) -> {
+            if (average == EMPTY) {
+                return givenSample;
+            }
+            return (long) (alpha * givenSample + (1 - alpha) * average);
+        });
     }
 
-    synchronized long getAverage() {
-        return average == -1 ? 0 : average;
+    long getAverage() {
+        long average = this.average.get();
+        return average == EMPTY ? 0 : average;
     }
 }

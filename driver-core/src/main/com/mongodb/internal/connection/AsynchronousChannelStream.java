@@ -69,16 +69,20 @@ public abstract class AsynchronousChannelStream implements Stream {
         return bufferProvider;
     }
 
-    public synchronized ExtendedAsynchronousByteChannel getChannel() {
+    public ExtendedAsynchronousByteChannel getChannel() {
         return channel;
     }
 
-    protected synchronized void setChannel(final ExtendedAsynchronousByteChannel channel) {
+    protected void setChannel(final ExtendedAsynchronousByteChannel channel) {
         isTrue("current channel is null", this.channel == null);
         if (isClosed) {
             closeChannel(channel);
         } else {
             this.channel = channel;
+            if (isClosed) {
+                this.channel = null;
+                closeChannel(channel);
+            }
         }
     }
 
@@ -158,16 +162,14 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         isClosed = true;
-        try {
-            closeChannel(channel);
-        } finally {
-            channel = null;
-        }
+        ExtendedAsynchronousByteChannel channel = this.channel;
+        this.channel = null;
+        closeChannel(channel);
     }
 
-    private void closeChannel(final ExtendedAsynchronousByteChannel channel) {
+    private void closeChannel(@Nullable final ExtendedAsynchronousByteChannel channel) {
         try {
             if (channel != null) {
                 channel.close();

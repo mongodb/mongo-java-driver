@@ -47,6 +47,8 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -84,10 +86,11 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final boolean firstBatchEmpty;
     private final int maxWireVersion;
 
-    /* protected by `this` */
+    private final Lock lock = new ReentrantLock();
+    /* protected by `lock` */
     private boolean isOperationInProgress = false;
     private boolean isClosed = false;
-    /* protected by `this` */
+    /* protected by `lock` */
     private volatile boolean isClosePending = false;
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
@@ -145,7 +148,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     public void close() {
         boolean doClose = false;
 
-        synchronized (this) {
+        lock.lock();
+        try {
             if (isOperationInProgress) {
                 isClosePending = true;
             } else if (!isClosed) {
@@ -153,6 +157,8 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 isClosePending = false;
                 doClose = true;
             }
+        } finally {
+            lock.unlock();
         }
 
         if (doClose) {
@@ -178,12 +184,15 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 close();
                 callback.onResult(null, null);
             } else {
-                synchronized (this) {
+                lock.lock();
+                try {
                     if (isClosed()) {
                         callback.onResult(null, new MongoException("next() called after the cursor was closed."));
                         return;
                     }
                     isOperationInProgress = true;
+                } finally {
+                    lock.unlock();
                 }
                 getMore(localCursor, callback);
             }
@@ -204,8 +213,11 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public boolean isClosed() {
-        synchronized (this) {
+        lock.lock();
+        try {
             return isClosed || isClosePending;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -314,9 +326,12 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     private void endOperationInProgress() {
         boolean closePending;
-        synchronized (this) {
+        lock.lock();
+        try {
             isOperationInProgress = false;
             closePending = this.isClosePending;
+        } finally {
+            lock.unlock();
         }
         if (closePending) {
             close();
