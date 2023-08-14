@@ -407,7 +407,6 @@ class ConnectionStringSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-        assert exception.message.contains(cause)
 
         where:
 

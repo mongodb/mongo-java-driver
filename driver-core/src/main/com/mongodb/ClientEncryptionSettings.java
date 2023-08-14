@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;

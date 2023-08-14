@@ -1188,10 +1188,10 @@ public class ConnectionString {
         if (proxyPort != null && proxyPort < 0) {
             throw new IllegalArgumentException("proxyPort should be equal or greater than 0");
         }
-        if (proxyUsername!=null && proxyUsername.isEmpty()) {
+        if (proxyUsername != null && proxyUsername.isEmpty()) {
             throw new IllegalArgumentException("proxyUsername cannot be empty");
         }
-        if (proxyPassword!=null && proxyPassword.isEmpty()) {
+        if (proxyPassword != null && proxyPassword.isEmpty()) {
             throw new IllegalArgumentException("proxyPassword cannot be empty");
         }
         if (proxyUsername == null ^ proxyPassword == null) {

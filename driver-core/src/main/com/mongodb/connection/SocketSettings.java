@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.Block;
 import com.mongodb.ConnectionString;
-import com.mongodb.ProxySettings;
 import com.mongodb.annotations.Immutable;
 
 import java.util.concurrent.TimeUnit;

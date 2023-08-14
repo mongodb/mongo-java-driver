@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb;
+package com.mongodb.connection;
 
 
+import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
@@ -25,12 +26,12 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * Settings for connecting to MongoDB via a SOCKS5 proxy server.
+ * An immutable class representing settings for connecting to MongoDB via a SOCKS5 proxy server.
  *
  * @since 4.11
  */
 @Immutable
-public class ProxySettings {
+public final class ProxySettings {
 
     @Nullable
     private final String host;
@@ -189,10 +190,10 @@ public class ProxySettings {
 
         ProxySettings that = (ProxySettings) o;
 
-        if (port != that.port) {
+        if (!Objects.equals(host, that.host)) {
             return false;
         }
-        if (!Objects.equals(host, that.host)) {
+        if (!Objects.equals(port, that.port)) {
             return false;
         }
         if (!Objects.equals(username, that.username)) {
@@ -204,7 +205,7 @@ public class ProxySettings {
     @Override
     public int hashCode() {
         int result = host != null ? host.hashCode() : 0;
-        result = 31 * result + port;
+        result = 31 * result + (port != null ? port.hashCode() : 0);
         result = 31 * result + (username != null ? username.hashCode() : 0);
         result = 31 * result + (password != null ? password.hashCode() : 0);
         return result;

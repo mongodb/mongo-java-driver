@@ -15,7 +15,7 @@
  */
 package com.mongodb.internal.connection;
 
-import com.mongodb.ProxySettings;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.internal.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
@@ -33,9 +33,12 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -70,7 +73,7 @@ public final class SocksSocket extends Socket {
     }
 
     public SocksSocket(@Nullable final Socket socket, final ProxySettings proxySettings) {
-        int port = proxySettings.getPort() == null ? DEFAULT_PORT : proxySettings.getPort();
+        int port = getPort(proxySettings);
         assertTrue(proxySettings.getHost() != null);
         assertTrue(port >= 0);
 
@@ -88,6 +91,12 @@ public final class SocksSocket extends Socket {
         }
     }
 
+    private static int getPort(final ProxySettings proxySettings) {
+        if (proxySettings.getPort() != null) {
+            return proxySettings.getPort();
+        }
+        return DEFAULT_PORT;
+    }
 
     @Override
     public void connect(final SocketAddress endpoint) throws IOException {
@@ -122,7 +131,8 @@ public final class SocksSocket extends Socket {
     private void sendConnect(final Timeout timeout) throws IOException {
         String host = remoteAddress.getHostName();
         int port = remoteAddress.getPort();
-        final int hostLength = host.getBytes().length;
+        byte[] bytesOfHost = host.getBytes(StandardCharsets.ISO_8859_1);
+        final int hostLength = host.length();
 
         byte[] bufferSent;
         byte[] ipAddress = createByteArrayFromIpAddress(remoteAddress);
@@ -136,7 +146,6 @@ public final class SocksSocket extends Socket {
             case ADDRESS_TYPE_DOMAIN_NAME:
                 bufferSent[3] = ADDRESS_TYPE_DOMAIN_NAME;
                 bufferSent[4] = (byte) hostLength;
-                byte[] bytesOfHost = host.getBytes();
                 System.arraycopy(bytesOfHost, 0, bufferSent, 5, hostLength);
                 bufferSent[5 + host.length()] = (byte) ((port & 0xff00) >> 8);
                 bufferSent[6 + host.length()] = (byte) (port & 0xff);
@@ -153,6 +162,8 @@ public final class SocksSocket extends Socket {
                 bufferSent[4 + ipAddress.length] = (byte) ((port & 0xff00) >> 8);
                 bufferSent[5 + ipAddress.length] = (byte) (port & 0xff);
                 break;
+            default:
+                fail();
         }
         outputStream.write(bufferSent);
         outputStream.flush();
@@ -203,7 +214,7 @@ public final class SocksSocket extends Socket {
         return ADDRESS_TYPE_IPV6;
     }
 
-    private static byte[] createBuffer(final byte addressType, final int hostLength) throws ConnectException {
+    private static byte[] createBuffer(final byte addressType, final int hostLength) {
         switch (addressType) {
             case ADDRESS_TYPE_DOMAIN_NAME:
                 return new byte[7 + hostLength];
@@ -211,8 +222,10 @@ public final class SocksSocket extends Socket {
                 return new byte[6 + LENGTH_OF_IPV4];
             case ADDRESS_TYPE_IPV6:
                 return new byte[6 + LENGTH_OF_IPV6];
+            default:
+                break;
         }
-        throw new ConnectException("Unknown address type");
+        throw fail();
     }
 
     private void checkServerReply(final Timeout timeout) throws IOException {
@@ -247,14 +260,14 @@ public final class SocksSocket extends Socket {
 
     private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
         if (authenticationMethod == SocksAuthenticationMethod.USERNAME_PASSWORD) {
-            final int usernameLength = proxyUsername.getBytes().length;
-            final int passwordLength = proxyPassword.getBytes().length;
-            final byte[] bytesOfUsername = proxyUsername.getBytes();
-            final byte[] bytesOfPassword = proxyPassword.getBytes();
+            final byte[] bytesOfUsername = assertNotNull(proxyUsername).getBytes(StandardCharsets.ISO_8859_1);
+            final byte[] bytesOfPassword = assertNotNull(proxyPassword).getBytes(StandardCharsets.ISO_8859_1);
+            final int usernameLength = bytesOfUsername.length;
+            final int passwordLength = bytesOfPassword.length;
             final byte[] command = new byte[3 + usernameLength + passwordLength];
 
             command[0] = 0x01;
-            command[1] = (byte) proxyUsername.getBytes().length;
+            command[1] = (byte) usernameLength;
             System.arraycopy(bytesOfUsername, 0, command, 2, usernameLength);
             command[2 + usernameLength] = (byte) passwordLength;
             System.arraycopy(bytesOfPassword, 0, command, 3 + usernameLength,

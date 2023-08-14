@@ -1,3 +1,19 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb.internal;
 
 import org.junit.jupiter.api.Assertions;
@@ -34,7 +50,7 @@ class SocksSocket {
             "0:0:0:0:0:0:0:0",
             "0:0:0:0:0:0:0:1",
     })
-    void shouldReturnIpv6Address(String ipAddress) throws SocketException, UnknownHostException {
+    void shouldReturnIpv6Address(final String ipAddress) throws SocketException, UnknownHostException {
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved(ipAddress, 0);
         Assertions.assertTrue(identifyAddressType(remoteAddress) instanceof Inet6Address);
     }
@@ -69,7 +85,7 @@ class SocksSocket {
             "www..com",
             "subdomain.no_underscores_or_dots_allowed,",
     })
-    void shouldReturnNullWhenHostnameIsProvided(String ipAddress) throws SocketException, UnknownHostException {
+    void shouldReturnNullWhenHostnameIsProvided(final String ipAddress) throws SocketException, UnknownHostException {
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved(ipAddress, 0);
         Assertions.assertNull(identifyAddressType(remoteAddress));
     }
@@ -106,7 +122,7 @@ class SocksSocket {
             "20012:db8:85a3::8a2e:370:7334",
             "20012:20012:20012:20012:20012:20012:20012:20012"
     })
-    void shouldReturnNullIfInvalidIpv6Address(String ipAddress) throws SocketException, UnknownHostException {
+    void shouldReturnNullIfInvalidIpv6Address(final String ipAddress) throws SocketException, UnknownHostException {
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved(ipAddress, 0);
         Assertions.assertNull(identifyAddressType(remoteAddress));
     }
@@ -124,7 +140,7 @@ class SocksSocket {
             "1.2.3.4",
             "007.008.009.010" // octal representation
     })
-    void shouldReturnInet4Address(String ipAddress) throws SocketException, UnknownHostException {
+    void shouldReturnInet4Address(final String ipAddress) throws SocketException, UnknownHostException {
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved(ipAddress, 0);
         Assertions.assertTrue(identifyAddressType(remoteAddress) instanceof Inet4Address);
     }
@@ -139,7 +155,7 @@ class SocksSocket {
             "localhost",
             "::::",
     })
-    void shouldReturnNullIfInet4AddressIsInvalid(String ipAddress) throws SocketException, UnknownHostException {
+    void shouldReturnNullIfInet4AddressIsInvalid(final String ipAddress) throws SocketException, UnknownHostException {
         InetSocketAddress remoteAddress = InetSocketAddress.createUnresolved(ipAddress, 0);
         Assertions.assertNull(identifyAddressType(remoteAddress));
     }

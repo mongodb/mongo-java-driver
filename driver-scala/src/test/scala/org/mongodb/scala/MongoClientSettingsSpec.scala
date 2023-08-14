@@ -53,7 +53,11 @@ class MongoClientSettingsSpec extends BaseSpec {
         override def apply(t: ServerSettings.Builder): Unit = {}
       })
       .applyToSocketSettings(new Block[SocketSettings.Builder] {
-        override def apply(t: SocketSettings.Builder): Unit = {}
+        override def apply(t: SocketSettings.Builder): Unit = {
+          t.applyToProxySettings(new Block[ProxySettings.Builder] {
+            override def apply(t: ProxySettings.Builder): Unit = {}
+          })
+        }
       })
       .applyToSslSettings(new Block[SslSettings.Builder] {
         override def apply(t: SslSettings.Builder): Unit = {}

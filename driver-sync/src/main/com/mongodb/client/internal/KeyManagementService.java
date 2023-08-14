@@ -16,7 +16,7 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.ProxySettings;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.connection.SocksSocket;
 import com.mongodb.internal.connection.SslHelper;

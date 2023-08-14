@@ -19,7 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
-import com.mongodb.ProxySettings;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.BufferProvider;
