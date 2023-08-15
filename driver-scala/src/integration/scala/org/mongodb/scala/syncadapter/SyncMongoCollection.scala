@@ -480,34 +480,6 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
   override def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): Unit =
     wrapped.drop(unwrap(clientSession), dropCollectionOptions).toFuture().get()
 
-  override def createSearchIndex(indexName: String, definition: Bson) =
-    wrapped.createSearchIndex(indexName, definition).toFuture().get()
-
-  override def createSearchIndex(definition: Bson) =
-    wrapped.createSearchIndex(definition).toFuture().get()
-
-  override def createSearchIndexes(searchIndexModels: java.util.List[SearchIndexModel]) =
-    wrapped.createSearchIndexes(searchIndexModels.asScala.toList).toFuture().get().asJava
-
-  def updateSearchIndex(indexName: String, definition: Bson) =
-    wrapped.updateSearchIndex(indexName, definition).toFuture().get()
-
-  def dropSearchIndex(indexName: String) = wrapped.dropSearchIndex(indexName).toFuture().get()
-
-  override def listSearchIndexes() = SyncListSearchIndexesIterable(
-    wrapped
-      .listSearchIndexes()
-  )
-
-  override def listSearchIndexes[TResult](resultClass: Class[TResult]) =
-    SyncListSearchIndexesIterable[TResult](
-      wrapped
-        .listSearchIndexes[TResult]()(
-          DefaultsTo.overrideDefault[TResult, org.mongodb.scala.Document],
-          ClassTag(resultClass)
-        )
-    )
-
   override def createIndex(keys: Bson): String = wrapped.createIndex(keys).toFuture().get()
 
   override def createIndex(keys: Bson, indexOptions: IndexOptions) =
