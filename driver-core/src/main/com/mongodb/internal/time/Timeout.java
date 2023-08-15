@@ -17,11 +17,13 @@ package com.mongodb.internal.time;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -35,28 +37,32 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  */
 @Immutable
 public final class Timeout {
-    private static final Timeout INFINITE = new Timeout(-1, Timer.useless());
-    private static final Timeout IMMEDIATE = new Timeout(0, Timer.useless());
+    private static final Timeout INFINITE = new Timeout(-1, null);
+    private static final Timeout IMMEDIATE = new Timeout(0, null);
 
     private final long durationNanos;
-    private final Timer timer;
+    /**
+     * {@code null} iff {@code this} is {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate}.
+     */
+    @Nullable
+    private final TimePoint start;
 
-    private Timeout(final long durationNanos, final Timer timer) {
+    private Timeout(final long durationNanos, @Nullable final TimePoint start) {
         this.durationNanos = durationNanos;
-        this.timer = timer;
+        this.start = start;
     }
 
     /**
      * Converts the specified {@code duration} from {@code unit}s to {@link TimeUnit#NANOSECONDS}
-     * as specified by {@link TimeUnit#toNanos(long)} and then acts identically to {@link #started(long, Timer)}.
+     * as specified by {@link TimeUnit#toNanos(long)} and then acts identically to {@link #started(long, TimePoint)}.
      * <p>
      * Note that the contract of this method is also used in some places to specify the behavior of methods that accept
      * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
      * so it cannot be changed without updating those methods.</p>
-     * @see #started(long, Timer)
+     * @see #started(long, TimePoint)
      */
-    public static Timeout started(final long duration, final TimeUnit unit, final Timer timer) {
-        return started(unit.toNanos(duration), timer);
+    public static Timeout started(final long duration, final TimeUnit unit, final TimePoint at) {
+        return started(unit.toNanos(duration), assertNotNull(at));
     }
 
     /**
@@ -69,25 +75,25 @@ public final class Timeout {
      * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
      * so it cannot be changed without updating those methods.</p>
      */
-    public static Timeout started(final long durationNanos, final Timer timer) {
+    public static Timeout started(final long durationNanos, final TimePoint at) {
         if (durationNanos < 0 || durationNanos == Long.MAX_VALUE) {
             return infinite();
         } else if (durationNanos == 0) {
             return immediate();
         } else {
-            return new Timeout(durationNanos, timer);
+            return new Timeout(durationNanos, assertNotNull(at));
         }
     }
 
     /**
-     * @see #started(long, Timer)
+     * @see #started(long, TimePoint)
      */
     public static Timeout infinite() {
         return INFINITE;
     }
 
     /**
-     * @see #started(long, Timer)
+     * @see #started(long, TimePoint)
      */
     public static Timeout immediate() {
         return IMMEDIATE;
@@ -97,13 +103,11 @@ public final class Timeout {
      * Returns 0 or a positive value.
      * 0 means that the timeout has expired.
      *
-     * @throws AssertionError If the timeout is {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate},
-     * because such timeouts use {@link Timer#useless()}.
+     * @throws AssertionError If the timeout is {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate}.
      */
     @VisibleForTesting(otherwise = PRIVATE)
-    long nonNegativeRemainingNanos(final long currentNanos) {
-        assertFalse(isInfinite() || isImmediate());
-        return Math.max(0, durationNanos - timer.elapsedNanos(currentNanos));
+    long nonNegativeRemainingNanos(final TimePoint now) {
+        return Math.max(0, durationNanos - now.durationSince(assertNotNull(start)).toNanos());
     }
 
     /**
@@ -125,7 +129,7 @@ public final class Timeout {
      */
     public long remaining(final TimeUnit unit) {
         assertFalse(isInfinite());
-        return isImmediate() ? 0 : convertRoundUp(nonNegativeRemainingNanos(System.nanoTime()), unit);
+        return isImmediate() ? 0 : convertRoundUp(nonNegativeRemainingNanos(TimePoint.now()), unit);
     }
 
     /**
@@ -180,12 +184,12 @@ public final class Timeout {
             return false;
         }
         Timeout other = (Timeout) o;
-        return durationNanos == other.durationNanos && timer == other.timer;
+        return durationNanos == other.durationNanos && start == other.start;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(durationNanos, timer);
+        return Objects.hash(durationNanos, start);
     }
 
     /**
@@ -197,7 +201,7 @@ public final class Timeout {
     public String toString() {
         return "Timeout{"
                 + "durationNanos=" + durationNanos
-                + ", timer=" + timer
+                + ", start=" + start
                 + '}';
     }
 
@@ -219,11 +223,6 @@ public final class Timeout {
     @VisibleForTesting(otherwise = PRIVATE)
     long durationNanos() {
         return durationNanos;
-    }
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    Timer timer() {
-        return timer;
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
