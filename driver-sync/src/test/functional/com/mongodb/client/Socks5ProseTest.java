@@ -28,6 +28,10 @@ import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.extension.ConditionEvaluationResult;
+import org.junit.jupiter.api.extension.ExecutionCondition;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
@@ -47,23 +51,14 @@ import static org.mockito.Mockito.atLeast;
 /**
  * See https://github.com/mongodb/specifications/blob/master/source/socks5-support/tests/README.rst#prose-tests
  */
+@ExtendWith(Socks5ProseTest.SocksProxyPropertyCondition.class)
 class Socks5ProseTest {
-    private static String mongoReplicaSetUriPrefix;
-    private static String mongoSingleMappedUriPrefix;
-    private static Boolean socksAuthEnabled;
-    private static String proxyHost;
-    private static int proxyPort;
+    private static final String MONGO_REPLICA_SET_URI_PREFIX = System.getProperty("org.mongodb.test.uri");
+    private static final String MONGO_SINGLE_MAPPED_URI_PREFIX = System.getProperty("org.mongodb.test.uri.singleHost");
+    private static final Boolean SOCKS_AUTH_ENABLED = Boolean.valueOf(System.getProperty("org.mongodb.test.uri.socks.auth.enabled"));
+    private static final String PROXY_HOST = System.getProperty("org.mongodb.test.uri.proxyHost");
+    private static final int PROXY_PORT = Integer.parseInt(System.getProperty("org.mongodb.test.uri.proxyPort"));
     private MongoClient mongoClient;
-
-    public Socks5ProseTest() {
-        assumeTrue(System.getProperty("org.mongodb.test.uri.socks.auth.enabled") != null);
-
-        mongoReplicaSetUriPrefix = System.getProperty("org.mongodb.test.uri");
-        mongoSingleMappedUriPrefix = System.getProperty("org.mongodb.test.uri.singleHost");
-        socksAuthEnabled = Boolean.valueOf(System.getProperty("org.mongodb.test.uri.socks.auth.enabled"));
-        proxyHost = System.getProperty("org.mongodb.test.uri.proxyHost");
-        proxyPort = Integer.parseInt(System.getProperty("org.mongodb.test.uri.proxyPort"));
-    }
 
     @After
     public void tearDown() {
@@ -71,24 +66,24 @@ class Socks5ProseTest {
     }
 
     static Stream<ConnectionString> noAuthSettings() {
-        return Stream.of(buildConnectionString(mongoSingleMappedUriPrefix, true),
-                buildConnectionString(mongoReplicaSetUriPrefix, false));
+        return Stream.of(buildConnectionString(MONGO_SINGLE_MAPPED_URI_PREFIX, true),
+                buildConnectionString(MONGO_REPLICA_SET_URI_PREFIX, false));
     }
 
     static Stream<ConnectionString> invalidAuthSettings() {
-        return Stream.of(buildConnectionString(mongoSingleMappedUriPrefix, true, "nonexistentuser", "badauth"),
-                buildConnectionString(mongoReplicaSetUriPrefix, false, "nonexistentuser", "badauth"));
+        return Stream.of(buildConnectionString(MONGO_SINGLE_MAPPED_URI_PREFIX, true, "nonexistentuser", "badauth"),
+                buildConnectionString(MONGO_REPLICA_SET_URI_PREFIX, false, "nonexistentuser", "badauth"));
     }
 
     static Stream<ConnectionString> validAuthSettings() {
-        return Stream.of(buildConnectionString(mongoSingleMappedUriPrefix, true, "username", "p4ssw0rd"),
-                buildConnectionString(mongoReplicaSetUriPrefix, false, "username", "p4ssw0rd"));
+        return Stream.of(buildConnectionString(MONGO_SINGLE_MAPPED_URI_PREFIX, true, "username", "p4ssw0rd"),
+                buildConnectionString(MONGO_REPLICA_SET_URI_PREFIX, false, "username", "p4ssw0rd"));
     }
 
     @ParameterizedTest(name = "Should connect without authentication in connection string. ConnectionString: {0}")
     @MethodSource({"noAuthSettings", "invalidAuthSettings"})
     public void shouldConnectWithoutAuth(final ConnectionString connectionString) {
-        assumeFalse(socksAuthEnabled);
+        assumeFalse(SOCKS_AUTH_ENABLED);
         mongoClient = MongoClients.create(connectionString);
         runHelloCommand(mongoClient);
     }
@@ -96,7 +91,7 @@ class Socks5ProseTest {
     @ParameterizedTest(name = "Should connect without authentication in proxy settings. ConnectionString: {0}")
     @MethodSource({"noAuthSettings", "invalidAuthSettings"})
     public void shouldConnectWithoutAuthInProxySettings(final ConnectionString connectionString) {
-        assumeFalse(socksAuthEnabled);
+        assumeFalse(SOCKS_AUTH_ENABLED);
         mongoClient = MongoClients.create(buildMongoClientSettings(connectionString));
         runHelloCommand(mongoClient);
     }
@@ -104,7 +99,7 @@ class Socks5ProseTest {
     @ParameterizedTest(name = "Should not connect without valid authentication in connection string. ConnectionString: {0}")
     @MethodSource({"noAuthSettings", "invalidAuthSettings"})
     public void shouldNotConnectWithoutAuth(final ConnectionString connectionString) {
-        assumeTrue(socksAuthEnabled);
+        assumeTrue(SOCKS_AUTH_ENABLED);
         ClusterListener clusterListener = Mockito.mock(ClusterListener.class);
         ArgumentCaptor<ClusterDescriptionChangedEvent> captor = ArgumentCaptor.forClass(ClusterDescriptionChangedEvent.class);
 
@@ -118,7 +113,7 @@ class Socks5ProseTest {
     @ParameterizedTest(name = "Should not connect without valid authentication in proxy settings. ConnectionString: {0}")
     @MethodSource({"noAuthSettings", "invalidAuthSettings"})
     public void shouldNotConnectWithoutAuthInProxySettings(final ConnectionString connectionString) {
-        assumeTrue(socksAuthEnabled);
+        assumeTrue(SOCKS_AUTH_ENABLED);
         ClusterListener clusterListener = Mockito.mock(ClusterListener.class);
         ArgumentCaptor<ClusterDescriptionChangedEvent> captor = ArgumentCaptor.forClass(ClusterDescriptionChangedEvent.class);
 
@@ -131,7 +126,7 @@ class Socks5ProseTest {
     @ParameterizedTest(name = "Should connect with valid authentication in connection string. ConnectionString: {0}")
     @MethodSource("validAuthSettings")
     public void shouldConnectWithValidAuth(final ConnectionString connectionString) {
-        assumeTrue(socksAuthEnabled);
+        assumeTrue(SOCKS_AUTH_ENABLED);
         mongoClient = MongoClients.create(connectionString);
         runHelloCommand(mongoClient);
     }
@@ -139,7 +134,7 @@ class Socks5ProseTest {
     @ParameterizedTest(name = "Should connect with valid authentication in proxy settings. ConnectionString: {0}")
     @MethodSource("validAuthSettings")
     public void shouldConnectWithValidAuthInProxySettings(final ConnectionString connectionString) {
-        assumeTrue(socksAuthEnabled);
+        assumeTrue(SOCKS_AUTH_ENABLED);
         mongoClient = MongoClients.create(buildMongoClientSettings(connectionString));
         runHelloCommand(mongoClient);
     }
@@ -173,8 +168,8 @@ class Socks5ProseTest {
             joiner = new StringJoiner("&", "/?", "");
         }
 
-        joiner.add("proxyHost=" + proxyHost)
-                .add("proxyPort=" + proxyPort);
+        joiner.add("proxyHost=" + PROXY_HOST)
+                .add("proxyPort=" + PROXY_PORT);
         if (proxyPassword != null && proxyUsername != null) {
             joiner.add("proxyPassword=" + proxyPassword)
                     .add("proxyUsername=" + proxyUsername);
@@ -222,5 +217,16 @@ class Socks5ProseTest {
                     builder.serverSelectionTimeout(5, TimeUnit.SECONDS);
                 })
                 .build());
+    }
+
+    public static class SocksProxyPropertyCondition implements ExecutionCondition {
+        @Override
+        public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
+            if (System.getProperty("org.mongodb.test.uri.socks.auth.enabled") != null) {
+                return ConditionEvaluationResult.enabled("Test enabled because socks proxy configuration exists");
+            } else {
+                return ConditionEvaluationResult.disabled("Test disabled because socks proxy configuration is missing");
+            }
+        }
     }
 }
