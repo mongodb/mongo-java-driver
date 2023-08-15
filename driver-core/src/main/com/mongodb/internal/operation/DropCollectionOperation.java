@@ -38,16 +38,16 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -252,7 +252,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
                 finalCallback.onResult(null, null);
             } else {
                 executeCommandAsync(binding, namespace.getDatabaseName(), nextCommandFunction.get(),
-                        connection, writeConcernErrorWriteTransformer(), this);
+                        connection, writeConcernErrorTransformerAsync(), this);
             }
         }
     }

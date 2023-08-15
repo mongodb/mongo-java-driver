@@ -37,12 +37,14 @@ import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.ReadPreference.secondary;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -124,7 +126,7 @@ public class DBTest extends DatabaseTestCase {
         collection.drop();
         database.createCollection(collectionName, new BasicDBObject("capped", true)
                                                   .append("size", 242880));
-        assertTrue(database.getCollection(collectionName).isCapped());
+        assertTrue(isCapped(database.getCollection(collectionName)));
     }
 
     @Test
@@ -134,7 +136,7 @@ public class DBTest extends DatabaseTestCase {
                                                                                          .append("size", 242880)
                                                                                          .append("max", 10));
 
-        assertThat(cappedCollectionWithMax.getStats(), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
+        assertThat(storageStats(cappedCollectionWithMax), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
 
         for (int i = 0; i < 11; i++) {
             cappedCollectionWithMax.insert(new BasicDBObject("x", i));
@@ -148,7 +150,7 @@ public class DBTest extends DatabaseTestCase {
         BasicDBObject creationOptions = new BasicDBObject("capped", false);
         database.createCollection(collectionName, creationOptions);
 
-        assertFalse(database.getCollection(collectionName).isCapped());
+        assertFalse(isCapped(database.getCollection(collectionName)));
     }
 
     @Test(expected = MongoCommandException.class)
@@ -346,5 +348,26 @@ public class DBTest extends DatabaseTestCase {
     BsonDocument getCollectionInfo(final String collectionName) {
         return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec())
                 .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
+    }
+
+    private boolean isCapped(final DBCollection collection) {
+        if (serverVersionLessThan(6, 2)) {
+            return collection.isCapped();
+        } else {
+            Object capped = storageStats(collection).get("capped");
+            return Boolean.TRUE.equals(capped) || Integer.valueOf(1).equals(capped);
+        }
+    }
+
+    private DBObject storageStats(final DBCollection collection) {
+        if (serverVersionLessThan(6, 2)) {
+            return collection.getStats();
+        } else {
+            try (Cursor cursor = collection.aggregate(singletonList(
+                    new BasicDBObject("$collStats", new BasicDBObject("storageStats", new BasicDBObject()))),
+                    AggregationOptions.builder().build())) {
+                return (DBObject) cursor.next().get("storageStats");
+            }
+        }
     }
 }

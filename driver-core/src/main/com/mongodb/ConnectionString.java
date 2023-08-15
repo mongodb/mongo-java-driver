@@ -421,8 +421,8 @@ public class ConnectionString {
             + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
         }
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
-        if (isSrvProtocol && !combinedOptionsMaps.containsKey("ssl")) {
-            combinedOptionsMaps.put("ssl", singletonList("true"));
+        if (isSrvProtocol && !(combinedOptionsMaps.containsKey("tls") || combinedOptionsMaps.containsKey("ssl"))) {
+            combinedOptionsMaps.put("tls", singletonList("true"));
         }
         translateOptions(combinedOptionsMaps);
 

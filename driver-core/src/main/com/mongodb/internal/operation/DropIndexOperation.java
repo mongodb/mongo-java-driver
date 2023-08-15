@@ -31,17 +31,17 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
@@ -116,7 +116,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
             } else {
                 SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
                 executeCommandAsync(binding, namespace.getDatabaseName(), getCommand(),
-                        connection, writeConcernErrorWriteTransformer(), (result, t1) -> {
+                        connection, writeConcernErrorTransformerAsync(), (result, t1) -> {
                             if (t1 != null && !isNamespaceError(t1)) {
                                 releasingCallback.onResult(null, t1);
                             } else {

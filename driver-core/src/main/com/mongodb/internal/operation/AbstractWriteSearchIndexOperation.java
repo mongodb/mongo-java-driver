@@ -26,12 +26,12 @@ import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
-import static com.mongodb.internal.operation.OperationHelper.withAsyncSourceAndConnection;
-import static com.mongodb.internal.operation.OperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 
 /**
  * An abstract class for defining operations for managing Atlas Search indexes.
@@ -65,7 +65,7 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
         withAsyncSourceAndConnection(binding::getWriteConnectionSource, false, callback,
                 (connectionSource, connection, cb) ->
                         executeCommandAsync(binding, namespace.getDatabaseName(), buildCommand(), connection,
-                                writeConcernErrorWriteTransformer(), (result, commandExecutionError) -> {
+                                writeConcernErrorTransformerAsync(), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
                                         callback.onResult(result, null);

@@ -59,8 +59,62 @@ public final class ChangeStreamDocument<TDocument> {
     private final BsonInt64 txnNumber;
     private final BsonDocument lsid;
     private final BsonDateTime wallTime;
+    private final SplitEvent splitEvent;
     @BsonExtraElements
     private final BsonDocument extraElements;
+
+    /**
+     * Creates a new instance
+     *
+     * @param operationTypeString the operation type
+     * @param resumeToken the resume token
+     * @param namespaceDocument the BsonDocument representing the namespace
+     * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
+     * @param fullDocument the full document
+     * @param fullDocumentBeforeChange the full document before change
+     * @param documentKey a document containing the _id of the changed document
+     * @param clusterTime the cluster time at which the change occured
+     * @param updateDescription the update description
+     * @param txnNumber the transaction number
+     * @param lsid the identifier for the session associated with the transaction
+     * @param wallTime the wall time of the server at the moment the change occurred
+     * @param splitEvent the split event
+     * @param extraElements any extra elements that are part of the change stream document but not otherwise mapped to fields
+     *
+     * @since 4.11
+     */
+    @BsonCreator
+    public ChangeStreamDocument(
+            @Nullable @BsonProperty("operationType") final String operationTypeString,
+            @BsonProperty("resumeToken") final BsonDocument resumeToken,
+            @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
+            @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
+            @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
+            @Nullable @BsonProperty("fullDocumentBeforeChange") final TDocument fullDocumentBeforeChange,
+            @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
+            @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
+            @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
+            @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
+            @Nullable @BsonProperty("lsid") final BsonDocument lsid,
+            @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime,
+            @Nullable @BsonProperty("splitEvent") final SplitEvent splitEvent,
+            @Nullable @BsonProperty final BsonDocument extraElements) {
+        this.resumeToken = resumeToken;
+        this.namespaceDocument = namespaceDocument;
+        this.destinationNamespaceDocument = destinationNamespaceDocument;
+        this.fullDocumentBeforeChange = fullDocumentBeforeChange;
+        this.documentKey = documentKey;
+        this.fullDocument = fullDocument;
+        this.clusterTime = clusterTime;
+        this.operationTypeString = operationTypeString;
+        this.operationType = operationTypeString == null ? null : OperationType.fromString(operationTypeString);
+        this.updateDescription = updateDescription;
+        this.txnNumber = txnNumber;
+        this.lsid = lsid;
+        this.wallTime = wallTime;
+        this.splitEvent = splitEvent;
+        this.extraElements = extraElements;
+    }
 
     /**
      * Creates a new instance
@@ -81,7 +135,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @since 4.7
      */
-    @BsonCreator
+    @Deprecated
     public ChangeStreamDocument(@BsonProperty("operationType") final String operationTypeString,
             @BsonProperty("resumeToken") final BsonDocument resumeToken,
             @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
@@ -95,20 +149,8 @@ public final class ChangeStreamDocument<TDocument> {
             @Nullable @BsonProperty("lsid") final BsonDocument lsid,
             @Nullable @BsonProperty("wallTime") final BsonDateTime wallTime,
             @Nullable @BsonProperty final BsonDocument extraElements) {
-        this.resumeToken = resumeToken;
-        this.namespaceDocument = namespaceDocument;
-        this.destinationNamespaceDocument = destinationNamespaceDocument;
-        this.fullDocumentBeforeChange = fullDocumentBeforeChange;
-        this.documentKey = documentKey;
-        this.fullDocument = fullDocument;
-        this.clusterTime = clusterTime;
-        this.operationTypeString = operationTypeString;
-        this.operationType = OperationType.fromString(operationTypeString);
-        this.updateDescription = updateDescription;
-        this.txnNumber = txnNumber;
-        this.lsid = lsid;
-        this.wallTime = wallTime;
-        this.extraElements = extraElements;
+        this(operationTypeString, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey,
+                clusterTime, updateDescription, txnNumber, lsid, wallTime, null, extraElements);
     }
 
     /**
@@ -139,7 +181,7 @@ public final class ChangeStreamDocument<TDocument> {
                                 @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
                                 @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
         this(operationTypeString, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid, null, null);
+                clusterTime, updateDescription, txnNumber, lsid, null, null, null);
     }
 
     /**
@@ -170,7 +212,7 @@ public final class ChangeStreamDocument<TDocument> {
             final BsonInt64 txnNumber,
             final BsonDocument lsid) {
         this(operationType.getValue(), resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, null, documentKey,
-                clusterTime, updateDescription, txnNumber, lsid, null, null);
+                clusterTime, updateDescription, txnNumber, lsid, null, null, null);
     }
 
     /**
@@ -360,26 +402,30 @@ public final class ChangeStreamDocument<TDocument> {
 
     /**
      * Returns the operation type as a string.
-     *
      * <p>
      * This method is useful when using a driver release that has not yet been updated to include a newer operation type in the
      * {@link OperationType} enum.  In that case, {@link #getOperationType()} will return {@link OperationType#OTHER} and this method can
      * be used to retrieve the actual operation type as a string value.
-     * </p>
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
      *
      * @return the operation type as a string
      * @since 4.6
      * @see #getOperationType()
      */
+    @Nullable
     public String getOperationTypeString() {
         return operationTypeString;
     }
 
     /**
-     * Returns the operationType
+     * Returns the operationType.
+     * <p>
+     * May return null only if <code>$changeStreamSplitLargeEvent</code> is used.
      *
      * @return the operationType
      */
+    @Nullable
     public OperationType getOperationType() {
         return operationType;
     }
@@ -431,6 +477,18 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
+     * The split event.
+     *
+     * @return the split event
+     * @since 4.11
+     * @mongodb.server.release 6.0.9
+     */
+    @Nullable
+    public SplitEvent getSplitEvent() {
+        return splitEvent;
+    }
+
+    /**
      * Any extra elements that are part of the change stream document but not otherwise mapped to fields.
      *
      * @return Any extra elements that are part of the change stream document but not otherwise mapped to fields.
@@ -462,64 +520,42 @@ public final class ChangeStreamDocument<TDocument> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ChangeStreamDocument<?> that = (ChangeStreamDocument<?>) o;
-
-        if (!Objects.equals(resumeToken, that.resumeToken)) {
-            return false;
-        }
-        if (!Objects.equals(namespaceDocument, that.namespaceDocument)) {
-            return false;
-        }
-        if (!Objects.equals(destinationNamespaceDocument, that.destinationNamespaceDocument)) {
-            return false;
-        }
-        if (!Objects.equals(fullDocument, that.fullDocument)) {
-            return false;
-        }
-        if (!Objects.equals(fullDocumentBeforeChange, that.fullDocumentBeforeChange)) {
-            return false;
-        }
-        if (!Objects.equals(documentKey, that.documentKey)) {
-            return false;
-        }
-        if (!Objects.equals(operationTypeString, that.operationTypeString)) {
-            return false;
-        }
-        if (!Objects.equals(clusterTime, that.clusterTime)) {
-            return false;
-        }
-        if (!Objects.equals(updateDescription, that.updateDescription)) {
-            return false;
-        }
-        if (!Objects.equals(txnNumber, that.txnNumber)) {
-            return false;
-        }
-        if (!Objects.equals(lsid, that.lsid)) {
-            return false;
-        }
-        if (!Objects.equals(wallTime, that.wallTime)) {
-            return false;
-        }
-
-        return true;
+        return Objects.equals(resumeToken, that.resumeToken)
+                && Objects.equals(namespaceDocument, that.namespaceDocument)
+                && Objects.equals(destinationNamespaceDocument, that.destinationNamespaceDocument)
+                && Objects.equals(fullDocument, that.fullDocument)
+                && Objects.equals(fullDocumentBeforeChange, that.fullDocumentBeforeChange)
+                && Objects.equals(documentKey, that.documentKey)
+                && Objects.equals(clusterTime, that.clusterTime)
+                && Objects.equals(operationTypeString, that.operationTypeString)
+                // operationType covered by operationTypeString
+                && Objects.equals(updateDescription, that.updateDescription)
+                && Objects.equals(txnNumber, that.txnNumber)
+                && Objects.equals(lsid, that.lsid)
+                && Objects.equals(wallTime, that.wallTime)
+                && Objects.equals(splitEvent, that.splitEvent)
+                && Objects.equals(extraElements, that.extraElements);
     }
 
     @Override
     public int hashCode() {
-        int result = resumeToken != null ? resumeToken.hashCode() : 0;
-        result = 31 * result + (namespaceDocument != null ? namespaceDocument.hashCode() : 0);
-        result = 31 * result + (destinationNamespaceDocument != null ? destinationNamespaceDocument.hashCode() : 0);
-        result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
-        result = 31 * result + (fullDocumentBeforeChange != null ? fullDocumentBeforeChange.hashCode() : 0);
-        result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
-        result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
-        result = 31 * result + (operationTypeString != null ? operationTypeString.hashCode() : 0);
-        result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
-        result = 31 * result + (txnNumber != null ? txnNumber.hashCode() : 0);
-        result = 31 * result + (lsid != null ? lsid.hashCode() : 0);
-        result = 31 * result + (wallTime != null ? wallTime.hashCode() : 0);
-        return result;
+        return Objects.hash(
+                resumeToken,
+                namespaceDocument,
+                destinationNamespaceDocument,
+                fullDocument,
+                fullDocumentBeforeChange,
+                documentKey,
+                clusterTime,
+                operationTypeString,
+                // operationType covered by operationTypeString
+                updateDescription,
+                txnNumber,
+                lsid,
+                wallTime,
+                splitEvent,
+                extraElements);
     }
 
     @Override
@@ -536,6 +572,7 @@ public final class ChangeStreamDocument<TDocument> {
                 + ", updateDescription=" + updateDescription
                 + ", txnNumber=" + txnNumber
                 + ", lsid=" + lsid
+                + ", splitEvent=" + splitEvent
                 + ", wallTime=" + wallTime
                 + "}";
     }

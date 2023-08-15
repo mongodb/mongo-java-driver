@@ -69,6 +69,18 @@ task integrationTest(type: Test) {
 
 check.dependsOn integrationTest
 
+// ===================
+//     Scala checks
+// ===================
+tasks.register("scalaCheck") {
+    description = "Runs all the Scala checks"
+    group = "verification"
+
+    dependsOn("clean", "compileTestScala", "compileIntegrationTestScala", "check")
+    tasks.findByName("check").mustRunAfter("clean")
+}
+
+
 task aggregatedScalaDoc(type: ScalaDoc) {
     description('Unified Scaladoc for bson-scala and driver-scala')
     group('documentation')

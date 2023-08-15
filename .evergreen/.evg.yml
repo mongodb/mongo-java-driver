@@ -901,7 +901,7 @@ tasks:
       commands:
         - func: "exec script"
           vars:
-            file: ".evergreen/compile.sh"
+            file: ".evergreen/static-checks.sh"
 
     - name: "test"
       commands:

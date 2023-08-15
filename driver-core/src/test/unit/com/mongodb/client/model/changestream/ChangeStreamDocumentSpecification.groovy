@@ -46,12 +46,13 @@ class ChangeStreamDocumentSpecification extends Specification {
         def txnNumber = new BsonInt64(1)
         def lsid = BsonDocument.parse('{id: 1, uid: 1}')
         def wallTime = new BsonDateTime(42)
+        def splitEvent = new SplitEvent(1, 2);
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
         when:
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
                 destinationNamespaceDocument, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, txnNumber,
-                lsid, wallTime, extraElements)
+                lsid, wallTime, splitEvent, extraElements)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -70,6 +71,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getTxnNumber() == txnNumber
         changeStreamDocument.getLsid() == lsid
         changeStreamDocument.getWallTime() == wallTime
+        changeStreamDocument.getSplitEvent() == splitEvent
         changeStreamDocument.getExtraElements() == extraElements
 
         when:
@@ -169,20 +171,21 @@ class ChangeStreamDocumentSpecification extends Specification {
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
         def documentKey = BsonDocument.parse('{_id : 1}')
         def clusterTime = new BsonTimestamp(1234, 2)
-        def operationType = OperationType.DROP_DATABASE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), singletonList(new TruncatedArray('d', 1)))
 
         //noinspection GrDeprecatedAPIUsage
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(null, resumeToken, namespaceDocument,
                 (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
         //noinspection GrDeprecatedAPIUsage
-        def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
+        def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(null, resumeToken,
                 namespaceDocumentEmpty, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc,
         null, null)
 
         expect:
         changeStreamDocument.getNamespace() == null
         changeStreamDocument.getDatabaseName() == 'databaseName'
+        changeStreamDocument.getOperationTypeString() == null
+        changeStreamDocument.getOperationType() == null
 
         changeStreamDocumentEmptyNamespace.getNamespace() == null
         changeStreamDocumentEmptyNamespace.getDatabaseName() == null

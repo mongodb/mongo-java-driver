@@ -1914,7 +1914,12 @@ public class DBCollection {
      *
      * @return a CommandResult containing the statistics about this collection
      * @mongodb.driver.manual reference/command/collStats/ collStats Command
+     * @mongodb.driver.manual reference/operator/aggregation/collStats/ $collStats
+     * @deprecated If you are using server release 3.4 or newer, use the {@code $collStats} aggregation pipeline stage via
+     * {@link #aggregate(List, AggregationOptions)} instead.
+     * This method uses the {@code collStats} command, which is deprecated since server release 6.2.
      */
+    @Deprecated
     public CommandResult getStats() {
         return getDB().executeCommand(new BsonDocument("collStats", new BsonString(getName())), getReadPreference());
     }
@@ -1923,8 +1928,13 @@ public class DBCollection {
      * Checks whether this collection is capped
      *
      * @return true if this is a capped collection
-     * @mongodb.driver.manual /core/capped-collections/#check-if-a-collection-is-capped Capped Collections
+     * @mongodb.driver.manual core/capped-collections/#check-if-a-collection-is-capped Capped Collections
+     * @mongodb.driver.manual reference/operator/aggregation/collStats/ $collStats
+     * @deprecated If you are using server release 3.4 or newer, use the {@code $collStats} aggregation pipeline stage via
+     * {@link #aggregate(List, AggregationOptions)} instead, and inspect the {@code storageStats.capped} field.
+     * This method uses the {@code collStats} command, which is deprecated since server release 6.2.
      */
+    @Deprecated
     public boolean isCapped() {
         CommandResult commandResult = getStats();
         Object cappedField = commandResult.get("capped");

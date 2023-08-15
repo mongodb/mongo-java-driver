@@ -25,9 +25,6 @@ import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformer;
-import com.mongodb.internal.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -43,14 +40,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String RESULT = "result";
@@ -196,8 +197,9 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT), asyncTransformer(), retryReads, errHandlingCallback);
+       executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+               CommandResultDocumentCodec.create(this.decoder, FIELD_NAMES_WITH_RESULT), asyncTransformer(), retryReads,
+               errHandlingCallback);
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
@@ -238,10 +240,11 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
+        assertNotNull(result);
         return cursorDocumentToQueryResult(result.getDocument(CURSOR), description.getServerAddress());
     }
 
-    private CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>> transformer() {
+    private CommandReadTransformer<BsonDocument, QueryBatchCursor<T>> transformer() {
         return (result, source, connection) -> {
             QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
             return new QueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, comment,

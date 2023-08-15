@@ -65,9 +65,10 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
                         null,
                         BsonDocument.parse('{userName: "alice123", _id: 1}'),
-                        new BsonTimestamp(1234, 2)
-                        ,
-                        null, null, null, null, null
+                        new BsonTimestamp(1234, 2),
+                        null, null, null, null,
+                        new SplitEvent(3, 4),
+                        null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.UPDATE.value,
                         BsonDocument.parse('{token: true}'),
@@ -195,6 +196,10 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
       _id: 1,
       userName: 'alice123',
       name: 'Alice'
+   },
+   splitEvent: {
+      fragment: 3,
+      of: 4
    }
 }
 ''',

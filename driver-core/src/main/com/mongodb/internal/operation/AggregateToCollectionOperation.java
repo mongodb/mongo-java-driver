@@ -40,9 +40,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableRead;
-import static com.mongodb.internal.operation.CommandOperationHelper.executeRetryableReadAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
