@@ -26,7 +26,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * A <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/doc-files/ValueBased.html">value-based</a> class
- * representing a point on a timeline. The origin on this timeline has no known relation to the
+ * representing a point on a timeline. The origin of this timeline has no known relation to the
  * {@linkplain  Clock#systemUTC() system clock}. The same timeline is used by all {@link TimePoint}s within the same process.
  * <p>
  * Methods operating on a pair of {@link TimePoint}s,
@@ -87,10 +87,11 @@ public final class TimePoint implements Comparable<TimePoint> {
      *     <li>
      *         A negative value means either of the following
      *         <ol>
-     *             <li>the clock from which {@link #nanos} was read jumped backwards, which must not happen;</li>
+     *             <li>{@code earlierNanos} is not earlier than {@link #nanos},
+     *             for example, because the clock from which {@code earlierNanos}/{@link #nanos} were read jumped backwards;</li>
      *             <li>(n * 2<sup>63</sup> - 1; (n + 1) * 2<sup>63</sup>)<sup>(*)</sup> nanoseconds has elapsed.</li>
      *         </ol>
-     *         This method interprets a negative value as {@link #nanos} being earlier than {@code earlierNanos}.
+     *         This method throws an {@link AssertionError} if this happens.
      *     </li>
      *     <li>
      *         0 means either of the following
