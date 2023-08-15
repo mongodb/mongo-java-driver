@@ -54,7 +54,10 @@ final class TimePointTest {
 
     private static Stream<Arguments> nanosAndDurationsArguments() {
         Collection<Long> nanos = asList(Long.MIN_VALUE, Long.MIN_VALUE / 2, 0L, Long.MAX_VALUE / 2, Long.MAX_VALUE);
-        Collection<Long> durations = asList(-Long.MAX_VALUE, -Long.MAX_VALUE / 2, 0L, Long.MAX_VALUE / 2, Long.MAX_VALUE);
+        Collection<Long> durations = asList(
+                // Using `-Long.MAX_VALUE` results in `ArithmeticException` in OpenJDK JDK 8 because of https://bugs.openjdk.org/browse/JDK-8146747.
+                // This was fixed in OpenJDK JDK 9.
+                -Long.MAX_VALUE / 2, 0L, Long.MAX_VALUE / 2, Long.MAX_VALUE);
         return nanos.stream()
                 .flatMap(nano -> durations.stream()
                         .map(duration -> arguments(nano, duration)));
