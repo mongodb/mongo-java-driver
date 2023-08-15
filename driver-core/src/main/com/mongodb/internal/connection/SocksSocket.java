@@ -24,17 +24,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -44,6 +41,7 @@ import static com.mongodb.assertions.Assertions.fail;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class SocksSocket extends Socket {
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile("^(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}|localhost)$");
     private static final byte LENGTH_OF_IPV4 = 4;
     private static final byte LENGTH_OF_IPV6 = 16;
     private static final byte SOCKS_VERSION = 5;
@@ -55,6 +53,7 @@ public final class SocksSocket extends Socket {
     private static final byte ADDRESS_TYPE_IPV4 = 1;
     private static final byte ADDRESS_TYPE_IPV6 = 4;
     private static final int DEFAULT_PORT = 1080;
+    public static final String IP_PARSING_ERROR_SUFFIX = " is not an IP string literal";
     private final SocksAuthenticationMethod[] authenticationMethods;
     private final InetSocketAddress proxyAddress;
     private InetSocketAddress remoteAddress;
@@ -129,16 +128,20 @@ public final class SocksSocket extends Socket {
     }
 
     private void sendConnect(final Timeout timeout) throws IOException {
-        String host = remoteAddress.getHostName();
-        int port = remoteAddress.getPort();
-        byte[] bytesOfHost = host.getBytes(StandardCharsets.ISO_8859_1);
+        final String host = remoteAddress.getHostName();
+        final int port = remoteAddress.getPort();
+        final byte[] bytesOfHost = host.getBytes(StandardCharsets.UTF_8);
         final int hostLength = host.length();
 
-        byte[] bufferSent;
-        byte[] ipAddress = createByteArrayFromIpAddress(remoteAddress);
-        byte addressType = determineAddressType(ipAddress);
-        bufferSent = createBuffer(addressType, hostLength);
-
+        byte addressType;
+        byte[] ipAddress = null;
+        if (isDomainName(host)) {
+            addressType = ADDRESS_TYPE_DOMAIN_NAME;
+        } else {
+            ipAddress = createByteArrayFromIpAddress(host);
+            addressType = determineAddressType(ipAddress);
+        }
+        byte[] bufferSent = createBuffer(addressType, hostLength);
         bufferSent[0] = SOCKS_VERSION;
         bufferSent[1] = (byte) SocksCommand.CONNECT.getCommandNumber();
         bufferSent[2] = RESERVED;
@@ -170,48 +173,27 @@ public final class SocksSocket extends Socket {
         checkServerReply(timeout);
     }
 
-    @Nullable
-    private static byte[] createByteArrayFromIpAddress(final InetSocketAddress remoteAddress) throws SocketException, UnknownHostException {
-        InetAddress inetAddress = identifyAddressType(remoteAddress);
-        if (inetAddress instanceof Inet4Address) {
-            return inetAddress.getAddress();
-        }
-        if (inetAddress instanceof Inet6Address) {
-            return inetAddress.getAddress();
-        }
-        return null;
-    }
-
-    @Nullable
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public static InetAddress identifyAddressType(final InetSocketAddress remoteAddress) throws SocketException, UnknownHostException {
-        String host = remoteAddress.getHostName();
-        if (host.contains(":") || (host.contains(".") && !hasAlphabeticCharacters(host))) {
-            try {
-                return InetAddress.getByName(host);
-            } catch (UnknownHostException e) {
-                //invalid IP address
-            }
-        }
-        return null;
+    public static boolean isDomainName(final String host) {
+        return DOMAIN_PATTERN.matcher(host).matches();
     }
 
-    private static boolean hasAlphabeticCharacters(final String input) {
-        for (int i = 0; i < input.length(); i++) {
-            if (Character.isAlphabetic(input.charAt(i))) {
-                return true;
-            }
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public static byte[] createByteArrayFromIpAddress(final String host) throws SocketException {
+        byte[] bytes = InetAddresses.ipStringToBytes(host);
+        if (bytes == null) {
+            throw new SocketException(host + IP_PARSING_ERROR_SUFFIX);
         }
-        return false;
+        return bytes;
     }
 
-    private byte determineAddressType(@Nullable final byte[] ipAddress) {
-        if (ipAddress == null) {
-            return ADDRESS_TYPE_DOMAIN_NAME;
-        } else if (ipAddress.length == LENGTH_OF_IPV4) {
+    private byte determineAddressType(final byte[] ipAddress) {
+        if (ipAddress.length == LENGTH_OF_IPV4) {
             return ADDRESS_TYPE_IPV4;
+        } else if (ipAddress.length == LENGTH_OF_IPV6) {
+            return ADDRESS_TYPE_IPV6;
         }
-        return ADDRESS_TYPE_IPV6;
+        throw fail();
     }
 
     private static byte[] createBuffer(final byte addressType, final int hostLength) {
@@ -260,8 +242,8 @@ public final class SocksSocket extends Socket {
 
     private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
         if (authenticationMethod == SocksAuthenticationMethod.USERNAME_PASSWORD) {
-            final byte[] bytesOfUsername = assertNotNull(proxyUsername).getBytes(StandardCharsets.ISO_8859_1);
-            final byte[] bytesOfPassword = assertNotNull(proxyPassword).getBytes(StandardCharsets.ISO_8859_1);
+            final byte[] bytesOfUsername = assertNotNull(proxyUsername).getBytes(StandardCharsets.UTF_8);
+            final byte[] bytesOfPassword = assertNotNull(proxyPassword).getBytes(StandardCharsets.UTF_8);
             final int usernameLength = bytesOfUsername.length;
             final int passwordLength = bytesOfPassword.length;
             final byte[] command = new byte[3 + usernameLength + passwordLength];
