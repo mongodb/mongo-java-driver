@@ -21,7 +21,6 @@ import com.mongodb.internal.VisibleForTesting;
 import java.time.Clock;
 import java.time.Duration;
 
-import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
@@ -58,65 +57,32 @@ public final class TimePoint implements Comparable<TimePoint> {
     }
 
     /**
-     * The {@link Duration} between this {@link TimePoint} and the {@code earlier} one.
-     *
-     * @param earlier A {@link TimePoint} that is {@linkplain #compareTo(TimePoint) not later} than this one.
+     * The {@link Duration} between this {@link TimePoint} and {@code t}.
+     * A {@linkplain Duration#isNegative() negative} {@link Duration} means that
+     * this {@link TimePoint} is {@linkplain #compareTo(TimePoint) earlier} than {@code t}.
      */
-    public Duration durationSince(final TimePoint earlier) {
-        return Duration.ofNanos(durationNanosSince(earlier.nanos));
+    public Duration durationSince(final TimePoint t) {
+        return Duration.ofNanos(nanos - t.nanos);
     }
 
     /**
      * Returns a {@link TimePoint} that is {@code duration} away from this one.
      *
-     * @param duration A duration that may also be {@linkplain Duration#isNegative() negative} or {@linkplain Duration#isZero() zero}.
+     * @param duration A duration that may also be {@linkplain Duration#isNegative() negative}.
      */
     public TimePoint add(final Duration duration) {
         long durationNanos = duration.toNanos();
         return TimePoint.at(nanos + durationNanos);
     }
 
-    @Override
-    public int compareTo(final TimePoint o) {
-        return Long.signum(nanos - o.nanos);
-    }
-
     /**
-     * Returns {@link #nanos} - {@code earlierNanos} if this difference is non-negative:
-     * <ul>
-     *     <li>
-     *         A negative value means either of the following
-     *         <ol>
-     *             <li>{@code earlierNanos} is not earlier than {@link #nanos},
-     *             for example, because the clock from which {@code earlierNanos}/{@link #nanos} were read jumped backwards;</li>
-     *             <li>(n * 2<sup>63</sup> - 1; (n + 1) * 2<sup>63</sup>)<sup>(*)</sup> nanoseconds has elapsed.</li>
-     *         </ol>
-     *         This method throws an {@link AssertionError} if this happens.
-     *     </li>
-     *     <li>
-     *         0 means either of the following
-     *         <ol>
-     *             <li>0 nanoseconds has elapsed;</li>
-     *             <li>(n + 1) * 2<sup>63</sup><sup>(*)</sup> nanoseconds has elapsed.</li>
-     *         </ol>
-     *         This method interprets 0 value as 0 elapsed nanoseconds.
-     *     </li>
-     *     <li>
-     *         A positive value means either of the following
-     *         <ol>
-     *             <li>this number of nanoseconds has elapsed;</li>
-     *             <li>((n + 1) * 2<sup>63</sup>; (n + 2) * 2<sup>63</sup> - 1]<sup>(*)</sup> nanoseconds has elapsed.</li>
-     *         </ol>
-     *         This method interprets a positive value as the number of elapsed nanoseconds.
-     *     </li>
-     * </ul>
-     * <hr>
-     * <sup>(*)</sup> n is positive and odd.
+     * If this {@link TimePoint} is less/greater than {@code t}, then it is earlier/later than {@code t}.
+     * <p>
+     * {@inheritDoc}</p>
      */
-    private long durationNanosSince(final long earlierNanos) {
-        long durationNanos = nanos - earlierNanos;
-        assertTrue(durationNanos >= 0);
-        return durationNanos;
+    @Override
+    public int compareTo(final TimePoint t) {
+        return Long.signum(nanos - t.nanos);
     }
 
     @Override
