@@ -735,7 +735,7 @@ functions:
         working_dir: src
         script: |
           ${PREPARE_SHELL}
-          SOCKS_AUTH="${SOCKS_AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" \
+          SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" \
           JAVA_VERSION="${JAVA_VERSION}" \
           .evergreen/run-socks5-tests.sh
 

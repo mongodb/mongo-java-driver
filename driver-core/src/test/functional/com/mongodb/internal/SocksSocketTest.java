@@ -119,7 +119,7 @@ class SocksSocketTest {
             "192.168.0.0.1",
             "110.010.20.030", // octal representation
             "008.8.8.8", // octal representation
-            "007.008.009.010",// octal representation
+            "007.008.009.010", // octal representation
 
             //Invalid IPV6 addresses
             "::::",

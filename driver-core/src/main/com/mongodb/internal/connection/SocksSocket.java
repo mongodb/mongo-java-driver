@@ -66,7 +66,6 @@ public final class SocksSocket extends Socket {
     private InputStream inputStream;
     private OutputStream outputStream;
 
-
     public SocksSocket(final ProxySettings proxySettings) {
         this(null, proxySettings);
     }

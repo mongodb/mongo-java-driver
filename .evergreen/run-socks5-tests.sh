@@ -43,6 +43,42 @@ provision_ssl () {
   export GRADLE_SSL_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
 }
 
+run_csfe_tests () {
+  local MONGODB_URI=$1  # Get MongoDB URI from the first argument
+  # By not specifying the path to the `crypt_shared` via the `org.mongodb.test.crypt.shared.lib.path` Java system property,
+  # we force the driver to start `mongocryptd` instead of loading and using `crypt_shared`.
+  ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+        -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled="true" \
+        -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyVaultEndpoint="${AZUREKMS_KEY_VAULT_ENDPOINT}" \
+        -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyName="${AZUREKMS_KEY_NAME}" \
+        -Dorg.mongodb.test.awsAccessKeyId=${AWS_ACCESS_KEY_ID} -Dorg.mongodb.test.awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} \
+        -Dorg.mongodb.test.tmpAwsAccessKeyId=${AWS_TEMP_ACCESS_KEY_ID} -Dorg.mongodb.test.tmpAwsSecretAccessKey=${AWS_TEMP_SECRET_ACCESS_KEY} -Dorg.mongodb.test.tmpAwsSessionToken=${AWS_TEMP_SESSION_TOKEN} \
+        -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
+        -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
+        ${GRADLE_EXTRA_VARS} \
+        --stacktrace --info --continue \
+        driver-sync:test \
+            --tests "*.Client*Encryption*" \
+        driver-reactive-streams:test \
+            --tests "*.Client*Encryption*" \
+        driver-scala:integrationTest \
+            --tests "*.Client*Encryption*"
+}
+
+run_socks5_prose_tests () {
+local proxyPort=$1
+local authEnabled=$2
+./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+      -Dorg.mongodb.test.uri.singleHost=${MONGODB_URI_SINGLEHOST} \
+      -Dorg.mongodb.test.uri.proxyHost="127.0.0.1" \
+      -Dorg.mongodb.test.uri.proxyPort=${proxyPort} \
+      -Dorg.mongodb.test.uri.socks.auth.enabled=${authEnabled} \
+      ${GRADLE_SSL_VARS} \
+      --stacktrace --info --continue \
+      driver-sync:test \
+          --tests "*.Socks5ProseTest*"
+}
+
 ############################################
 #            Main Program                  #
 ############################################
@@ -56,32 +92,15 @@ fi
 echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks5 auth enabled"
 ./gradlew -version
 "$PYTHON_BINARY" "$SOCKS5_SERVER_SCRIPT" --port 1080 --auth username:p4ssw0rd --map "127.0.0.1:12345 to $FIRST_HOST" &
-trap "kill $!" EXIT
-./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-      -Dorg.mongodb.test.uri.singleHost=${MONGODB_URI_SINGLEHOST} \
-      -Dorg.mongodb.test.uri.proxyHost="127.0.0.1" \
-      -Dorg.mongodb.test.uri.proxyPort="1080" \
-      -Dorg.mongodb.test.uri.socks.auth.enabled="true" \
-      -Dorg.mongodb.test.uri.proxyUsername="username" \
-      -Dorg.mongodb.test.uri.proxyPassword="p4ssw0rd" \
-      ${GRADLE_SSL_VARS} \
-      --stacktrace --info --continue \
-      driver-sync:test \
-          --tests "*.Socks5ProseTest*"
-
-
+SOCKS5_SERVER_PID_1=$!
+trap "kill $SOCKS5_SERVER_PID_1" EXIT
+run_socks5_prose_tests "1080" "true"
 
 # Second, test with Socks5 + no authentication
 echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks5 auth disabled"
 ./gradlew -version
 "$PYTHON_BINARY" "$SOCKS5_SERVER_SCRIPT" --port 1081 --map "127.0.0.1:12345 to $FIRST_HOST" &
-trap "kill $!" EXIT
-./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-      -Dorg.mongodb.test.uri.singleHost=${MONGODB_URI_SINGLEHOST} \
-      -Dorg.mongodb.test.uri.socks.auth.enabled="false" \
-      -Dorg.mongodb.test.uri.proxyHost="127.0.0.1" \
-      -Dorg.mongodb.test.uri.proxyPort="1081" \
-      ${GRADLE_SSL_VARS} \
-      --stacktrace --info --continue \
-      driver-sync:test \
-          --tests "*.Socks5ProseTest*"
+# Set up trap to kill both processes when the script exits
+SOCKS5_SERVER_PID_2=$!
+trap "kill $SOCKS5_SERVER_PID_1; kill $SOCKS5_SERVER_PID_2" EXIT
+run_socks5_prose_tests "1081" "false"

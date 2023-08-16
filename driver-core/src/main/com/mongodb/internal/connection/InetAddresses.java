@@ -53,7 +53,7 @@ final class InetAddresses {
      * @return {@link InetAddress} representing the argument
      * @throws IllegalArgumentException if the argument is not a valid IP string literal
      */
-    static InetAddress forString(String ipString) {
+    static InetAddress forString(final String ipString) {
         byte[] addr = ipStringToBytes(ipString);
 
         // The argument was malformed, i.e. not an IP string literal.
@@ -74,7 +74,7 @@ final class InetAddresses {
      * @param ipString {@code String} to evaluated as an IP string literal
      * @return {@code true} if the argument is a valid IP string literal
      */
-    static boolean isInetAddress(String ipString) {
+    static boolean isInetAddress(final String ipString) {
         return ipStringToBytes(ipString) != null;
     }
 
@@ -82,7 +82,7 @@ final class InetAddresses {
      * Returns {@code null} if unable to parse into a {@code byte[]}.
      */
     @Nullable
-    static byte[] ipStringToBytes(String ipStringParam) {
+    static byte[] ipStringToBytes(final String ipStringParam) {
         String ipString = ipStringParam;
         // Make a first pass to categorize the characters in this string.
         boolean hasColon = false;
@@ -150,7 +150,7 @@ final class InetAddresses {
     }
 
     @Nullable
-    private static byte[] textToNumericFormatV4(String ipString) {
+    private static byte[] textToNumericFormatV4(final String ipString) {
         if (!hasCorrectNumberOfOctets(ipString)) {
             return null; // Wrong number of parts
         }
@@ -176,7 +176,7 @@ final class InetAddresses {
     }
 
     @Nullable
-    private static byte[] textToNumericFormatV6(String ipString) {
+    private static byte[] textToNumericFormatV6(final String ipString) {
         // An address can have [2..8] colons.
         int delimiterCount = countIn(ipString, IPV6_DELIMITER);
         if (delimiterCount < 2 || delimiterCount > IPV6_PART_COUNT) {
@@ -247,7 +247,7 @@ final class InetAddresses {
     }
 
     @Nullable
-    private static String convertDottedQuadToHex(String ipString) {
+    private static String convertDottedQuadToHex(final String ipString) {
         int lastColon = ipString.lastIndexOf(':');
         String initialPart = ipString.substring(0, lastColon + 1);
         String dottedQuad = ipString.substring(lastColon + 1);
@@ -260,7 +260,7 @@ final class InetAddresses {
         return initialPart + penultimate + ":" + ultimate;
     }
 
-    private static byte parseOctet(String ipString, int start, int end) {
+    private static byte parseOctet(final String ipString, final int start, final int end) {
         // Note: we already verified that this string contains only hex digits, but the string may still
         // contain non-decimal characters.
         int length = end - start;
@@ -288,7 +288,7 @@ final class InetAddresses {
     }
 
     // Parse a hextet out of the ipString from start (inclusive) to end (exclusive)
-    private static short parseHextet(String ipString, int start, int end) {
+    private static short parseHextet(final String ipString, final int start, final int end) {
         // Note: we already verified that this string contains only hex digits.
         int length = end - start;
         if (length <= 0 || length > 4) {
@@ -312,7 +312,7 @@ final class InetAddresses {
      * @param addr the raw 4-byte or 16-byte IP address in big-endian order
      * @return an InetAddress object created from the raw IP address
      */
-    private static InetAddress bytesToInetAddress(byte[] addr) {
+    private static InetAddress bytesToInetAddress(final byte[] addr) {
         try {
             return InetAddress.getByAddress(addr);
         } catch (UnknownHostException e) {
