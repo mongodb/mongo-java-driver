@@ -27,6 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An immutable class representing settings for connecting to MongoDB via a SOCKS5 proxy server.
+ * NOTE: This setting is only applicable to the synchronous variant of MongoClient and KMS settings.
  *
  * @since 4.11
  */

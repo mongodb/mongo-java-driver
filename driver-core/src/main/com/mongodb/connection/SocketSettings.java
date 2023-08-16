@@ -36,6 +36,9 @@ public final class SocketSettings {
     private final long readTimeoutMS;
     private final int receiveBufferSize;
     private final int sendBufferSize;
+    /**
+     * NOTE: This setting is only applicable to the synchronous variant of MongoClient.
+     */
     private final ProxySettings proxySettings;
 
     /**
@@ -139,6 +142,9 @@ public final class SocketSettings {
 
         /**
          * Applies the {@link ProxySettings.Builder} block and then sets the {@link SocketSettings#proxySettings}.
+         *
+         * <p>
+         * NOTE: This setting is only applicable to the synchronous variant of MongoClient.
          *
          * @param block the block to apply to the {@link ProxySettings}.
          * @return this

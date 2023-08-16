@@ -221,7 +221,7 @@ class Socks5ProseTest {
 
     public static class SocksProxyPropertyCondition implements ExecutionCondition {
         @Override
-        public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
+        public ConditionEvaluationResult evaluateExecutionCondition(final ExtensionContext context) {
             if (System.getProperty("org.mongodb.test.uri.socks.auth.enabled") != null) {
                 return ConditionEvaluationResult.enabled("Test enabled because socks proxy configuration exists");
             } else {

@@ -43,28 +43,6 @@ provision_ssl () {
   export GRADLE_SSL_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
 }
 
-run_csfe_tests () {
-  local MONGODB_URI=$1  # Get MongoDB URI from the first argument
-  # By not specifying the path to the `crypt_shared` via the `org.mongodb.test.crypt.shared.lib.path` Java system property,
-  # we force the driver to start `mongocryptd` instead of loading and using `crypt_shared`.
-  ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-        -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled="true" \
-        -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyVaultEndpoint="${AZUREKMS_KEY_VAULT_ENDPOINT}" \
-        -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyName="${AZUREKMS_KEY_NAME}" \
-        -Dorg.mongodb.test.awsAccessKeyId=${AWS_ACCESS_KEY_ID} -Dorg.mongodb.test.awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} \
-        -Dorg.mongodb.test.tmpAwsAccessKeyId=${AWS_TEMP_ACCESS_KEY_ID} -Dorg.mongodb.test.tmpAwsSecretAccessKey=${AWS_TEMP_SECRET_ACCESS_KEY} -Dorg.mongodb.test.tmpAwsSessionToken=${AWS_TEMP_SESSION_TOKEN} \
-        -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
-        -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
-        ${GRADLE_EXTRA_VARS} \
-        --stacktrace --info --continue \
-        driver-sync:test \
-            --tests "*.Client*Encryption*" \
-        driver-reactive-streams:test \
-            --tests "*.Client*Encryption*" \
-        driver-scala:integrationTest \
-            --tests "*.Client*Encryption*"
-}
-
 run_socks5_prose_tests () {
 local proxyPort=$1
 local authEnabled=$2

@@ -37,6 +37,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class KeyManagementService {
@@ -64,7 +65,7 @@ class KeyManagementService {
         Socket socket = null;
         try {
             if (isProxyEnabled()) {
-                socket = new SocksSocket(proxySettings);
+                socket = new SocksSocket(assertNotNull(proxySettings));
                 socket.setSoTimeout(timeoutMillis);
                 socket.connect(InetSocketAddress.createUnresolved(host, serverAddress.getPort()), timeoutMillis);
                 socket = sslSocketFactory.createSocket(socket, host, serverAddress.getPort(), true);

@@ -196,7 +196,7 @@
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
     </Match>
 
-    <!-- FindBugs currently does not prune infeasible excepti'on paths, this is a false warning.-->
+    <!-- FindBugs currently does not prune infeasible exception paths, this is a false warning.-->
     <Match>
         <Class name="com.mongodb.internal.connection.SocksSocket"/>
         <Method name="getPort"/>
