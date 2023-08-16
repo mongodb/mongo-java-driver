@@ -183,6 +183,9 @@ public class BaseClientSessionImpl implements ClientSession {
 
     @Override
     public void close() {
+        // While the interface implemented by this class  is documented as not thread safe, it's still useful to provide thread safety here
+        // in order to prevent the code within the conditional from executing more than once. Doing so protects the server session pool from
+        // corruption, by preventing the same server session from being released to the pool more than once.
         if (closed.compareAndSet(false, true)) {
             if (serverSession != null) {
                 serverSessionPool.release(serverSession);
