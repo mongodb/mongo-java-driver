@@ -26,6 +26,8 @@ import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 
@@ -39,20 +41,19 @@ public class BaseClientSessionImpl implements ClientSession {
     private ServerSession serverSession;
     private final Object originator;
     private final ClientSessionOptions options;
+    private final AtomicBoolean closed = new AtomicBoolean(false);
     private BsonDocument clusterTime;
     private BsonTimestamp operationTime;
     private BsonTimestamp snapshotTimestamp;
     private ServerAddress pinnedServerAddress;
     private BsonDocument recoveryToken;
     private ReferenceCounted transactionContext;
-    private volatile boolean closed;
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
         this.originator = originator;
         this.options = options;
         this.pinnedServerAddress = null;
-        closed = false;
     }
 
     @Override
@@ -121,7 +122,7 @@ public class BaseClientSessionImpl implements ClientSession {
 
     @Override
     public ServerSession getServerSession() {
-        isTrue("open", !closed);
+        isTrue("open", !closed.get());
         if (serverSession == null) {
             serverSession = serverSessionPool.get();
         }
@@ -130,19 +131,19 @@ public class BaseClientSessionImpl implements ClientSession {
 
     @Override
     public void advanceOperationTime(@Nullable final BsonTimestamp newOperationTime) {
-        isTrue("open", !closed);
+        isTrue("open", !closed.get());
         this.operationTime = greaterOf(newOperationTime);
     }
 
     @Override
     public void advanceClusterTime(@Nullable final BsonDocument newClusterTime) {
-        isTrue("open", !closed);
+        isTrue("open", !closed.get());
         this.clusterTime = greaterOf(newClusterTime);
     }
 
     @Override
     public void setSnapshotTimestamp(@Nullable final BsonTimestamp snapshotTimestamp) {
-        isTrue("open", !closed);
+        isTrue("open", !closed.get());
         if (snapshotTimestamp != null) {
             if (this.snapshotTimestamp != null && !snapshotTimestamp.equals(this.snapshotTimestamp)) {
                 throw new MongoClientException("Snapshot timestamps should not change during the lifetime of the session.  Current "
@@ -155,7 +156,7 @@ public class BaseClientSessionImpl implements ClientSession {
     @Override
     @Nullable
     public BsonTimestamp getSnapshotTimestamp() {
-        isTrue("open", !closed);
+        isTrue("open", !closed.get());
         return snapshotTimestamp;
     }
 
@@ -182,8 +183,10 @@ public class BaseClientSessionImpl implements ClientSession {
 
     @Override
     public void close() {
-        if (!closed) {
-            closed = true;
+        // While the interface implemented by this class  is documented as not thread safe, it's still useful to provide thread safety here
+        // in order to prevent the code within the conditional from executing more than once. Doing so protects the server session pool from
+        // corruption, by preventing the same server session from being released to the pool more than once.
+        if (closed.compareAndSet(false, true)) {
             if (serverSession != null) {
                 serverSessionPool.release(serverSession);
             }
