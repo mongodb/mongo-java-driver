@@ -30,7 +30,6 @@ import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.time.TimePoint;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -268,7 +267,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)
             throws InterruptedException {
-        assertPoll(queue, allowed, required, Timeout.started(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS, TimePoint.now()));
+        assertPoll(queue, allowed, required, Timeout.startNow(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required,

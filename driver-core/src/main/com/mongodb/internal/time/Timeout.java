@@ -59,7 +59,6 @@ public final class Timeout {
      * Note that the contract of this method is also used in some places to specify the behavior of methods that accept
      * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
      * so it cannot be changed without updating those methods.</p>
-     * @see #started(long, TimePoint)
      */
     public static Timeout started(final long duration, final TimeUnit unit, final TimePoint at) {
         return started(unit.toNanos(duration), assertNotNull(at));
@@ -86,6 +85,22 @@ public final class Timeout {
     }
 
     /**
+     * This method acts identically to {@link #started(long, TimeUnit, TimePoint)}
+     * with the {@linkplain TimePoint#now() current} {@link TimePoint} passed to it.
+     */
+    public static Timeout startNow(final long duration, final TimeUnit unit) {
+        return started(duration, unit, TimePoint.now());
+    }
+
+    /**
+     * This method acts identically to {@link #started(long, TimePoint)}
+     * with the {@linkplain TimePoint#now() current} {@link TimePoint} passed to it.
+     */
+    public static Timeout startNow(final long durationNanos) {
+        return started(durationNanos, TimePoint.now());
+    }
+
+    /**
      * @see #started(long, TimePoint)
      */
     public static Timeout infinite() {
@@ -106,7 +121,7 @@ public final class Timeout {
      * @throws AssertionError If the timeout is {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate}.
      */
     @VisibleForTesting(otherwise = PRIVATE)
-    long nonNegativeRemainingNanos(final TimePoint now) {
+    long saturatingRemainingNanos(final TimePoint now) {
         return Math.max(0, durationNanos - now.durationSince(assertNotNull(start)).toNanos());
     }
 
@@ -129,7 +144,7 @@ public final class Timeout {
      */
     public long remaining(final TimeUnit unit) {
         assertFalse(isInfinite());
-        return isImmediate() ? 0 : convertRoundUp(nonNegativeRemainingNanos(TimePoint.now()), unit);
+        return isImmediate() ? 0 : convertRoundUp(saturatingRemainingNanos(TimePoint.now()), unit);
     }
 
     /**
@@ -184,7 +199,7 @@ public final class Timeout {
             return false;
         }
         Timeout other = (Timeout) o;
-        return durationNanos == other.durationNanos && start == other.start;
+        return durationNanos == other.durationNanos && Objects.equals(start, other.start());
     }
 
     @Override
@@ -223,6 +238,12 @@ public final class Timeout {
     @VisibleForTesting(otherwise = PRIVATE)
     long durationNanos() {
         return durationNanos;
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    @Nullable
+    TimePoint start() {
+        return start;
     }
 
     @VisibleForTesting(otherwise = PRIVATE)

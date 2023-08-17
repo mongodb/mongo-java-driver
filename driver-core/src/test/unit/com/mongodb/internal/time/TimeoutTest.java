@@ -39,6 +39,7 @@ final class TimeoutTest {
         assertAll(
                 () -> assertTrue(Timeout.infinite().isInfinite()),
                 () -> assertFalse(Timeout.immediate().isInfinite()),
+                () -> assertFalse(Timeout.startNow(1).isInfinite()),
                 () -> assertFalse(Timeout.started(1, TimePoint.now()).isInfinite()));
     }
 
@@ -47,6 +48,7 @@ final class TimeoutTest {
         assertAll(
                 () -> assertTrue(Timeout.immediate().isImmediate()),
                 () -> assertFalse(Timeout.infinite().isImmediate()),
+                () -> assertFalse(Timeout.startNow(1).isImmediate()),
                 () -> assertFalse(Timeout.started(1, TimePoint.now()).isImmediate()));
     }
 
@@ -58,8 +60,25 @@ final class TimeoutTest {
                 () -> assertEquals(Timeout.immediate(), Timeout.started(0, timePoint)),
                 () -> assertNotEquals(Timeout.infinite(), Timeout.started(1, timePoint)),
                 () -> assertNotEquals(Timeout.immediate(), Timeout.started(1, timePoint)),
+                () -> assertEquals(1, Timeout.started(1, timePoint).durationNanos()),
+                () -> assertEquals(timePoint, Timeout.started(1, timePoint).start()),
                 () -> assertNotEquals(Timeout.infinite(), Timeout.started(Long.MAX_VALUE - 1, timePoint)),
+                () -> assertEquals(Long.MAX_VALUE - 1, Timeout.started(Long.MAX_VALUE - 1, timePoint).durationNanos()),
+                () -> assertEquals(timePoint, Timeout.started(Long.MAX_VALUE - 1, timePoint).start()),
                 () -> assertEquals(Timeout.infinite(), Timeout.started(Long.MAX_VALUE, timePoint)));
+    }
+
+    @Test
+    void startNow() {
+        assertAll(
+                () -> assertEquals(Timeout.infinite(), Timeout.startNow(-1)),
+                () -> assertEquals(Timeout.immediate(), Timeout.startNow(0)),
+                () -> assertNotEquals(Timeout.infinite(), Timeout.startNow(1)),
+                () -> assertNotEquals(Timeout.immediate(), Timeout.startNow(1)),
+                () -> assertEquals(1, Timeout.startNow(1).durationNanos()),
+                () -> assertNotEquals(Timeout.infinite(), Timeout.startNow(Long.MAX_VALUE - 1)),
+                () -> assertEquals(Long.MAX_VALUE - 1, Timeout.startNow(Long.MAX_VALUE - 1).durationNanos()),
+                () -> assertEquals(Timeout.infinite(), Timeout.startNow(Long.MAX_VALUE)));
     }
 
     @ParameterizedTest
@@ -72,6 +91,18 @@ final class TimeoutTest {
             assertTrue(Timeout.started(duration, unit, timePoint).isImmediate());
         } else {
             assertEquals(unit.toNanos(duration), Timeout.started(duration, unit, timePoint).durationNanos());
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("durationArguments")
+    void startNowConvertsUnits(final long duration, final TimeUnit unit) {
+        if (duration < 0) {
+            assertTrue(Timeout.startNow(duration, unit).isInfinite());
+        } else if (duration == 0) {
+            assertTrue(Timeout.startNow(duration, unit).isImmediate());
+        } else {
+            assertEquals(unit.toNanos(duration), Timeout.startNow(duration, unit).durationNanos());
         }
     }
 
@@ -94,13 +125,13 @@ final class TimeoutTest {
 
     @ParameterizedTest
     @ValueSource(longs = {1, 7, Long.MAX_VALUE / 2, Long.MAX_VALUE - 1})
-    void nonNegativeRemainingNanos(final long durationNanos) {
+    void saturatingRemainingNanos(final long durationNanos) {
         TimePoint start = TimePoint.now();
         Timeout timeout = Timeout.started(durationNanos, start);
-        assertEquals(durationNanos, timeout.nonNegativeRemainingNanos(start));
-        assertEquals(Math.max(0, durationNanos - 1), timeout.nonNegativeRemainingNanos(start.add(Duration.ofNanos(1))));
-        assertEquals(0, timeout.nonNegativeRemainingNanos(start.add(Duration.ofNanos(durationNanos))));
-        assertEquals(0, timeout.nonNegativeRemainingNanos(start.add(Duration.ofNanos(durationNanos + 1))));
+        assertEquals(durationNanos, timeout.saturatingRemainingNanos(start));
+        assertEquals(Math.max(0, durationNanos - 1), timeout.saturatingRemainingNanos(start.add(Duration.ofNanos(1))));
+        assertEquals(0, timeout.saturatingRemainingNanos(start.add(Duration.ofNanos(durationNanos))));
+        assertEquals(0, timeout.saturatingRemainingNanos(start.add(Duration.ofNanos(durationNanos + 1))));
     }
 
     @Test
