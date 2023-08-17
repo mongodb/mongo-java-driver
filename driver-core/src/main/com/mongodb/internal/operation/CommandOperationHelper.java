@@ -58,8 +58,14 @@ final class CommandOperationHelper {
         if (previouslyChosenException == null
                 || mostRecentAttemptException instanceof MongoSocketException
                 || mostRecentAttemptException instanceof MongoServerException) {
+            if (previouslyChosenException != null && mostRecentAttemptException != previouslyChosenException) {
+                mostRecentAttemptException.addSuppressed(previouslyChosenException);
+            }
             return mostRecentAttemptException;
         } else {
+            if (previouslyChosenException != mostRecentAttemptException) {
+                previouslyChosenException.addSuppressed(mostRecentAttemptException);
+            }
             return previouslyChosenException;
         }
     }
@@ -74,8 +80,14 @@ final class CommandOperationHelper {
         } else if (mostRecentAttemptException instanceof ResourceSupplierInternalException
                 || (mostRecentAttemptException instanceof MongoException
                     && ((MongoException) mostRecentAttemptException).hasErrorLabel(NO_WRITES_PERFORMED_ERROR_LABEL))) {
+            if (previouslyChosenException != mostRecentAttemptException) {
+                previouslyChosenException.addSuppressed(mostRecentAttemptException);
+            }
             return previouslyChosenException;
         } else {
+            if (mostRecentAttemptException != previouslyChosenException) {
+                mostRecentAttemptException.addSuppressed(previouslyChosenException);
+            }
             return mostRecentAttemptException;
         }
     }
