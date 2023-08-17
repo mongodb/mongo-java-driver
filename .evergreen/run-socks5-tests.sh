@@ -43,18 +43,38 @@ provision_ssl () {
   export GRADLE_SSL_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
 }
 
+run_csfle_tests () {
+  local MONGODB_URI=$1  # Get MongoDB URI from the first argument
+  echo "Running CSFE tests with Java ${JAVA_VERSION} for $TOPOLOGY and connecting to $MONGODB_URI with socks5"
+  # By not specifying the path to the `crypt_shared` via the `org.mongodb.test.crypt.shared.lib.path` Java system property,
+  # we force the driver to start `mongocryptd` instead of loading and using `crypt_shared`.
+  ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+        -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled="true" \
+        -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyVaultEndpoint="${AZUREKMS_KEY_VAULT_ENDPOINT}" \
+        -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyName="${AZUREKMS_KEY_NAME}" \
+        -Dorg.mongodb.test.awsAccessKeyId=${AWS_ACCESS_KEY_ID} -Dorg.mongodb.test.awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY} \
+        -Dorg.mongodb.test.tmpAwsAccessKeyId=${AWS_TEMP_ACCESS_KEY_ID} -Dorg.mongodb.test.tmpAwsSecretAccessKey=${AWS_TEMP_SECRET_ACCESS_KEY} -Dorg.mongodb.test.tmpAwsSessionToken=${AWS_TEMP_SESSION_TOKEN} \
+        -Dorg.mongodb.test.azureTenantId=${AZURE_TENANT_ID} -Dorg.mongodb.test.azureClientId=${AZURE_CLIENT_ID} -Dorg.mongodb.test.azureClientSecret=${AZURE_CLIENT_SECRET} \
+        -Dorg.mongodb.test.gcpEmail=${GCP_EMAIL} -Dorg.mongodb.test.gcpPrivateKey=${GCP_PRIVATE_KEY} \
+        ${GRADLE_SSL_VARS} \
+        --stacktrace --info --continue \
+        driver-sync:test \
+            --tests "*Client*Encryption*"
+}
+
 run_socks5_prose_tests () {
-local proxyPort=$1
-local authEnabled=$2
+local PROXY_PORT=$1
+local AUTH_ENABLED=$2
+ echo "Running Socks5 tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks auth enabled $AUTH_ENABLED"
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
       -Dorg.mongodb.test.uri.singleHost=${MONGODB_URI_SINGLEHOST} \
       -Dorg.mongodb.test.uri.proxyHost="127.0.0.1" \
-      -Dorg.mongodb.test.uri.proxyPort=${proxyPort} \
-      -Dorg.mongodb.test.uri.socks.auth.enabled=${authEnabled} \
+      -Dorg.mongodb.test.uri.proxyPort=${PROXY_PORT} \
+      -Dorg.mongodb.test.uri.socks.auth.enabled=${AUTH_ENABLED} \
       ${GRADLE_SSL_VARS} \
       --stacktrace --info --continue \
       driver-sync:test \
-          --tests "*.Socks5ProseTest*"
+          --tests "com.mongodb.client.Socks5ProseTest*"
 }
 
 ############################################
@@ -62,9 +82,7 @@ local authEnabled=$2
 ############################################
 
 # Set up keystore/truststore
-if [ "${SSL}" = "ssl" ]; then
-  provision_ssl
-fi
+provision_ssl
 
 # First, test with Socks5 + authentication required
 echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks5 auth enabled"
@@ -72,7 +90,9 @@ echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connec
 "$PYTHON_BINARY" "$SOCKS5_SERVER_SCRIPT" --port 1080 --auth username:p4ssw0rd --map "127.0.0.1:12345 to $FIRST_HOST" &
 SOCKS5_SERVER_PID_1=$!
 trap "kill $SOCKS5_SERVER_PID_1" EXIT
+
 run_socks5_prose_tests "1080" "true"
+run_csfle_tests "$MONGODB_URI&proxyHost=127.0.0.1&proxyPort=1080&proxyUsername=username&proxyPassword=p4ssw0rd"
 
 # Second, test with Socks5 + no authentication
 echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks5 auth disabled"
@@ -81,4 +101,6 @@ echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connec
 # Set up trap to kill both processes when the script exits
 SOCKS5_SERVER_PID_2=$!
 trap "kill $SOCKS5_SERVER_PID_1; kill $SOCKS5_SERVER_PID_2" EXIT
+
 run_socks5_prose_tests "1081" "false"
+run_csfle_tests "$MONGODB_URI&proxyHost=127.0.0.1&proxyPort=1081"

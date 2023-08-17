@@ -16,8 +16,8 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.connection.ProxySettings;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.internal.connection.SocksSocket;
 import com.mongodb.internal.connection.SslHelper;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
@@ -64,14 +65,17 @@ class KeyManagementService {
 
         Socket socket = null;
         try {
+            final String serverHost = serverAddress.getHost();
+            final int serverPort = serverAddress.getPort();
+
             if (isProxyEnabled()) {
                 socket = new SocksSocket(assertNotNull(proxySettings));
                 socket.setSoTimeout(timeoutMillis);
-                socket.connect(InetSocketAddress.createUnresolved(host, serverAddress.getPort()), timeoutMillis);
-                socket = sslSocketFactory.createSocket(socket, host, serverAddress.getPort(), true);
+                socket.connect(InetSocketAddress.createUnresolved(serverHost, serverPort), timeoutMillis);
+                socket = sslSocketFactory.createSocket(socket, serverHost, serverPort, true);
             } else {
                 socket = sslSocketFactory.createSocket();
-                socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()),
+                socket.connect(new InetSocketAddress(InetAddress.getByName(serverHost), serverPort),
                         timeoutMillis);
             }
             enableHostNameVerification((SSLSocket) socket);
