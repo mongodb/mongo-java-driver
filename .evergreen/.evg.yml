@@ -739,7 +739,6 @@ functions:
           export AWS_SECRET_ACCESS_KEY=${aws_secret_access_key}
           export AWS_DEFAULT_REGION=us-east-1
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
-          MONGODB_URI="${MONGODB_URI}" \
           AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
           AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
           AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
