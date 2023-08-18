@@ -125,7 +125,7 @@ final class TimeoutTest {
 
     @ParameterizedTest
     @ValueSource(longs = {1, 7, Long.MAX_VALUE / 2, Long.MAX_VALUE - 1})
-    void saturatingRemainingNanos(final long durationNanos) {
+    void remainingNanos(final long durationNanos) {
         TimePoint start = TimePoint.now();
         Timeout timeout = Timeout.started(durationNanos, start);
         assertEquals(durationNanos, timeout.remainingNanos(start));
