@@ -60,9 +60,21 @@ public final class TimePoint implements Comparable<TimePoint> {
      * The {@link Duration} between this {@link TimePoint} and {@code t}.
      * A {@linkplain Duration#isNegative() negative} {@link Duration} means that
      * this {@link TimePoint} is {@linkplain #compareTo(TimePoint) before} {@code t}.
+     *
+     * @see #elapsed()
      */
     public Duration durationSince(final TimePoint t) {
         return Duration.ofNanos(nanos - t.nanos);
+    }
+
+    /**
+     * The {@link Duration} between {@link TimePoint#now()} and this {@link TimePoint}.
+     * This method is functionally equivalent to {@code TimePoint.now().durationSince(this)}.
+     *
+     * @see #durationSince(TimePoint)
+     */
+    public Duration elapsed() {
+        return Duration.ofNanos(System.nanoTime() - nanos);
     }
 
     /**

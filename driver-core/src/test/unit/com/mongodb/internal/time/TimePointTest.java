@@ -41,6 +41,16 @@ final class TimePointTest {
         assertTrue(timePoint.compareTo(timePointUpperBound) <= 0, "the point is too late");
     }
 
+    @Test
+    void elapsed() {
+        TimePoint timePoint = TimePoint.now();
+        Duration elapsedLowerBound = TimePoint.now().durationSince(timePoint);
+        Duration elapsed = timePoint.elapsed();
+        Duration elapsedUpperBound = TimePoint.now().durationSince(timePoint);
+        assertTrue(elapsed.compareTo(elapsedLowerBound) >= 0, "the elapsed is too low");
+        assertTrue(elapsed.compareTo(elapsedUpperBound) <= 0, "the elapsed is too high");
+    }
+
     @ParameterizedTest
     @MethodSource("earlierNanosAndNanosArguments")
     void durationSince(final long earlierNanos, final long nanos) {
