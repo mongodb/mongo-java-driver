@@ -121,7 +121,7 @@ public final class Timeout {
      * @throws AssertionError If the timeout is {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate}.
      */
     @VisibleForTesting(otherwise = PRIVATE)
-    long saturatingRemainingNanos(final TimePoint now) {
+    long remainingNanos(final TimePoint now) {
         return Math.max(0, durationNanos - now.durationSince(assertNotNull(start)).toNanos());
     }
 
@@ -144,7 +144,7 @@ public final class Timeout {
      */
     public long remaining(final TimeUnit unit) {
         assertFalse(isInfinite());
-        return isImmediate() ? 0 : convertRoundUp(saturatingRemainingNanos(TimePoint.now()), unit);
+        return isImmediate() ? 0 : convertRoundUp(remainingNanos(TimePoint.now()), unit);
     }
 
     /**

@@ -128,10 +128,10 @@ final class TimeoutTest {
     void saturatingRemainingNanos(final long durationNanos) {
         TimePoint start = TimePoint.now();
         Timeout timeout = Timeout.started(durationNanos, start);
-        assertEquals(durationNanos, timeout.saturatingRemainingNanos(start));
-        assertEquals(Math.max(0, durationNanos - 1), timeout.saturatingRemainingNanos(start.add(Duration.ofNanos(1))));
-        assertEquals(0, timeout.saturatingRemainingNanos(start.add(Duration.ofNanos(durationNanos))));
-        assertEquals(0, timeout.saturatingRemainingNanos(start.add(Duration.ofNanos(durationNanos + 1))));
+        assertEquals(durationNanos, timeout.remainingNanos(start));
+        assertEquals(Math.max(0, durationNanos - 1), timeout.remainingNanos(start.add(Duration.ofNanos(1))));
+        assertEquals(0, timeout.remainingNanos(start.add(Duration.ofNanos(durationNanos))));
+        assertEquals(0, timeout.remainingNanos(start.add(Duration.ofNanos(durationNanos + 1))));
     }
 
     @Test
