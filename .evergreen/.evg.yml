@@ -1484,6 +1484,23 @@ tasks:
         - func: "run perf tests"
         - func: "send dashboard data"
 
+    - name: "test-aws-lambda-deployed"
+      commands:
+        - command: ec2.assume_role
+          params:
+            role_arn: ${LAMBDA_AWS_ROLE_ARN}
+            duration_seconds: 3600
+        - command: subprocess.exec
+          params:
+            working_dir: src
+            binary: bash
+            add_expansions_to_env: true
+            args:
+              - .evergreen/run-deployed-lambda-aws-tests.sh
+            env:
+              TEST_LAMBDA_DIRECTORY: ${PROJECT_DIRECTORY}/driver-lambda/
+              AWS_REGION: us-east-1
+
     - name: "mmapv1-storage-test"
       commands:
         - func: "bootstrap mongo-orchestration"
@@ -1891,6 +1908,32 @@ task_groups:
             $DRIVERS_TOOLS/.evergreen/csfle/azurekms/delete-vm.sh
     tasks:
       - testazurekms-task
+  - name: test_atlas_task_group
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - command: subprocess.exec
+        params:
+          working_dir: src
+          binary: bash
+          add_expansions_to_env: true
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/setup-atlas-cluster.sh
+      - command: expansions.update
+        params:
+          file: src/atlas-expansion.yml
+    teardown_group:
+      - command: subprocess.exec
+        params:
+          working_dir: src
+          binary: bash
+          add_expansions_to_env: true
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown-atlas-cluster.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - test-aws-lambda-deployed
 
 buildvariants:
 
@@ -2022,6 +2065,12 @@ buildvariants:
   tags: ["perf-variant"]
   tasks:
      - name: "perf"
+
+- name: rhel8-test-atlas
+  display_name: Atlas Cluster Tests
+  run_on: rhel80-large
+  tasks:
+    - test_atlas_task_group
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
