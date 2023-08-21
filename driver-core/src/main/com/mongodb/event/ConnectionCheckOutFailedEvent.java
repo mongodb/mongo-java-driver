@@ -68,7 +68,7 @@ public final class ConnectionCheckOutFailedEvent {
      * @param operationId The operation ID. See {@link #getOperationId()}.
      * @param reason The reason the connection check out failed. See {@link #getReason()}.
      * @param elapsedTimeNanos The time it took while trying to check out the connection. See {@link #getElapsedTime(TimeUnit)}.
-     * @since VAKOTODO
+     * @since 4.11
      */
     public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason, final long elapsedTimeNanos) {
         this.serverId = notNull("serverId", serverId);
@@ -150,7 +150,7 @@ public final class ConnectionCheckOutFailedEvent {
      * @param timeUnit The time unit of the result.
      * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.
      * @return The time it took to establish the connection.
-     * @since VAKOTODO
+     * @since 4.11
      */
     public long getElapsedTime(final TimeUnit timeUnit) {
         return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);

@@ -37,7 +37,7 @@ public final class ConnectionReadyEvent {
      *
      * @param connectionId The connection ID. See {@link #getConnectionId()}.
      * @param elapsedTimeNanos The time it took to establish the connection. See {@link #getElapsedTime(TimeUnit)}.
-     * @since VAKOTODO
+     * @since 4.11
      */
     public ConnectionReadyEvent(final ConnectionId connectionId, final long elapsedTimeNanos) {
         this.connectionId = notNull("connectionId", connectionId);
@@ -80,7 +80,7 @@ public final class ConnectionReadyEvent {
      * @param timeUnit The time unit of the result.
      * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.
      * @return The time it took to establish the connection.
-     * @since VAKOTODO
+     * @since 4.11
      */
     public long getElapsedTime(final TimeUnit timeUnit) {
         return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);
