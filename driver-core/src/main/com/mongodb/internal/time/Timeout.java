@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal;
+package com.mongodb.internal.time;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -29,125 +31,98 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/doc-files/ValueBased.html">value-based</a> class
- * useful for tracking timeouts.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * for tracking timeouts.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.</p>
  */
 @Immutable
 public final class Timeout {
-    private static final Timeout INFINITE = new Timeout(-1, 0);
-    private static final Timeout IMMEDIATE = new Timeout(0, 0);
+    private static final Timeout INFINITE = new Timeout(-1, null);
+    private static final Timeout IMMEDIATE = new Timeout(0, null);
 
     private final long durationNanos;
-    private final long startNanos;
+    /**
+     * {@code null} iff {@code this} is {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate}.
+     */
+    @Nullable
+    private final TimePoint start;
 
-    private Timeout(final long durationNanos, final long startNanos) {
+    private Timeout(final long durationNanos, @Nullable final TimePoint start) {
         this.durationNanos = durationNanos;
-        this.startNanos = startNanos;
+        this.start = start;
     }
 
     /**
-     * Converts the specified {@code duration} from {@code unit}s to {@link TimeUnit#NANOSECONDS} via {@link TimeUnit#toNanos(long)}
-     * and then acts identically to {@link #startNow(long)}.
+     * Converts the specified {@code duration} from {@code unit}s to {@link TimeUnit#NANOSECONDS}
+     * as specified by {@link TimeUnit#toNanos(long)} and then acts identically to {@link #started(long, TimePoint)}.
      * <p>
      * Note that the contract of this method is also used in some places to specify the behavior of methods that accept
      * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
-     * so it cannot be changed without updating those methods.
-     * @see #startNow(long)
+     * so it cannot be changed without updating those methods.</p>
      */
-    public static Timeout startNow(final long duration, final TimeUnit unit) {
-        assertNotNull(unit);
-        return startNow(unit.toNanos(duration));
+    public static Timeout started(final long duration, final TimeUnit unit, final TimePoint at) {
+        return started(unit.toNanos(duration), assertNotNull(at));
     }
 
     /**
      * Returns an {@linkplain #isInfinite() infinite} timeout if {@code durationNanos} is either negative
      * or is equal to {@link Long#MAX_VALUE},
      * an {@linkplain #isImmediate() immediate} timeout if {@code durationNanos} is 0,
-     * otherwise an object that represents the specified {@code durationNanos}.
+     * otherwise a timeout of {@code durationNanos}.
      * <p>
      * Note that the contract of this method is also used in some places to specify the behavior of methods that accept
      * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
-     * so it cannot be changed without updating those methods.
+     * so it cannot be changed without updating those methods.</p>
      */
-    public static Timeout startNow(final long durationNanos) {
+    public static Timeout started(final long durationNanos, final TimePoint at) {
         if (durationNanos < 0 || durationNanos == Long.MAX_VALUE) {
             return infinite();
         } else if (durationNanos == 0) {
             return immediate();
         } else {
-            return new Timeout(durationNanos, System.nanoTime());
+            return new Timeout(durationNanos, assertNotNull(at));
         }
     }
 
     /**
-     * @see #startNow(long)
+     * This method acts identically to {@link #started(long, TimeUnit, TimePoint)}
+     * with the {@linkplain TimePoint#now() current} {@link TimePoint} passed to it.
+     */
+    public static Timeout startNow(final long duration, final TimeUnit unit) {
+        return started(duration, unit, TimePoint.now());
+    }
+
+    /**
+     * This method acts identically to {@link #started(long, TimePoint)}
+     * with the {@linkplain TimePoint#now() current} {@link TimePoint} passed to it.
+     */
+    public static Timeout startNow(final long durationNanos) {
+        return started(durationNanos, TimePoint.now());
+    }
+
+    /**
+     * @see #started(long, TimePoint)
      */
     public static Timeout infinite() {
         return INFINITE;
     }
 
     /**
-     * @see #startNow(long)
+     * @see #started(long, TimePoint)
      */
     public static Timeout immediate() {
         return IMMEDIATE;
     }
 
     /**
-     * Must not be called on {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate} timeouts.
-     * <p>
-     * Returns {@code currentNanos} - {@link #startNanos}:
-     * <ul>
-     *     <li>
-     *         A negative value means either of the following
-     *         <ol>
-     *             <li>the clock from which {@code currentNanos} was read jumped backwards,
-     *             in which case the behaviour of this class is undefined;</li>
-     *             <li>(n * 2<sup>63</sup> - 1; (n + 1) * 2<sup>63</sup>)<sup>(*)</sup> nanoseconds has elapsed,
-     *             in which case the timeout has expired.</li>
-     *         </ol>
-     *     </li>
-     *     <li>
-     *         0 means either of the following
-     *         <ol>
-     *             <li>0 nanoseconds has elapsed;</li>
-     *             <li>(n + 1) * 2<sup>63</sup><sup>(*)</sup> nanoseconds has elapsed,
-     *             in which case the timeout has expired.</li>
-     *         </ol>
-     *         Since it is impossible to differentiate the former from the latter, and the former is much more likely to happen in practice,
-     *         this class interprets 0 value as 0 elapsed nanoseconds.
-     *     </li>
-     *     <li>
-     *         A positive value means either of the following
-     *         <ol>
-     *             <li>this exact number of nanoseconds has elapsed;</li>
-     *             <li>((n + 1) * 2<sup>63</sup>; (n + 2) * 2<sup>63</sup> - 1]<sup>(*)</sup> nanoseconds has elapsed,
-     *             in which case the timeout has expired.</li>
-     *         </ol>
-     *         Since it is impossible to differentiate the former from the latter, and the former is much more likely to happen in practice,
-     *         this class interprets a positive value as the exact number of elapsed nanoseconds.
-     *     </li>
-     * </ul>
-     * <hr>
-     * <sup>(*)</sup> n is positive and odd.
-     */
-    private long elapsedNanos(final long currentNanos) {
-        assertFalse(isInfinite() || isImmediate());
-        return currentNanos - startNanos;
-    }
-
-    /**
      * Returns 0 or a positive value.
      * 0 means that the timeout has expired.
-     * <p>
-     * Must not be called on {@linkplain #isInfinite() infinite} timeouts.
+     *
+     * @throws AssertionError If the timeout is {@linkplain #isInfinite() infinite} or {@linkplain #isImmediate() immediate}.
      */
     @VisibleForTesting(otherwise = PRIVATE)
-    long remainingNanos(final long currentNanos) {
-        assertFalse(isInfinite() || isImmediate());
-        long elapsedNanos = elapsedNanos(currentNanos);
-        return elapsedNanos < 0 ? 0 : Math.max(0, durationNanos - elapsedNanos);
+    long remainingNanos(final TimePoint now) {
+        return Math.max(0, durationNanos - now.durationSince(assertNotNull(start)).toNanos());
     }
 
     /**
@@ -155,22 +130,21 @@ public final class Timeout {
      * Use {@link #expired(long)} to check if the returned value signifies that a timeout is expired.
      *
      * @param unit If not {@link TimeUnit#NANOSECONDS}, then coarsening conversion is done that may result in returning a value
-     *             that represents a longer time duration than is actually remaining (this is done to prevent treating a timeout as
-     *             {@linkplain #expired(long) expired} when it is not). Consequently, one should specify {@code unit} as small as
-     *             practically possible. Such rounding up happens if and only if the remaining time cannot be
-     *             represented exactly as an integral number of the {@code unit}s specified. It may result in
-     *             {@link #expired()} returning {@code true} and after that (in the happens-before order)
-     *             {@link #expired(long) expired}{@code (}{@link #remaining(TimeUnit) remaining(...)}{@code )}
-     *             returning {@code false}. If such a discrepancy is observed,
-     *             the result of the {@link #expired()} method should be preferred.
+     * that represents a longer time duration than is actually remaining (this is done to prevent treating a timeout as
+     * {@linkplain #expired(long) expired} when it is not). Consequently, one should specify {@code unit} as small as
+     * practically possible. Such rounding up happens if and only if the remaining time cannot be
+     * represented exactly as an integral number of the {@code unit}s specified. It may result in
+     * {@link #expired()} returning {@code true} and after that (in the happens-before order)
+     * {@link #expired(long) expired}{@code (}{@link #remaining(TimeUnit) remaining(...)}{@code )}
+     * returning {@code false}. If such a discrepancy is observed,
+     * the result of the {@link #expired()} method should be preferred.
      *
      * @throws AssertionError If the timeout is {@linkplain #isInfinite() infinite}.
      * @see #remainingOrInfinite(TimeUnit)
      */
     public long remaining(final TimeUnit unit) {
-        assertNotNull(unit);
         assertFalse(isInfinite());
-        return isImmediate() ? 0 : convertRoundUp(remainingNanos(System.nanoTime()), unit);
+        return isImmediate() ? 0 : convertRoundUp(remainingNanos(TimePoint.now()), unit);
     }
 
     /**
@@ -181,7 +155,6 @@ public final class Timeout {
      * @see #remaining(TimeUnit)
      */
     public long remainingOrInfinite(final TimeUnit unit) {
-        assertNotNull(unit);
         return isInfinite() ? -1 : remaining(unit);
     }
 
@@ -226,12 +199,12 @@ public final class Timeout {
             return false;
         }
         Timeout other = (Timeout) o;
-        return durationNanos == other.durationNanos && startNanos == other.startNanos;
+        return durationNanos == other.durationNanos && Objects.equals(start, other.start());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(durationNanos, startNanos);
+        return Objects.hash(durationNanos, start);
     }
 
     /**
@@ -243,7 +216,7 @@ public final class Timeout {
     public String toString() {
         return "Timeout{"
                 + "durationNanos=" + durationNanos
-                + ", startNanos=" + startNanos
+                + ", start=" + start
                 + '}';
     }
 
@@ -268,8 +241,9 @@ public final class Timeout {
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    long startNanos() {
-        return startNanos;
+    @Nullable
+    TimePoint start() {
+        return start;
     }
 
     @VisibleForTesting(otherwise = PRIVATE)

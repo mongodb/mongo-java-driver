@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal;
+package com.mongodb.internal.time;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,16 +21,17 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 final class TimeoutTest {
     @Test
@@ -38,7 +39,8 @@ final class TimeoutTest {
         assertAll(
                 () -> assertTrue(Timeout.infinite().isInfinite()),
                 () -> assertFalse(Timeout.immediate().isInfinite()),
-                () -> assertFalse(Timeout.startNow(1).isInfinite()));
+                () -> assertFalse(Timeout.startNow(1).isInfinite()),
+                () -> assertFalse(Timeout.started(1, TimePoint.now()).isInfinite()));
     }
 
     @Test
@@ -46,7 +48,24 @@ final class TimeoutTest {
         assertAll(
                 () -> assertTrue(Timeout.immediate().isImmediate()),
                 () -> assertFalse(Timeout.infinite().isImmediate()),
-                () -> assertFalse(Timeout.startNow(1).isImmediate()));
+                () -> assertFalse(Timeout.startNow(1).isImmediate()),
+                () -> assertFalse(Timeout.started(1, TimePoint.now()).isImmediate()));
+    }
+
+    @Test
+    void started() {
+        TimePoint timePoint = TimePoint.now();
+        assertAll(
+                () -> assertEquals(Timeout.infinite(), Timeout.started(-1, timePoint)),
+                () -> assertEquals(Timeout.immediate(), Timeout.started(0, timePoint)),
+                () -> assertNotEquals(Timeout.infinite(), Timeout.started(1, timePoint)),
+                () -> assertNotEquals(Timeout.immediate(), Timeout.started(1, timePoint)),
+                () -> assertEquals(1, Timeout.started(1, timePoint).durationNanos()),
+                () -> assertEquals(timePoint, Timeout.started(1, timePoint).start()),
+                () -> assertNotEquals(Timeout.infinite(), Timeout.started(Long.MAX_VALUE - 1, timePoint)),
+                () -> assertEquals(Long.MAX_VALUE - 1, Timeout.started(Long.MAX_VALUE - 1, timePoint).durationNanos()),
+                () -> assertEquals(timePoint, Timeout.started(Long.MAX_VALUE - 1, timePoint).start()),
+                () -> assertEquals(Timeout.infinite(), Timeout.started(Long.MAX_VALUE, timePoint)));
     }
 
     @Test
@@ -56,8 +75,23 @@ final class TimeoutTest {
                 () -> assertEquals(Timeout.immediate(), Timeout.startNow(0)),
                 () -> assertNotEquals(Timeout.infinite(), Timeout.startNow(1)),
                 () -> assertNotEquals(Timeout.immediate(), Timeout.startNow(1)),
+                () -> assertEquals(1, Timeout.startNow(1).durationNanos()),
                 () -> assertNotEquals(Timeout.infinite(), Timeout.startNow(Long.MAX_VALUE - 1)),
+                () -> assertEquals(Long.MAX_VALUE - 1, Timeout.startNow(Long.MAX_VALUE - 1).durationNanos()),
                 () -> assertEquals(Timeout.infinite(), Timeout.startNow(Long.MAX_VALUE)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("durationArguments")
+    void startedConvertsUnits(final long duration, final TimeUnit unit) {
+        TimePoint timePoint = TimePoint.now();
+        if (duration < 0) {
+            assertTrue(Timeout.started(duration, unit, timePoint).isInfinite());
+        } else if (duration == 0) {
+            assertTrue(Timeout.started(duration, unit, timePoint).isImmediate());
+        } else {
+            assertEquals(unit.toNanos(duration), Timeout.started(duration, unit, timePoint).durationNanos());
+        }
     }
 
     @ParameterizedTest
@@ -81,7 +115,7 @@ final class TimeoutTest {
     }
 
     @Test
-    void remainingNanosTrivialCases() {
+    void remainingTrivialCases() {
         assertAll(
                 () -> assertThrows(AssertionError.class, () -> Timeout.infinite().remaining(NANOSECONDS)),
                 () -> assertTrue(Timeout.infinite().remainingOrInfinite(NANOSECONDS) < 0),
@@ -92,16 +126,12 @@ final class TimeoutTest {
     @ParameterizedTest
     @ValueSource(longs = {1, 7, Long.MAX_VALUE / 2, Long.MAX_VALUE - 1})
     void remainingNanos(final long durationNanos) {
-        Timeout timeout = Timeout.startNow(durationNanos);
-        long startNanos = timeout.startNanos();
-        assertEquals(durationNanos, timeout.remainingNanos(startNanos));
-        assertEquals(Math.max(0, durationNanos - 1), timeout.remainingNanos(startNanos + 1));
-        assertEquals(0, timeout.remainingNanos(startNanos + durationNanos));
-        assertEquals(0, timeout.remainingNanos(startNanos + durationNanos + 1));
-        assertEquals(0, timeout.remainingNanos(startNanos + Long.MAX_VALUE));
-        assertEquals(0, timeout.remainingNanos(startNanos + Long.MAX_VALUE + 1));
-        assertEquals(0, timeout.remainingNanos(startNanos + Long.MAX_VALUE + Long.MAX_VALUE));
-
+        TimePoint start = TimePoint.now();
+        Timeout timeout = Timeout.started(durationNanos, start);
+        assertEquals(durationNanos, timeout.remainingNanos(start));
+        assertEquals(Math.max(0, durationNanos - 1), timeout.remainingNanos(start.add(Duration.ofNanos(1))));
+        assertEquals(0, timeout.remainingNanos(start.add(Duration.ofNanos(durationNanos))));
+        assertEquals(0, timeout.remainingNanos(start.add(Duration.ofNanos(durationNanos + 1))));
     }
 
     @Test
@@ -130,21 +160,18 @@ final class TimeoutTest {
 
     @ParameterizedTest
     @ValueSource(longs = {1, 7, 10, 100, 1000})
-    void usesRealClock(final long durationNanos) {
-        long startNanosLowerBound = System.nanoTime();
-        Timeout timeout = Timeout.startNow(durationNanos);
-        long startNanosUpperBound = System.nanoTime();
-        assertTrue(timeout.startNanos() - startNanosLowerBound >= 0, "started too early");
-        assertTrue(timeout.startNanos() - startNanosUpperBound <= 0, "started too late");
+    void remaining(final long durationNanos) {
+        TimePoint start = TimePoint.now();
+        Timeout timeout = Timeout.started(durationNanos, start);
         while (!timeout.expired()) {
-            long remainingNanosUpperBound = Math.max(0, durationNanos - (System.nanoTime() - startNanosUpperBound));
+            long remainingNanosUpperBound = Math.max(0, durationNanos - TimePoint.now().durationSince(start).toNanos());
             long remainingNanos = timeout.remaining(NANOSECONDS);
-            long remainingNanosLowerBound = Math.max(0, durationNanos - (System.nanoTime() - startNanosLowerBound));
+            long remainingNanosLowerBound = Math.max(0, durationNanos - TimePoint.now().durationSince(start).toNanos());
             assertTrue(remainingNanos >= remainingNanosLowerBound, "remaining nanos is too low");
             assertTrue(remainingNanos <= remainingNanosUpperBound, "remaining nanos is too high");
             Thread.yield();
         }
-        assertTrue(System.nanoTime() - startNanosLowerBound >= durationNanos, "expired too early");
+        assertTrue(TimePoint.now().durationSince(start).toNanos() >= durationNanos, "expired too early");
     }
 
     private TimeoutTest() {

@@ -43,7 +43,8 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.Timeout;
+import com.mongodb.internal.time.TimePoint;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
@@ -1123,7 +1124,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
-         * @param timeoutNanos See {@link Timeout#startNow(long)}.
+         * @param timeoutNanos See {@link Timeout#started(long, TimePoint)}.
          * @return The remaining duration as per {@link Timeout#remainingOrInfinite(TimeUnit)} if waiting ended early either
          * spuriously or because of receiving a signal.
          */
