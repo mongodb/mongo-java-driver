@@ -28,6 +28,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.client.model.changestream.SplitEvent;
+import com.mongodb.connection.ServerVersion;
 import com.mongodb.internal.operation.AggregateResponseBatchCursor;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -39,6 +40,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 
+import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
@@ -408,7 +410,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
 
     @Test
     public void test19SplitChangeStreamEvents() {
-        assumeTrue(serverVersionAtLeast(7, 0));
+        assumeTrue(getServerVersion().compareTo(new ServerVersion(asList(6, 0, 9))) >= 0);
         collection.drop();
         database.createCollection(
                 getClass().getName(),
