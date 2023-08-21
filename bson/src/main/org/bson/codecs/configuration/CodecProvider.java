@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @since 3.0
  */
-public interface CodecProvider {
+public interface CodecProvider<T> {
 
     /**
      * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.
@@ -46,7 +46,7 @@ public interface CodecProvider {
      * @param <T> the type of the class for which a Codec is required
      * @return the Codec instance, which may be null, if this source is unable to provide one for the requested Class
      */
-    <T> Codec<T> get(Class<T> clazz, CodecRegistry registry);
+     Codec<T> get(Class<T> clazz, CodecRegistry registry);
 
     /**
      * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.
