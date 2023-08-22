@@ -29,16 +29,7 @@ plugins {
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
-
 apply plugin: 'java'
-
-tasks.withType(Tar){
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-tasks.withType(Zip){
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -72,7 +63,6 @@ javadoc {
 }
 
 jar {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes "Main-Class": "com.mongodb.lambdatest.LambdaTestApp"
     }

@@ -8,6 +8,6 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 
 # compiled outside of lambda workflow. Note "SkipBuild: True" in template.yaml
 ./gradlew -version
-./gradlew -PxmlReports.enabled=true --info -x test -x integrationTest -x spotlessApply jar shadowJar
+./gradlew --info driver-lambda:shadowJar
 
 . ${DRIVERS_TOOLS}/.evergreen/aws_lambda/run-deployed-lambda-aws-tests.sh
