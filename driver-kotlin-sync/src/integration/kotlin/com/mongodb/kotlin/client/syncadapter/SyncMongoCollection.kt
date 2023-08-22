@@ -56,6 +56,7 @@ import com.mongodb.client.result.InsertOneResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.kotlin.client.MongoCollection
 import java.lang.UnsupportedOperationException
+import java.util.concurrent.TimeUnit
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
@@ -73,6 +74,7 @@ internal class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : J
     override fun getWriteConcern(): WriteConcern = wrapped.writeConcern
 
     override fun getReadConcern(): ReadConcern = wrapped.readConcern
+    override fun getTimeout(timeUnit: TimeUnit): Long? = wrapped.timeout(timeUnit)
 
     override fun <R : Any> withDocumentClass(clazz: Class<R>): SyncMongoCollection<R> =
         SyncMongoCollection(wrapped.withDocumentClass(clazz))
@@ -88,6 +90,9 @@ internal class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : J
 
     override fun withReadConcern(readConcern: ReadConcern): SyncMongoCollection<T> =
         SyncMongoCollection(wrapped.withReadConcern(readConcern))
+
+    override fun withTimeout(timeout: Long, timeUnit: TimeUnit): com.mongodb.client.MongoCollection<T> =
+        SyncMongoCollection(wrapped.withTimeout(timeout, timeUnit))
 
     override fun countDocuments(): Long = wrapped.countDocuments()
 

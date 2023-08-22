@@ -69,9 +69,9 @@ public final class AsyncOperations<TDocument> {
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
             final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
-            final boolean retryWrites, final boolean retryReads) {
+            final boolean retryWrites, final boolean retryReads,  @Nullable final Long timeoutMS) {
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                retryWrites, retryReads);
+                retryWrites, retryReads, timeoutMS);
     }
 
     public MongoNamespace getNamespace() {
@@ -104,6 +104,11 @@ public final class AsyncOperations<TDocument> {
 
     public boolean isRetryReads() {
         return operations.isRetryReads();
+    }
+
+    @Nullable
+    public Long getTimeoutMS() {
+        return operations.getTimeoutMS();
     }
 
     public AsyncReadOperation<Long> countDocuments(final Bson filter, final CountOptions options) {

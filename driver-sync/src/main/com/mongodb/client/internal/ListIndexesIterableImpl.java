@@ -42,15 +42,10 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
     private BsonValue comment;
 
     ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
-                            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor) {
-        this(clientSession, namespace, resultClass, codecRegistry, readPreference, executor, true);
-    }
-
-    ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
-                            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
-                            final boolean retryReads) {
-        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads);
-        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads);
+            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
+            final boolean retryReads, @Nullable final Long timeoutMS) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutMS);
+        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutMS);
         this.resultClass = notNull("resultClass", resultClass);
     }
 

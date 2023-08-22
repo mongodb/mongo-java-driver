@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
 import com.mongodb.internal.async.function.AsyncCallbackRunnable;
@@ -76,6 +77,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  */
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<? extends WriteRequest> writeRequests;
     private final boolean ordered;
@@ -85,11 +87,13 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private BsonValue comment;
     private BsonDocument variables;
 
-    public MixedBulkWriteOperation(final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests,
-                                   final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites) {
-        this.ordered = ordered;
+    public MixedBulkWriteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final List<? extends WriteRequest> writeRequests, final boolean ordered, final WriteConcern writeConcern,
+            final boolean retryWrites) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.writeRequests = notNull("writes", writeRequests);
+        this.ordered = ordered;
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
         isTrueArgument("writes is not an empty list", !writeRequests.isEmpty());

@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -27,13 +28,11 @@ import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -50,6 +49,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceE
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
@@ -66,14 +66,17 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
     private int batchSize;
-    private long maxTimeMS;
+
     private BsonValue comment;
 
-    public ListIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+    public ListIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final Decoder<T> decoder) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -84,17 +87,6 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     public ListIndexesOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
-        return this;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public ListIndexesOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -124,8 +116,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
-                            createCommandDecoder(), transformer(), connection);
+                    return createReadCommandAndExecute(clientSideOperationTimeout, retryState, binding, source, namespace.getDatabaseName(),
+                            getCommandCreator(), createCommandDecoder(), transformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
                             source.getServerDescription().getAddress(), batchSize));
@@ -147,8 +139,9 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                         binding.getSessionContext()), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
-                                        createCommandDecoder(), asyncTransformer(), connection, (result, t) -> {
+                                createReadCommandAndExecuteAsync(clientSideOperationTimeout, retryState, binding, source,
+                                        namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(), asyncTransformer(),
+                                        connection, (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {
                                                 releasingCallback.onResult(null, t);
                                             } else {
@@ -165,17 +158,14 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     private CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> getCommand();
-    }
+        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+            BsonDocument command = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
+                    .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
 
-    private BsonDocument getCommand() {
-        BsonDocument command = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
-                .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
-        if (maxTimeMS > 0) {
-            command.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        putIfNotNull(command, "comment", comment);
-        return command;
+            putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+            putIfNotNull(command, "comment", comment);
+            return command;
+        };
     }
 
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {

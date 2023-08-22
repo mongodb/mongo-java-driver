@@ -26,9 +26,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
+import static com.mongodb.ClusterFixture.CSOT_MAX_TIME;
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ListCollectionsPublisherImplTest extends TestHelper {
@@ -42,7 +44,7 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
         ListCollectionsPublisher<String> publisher = new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)
                 .withDocumentClass(String.class), true);
 
-        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
+        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(CSOT_NO_TIMEOUT.get(), DATABASE_NAME,
                                                                                             getDefaultCodecRegistry().get(String.class))
                 .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true).retryReads(true);
@@ -56,12 +58,14 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
         // Should apply settings
         publisher
                 .filter(new Document("filter", 1))
-                .maxTime(10, SECONDS)
+                .maxTime(100, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation
+        expectedOperation = new ListCollectionsOperation<>(CSOT_MAX_TIME.get(), DATABASE_NAME,
+                getDefaultCodecRegistry().get(String.class))
+                .nameOnly(true)
+                .retryReads(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)))
-                .maxTime(10, SECONDS)
                 .batchSize(100);
 
         Flux.from(publisher).blockFirst();

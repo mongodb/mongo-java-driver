@@ -21,6 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -36,7 +37,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -56,6 +56,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConc
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class AggregateToCollectionOperation implements AsyncReadOperation<Void>, ReadOperation<Void> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -63,35 +64,21 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     private final AggregationLevel aggregationLevel;
 
     private Boolean allowDiskUse;
-    private long maxTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
     private BsonValue comment;
     private BsonValue hint;
     private BsonDocument variables;
 
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
-        this(namespace, pipeline, null, null, AggregationLevel.COLLECTION);
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final List<BsonDocument> pipeline, final ReadConcern readConcern, final WriteConcern writeConcern) {
+        this(clientSideOperationTimeout, namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
     }
 
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
-                                          final WriteConcern writeConcern) {
-        this(namespace, pipeline, null, writeConcern, AggregationLevel.COLLECTION);
-    }
-
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
-                                          final ReadConcern readConcern) {
-        this(namespace, pipeline, readConcern, null, AggregationLevel.COLLECTION);
-    }
-
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
-                                          final ReadConcern readConcern, final WriteConcern writeConcern) {
-        this(namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
-    }
-
-    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
-                                          @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern,
-                                          final AggregationLevel aggregationLevel) {
+    public AggregateToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final List<BsonDocument> pipeline, @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern,
+            final AggregationLevel aggregationLevel) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
@@ -119,17 +106,6 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
     public AggregateToCollectionOperation allowDiskUse(@Nullable final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
-        return this;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public AggregateToCollectionOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -176,10 +152,10 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
     @Override
     public Void execute(final ReadBinding binding) {
-        return executeRetryableRead(binding,
+        return executeRetryableRead(clientSideOperationTimeout, binding,
                 () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),
                 namespace.getDatabaseName(),
-                (serverDescription, connectionDescription) -> getCommand(),
+                (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(),
                 new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                             connection.getDescription().getMaxWireVersion());
@@ -189,12 +165,11 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Void> callback) {
-        executeRetryableReadAsync(binding,
-                (connectionSourceCallback) -> {
-                        binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary(), connectionSourceCallback);
-                },
+        executeRetryableReadAsync(clientSideOperationTimeout, binding,
+                (connectionSourceCallback) ->
+                        binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary(), connectionSourceCallback),
                 namespace.getDatabaseName(),
-                (serverDescription, connectionDescription) -> getCommand(),
+                (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(),
                 new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                             connection.getDescription().getMaxWireVersion());
@@ -208,6 +183,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
         commandDocument.put("pipeline", new BsonArray(pipeline));
+        long maxTimeMS = clientSideOperationTimeout.getMaxTimeMS();
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }

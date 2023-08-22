@@ -35,6 +35,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer
@@ -75,7 +76,7 @@ class SyncOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = BsonDocument.parse('''{findAndModify: "coll", query: {a: 1}, new: false, update: {$inc: {a :1}}, txnNumber: 1}''')
-        def commandCreator = { serverDescription, connectionDescription -> command }
+        def commandCreator = { csot, serverDescription, connectionDescription -> command }
         def decoder = new BsonDocumentCodec()
         def results = [
             BsonDocument.parse('{ok: 1.0, writeConcernError: {code: 91, errmsg: "Replication is being shut down"}}'),
@@ -104,8 +105,8 @@ class SyncOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableWrite(writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
-                FindAndModifyHelper.transformer()) { cmd -> cmd }
+        executeRetryableWrite(CSOT_NO_TIMEOUT.get(), writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
+                FindAndModifyHelper.transformer())  { cmd -> cmd }
 
         then:
         2 * connection.command(dbName, command, _, primary(), decoder, writeBinding) >> { results.poll() }
@@ -119,7 +120,7 @@ class SyncOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = new BsonDocument('fakeCommandName', BsonNull.VALUE)
-        def commandCreator = { serverDescription, connectionDescription -> command }
+        def commandCreator = { csot, serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
         def function = Stub(CommandReadTransformer)
         def connection = Mock(Connection)
@@ -134,7 +135,7 @@ class SyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableRead(readBinding, dbName, commandCreator, decoder, function, false)
+        executeRetryableRead(CSOT_NO_TIMEOUT.get(), readBinding, dbName, commandCreator, decoder, function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription

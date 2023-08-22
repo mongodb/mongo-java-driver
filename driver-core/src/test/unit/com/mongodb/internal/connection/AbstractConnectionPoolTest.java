@@ -81,6 +81,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
@@ -474,7 +475,8 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     private static void executeAdminCommand(final BsonDocument command) {
-        new CommandReadOperation<>("admin", command, new BsonDocumentCodec()).execute(ClusterFixture.getBinding());
+        new CommandReadOperation<>(CSOT_NO_TIMEOUT.get(), "admin", command, new BsonDocumentCodec())
+                .execute(ClusterFixture.getBinding());
     }
 
     private void setFailPoint() {

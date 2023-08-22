@@ -26,6 +26,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -44,7 +45,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
@@ -66,18 +66,15 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
-    private long maxTimeMS;
     private CreateIndexCommitQuorum commitQuorum;
 
-    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests) {
-        this(namespace, requests, null);
-    }
-
-    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests,
-            @Nullable final WriteConcern writeConcern) {
+    public CreateIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final List<IndexRequest> requests, @Nullable final WriteConcern writeConcern) {
+        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
@@ -101,18 +98,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             }
         }
         return indexNames;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public CreateIndexesOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxTime >= 0", maxTime >= 0);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
     }
 
     public CreateIndexCommitQuorum getCommitQuorum() {
@@ -231,7 +216,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             values.add(getIndex(request));
         }
         command.put("indexes", new BsonArray(values));
-        putIfNotZero(command, "maxTimeMS", maxTimeMS);
+        putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
         appendWriteConcernToCommand(writeConcern, command);
         if (commitQuorum != null) {
             if (serverIsAtLeastVersionFourDotFour(description)) {

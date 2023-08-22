@@ -23,6 +23,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.LEGACY_HELLO
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
@@ -65,7 +66,7 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         source?.release()
     }
    private static BsonDocument getHelloResult() {
-        new CommandReadOperation<BsonDocument>('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)),
-                                               new BsonDocumentCodec()).execute(getBinding())
+        new CommandReadOperation<BsonDocument>(CSOT_NO_TIMEOUT.get(), 'admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)),
+                new BsonDocumentCodec()).execute(getBinding())
     }
 }

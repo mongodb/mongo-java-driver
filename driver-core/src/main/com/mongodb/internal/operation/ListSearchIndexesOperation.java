@@ -20,6 +20,7 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.ClientSideOperationTimeout;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -31,12 +32,10 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.internal.operation.AsyncOperationHelper.createEmptyAsyncBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
+import static java.util.Collections.singletonList;
 
 /**
  * An operation that lists Alas Search indexes with the help of {@value #STAGE_LIST_SEARCH_INDEXES} pipeline stage.
@@ -46,6 +45,7 @@ import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCur
 final class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     @Nullable
@@ -56,26 +56,20 @@ final class ListSearchIndexesOperation<T>
     private final Collation collation;
     @Nullable
     private final BsonValue comment;
-    private final long maxTimeMS;
     @Nullable
     private final String indexName;
     private final boolean retryReads;
 
-    ListSearchIndexesOperation(final MongoNamespace namespace,
-                               final Decoder<T> decoder,
-                               final long maxTimeMS,
-                               @Nullable final String indexName,
-                               @Nullable final Integer batchSize,
-                               @Nullable final Collation collation,
-                               @Nullable final BsonValue comment,
-                               @Nullable final Boolean allowDiskUse,
-                               final boolean retryReads) {
+    ListSearchIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+            final Decoder<T> decoder, @Nullable final String indexName, @Nullable final Integer batchSize,
+            @Nullable final Collation collation, @Nullable final BsonValue comment, @Nullable final Boolean allowDiskUse,
+            final boolean retryReads) {
+        this.clientSideOperationTimeout = clientSideOperationTimeout;
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
         this.batchSize = batchSize;
         this.collation = collation;
-        this.maxTimeMS = maxTimeMS;
         this.comment = comment;
         this.indexName = indexName;
         this.retryReads = retryReads;
@@ -125,13 +119,12 @@ final class ListSearchIndexesOperation<T>
         BsonDocument searchDefinition = getSearchDefinition();
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
 
-        return new AggregateOperation<>(namespace, Collections.singletonList(listSearchIndexesStage), decoder)
+        return new AggregateOperation<>(clientSideOperationTimeout, namespace, singletonList(listSearchIndexesStage), decoder)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)
                 .allowDiskUse(allowDiskUse)
-                .batchSize(batchSize)
-                .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+                .batchSize(batchSize);
     }
 
     @NonNull

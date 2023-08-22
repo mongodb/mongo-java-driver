@@ -52,7 +52,16 @@ class MongoDatabaseTest {
     fun shouldHaveTheSameMethods() {
         val jMongoDatabaseFunctions = JMongoDatabase::class.declaredFunctions.map { it.name }.toSet()
         val kMongoDatabaseFunctions =
-            MongoDatabase::class.declaredFunctions.map { it.name }.toSet() +
+            MongoDatabase::class
+                .declaredFunctions
+                .map {
+                    if (it.name == "timeout") {
+                        "getTimeout"
+                    } else {
+                        it.name
+                    }
+                }
+                .toSet() +
                 MongoDatabase::class
                     .declaredMemberProperties
                     .filterNot { it.name == "wrapped" }

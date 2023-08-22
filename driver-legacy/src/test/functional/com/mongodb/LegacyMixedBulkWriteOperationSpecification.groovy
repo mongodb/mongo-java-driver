@@ -28,6 +28,7 @@ import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getSingleConnectionBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -46,7 +47,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
 
     def 'should throw IllegalArgumentException for empty list of requests'() {
         when:
-        createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, true, [])
+        createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, true, [])
 
         then:
         thrown(IllegalArgumentException)
@@ -56,7 +57,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
         given:
         def inserts = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                        new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]
-        def operation = createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, false, inserts)
+        def operation = createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false, inserts)
 
         when:
         def result = execute(operation)
@@ -73,7 +74,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should insert a single document'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def operation = createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, false, asList(insert))
+        def operation = createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false, asList(insert))
 
         when:
         execute(operation)
@@ -85,7 +86,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should execute unacknowledged write'() {
         given:
         def binding = getSingleConnectionBinding()
-        def operation = createBulkWriteOperationForInsert(getNamespace(), true, UNACKNOWLEDGED, false,
+        def operation = createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), true, UNACKNOWLEDGED, false,
                 [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                  new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
 
@@ -107,7 +108,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                 new InsertRequest(new BsonDocument('_id', new BsonInt32(2))),
         ]
-        def operation = createBulkWriteOperationForInsert(getNamespace(), false, ACKNOWLEDGED, false, documents)
+        def operation = createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), false, ACKNOWLEDGED, false, documents)
 
         when:
         execute(operation)
@@ -124,7 +125,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                 new InsertRequest(new BsonDocument('_id', new BsonInt32(2))),
         ]
-        def operation = createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, false, documents)
+        def operation = createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false, documents)
 
         when:
         execute(operation)
@@ -138,7 +139,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should support retryable writes'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def operation = createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, true, asList(insert))
+        def operation = createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, true, asList(insert))
 
         when:
         executeWithSession(operation, false)
@@ -150,7 +151,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should remove a document'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = createBulkWriteOperationForDelete(getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = createBulkWriteOperationForDelete(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false,
                 [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])
 
         when:
@@ -167,7 +168,8 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should return correct result for replace'() {
         given:
         def replacement = new UpdateRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)), REPLACE)
-        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = createBulkWriteOperationForReplace(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED,
+                false, asList(replacement))
 
         when:
         def result = execute(operation)
@@ -182,11 +184,13 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should replace a single document'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
+        createBulkWriteOperationForInsert(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false, asList(insert))
+                .execute(getBinding())
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                 new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
-        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = createBulkWriteOperationForReplace(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED,
+                false, asList(replacement))
 
         when:
         def result = execute(operation)
@@ -205,7 +209,8 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                 new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
                 .upsert(true)
-        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = createBulkWriteOperationForReplace(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED,
+                false, asList(replacement))
 
         when:
         execute(operation)
@@ -216,9 +221,9 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
 
     def 'should update nothing if no documents match'() {
         given:
-        def operation = createBulkWriteOperationForUpdate(getNamespace(), true, ACKNOWLEDGED, false,
-                asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
-                        new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(false)))
+        def operation = createBulkWriteOperationForUpdate(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED,
+                false, asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
+                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(false)))
 
         when:
         WriteConcernResult result = execute(operation)
@@ -236,7 +241,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
         getCollectionHelper().insertDocuments(new DocumentCodec(),
                 new Document('x', 1),
                 new Document('x', 1))
-        def operation = createBulkWriteOperationForUpdate(getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = createBulkWriteOperationForUpdate(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(false)))
 
@@ -256,7 +261,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
         getCollectionHelper().insertDocuments(new DocumentCodec(),
                 new Document('x', 1),
                 new Document('x', 1))
-        def operation = createBulkWriteOperationForUpdate(getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = createBulkWriteOperationForUpdate(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(true)))
 
@@ -273,7 +278,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
 
     def 'when upsert is true should insert a document if there are no matching documents'() {
         given:
-        def operation = createBulkWriteOperationForUpdate(getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = createBulkWriteOperationForUpdate(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                         new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).upsert(true)))
 
@@ -291,7 +296,7 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should return correct result for upsert'() {
         given:
         def id = new ObjectId()
-        def operation = createBulkWriteOperationForUpdate(getNamespace(), true, ACKNOWLEDGED, false,
+        def operation = createBulkWriteOperationForUpdate(CSOT_NO_TIMEOUT.get(), getNamespace(), true, ACKNOWLEDGED, false,
                 asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                         new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), UPDATE).upsert(true)))
 
