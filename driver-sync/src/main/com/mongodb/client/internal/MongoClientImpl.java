@@ -50,6 +50,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
@@ -265,6 +266,6 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private @Nullable Long getTimeoutMS() {
-        return null; // TODO (CSOT) - JAVA-4064
+        return settings.getTimeout(TimeUnit.MILLISECONDS);
     }
 }

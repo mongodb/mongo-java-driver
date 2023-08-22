@@ -51,6 +51,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
         options.getMaxConnecting() == 2
+        options.getTimeout() == null
         options.getConnectTimeout() == 10000
         options.getReadPreference() == ReadPreference.primary()
         options.getServerSelector() == null
@@ -119,6 +120,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .readConcern(ReadConcern.MAJORITY)
                                         .minConnectionsPerHost(30)
                                         .connectionsPerHost(500)
+                                        .timeout(10_000)
                                         .connectTimeout(100)
                                         .socketTimeout(700)
                                         .serverSelector(serverSelector)
@@ -161,6 +163,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getRetryWrites()
         !options.getRetryReads()
         options.getServerSelectionTimeout() == 150
+        options.getTimeout() == 10_000
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300
         options.getMaxConnectionLifeTime() == 400
@@ -211,6 +214,7 @@ class MongoClientOptionsSpecification extends Specification {
         settings.readConcern == ReadConcern.MAJORITY
         settings.uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
         settings.serverApi == serverApi
+        settings.getTimeout(TimeUnit.MILLISECONDS) == 10_000
 
         when:
         def optionsFromSettings = MongoClientOptions.builder(settings).build()
@@ -223,6 +227,7 @@ class MongoClientOptionsSpecification extends Specification {
         optionsFromSettings.getServerSelector() == serverSelector
         optionsFromSettings.getRetryWrites()
         !optionsFromSettings.getRetryReads()
+        optionsFromSettings.getServerSelectionTimeout() == 150
         optionsFromSettings.getServerSelectionTimeout() == 150
         optionsFromSettings.getMaxWaitTime() == 200
         optionsFromSettings.getMaxConnectionIdleTime() == 300
@@ -317,6 +322,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
+                .timeout(10_000)
                 .connectTimeout(100)
                 .socketTimeout(700)
                 .serverSelectionTimeout(150)
@@ -616,6 +622,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .uuidRepresentation(UuidRepresentation.STANDARD)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
+                .timeout(10_000)
                 .connectTimeout(100)
                 .socketTimeout(700)
                 .serverSelectionTimeout(150)

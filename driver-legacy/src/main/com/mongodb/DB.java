@@ -568,7 +568,7 @@ public class DB {
 
     @Nullable
     Long getTimeoutMS() {
-        return null; // TODO (CSOT) - JAVA-4064
+        return mongo.getMongoClientOptions().getTimeout();
     }
 
     private static final Set<String> OBEDIENT_COMMANDS = new HashSet<>();

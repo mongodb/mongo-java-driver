@@ -45,6 +45,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -103,7 +104,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
                                                                      settings.getUuidRepresentation(),
                                                                      settings.getAutoEncryptionSettings(),
-                                                                     null, // TODO JAVA-4064
+                                                                     settings.getTimeout(TimeUnit.MILLISECONDS),
                                                                      this.executor);
         this.closed = new AtomicBoolean();
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);

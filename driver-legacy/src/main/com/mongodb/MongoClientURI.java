@@ -101,7 +101,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * sslInvalidHostNameAllowed option</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
- * This option is the same as {@link MongoClientOptions#getSocketTimeout()}.</li>
+ * This option is the same as {@link MongoClientOptions#getSocketTimeout()}.
+ * Deprecated, use {@code timeoutMS} instead.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
@@ -116,6 +117,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
  * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
+ * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
+ *      become available. Deprecated, use {@code timeoutMS} instead.</li>
  * </ul>
  *
  * <p>Write concern configuration:</p>
@@ -140,7 +143,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * {@code "majority"}</li>
  *      </ul>
  *  </li>
- *  <li>{@code wtimeoutMS=ms}
+ *  <li>{@code wtimeoutMS=ms}. Deprecated, use {@code timeoutMS} instead.
  *      <ul>
  *          <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
  *          <li>Used in combination with {@code w}</li>
@@ -460,6 +463,10 @@ public class MongoClientURI {
         String srvServiceName = proxied.getSrvServiceName();
         if (srvServiceName != null) {
             builder.srvServiceName(srvServiceName);
+        }
+        Long timeout = proxied.getTimeout();
+        if (timeout != null) {
+            builder.timeout(timeout);
         }
         return builder.build();
     }
