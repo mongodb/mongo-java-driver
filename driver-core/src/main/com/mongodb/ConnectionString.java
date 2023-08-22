@@ -1443,7 +1443,7 @@ public class ConnectionString {
     }
 
     /**
-     * The time limit for the full execution of an operation.
+     * The time limit for the full execution of an operation in milliseconds.
      *
      * <p>If set the following deprecated options will be ignored:
      * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
@@ -1465,7 +1465,7 @@ public class ConnectionString {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
-     * @return the time limit for the full execution of an operation or null.
+     * @return the time limit for the full execution of an operation in milliseconds or null.
      * @since 4.x
      */
     @Nullable
