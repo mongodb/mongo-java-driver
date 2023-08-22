@@ -47,6 +47,7 @@ public abstract class AsynchronousChannelStream implements Stream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
     private final PowerOfTwoBufferPool bufferProvider;
+    // we use `AtomicReference` to guarantee that we do not call `channel.close` concurrently with itself
     private final AtomicReference<ExtendedAsynchronousByteChannel> channel;
     private volatile boolean isClosed;
 
