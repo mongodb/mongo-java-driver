@@ -96,7 +96,7 @@ functions:
             # If this was a patch build, doing a fresh clone would not actually test the patch
             cp -R ${PROJECT_DIRECTORY}/ $DRIVERS_TOOLS
           else
-            git clone https://github.com/mongodb-labs/drivers-evergreen-tools.git $DRIVERS_TOOLS
+            git clone --branch EVG-20540 --single-branch https://github.com/hadjri/drivers-evergreen-tools.git $DRIVERS_TOOLS
           fi
           echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
 
@@ -1668,6 +1668,9 @@ axes:
       - id: "ubuntu"
         display_name: "Ubuntu"
         run_on: ubuntu2004-small
+      - id: "container"
+        display_name: "Container"
+        run_on: test-container
 
   - id: topology
     display_name: Topology
@@ -1934,7 +1937,7 @@ buildvariants:
 
 - matrix_name: "tests-jdk-secure"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17" ], version: [ "3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "latest" ],
-                 topology: "*", os: "linux" }
+                 topology: "*", os: ["linux", "container"] }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -2152,17 +2155,10 @@ buildvariants:
     - name: testazurekms_task_group
       batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
 
-- name: container-variant
-  display_name: "Container Variant"
-  run_on:
-    - test-container
-  tasks:
-    - static-analysis
-
 containers:
   - name: test-container
     working_dir: /
-    image: "557821124784.dkr.ecr.us-east-1.amazonaws.com/evergreen/mongo-java-driver:1e8c5b7b88296ed53462d5606ff2debdb5df2820"
+    image: "557821124784.dkr.ecr.us-east-1.amazonaws.com/evergreen/mongo-java-driver:9f1e43cb8f3bc893c6bdaa1f594ee32da5d08e56"
     resources:
       cpu: 4096
       memory_mb: 8192
