@@ -26,7 +26,7 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
  * See <a href="https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.rst#search-index-management-helpers">Search Index Management Tests</a>
  */
 public class AtlasSearchIndexManagementProseTest extends AbstractAtlasSearchIndexManagementProseTest {
-    protected MongoClient createMongoClient(MongoClientSettings settings) {
+    protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(MongoClients.create(settings));
     }
 }

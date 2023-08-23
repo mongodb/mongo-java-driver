@@ -60,13 +60,13 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     private static final String TEST_SEARCH_INDEX_NAME_1 = "test-search-index";
     private static final String TEST_SEARCH_INDEX_NAME_2 = "test-search-index-2";
     private static final Document NOT_DYNAMIC_MAPPING_DEFINITION = Document.parse(
-            "{" +
-                    "  mappings: { dynamic: false }" +
-                    "}");
+                      "{"
+                    + "  mappings: { dynamic: false }"
+                    + "}");
     private static final Document DYNAMIC_MAPPING_DEFINITION = Document.parse(
-            "{" +
-                    "  mappings: { dynamic: true }" +
-                    "}");
+                      "{"
+                    + "  mappings: { dynamic: true }"
+                    + "}");
     private MongoClient client = createMongoClient(getMongoClientSettings());
     private MongoDatabase db;
     private MongoCollection<Document> collection;
@@ -84,7 +84,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
 
     @BeforeEach
     public void setUp() {
-
         client = createMongoClient(getMongoClientSettings());
         db = client.getDatabase("test");
 
@@ -197,7 +196,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     }
 
 
-    private Map<String, Document> awaitIndexChanges(Predicate<Document> indexStatus, final SearchIndexModel... searchIndexModels)
+    private Map<String, Document> awaitIndexChanges(final Predicate<Document> indexStatus, final SearchIndexModel... searchIndexModels)
             throws InterruptedException {
         int attempts = MAX_WAIT_ATTEMPTS;
         while (checkAttempt(attempts--)) {
@@ -223,7 +222,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
 
 
     private boolean checkAttempt(final int attempt) {
-        Assertions.assertFalse(attempt < 0, "Exceeded maximum attempts waiting for Search Index changes in Atlas cluster");
+        Assertions.assertFalse(attempt <= 0, "Exceeded maximum attempts waiting for Search Index changes in Atlas cluster");
         return true;
     }
 
