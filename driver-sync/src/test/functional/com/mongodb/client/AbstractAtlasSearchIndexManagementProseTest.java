@@ -74,7 +74,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     protected AbstractAtlasSearchIndexManagementProseTest() {
-        Assumptions.assumeTrue(serverVersionAtLeast(7, 0));
+        Assumptions.assumeTrue(serverVersionAtLeast(6, 0));
         Assumptions.assumeTrue(hasAtlasSearchIndexHelperEnabled(), "Atlas Search Index tests are disabled"); //TODO enable by flag
     }
 
