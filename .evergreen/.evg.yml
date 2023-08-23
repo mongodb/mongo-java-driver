@@ -220,7 +220,7 @@ functions:
             . ./activate-authawsvenv.sh
             python ./lib/aws_assign_instance_profile.py
           fi
-
+          
   "run tests":
     - command: shell.exec
       type: test
