@@ -1451,6 +1451,16 @@ tasks:
       commands:
         - func: "run atlas test"
 
+    - name: "test-atlas-search-index-helpers"
+      commands:
+        - command: subprocess.exec
+          params:
+            working_dir: src
+            binary: bash
+            add_expansions_to_env: true
+            args:
+              - .evergreen/run-atlas-search-index-management-tests.sh
+
     - name: publish-snapshot
       depends_on:
         - variant: "static-checks"
@@ -1810,6 +1820,35 @@ axes:
           AWS_CREDENTIAL_PROVIDER: "builtIn"
 
 task_groups:
+  - name: test_atlas_task_group_search_indexes
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - func: make files executable
+      - command: subprocess.exec
+        params:
+          working_dir: src
+          binary: bash
+          add_expansions_to_env: true
+          #            env:
+          #              MONGODB_VERSION: "7.0"
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/setup-atlas-cluster.sh
+      - command: expansions.update
+        params:
+          file: src/atlas-expansion.yml
+    teardown_group:
+      - command: subprocess.exec
+        params:
+          working_dir: src
+          binary: bash
+          add_expansions_to_env: true
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown-atlas-cluster.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - test-atlas-search-index-helpers
   - name: testgcpkms_task_group
     setup_group_can_fail_task: true
     setup_group_timeout_secs: 1800 # 30 minutes
@@ -2028,6 +2067,12 @@ buildvariants:
   run_on: rhel80-small
   tasks:
     - name: "plain-auth-test"
+
+- name: rhel80-test-search-indexes
+  display_name: Atlas Search Index Management Tests
+  run_on: rhel80-large
+  tasks:
+    - name: "test_atlas_task_group_search_indexes"
 
 - matrix_name: "aws-auth-test"
   matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",
