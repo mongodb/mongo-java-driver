@@ -311,6 +311,7 @@ public final class AutoEncryptionSettings {
      * Gets the proxy settings used for connecting to Key Management Service via a SOCKS5 proxy server.
      *
      * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
+     * @see Builder#proxySettings(ProxySettings)
      * @since 4.11
      */
     @Nullable
