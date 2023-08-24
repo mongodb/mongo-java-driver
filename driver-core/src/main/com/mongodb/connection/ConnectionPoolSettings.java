@@ -146,9 +146,9 @@ public class ConnectionPoolSettings {
          * <p>
          * The maximum duration to wait for either an available connection (limited by {@link #getMaxSize()}),
          * or a {@linkplain ConnectionCreatedEvent newly created connection} (limited by {@link #getMaxConnecting()}).
-         * Note that the latter then has to be {@linkplain ConnectionReadyEvent established}
+         * Note that a newly created connection must first be {@linkplain ConnectionReadyEvent established}
          * before {@link ConnectionCheckedOutEvent checking out is completed}.
-         * Establishment of a connection is not controlled by this setting.</p>
+         * The time taken by the driver to establish a connection is not included in the wait time.</p>
          *
          * <p>Default is 2 minutes. A value of 0 means that it will not wait.  A negative value means it will wait indefinitely.</p>
          *
