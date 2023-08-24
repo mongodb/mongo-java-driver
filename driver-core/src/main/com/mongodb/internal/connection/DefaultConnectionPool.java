@@ -193,8 +193,7 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public InternalConnection get(final OperationContext operationContext, final long timeoutValue, final TimeUnit timeUnit) {
-        connectionCheckoutStarted(operationContext);
-        TimePoint checkoutStart = TimePoint.now();
+        TimePoint checkoutStart = connectionCheckoutStarted(operationContext);
         Timeout timeout = Timeout.started(timeoutValue, timeUnit, checkoutStart);
         try {
             stateAndGeneration.throwIfClosedOrPaused();
@@ -212,8 +211,7 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
-        connectionCheckoutStarted(operationContext);
-        TimePoint checkoutStart = TimePoint.now();
+        TimePoint checkoutStart = connectionCheckoutStarted(operationContext);
         Timeout timeout = Timeout.started(settings.getMaxWaitTime(NANOSECONDS), checkoutStart);
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
@@ -504,6 +502,9 @@ final class DefaultConnectionPool implements ConnectionPool {
      *
      * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionAdded(ConnectionAddedEvent)},
      * {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}.
+     * This order is required by
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
+     * and {@link ConnectionReadyEvent#getElapsedTime(TimeUnit)}.
      */
     private TimePoint connectionCreated(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId) {
         logEventMessage("Connection created",
@@ -557,10 +558,18 @@ final class DefaultConnectionPool implements ConnectionPool {
         connectionPoolListener.connectionCheckedOut(
                 new ConnectionCheckedOutEvent(connectionId, operationContext.getId(), checkoutDuration.toNanos()));
     }
-    private void connectionCheckoutStarted(final OperationContext operationContext) {
+
+    /**
+     * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionCheckOutStarted(ConnectionCheckOutStartedEvent)}.
+     * This order is required by
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
+     * and {@link ConnectionCheckedOutEvent#getElapsedTime(TimeUnit)}, {@link ConnectionCheckOutFailedEvent#getElapsedTime(TimeUnit)}.
+     */
+    private TimePoint connectionCheckoutStarted(final OperationContext operationContext) {
         logEventMessage("Connection checkout started", "Checkout started for connection to {}:{}");
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
+        return TimePoint.now();
     }
 
     private com.mongodb.event.ConnectionRemovedEvent.Reason getReasonForRemoved(final ConnectionClosedEvent.Reason reason) {

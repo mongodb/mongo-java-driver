@@ -141,11 +141,11 @@ public final class ConnectionCheckOutFailedEvent {
      * <p>
      * Naturally, if a new connection was not {@linkplain ConnectionCreatedEvent created}
      * and {@linkplain ConnectionReadyEvent established} as part of checking out,
-``     * this duration is usually not greater than {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)},
+     * this duration is usually not greater than {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)},
      * but may occasionally be greater than that, because the driver does not provide hard real-time guarantees.</p>
      * <p>
-     * This duration does not include the time to deliver the {@link ConnectionCheckOutStartedEvent}.
-     * Be warned that this may change.</p>
+     * This duration does not currently include the time to deliver the {@link ConnectionCheckOutStartedEvent}.
+     * Subject to change.</p>
      *
      * @param timeUnit The time unit of the result.
      * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.
