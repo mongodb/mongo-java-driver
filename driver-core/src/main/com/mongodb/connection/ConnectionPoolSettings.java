@@ -113,15 +113,15 @@ public class ConnectionPoolSettings {
         }
 
         /**
-         * <p>The maximum number of connections allowed. Those connections will be kept in the pool when idle. Once the pool is exhausted, any
-         * operation requiring a connection will block waiting for an available connection.
-         * The duration of such waiting is affected by the {@link #getMaxWaitTime(TimeUnit)} setting.</p>
+         * <p>The maximum number of connections allowed. Those connections will be kept in the pool when idle. Once the pool is exhausted,
+         * any operation requiring a connection will block waiting for an available connection.</p>
          *
          * <p>Default is 100.</p>
          *
          * @param maxSize the maximum number of connections in the pool; if 0, then there is no limit.
          * @return this
          * @see #getMaxSize()
+         * @see #getMaxWaitTime(TimeUnit)
          */
         public Builder maxSize(final int maxSize) {
             this.maxSize = maxSize;
