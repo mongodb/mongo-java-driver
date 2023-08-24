@@ -213,6 +213,7 @@ public final class SocketSettings {
      * Gets the proxy settings used for connecting to MongoDB via a SOCKS5 proxy server.
      *
      * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
+     * @see Builder#applyToProxySettings(Block)
      */
     public ProxySettings getProxySettings() {
         return proxySettings;
