@@ -185,31 +185,19 @@ public final class ProxySettings {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ProxySettings)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        ProxySettings that = (ProxySettings) o;
-
-        if (!Objects.equals(host, that.host)) {
-            return false;
-        }
-        if (!Objects.equals(port, that.port)) {
-            return false;
-        }
-        if (!Objects.equals(username, that.username)) {
-            return false;
-        }
-        return Objects.equals(password, that.password);
+        final ProxySettings that = (ProxySettings) o;
+        return Objects.equals(host, that.host)
+                && Objects.equals(port, that.port)
+                && Objects.equals(username, that.username)
+                && Objects.equals(password, that.password);
     }
 
     @Override
     public int hashCode() {
-        int result = host != null ? host.hashCode() : 0;
-        result = 31 * result + (port != null ? port.hashCode() : 0);
-        result = 31 * result + (username != null ? username.hashCode() : 0);
-        result = 31 * result + (password != null ? password.hashCode() : 0);
-        return result;
+        return Objects.hash(host, port, username, password);
     }
 
     @Override
