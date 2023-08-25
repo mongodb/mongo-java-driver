@@ -157,7 +157,7 @@ public class ConnectionPoolSettings {
          *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
          *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
          *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
-         *         among other, and is not affected by this maximum duration.
+         *         among others, and is not affected by this maximum duration.
          *     </li>
          * </ul>
          * The reasons it is not always possible to create and start establishing a connection
@@ -362,7 +362,7 @@ public class ConnectionPoolSettings {
      *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
      *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
      *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
-     *         among other, and is not affected by this maximum duration.
+     *         among others, and is not affected by this maximum duration.
      *     </li>
      * </ul>
      * The reasons it is not always possible to create and start establishing a connection
