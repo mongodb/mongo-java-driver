@@ -44,6 +44,7 @@ import static java.lang.Thread.sleep;
 /**
  * Helper class for asynchronous tests.
  */
+@SuppressWarnings("deprecation")
 public final class Fixture {
     private static MongoClientImpl mongoClient;
     private static ServerVersion serverVersion;

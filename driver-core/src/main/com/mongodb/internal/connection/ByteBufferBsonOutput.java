@@ -31,6 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@SuppressWarnings("deprecation")
 public class ByteBufferBsonOutput extends OutputBuffer {
 
     private static final int MAX_SHIFT = 31;

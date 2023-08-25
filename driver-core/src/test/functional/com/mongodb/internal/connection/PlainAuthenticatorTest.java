@@ -39,6 +39,7 @@ import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 
 @Ignore
+@SuppressWarnings("deprecation")
 public class PlainAuthenticatorTest {
     private InternalConnection internalConnection;
     private ConnectionDescription connectionDescription;

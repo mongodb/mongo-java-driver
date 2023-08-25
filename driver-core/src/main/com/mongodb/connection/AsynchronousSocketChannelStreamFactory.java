@@ -29,7 +29,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * Factory to create a Stream that's an AsynchronousSocketChannelStream. Throws an exception if SSL is enabled.
  *
  * @since 3.0
+ * @deprecated There is no replacement for this class.
  */
+@Deprecated
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final PowerOfTwoBufferPool bufferProvider = PowerOfTwoBufferPool.DEFAULT;
     private final SocketSettings settings;

@@ -41,6 +41,7 @@ import static java.util.Collections.emptyList;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@SuppressWarnings("deprecation")
 public class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;

@@ -35,6 +35,7 @@ import java.util.Set;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
 
+@SuppressWarnings("deprecation")
 public class MainTransactionsTest extends AbstractMainTransactionsTest {
     public static final Set<String> SESSION_CLOSE_TIMING_SENSITIVE_TESTS = new HashSet<>(Collections.singletonList(
             "implicit abort"));

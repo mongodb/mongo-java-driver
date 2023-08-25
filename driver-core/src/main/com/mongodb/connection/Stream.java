@@ -26,7 +26,9 @@ import java.util.List;
  * A full duplex stream of bytes.
  *
  * @since 3.0
+ * @deprecated There is no replacement for this interface.
  */
+@Deprecated
 public interface Stream extends BufferProvider{
 
     /**

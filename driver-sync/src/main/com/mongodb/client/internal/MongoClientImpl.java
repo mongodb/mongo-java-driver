@@ -54,6 +54,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
+import static com.mongodb.internal.connection.StreamFactoryHelper.getStreamFactoryFactoryFromSettings;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -229,8 +230,9 @@ public final class MongoClientImpl implements MongoClient {
                 settings.getDnsClient(), settings.getInetAddressResolver());
     }
 
+    @SuppressWarnings("deprecation")
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
-        StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
+        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings);
         SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
         if (streamFactoryFactory == null) {
             return new SocketStreamFactory(socketSettings, settings.getSslSettings());

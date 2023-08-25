@@ -30,6 +30,7 @@ import java.net.Socket;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@SuppressWarnings("deprecation")
 public class UnixSocketChannelStream extends SocketStream {
     private final UnixServerAddress address;
 

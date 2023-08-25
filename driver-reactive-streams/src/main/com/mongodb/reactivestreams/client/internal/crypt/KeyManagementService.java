@@ -43,6 +43,7 @@ import java.util.Map;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+@SuppressWarnings("deprecation")
 class KeyManagementService implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final Map<String, SSLContext> kmsProviderSslContextMap;

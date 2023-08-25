@@ -35,6 +35,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.io.Closeable;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.StreamFactoryHelper.getStreamFactoryFactoryFromSettings;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 
 
@@ -42,6 +43,7 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
  * A factory for MongoClient instances.
  *
  */
+@SuppressWarnings("deprecation")
 public final class MongoClients {
 
     /**
@@ -109,11 +111,14 @@ public final class MongoClients {
      * @return the client
      * @since 1.8
      */
+    @SuppressWarnings("deprecation")
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         if (settings.getSocketSettings().getProxySettings().isProxyEnabled()) {
             throw new MongoClientException("Proxy is not supported for reactive clients");
         }
-        if (settings.getStreamFactoryFactory() == null) {
+        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings);
+
+        if (streamFactoryFactory == null) {
             if (settings.getSslSettings().isEnabled()) {
                 return createWithTlsChannel(settings, mongoDriverInformation);
             } else {

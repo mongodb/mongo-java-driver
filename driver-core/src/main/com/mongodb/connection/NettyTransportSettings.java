@@ -14,113 +14,55 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty;
+package com.mongodb.connection;
 
-import com.mongodb.connection.NettyTransportSettings;
-import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.connection.TransportSettings;
-import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.ReferenceCountedOpenSslClientContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 
 import java.security.Security;
-import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
- * A {@code StreamFactoryFactory} implementation for <a href='http://netty.io/'>Netty</a>-based streams.
+ * A {@code TransportSettings} implementation for a <a href="http://netty.io/">Netty</a>-based transport implementation.
  *
- * @since 3.1
- * @deprecated Prefer {@link NettyTransportSettings}, creatable via {@link TransportSettings#nettyBuilder()} and applied via
- * {@link com.mongodb.MongoClientSettings.Builder#transportSettings(TransportSettings)}
+ * @since 4.11
  */
-@SuppressWarnings("deprecation")
-@Deprecated
-public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
+@Immutable
+public final class NettyTransportSettings extends TransportSettings {
 
     private final EventLoopGroup eventLoopGroup;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
-    @Nullable
     private final SslContext sslContext;
 
     /**
      * Gets a builder for an instance of {@code NettyStreamFactoryFactory}.
      * @return the builder
-     * @since 3.3
      */
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
-    }
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    EventLoopGroup getEventLoopGroup() {
-        return eventLoopGroup;
-    }
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    @Nullable
-    Class<? extends SocketChannel> getSocketChannelClass() {
-        return socketChannelClass;
-    }
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    @Nullable
-    ByteBufAllocator getAllocator() {
-        return allocator;
-    }
-
-    @VisibleForTesting(otherwise = PRIVATE)
-    @Nullable
-    SslContext getSslContext() {
-        return sslContext;
     }
 
     /**
      * A builder for an instance of {@code NettyStreamFactoryFactory}.
-     *
-     * @since 3.3
      */
     public static final class Builder {
         private ByteBufAllocator allocator;
         private Class<? extends SocketChannel> socketChannelClass;
         private EventLoopGroup eventLoopGroup;
-        @Nullable
         private SslContext sslContext;
 
         private Builder() {
-            allocator(ByteBufAllocator.DEFAULT);
-            socketChannelClass(NioSocketChannel.class);
         }
-
-        /**
-         * Apply NettyTransportSettings
-         *
-         * @param settings the settings
-         * @return this
-         */
-        public Builder applySettings(final NettyTransportSettings settings) {
-            this.allocator = settings.getAllocator();
-            this.eventLoopGroup = settings.getEventLoopGroup();
-            this.sslContext = settings.getSslContext();
-            this.socketChannelClass = settings.getSocketChannelClass();
-            return this;
-        }
-
 
         /**
          * Sets the allocator.
@@ -161,7 +103,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         /**
          * Sets a {@linkplain SslContextBuilder#forClient() client-side} {@link SslContext io.netty.handler.ssl.SslContext},
          * which overrides the standard {@link SslSettings#getContext()}.
-         * By default it is {@code null} and {@link SslSettings#getContext()} is at play.
+         * By default, it is {@code null} and {@link SslSettings#getContext()} is at play.
          * <p>
          * This option may be used as a convenient way to utilize
          * <a href="https://www.openssl.org/">OpenSSL</a> as an alternative to the TLS/SSL protocol implementation in a JDK.
@@ -183,8 +125,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
          *
          * @param sslContext The Netty {@link SslContext}, which must be created via {@linkplain SslContextBuilder#forClient()}.
          * @return {@code this}.
-         *
-         * @since 4.3
          */
         public Builder sslContext(final SslContext sslContext) {
             this.sslContext = notNull("sslContext", sslContext);
@@ -199,37 +139,58 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
          * Build an instance of {@code NettyStreamFactoryFactory}.
          * @return factory of the netty stream factory
          */
-        public NettyStreamFactoryFactory build() {
-            return new NettyStreamFactoryFactory(this);
+        public NettyTransportSettings build() {
+            return new NettyTransportSettings(this);
         }
     }
 
-    @Override
-    public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new NettyStreamFactory(socketSettings, sslSettings, eventLoopGroup, socketChannelClass, allocator, sslContext);
+    /**
+     * Gets the event loop group.
+     *
+     * @return the event loop group
+     * @see Builder#eventLoopGroup(EventLoopGroup)
+     */
+    @Nullable
+    public EventLoopGroup getEventLoopGroup() {
+        return eventLoopGroup;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        NettyStreamFactoryFactory that = (NettyStreamFactoryFactory) o;
-        return Objects.equals(eventLoopGroup, that.eventLoopGroup) && Objects.equals(socketChannelClass, that.socketChannelClass)
-                && Objects.equals(allocator, that.allocator) && Objects.equals(sslContext, that.sslContext);
+    /**
+     * Gets the socket channel class.
+     *
+     * @return the socket channel class
+     * @see Builder#socketChannelClass(Class)
+     */
+    @Nullable
+    public Class<? extends SocketChannel> getSocketChannelClass() {
+        return socketChannelClass;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(eventLoopGroup, socketChannelClass, allocator, sslContext);
+    /**
+     * Gets the allocator.
+     *
+     * @return the allocator
+     * @see Builder#allocator(ByteBufAllocator)
+     */
+    @Nullable
+    public ByteBufAllocator getAllocator() {
+        return allocator;
+    }
+
+    /**
+     * Gets the SSL Context.
+     *
+     * @return the SSL context
+     * @see Builder#sslContext(SslContext)
+     */
+    @Nullable
+    public SslContext getSslContext() {
+        return sslContext;
     }
 
     @Override
     public String toString() {
-        return "NettyStreamFactoryFactory{"
+        return "NettyTransportSettings{"
                 + "eventLoopGroup=" + eventLoopGroup
                 + ", socketChannelClass=" + socketChannelClass
                 + ", allocator=" + allocator
@@ -237,14 +198,10 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
                 + '}';
     }
 
-    private NettyStreamFactoryFactory(final Builder builder) {
+    private NettyTransportSettings(final Builder builder) {
         allocator = builder.allocator;
         socketChannelClass = builder.socketChannelClass;
-        if (builder.eventLoopGroup != null) {
-            eventLoopGroup = builder.eventLoopGroup;
-        } else {
-            eventLoopGroup = new NioEventLoopGroup();
-        }
+        eventLoopGroup = builder.eventLoopGroup;
         sslContext = builder.sslContext;
     }
 }

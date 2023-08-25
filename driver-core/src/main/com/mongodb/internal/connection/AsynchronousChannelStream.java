@@ -43,6 +43,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@SuppressWarnings("deprecation")
 public abstract class AsynchronousChannelStream implements Stream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;

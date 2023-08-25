@@ -18,7 +18,6 @@
 
 package com.mongodb.annotations;
 
-import com.mongodb.connection.StreamFactoryFactory;
 import org.bson.conversions.Bson;
 
 import java.lang.annotation.Documented;
@@ -48,11 +47,6 @@ import java.lang.annotation.Target;
  *   <tr>
  *     <td>Doing so allows/simplifies integrating user code with the API.</td>
  *     <td>{@link Bson}</td>
- *     <td>Not applicable.</td>
- *   </tr>
- *   <tr>
- *     <td>Doing so allows customizing API behavior.</td>
- *     <td>{@link StreamFactoryFactory}</td>
  *     <td>Not applicable.</td>
  *   </tr>
  *   <tr>
