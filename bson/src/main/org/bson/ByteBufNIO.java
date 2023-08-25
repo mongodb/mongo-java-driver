@@ -26,6 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @since 3.0
  */
+@Deprecated
+// TODO: Can we?  Can we go even further and deprecate ByteBuf? The main public usage in in RawBsonArray and RawBsonDocument
+// and in org.bson.io package. It would be nice because ByteBuf is not a good abstraction currently and removing it from the API would
+// give us more flexibility to refactor it.
 public class ByteBufNIO implements ByteBuf {
     private ByteBuffer buf;
     private final AtomicInteger referenceCount = new AtomicInteger(1);

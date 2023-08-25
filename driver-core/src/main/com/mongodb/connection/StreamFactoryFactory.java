@@ -21,6 +21,7 @@ package com.mongodb.connection;
  *
  * @since 3.1
  */
+@Deprecated
 public interface StreamFactoryFactory {
 
     /**

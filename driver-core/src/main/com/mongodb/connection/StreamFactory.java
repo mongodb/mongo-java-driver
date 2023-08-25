@@ -23,6 +23,7 @@ import com.mongodb.ServerAddress;
  *
  * @since 3.0
  */
+@Deprecated
 public interface StreamFactory {
     /**
      * Create a Stream to the given address

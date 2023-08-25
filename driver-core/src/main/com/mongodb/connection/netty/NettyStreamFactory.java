@@ -37,6 +37,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
+@Deprecated
 public class NettyStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;

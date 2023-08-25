@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
@@ -490,9 +491,25 @@ public final class MongoClientSettings {
          * @param streamFactoryFactory the stream factory factory
          * @return this
          * @see #getStreamFactoryFactory()
+         * @see #transportSettings(TransportSettings)
          */
+        @Deprecated
         public Builder streamFactoryFactory(final StreamFactoryFactory streamFactoryFactory) {
             this.streamFactoryFactory = notNull("streamFactoryFactory", streamFactoryFactory);
+            return this;
+        }
+
+        /**
+         * Enables Netty with the given settings.
+         *
+         * <p>
+         * If Netty is enabled with this method, it is an error to also use {@link #streamFactoryFactory}.
+         * </p>
+         *
+         * @param nettySettings the settings for Netty
+         * @return this
+         */
+        public Builder transportSettings(final TransportSettings nettySettings) {
             return this;
         }
 
@@ -771,10 +788,24 @@ public final class MongoClientSettings {
      *
      * @return the stream factory factory
      * @see Builder#streamFactoryFactory(StreamFactoryFactory)
+     * @see #getTransportSettings() ()
      */
+    @Deprecated
     @Nullable
     public StreamFactoryFactory getStreamFactoryFactory() {
         return streamFactoryFactory;
+    }
+
+    /**
+     * Gets the settings for the underlying transport API
+     *
+     * @return the settings for the underlying transport API
+     *
+     * @since 4.11
+     */
+    @Nullable
+    public TransportSettings getTransportSettings() {
+        throw new UnsupportedOperationException();
     }
 
     /**

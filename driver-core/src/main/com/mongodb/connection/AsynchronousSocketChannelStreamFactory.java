@@ -30,6 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
+@Deprecated
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final PowerOfTwoBufferPool bufferProvider = PowerOfTwoBufferPool.DEFAULT;
     private final SocketSettings settings;

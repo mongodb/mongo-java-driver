@@ -36,6 +36,7 @@ import static java.util.Optional.ofNullable;
  *
  * @since 3.0
  */
+@Deprecated
 public class SocketStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;

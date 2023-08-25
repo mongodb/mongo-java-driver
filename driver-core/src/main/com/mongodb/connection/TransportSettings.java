@@ -16,22 +16,20 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.annotations.ThreadSafe;
-import org.bson.ByteBuf;
+import com.mongodb.connection.netty.NettySettings;
 
 /**
- * A provider of instances of ByteBuf.
+ * Transport settings for the driver.
  *
- * @since 3.0
+ * @since 4.11
  */
-@Deprecated
-@ThreadSafe
-public interface BufferProvider {
+public abstract class TransportSettings {
     /**
-     * Gets a buffer with the givens capacity.
+     * A builder for NettySettings.
      *
-     * @param size the size required for the buffer
-     * @return a ByteBuf with the given size, which is now owned by the caller and must be released.
+     * @return a builder for NettySettings
      */
-    ByteBuf getBuffer(int size);
+    public static NettySettings.Builder nettyBuilder() {
+        return NettySettings.builder();
+    }
 }

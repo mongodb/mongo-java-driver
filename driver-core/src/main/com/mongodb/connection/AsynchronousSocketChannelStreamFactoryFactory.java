@@ -24,6 +24,7 @@ import java.nio.channels.AsynchronousChannelGroup;
  * @see java.nio.channels.AsynchronousSocketChannel
  * @since 3.1
  */
+@Deprecated
 public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
     private final AsynchronousChannelGroup group;
 

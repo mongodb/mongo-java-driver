@@ -58,6 +58,7 @@ import static java.util.Optional.ofNullable;
  *
  * @since 3.10
  */
+@Deprecated
 public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Closeable {
 
     private static final Logger LOGGER = Loggers.getLogger("connection.tls");
