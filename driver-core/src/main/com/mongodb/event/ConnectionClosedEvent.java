@@ -17,11 +17,13 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ConnectionPoolSettings;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for when a connection pool closes a connection.
+ * Such a connection stops being counted towards {@link ConnectionPoolSettings#getMaxSize()}.
  *
  * @since 4.0
  */

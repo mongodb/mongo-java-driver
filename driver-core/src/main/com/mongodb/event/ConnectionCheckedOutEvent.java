@@ -17,17 +17,38 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ConnectionPoolSettings;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for checking out a connection from the pool.
+ * Such a connection is considered in use until it becomes {@linkplain ConnectionCheckedInEvent available}.
  *
  * @since 3.5
  */
 public final class ConnectionCheckedOutEvent {
     private final ConnectionId connectionId;
     private final long operationId;
+    private final long elapsedTimeNanos;
+
+    /**
+     * Constructs an instance.
+     *
+     * @param connectionId The connection ID. See {@link #getConnectionId()}.
+     * @param operationId The operation ID. See {@link #getOperationId()}.
+     * @param elapsedTimeNanos The time it took to check out the connection. See {@link #getElapsedTime(TimeUnit)}.
+     * @since 4.11
+     */
+    public ConnectionCheckedOutEvent(final ConnectionId connectionId, final long operationId, final long elapsedTimeNanos) {
+        this.connectionId = notNull("connectionId", connectionId);
+        this.operationId = operationId;
+        isTrueArgument("waited time is not negative", elapsedTimeNanos >= 0);
+        this.elapsedTimeNanos = elapsedTimeNanos;
+    }
 
     /**
      * Construct an instance
@@ -35,17 +56,20 @@ public final class ConnectionCheckedOutEvent {
      * @param connectionId the connectionId
      * @param operationId the operation id
      * @since 4.10
+     * @deprecated Prefer {@link ConnectionCheckedOutEvent#ConnectionCheckedOutEvent(ConnectionId, long, long)}.
+     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
      */
+    @Deprecated
     public ConnectionCheckedOutEvent(final ConnectionId connectionId, final long operationId) {
-        this.connectionId = notNull("connectionId", connectionId);
-        this.operationId = operationId;
+        this(connectionId, operationId, 0);
     }
 
     /**
      * Construct an instance
      *
      * @param connectionId the connectionId
-     * @deprecated Prefer {@link #ConnectionCheckedOutEvent(ConnectionId, long)}
+     * @deprecated Prefer {@link #ConnectionCheckedOutEvent(ConnectionId, long)}.
+     * If this constructor is used, then {@link #getOperationId()} is -1.
      */
     @Deprecated
     public ConnectionCheckedOutEvent(final ConnectionId connectionId) {
@@ -71,6 +95,27 @@ public final class ConnectionCheckedOutEvent {
         return operationId;
     }
 
+    /**
+     * The time it took to check out the connection.
+     * More specifically, the time elapsed between the {@link ConnectionCheckOutStartedEvent} emitted by the same checking out and this event.
+     * <p>
+     * Naturally, if a new connection was not {@linkplain ConnectionCreatedEvent created}
+     * and {@linkplain ConnectionReadyEvent established} as part of checking out,
+     * this duration is usually not greater than {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)},
+     * but may occasionally be greater than that, because the driver does not provide hard real-time guarantees.</p>
+     * <p>
+     * This duration does not currently include the time to deliver the {@link ConnectionCheckOutStartedEvent}.
+     * Subject to change.</p>
+     *
+     * @param timeUnit The time unit of the result.
+     * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.
+     * @return The time it took to establish the connection.
+     * @since 4.11
+     */
+    public long getElapsedTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(elapsedTimeNanos, TimeUnit.NANOSECONDS);
+    }
+
     @Override
     public String toString() {
         return "ConnectionCheckedOutEvent{"
@@ -78,6 +123,7 @@ public final class ConnectionCheckedOutEvent {
                 + ", server=" + connectionId.getServerId().getAddress()
                 + ", clusterId=" + connectionId.getServerId().getClusterId()
                 + ", operationId=" + operationId
+                + ", elapsedTimeNanos=" + elapsedTimeNanos
                 + '}';
     }
 }
