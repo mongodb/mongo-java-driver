@@ -19,7 +19,11 @@ package com.mongodb;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.event.ConnectionCheckOutStartedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
+import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
+import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
@@ -133,9 +137,10 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
  * <li>{@code minPoolSize=n}: The minimum number of connections in the connection pool.</li>
- * <li>{@code waitQueueTimeoutMS=ms}: The maximum duration to wait for either an available connection
- * (limited by {@link #getMaxConnectionPoolSize()}),
- * or a {@linkplain ConnectionCreatedEvent newly created connection} (limited by {@link #getMaxConnecting()}).</li>
+ * <li>{@code waitQueueTimeoutMS=ms}: The maximum duration to wait until either:
+ * an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available},
+ * or a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+ * See {@link #getMaxWaitTime()} for more details.</li>
  * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
  * </ul>
  * <p>Write concern configuration:</p>
@@ -1376,9 +1381,33 @@ public class ConnectionString {
     }
 
     /**
-     * The maximum duration to wait for either an available connection (limited by {@link #getMaxConnectionPoolSize()}),
-     * or a {@linkplain ConnectionCreatedEvent newly created connection} (limited by {@link #getMaxConnecting()}).
-     * @return the maximum wait time when waiting for a connection
+     * The maximum duration to wait until either:
+     * <ul>
+     *     <li>
+     *         an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available}; or
+     *     </li>
+     *     <li>
+     *         a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+     *         The time between {@linkplain ConnectionCheckOutStartedEvent requesting} a connection
+     *         and it being created is limited by this maximum duration.
+     *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
+     *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
+     *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
+     *         among other, and is not affected by this maximum duration.
+     *     </li>
+     * </ul>
+     * The reasons it is not always possible to create and start establishing a connection
+     * whenever there is no available one:
+     * <ul>
+     *     <li>
+     *         the number of connections per pool is limited by {@link #getMaxConnectionPoolSize()};
+     *     </li>
+     *     <li>
+     *         the number of connections a pool may be establishing concurrently is limited by {@link #getMaxConnecting()}.
+     *     </li>
+     * </ul>
+     *
+     * @return The value of the {@code waitQueueTimeoutMS} option, if specified.
      * @see ConnectionPoolSettings#getMaxWaitTime(TimeUnit)
      */
     @Nullable

@@ -19,6 +19,8 @@ package com.mongodb.connection;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.event.ConnectionCheckOutStartedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
@@ -143,12 +145,31 @@ public class ConnectionPoolSettings {
         }
 
         /**
-         * <p>
-         * The maximum duration to wait for either an available connection (limited by {@link #getMaxSize()}),
-         * or a {@linkplain ConnectionCreatedEvent newly created connection} (limited by {@link #getMaxConnecting()}).
-         * Note that a newly created connection must first be {@linkplain ConnectionReadyEvent established}
-         * before {@link ConnectionCheckedOutEvent checking out is completed}.
-         * The time taken by the driver to establish a connection is not included in the wait time.</p>
+         * The maximum duration to wait until either:
+         * <ul>
+         *     <li>
+         *         an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available}; or
+         *     </li>
+         *     <li>
+         *         a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+         *         The time between {@linkplain ConnectionCheckOutStartedEvent requesting} a connection
+         *         and it being created is limited by this maximum duration.
+         *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
+         *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
+         *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
+         *         among other, and is not affected by this maximum duration.
+         *     </li>
+         * </ul>
+         * The reasons it is not always possible to create and start establishing a connection
+         * whenever there is no available one:
+         * <ul>
+         *     <li>
+         *         the number of connections per pool is limited by {@link #getMaxSize()};
+         *     </li>
+         *     <li>
+         *         the number of connections a pool may be establishing concurrently is limited by {@link #getMaxConnecting()}.
+         *     </li>
+         * </ul>
          *
          * <p>Default is 2 minutes. A value of 0 means that it will not wait.  A negative value means it will wait indefinitely.</p>
          *
@@ -243,6 +264,7 @@ public class ConnectionPoolSettings {
          * @param maxConnecting The maximum number of connections a pool may be establishing concurrently. Must be positive.
          * @return {@code this}.
          * @see ConnectionPoolSettings#getMaxConnecting()
+         * @see #getMaxWaitTime(TimeUnit)
          * @since 4.4
          */
         public Builder maxConnecting(final int maxConnecting) {
@@ -302,14 +324,14 @@ public class ConnectionPoolSettings {
 
     /**
      * <p>The maximum number of connections allowed. Those connections will be kept in the pool when idle. Once the pool is exhausted, any
-     * operation requiring a connection will block waiting for an available connection.
-     * The duration of such waiting is affected by the {@link #getMaxWaitTime(TimeUnit)} setting.</p>
+     * operation requiring a connection will block waiting for an available connection.</p>
      *
      * <p>Default is 100.</p>
      *
      * @return the maximum number of connections in the pool; if 0, then there is no limit.
      * @see Builder#maxSize(int)
      * @see ConnectionString#getMaxConnectionPoolSize()
+     * @see #getMaxWaitTime(TimeUnit)
      */
     public int getMaxSize() {
         return maxSize;
@@ -328,12 +350,31 @@ public class ConnectionPoolSettings {
     }
 
     /**
-     * <p>
-     * The maximum duration to wait for either an available connection (limited by {@link #getMaxSize()}),
-     * or a {@linkplain ConnectionCreatedEvent newly created connection} (limited by {@link #getMaxConnecting()}).
-     * Note that the latter then has to be {@linkplain ConnectionReadyEvent established}
-     * before {@link ConnectionCheckedOutEvent checking out is completed}.
-     * Establishment of a connection is not controlled by this setting.</p>
+     * The maximum duration to wait until either:
+     * <ul>
+     *     <li>
+     *         an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available}; or
+     *     </li>
+     *     <li>
+     *         a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
+     *         The time between {@linkplain ConnectionCheckOutStartedEvent requesting} a connection
+     *         and it being created is limited by this maximum duration.
+     *         The maximum time between it being created and {@linkplain ConnectionCheckedOutEvent successfully checked out},
+     *         which includes the time to {@linkplain ConnectionReadyEvent establish} the created connection,
+     *         is affected by {@link SocketSettings#getConnectTimeout(TimeUnit)}, {@link SocketSettings#getReadTimeout(TimeUnit)}
+     *         among other, and is not affected by this maximum duration.
+     *     </li>
+     * </ul>
+     * The reasons it is not always possible to create and start establishing a connection
+     * whenever there is no available one:
+     * <ul>
+     *     <li>
+     *         the number of connections per pool is limited by {@link #getMaxSize()};
+     *     </li>
+     *     <li>
+     *         the number of connections a pool may be establishing concurrently is limited by {@link #getMaxConnecting()}.
+     *     </li>
+     * </ul>
      *
      * <p>Default is 2 minutes. A value of 0 means that it will not wait.  A negative value means it will wait indefinitely.</p>
      *
@@ -403,14 +444,12 @@ public class ConnectionPoolSettings {
      * Establishment of a connection is a part of its life cycle
      * starting after a {@link ConnectionCreatedEvent} and ending before a {@link ConnectionReadyEvent}.
      * <p>
-     * This limit may cause waiting when checking out a connection.
-     * The duration of such waiting is affected by the {@link #getMaxWaitTime(TimeUnit)} setting.</p>
-     * <p>
      * Default is 2.</p>
      *
      * @return The maximum number of connections a pool may be establishing concurrently.
      * @see Builder#maxConnecting(int)
      * @see ConnectionString#getMaxConnecting()
+     * @see #getMaxWaitTime(TimeUnit)
      * @since 4.4
      */
     public int getMaxConnecting() {

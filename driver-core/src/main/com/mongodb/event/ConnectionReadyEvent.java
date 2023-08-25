@@ -24,7 +24,9 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event for when a connection in the pool has finished being established and is ready for use.
+ * An event for when a connection in the pool has finished being established.
+ * Such a connection is considered available until it becomes {@linkplain ConnectionCheckedOutEvent in use}
+ * or {@linkplain ConnectionClosedEvent closed}.
  *
  * @since 4.0
  */

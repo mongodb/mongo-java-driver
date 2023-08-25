@@ -26,6 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for checking out a connection from the pool.
+ * Such a connection is considered in use until it becomes {@linkplain ConnectionCheckedInEvent available}.
  *
  * @since 3.5
  */
