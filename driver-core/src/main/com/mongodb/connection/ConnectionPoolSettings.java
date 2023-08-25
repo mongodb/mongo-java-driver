@@ -161,7 +161,7 @@ public class ConnectionPoolSettings {
          *     </li>
          * </ul>
          * The reasons it is not always possible to create and start establishing a connection
-         * whenever there is no available one:
+         * whenever there is no available connection:
          * <ul>
          *     <li>
          *         the number of connections per pool is limited by {@link #getMaxSize()};
@@ -366,7 +366,7 @@ public class ConnectionPoolSettings {
      *     </li>
      * </ul>
      * The reasons it is not always possible to create and start establishing a connection
-     * whenever there is no available one:
+     * whenever there is no available connection:
      * <ul>
      *     <li>
      *         the number of connections per pool is limited by {@link #getMaxSize()};
