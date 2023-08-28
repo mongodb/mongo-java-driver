@@ -1,0 +1,57 @@
+*~
+.#*
+.git
+*#
+
+# os x stuff
+*Thumbs.db*
+*.DS_Store
+
+# Build artifacts
+build
+target
+out
+mongo*.jar
+
+# Eclipse files
+.classpath
+.project
+.settings
+
+# Intellij IDEA files
+*.ipr
+*.iws
+*.iml
+*.idea
+workspace.xml
+atlassian-ide-plugin.xml
+
+# gradle
+.gradle
+
+# code review
+codereview.rc
+
+# evergreen
+expansion.yml
+
+# local settings
+**/gradle.properties
+local.properties
+
+# jenv
+.java-version
+
+# mongocryptd
+**/mongocryptd*.pid
+
+# shell scripts
+*.sh
+!.evergreen/*.sh
+
+# security-sensitive files
+*.gpg
+
+# bin build directories
+**/bin
+
