@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -254,7 +253,7 @@ public abstract class AbstractRetryableWritesTest {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getArray("data"), test.asDocument(),
-                        !isDiscoverableReplicaSet() || skipTest(testDocument, test.asDocument())});
+                        skipTest(testDocument, test.asDocument())});
             }
         }
         return data;
