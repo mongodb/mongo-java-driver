@@ -103,6 +103,8 @@ public final class SocksSocket extends Socket {
 
     @Override
     public void connect(final SocketAddress endpoint, final int timeoutMs) throws IOException {
+    // `Socket` requires `IllegalArgumentException`
+    isTrueArgument("timeoutMs", timeoutMs >= 0);
         try {
             Timeout timeout = toTimeout(timeoutMs);
             InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
