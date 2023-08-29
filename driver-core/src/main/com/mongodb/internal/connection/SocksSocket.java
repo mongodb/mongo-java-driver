@@ -307,7 +307,7 @@ public final class SocksSocket extends Socket {
             return 0;
         }
 
-        final int remaining = (int) timeout.remaining(TimeUnit.MILLISECONDS);
+        final int remaining = Math.toIntExact(timeout.remaining(TimeUnit.MILLISECONDS));
         if (remaining > 0) {
             return remaining;
         }
