@@ -23,7 +23,6 @@ import org.bson.BsonString;
 import org.bson.conversions.Bson;
 
 import java.util.Collections;
-import java.util.function.Supplier;
 
 public final class FailPoint implements AutoCloseable {
     private final BsonDocument failPointDocument;
@@ -41,8 +40,8 @@ public final class FailPoint implements AutoCloseable {
     public static FailPoint enable(
             final BsonDocument configureFailPointDoc,
             final ServerAddress serverAddress,
-            final Supplier<MongoClientSettings.Builder> clientSettingsBuilderSupplier) {
-        MongoClientSettings clientSettings = clientSettingsBuilderSupplier.get()
+            final MongoClientSettings.Builder clientSettingsBuilder) {
+        MongoClientSettings clientSettings = clientSettingsBuilder
                 .applyToClusterSettings(builder -> builder
                         .mode(ClusterConnectionMode.SINGLE)
                         .hosts(Collections.singletonList(serverAddress)))

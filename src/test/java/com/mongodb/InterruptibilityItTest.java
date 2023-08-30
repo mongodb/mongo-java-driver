@@ -105,8 +105,6 @@ final class InterruptibilityItTest {
 
     @AfterEach
     void afterEach() {
-        // make sure the current thread is not interrupted because tests mess with this status
-        com.mongodb.assertions.Assertions.assertFalse(Thread.interrupted());
         // make sure the primary is available, because tests mess with it
         primary(client, Duration.ofNanos(Long.MAX_VALUE));
     }
@@ -145,7 +143,10 @@ final class InterruptibilityItTest {
         // we assume here that the time to elect a new leader is greater than `interruptDelay`
         client.getDatabase("admin").runCommand(BsonDocument.parse(
                 "{\n"
-                // using `blockTimeout` does not give us much because it controls only the unelectability of the current primary
+                // `replSetStepDown` makes only the current primary an unelectabile one.
+                // We would like to make all nodes unelectable for `blockTimeout`, but there seem to be no way.
+                // It is still better to affect at least the current primary,
+                // because re-electing a different node must at least be no faster than re-electing the current one.
                 + "    'replSetStepDown': " + blockTimeout.toSeconds() + ",\n"
                 + "    'force': true\n"
                 + "}"));
@@ -182,7 +183,7 @@ final class InterruptibilityItTest {
                 + "    }\n"
                 + "}"),
                 primary(client, testTimeout),
-                clientSettingsBuilderSupplier)) {
+                clientSettingsBuilderSupplier.get())) {
             return assertThrows(expectedType, () ->
                     inVirtualThread(() ->
                             inInterruptedThread(interruptDelay, action))
@@ -238,17 +239,17 @@ final class InterruptibilityItTest {
                 futureInterrupt.get();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                //noinspection ThrowFromFinallyBlock
+                // noinspection ThrowFromFinallyBlock
                 throw new RuntimeException(e);
             } catch (ExecutionException e) {
-                //noinspection ThrowFromFinallyBlock
+                // noinspection ThrowFromFinallyBlock
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private static ServerAddress primary(final MongoClient client, final Duration timeout) {
-        Timeout tOut = Timeout.startNow(timeout.toNanos());
+    private static ServerAddress primary(final MongoClient client, final Duration timoutDuration) {
+        Timeout timeout = Timeout.startNow(timoutDuration.toNanos());
         ServerAddress result;
         do {
             result = client.getClusterDescription()
@@ -258,12 +259,12 @@ final class InterruptibilityItTest {
                     .findAny()
                     .map(ServerDescription::getAddress)
                     .orElse(null);
-            if (result == null && tOut.expired()) {
+            if (result == null && timeout.expired()) {
                 throw com.mongodb.assertions.Assertions.fail();
             } else {
                 LOGGER.info("Waiting for the primary to become available ...");
                 try {
-                    collection.listIndexes().first();
+                    client.listDatabaseNames().first();
                 } catch (MongoTimeoutException e) {
                     // ignore
                 }
