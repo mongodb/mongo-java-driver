@@ -7,4 +7,4 @@
   </a>
 </p>
 
-To run the tests, run `mvn` in the project root directory.
+To run the tests, run `mvn verify` in the project root directory.
