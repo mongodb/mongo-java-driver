@@ -2068,7 +2068,7 @@ buildvariants:
 
 - name: rhel80-test-search-indexes
   display_name: Atlas Search Index Management Tests
-  run_on: rhel80-large
+  run_on: rhel80-small
   tasks:
     - name: "test_atlas_task_group_search_indexes"
 
