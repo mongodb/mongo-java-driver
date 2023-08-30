@@ -26,6 +26,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 
@@ -37,42 +39,52 @@ import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 public final class AzureCredentialHelper {
     private static final String ACCESS_TOKEN_FIELD = "access_token";
     private static final String EXPIRES_IN_FIELD = "expires_in";
+    private static final Lock CACHED_ACCESS_TOKEN_LOCK = new ReentrantLock();
+    private static volatile ExpirableValue<String> cachedAccessToken = ExpirableValue.expired();
 
-    private static ExpirableValue<String> cachedAccessToken = ExpirableValue.expired();
-
-    public static synchronized BsonDocument obtainFromEnvironment() {
+    public static BsonDocument obtainFromEnvironment() {
         String accessToken;
         Optional<String> cachedValue = cachedAccessToken.getValue();
         if (cachedValue.isPresent()) {
             accessToken = cachedValue.get();
         } else {
-            String endpoint = "http://" + "169.254.169.254:80"
-                    + "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net";
-
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Metadata", "true");
-            headers.put("Accept", "application/json");
-
-            long startNanoTime = System.nanoTime();
-            BsonDocument responseDocument;
+            CACHED_ACCESS_TOKEN_LOCK.lock();
             try {
-                responseDocument = BsonDocument.parse(getHttpContents("GET", endpoint, headers));
-            } catch (JsonParseException e) {
-                throw new MongoClientException("Exception parsing JSON from Azure IMDS metadata response.", e);
-            }
+                cachedValue = cachedAccessToken.getValue();
+                if (cachedValue.isPresent()) {
+                    accessToken = cachedValue.get();
+                } else {
+                    String endpoint = "http://" + "169.254.169.254:80"
+                            + "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net";
 
-            if (!responseDocument.isString(ACCESS_TOKEN_FIELD)) {
-                throw new MongoClientException(String.format(
-                        "The %s field from Azure IMDS metadata response is missing or is not a string", ACCESS_TOKEN_FIELD));
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Metadata", "true");
+                    headers.put("Accept", "application/json");
+
+                    long startNanoTime = System.nanoTime();
+                    BsonDocument responseDocument;
+                    try {
+                        responseDocument = BsonDocument.parse(getHttpContents("GET", endpoint, headers));
+                    } catch (JsonParseException e) {
+                        throw new MongoClientException("Exception parsing JSON from Azure IMDS metadata response.", e);
+                    }
+
+                    if (!responseDocument.isString(ACCESS_TOKEN_FIELD)) {
+                        throw new MongoClientException(String.format(
+                                "The %s field from Azure IMDS metadata response is missing or is not a string", ACCESS_TOKEN_FIELD));
+                    }
+                    if (!responseDocument.isString(EXPIRES_IN_FIELD)) {
+                        throw new MongoClientException(String.format(
+                                "The %s field from Azure IMDS metadata response is missing or is not a string", EXPIRES_IN_FIELD));
+                    }
+                    accessToken = responseDocument.getString(ACCESS_TOKEN_FIELD).getValue();
+                    int expiresInSeconds = Integer.parseInt(responseDocument.getString(EXPIRES_IN_FIELD).getValue());
+                    cachedAccessToken = ExpirableValue.expirable(accessToken, Duration.ofSeconds(expiresInSeconds).minus(Duration.ofMinutes(1)),
+                            startNanoTime);
+                }
+            } finally {
+                CACHED_ACCESS_TOKEN_LOCK.unlock();
             }
-            if (!responseDocument.isString(EXPIRES_IN_FIELD)) {
-                throw new MongoClientException(String.format(
-                        "The %s field from Azure IMDS metadata response is missing or is not a string", EXPIRES_IN_FIELD));
-            }
-            accessToken = responseDocument.getString(ACCESS_TOKEN_FIELD).getValue();
-            int expiresInSeconds = Integer.parseInt(responseDocument.getString(EXPIRES_IN_FIELD).getValue());
-            cachedAccessToken = ExpirableValue.expirable(accessToken, Duration.ofSeconds(expiresInSeconds).minus(Duration.ofMinutes(1)),
-                    startNanoTime);
        }
        return new BsonDocument("accessToken", new BsonString(accessToken));
     }

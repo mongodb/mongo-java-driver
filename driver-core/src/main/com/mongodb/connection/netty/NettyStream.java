@@ -64,6 +64,8 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -120,8 +122,8 @@ final class NettyStream implements Stream {
     private volatile Channel channel;
 
     private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<>();
-    /* The fields pendingReader, pendingException are always written/read inside synchronized blocks
-     * that use the same NettyStream object, so they can be plain.*/
+    private final Lock lock = new ReentrantLock();
+    // access to the fields `pendingReader`, `pendingException` is guarded by `lock`
     private PendingReader pendingReader;
     private Throwable pendingException;
     /* The fields readTimeoutTask, readTimeoutMillis are each written only in the ChannelInitializer.initChannel method
@@ -282,7 +284,8 @@ final class NettyStream implements Stream {
     private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final long readTimeoutMillis) {
         ByteBuf buffer = null;
         Throwable exceptionResult = null;
-        synchronized (this) {
+        lock.lock();
+        try {
             exceptionResult = pendingException;
             if (exceptionResult == null) {
                 if (!hasBytesAvailable(numBytes)) {
@@ -316,6 +319,8 @@ final class NettyStream implements Stream {
                 cancel(pendingReader.timeout);
                 this.pendingReader = null;
             }
+        } finally {
+            lock.unlock();
         }
         if (exceptionResult != null) {
             handler.failed(exceptionResult);
@@ -338,13 +343,16 @@ final class NettyStream implements Stream {
 
     private void handleReadResponse(@Nullable final io.netty.buffer.ByteBuf buffer, @Nullable final Throwable t) {
         PendingReader localPendingReader = null;
-        synchronized (this) {
+        lock.lock();
+        try {
             if (buffer != null) {
                 pendingInboundBuffers.add(buffer.retain());
             } else {
                 pendingException = t;
             }
             localPendingReader = pendingReader;
+        } finally {
+            lock.unlock();
         }
 
         if (localPendingReader != null) {
@@ -359,16 +367,21 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public synchronized void close() {
-        isClosed = true;
-        if (channel != null) {
-            channel.close();
-            channel = null;
-        }
-        for (Iterator<io.netty.buffer.ByteBuf> iterator = pendingInboundBuffers.iterator(); iterator.hasNext();) {
-            io.netty.buffer.ByteBuf nextByteBuf = iterator.next();
-            iterator.remove();
-            nextByteBuf.release();
+    public void close() {
+        lock.lock();
+        try {
+            isClosed = true;
+            if (channel != null) {
+                channel.close();
+                channel = null;
+            }
+            for (Iterator<io.netty.buffer.ByteBuf> iterator = pendingInboundBuffers.iterator(); iterator.hasNext();) {
+                io.netty.buffer.ByteBuf nextByteBuf = iterator.next();
+                iterator.remove();
+                nextByteBuf.release();
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -504,7 +517,8 @@ final class NettyStream implements Stream {
 
         @Override
         public void operationComplete(final ChannelFuture future) {
-            synchronized (NettyStream.this) {
+            lock.lock();
+            try {
                 if (future.isSuccess()) {
                     if (isClosed) {
                         channelFuture.channel().close();
@@ -522,6 +536,8 @@ final class NettyStream implements Stream {
                         initializeChannel(handler, socketAddressQueue);
                     }
                 }
+            } finally {
+                lock.unlock();
             }
         }
     }

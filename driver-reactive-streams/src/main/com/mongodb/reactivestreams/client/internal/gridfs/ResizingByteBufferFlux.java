@@ -26,6 +26,7 @@ import reactor.core.publisher.FluxSink;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -51,19 +52,16 @@ class ResizingByteBufferFlux extends Flux<ByteBuffer> {
             BaseSubscriber<ByteBuffer> subscriber = new BaseSubscriber<ByteBuffer>() {
                 private volatile ByteBuffer remainder;
                 private final AtomicLong requested = new AtomicLong();
-                private volatile boolean startedProcessing = false;
+                private final AtomicBoolean startedProcessing = new AtomicBoolean();
                 private volatile boolean finished = false;
 
                 @Override
                 protected void hookOnSubscribe(final Subscription subscription) {
                     sink.onCancel(() -> upstream().cancel());
                     sink.onRequest(l -> {
-                        synchronized (this) {
-                            requested.addAndGet(l);
-                            if (!startedProcessing) {
-                                startedProcessing = true;
-                                upstream().request(1);
-                            }
+                        requested.addAndGet(l);
+                        if (startedProcessing.compareAndSet(false, true)) {
+                            upstream().request(1);
                         }
                     });
                 }

@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -47,7 +47,8 @@ public abstract class AsynchronousChannelStream implements Stream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
     private final PowerOfTwoBufferPool bufferProvider;
-    private volatile ExtendedAsynchronousByteChannel channel;
+    // we use `AtomicReference` to guarantee that we do not call `ExtendedAsynchronousByteChannel.close` concurrently with itself
+    private final AtomicReference<ExtendedAsynchronousByteChannel> channel;
     private volatile boolean isClosed;
 
     public AsynchronousChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
@@ -55,6 +56,7 @@ public abstract class AsynchronousChannelStream implements Stream {
         this.serverAddress = serverAddress;
         this.settings = settings;
         this.bufferProvider = bufferProvider;
+        channel = new AtomicReference<>();
     }
 
     public ServerAddress getServerAddress() {
@@ -69,16 +71,18 @@ public abstract class AsynchronousChannelStream implements Stream {
         return bufferProvider;
     }
 
-    public synchronized ExtendedAsynchronousByteChannel getChannel() {
-        return channel;
+    public ExtendedAsynchronousByteChannel getChannel() {
+        return channel.get();
     }
 
-    protected synchronized void setChannel(final ExtendedAsynchronousByteChannel channel) {
-        isTrue("current channel is null", this.channel == null);
+    protected void setChannel(final ExtendedAsynchronousByteChannel channel) {
         if (isClosed) {
             closeChannel(channel);
         } else {
-            this.channel = channel;
+            assertTrue(this.channel.compareAndSet(null, channel));
+            if (isClosed) {
+                closeChannel(this.channel.getAndSet(null));
+            }
         }
     }
 
@@ -116,7 +120,7 @@ public abstract class AsynchronousChannelStream implements Stream {
             timeout += additionalTimeout;
         }
 
-        channel.read(buffer.asNIO(), timeout, MILLISECONDS, null, new BasicCompletionHandler(buffer, handler));
+        getChannel().read(buffer.asNIO(), timeout, MILLISECONDS, null, new BasicCompletionHandler(buffer, handler));
     }
 
     @Override
@@ -158,16 +162,12 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         isClosed = true;
-        try {
-            closeChannel(channel);
-        } finally {
-            channel = null;
-        }
+        closeChannel(this.channel.getAndSet(null));
     }
 
-    private void closeChannel(final ExtendedAsynchronousByteChannel channel) {
+    private void closeChannel(@Nullable final ExtendedAsynchronousByteChannel channel) {
         try {
             if (channel != null) {
                 channel.close();
@@ -208,7 +208,7 @@ public abstract class AsynchronousChannelStream implements Stream {
 
     private class AsyncWritableByteChannelAdapter {
         void write(final ByteBuffer src, final AsyncCompletionHandler<Void> handler) {
-            channel.write(src, null, new AsyncWritableByteChannelAdapter.WriteCompletionHandler(handler));
+            getChannel().write(src, null, new AsyncWritableByteChannelAdapter.WriteCompletionHandler(handler));
         }
 
         private class WriteCompletionHandler extends BaseCompletionHandler<Void, Integer, Object> {
@@ -250,7 +250,7 @@ public abstract class AsynchronousChannelStream implements Stream {
                 localByteBuf.flip();
                 localHandler.completed(localByteBuf);
             } else {
-                channel.read(localByteBuf.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
+                getChannel().read(localByteBuf.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
                         new BasicCompletionHandler(localByteBuf, localHandler));
             }
         }

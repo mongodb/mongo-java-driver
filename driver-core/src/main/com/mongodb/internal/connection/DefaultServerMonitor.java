@@ -245,9 +245,12 @@ class DefaultServerMonitor implements ServerMonitor {
             } catch (Throwable t) {
                 averageRoundTripTime.reset();
                 InternalConnection localConnection;
-                synchronized (this) {
+                lock.lock();
+                try {
                     localConnection = connection;
                     connection = null;
+                } finally {
+                    lock.unlock();
                 }
                 if (localConnection != null) {
                     localConnection.close();
@@ -311,11 +314,14 @@ class DefaultServerMonitor implements ServerMonitor {
 
         public void cancelCurrentCheck() {
             InternalConnection localConnection = null;
-            synchronized (this) {
+            lock.lock();
+            try {
                 if (connection != null && !currentCheckCancelled) {
                     localConnection = connection;
                     currentCheckCancelled = true;
                 }
+            } finally {
+                lock.unlock();
             }
             if (localConnection != null) {
                 localConnection.close();
