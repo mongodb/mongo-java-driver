@@ -55,6 +55,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * These tests are inherently racy.
+ */
 final class InterruptibilityItTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(InterruptibilityItTest.class);
 
@@ -87,6 +90,10 @@ final class InterruptibilityItTest {
                         .mode(ClusterConnectionMode.MULTIPLE)
                         .requiredClusterType(ClusterType.REPLICA_SET)
                         .serverSelectionTimeout(blockTimeout.toMillis(), MILLISECONDS)
+                )
+                .applyToConnectionPoolSettings(builder -> builder
+                        .maxSize(1)
+                        .maxWaitTime(toIntExact(blockTimeout.toMillis()), MILLISECONDS)
                 );
         clientSettings = clientSettingsBuilderSupplier.get().build();
         client = MongoClients.create(clientSettings);
@@ -155,6 +162,24 @@ final class InterruptibilityItTest {
                 interruptDelay, null, iterable::first);
     }
 
+    @ParameterizedTest
+    @MethodSource("arguments")
+    void connectionCheckout(final Duration interruptDelay) throws InterruptedException {
+        Future<?> backgroundConnectionBlocker = ForkJoinPool.commonPool().submit(() ->
+                withBlockedCommand("listIndexes", blockTimeout, () -> collection.listIndexes().first()));
+        // Wait until the background task blocks the only connection in the pool.
+        // We need the duration the connection remains blocked after this waiting to be greater than `interruptDelay`.
+        Thread.sleep(blockTimeout.minus(interruptDelay).dividedBy(2));
+        assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
+                interruptDelay, null, collection::drop);
+        try {
+            backgroundConnectionBlocker.get();
+        } catch (ExecutionException e) {
+            // We do not care about the result of the background task,
+            // its only purpose is to prevent the connection from being checked in.
+        }
+    }
+
     private static Stream<Arguments> arguments() {
         return Stream.of(
                 Arguments.of(Duration.ZERO),
@@ -162,12 +187,26 @@ final class InterruptibilityItTest {
         );
     }
 
-    @SuppressWarnings({"try", "UnusedReturnValue"})
+    @SuppressWarnings("UnusedReturnValue")
     private static <T extends Throwable> T assertThrowsInVirtualInterruptedThread(
             final Class<T> expectedType,
             final Duration interruptDelay,
             @Nullable final String blockedCommandName,
             final Runnable action) {
+        return withBlockedCommand(blockedCommandName, blockTimeout, () ->
+                assertThrows(expectedType, () ->
+                        inVirtualThread(() ->
+                                inInterruptedThread(interruptDelay, action)
+                        )
+                )
+        );
+    }
+
+    @SuppressWarnings("try")
+    private static <T> T withBlockedCommand(
+            @Nullable final String blockedCommandName,
+            final Duration blockTimeout,
+            final Supplier<T> action) {
         try (@SuppressWarnings("unused") FailPoint fp = blockedCommandName == null ? null : FailPoint.enable(BsonDocument.parse(
                 "{'configureFailPoint': 'failCommand',\n"
                 + "    'appName': '" + clientSettings.getApplicationName() + "',\n"
@@ -184,10 +223,7 @@ final class InterruptibilityItTest {
                 + "}"),
                 primary(client, testTimeout),
                 clientSettingsBuilderSupplier.get())) {
-            return assertThrows(expectedType, () ->
-                    inVirtualThread(() ->
-                            inInterruptedThread(interruptDelay, action))
-            );
+            return action.get();
         }
     }
 
