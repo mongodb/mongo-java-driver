@@ -24,6 +24,8 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -40,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,6 +57,7 @@ import static java.lang.Math.toIntExact;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * These tests are inherently racy.
@@ -68,6 +72,7 @@ final class InterruptibilityItTest {
     private static Duration blockTimeout;
     private static MongoClient client;
     private static MongoCollection<Document> collection;
+    private static ConcurrentLinkedQueue<String> startedCommandNames;
 
     @BeforeAll
     static void beforeAll() {
@@ -75,9 +80,8 @@ final class InterruptibilityItTest {
         interruptDelay = baselineDuration;
         testTimeout = baselineDuration.plus(baselineDuration);
         blockTimeout = testTimeout.plus(baselineDuration);
+        startedCommandNames = new ConcurrentLinkedQueue<>();
         clientSettingsBuilderSupplier = () -> MongoClientSettings.builder()
-                .retryWrites(false)
-                .retryReads(false)
                 .applicationName(InterruptibilityItTest.class.getName())
                 .applyToServerSettings(builder -> builder
                         .heartbeatFrequency(baselineDuration.toMillis(), MILLISECONDS)
@@ -95,7 +99,13 @@ final class InterruptibilityItTest {
                         .maxSize(1)
                         .maxWaitTime(toIntExact(blockTimeout.toMillis()), MILLISECONDS)
                 );
-        clientSettings = clientSettingsBuilderSupplier.get().build();
+        clientSettings = clientSettingsBuilderSupplier.get()
+                .addCommandListener(new CommandListener() {
+                    @Override
+                    public void commandStarted(final CommandStartedEvent event) {
+                        startedCommandNames.add(event.getCommandName());
+                    }
+                }).build();
         client = MongoClients.create(clientSettings);
         collection = client.getDatabase(InterruptibilityItTest.class.getSimpleName()).getCollection("collection");
     }
@@ -120,7 +130,7 @@ final class InterruptibilityItTest {
     @MethodSource("arguments")
     void mongoCollectionDrop(final Duration interruptDelay) {
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, "drop", collection::drop);
+                interruptDelay, "drop", true, collection::drop);
     }
 
     @ParameterizedTest
@@ -128,7 +138,7 @@ final class InterruptibilityItTest {
     void mongoIterableFirst(final Duration interruptDelay) {
         MongoIterable<String> iterable = client.listDatabaseNames();
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, "listDatabases", iterable::first);
+                interruptDelay, "listDatabases", true, iterable::first);
     }
 
     @ParameterizedTest
@@ -140,7 +150,7 @@ final class InterruptibilityItTest {
             cursor.next();
             com.mongodb.assertions.Assertions.assertTrue(cursor.available() == 0);
             assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                    interruptDelay, "getMore", cursor::next);
+                    interruptDelay, "getMore", true, cursor::next);
         }
     }
 
@@ -159,7 +169,7 @@ final class InterruptibilityItTest {
                 + "}"));
         MongoIterable<String> iterable = client.listDatabaseNames();
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, null, iterable::first);
+                interruptDelay, "listDatabases", false, iterable::first);
     }
 
     @ParameterizedTest
@@ -171,7 +181,7 @@ final class InterruptibilityItTest {
         // We need the duration the connection remains blocked after this waiting to be greater than `interruptDelay`.
         Thread.sleep(blockTimeout.minus(interruptDelay).dividedBy(2));
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, null, collection::drop);
+                interruptDelay, "drop", false, collection::drop);
         try {
             backgroundConnectionBlocker.get();
         } catch (ExecutionException e) {
@@ -191,15 +201,20 @@ final class InterruptibilityItTest {
     private static <T extends Throwable> T assertThrowsInVirtualInterruptedThread(
             final Class<T> expectedType,
             final Duration interruptDelay,
-            @Nullable final String blockedCommandName,
-            final Runnable action) {
-        return withBlockedCommand(blockedCommandName, blockTimeout, () ->
-                assertThrows(expectedType, () ->
-                        inVirtualThread(() ->
-                                inInterruptedThread(interruptDelay, action)
-                        )
-                )
-        );
+            final String commandName,
+            final boolean blockCommand,
+            final Runnable executeCommand) {
+        return withBlockedCommand(blockCommand ? commandName : null, blockTimeout, () -> {
+            startedCommandNames.clear();
+            T t = assertThrows(expectedType, () ->
+                    inVirtualThread(() ->
+                            inInterruptedThread(interruptDelay, executeCommand)
+                    )
+            );
+            assertTrue(startedCommandNames.stream().filter(startedCommandName -> startedCommandName.equals(commandName)).count() <= 1,
+                    "Unexpected retries " + startedCommandNames);
+            return t;
+        });
     }
 
     @SuppressWarnings("try")
