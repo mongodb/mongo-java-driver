@@ -19,9 +19,15 @@ package org.mongodb.scala.connection
 import com.mongodb.connection.{ ProxySettings => JProxySettings }
 
 /**
- * An immutable class representing settings for connecting to MongoDB via a SOCKS5 proxy server.
- * NOTE: This setting is only applicable to the synchronous variant of MongoClient and Key Management Service settings.
+ * This setting is only applicable when communicating with a MongoDB server using the synchronous variant of `MongoClient`.
  *
+ * This setting is furthermore ignored if:
+ * - the communication is via `com.mongodb.UnixServerAddress` (Unix domain socket).
+ * - a `StreamFactoryFactory` is `MongoClientSettings.Builder.streamFactoryFactory` configured.
+ *
+ * @see [[SocketSettings#getProxySettings]]
+ * @see [[org.mongodb.scala.AutoEncryptionSettings#getKeyVaultMongoClientSettings]]
+ * @see [[org.mongodb.scala.ClientEncryptionSettings#getKeyVaultMongoClientSettings]]
  * @since 4.11
  */
 object ProxySettings {

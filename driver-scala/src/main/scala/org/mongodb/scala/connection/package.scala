@@ -42,8 +42,17 @@ package object connection {
   type SocketSettings = com.mongodb.connection.SocketSettings
 
   /**
-   * Settings for connecting to MongoDB via proxy server.
-   * NOTE: This setting is only applicable to the synchronous variant of MongoClient and Key Management Service settings.
+   * This setting is only applicable when communicating with a MongoDB server or a Key Management Service
+   * using the synchronous variant of `com.mongodb.MongoClient` or `ClientEncryption`.
+   *
+   * This setting is furthermore ignored if:
+   * - the communication is via `com.mongodb.UnixServerAddress` (Unix domain socket).
+   * - a `StreamFactoryFactory` is `MongoClientSettings.Builder.streamFactoryFactory` configured.
+   *
+   * @see [[SocketSettings#getProxySettings]]
+   * @see [[AutoEncryptionSettings#getProxySettings]]
+   * @see [[ClientEncryptionSettings#getProxySettings]]
+   * @since 4.11
    */
   type ProxySettings = com.mongodb.connection.ProxySettings
 

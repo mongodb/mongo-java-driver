@@ -36,6 +36,7 @@ import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ConnectionStringSpecification extends Specification {
+    static final LONG_STRING = new String((1..256).collect { (byte) 1 } as byte[])
 
     @Unroll
     def 'should parse #connectionString into correct components'() {
@@ -387,18 +388,36 @@ class ConnectionStringSpecification extends Specification {
         assert exception.message == cause
 
         where:
-
-        cause                                                 | connectionString
-        'proxyPort can only be specified with proxyHost'      | 'mongodb://localhost:27017/?proxyPort=1'
-        'proxyPort should be equal or greater than 0'         | 'mongodb://localhost:27017/?proxyHost=a&proxyPort=-1'
-        'proxyUsername can only be specified with proxyHost'  | 'mongodb://localhost:27017/?proxyUsername=1'
-        'proxyUsername cannot be empty'                       | 'mongodb://localhost:27017/?proxyHost=a&proxyUsername='
-        'proxyPassword can only be specified with proxyHost'  | 'mongodb://localhost:27017/?proxyPassword=1'
-        'proxyPassword cannot be empty'                       | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword='
+        cause                                                    | connectionString
+        'proxyPort can only be specified with proxyHost'         | 'mongodb://localhost:27017/?proxyPort=1'
+        'proxyPort should be within the valid range (0 to 65535)'| 'mongodb://localhost:27017/?proxyHost=a&proxyPort=-1'
+        'proxyPort should be within the valid range (0 to 65535)'| 'mongodb://localhost:27017/?proxyHost=a&proxyPort=65536'
+        'proxyUsername can only be specified with proxyHost'     | 'mongodb://localhost:27017/?proxyUsername=1'
+        'proxyUsername cannot be empty'                          | 'mongodb://localhost:27017/?proxyHost=a&proxyUsername='
+        'proxyPassword can only be specified with proxyHost'     | 'mongodb://localhost:27017/?proxyPassword=1'
+        'proxyPassword cannot be empty'                          | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword='
+        'username\'s length in bytes cannot be greater than 255' | 'mongodb://localhost:27017/?proxyHost=a&proxyUsername=' + LONG_STRING
+        'password\'s length in bytes cannot be greater than 255' | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword=' + LONG_STRING
         'Both proxyUsername' +
                 ' and proxyPassword must be set together.' +
-                ' They cannot be set individually'            | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword=1'
+                ' They cannot be set individually'               | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword=1'
     }
+
+    def 'should set proxy settings properties'() {
+        when:
+        def connectionString =  new ConnectionString('mongodb+srv://test5.cc/?'
+                + 'proxyPort=1080'
+                + '&proxyHost=proxy.com'
+                + '&proxyUsername=username'
+                + '&proxyPassword=password')
+
+        then:
+        connectionString.getProxyHost() == 'proxy.com'
+        connectionString.getProxyPort() == 1080
+        connectionString.getProxyUsername() == 'username'
+        connectionString.getProxyPassword() == 'password'
+    }
+
 
     @Unroll
     def 'should throw IllegalArgumentException when the string #cause'() {
@@ -642,6 +661,16 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://ross:123@localhost/?'
                              + 'authMechanism=SCRAM-SHA-1')         | new ConnectionString('mongodb://ross:123@localhost/?'
                                                                                            + 'authMechanism=SCRAM-SHA-1')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com'
+                + '&proxyPort=1080'
+                + '&proxyUsername=username'
+                + '&proxyPassword=password')                         |         new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                            + 'proxyHost=proxy.com'
+                                                                                            + '&proxyPort=1080'
+                                                                                            + '&proxyUsername=username'
+                                                                                            + '&proxyPassword=password')
+
         new ConnectionString('mongodb://localhost/db.coll'
                              + '?minPoolSize=5;'
                              + 'maxPoolSize=10;'
@@ -693,8 +722,19 @@ class ConnectionStringSpecification extends Specification {
                                                                                            + '&readPreferenceTags='
                                                                                            + '&maxConnecting=2')
         new ConnectionString('mongodb://ross:123@localhost/?'
-                           + 'authMechanism=SCRAM-SHA-1')            | new ConnectionString('mongodb://ross:123@localhost/?'
+                           + 'authMechanism=SCRAM-SHA-1')             | new ConnectionString('mongodb://ross:123@localhost/?'
                                                                                           + 'authMechanism=GSSAPI')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com')                              |     new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                        + 'proxyHost=1proxy.com')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com&proxyPort=1080')               |     new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                         + 'proxyHost=proxy.com1.com&proxyPort=1081')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                + 'proxyHost=proxy.com&proxyPassword=password'
+                + '&proxyUsername=username')                            |     new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                         + 'proxyHost=proxy.com&proxyPassword=password1'
+                                                                                         + '&proxyUsername=username')
     }
 
     def 'should recognize SRV protocol'() {

@@ -19,10 +19,10 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
-import com.mongodb.connection.ProxySettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
@@ -84,7 +84,7 @@ public class SocketStream implements Stream {
 
     protected Socket initializeSocket() throws IOException {
         ProxySettings proxySettings = settings.getProxySettings();
-        if (proxySettings.getHost() != null) {
+        if (proxySettings.isProxyEnabled()) {
             if (sslSettings.isEnabled()) {
                 assertTrue(socketFactory instanceof SSLSocketFactory);
                 SSLSocketFactory sslSocketFactory = (SSLSocketFactory) socketFactory;
@@ -110,12 +110,12 @@ public class SocketStream implements Stream {
     }
 
     private SSLSocket initializeSslSocketOverSocksProxy(final SSLSocketFactory sslSocketFactory) throws IOException {
-        String serverHost = address.getHost();
-        int serverPort = address.getPort();
+        final String serverHost = address.getHost();
+        final int serverPort = address.getPort();
 
-        SocksSocket socksProxy = new SocksSocket(null, settings.getProxySettings());
+        SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
         configureSocket(socksProxy, settings);
-        InetSocketAddress inetSocketAddress = InetSocketAddress.createUnresolved(serverHost, serverPort);
+        InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
         socksProxy.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
 
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
@@ -125,14 +125,28 @@ public class SocketStream implements Stream {
         return sslSocket;
     }
 
+
+    /**
+     * Creates an unresolved {@link InetSocketAddress}.
+     * This method is used to create an address that is meant to be resolved by a SOCKS proxy.
+     */
+    private static InetSocketAddress toSocketAddress(final String serverHost, final int serverPort) {
+        return InetSocketAddress.createUnresolved(serverHost, serverPort);
+    }
+
     private Socket initializeSocketOverSocksProxy() throws IOException {
         Socket createdSocket = socketFactory.createSocket();
-        SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
         configureSocket(createdSocket, settings);
+        /*
+          Wrap the configured socket with SocksSocket to add extra functionality.
+          Reason for separate steps: We can't directly extend Java 11 methods within 'SocksSocket'
+          to configure itself.
+         */
+        SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
 
-        socksProxy.connect(InetSocketAddress.createUnresolved(address.getHost(), address.getPort()),
+        socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
                 settings.getConnectTimeout(TimeUnit.MILLISECONDS));
-        return createdSocket;
+        return socksProxy;
     }
 
     @Override
@@ -212,10 +226,6 @@ public class SocketStream implements Stream {
      */
     SocketSettings getSettings() {
         return settings;
-    }
-
-    SocketFactory getSocketFactory() {
-        return socketFactory;
     }
 
     @Override

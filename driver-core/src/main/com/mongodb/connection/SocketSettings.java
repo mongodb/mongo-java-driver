@@ -36,9 +36,6 @@ public final class SocketSettings {
     private final long readTimeoutMS;
     private final int receiveBufferSize;
     private final int sendBufferSize;
-    /**
-     * NOTE: This setting is only applicable to the synchronous variant of MongoClient.
-     */
     private final ProxySettings proxySettings;
 
     /**
@@ -214,6 +211,7 @@ public final class SocketSettings {
      *
      * @return The {@link ProxySettings} instance containing the SOCKS5 proxy configuration.
      * @see Builder#applyToProxySettings(Block)
+     * @since 4.11
      */
     public ProxySettings getProxySettings() {
         return proxySettings;

@@ -110,10 +110,10 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
+        if (settings.getSocketSettings().getProxySettings().getHost() != null){
+            throw new MongoClientException("Proxy is not supported for reactive clients");
+        }
         if (settings.getStreamFactoryFactory() == null) {
-            if (settings.getSocketSettings().getProxySettings().getHost() != null){
-                throw new MongoClientException("Proxy is not supported for reactive clients");
-            }
             if (settings.getSslSettings().isEnabled()) {
                 return createWithTlsChannel(settings, mongoDriverInformation);
             } else {

@@ -29,13 +29,13 @@ import java.nio.ByteBuffer;
  * possible over their JDK equivalents whenever you are expecting to handle only IP address string
  * literals -- there is no blocking DNS penalty for a malformed string.
  */
-final class InetAddresses {
+final class InetAddressUtils {
     private static final int IPV4_PART_COUNT = 4;
     private static final int IPV6_PART_COUNT = 8;
     private static final char IPV4_DELIMITER = '.';
     private static final char IPV6_DELIMITER = ':';
 
-    private InetAddresses() {
+    private InetAddressUtils() {
     }
 
     /**

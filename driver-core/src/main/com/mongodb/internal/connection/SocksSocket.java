@@ -17,112 +17,96 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.internal.Timeout;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.connection.DomainNameUtils.isDomainName;
+import static com.mongodb.internal.connection.SocksSocket.AddressType.DOMAIN_NAME;
+import static com.mongodb.internal.connection.SocksSocket.AddressType.IP_V4;
+import static com.mongodb.internal.connection.SocksSocket.AddressType.IP_V6;
+import static com.mongodb.internal.connection.SocksSocket.ServerReply.REPLY_SUCCEEDED;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class SocksSocket extends Socket {
-    private static final Pattern DOMAIN_PATTERN = Pattern.compile("^(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}|localhost)$");
-    private static final byte LENGTH_OF_IPV4 = 4;
-    private static final byte LENGTH_OF_IPV6 = 16;
-    private static final byte SOCKS_VERSION = 5;
+    //    private static final byte LENGTH_OF_IPV4 = 4;
+//    private static final byte LENGTH_OF_IPV6 = 16;
+    private static final byte SOCKS_VERSION = 0x05;
     private static final byte RESERVED = 0x00;
     private static final byte PORT_SIZE = 2;
     private static final byte AUTHENTICATION_SUCCEEDED_STATUS = 0x00;
-    private static final byte REQUEST_OK = 0;
-    private static final byte ADDRESS_TYPE_DOMAIN_NAME = 3;
-    private static final byte ADDRESS_TYPE_IPV4 = 1;
-    private static final byte ADDRESS_TYPE_IPV6 = 4;
-    private static final int DEFAULT_PORT = 1080;
     public static final String IP_PARSING_ERROR_SUFFIX = " is not an IP string literal";
-    private final SocksAuthenticationMethod[] authenticationMethods;
-    private final InetSocketAddress proxyAddress;
+    private static final byte USER_PASSWORD_SUB_NEGOTIATION_VERSION = 0x01;
     private InetSocketAddress remoteAddress;
-    @Nullable
-    private String proxyUsername;
-    @Nullable
-    private String proxyPassword;
+    private final ProxySettings proxySettings;
     @Nullable
     private final Socket socket;
-    private InputStream inputStream;
-    private OutputStream outputStream;
 
     public SocksSocket(final ProxySettings proxySettings) {
         this(null, proxySettings);
     }
 
     public SocksSocket(@Nullable final Socket socket, final ProxySettings proxySettings) {
-        int port = getPort(proxySettings);
-        assertTrue(proxySettings.getHost() != null);
-        assertTrue(port >= 0);
-
-        this.proxyAddress = new InetSocketAddress(proxySettings.getHost(), port);
+        assertNotNull(proxySettings.getHost());
+        /* Explanation for using Socket instead of SocketFactory: The process of initializing a socket for a SOCKS proxy follows a specific sequence.
+           First, a basic TCP socket is created using the socketFactory, and then it's customized with settings.
+           Subsequently, the socket is wrapped within a SocksSocket instance to provide additional functionality.
+           Due to limitations in extending methods within SocksSocket for Java 11, the configuration step must precede the wrapping stage.
+           As a result, passing SocketFactory directly into this constructor for socket creation is not feasible.
+        */
+        if (socket != null) {
+            assertFalse(socket.isConnected());
+        }
         this.socket = socket;
-
-        if (proxySettings.getUsername() != null && proxySettings.getPassword() != null) {
-            this.authenticationMethods = new SocksAuthenticationMethod[]{
-                    SocksAuthenticationMethod.NO_AUTH,
-                    SocksAuthenticationMethod.USERNAME_PASSWORD};
-            this.proxyUsername = proxySettings.getUsername();
-            this.proxyPassword = proxySettings.getPassword();
-        } else {
-            this.authenticationMethods = new SocksAuthenticationMethod[]{SocksAuthenticationMethod.NO_AUTH};
-        }
-    }
-
-    private static int getPort(final ProxySettings proxySettings) {
-        if (proxySettings.getPort() != null) {
-            return proxySettings.getPort();
-        }
-        return DEFAULT_PORT;
-    }
-
-    @Override
-    public void connect(final SocketAddress endpoint) throws IOException {
-        connect(endpoint, 0);
+        this.proxySettings = proxySettings;
     }
 
     @Override
     public void connect(final SocketAddress endpoint, final int timeoutMs) throws IOException {
-    // `Socket` requires `IllegalArgumentException`
-    isTrueArgument("timeoutMs", timeoutMs >= 0);
+        // `Socket` requires `IllegalArgumentException`
+        isTrueArgument("timeoutMs", timeoutMs >= 0);
         try {
             Timeout timeout = toTimeout(timeoutMs);
             InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
             assertTrue(unresolvedAddress.isUnresolved());
             this.remoteAddress = unresolvedAddress;
-            if (socket != null && !socket.isConnected()) {
+
+            InetSocketAddress proxyAddress = new InetSocketAddress(proxySettings.getHost(), proxySettings.getPort());
+            if (socket != null) {
                 socket.connect(proxyAddress, remainingMillis(timeout));
-                inputStream = socket.getInputStream();
-                outputStream = socket.getOutputStream();
             } else {
                 super.connect(proxyAddress, remainingMillis(timeout));
-                inputStream = getInputStream();
-                outputStream = getOutputStream();
             }
             SocksAuthenticationMethod authenticationMethod = performHandshake(timeout);
             authenticate(authenticationMethod, timeout);
             sendConnect(timeout);
         } catch (SocketException socketException) {
+            /*
+             * The 'close()' call here has two purposes:
+             *
+             * 1. Enforces self-closing under RFC 1928 if METHOD is X'FF'.
+             * 2. Handles all other errors during connection, distinct from external closures.
+             */
             close();
             throw socketException;
         }
@@ -132,167 +116,178 @@ public final class SocksSocket extends Socket {
         final String host = remoteAddress.getHostName();
         final int port = remoteAddress.getPort();
         final byte[] bytesOfHost = host.getBytes(StandardCharsets.UTF_8);
-        final int hostLength = host.length();
+        final int hostLength = bytesOfHost.length;
 
-        byte addressType;
+        AddressType addressType;
         byte[] ipAddress = null;
         if (isDomainName(host)) {
-            addressType = ADDRESS_TYPE_DOMAIN_NAME;
+            addressType = DOMAIN_NAME;
         } else {
             ipAddress = createByteArrayFromIpAddress(host);
             addressType = determineAddressType(ipAddress);
         }
         byte[] bufferSent = createBuffer(addressType, hostLength);
         bufferSent[0] = SOCKS_VERSION;
-        bufferSent[1] = (byte) SocksCommand.CONNECT.getCommandNumber();
+        bufferSent[1] = SocksCommand.CONNECT.getCommandNumber();
         bufferSent[2] = RESERVED;
         switch (addressType) {
-            case ADDRESS_TYPE_DOMAIN_NAME:
-                bufferSent[3] = ADDRESS_TYPE_DOMAIN_NAME;
+            case DOMAIN_NAME:
+                bufferSent[3] = DOMAIN_NAME.getAddressTypeNumber();
                 bufferSent[4] = (byte) hostLength;
                 System.arraycopy(bytesOfHost, 0, bufferSent, 5, hostLength);
-                bufferSent[5 + host.length()] = (byte) ((port & 0xff00) >> 8);
-                bufferSent[6 + host.length()] = (byte) (port & 0xff);
+                addPort(bufferSent, 5 + hostLength, port);
                 break;
-            case ADDRESS_TYPE_IPV4:
-                bufferSent[3] = ADDRESS_TYPE_IPV4;
+            case IP_V4:
+                bufferSent[3] = IP_V4.getAddressTypeNumber();
                 System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);
-                bufferSent[4 + ipAddress.length] = (byte) ((port & 0xff00) >> 8);
-                bufferSent[5 + ipAddress.length] = (byte) (port & 0xff);
+                addPort(bufferSent, 4 + ipAddress.length, port);
                 break;
-            case ADDRESS_TYPE_IPV6:
-                bufferSent[3] = ADDRESS_TYPE_IPV6;
+            case IP_V6:
+                bufferSent[3] = DOMAIN_NAME.getAddressTypeNumber();
                 System.arraycopy(ipAddress, 0, bufferSent, 4, ipAddress.length);
-                bufferSent[4 + ipAddress.length] = (byte) ((port & 0xff00) >> 8);
-                bufferSent[5 + ipAddress.length] = (byte) (port & 0xff);
+                addPort(bufferSent, 4 + ipAddress.length, port);
                 break;
             default:
                 fail();
         }
+        OutputStream outputStream = getOutputStream();
         outputStream.write(bufferSent);
         outputStream.flush();
         checkServerReply(timeout);
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public static boolean isDomainName(final String host) {
-        return DOMAIN_PATTERN.matcher(host).matches();
+    private static void addPort(final byte[] bufferSent, final int index, final int port) {
+        bufferSent[index] = (byte) ((port & 0xff00) >> 8);
+        bufferSent[index + 1] = (byte) (port & 0xff);
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public static byte[] createByteArrayFromIpAddress(final String host) throws SocketException {
-        byte[] bytes = InetAddresses.ipStringToBytes(host);
+    private static byte[] createByteArrayFromIpAddress(final String host) throws SocketException {
+        byte[] bytes = InetAddressUtils.ipStringToBytes(host);
         if (bytes == null) {
             throw new SocketException(host + IP_PARSING_ERROR_SUFFIX);
         }
         return bytes;
     }
 
-    private byte determineAddressType(final byte[] ipAddress) {
-        if (ipAddress.length == LENGTH_OF_IPV4) {
-            return ADDRESS_TYPE_IPV4;
-        } else if (ipAddress.length == LENGTH_OF_IPV6) {
-            return ADDRESS_TYPE_IPV6;
+    private AddressType determineAddressType(final byte[] ipAddress) {
+        if (ipAddress.length == IP_V4.getLength()) {
+            return IP_V4;
+        } else if (ipAddress.length == IP_V6.getLength()) {
+            return IP_V6;
         }
         throw fail();
     }
 
-    private static byte[] createBuffer(final byte addressType, final int hostLength) {
+    private static byte[] createBuffer(final AddressType addressType, final int hostLength) {
         switch (addressType) {
-            case ADDRESS_TYPE_DOMAIN_NAME:
+            case DOMAIN_NAME:
                 return new byte[7 + hostLength];
-            case ADDRESS_TYPE_IPV4:
-                return new byte[6 + LENGTH_OF_IPV4];
-            case ADDRESS_TYPE_IPV6:
-                return new byte[6 + LENGTH_OF_IPV6];
+            case IP_V4:
+                return new byte[6 + IP_V4.getLength()];
+            case IP_V6:
+                return new byte[6 + IP_V6.getLength()];
             default:
-                break;
+                throw fail();
         }
-        throw fail();
     }
 
     private void checkServerReply(final Timeout timeout) throws IOException {
-        byte[] data = readSocksReply(inputStream, 4, timeout);
-        byte status = data[1];
-
-        if (status == REQUEST_OK) {
-            switch (data[3]) {
-                case ADDRESS_TYPE_IPV4:
-                    readSocksReply(inputStream, 4 + PORT_SIZE, timeout);
+        byte[] data = readSocksReply(4, timeout);
+        ServerReply reply = ServerReply.of(data[1]);
+        if (reply == REPLY_SUCCEEDED) {
+            switch (AddressType.of(data[3])) {
+                case DOMAIN_NAME:
+                    byte hostNameLength = readSocksReply(1, timeout)[0];
+                    readSocksReply(hostNameLength + PORT_SIZE, timeout);
                     break;
-                case ADDRESS_TYPE_DOMAIN_NAME:
-                    byte hostNameLength = readSocksReply(inputStream, 1, timeout)[0];
-                    readSocksReply(inputStream, hostNameLength + PORT_SIZE, timeout);
+                case IP_V4:
+                    readSocksReply(IP_V4.getLength() + PORT_SIZE, timeout);
                     break;
-                case ADDRESS_TYPE_IPV6:
-                    readSocksReply(inputStream, 16 + PORT_SIZE, timeout);
+                case IP_V6:
+                    readSocksReply(IP_V6.getLength() + PORT_SIZE, timeout);
                     break;
                 default:
-                    throw new ConnectException("Reply from SOCKS proxy server contains wrong code");
+                    throw fail();
             }
             return;
         }
-
-        for (ServerErrorReply serverErrorReply : ServerErrorReply.values()) {
-            if (status == serverErrorReply.getReplyNumber()) {
-                throw new ConnectException(serverErrorReply.getMessage());
-            }
-        }
-        throw new ConnectException("Unknown status");
+        throw new ConnectException(reply.getMessage());
     }
 
     private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
         if (authenticationMethod == SocksAuthenticationMethod.USERNAME_PASSWORD) {
-            final byte[] bytesOfUsername = assertNotNull(proxyUsername).getBytes(StandardCharsets.UTF_8);
-            final byte[] bytesOfPassword = assertNotNull(proxyPassword).getBytes(StandardCharsets.UTF_8);
+            final byte[] bytesOfUsername = assertNotNull(proxySettings.getUsername()).getBytes(StandardCharsets.UTF_8);
+            final byte[] bytesOfPassword = assertNotNull(proxySettings.getPassword()).getBytes(StandardCharsets.UTF_8);
             final int usernameLength = bytesOfUsername.length;
             final int passwordLength = bytesOfPassword.length;
             final byte[] command = new byte[3 + usernameLength + passwordLength];
 
-            command[0] = 0x01;
+            command[0] = USER_PASSWORD_SUB_NEGOTIATION_VERSION;
             command[1] = (byte) usernameLength;
             System.arraycopy(bytesOfUsername, 0, command, 2, usernameLength);
             command[2 + usernameLength] = (byte) passwordLength;
             System.arraycopy(bytesOfPassword, 0, command, 3 + usernameLength,
                     passwordLength);
+
+            OutputStream outputStream = getOutputStream();
             outputStream.write(command);
             outputStream.flush();
 
-            byte[] authenticationResult = readSocksReply(inputStream, 2, timeout);
+            byte[] authResult = readSocksReply(2, timeout);
+            byte authStatus = authResult[1];
 
-            if (authenticationResult[1] != AUTHENTICATION_SUCCEEDED_STATUS) {
-                  /* RFC 1929 specifies that the connection MUST be closed if
-                   authentication fails */
-                throw new ConnectException("Authentication failed");
+            if (authStatus != AUTHENTICATION_SUCCEEDED_STATUS) {
+                throw new ConnectException("Authentication failed. Server returned status: " + authStatus);
             }
         }
     }
 
     private SocksAuthenticationMethod performHandshake(final Timeout timeout) throws IOException {
+        SocksAuthenticationMethod[] authenticationMethods = getSocksAuthenticationMethods();
+
         int methodsCount = authenticationMethods.length;
 
         byte[] bufferSent = new byte[2 + methodsCount];
         bufferSent[0] = SOCKS_VERSION;
         bufferSent[1] = (byte) methodsCount;
         for (int i = 0; i < methodsCount; i++) {
-            bufferSent[2 + i] = (byte) authenticationMethods[i].getMethodNumber();
+            bufferSent[2 + i] = authenticationMethods[i].getMethodNumber();
         }
+
+        OutputStream outputStream = getOutputStream();
         outputStream.write(bufferSent);
         outputStream.flush();
 
-        byte[] handshakeReply = readSocksReply(inputStream, 2, timeout);
+        byte[] handshakeReply = readSocksReply(2, timeout);
 
         if (handshakeReply[0] != SOCKS_VERSION) {
-            throw new ConnectException("Remote server doesn't support SOCKS5");
+            throw new ConnectException("Remote server doesn't support socks version 5"
+                    + " Received version: " + handshakeReply[0]);
         }
-        if (handshakeReply[1] == (byte) 0xFF) {
-            throw new ConnectException("None of the authentication methods listed are acceptable");
+        byte authMethodNumber = handshakeReply[1];
+        if (authMethodNumber == (byte) 0xFF) {
+            throw new ConnectException("None of the authentication methods listed are acceptable. Attempted methods: "
+                    + Arrays.toString(authenticationMethods));
         }
-        if (handshakeReply[1] == SocksAuthenticationMethod.NO_AUTH.getMethodNumber()) {
+        if (authMethodNumber == SocksAuthenticationMethod.NO_AUTH.getMethodNumber()) {
             return SocksAuthenticationMethod.NO_AUTH;
+        } else if (authMethodNumber == SocksAuthenticationMethod.USERNAME_PASSWORD.getMethodNumber()) {
+            return SocksAuthenticationMethod.USERNAME_PASSWORD;
         }
 
-        return SocksAuthenticationMethod.USERNAME_PASSWORD;
+        throw new ConnectException("Proxy returned unsupported authentication method: " + authMethodNumber);
+    }
+
+    private SocksAuthenticationMethod[] getSocksAuthenticationMethods() {
+        SocksAuthenticationMethod[] authMethods;
+        if (proxySettings.getUsername() != null) {
+            authMethods = new SocksAuthenticationMethod[]{
+                    SocksAuthenticationMethod.NO_AUTH,
+                    SocksAuthenticationMethod.USERNAME_PASSWORD};
+        } else {
+            authMethods = new SocksAuthenticationMethod[]{SocksAuthenticationMethod.NO_AUTH};
+        }
+        return authMethods;
     }
 
     private static Timeout toTimeout(final int timeoutMs) {
@@ -315,7 +310,8 @@ public final class SocksSocket extends Socket {
         throw new SocketTimeoutException("Socket connection timed out");
     }
 
-    private byte[] readSocksReply(final InputStream in, final int length, final Timeout timeout) throws IOException {
+    private byte[] readSocksReply(final int length, final Timeout timeout) throws IOException {
+        InputStream inputStream = getInputStream();
         byte[] data = new byte[length];
         int received = 0;
         int originalTimeout = getSoTimeout();
@@ -324,11 +320,7 @@ public final class SocksSocket extends Socket {
                 int count;
                 int remaining = remainingMillis(timeout);
                 setSoTimeout(remaining);
-                try {
-                    count = in.read(data, received, length - received);
-                } catch (SocketTimeoutException e) {
-                    throw new SocketTimeoutException("Socket connection timed out");
-                }
+                count = inputStream.read(data, received, length - received);
                 if (count < 0) {
                     throw new ConnectException("Malformed reply from SOCKS proxy server");
                 }
@@ -340,33 +332,437 @@ public final class SocksSocket extends Socket {
         return data;
     }
 
-    public static byte[] read(final InputStream inputStream, final int length) throws IOException {
-        byte[] bytes = new byte[length];
-        for (int i = 0; i < length; i++) {
-            int read = inputStream.read();
-            if (read < 0) {
-                throw new ConnectException("End of stream");
-            }
-            bytes[i] = (byte) read;
+    enum SocksCommand {
+
+        CONNECT(0x01);
+
+        private final byte value;
+
+        SocksCommand(final int value) {
+            this.value = (byte) value;
         }
-        return bytes;
+
+        public byte getCommandNumber() {
+            return value;
+        }
+    }
+
+    private enum SocksAuthenticationMethod {
+        NO_AUTH(0x00),
+        USERNAME_PASSWORD(0x02);
+
+        private final byte methodNumber;
+
+        SocksAuthenticationMethod(final int methodNumber) {
+            this.methodNumber = (byte) methodNumber;
+        }
+
+        public byte getMethodNumber() {
+            return methodNumber;
+        }
+    }
+
+    enum AddressType {
+        IP_V4(0x01, 4),
+        IP_V6(0x04, 16),
+        DOMAIN_NAME(0x03, -1) {
+            public byte getLength() {
+                throw fail();
+            }
+        };
+
+        private final byte length;
+        private final byte addressTypeNumber;
+
+        AddressType(final int addressTypeNumber, final int length) {
+            this.addressTypeNumber = (byte) addressTypeNumber;
+            this.length = (byte) length;
+        }
+
+        static AddressType of(final byte signedAddressType) throws ConnectException {
+            int addressTypeNumber = Byte.toUnsignedInt(signedAddressType);
+            for (AddressType addressType : AddressType.values()) {
+                if (addressTypeNumber == addressType.getAddressTypeNumber()) {
+                    return addressType;
+                }
+            }
+            throw new ConnectException("Reply from SOCKS proxy server contains wrong address type"
+                    + " Address type: " + addressTypeNumber);
+        }
+
+        byte getLength() {
+            return length;
+        }
+
+        byte getAddressTypeNumber() {
+            return addressTypeNumber;
+        }
+
+    }
+
+    enum ServerReply {
+        REPLY_SUCCEEDED(0x00, "Succeeded"),
+        GENERAL_FAILURE(0x01, "General SOCKS5 server failure"),
+        NOT_ALLOWED(0x02, "Proxy server general failure"),
+        NET_UNREACHABLE(0x03, "Connection not allowed by ruleset"),
+        HOST_UNREACHABLE(0x04, "Network is unreachable"),
+        CONN_REFUSED(0x05, "Host is unreachable"),
+        TTL_EXPIRED(0x06, "Connection has been refused"),
+        CMD_NOT_SUPPORTED(0x07, "TTL expired"),
+        ADDR_TYPE_NOT_SUP(0x08, "Address type not supported");
+
+        private final int replyNumber;
+        private final String message;
+
+        ServerReply(final int replyNumber, final String message) {
+            this.replyNumber = replyNumber;
+            this.message = message;
+        }
+
+        static ServerReply of(final byte byteStatus) throws ConnectException {
+            int status = Byte.toUnsignedInt(byteStatus);
+            for (ServerReply serverReply : ServerReply.values()) {
+                if (status == serverReply.getReplyNumber()) {
+                    return serverReply;
+                }
+            }
+
+            throw new ConnectException("Unknown reply field. Reply field: " + status);
+        }
+
+        public int getReplyNumber() {
+            return replyNumber;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 
     @Override
-    public synchronized void close() throws IOException {
-        if (socket != null) {
-            socket.close();
-        } else {
+    public void close() throws IOException {
+        /*
+          If this.socket is not null, this class essentially acts as a wrapper and we neither bind nor connect in the superclass,
+          nor do we get input/output streams from the superclass. While it might seem reasonable to skip calling super.close() in this case,
+          the Java SE Socket documentation doesn't definitively clarify this. Therefore, it's safer to always call super.close().
+         */
+        try (Socket autoClosed = socket) {
             super.close();
         }
     }
 
     @Override
-    public synchronized void setSoTimeout(final int timeout) throws SocketException {
+    public void setSoTimeout(final int timeout) throws SocketException {
         if (socket != null) {
             socket.setSoTimeout(timeout);
         } else {
             super.setSoTimeout(timeout);
+        }
+    }
+
+    @Override
+    public int getSoTimeout() throws SocketException {
+        if (socket != null) {
+            return socket.getSoTimeout();
+        } else {
+            return super.getSoTimeout();
+        }
+    }
+
+    @Override
+    public void bind(final SocketAddress bindpoint) throws IOException {
+        if (socket != null) {
+            socket.bind(bindpoint);
+        } else {
+            super.bind(bindpoint);
+        }
+    }
+
+    @Override
+    public InetAddress getInetAddress() {
+        if (socket != null) {
+            return socket.getInetAddress();
+        } else {
+            return super.getInetAddress();
+        }
+    }
+
+    @Override
+    public InetAddress getLocalAddress() {
+        if (socket != null) {
+            return socket.getLocalAddress();
+        } else {
+            return super.getLocalAddress();
+        }
+    }
+
+    @Override
+    public int getPort() {
+        if (socket != null) {
+            return socket.getPort();
+        } else {
+            return super.getPort();
+        }
+    }
+
+    @Override
+    public int getLocalPort() {
+        if (socket != null) {
+            return socket.getLocalPort();
+        } else {
+            return super.getLocalPort();
+        }
+    }
+
+    @Override
+    public SocketAddress getRemoteSocketAddress() {
+        if (socket != null) {
+            return socket.getRemoteSocketAddress();
+        } else {
+            return super.getRemoteSocketAddress();
+        }
+    }
+
+    @Override
+    public SocketAddress getLocalSocketAddress() {
+        if (socket != null) {
+            return socket.getLocalSocketAddress();
+        } else {
+            return super.getLocalSocketAddress();
+        }
+    }
+
+    @Override
+    public SocketChannel getChannel() {
+        if (socket != null) {
+            return socket.getChannel();
+        } else {
+            return super.getChannel();
+        }
+    }
+
+    @Override
+    public void setTcpNoDelay(final boolean on) throws SocketException {
+        if (socket != null) {
+            socket.setTcpNoDelay(on);
+        } else {
+            super.setTcpNoDelay(on);
+        }
+    }
+
+    @Override
+    public boolean getTcpNoDelay() throws SocketException {
+        if (socket != null) {
+            return socket.getTcpNoDelay();
+        } else {
+            return super.getTcpNoDelay();
+        }
+    }
+
+    @Override
+    public void setSoLinger(final boolean on, final int linger) throws SocketException {
+        if (socket != null) {
+            socket.setSoLinger(on, linger);
+        } else {
+            super.setSoLinger(on, linger);
+        }
+    }
+
+    @Override
+    public int getSoLinger() throws SocketException {
+        if (socket != null) {
+            return socket.getSoLinger();
+        } else {
+            return super.getSoLinger();
+        }
+    }
+
+    @Override
+    public void sendUrgentData(final int data) throws IOException {
+        if (socket != null) {
+            socket.sendUrgentData(data);
+        } else {
+            super.sendUrgentData(data);
+        }
+    }
+
+    @Override
+    public void setOOBInline(final boolean on) throws SocketException {
+        if (socket != null) {
+            socket.setOOBInline(on);
+        } else {
+            super.setOOBInline(on);
+        }
+    }
+
+    @Override
+    public boolean getOOBInline() throws SocketException {
+        if (socket != null) {
+            return socket.getOOBInline();
+        } else {
+            return super.getOOBInline();
+        }
+    }
+
+    @Override
+    public synchronized void setSendBufferSize(final int size) throws SocketException {
+        if (socket != null) {
+            socket.setSendBufferSize(size);
+        } else {
+            super.setSendBufferSize(size);
+        }
+    }
+
+    @Override
+    public synchronized int getSendBufferSize() throws SocketException {
+        if (socket != null) {
+            return socket.getSendBufferSize();
+        } else {
+            return super.getSendBufferSize();
+        }
+    }
+
+    @Override
+    public synchronized void setReceiveBufferSize(final int size) throws SocketException {
+        if (socket != null) {
+            socket.setReceiveBufferSize(size);
+        } else {
+            super.setReceiveBufferSize(size);
+        }
+    }
+
+    @Override
+    public synchronized int getReceiveBufferSize() throws SocketException {
+        if (socket != null) {
+            return socket.getReceiveBufferSize();
+        } else {
+            return super.getReceiveBufferSize();
+        }
+    }
+
+    @Override
+    public void setKeepAlive(final boolean on) throws SocketException {
+        if (socket != null) {
+            socket.setKeepAlive(on);
+        } else {
+            super.setKeepAlive(on);
+        }
+    }
+
+    @Override
+    public boolean getKeepAlive() throws SocketException {
+        if (socket != null) {
+            return socket.getKeepAlive();
+        } else {
+            return super.getKeepAlive();
+        }
+    }
+
+    @Override
+    public void setTrafficClass(final int tc) throws SocketException {
+        if (socket != null) {
+            socket.setTrafficClass(tc);
+        } else {
+            super.setTrafficClass(tc);
+        }
+    }
+
+    @Override
+    public int getTrafficClass() throws SocketException {
+        if (socket != null) {
+            return socket.getTrafficClass();
+        } else {
+            return super.getTrafficClass();
+        }
+    }
+
+    @Override
+    public void setReuseAddress(final boolean on) throws SocketException {
+        if (socket != null) {
+            socket.setReuseAddress(on);
+        } else {
+            super.setReuseAddress(on);
+        }
+    }
+
+    @Override
+    public boolean getReuseAddress() throws SocketException {
+        if (socket != null) {
+            return socket.getReuseAddress();
+        } else {
+            return super.getReuseAddress();
+        }
+    }
+
+    @Override
+    public void shutdownInput() throws IOException {
+        if (socket != null) {
+            socket.shutdownInput();
+        } else {
+            super.shutdownInput();
+        }
+    }
+
+    @Override
+    public void shutdownOutput() throws IOException {
+        if (socket != null) {
+            socket.shutdownOutput();
+        } else {
+            super.shutdownOutput();
+        }
+    }
+
+    @Override
+    public boolean isConnected() {
+        if (socket != null) {
+            return socket.isConnected();
+        } else {
+            return super.isConnected();
+        }
+    }
+
+    @Override
+    public boolean isBound() {
+        if (socket != null) {
+            return socket.isBound();
+        } else {
+            return super.isBound();
+        }
+    }
+
+    @Override
+    public boolean isClosed() {
+        if (socket != null) {
+            return socket.isClosed();
+        } else {
+            return super.isClosed();
+        }
+    }
+
+    @Override
+    public boolean isInputShutdown() {
+        if (socket != null) {
+            return socket.isInputShutdown();
+        } else {
+            return super.isInputShutdown();
+        }
+    }
+
+    @Override
+    public boolean isOutputShutdown() {
+        if (socket != null) {
+            return socket.isOutputShutdown();
+        } else {
+            return super.isOutputShutdown();
+        }
+    }
+
+    @Override
+    public void setPerformancePreferences(final int connectionTime, final int latency, final int bandwidth) {
+        if (socket != null) {
+            socket.setPerformancePreferences(connectionTime, latency, bandwidth);
+        } else {
+            super.setPerformancePreferences(connectionTime, latency, bandwidth);
         }
     }
 
@@ -384,63 +780,5 @@ public final class SocksSocket extends Socket {
             return socket.getOutputStream();
         }
         return super.getOutputStream();
-    }
-
-    private enum SocksCommand {
-
-        CONNECT(0x01);
-
-        private final int value;
-
-        SocksCommand(final int value) {
-            this.value = value;
-        }
-
-        public int getCommandNumber() {
-            return value;
-        }
-    }
-
-    private enum SocksAuthenticationMethod {
-        NO_AUTH(0x00),
-        USERNAME_PASSWORD(0x02);
-
-        private final int methodNumber;
-
-        SocksAuthenticationMethod(final int methodNumber) {
-            this.methodNumber = methodNumber;
-        }
-
-        public int getMethodNumber() {
-            return methodNumber;
-        }
-
-    }
-
-    private enum ServerErrorReply {
-        GENERAL_FAILURE(1, "Remote server doesn't support SOCKS5"),
-        NOT_ALLOWED(2, "Proxy server general failure"),
-        NET_UNREACHABLE(3, "Connection not allowed by ruleset"),
-        HOST_UNREACHABLE(4, "Network is unreachable"),
-        CONN_REFUSED(5, "Host is unreachable"),
-        TTL_EXPIRED(6, "Connection has been refused"),
-        CMD_NOT_SUPPORTED(7, "TTL expired"),
-        ADDR_TYPE_NOT_SUP(8, "Address type not supported");
-
-        private final int replyNumber;
-        private final String message;
-
-        ServerErrorReply(final int replyNumber, final String message) {
-            this.replyNumber = replyNumber;
-            this.message = message;
-        }
-
-        public int getReplyNumber() {
-            return replyNumber;
-        }
-
-        public String getMessage() {
-            return message;
-        }
     }
 }

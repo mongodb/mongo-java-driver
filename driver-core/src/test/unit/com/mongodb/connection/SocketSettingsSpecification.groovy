@@ -33,6 +33,7 @@ class SocketSettingsSpecification extends Specification {
         settings.getReadTimeout(MILLISECONDS) == 0
         settings.receiveBufferSize == 0
         settings.sendBufferSize == 0
+        settings.proxySettings == ProxySettings.builder().build()
     }
 
     def 'should set settings'() {
@@ -42,6 +43,12 @@ class SocketSettingsSpecification extends Specification {
                                      .readTimeout(2000, MILLISECONDS)
                                      .sendBufferSize(1000)
                                      .receiveBufferSize(1500)
+                                     .applyToProxySettings {
+                                         it.host('proxy.com')
+                                         it.port(1080)
+                                         it.username('username')
+                                         it.password('password')
+                                     }
                                      .build()
 
 
@@ -50,6 +57,11 @@ class SocketSettingsSpecification extends Specification {
         settings.getReadTimeout(MILLISECONDS) == 2000
         settings.sendBufferSize == 1000
         settings.receiveBufferSize == 1500
+        def proxySettings = settings.getProxySettings()
+        proxySettings.getHost() == 'proxy.com'
+        proxySettings.getPort() == 1080
+        proxySettings.getUsername() == 'username'
+        proxySettings.getPassword() == 'password'
     }
 
     def 'should apply builder settings'() {
@@ -59,6 +71,12 @@ class SocketSettingsSpecification extends Specification {
                 .readTimeout(2000, MILLISECONDS)
                 .sendBufferSize(1000)
                 .receiveBufferSize(1500)
+                .applyToProxySettings {
+                    it.host('proxy.com')
+                    it.port(1080)
+                    it.username('username')
+                    it.password('password')
+                }
                 .build()
 
         def settings = SocketSettings.builder(original).build()
@@ -68,13 +86,22 @@ class SocketSettingsSpecification extends Specification {
         settings.getReadTimeout(MILLISECONDS) == 2000
         settings.sendBufferSize == 1000
         settings.receiveBufferSize == 1500
+        def proxySettings = settings.getProxySettings()
+        proxySettings.getHost() == 'proxy.com'
+        proxySettings.getPort() == 1080
+        proxySettings.getUsername() == 'username'
+        proxySettings.getPassword() == 'password'
     }
 
     def 'should apply connection string'() {
         when:
         def settings = SocketSettings.builder()
                                      .applyConnectionString(new ConnectionString
-                                                                    ('mongodb://localhost/?connectTimeoutMS=5000&socketTimeoutMS=2000'))
+                                                                    ('mongodb://localhost/?connectTimeoutMS=5000&socketTimeoutMS=2000'
+                                                                           + '&proxyHost=proxy.com'
+                                                                           + '&proxyPort=1080'
+                                                                           + '&proxyUsername=username'
+                                                                           + '&proxyPassword=password'))
                                      .build()
 
 
@@ -83,6 +110,11 @@ class SocketSettingsSpecification extends Specification {
         settings.getReadTimeout(MILLISECONDS) == 2000
         settings.sendBufferSize == 0
         settings.receiveBufferSize == 0
+        def proxySettings = settings.getProxySettings()
+        proxySettings.getHost() == 'proxy.com'
+        proxySettings.getPort() == 1080
+        proxySettings.getUsername() == 'username'
+        proxySettings.getPassword() == 'password'
     }
 
     def 'should apply settings'() {
@@ -93,6 +125,12 @@ class SocketSettingsSpecification extends Specification {
                 .readTimeout(2000, MILLISECONDS)
                 .sendBufferSize(1000)
                 .receiveBufferSize(1500)
+                .applyToProxySettings {
+                    it.host('proxy.com')
+                    it.port(1080)
+                    it.username('username')
+                    it.password('password')
+                }
                 .build()
 
         expect:
@@ -108,12 +146,24 @@ class SocketSettingsSpecification extends Specification {
                       .readTimeout(2000, MILLISECONDS)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
+                      .applyToProxySettings {
+                          it.host('proxy.com')
+                          it.port(1080)
+                          it.username('username')
+                          it.password('password')
+                      }
                       .build() ==
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
                       .readTimeout(2000, MILLISECONDS)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
+                      .applyToProxySettings {
+                          it.host('proxy.com')
+                          it.port(1080)
+                          it.username('username')
+                          it.password('password')
+                      }
                       .build()
     }
 
@@ -130,12 +180,24 @@ class SocketSettingsSpecification extends Specification {
                       .readTimeout(2000, MILLISECONDS)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
+                      .applyToProxySettings {
+                          it.host('proxy.com')
+                          it.port(1080)
+                          it.username('username')
+                          it.password('password')
+                      }
                       .build().hashCode() ==
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
                       .readTimeout(2000, MILLISECONDS)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
+                      .applyToProxySettings {
+                          it.host('proxy.com')
+                          it.port(1080)
+                          it.username('username')
+                          it.password('password')
+                      }
                       .build().hashCode()
     }
 
