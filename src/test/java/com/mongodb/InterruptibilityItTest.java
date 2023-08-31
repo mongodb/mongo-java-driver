@@ -56,6 +56,7 @@ import java.util.stream.Stream;
 import static java.lang.Math.toIntExact;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -211,8 +212,9 @@ final class InterruptibilityItTest {
                             inInterruptedThread(interruptDelay, executeCommand)
                     )
             );
-            assertTrue(startedCommandNames.stream().filter(startedCommandName -> startedCommandName.equals(commandName)).count() <= 1,
-                    "Unexpected retries " + startedCommandNames);
+            assertFalse(startedCommandNames.stream().anyMatch(startedCommandName -> !startedCommandName.equals(commandName)),
+                    "Unexpected commands in " + startedCommandNames + ", expected only " + commandName);
+            assertTrue(startedCommandNames.size() <= 1, startedCommandNames + "was attempted " + startedCommandNames.size() + " times");
             return t;
         });
     }
