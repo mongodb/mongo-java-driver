@@ -24,8 +24,13 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerType;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.ConnectionPoolClearedEvent;
+import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.event.ServerListener;
 import com.mongodb.internal.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -49,6 +54,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -56,9 +62,9 @@ import java.util.stream.Stream;
 import static java.lang.Math.toIntExact;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * These tests are inherently racy.
@@ -74,6 +80,8 @@ final class InterruptibilityItTest {
     private static MongoClient client;
     private static MongoCollection<Document> collection;
     private static ConcurrentLinkedQueue<String> startedCommandNames;
+    private static LongAdder unknownServerEventsCount;
+    private static LongAdder connectionPoolClearedEventsCount;
 
     @BeforeAll
     static void beforeAll() {
@@ -82,10 +90,13 @@ final class InterruptibilityItTest {
         testTimeout = baselineDuration.plus(baselineDuration);
         blockTimeout = testTimeout.plus(baselineDuration);
         startedCommandNames = new ConcurrentLinkedQueue<>();
+        unknownServerEventsCount = new LongAdder();
+        connectionPoolClearedEventsCount = new LongAdder();
         clientSettingsBuilderSupplier = () -> MongoClientSettings.builder()
                 .applicationName(InterruptibilityItTest.class.getName())
                 .applyToServerSettings(builder -> builder
                         .heartbeatFrequency(baselineDuration.toMillis(), MILLISECONDS)
+                        .minHeartbeatFrequency(0, MILLISECONDS)
                 )
                 .applyToSocketSettings(builder -> builder
                         .connectTimeout(toIntExact(blockTimeout.toMillis()), MILLISECONDS)
@@ -106,7 +117,27 @@ final class InterruptibilityItTest {
                     public void commandStarted(final CommandStartedEvent event) {
                         startedCommandNames.add(event.getCommandName());
                     }
-                }).build();
+                })
+                .applyToServerSettings(builder -> builder
+                        .addServerListener(new ServerListener() {
+                            @Override
+                            public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
+                                ServerType newType = event.getNewDescription().getType();
+                                if (newType == ServerType.UNKNOWN && newType != event.getPreviousDescription().getType()) {
+                                    unknownServerEventsCount.increment();
+                                }
+                            }
+                        })
+                )
+                .applyToConnectionPoolSettings(builder -> builder
+                        .addConnectionPoolListener(new ConnectionPoolListener() {
+                            @Override
+                            public void connectionPoolCleared(final ConnectionPoolClearedEvent event) {
+                                connectionPoolClearedEventsCount.increment();
+                            }
+                        })
+                )
+                .build();
         client = MongoClients.create(clientSettings);
         collection = client.getDatabase(InterruptibilityItTest.class.getSimpleName()).getCollection("collection");
     }
@@ -131,7 +162,7 @@ final class InterruptibilityItTest {
     @MethodSource("arguments")
     void mongoCollectionDrop(final Duration interruptDelay) {
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, "drop", true, collection::drop);
+                interruptDelay, "drop", interruptDelay.isZero() ? 0 : 1, true, collection::drop);
     }
 
     @ParameterizedTest
@@ -139,7 +170,7 @@ final class InterruptibilityItTest {
     void mongoIterableFirst(final Duration interruptDelay) {
         MongoIterable<String> iterable = client.listDatabaseNames();
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, "listDatabases", true, iterable::first);
+                interruptDelay, "listDatabases", interruptDelay.isZero() ? 0 : 1, true, iterable::first);
     }
 
     @ParameterizedTest
@@ -151,7 +182,7 @@ final class InterruptibilityItTest {
             cursor.next();
             com.mongodb.assertions.Assertions.assertTrue(cursor.available() == 0);
             assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                    interruptDelay, "getMore", true, cursor::next);
+                    interruptDelay, "getMore", interruptDelay.isZero() ? 0 : 1, true, cursor::next);
         }
     }
 
@@ -170,7 +201,7 @@ final class InterruptibilityItTest {
                 + "}"));
         MongoIterable<String> iterable = client.listDatabaseNames();
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, "listDatabases", false, iterable::first);
+                interruptDelay, "listDatabases", 0, false, iterable::first);
     }
 
     @ParameterizedTest
@@ -182,7 +213,7 @@ final class InterruptibilityItTest {
         // We need the duration the connection remains blocked after this waiting to be greater than `interruptDelay`.
         Thread.sleep(blockTimeout.minus(interruptDelay).dividedBy(2));
         assertThrowsInVirtualInterruptedThread(MongoInterruptedException.class,
-                interruptDelay, "drop", false, collection::drop);
+                interruptDelay, "drop", 0, false, collection::drop);
         try {
             backgroundConnectionBlocker.get();
         } catch (ExecutionException e) {
@@ -203,10 +234,13 @@ final class InterruptibilityItTest {
             final Class<T> expectedType,
             final Duration interruptDelay,
             final String commandName,
+            final int expectedCommandStartedEventCount,
             final boolean blockCommand,
             final Runnable executeCommand) {
         return withBlockedCommand(blockCommand ? commandName : null, blockTimeout, () -> {
             startedCommandNames.clear();
+            unknownServerEventsCount.reset();
+            connectionPoolClearedEventsCount.reset();
             T t = assertThrows(expectedType, () ->
                     inVirtualThread(() ->
                             inInterruptedThread(interruptDelay, executeCommand)
@@ -214,7 +248,10 @@ final class InterruptibilityItTest {
             );
             assertFalse(startedCommandNames.stream().anyMatch(startedCommandName -> !startedCommandName.equals(commandName)),
                     "Unexpected commands in " + startedCommandNames + ", expected only " + commandName);
-            assertTrue(startedCommandNames.size() <= 1, startedCommandNames + "was attempted " + startedCommandNames.size() + " times");
+            assertEquals(expectedCommandStartedEventCount, startedCommandNames.size(),
+                    "Retries may be to blame");
+            assertEquals(0, unknownServerEventsCount.sum());
+            assertEquals(0, connectionPoolClearedEventsCount.sum());
             return t;
         });
     }
