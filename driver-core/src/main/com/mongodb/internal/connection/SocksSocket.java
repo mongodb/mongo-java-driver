@@ -440,6 +440,7 @@ public final class SocksSocket extends Socket {
     }
 
     @Override
+    @SuppressWarnings("try")
     public void close() throws IOException {
         /*
           If this.socket is not null, this class essentially acts as a wrapper and we neither bind nor connect in the superclass,

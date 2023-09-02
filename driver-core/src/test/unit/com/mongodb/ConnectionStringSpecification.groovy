@@ -433,9 +433,9 @@ class ConnectionStringSpecification extends Specification {
         assert connectionString.getProxyUsername() == proxyUsername
 
         where:
-        uri                                                                                                                |  proxyPassword        | proxyUsername
-        'mongodb://localhost:27017/?proxyHost=test4&proxyPassword=pass%21wor%24&proxyUsername=user%21name'                 | 'pass!wor$'           | 'user!name'
-        'mongodb://localhost:27017/?proxyHost=::5000&proxyPassword=pass!wor$&proxyUsername=user!name'                      | 'pass!wor$'           | 'user!name'
+        uri                                                                                               |  proxyPassword | proxyUsername
+        'mongodb://localhost:27017/?proxyHost=test4&proxyPassword=pass%21wor%24&proxyUsername=user%21name'| 'pass!wor$'    | 'user!name'
+        'mongodb://localhost:27017/?proxyHost=::5000&proxyPassword=pass!wor$&proxyUsername=user!name'     | 'pass!wor$'    | 'user!name'
     }
 
     def 'should set proxy settings properties'() {
