@@ -4,6 +4,7 @@ set -o xtrace   # Write all commands first to stderr
 set -o errexit  # Exit the script with error if any of the commands fail
 
 SSL=${SSL:-nossl}
+SOCKS_AUTH=${SOCKS_AUTH:-noauth}
 MONGODB_URI=${MONGODB_URI:-}
 SOCKS5_SERVER_SCRIPT="$DRIVERS_TOOLS/.evergreen/socks5srv.py"
 PYTHON_BINARY=${PYTHON_BINARY:-python3}
@@ -43,14 +44,31 @@ provision_ssl () {
   export GRADLE_SSL_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
 }
 
+
+run_socks5_proxy () {
+if [ "$SOCKS_AUTH" == "auth" ]; then
+   "$PYTHON_BINARY" "$SOCKS5_SERVER_SCRIPT" --port 1080 --auth username:p4ssw0rd --map "127.0.0.1:12345 to $FIRST_HOST" &
+   SOCKS5_SERVER_PID_1=$!
+   trap "kill $SOCKS5_SERVER_PID_1" EXIT
+  else
+   "$PYTHON_BINARY" "$SOCKS5_SERVER_SCRIPT" --port 1080 --map "127.0.0.1:12345 to $FIRST_HOST" &
+   SOCKS5_SERVER_PID_1=$!
+    trap "kill $SOCKS5_SERVER_PID_1" EXIT
+fi
+}
+
 run_socks5_prose_tests () {
-local PROXY_PORT=$1
-local AUTH_ENABLED=$2
- echo "Running Socks5 tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks auth enabled $AUTH_ENABLED"
+if [ "$SOCKS_AUTH" == "auth" ]; then
+  local AUTH_ENABLED="true"
+else
+  local AUTH_ENABLED="false"
+fi
+
+echo "Running Socks5 tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks auth enabled: $AUTH_ENABLED"
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
       -Dorg.mongodb.test.uri.singleHost=${MONGODB_URI_SINGLEHOST} \
       -Dorg.mongodb.test.uri.proxyHost="127.0.0.1" \
-      -Dorg.mongodb.test.uri.proxyPort=${PROXY_PORT} \
+      -Dorg.mongodb.test.uri.proxyPort="1080" \
       -Dorg.mongodb.test.uri.socks.auth.enabled=${AUTH_ENABLED} \
       ${GRADLE_SSL_VARS} \
       --stacktrace --info --continue \
@@ -64,22 +82,6 @@ local AUTH_ENABLED=$2
 
 # Set up keystore/truststore
 provision_ssl
-
-# First, test with Socks5 + authentication required
-echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks5 auth enabled"
 ./gradlew -version
-"$PYTHON_BINARY" "$SOCKS5_SERVER_SCRIPT" --port 1080 --auth username:p4ssw0rd --map "127.0.0.1:12345 to $FIRST_HOST" &
-SOCKS5_SERVER_PID_1=$!
-trap "kill $SOCKS5_SERVER_PID_1" EXIT
-
-run_socks5_prose_tests "1080" "true"
-
-# Second, test with Socks5 + no authentication
-echo "Running tests with Java ${JAVA_VERSION} over $SSL for $TOPOLOGY and connecting to $MONGODB_URI with socks5 auth disabled"
-./gradlew -version
-"$PYTHON_BINARY" "$SOCKS5_SERVER_SCRIPT" --port 1081 --map "127.0.0.1:12345 to $FIRST_HOST" &
-# Set up trap to kill both processes when the script exits
-SOCKS5_SERVER_PID_2=$!
-trap "kill $SOCKS5_SERVER_PID_1; kill $SOCKS5_SERVER_PID_2" EXIT
-
-run_socks5_prose_tests "1081" "false"
+run_socks5_proxy
+run_socks5_prose_tests

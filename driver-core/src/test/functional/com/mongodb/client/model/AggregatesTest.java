@@ -24,7 +24,6 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -55,10 +54,8 @@ public class AggregatesTest extends OperationTest {
 
     private static Stream<Arguments> groupWithQuantileSource() {
         return Stream.of(
-                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95), QuantileMethod.approximate()), asList(3.0),
-                        asList(1.0)),
-                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95, 0.3), QuantileMethod.approximate()), asList(3.0, 2.0),
-                        asList(1.0, 1.0)),
+                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95), QuantileMethod.approximate()), asList(3.0), asList(1.0)),
+                Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95, 0.3), QuantileMethod.approximate()), asList(3.0, 2.0), asList(1.0, 1.0)),
                 Arguments.of(median("result", "$x", QuantileMethod.approximate()), 2.0d, 1.0d)
         );
     }
@@ -167,7 +164,6 @@ public class AggregatesTest extends OperationTest {
     }
 
     @Test
-    @Disabled
     public void testGeoNear() {
         getCollectionHelper().insertDocuments("[\n"
                 + "   {\n"
@@ -203,18 +199,18 @@ public class AggregatesTest extends OperationTest {
                 ));
 
         List<Bson> pipeline = assertPipeline("{\n"
-                        + "   $geoNear: {\n"
-                        + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
-                        + "      distanceField: 'dist.calculated',\n"
-                        + "      minDistance: 0,\n"
-                        + "      maxDistance: 2,\n"
-                        + "      query: { category: 'Parks' },\n"
-                        + "      includeLocs: 'dist.location',\n"
-                        + "      spherical: true,\n"
-                        + "      key: 'location',\n"
-                        + "      distanceMultiplier: 10.0\n"
-                        + "   }\n"
-                        + "}",
+                + "   $geoNear: {\n"
+                + "      near: { type: 'Point', coordinates: [ -73.99279 , 40.719296 ] },\n"
+                + "      distanceField: 'dist.calculated',\n"
+                + "      minDistance: 0,\n"
+                + "      maxDistance: 2,\n"
+                + "      query: { category: 'Parks' },\n"
+                + "      includeLocs: 'dist.location',\n"
+                + "      spherical: true,\n"
+                + "      key: 'location',\n"
+                + "      distanceMultiplier: 10.0\n"
+                + "   }\n"
+                + "}",
                 geoNear(
                         new Point(new Position(-73.99279, 40.719296)),
                         "dist.calculated",

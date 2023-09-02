@@ -403,6 +403,41 @@ class ConnectionStringSpecification extends Specification {
                 ' They cannot be set individually'               | 'mongodb://localhost:27017/?proxyHost=a&proxyPassword=1'
     }
 
+    @Unroll
+    def 'should create connection string with valid proxy socket settings'() {
+        when:
+        def connectionString = new ConnectionString(uri)
+
+        then:
+        assert connectionString.getProxyHost() == proxyHost
+        assert connectionString.getProxyPort() == 1081
+
+        where:
+        uri                                                                               |  proxyHost
+        'mongodb://localhost:27017/?proxyHost=2001:db8:85a3::8a2e:370:7334&proxyPort=1081'| '2001:db8:85a3::8a2e:370:7334'
+        'mongodb://localhost:27017/?proxyHost=::5000&proxyPort=1081'                      | '::5000'
+        'mongodb://localhost:27017/?proxyHost=%3A%3A5000&proxyPort=1081'                  | '::5000'
+        'mongodb://localhost:27017/?proxyHost=0::1&proxyPort=1081'                        | '0::1'
+        'mongodb://localhost:27017/?proxyHost=hyphen-domain.com&proxyPort=1081'           | 'hyphen-domain.com'
+        'mongodb://localhost:27017/?proxyHost=sub.domain.c.com.com&proxyPort=1081'        | 'sub.domain.c.com.com'
+        'mongodb://localhost:27017/?proxyHost=192.168.0.1&proxyPort=1081'                 | '192.168.0.1'
+    }
+
+    @Unroll
+    def 'should create connection string with valid proxy credentials settings'() {
+        when:
+        def connectionString = new ConnectionString(uri)
+
+        then:
+        assert connectionString.getProxyPassword() == proxyPassword
+        assert connectionString.getProxyUsername() == proxyUsername
+
+        where:
+        uri                                                                                                                |  proxyPassword        | proxyUsername
+        'mongodb://localhost:27017/?proxyHost=test4&proxyPassword=pass%21wor%24&proxyUsername=user%21name'                 | 'pass!wor$'           | 'user!name'
+        'mongodb://localhost:27017/?proxyHost=::5000&proxyPassword=pass!wor$&proxyUsername=user!name'                      | 'pass!wor$'           | 'user!name'
+    }
+
     def 'should set proxy settings properties'() {
         when:
         def connectionString =  new ConnectionString('mongodb+srv://test5.cc/?'

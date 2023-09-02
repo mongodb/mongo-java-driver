@@ -735,6 +735,7 @@ functions:
         working_dir: src
         script: |
           ${PREPARE_SHELL}
+          SOCKS_AUTH="${SOCKS_AUTH}" \
           SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" \
           JAVA_VERSION="${JAVA_VERSION}" \
           .evergreen/run-socks5-tests.sh
@@ -1624,16 +1625,6 @@ tasks:
             VERSION: latest
             TOPOLOGY: replica_set
         - func: run socks5 tests
-    - name: test-socks5-tls
-      tags: []
-      commands:
-        - func: bootstrap mongo-orchestration
-          vars:
-            VERSION: latest
-            TOPOLOGY: replica_set
-        - func: run socks5 tests
-          vars:
-            SSL: ssl
 axes:
   - id: version
     display_name: MongoDB Version
@@ -1724,6 +1715,17 @@ axes:
         display_name: NoAuth
         variables:
            AUTH: "noauth"
+  - id: socks_auth
+    display_name: Socks Proxy Authentication
+    values:
+      - id: "auth"
+        display_name: Auth
+        variables:
+          SOCKS_AUTH: "auth"
+      - id: "noauth"
+        display_name: NoAuth
+        variables:
+          SOCKS_AUTH: "noauth"
   - id: ssl
     display_name: SSL
     values:
@@ -2166,8 +2168,8 @@ buildvariants:
     - name: "csfle-tests-with-mongocryptd"
 
 - matrix_name: "socks5-tests"
-  matrix_spec: { os: "linux", ssl: ["nossl", "ssl"], version: [ "latest" ], topology: ["replicaset"] }
-  display_name: "Socks5: ${version} ${topology} ${ssl} ${jdk} ${os}"
+  matrix_spec: { os: "linux", ssl: ["nossl", "ssl"], version: [ "latest" ], topology: ["replicaset"], socks_auth: ["auth", "noauth"] }
+  display_name: "${socks_auth} SOCKS5 proxy: ${version} ${topology} ${ssl} ${jdk} ${os}"
   tasks:
     - name: test-socks5
 
