@@ -158,6 +158,7 @@ public final class ProxySettings {
          * @throws IllegalArgumentException If the provided username is empty or null.
          * @see ProxySettings.Builder#password(String)
          * @see ProxySettings.Builder#host(String)
+         * @see #getUsername()
          */
         public ProxySettings.Builder username(final String username) {
             notNull("username", username);
