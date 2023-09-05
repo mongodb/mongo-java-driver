@@ -255,13 +255,8 @@ public final class SocketSettings {
         if (sendBufferSize != that.sendBufferSize) {
             return false;
         }
-        if (proxySettings != that.proxySettings) {
-            return false;
-        }
-
-        return true;
+        return proxySettings.equals(that.proxySettings);
     }
-
 
     @Override
     public int hashCode() {

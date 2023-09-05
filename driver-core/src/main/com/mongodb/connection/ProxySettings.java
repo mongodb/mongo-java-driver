@@ -16,6 +16,7 @@
 package com.mongodb.connection;
 
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;

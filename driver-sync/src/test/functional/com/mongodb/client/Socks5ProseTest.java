@@ -26,6 +26,8 @@ import com.mongodb.event.ClusterListener;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.condition.DisabledIf;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +45,6 @@ import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.atLeast;
 
 /**
@@ -53,7 +54,6 @@ import static org.mockito.Mockito.atLeast;
 class Socks5ProseTest {
     private static final String MONGO_REPLICA_SET_URI_PREFIX = System.getProperty("org.mongodb.test.uri");
     private static final String MONGO_SINGLE_MAPPED_URI_PREFIX = System.getProperty("org.mongodb.test.uri.singleHost");
-    private static final Boolean SOCKS_AUTH_ENABLED = Boolean.valueOf(System.getProperty("org.mongodb.test.uri.socks.auth.enabled"));
     private static final int PROXY_PORT = Integer.parseInt(System.getProperty("org.mongodb.test.uri.proxyPort"));
     private MongoClient mongoClient;
 
@@ -85,24 +85,24 @@ class Socks5ProseTest {
 
     @ParameterizedTest(name = "Should connect without authentication in connection string. ConnectionString: {0}")
     @MethodSource({"noAuthConnectionStrings", "invalidAuthConnectionStrings"})
+    @DisabledIf("isAuthEnabled")
     void shouldConnectWithoutAuth(final ConnectionString connectionString) {
-        assumeFalse(SOCKS_AUTH_ENABLED);
         mongoClient = MongoClients.create(connectionString);
         runHelloCommand(mongoClient);
     }
 
     @ParameterizedTest(name = "Should connect without authentication in proxy settings. ConnectionString: {0}")
     @MethodSource({"noAuthConnectionStrings", "invalidAuthConnectionStrings"})
+    @DisabledIf("isAuthEnabled")
     void shouldConnectWithoutAuthInProxySettings(final ConnectionString connectionString) {
-        assumeFalse(SOCKS_AUTH_ENABLED);
         mongoClient = MongoClients.create(buildMongoClientSettings(connectionString));
         runHelloCommand(mongoClient);
     }
 
     @ParameterizedTest(name = "Should not connect without valid authentication in connection string. ConnectionString: {0}")
     @MethodSource({"noAuthConnectionStrings", "invalidAuthConnectionStrings"})
+    @EnabledIf("isAuthEnabled")
     void shouldNotConnectWithoutAuth(final ConnectionString connectionString) {
-        assumeTrue(SOCKS_AUTH_ENABLED);
         ClusterListener clusterListener = Mockito.mock(ClusterListener.class);
         ArgumentCaptor<ClusterDescriptionChangedEvent> captor = ArgumentCaptor.forClass(ClusterDescriptionChangedEvent.class);
 
@@ -115,8 +115,8 @@ class Socks5ProseTest {
 
     @ParameterizedTest(name = "Should not connect without valid authentication in proxy settings. ConnectionString: {0}")
     @MethodSource({"noAuthConnectionStrings", "invalidAuthConnectionStrings"})
-    public void shouldNotConnectWithoutAuthInProxySettings(final ConnectionString connectionString) {
-        assumeTrue(SOCKS_AUTH_ENABLED);
+    @EnabledIf("isAuthEnabled")
+    void shouldNotConnectWithoutAuthInProxySettings(final ConnectionString connectionString) {
         ClusterListener clusterListener = Mockito.mock(ClusterListener.class);
         ArgumentCaptor<ClusterDescriptionChangedEvent> captor = ArgumentCaptor.forClass(ClusterDescriptionChangedEvent.class);
 
@@ -128,16 +128,16 @@ class Socks5ProseTest {
 
     @ParameterizedTest(name = "Should connect with valid authentication in connection string. ConnectionString: {0}")
     @MethodSource("validAuthConnectionStrings")
+    @EnabledIf("isAuthEnabled")
     void shouldConnectWithValidAuth(final ConnectionString connectionString) {
-        assumeTrue(SOCKS_AUTH_ENABLED);
         mongoClient = MongoClients.create(connectionString);
         runHelloCommand(mongoClient);
     }
 
     @ParameterizedTest(name = "Should connect with valid authentication in proxy settings. ConnectionString: {0}")
     @MethodSource("validAuthConnectionStrings")
-    public void shouldConnectWithValidAuthInProxySettings(final ConnectionString connectionString) {
-        assumeTrue(SOCKS_AUTH_ENABLED);
+    @EnabledIf("isAuthEnabled")
+    void shouldConnectWithValidAuthInProxySettings(final ConnectionString connectionString) {
         mongoClient = MongoClients.create(buildMongoClientSettings(connectionString));
         runHelloCommand(mongoClient);
     }
@@ -182,6 +182,10 @@ class Socks5ProseTest {
                     builder.serverSelectionTimeout(5, TimeUnit.SECONDS);
                 })
                 .build());
+    }
+
+    private static boolean isAuthEnabled() {
+        return Boolean.parseBoolean(System.getProperty("org.mongodb.test.uri.socks.auth.enabled"));
     }
 
     public static class SocksProxyPropertyCondition implements ExecutionCondition {
