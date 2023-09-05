@@ -140,9 +140,6 @@ public final class SocketSettings {
         /**
          * Applies the {@link ProxySettings.Builder} block and then sets the {@link SocketSettings#proxySettings}.
          *
-         * <p>
-         * NOTE: This setting is only applicable to the synchronous variant of MongoClient.
-         *
          * @param block the block to apply to the {@link ProxySettings}.
          * @return this
          * @see SocketSettings#getProxySettings()
@@ -258,9 +255,13 @@ public final class SocketSettings {
         if (sendBufferSize != that.sendBufferSize) {
             return false;
         }
+        if (proxySettings != that.proxySettings) {
+            return false;
+        }
 
         return true;
     }
+
 
     @Override
     public int hashCode() {
@@ -268,6 +269,7 @@ public final class SocketSettings {
         result = 31 * result + (int) (readTimeoutMS ^ (readTimeoutMS >>> 32));
         result = 31 * result + receiveBufferSize;
         result = 31 * result + sendBufferSize;
+        result = 31 * result + proxySettings.hashCode();
         return result;
     }
 

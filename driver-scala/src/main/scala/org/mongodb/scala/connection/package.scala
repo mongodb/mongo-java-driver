@@ -42,16 +42,17 @@ package object connection {
   type SocketSettings = com.mongodb.connection.SocketSettings
 
   /**
-   * This setting is only applicable when communicating with a MongoDB server or a Key Management Service
-   * using the synchronous variant of `com.mongodb.MongoClient` or `ClientEncryption`.
+   * This setting is only applicable when communicating with a MongoDB server using the synchronous variant of `MongoClient`.
    *
    * This setting is furthermore ignored if:
-   * - the communication is via `com.mongodb.UnixServerAddress` (Unix domain socket).
-   * - a `StreamFactoryFactory` is `MongoClientSettings.Builder.streamFactoryFactory` configured.
+   * <ul>
+   *    <li>the communication is via `com.mongodb.UnixServerAddress` (Unix domain socket).</li>
+   *    <li>a `StreamFactoryFactory` is `MongoClientSettings.Builder.streamFactoryFactory` configured.</li>
+   * </ul>
    *
-   * @see [[SocketSettings#getProxySettings]]
-   * @see [[AutoEncryptionSettings#getProxySettings]]
-   * @see [[ClientEncryptionSettings#getProxySettings]]
+   * @see [[org.mongodb.scala.connection.SocketSettings]]
+   * @see [[org.mongodb.scala.AutoEncryptionSettings]]
+   * @see [[org.mongodb.scala.ClientEncryptionSettings]]
    * @since 4.11
    */
   type ProxySettings = com.mongodb.connection.ProxySettings
