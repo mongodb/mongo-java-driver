@@ -180,6 +180,7 @@ public final class ProxySettings {
          * @throws IllegalArgumentException If the provided password is empty or null.
          * @see ProxySettings.Builder#username(String)
          * @see ProxySettings.Builder#host(String)
+         * @see #getPassword()
          */
         public ProxySettings.Builder password(final String password) {
             notNull("password", password);
