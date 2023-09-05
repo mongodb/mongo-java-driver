@@ -49,8 +49,6 @@ import static com.mongodb.internal.connection.SocksSocket.ServerReply.REPLY_SUCC
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class SocksSocket extends Socket {
-    //    private static final byte LENGTH_OF_IPV4 = 4;
-//    private static final byte LENGTH_OF_IPV6 = 16;
     private static final byte SOCKS_VERSION = 0x05;
     private static final byte RESERVED = 0x00;
     private static final byte PORT_SIZE = 2;
@@ -237,7 +235,7 @@ public final class SocksSocket extends Socket {
             byte authStatus = authResult[1];
 
             if (authStatus != AUTHENTICATION_SUCCEEDED_STATUS) {
-                throw new ConnectException("Authentication failed. Server returned status: " + authStatus);
+                throw new ConnectException("Authentication failed. Proxy server returned status: " + authStatus);
             }
         }
     }
