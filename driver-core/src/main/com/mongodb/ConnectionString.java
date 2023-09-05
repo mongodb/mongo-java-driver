@@ -131,7 +131,8 @@ import static java.util.Collections.unmodifiableList;
  * <p>Proxy Configuration:</p>
  * <ul>
  * <li>{@code proxyHost=string}: The SOCKS5 proxy host to establish a connection through.
- * It can be provided as a valid IPv4 address, IPv6 address, or a domain name.</li>
+ * It can be provided as a valid IPv4 address, IPv6 address, or a domain name. Required if either proxyPassword, proxyUsername or
+ * proxyPort are specified</li>
  * <li>{@code proxyPort=n}: The port number for the SOCKS5 proxy server. Must be a non-negative integer.</li>
  * <li>{@code proxyUsername=string}: Username for authenticating with the proxy server. Required if proxyPassword is specified.</li>
  * <li>{@code proxyPassword=string}: Password for authenticating with the proxy server. Required if proxyUsername is specified.</li>
