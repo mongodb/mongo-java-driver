@@ -39,8 +39,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  *
  * @see SocketSettings#getProxySettings()
- * @see ClientEncryptionSettings#getKeyVaultMongoClientSettings()}
- * @see ClientEncryptionSettings#getKeyVaultMongoClientSettings()}.
+ * @see ClientEncryptionSettings#getKeyVaultMongoClientSettings()
+ * @see AutoEncryptionSettings#getKeyVaultMongoClientSettings()
  * @since 4.11
  */
 @Immutable
