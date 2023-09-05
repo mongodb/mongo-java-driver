@@ -119,6 +119,7 @@ public final class ProxySettings {
          * @return This ProxySettings.Builder instance, configured with the specified proxy host.
          * @throws IllegalArgumentException If the provided host is null or empty after trimming.
          * @see ProxySettings.Builder#port(int)
+         * @see #getHost()
          */
         public ProxySettings.Builder host(final String host) {
             notNull("proxyHost", host);
@@ -139,6 +140,7 @@ public final class ProxySettings {
          * @return This ProxySettings.Builder instance, configured with the specified proxy port.
          * @throws IllegalArgumentException If the provided port is negative.
          * @see ProxySettings.Builder#host(String)
+         * @see #getPort()
          */
         public ProxySettings.Builder port(final int port) {
             isTrueArgument("proxyPort is within the valid range (0 to 65535)", port >= 0 && port <= 65535);
@@ -240,7 +242,7 @@ public final class ProxySettings {
     /**
      * Gets the SOCKS5 proxy host.
      *
-     * @return the proxy host value.
+     * @return the proxy host value. {@code null} if and only if the {@linkplain #isProxyEnabled() proxy functionality is not enabled}.
      * @see Builder#host(String)
      */
     @Nullable
