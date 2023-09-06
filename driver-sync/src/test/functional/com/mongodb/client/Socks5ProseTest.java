@@ -104,13 +104,12 @@ class Socks5ProseTest {
     @EnabledIf("isAuthEnabled")
     void shouldNotConnectWithoutAuth(final ConnectionString connectionString) {
         ClusterListener clusterListener = Mockito.mock(ClusterListener.class);
-        ArgumentCaptor<ClusterDescriptionChangedEvent> captor = ArgumentCaptor.forClass(ClusterDescriptionChangedEvent.class);
 
         mongoClient = createMongoClient(MongoClientSettings.builder()
                 .applyConnectionString(connectionString), clusterListener);
 
         Assertions.assertThrows(MongoTimeoutException.class, () -> runHelloCommand(mongoClient));
-        assertSocksAuthenticationIssue(clusterListener, captor);
+        assertSocksAuthenticationIssue(clusterListener);
     }
 
     @ParameterizedTest(name = "Should not connect without valid authentication in proxy settings. ConnectionString: {0}")
@@ -118,12 +117,11 @@ class Socks5ProseTest {
     @EnabledIf("isAuthEnabled")
     void shouldNotConnectWithoutAuthInProxySettings(final ConnectionString connectionString) {
         ClusterListener clusterListener = Mockito.mock(ClusterListener.class);
-        ArgumentCaptor<ClusterDescriptionChangedEvent> captor = ArgumentCaptor.forClass(ClusterDescriptionChangedEvent.class);
 
         mongoClient = createMongoClient(MongoClientSettings.builder(buildMongoClientSettings(connectionString)), clusterListener);
 
         Assertions.assertThrows(MongoTimeoutException.class, () -> runHelloCommand(mongoClient));
-        assertSocksAuthenticationIssue(clusterListener, captor);
+        assertSocksAuthenticationIssue(clusterListener);
     }
 
     @ParameterizedTest(name = "Should connect with valid authentication in connection string. ConnectionString: {0}")
@@ -142,8 +140,8 @@ class Socks5ProseTest {
         runHelloCommand(mongoClient);
     }
 
-    private static void assertSocksAuthenticationIssue(final ClusterListener clusterListener,
-                                                       final ArgumentCaptor<ClusterDescriptionChangedEvent> captor) {
+    private static void assertSocksAuthenticationIssue(final ClusterListener clusterListener) {
+        final ArgumentCaptor<ClusterDescriptionChangedEvent> captor = ArgumentCaptor.forClass(ClusterDescriptionChangedEvent.class);
         Mockito.verify(clusterListener, atLeast(1)).clusterDescriptionChanged(captor.capture());
         List<Throwable> errors = captor.getAllValues().stream()
                 .map(ClusterDescriptionChangedEvent::getNewDescription)

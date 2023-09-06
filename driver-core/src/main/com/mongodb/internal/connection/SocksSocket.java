@@ -51,7 +51,7 @@ import static com.mongodb.internal.connection.SocksSocket.ServerReply.REPLY_SUCC
 public final class SocksSocket extends Socket {
     private static final byte SOCKS_VERSION = 0x05;
     private static final byte RESERVED = 0x00;
-    private static final byte PORT_SIZE = 2;
+    private static final byte PORT_LENGTH = 2;
     private static final byte AUTHENTICATION_SUCCEEDED_STATUS = 0x00;
     public static final String IP_PARSING_ERROR_SUFFIX = " is not an IP string literal";
     private static final byte USER_PASSWORD_SUB_NEGOTIATION_VERSION = 0x01;
@@ -95,7 +95,7 @@ public final class SocksSocket extends Socket {
             } else {
                 super.connect(proxyAddress, remainingMillis(timeout));
             }
-            SocksAuthenticationMethod authenticationMethod = performHandshake(timeout);
+            SocksAuthenticationMethod authenticationMethod = performNegotiation(timeout);
             authenticate(authenticationMethod, timeout);
             sendConnect(timeout);
         } catch (SocketException socketException) {
@@ -155,8 +155,8 @@ public final class SocksSocket extends Socket {
     }
 
     private static void addPort(final byte[] bufferSent, final int index, final int port) {
-        bufferSent[index] = (byte) ((port & 0xff00) >> 8);
-        bufferSent[index + 1] = (byte) (port & 0xff);
+        bufferSent[index] = (byte) (port >> 8);
+        bufferSent[index + 1] = (byte) port;
     }
 
     private static byte[] createByteArrayFromIpAddress(final String host) throws SocketException {
@@ -196,13 +196,13 @@ public final class SocksSocket extends Socket {
             switch (AddressType.of(data[3])) {
                 case DOMAIN_NAME:
                     byte hostNameLength = readSocksReply(1, timeout)[0];
-                    readSocksReply(hostNameLength + PORT_SIZE, timeout);
+                    readSocksReply(hostNameLength + PORT_LENGTH, timeout);
                     break;
                 case IP_V4:
-                    readSocksReply(IP_V4.getLength() + PORT_SIZE, timeout);
+                    readSocksReply(IP_V4.getLength() + PORT_LENGTH, timeout);
                     break;
                 case IP_V6:
-                    readSocksReply(IP_V6.getLength() + PORT_SIZE, timeout);
+                    readSocksReply(IP_V6.getLength() + PORT_LENGTH, timeout);
                     break;
                 default:
                     throw fail();
@@ -240,7 +240,7 @@ public final class SocksSocket extends Socket {
         }
     }
 
-    private SocksAuthenticationMethod performHandshake(final Timeout timeout) throws IOException {
+    private SocksAuthenticationMethod performNegotiation(final Timeout timeout) throws IOException {
         SocksAuthenticationMethod[] authenticationMethods = getSocksAuthenticationMethods();
 
         int methodsCount = authenticationMethods.length;
@@ -330,6 +330,12 @@ public final class SocksSocket extends Socket {
         return data;
     }
 
+    private static void validateDomainLength(final int hostLength) throws ConnectException {
+        if(hostLength > 255){
+            throw new ConnectException("Domain name length in bytes exceeds the maximum allowed length of 255 in SOCKS5");
+        }
+    }
+
     enum SocksCommand {
 
         CONNECT(0x01);
@@ -401,13 +407,13 @@ public final class SocksSocket extends Socket {
     enum ServerReply {
         REPLY_SUCCEEDED(0x00, "Succeeded"),
         GENERAL_FAILURE(0x01, "General SOCKS5 server failure"),
-        NOT_ALLOWED(0x02, "Proxy server general failure"),
-        NET_UNREACHABLE(0x03, "Connection not allowed by ruleset"),
-        HOST_UNREACHABLE(0x04, "Network is unreachable"),
-        CONN_REFUSED(0x05, "Host is unreachable"),
-        TTL_EXPIRED(0x06, "Connection has been refused"),
-        CMD_NOT_SUPPORTED(0x07, "TTL expired"),
-        ADDR_TYPE_NOT_SUP(0x08, "Address type not supported");
+        NOT_ALLOWED(0x02, "Connection is not allowed by ruleset"),
+        NET_UNREACHABLE(0x03, "Network is unreachable"),
+        HOST_UNREACHABLE(0x04, "Host is unreachable"),
+        CONN_REFUSED(0x05, "Connection has been refused"),
+        TTL_EXPIRED(0x06, "TTL is expired"),
+        CMD_NOT_SUPPORTED(0x07, "Command is not supported"),
+        ADDR_TYPE_NOT_SUP(0x08, "Address type is not supported");
 
         private final int replyNumber;
         private final String message;
@@ -420,7 +426,7 @@ public final class SocksSocket extends Socket {
         static ServerReply of(final byte byteStatus) throws ConnectException {
             int status = Byte.toUnsignedInt(byteStatus);
             for (ServerReply serverReply : ServerReply.values()) {
-                if (status == serverReply.getReplyNumber()) {
+                if (status == serverReply.replyNumber) {
                     return serverReply;
                 }
             }
@@ -428,11 +434,7 @@ public final class SocksSocket extends Socket {
             throw new ConnectException("Unknown reply field. Reply field: " + status);
         }
 
-        public int getReplyNumber() {
-            return replyNumber;
-        }
-
-        String getMessage() {
+        public String getMessage() {
             return message;
         }
     }
@@ -604,7 +606,7 @@ public final class SocksSocket extends Socket {
     }
 
     @Override
-    public synchronized void setSendBufferSize(final int size) throws SocketException {
+    public void setSendBufferSize(final int size) throws SocketException {
         if (socket != null) {
             socket.setSendBufferSize(size);
         } else {
@@ -613,7 +615,7 @@ public final class SocksSocket extends Socket {
     }
 
     @Override
-    public synchronized int getSendBufferSize() throws SocketException {
+    public int getSendBufferSize() throws SocketException {
         if (socket != null) {
             return socket.getSendBufferSize();
         } else {
@@ -622,7 +624,7 @@ public final class SocksSocket extends Socket {
     }
 
     @Override
-    public synchronized void setReceiveBufferSize(final int size) throws SocketException {
+    public void setReceiveBufferSize(final int size) throws SocketException {
         if (socket != null) {
             socket.setReceiveBufferSize(size);
         } else {
@@ -631,7 +633,7 @@ public final class SocksSocket extends Socket {
     }
 
     @Override
-    public synchronized int getReceiveBufferSize() throws SocketException {
+    public int getReceiveBufferSize() throws SocketException {
         if (socket != null) {
             return socket.getReceiveBufferSize();
         } else {

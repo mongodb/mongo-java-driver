@@ -2169,7 +2169,7 @@ buildvariants:
 
 - matrix_name: "socks5-tests"
   matrix_spec: { os: "linux", ssl: ["nossl", "ssl"], version: [ "latest" ], topology: ["replicaset"], socks_auth: ["auth", "noauth"] }
-  display_name: "${socks_auth} SOCKS5 proxy: ${version} ${topology} ${ssl} ${jdk} ${os}"
+  display_name: "SOCKS5 proxy ${socks_auth} : ${version} ${topology} ${ssl} ${jdk} ${os}"
   tasks:
     - name: test-socks5
 
