@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  */
 public class DomainNameUtils {
     private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}|localhost)$");
+            Pattern.compile("^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}|localhost))$");
 
     static boolean isDomainName(final String domainName) {
         return DOMAIN_PATTERN.matcher(domainName).matches();

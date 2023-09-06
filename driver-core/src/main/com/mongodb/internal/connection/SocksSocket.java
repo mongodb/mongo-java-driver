@@ -113,7 +113,7 @@ public final class SocksSocket extends Socket {
     private void sendConnect(final Timeout timeout) throws IOException {
         final String host = remoteAddress.getHostName();
         final int port = remoteAddress.getPort();
-        final byte[] bytesOfHost = host.getBytes(StandardCharsets.UTF_8);
+        final byte[] bytesOfHost = host.getBytes(StandardCharsets.US_ASCII);
         final int hostLength = bytesOfHost.length;
 
         AddressType addressType;
@@ -328,12 +328,6 @@ public final class SocksSocket extends Socket {
             setSoTimeout(originalTimeout);
         }
         return data;
-    }
-
-    private static void validateDomainLength(final int hostLength) throws ConnectException {
-        if(hostLength > 255){
-            throw new ConnectException("Domain name length in bytes exceeds the maximum allowed length of 255 in SOCKS5");
-        }
     }
 
     enum SocksCommand {

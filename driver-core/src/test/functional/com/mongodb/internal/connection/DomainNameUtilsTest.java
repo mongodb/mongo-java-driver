@@ -38,6 +38,9 @@ class DomainNameUtilsTest {
             "localhost",
             "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyz.com",
             "xn--weihnachten-uzb.org",
+            "sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain." +
+                    "com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain." +
+                    "com.domain.com.sub.domain.subb.com"  //255 characters
     })
     void shouldReturnTrueWithValidHostName(final String hostname) {
         Assertions.assertTrue(isDomainName(hostname));
@@ -55,9 +58,14 @@ class DomainNameUtilsTest {
             "subdomain..domain._com",
             "subdomain..domain.com_",
             "notlocalhost",
+            "домен.com", //NON-ASCII
+            "ẞẞ.com", //NON-ASCII
             "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyzl.com",
             "this-domain-is-really-long-because-it-just-keeps-going-and-going-and-its-still-not-done-yet-because-theres-more.net",
-            "verylongsubdomainnamethatisreallylongandmaycausetroubleforparsing.example"
+            "verylongsubdomainnamethatisreallylongandmaycausetroubleforparsing.example",
+            "sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain." +
+                    "com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain." +
+                    "com.sub.domain.com.domain.com.sub.domain.subbb.com"   //256 characters
     })
     void shouldReturnFalseWithInvalidHostName(final String hostname) {
         Assertions.assertFalse(isDomainName(hostname));
