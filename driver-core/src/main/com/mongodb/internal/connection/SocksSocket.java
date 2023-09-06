@@ -89,7 +89,7 @@ public final class SocksSocket extends Socket {
             assertTrue(unresolvedAddress.isUnresolved());
             this.remoteAddress = unresolvedAddress;
 
-            InetSocketAddress proxyAddress = new InetSocketAddress(proxySettings.getHost(), proxySettings.getPort());
+            InetSocketAddress proxyAddress = new InetSocketAddress(assertNotNull(proxySettings.getHost()), proxySettings.getPort());
             if (socket != null) {
                 socket.connect(proxyAddress, remainingMillis(timeout));
             } else {
@@ -432,7 +432,7 @@ public final class SocksSocket extends Socket {
             return replyNumber;
         }
 
-        public String getMessage() {
+        String getMessage() {
             return message;
         }
     }
