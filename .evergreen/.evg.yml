@@ -2063,7 +2063,6 @@ buildvariants:
   run_on: rhel90-dbx-perf-large
   tasks:
     - name: "perf"
-      batchtime: 1440 # run once a day
       vars:
         VERSION: "v6.0-perf"
         TOPOLOGY: "server"
