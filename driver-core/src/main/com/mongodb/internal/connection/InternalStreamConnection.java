@@ -748,11 +748,11 @@ public class InternalStreamConnection implements InternalConnection {
             return new MongoInterruptedException(message, (InterruptedException) e);
         } else if (
                 // `InterruptedIOException` is weirdly documented, and almost seems to be a relic abandoned by the Java SE APIs:
-                // - `java.net.SocketTimeoutException` is `InterruptedIOException`,
+                // - `SocketTimeoutException` is `InterruptedIOException`,
                 //   but it is not related to the Java SE interrupt mechanism. As a side note, it does not happen when writing.
                 // - Java SE methods, where IO may indeed be interrupted via the Java SE interrupt mechanism,
                 //   use different exceptions, like `ClosedByInterruptException` or even `SocketException`.
-                e instanceof InterruptedIOException
+                (e instanceof InterruptedIOException && !(e instanceof SocketTimeoutException))
                 // see `java.nio.channels.InterruptibleChannel` and `java.net.Socket.getOutputStream`/`getInputStream`
                 || e instanceof ClosedByInterruptException
                 // see `java.net.Socket.getOutputStream`/`getInputStream`
