@@ -422,11 +422,15 @@ final class DefaultConnectionPool implements ConnectionPool {
                         RuntimeException actualException = e instanceof MongoOpenConnectionInternalException
                                 ? (RuntimeException) e.getCause()
                                 : e;
-                        sdamProvider.optional().ifPresent(sdam -> {
-                            if (!silentlyComplete.test(actualException)) {
-                                sdam.handleExceptionBeforeHandshake(SdamIssue.specific(actualException, sdam.context(newConnection)));
-                            }
-                        });
+                        try {
+                            sdamProvider.optional().ifPresent(sdam -> {
+                                if (!silentlyComplete.test(actualException)) {
+                                    sdam.handleExceptionBeforeHandshake(SdamIssue.specific(actualException, sdam.context(newConnection)));
+                                }
+                            });
+                        } catch (Exception suppressed) {
+                            actualException.addSuppressed(suppressed);
+                        }
                         throw actualException;
                     }
                 });
