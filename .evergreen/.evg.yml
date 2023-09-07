@@ -2060,15 +2060,10 @@ buildvariants:
 
 - name: "perf"
   display_name: Performance Tests
+  tags: ["perf-variant"]
   run_on: rhel90-dbx-perf-large
   tasks:
     - name: "perf"
-      vars:
-        VERSION: "v6.0-perf"
-        TOPOLOGY: "server"
-        SSL: "nossl"
-        AUTH: "noauth"
-        SKIP_LEGACY_SHELL: "true"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
