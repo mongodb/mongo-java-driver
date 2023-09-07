@@ -60,6 +60,7 @@ import org.bson.io.ByteBufferBsonInput;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.Collections;
@@ -705,10 +706,12 @@ public class InternalStreamConnection implements InternalConnection {
     private MongoException translateWriteException(final Throwable e) {
         if (e instanceof MongoException) {
             return (MongoException) e;
+        }
+        MongoInterruptedException interruptedException = translateInterruptedExceptions(e, "Interrupted while sending message");
+        if (interruptedException != null) {
+            return interruptedException;
         } else if (e instanceof IOException) {
             return new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
-        } else if (e instanceof InterruptedException) {
-            return new MongoInternalException("Thread interrupted exception", e);
         } else {
             return new MongoInternalException("Unexpected exception", e);
         }
@@ -717,20 +720,49 @@ public class InternalStreamConnection implements InternalConnection {
     private MongoException translateReadException(final Throwable e) {
         if (e instanceof MongoException) {
             return (MongoException) e;
+        }
+        MongoInterruptedException interruptedException = translateInterruptedExceptions(e, "Interrupted while receiving message");
+        if (interruptedException != null) {
+            return interruptedException;
         } else if (e instanceof SocketTimeoutException) {
             return new MongoSocketReadTimeoutException("Timeout while receiving message", getServerAddress(), e);
-        } else if (e instanceof InterruptedIOException) {
-            return new MongoInterruptedException("Interrupted while receiving message", (InterruptedIOException) e);
-        } else if (e instanceof ClosedByInterruptException) {
-            return new MongoInterruptedException("Interrupted while receiving message", (ClosedByInterruptException) e);
         } else if (e instanceof IOException) {
             return new MongoSocketReadException("Exception receiving message", getServerAddress(), e);
         } else if (e instanceof RuntimeException) {
             return new MongoInternalException("Unexpected runtime exception", e);
-        } else if (e instanceof InterruptedException) {
-            return new MongoInternalException("Interrupted exception", e);
         } else {
             return new MongoInternalException("Unexpected exception", e);
+        }
+    }
+
+    /**
+     * @return {@code null} iff {@code e} does not communicate an interrupt.
+     */
+    @Nullable
+    private static MongoInterruptedException translateInterruptedExceptions(final Throwable e, final String message) {
+        if (e instanceof InterruptedException) {
+            // The interrupted status is cleared before throwing `InterruptedException`,
+            // we are not propagating `InterruptedException`, and we do not own the current thread,
+            // which means we must reinstate the interrupted status.
+            Thread.currentThread().interrupt();
+            return new MongoInterruptedException(message, (InterruptedException) e);
+        } else if (
+                // `InterruptedIOException` is weirdly documented, and almost seems to be a relic abandoned by the Java SE APIs:
+                // - `SocketTimeoutException` is `InterruptedIOException`,
+                //   but it is not related to the Java SE interrupt mechanism. As a side note, it does not happen when writing.
+                // - Java SE methods, where IO may indeed be interrupted via the Java SE interrupt mechanism,
+                //   use different exceptions, like `ClosedByInterruptException` or even `SocketException`.
+                (e instanceof InterruptedIOException && !(e instanceof SocketTimeoutException))
+                // see `java.nio.channels.InterruptibleChannel` and `java.net.Socket.getOutputStream`/`getInputStream`
+                || e instanceof ClosedByInterruptException
+                // see `java.net.Socket.getOutputStream`/`getInputStream`
+                || (e instanceof SocketException && Thread.currentThread().isInterrupted())) {
+            // The interrupted status is not cleared before throwing `ClosedByInterruptException`/`SocketException`,
+            // so we do not need to reinstate it.
+            // `InterruptedIOException` does not specify how it behaves with regard to the interrupted status, so we do nothing.
+            return new MongoInterruptedException(message, (Exception) e);
+        } else {
+            return null;
         }
     }
 

@@ -138,7 +138,10 @@ public class SocketStream implements Stream {
         try {
             return read(numBytes);
         } finally {
-            socket.setSoTimeout(curTimeout);
+            if (!socket.isClosed()) {
+                // `socket` may be closed if the current thread is virtual, and it is interrupted while reading
+                socket.setSoTimeout(curTimeout);
+            }
         }
     }
 

@@ -18,6 +18,7 @@ package com.mongodb.internal.connection
 
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoInternalException
+import com.mongodb.MongoInterruptedException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketException
@@ -54,6 +55,7 @@ import org.bson.codecs.configuration.CodecConfigurationException
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
+import java.nio.channels.ClosedByInterruptException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -312,6 +314,149 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.isClosed()
     }
 
+    def 'should throw MongoInterruptedException and leave the interrupt status set when Stream.write throws InterruptedIOException'() {
+        given:
+        stream.write(_) >> { throw new InterruptedIOException() }
+        def connection = getOpenedConnection()
+        Thread.currentThread().interrupt()
+
+        when:
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1)
+
+        then:
+        Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInterruptedException and leave the interrupt status unset when Stream.write throws InterruptedIOException'() {
+        given:
+        stream.write(_) >> { throw new InterruptedIOException() }
+        def connection = getOpenedConnection()
+
+        when:
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1)
+
+        then:
+        !Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInterruptedException and leave the interrupt status set when Stream.write throws ClosedByInterruptException'() {
+        given:
+        stream.write(_) >> { throw new ClosedByInterruptException() }
+        def connection = getOpenedConnection()
+        Thread.currentThread().interrupt()
+
+        when:
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1)
+
+        then:
+        Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInterruptedException when Stream.write throws SocketException and the thread is interrupted'() {
+        given:
+        stream.write(_) >> { throw new SocketException() }
+        def connection = getOpenedConnection()
+        Thread.currentThread().interrupt()
+
+        when:
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1)
+
+        then:
+        Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoSocketWriteException when Stream.write throws SocketException and the thread is not interrupted'() {
+        given:
+        stream.write(_) >> { throw new SocketException() }
+        def connection = getOpenedConnection()
+
+        when:
+        connection.sendMessage([new ByteBufNIO(ByteBuffer.allocate(1))], 1)
+
+        then:
+        thrown(MongoSocketWriteException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInterruptedException and leave the interrupt status set when Stream.read throws InterruptedIOException'() {
+        given:
+        stream.read(_, _) >> { throw new InterruptedIOException() }
+        def connection = getOpenedConnection()
+        Thread.currentThread().interrupt()
+
+        when:
+        connection.receiveMessage(1)
+
+        then:
+        Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInterruptedException and leave the interrupt status unset when Stream.read throws InterruptedIOException'() {
+        given:
+        stream.read(_, _) >> { throw new InterruptedIOException() }
+        def connection = getOpenedConnection()
+
+        when:
+        connection.receiveMessage(1)
+
+        then:
+        !Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInterruptedException and leave the interrupt status set when Stream.read throws ClosedByInterruptException'() {
+        given:
+        stream.read(_, _) >> { throw new ClosedByInterruptException() }
+        def connection = getOpenedConnection()
+        Thread.currentThread().interrupt()
+
+        when:
+        connection.receiveMessage(1)
+
+        then:
+        Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInterruptedException when Stream.read throws SocketException and the thread is interrupted'() {
+        given:
+        stream.read(_, _) >> { throw new SocketException() }
+        def connection = getOpenedConnection()
+        Thread.currentThread().interrupt()
+
+        when:
+        connection.receiveMessage(1)
+
+        then:
+        Thread.interrupted()
+        thrown(MongoInterruptedException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoSocketReadException when Stream.read throws SocketException and the thread is not interrupted'() {
+        given:
+        stream.read(_, _) >> { throw new SocketException() }
+        def connection = getOpenedConnection()
+
+        when:
+        connection.receiveMessage(1)
+
+        then:
+        thrown(MongoSocketReadException)
+        connection.isClosed()
+    }
 
     def 'should close the stream when reading the message header throws an exception asynchronously'() {
         given:

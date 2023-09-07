@@ -95,9 +95,13 @@ class DefaultServer implements ClusterableServer {
             return OperationCountTrackingConnection.decorate(this,
                     connectionFactory.create(connectionPool.get(operationContext), new DefaultServerProtocolExecutor(), clusterConnectionMode));
         } catch (Throwable e) {
-            operationEnd();
-            if (e instanceof MongoException) {
-                sdam.handleExceptionBeforeHandshake(SdamIssue.specific(e, exceptionContext));
+            try {
+                operationEnd();
+                if (e instanceof MongoException) {
+                    sdam.handleExceptionBeforeHandshake(SdamIssue.specific(e, exceptionContext));
+                }
+            } catch (Exception suppressed) {
+                e.addSuppressed(suppressed);
             }
             throw e;
         }
@@ -117,6 +121,8 @@ class DefaultServer implements ClusterableServer {
                 try {
                     operationEnd();
                     sdam.handleExceptionBeforeHandshake(SdamIssue.specific(t, exceptionContext));
+                } catch (Exception suppressed) {
+                    t.addSuppressed(suppressed);
                 } finally {
                     callback.onResult(null, t);
                 }
@@ -202,7 +208,11 @@ class DefaultServer implements ClusterableServer {
                 protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
                 return protocol.execute(connection);
             } catch (MongoException e) {
-                sdam.handleExceptionAfterHandshake(SdamIssue.specific(e, sdam.context(connection)));
+                try {
+                    sdam.handleExceptionAfterHandshake(SdamIssue.specific(e, sdam.context(connection)));
+                } catch (Exception suppressed) {
+                    e.addSuppressed(suppressed);
+                }
                 if (e instanceof MongoWriteConcernWithResponseException) {
                     return (T) ((MongoWriteConcernWithResponseException) e).getResponse();
                 } else {
@@ -223,6 +233,8 @@ class DefaultServer implements ClusterableServer {
                 if (t != null) {
                     try {
                         sdam.handleExceptionAfterHandshake(SdamIssue.specific(t, sdam.context(connection)));
+                    } catch (Exception suppressed) {
+                        t.addSuppressed(suppressed);
                     } finally {
                         if (t instanceof MongoWriteConcernWithResponseException) {
                             callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
