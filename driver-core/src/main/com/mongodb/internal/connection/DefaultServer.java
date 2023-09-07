@@ -95,13 +95,13 @@ class DefaultServer implements ClusterableServer {
             return OperationCountTrackingConnection.decorate(this,
                     connectionFactory.create(connectionPool.get(operationContext), new DefaultServerProtocolExecutor(), clusterConnectionMode));
         } catch (Throwable e) {
-            operationEnd();
-            if (e instanceof MongoException) {
-                try {
+            try {
+                operationEnd();
+                if (e instanceof MongoException) {
                     sdam.handleExceptionBeforeHandshake(SdamIssue.specific(e, exceptionContext));
-                } catch (Exception suppressed) {
-                    e.addSuppressed(suppressed);
                 }
+            } catch (Exception suppressed) {
+                e.addSuppressed(suppressed);
             }
             throw e;
         }
