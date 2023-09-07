@@ -74,6 +74,7 @@ public class SocketStream implements Stream {
         }
     }
 
+    @SuppressWarnings("deprecation")
     protected Socket initializeSocket() throws IOException {
         Iterator<InetSocketAddress> inetSocketAddresses = address.getSocketAddresses().iterator();
         while (inetSocketAddresses.hasNext()) {

@@ -197,6 +197,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
             return true;
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public void openAsync(final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);

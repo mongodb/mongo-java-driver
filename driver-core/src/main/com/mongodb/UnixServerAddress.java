@@ -44,6 +44,8 @@ public final class UnixServerAddress extends ServerAddress {
         isTrueArgument("The path must end in .sock", path.endsWith(".sock"));
     }
 
+    @SuppressWarnings("deprecation")
+    @Deprecated
     @Override
     public InetSocketAddress getSocketAddress() {
         throw new UnsupportedOperationException("Cannot return a InetSocketAddress from a UnixServerAddress");
@@ -51,7 +53,9 @@ public final class UnixServerAddress extends ServerAddress {
 
     /**
      * @return the SocketAddress for the MongoD unix domain socket.
+     * @deprecated Prefer {@link UnixSocketAddress#UnixSocketAddress(String)}
      */
+    @Deprecated
     public SocketAddress getUnixSocketAddress() {
         return new UnixSocketAddress(getHost());
     }
