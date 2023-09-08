@@ -30,7 +30,6 @@ import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
-import com.mongodb.event.ConnectionAddedEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent.Reason;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
@@ -504,7 +503,7 @@ final class DefaultConnectionPool implements ConnectionPool {
      * Send both current and deprecated events in order to preserve backwards compatibility.
      * Must not throw {@link Exception}s.
      *
-     * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionAdded(ConnectionAddedEvent)},
+     * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionAdded(com.mongodb.event.ConnectionAddedEvent)},
      * {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}.
      * This order is required by
      * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
