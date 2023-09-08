@@ -7,4 +7,5 @@
 fd21430c967571ed172259cc4100f291257a9a01
 # IntelliJ automated code cleanup
 d9aa6044e1a6b440bcb013c330497f2813484050
-
+# Remove `final` in catch clauses
+4b3b48546fb0457e5c515ccfe8780e373ad7de5f
