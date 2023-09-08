@@ -43,6 +43,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
 /**
  * A concurrent pool implementation.
@@ -411,7 +412,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                             return false;
                         }
                     } catch (InterruptedException e) {
-                        throw new MongoInterruptedException(null, e);
+                        throw interruptAndCreateMongoInterruptedException(null, e);
                     } finally {
                         waitersEstimate.decrementAndGet();
                     }
@@ -518,19 +519,20 @@ public class ConcurrentPool<T> implements Pool<T> {
         try {
             lock.lockInterruptibly();
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(null, e);
+            throw interruptAndCreateMongoInterruptedException(null, e);
         }
     }
 
     private static void lockInterruptiblyUnfair(final ReentrantLock lock) throws MongoInterruptedException {
-        throwIfInterrupted();
+        if (Thread.currentThread().isInterrupted()) {
+            throw interruptAndCreateMongoInterruptedException(null, null);
+        }
         // `ReentrantLock.tryLock` is unfair
         if (!lock.tryLock()) {
             try {
                 lock.lockInterruptibly();
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new MongoInterruptedException(null, e);
+                throw interruptAndCreateMongoInterruptedException(null, e);
             }
         }
     }
@@ -539,12 +541,6 @@ public class ConcurrentPool<T> implements Pool<T> {
         // `ReentrantLock.tryLock` is unfair
         if (!lock.tryLock()) {
             lock.lock();
-        }
-    }
-
-    private static void throwIfInterrupted() throws MongoInterruptedException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw new MongoInterruptedException(null, null);
         }
     }
 }

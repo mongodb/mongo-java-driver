@@ -20,7 +20,6 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
@@ -39,6 +38,7 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.Thread.sleep;
 
 /**
@@ -141,7 +141,7 @@ public final class Fixture {
                     sleep(10);
                     sessionInUseCount = getSessionInUseCount();
                 } catch (InterruptedException e) {
-                    throw new MongoInterruptedException("Interrupted", e);
+                    throw interruptAndCreateMongoInterruptedException("Interrupted", e);
                 }
             }
         }

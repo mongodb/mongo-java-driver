@@ -119,6 +119,7 @@ import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVICE_ID;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.WAIT_QUEUE_TIMEOUT_MS;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -1178,7 +1179,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                     return Math.max(0, condition.awaitNanos(timeoutNanos));
                 }
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException(null, e);
+                throw interruptAndCreateMongoInterruptedException(null, e);
             }
         }
     }
