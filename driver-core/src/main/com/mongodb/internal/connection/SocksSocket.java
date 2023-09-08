@@ -16,7 +16,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ProxySettings;
-import com.mongodb.internal.time.Timeout;
+import com.mongodb.internal.time.Deadline;
 import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
@@ -84,7 +84,7 @@ public final class SocksSocket extends Socket {
         // `Socket` requires `IllegalArgumentException`
         isTrueArgument("timeoutMs", timeoutMs >= 0);
         try {
-            Timeout timeout = toTimeout(timeoutMs);
+            Deadline timeout = toDeadline(timeoutMs);
             InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
             assertTrue(unresolvedAddress.isUnresolved());
             this.remoteAddress = unresolvedAddress;
@@ -110,7 +110,7 @@ public final class SocksSocket extends Socket {
         }
     }
 
-    private void sendConnect(final Timeout timeout) throws IOException {
+    private void sendConnect(final Deadline deadline) throws IOException {
         final String host = remoteAddress.getHostName();
         final int port = remoteAddress.getPort();
         final byte[] bytesOfHost = host.getBytes(StandardCharsets.US_ASCII);
@@ -151,7 +151,7 @@ public final class SocksSocket extends Socket {
         OutputStream outputStream = getOutputStream();
         outputStream.write(bufferSent);
         outputStream.flush();
-        checkServerReply(timeout);
+        checkServerReply(deadline);
     }
 
     private static void addPort(final byte[] bufferSent, final int index, final int port) {
@@ -189,20 +189,20 @@ public final class SocksSocket extends Socket {
         }
     }
 
-    private void checkServerReply(final Timeout timeout) throws IOException {
-        byte[] data = readSocksReply(4, timeout);
+    private void checkServerReply(final Deadline deadline) throws IOException {
+        byte[] data = readSocksReply(4, deadline);
         ServerReply reply = ServerReply.of(data[1]);
         if (reply == REPLY_SUCCEEDED) {
             switch (AddressType.of(data[3])) {
                 case DOMAIN_NAME:
-                    byte hostNameLength = readSocksReply(1, timeout)[0];
-                    readSocksReply(hostNameLength + PORT_LENGTH, timeout);
+                    byte hostNameLength = readSocksReply(1, deadline)[0];
+                    readSocksReply(hostNameLength + PORT_LENGTH, deadline);
                     break;
                 case IP_V4:
-                    readSocksReply(IP_V4.getLength() + PORT_LENGTH, timeout);
+                    readSocksReply(IP_V4.getLength() + PORT_LENGTH, deadline);
                     break;
                 case IP_V6:
-                    readSocksReply(IP_V6.getLength() + PORT_LENGTH, timeout);
+                    readSocksReply(IP_V6.getLength() + PORT_LENGTH, deadline);
                     break;
                 default:
                     throw fail();
@@ -212,7 +212,7 @@ public final class SocksSocket extends Socket {
         throw new ConnectException(reply.getMessage());
     }
 
-    private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Timeout timeout) throws IOException {
+    private void authenticate(final SocksAuthenticationMethod authenticationMethod, final Deadline deadline) throws IOException {
         if (authenticationMethod == SocksAuthenticationMethod.USERNAME_PASSWORD) {
             final byte[] bytesOfUsername = assertNotNull(proxySettings.getUsername()).getBytes(StandardCharsets.UTF_8);
             final byte[] bytesOfPassword = assertNotNull(proxySettings.getPassword()).getBytes(StandardCharsets.UTF_8);
@@ -231,7 +231,7 @@ public final class SocksSocket extends Socket {
             outputStream.write(command);
             outputStream.flush();
 
-            byte[] authResult = readSocksReply(2, timeout);
+            byte[] authResult = readSocksReply(2, deadline);
             byte authStatus = authResult[1];
 
             if (authStatus != AUTHENTICATION_SUCCEEDED_STATUS) {
@@ -240,7 +240,7 @@ public final class SocksSocket extends Socket {
         }
     }
 
-    private SocksAuthenticationMethod performNegotiation(final Timeout timeout) throws IOException {
+    private SocksAuthenticationMethod performNegotiation(final Deadline deadline) throws IOException {
         SocksAuthenticationMethod[] authenticationMethods = getSocksAuthenticationMethods();
 
         int methodsCount = authenticationMethods.length;
@@ -256,7 +256,7 @@ public final class SocksSocket extends Socket {
         outputStream.write(bufferSent);
         outputStream.flush();
 
-        byte[] handshakeReply = readSocksReply(2, timeout);
+        byte[] handshakeReply = readSocksReply(2, deadline);
 
         if (handshakeReply[0] != SOCKS_VERSION) {
             throw new ConnectException("Remote server doesn't support socks version 5"
@@ -288,14 +288,14 @@ public final class SocksSocket extends Socket {
         return authMethods;
     }
 
-    private static Timeout toTimeout(final int timeoutMs) {
+    private static Deadline toDeadline(final int timeoutMs) {
         if (timeoutMs == 0) {
-            return Timeout.infinite();
+            return Deadline.infinite();
         }
-        return Timeout.startNow(timeoutMs, TimeUnit.MILLISECONDS);
+        return Deadline.expiresIn(timeoutMs, TimeUnit.MILLISECONDS);
     }
 
-    private static int remainingMillis(final Timeout timeout) throws IOException {
+    private static int remainingMillis(final Deadline timeout) throws IOException {
         if (timeout.isInfinite()) {
             return 0;
         }
@@ -308,7 +308,7 @@ public final class SocksSocket extends Socket {
         throw new SocketTimeoutException("Socket connection timed out");
     }
 
-    private byte[] readSocksReply(final int length, final Timeout timeout) throws IOException {
+    private byte[] readSocksReply(final int length, final Deadline timeout) throws IOException {
         InputStream inputStream = getInputStream();
         byte[] data = new byte[length];
         int received = 0;

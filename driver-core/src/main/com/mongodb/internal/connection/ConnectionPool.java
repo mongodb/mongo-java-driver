@@ -20,8 +20,7 @@ import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.time.Timeout;
-import com.mongodb.internal.time.TimePoint;
+import com.mongodb.internal.time.StartTime;
 import org.bson.types.ObjectId;
 import com.mongodb.lang.Nullable;
 
@@ -43,7 +42,7 @@ interface ConnectionPool extends Closeable {
      * @param timeout This is not a timeout for the whole {@link #get(OperationContext, long, TimeUnit)},
      * see {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
      * <p>
-     * See {@link Timeout#started(long, TimeUnit, TimePoint)}.</p>
+     * See {@link StartTime#fromNowOrInfiniteIfNegative(long, TimeUnit)}.</p>
      * @throws MongoConnectionPoolClearedException If detects that the pool is {@linkplain #invalidate(Throwable) paused}.
      */
     InternalConnection get(OperationContext operationContext, long timeout, TimeUnit timeUnit) throws MongoConnectionPoolClearedException;

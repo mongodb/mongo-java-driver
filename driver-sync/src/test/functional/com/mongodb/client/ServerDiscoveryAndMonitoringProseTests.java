@@ -26,7 +26,7 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
-import com.mongodb.internal.time.Timeout;
+import com.mongodb.internal.time.Deadline;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
@@ -267,20 +267,20 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)
             throws InterruptedException {
-        assertPoll(queue, allowed, required, Timeout.startNow(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
+        assertPoll(queue, allowed, required, Deadline.expiresIn(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required,
-                                   final Timeout timeout) throws InterruptedException {
+                                   final Deadline deadline) throws InterruptedException {
         Set<Class<?>> encountered = new HashSet<>();
         while (true) {
             Object element;
-            if (timeout.isImmediate()) {
+            if (deadline.hasExpired()) {
                 element = queue.poll();
-            } else if (timeout.isInfinite()) {
+            } else if (deadline.isInfinite()) {
                 element = queue.take();
             } else {
-                element = queue.poll(timeout.remaining(NANOSECONDS), NANOSECONDS);
+                element = queue.poll(deadline.remaining(NANOSECONDS), NANOSECONDS);
             }
             if (element != null) {
                 if (LOGGER.isInfoEnabled()) {
@@ -299,7 +299,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                     return;
                 }
             }
-            if (timeout.expired()) {
+            if (deadline.hasExpired()) {
                 fail(format("encountered %s, required %s", encountered, required));
             }
         }
