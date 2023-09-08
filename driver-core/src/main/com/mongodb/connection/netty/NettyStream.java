@@ -581,7 +581,7 @@ final class NettyStream implements Stream {
                     ctx.fireExceptionCaught(ReadTimeoutException.INSTANCE);
                     ctx.close();
                 }
-            } catch (final Throwable t) {
+            } catch (Throwable t) {
                 ctx.fireExceptionCaught(t);
             }
         }

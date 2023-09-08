@@ -96,7 +96,7 @@ final class CollectionPropertyCodecProvider implements PropertyCodecProvider {
 
             try {
                 return encoderClass.getDeclaredConstructor().newInstance();
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 throw new CodecConfigurationException(e.getMessage(), e);
             }
         }
