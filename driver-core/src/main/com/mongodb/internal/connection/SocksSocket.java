@@ -16,7 +16,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ProxySettings;
-import com.mongodb.internal.Timeout;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
