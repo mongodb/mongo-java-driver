@@ -36,7 +36,7 @@ import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonDocument;
-import org.bson.BsonDouble;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -53,11 +53,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
     private final MongoClient mongoClient;
-    private double openConnections = 0;
-    private double totalHeartbeatCount = 0;
-    private double totalHeartbeatDuration = 0;
-    private double totalCommandCount = 0;
-    private double totalCommandDuration = 0;
+    private long openConnections = 0;
+    private long totalHeartbeatCount = 0;
+    private long totalHeartbeatDurationMs = 0;
+    private long totalCommandCount = 0;
+    private long totalCommandDurationMs = 0;
 
     public LambdaTestApp() {
         String connectionString = System.getenv("MONGODB_URI");
@@ -68,24 +68,24 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
                     @Override
                     public void commandSucceeded(@NonNull final CommandSucceededEvent event) {
                         totalCommandCount++;
-                        totalCommandDuration += event.getElapsedTime(MILLISECONDS);
+                        totalCommandDurationMs += event.getElapsedTime(MILLISECONDS);
                     }
                     @Override
                     public void commandFailed(@NonNull final CommandFailedEvent event) {
                         totalCommandCount++;
-                        totalCommandDuration += event.getElapsedTime(MILLISECONDS);
+                        totalCommandDurationMs += event.getElapsedTime(MILLISECONDS);
                     }
                 })
                 .applyToServerSettings(builder -> builder.addServerMonitorListener(new ServerMonitorListener() {
                     @Override
                     public void serverHeartbeatSucceeded(@NonNull final ServerHeartbeatSucceededEvent event) {
                         totalHeartbeatCount++;
-                        totalHeartbeatDuration += event.getElapsedTime(MILLISECONDS);
+                        totalHeartbeatDurationMs += event.getElapsedTime(MILLISECONDS);
                     }
                     @Override
                     public void serverHeartbeatFailed(@NonNull final ServerHeartbeatFailedEvent event) {
                         totalHeartbeatCount++;
-                        totalHeartbeatDuration += event.getElapsedTime(MILLISECONDS);
+                        totalHeartbeatDurationMs += event.getElapsedTime(MILLISECONDS);
                     }
                 }))
                 .applyToConnectionPoolSettings(builder -> builder.addConnectionPoolListener(new ConnectionPoolListener() {
@@ -111,11 +111,11 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
             collection.deleteOne(new Document("_id", id));
 
             BsonDocument responseBody = new BsonDocument()
-                    .append("totalCommandDuration", new BsonDouble(totalCommandDuration))
-                    .append("totalCommandCount", new BsonDouble(totalCommandCount))
-                    .append("totalHeartbeatDuration", new BsonDouble(totalHeartbeatDuration))
-                    .append("totalHeartbeatCount", new BsonDouble(totalHeartbeatCount))
-                    .append("openConnections", new BsonDouble(openConnections));
+                    .append("totalCommandDurationMs", new BsonInt64(totalCommandDurationMs))
+                    .append("totalCommandCount", new BsonInt64(totalCommandCount))
+                    .append("totalHeartbeatDurationMs", new BsonInt64(totalHeartbeatDurationMs))
+                    .append("totalHeartbeatCount", new BsonInt64(totalHeartbeatCount))
+                    .append("openConnections", new BsonInt64(openConnections));
 
             return templateResponse()
                     .withStatusCode(200)
