@@ -728,6 +728,18 @@ functions:
           MONGODB_URIS="${atlas_free_tier_uri}|${atlas_replica_set_uri}|${atlas_sharded_uri}|${atlas_tls_v11_uri}|${atlas_tls_v12_uri}|${atlas_free_tier_uri_srv}|${atlas_replica_set_uri_srv}|${atlas_sharded_uri_srv}|${atlas_tls_v11_uri_srv}|${atlas_tls_v12_uri_srv}|${atlas_serverless_uri}|${atlas_serverless_uri_srv}" \
           .evergreen/run-connectivity-tests.sh
 
+  run socks5 tests:
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: src
+        script: |
+          ${PREPARE_SHELL}
+          SOCKS_AUTH="${SOCKS_AUTH}" \
+          SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" \
+          JAVA_VERSION="${JAVA_VERSION}" \
+          .evergreen/run-socks5-tests.sh
+
   start-kms-mock-server:
     - command: shell.exec
       params:
@@ -1615,6 +1627,14 @@ tasks:
               export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
               export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
               AZUREKMS_CMD="MONGODB_URI=mongodb://localhost:27017 PROVIDER=azure AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+    - name: test-socks5
+      tags: []
+      commands:
+        - func: bootstrap mongo-orchestration
+          vars:
+            VERSION: latest
+            TOPOLOGY: replica_set
+        - func: run socks5 tests
 axes:
   - id: version
     display_name: MongoDB Version
@@ -1705,6 +1725,17 @@ axes:
         display_name: NoAuth
         variables:
            AUTH: "noauth"
+  - id: socks_auth
+    display_name: Socks Proxy Authentication
+    values:
+      - id: "auth"
+        display_name: Auth
+        variables:
+          SOCKS_AUTH: "auth"
+      - id: "noauth"
+        display_name: NoAuth
+        variables:
+          SOCKS_AUTH: "noauth"
   - id: ssl
     display_name: SSL
     values:
@@ -2178,6 +2209,12 @@ buildvariants:
   display_name: "CSFLE with mongocryptd: ${version}"
   tasks:
     - name: "csfle-tests-with-mongocryptd"
+
+- matrix_name: "socks5-tests"
+  matrix_spec: { os: "linux", ssl: ["nossl", "ssl"], version: [ "latest" ], topology: ["replicaset"], socks_auth: ["auth", "noauth"] }
+  display_name: "SOCKS5 proxy ${socks_auth} : ${version} ${topology} ${ssl} ${jdk} ${os}"
+  tasks:
+    - name: test-socks5
 
 - name: testgcpkms-variant
   display_name: "GCP KMS"

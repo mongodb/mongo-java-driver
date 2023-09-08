@@ -19,6 +19,7 @@ package com.mongodb
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.ConnectionPoolSettings
+import com.mongodb.connection.ProxySettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
@@ -53,6 +54,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.clusterSettings == ClusterSettings.builder().build()
         settings.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         settings.socketSettings == SocketSettings.builder().build()
+        settings.socketSettings.proxySettings == ProxySettings.builder().build()
         settings.heartbeatSocketSettings == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).build()
         settings.serverSettings == ServerSettings.builder().build()
         settings.streamFactoryFactory == null
@@ -306,6 +308,10 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&readConcernLevel=majority'
                 + '&compressors=zlib&zlibCompressionLevel=5'
                 + '&uuidRepresentation=standard'
+                + '&proxyHost=proxy.com'
+                + '&proxyPort=1080'
+                + '&proxyUsername=username'
+                + '&proxyPassword=password'
         )
         MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(connectionString).build()
         MongoClientSettings expected = MongoClientSettings.builder()
@@ -340,6 +346,12 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final SocketSettings.Builder builder) {
                 builder.connectTimeout(2500, TimeUnit.MILLISECONDS)
                         .readTimeout(5500, TimeUnit.MILLISECONDS)
+                        .applyToProxySettings {
+                            it.host('proxy.com')
+                            it.port(1080)
+                            it.username('username')
+                            it.password('password')
+                        }
             }
         })
             .applyToSslSettings(new Block<SslSettings.Builder>() {
@@ -397,6 +409,12 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final SocketSettings.Builder builder) {
                 builder.connectTimeout(2500, TimeUnit.MILLISECONDS)
                         .readTimeout(5500, TimeUnit.MILLISECONDS)
+                        .applyToProxySettings {
+                            it.host('proxy.com')
+                            it.port(1080)
+                            it.username('username')
+                            it.password('password')
+                        }
             }
         })
                 .applyToSslSettings(new Block<SslSettings.Builder>() {
@@ -445,6 +463,31 @@ class MongoClientSettingsSpecification extends Specification {
         then:
         settings.getHeartbeatSocketSettings() == SocketSettings.builder().connectTimeout(21, TimeUnit.SECONDS)
                 .readTimeout(21, TimeUnit.SECONDS)
+                .build()
+    }
+
+    def 'should use the proxy settings for the heartbeat settings'() {
+        when:
+        def settings = MongoClientSettings.builder().applyToSocketSettings { SocketSettings.Builder builder ->
+            builder.connectTimeout(42, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .applyToProxySettings {
+                        it.host('proxy.com')
+                        it.port(1080)
+                        it.username('username')
+                        it.password('password')
+                    }
+        }.build()
+
+        then:
+        settings.getHeartbeatSocketSettings() == SocketSettings.builder().connectTimeout(42, TimeUnit.SECONDS)
+                .readTimeout(42, TimeUnit.SECONDS)
+                .applyToProxySettings {
+                    it.host('proxy.com')
+                    it.port(1080)
+                    it.username('username')
+                    it.password('password')
+                }
                 .build()
     }
 

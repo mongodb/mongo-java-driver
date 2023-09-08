@@ -133,6 +133,15 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
+ * <p>Proxy Configuration:</p>
+ * <ul>
+ * <li>{@code proxyHost=string}: The SOCKS5 proxy host to establish a connection through.
+ * It can be provided as a valid IPv4 address, IPv6 address, or a domain name. Required if either proxyPassword, proxyUsername or
+ * proxyPort are specified</li>
+ * <li>{@code proxyPort=n}: The port number for the SOCKS5 proxy server. Must be a non-negative integer.</li>
+ * <li>{@code proxyUsername=string}: Username for authenticating with the proxy server. Required if proxyPassword is specified.</li>
+ * <li>{@code proxyPassword=string}: Password for authenticating with the proxy server. Required if proxyUsername is specified.</li>
+ * </ul>
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
@@ -290,6 +299,10 @@ public class ConnectionString {
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
+    private String proxyHost;
+    private Integer proxyPort;
+    private String proxyUsername;
+    private String proxyPassword;
     private String requiredReplicaSetName;
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
@@ -468,6 +481,8 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvMaxHosts can not be specified with replica set name");
         }
 
+        validateProxyParameters();
+
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
@@ -501,6 +516,12 @@ public class ConnectionString {
         // option will supersede the sslinvalidhostnameallowed option when both are set
         GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
         GENERAL_OPTIONS_KEYS.add("tlsallowinvalidhostnames");
+
+        //Socks5 proxy settings
+        GENERAL_OPTIONS_KEYS.add("proxyhost");
+        GENERAL_OPTIONS_KEYS.add("proxyport");
+        GENERAL_OPTIONS_KEYS.add("proxyusername");
+        GENERAL_OPTIONS_KEYS.add("proxypassword");
 
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
@@ -598,6 +619,18 @@ public class ConnectionString {
                     break;
                 case "sockettimeoutms":
                     socketTimeout = parseInteger(value, "sockettimeoutms");
+                    break;
+                case "proxyhost":
+                    proxyHost = value;
+                    break;
+                case "proxyport":
+                    proxyPort = parseInteger(value, "proxyPort");
+                    break;
+                case "proxyusername":
+                    proxyUsername = value;
+                    break;
+                case "proxypassword":
+                    proxyPassword = value;
                     break;
                 case "tlsallowinvalidhostnames":
                     sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
@@ -1158,6 +1191,41 @@ public class ConnectionString {
         }
     }
 
+    private void validateProxyParameters() {
+        if (proxyHost == null) {
+            if (proxyPort != null) {
+                throw new IllegalArgumentException("proxyPort can only be specified with proxyHost");
+            } else if (proxyUsername != null) {
+                throw new IllegalArgumentException("proxyUsername can only be specified with proxyHost");
+            } else if (proxyPassword != null) {
+                throw new IllegalArgumentException("proxyPassword can only be specified with proxyHost");
+            }
+        }
+        if (proxyPort != null && (proxyPort < 0 || proxyPort > 65535)) {
+            throw new IllegalArgumentException("proxyPort should be within the valid range (0 to 65535)");
+        }
+        if (proxyUsername != null) {
+            if (proxyUsername.isEmpty()) {
+                throw new IllegalArgumentException("proxyUsername cannot be empty");
+            }
+            if (proxyUsername.getBytes(StandardCharsets.UTF_8).length >= 255) {
+                throw new IllegalArgumentException("username's length in bytes cannot be greater than 255");
+            }
+        }
+        if (proxyPassword != null) {
+            if (proxyPassword.isEmpty()) {
+                throw new IllegalArgumentException("proxyPassword cannot be empty");
+            }
+            if (proxyPassword.getBytes(StandardCharsets.UTF_8).length >= 255) {
+                throw new IllegalArgumentException("password's length in bytes cannot be greater than 255");
+            }
+        }
+        if (proxyUsername == null ^ proxyPassword == null) {
+            throw new IllegalArgumentException(
+                    "Both proxyUsername and proxyPassword must be set together. They cannot be set individually");
+        }
+    }
+
     private int countOccurrences(final String haystack, final String needle) {
         return haystack.length() - haystack.replace(needle, "").length();
     }
@@ -1474,6 +1542,49 @@ public class ConnectionString {
     }
 
     /**
+     * Gets the SOCKS5 proxy host specified in the connection string.
+     *
+     * @return the proxy host value.
+     * @since 4.11
+     */
+    @Nullable
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    /**
+     * Gets the SOCKS5 proxy port specified in the connection string.
+     *
+     * @return the proxy port value.
+     * @since 4.11
+     */
+    @Nullable
+    public Integer getProxyPort() {
+        return proxyPort;
+    }
+
+    /**
+     * Gets the SOCKS5 proxy username specified in the connection string.
+     *
+     * @return the proxy username value.
+     * @since 4.11
+     */
+    @Nullable
+    public String getProxyUsername() {
+        return proxyUsername;
+    }
+
+    /**
+     * Gets the SOCKS5 proxy password specified in the connection string.
+     *
+     * @return the proxy password value.
+     * @since 4.11
+     */
+    @Nullable
+    public String getProxyPassword() {
+        return proxyPassword;
+    }
+    /**
      * Gets the SSL invalidHostnameAllowed value specified in the connection string.
      *
      * @return the SSL invalidHostnameAllowed value
@@ -1594,6 +1705,10 @@ public class ConnectionString {
                 && Objects.equals(maxConnecting, that.maxConnecting)
                 && Objects.equals(connectTimeout, that.connectTimeout)
                 && Objects.equals(socketTimeout, that.socketTimeout)
+                && Objects.equals(proxyHost, that.proxyHost)
+                && Objects.equals(proxyPort, that.proxyPort)
+                && Objects.equals(proxyUsername, that.proxyUsername)
+                && Objects.equals(proxyPassword, that.proxyPassword)
                 && Objects.equals(sslEnabled, that.sslEnabled)
                 && Objects.equals(sslInvalidHostnameAllowed, that.sslInvalidHostnameAllowed)
                 && Objects.equals(requiredReplicaSetName, that.requiredReplicaSetName)
@@ -1613,6 +1728,7 @@ public class ConnectionString {
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
-                applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts);
+                applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost, proxyPort,
+                proxyUsername, proxyPassword);
     }
 }
