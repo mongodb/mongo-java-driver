@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.InterruptibleChannel;
@@ -34,7 +35,8 @@ import java.nio.channels.InterruptibleChannel;
  * The Java SE API uses exceptions different from {@link InterruptedException} to communicate the same information:</p>
  * <ul>
  *     <li>{@link InterruptibleChannel} uses {@link ClosedByInterruptException}.</li>
- *     <li>{@linkplain InputStream}/{@link OutputStream} obtained via {@link Socket#getInputStream()}/{@link Socket#getOutputStream()}
+ *     <li>{@link Socket#connect(SocketAddress)},
+ *     {@linkplain InputStream}/{@link OutputStream} obtained via {@link Socket#getInputStream()}/{@link Socket#getOutputStream()}
  *     use either {@link ClosedByInterruptException} or {@link SocketException}.</li>
  *     <li>There is also {@link InterruptedIOException}, which is documented to an extent as an IO-specific counterpart to
  *     {@link InterruptedException}.</li>

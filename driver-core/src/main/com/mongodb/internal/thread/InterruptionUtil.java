@@ -60,9 +60,10 @@ public final class InterruptionUtil {
                 // - Java SE methods, where IO may indeed be interrupted via the Java SE interrupt mechanism,
                 //   use different exceptions, like `ClosedByInterruptException` or even `SocketException`.
                 (e instanceof InterruptedIOException && !(e instanceof SocketTimeoutException))
-                // see `java.nio.channels.InterruptibleChannel` and `java.net.Socket.getOutputStream`/`getInputStream`
+                // see `java.nio.channels.InterruptibleChannel`
+                // and `java.net.Socket.connect`, `java.net.Socket.getOutputStream`/`getInputStream`
                 || e instanceof ClosedByInterruptException
-                // see `java.net.Socket.getOutputStream`/`getInputStream`
+                // see `java.net.Socket.connect`, `java.net.Socket.getOutputStream`/`getInputStream`
                 || (e instanceof SocketException && Thread.currentThread().isInterrupted())) {
             // The interrupted status is not cleared before throwing `ClosedByInterruptException`/`SocketException`,
             // so we do not need to reinstate it.
