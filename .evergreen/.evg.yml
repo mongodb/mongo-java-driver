@@ -148,7 +148,7 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
+          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} SKIP_LEGACY_SHELL=${SKIP_LEGACY_SHELL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     # run-orchestration generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
@@ -1503,6 +1503,12 @@ tasks:
       tags: ["perf"]
       commands:
         - func: "bootstrap mongo-orchestration"
+          vars:
+            VERSION: "v6.0-perf"
+            TOPOLOGY: "server"
+            SSL: "nossl"
+            AUTH: "noauth"
+            SKIP_LEGACY_SHELL: "true"
         - func: "run perf tests"
         - func: "send dashboard data"
 
@@ -2083,13 +2089,12 @@ buildvariants:
   tasks:
      - name: "gssapi-auth-test"
 
-- matrix_name: "perf"
-  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["latest"], topology: "standalone", os: "linux" }
-  batchtime: 1440 # run once a day
-  display_name: "Perf Tests ${version} "
+- name: "perf"
+  display_name: Performance Tests
   tags: ["perf-variant"]
+  run_on: rhel90-dbx-perf-large
   tasks:
-     - name: "perf"
+    - name: "perf"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
