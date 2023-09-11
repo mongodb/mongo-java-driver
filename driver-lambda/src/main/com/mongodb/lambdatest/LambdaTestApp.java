@@ -110,12 +110,7 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
             BsonValue id = collection.insertOne(new Document("n", 1)).getInsertedId();
             collection.deleteOne(new Document("_id", id));
 
-            BsonDocument responseBody = new BsonDocument()
-                    .append("totalCommandDurationMs", new BsonInt64(totalCommandDurationMs))
-                    .append("totalCommandCount", new BsonInt64(totalCommandCount))
-                    .append("totalHeartbeatDurationMs", new BsonInt64(totalHeartbeatDurationMs))
-                    .append("totalHeartbeatCount", new BsonInt64(totalHeartbeatCount))
-                    .append("openConnections", new BsonInt64(openConnections));
+            BsonDocument responseBody = getBsonDocument();
 
             return templateResponse()
                     .withStatusCode(200)
@@ -131,6 +126,22 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
                     .withBody(responseBody.toJson())
                     .withStatusCode(500);
         }
+    }
+
+    private BsonDocument getBsonDocument() {
+        BsonDocument responseBody = new BsonDocument()
+                .append("totalCommandDurationMs", new BsonInt64(totalCommandDurationMs))
+                .append("totalCommandCount", new BsonInt64(totalCommandCount))
+                .append("totalHeartbeatDurationMs", new BsonInt64(totalHeartbeatDurationMs))
+                .append("totalHeartbeatCount", new BsonInt64(totalHeartbeatCount))
+                .append("openConnections", new BsonInt64(openConnections));
+
+        totalCommandDurationMs = 0;
+        totalCommandCount = 0;
+        totalHeartbeatCount = 0;
+        totalHeartbeatDurationMs = 0;
+
+        return responseBody;
     }
 
     private APIGatewayProxyResponseEvent templateResponse() {

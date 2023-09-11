@@ -13,7 +13,7 @@ Globals:
     MemorySize: 128
     Tracing: Active
   Api:
-    TracingEnabled: true
+    TracingEnabled: false
 
 Resources:
   MongoDBFunction:
