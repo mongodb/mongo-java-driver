@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerApi;
@@ -179,7 +180,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
                     waitForNext();
                 }
-            } catch (InterruptedException closed) {
+            } catch (InterruptedException | MongoInterruptedException closed) {
                 // stop the monitor
             } catch (RuntimeException e) {
                 LOGGER.error(format("Server monitor for %s exiting with exception", serverId), e);
