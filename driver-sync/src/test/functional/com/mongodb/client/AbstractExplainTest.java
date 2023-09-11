@@ -119,6 +119,8 @@ public abstract class AbstractExplainTest {
         assertFalse(explainBsonDocument.containsKey("executionStats"));
     }
 
+    // Post-MongoDB 7.0, sharded cluster responses move the explain plan document into a "shards" document, which a plan for each shard.
+    // This method grabs the explain plan document from the first shard when this new structure is present.
     private static Document getAggregateExplainDocument(final Document rootAggregateExplainDocument) {
         assertNotNull(rootAggregateExplainDocument);
         Document aggregateExplainDocument = rootAggregateExplainDocument;
