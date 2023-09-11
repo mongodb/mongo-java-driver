@@ -37,9 +37,7 @@ public final class InterruptionUtil {
      */
     public static MongoInterruptedException interruptAndCreateMongoInterruptedException(
             @Nullable final String msg, @Nullable final InterruptedException cause) {
-        if (cause != null) {
-            Thread.currentThread().interrupt();
-        }
+        Thread.currentThread().interrupt();
         return new MongoInterruptedException(msg, cause);
     }
 
