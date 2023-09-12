@@ -180,8 +180,8 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
                     waitForNext();
                 }
-            } catch (MongoInterruptedException e) {
-                // ignore
+            } catch (InterruptedException | MongoInterruptedException closed) {
+                // stop the monitor
             } catch (RuntimeException e) {
                 LOGGER.error(format("Server monitor for %s exiting with exception", serverId), e);
             } finally {
@@ -285,21 +285,17 @@ class DefaultServerMonitor implements ServerMonitor {
             }
         }
 
-        private void waitForNext() {
-            try {
-                long timeRemaining = waitForSignalOrTimeout();
-                if (timeRemaining > 0) {
-                    long timeWaiting = serverSettings.getHeartbeatFrequency(NANOSECONDS) - timeRemaining;
-                    long minimumNanosToWait = serverSettings.getMinHeartbeatFrequency(NANOSECONDS);
-                    if (timeWaiting < minimumNanosToWait) {
-                        long millisToSleep = MILLISECONDS.convert(minimumNanosToWait - timeWaiting, NANOSECONDS);
-                        if (millisToSleep > 0) {
-                            Thread.sleep(millisToSleep);
-                        }
+        private void waitForNext() throws InterruptedException {
+            long timeRemaining = waitForSignalOrTimeout();
+            if (timeRemaining > 0) {
+                long timeWaiting = serverSettings.getHeartbeatFrequency(NANOSECONDS) - timeRemaining;
+                long minimumNanosToWait = serverSettings.getMinHeartbeatFrequency(NANOSECONDS);
+                if (timeWaiting < minimumNanosToWait) {
+                    long millisToSleep = MILLISECONDS.convert(minimumNanosToWait - timeWaiting, NANOSECONDS);
+                    if (millisToSleep > 0) {
+                        Thread.sleep(millisToSleep);
                     }
                 }
-            } catch (InterruptedException e) {
-                // fall through
             }
         }
 
@@ -429,6 +425,8 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
                     waitForNext();
                 }
+            } catch (InterruptedException closed) {
+                // stop the monitor
             } finally {
                 if (connection != null) {
                     connection.close();
@@ -453,12 +451,8 @@ class DefaultServerMonitor implements ServerMonitor {
         }
     }
 
-    private void waitForNext() {
-        try {
-            Thread.sleep(serverSettings.getHeartbeatFrequency(MILLISECONDS));
-        } catch (InterruptedException e) {
-            // fall through
-        }
+    private void waitForNext() throws InterruptedException {
+        Thread.sleep(serverSettings.getHeartbeatFrequency(MILLISECONDS));
     }
 
     private String getHandshakeCommandName(final ServerDescription serverDescription) {

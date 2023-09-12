@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
@@ -56,6 +55,7 @@ import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -313,7 +313,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
         try {
             q.put(e);
         } catch (InterruptedException t) {
-            throw new MongoInterruptedException(null, t);
+            throw interruptAndCreateMongoInterruptedException(null, t);
         }
     }
 }

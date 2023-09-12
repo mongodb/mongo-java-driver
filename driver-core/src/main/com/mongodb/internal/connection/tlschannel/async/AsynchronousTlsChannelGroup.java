@@ -56,6 +56,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 
 /**
@@ -383,7 +384,7 @@ public class AsynchronousTlsChannelGroup {
         try {
             socket.registered.await();
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw interruptAndCreateMongoInterruptedException(null, e);
         }
     }
 

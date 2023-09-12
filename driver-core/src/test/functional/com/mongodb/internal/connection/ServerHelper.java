@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ClusterFixture;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerDescription;
@@ -27,6 +26,7 @@ import com.mongodb.internal.selector.ServerAddressSelector;
 import static com.mongodb.ClusterFixture.getAsyncCluster;
 import static com.mongodb.ClusterFixture.getCluster;
 import static com.mongodb.assertions.Assertions.fail;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.Thread.sleep;
 
 public final class ServerHelper {
@@ -56,7 +56,7 @@ public final class ServerHelper {
                                                             + pool.getInUseCount());
                 }
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted", e);
+                throw interruptAndCreateMongoInterruptedException("Interrupted", e);
             }
         }
     }
@@ -90,7 +90,7 @@ public final class ServerHelper {
                     throw new MongoTimeoutException("Timed out waiting for ConnectionSource count to drop to " + expectedCount);
                 }
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted", e);
+                throw interruptAndCreateMongoInterruptedException("Interrupted", e);
             }
         }
     }

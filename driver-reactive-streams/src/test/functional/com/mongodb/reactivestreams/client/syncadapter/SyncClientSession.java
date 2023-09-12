@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.ClientSessionOptions;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
@@ -29,6 +28,7 @@ import org.bson.BsonTimestamp;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterSessionClose;
 
@@ -186,7 +186,7 @@ class SyncClientSession implements ClientSession {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(null, e);
+            throw interruptAndCreateMongoInterruptedException(null, e);
         }
     }
 }

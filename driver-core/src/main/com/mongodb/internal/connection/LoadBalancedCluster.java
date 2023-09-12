@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
@@ -58,6 +57,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -231,8 +231,7 @@ final class LoadBalancedCluster implements Cluster {
                 remainingTimeNanos = condition.awaitNanos(remainingTimeNanos);
             }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new MongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
+            throw interruptAndCreateMongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
         } finally {
             lock.unlock();
         }
@@ -380,7 +379,7 @@ final class LoadBalancedCluster implements Cluster {
                         try {
                             //noinspection ResultOfMethodCallIgnored
                             condition.await(waitTimeNanos, NANOSECONDS);
-                        } catch (InterruptedException e) {
+                        } catch (InterruptedException unexpected) {
                             fail();
                         }
                     }

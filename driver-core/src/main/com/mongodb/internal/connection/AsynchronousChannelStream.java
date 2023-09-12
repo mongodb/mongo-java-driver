@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
@@ -38,6 +37,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -317,7 +317,7 @@ public abstract class AsynchronousChannelStream implements Stream {
             try {
                 latch.await();
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
+                throw interruptAndCreateMongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
 
             }
             if (error != null) {

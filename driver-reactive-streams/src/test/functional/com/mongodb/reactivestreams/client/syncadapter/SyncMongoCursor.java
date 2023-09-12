@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
@@ -34,6 +33,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorClose;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorOpen;
@@ -85,7 +85,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             }
             sleep(getSleepAfterCursorOpen());
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
+            throw interruptAndCreateMongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
         }
     }
 
@@ -99,7 +99,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted from nap", e);
+            throw interruptAndCreateMongoInterruptedException("Interrupted from nap", e);
         }
     }
 
@@ -136,7 +136,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
                 return true;
             }
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted waiting for next result", e);
+            throw interruptAndCreateMongoInterruptedException("Interrupted waiting for next result", e);
         }
     }
 

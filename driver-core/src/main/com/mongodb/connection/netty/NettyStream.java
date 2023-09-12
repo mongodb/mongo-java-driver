@@ -19,7 +19,6 @@ package com.mongodb.connection.netty;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -71,6 +70,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -436,7 +436,7 @@ final class NettyStream implements Stream {
 
     private class InboundBufferHandler extends SimpleChannelInboundHandler<io.netty.buffer.ByteBuf> {
         @Override
-        protected void channelRead0(final ChannelHandlerContext ctx, final io.netty.buffer.ByteBuf buffer) throws Exception {
+        protected void channelRead0(final ChannelHandlerContext ctx, final io.netty.buffer.ByteBuf buffer) {
             handleReadResponse(buffer, null);
         }
 
@@ -499,7 +499,7 @@ final class NettyStream implements Stream {
                 }
                 return t;
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted", e);
+                throw interruptAndCreateMongoInterruptedException("Interrupted", e);
             }
         }
     }
