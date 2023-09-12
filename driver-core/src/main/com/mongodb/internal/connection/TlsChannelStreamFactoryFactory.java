@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.connection.AsynchronousChannelStream;
-import com.mongodb.internal.connection.ExtendedAsynchronousByteChannel;
-import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
 import com.mongodb.internal.connection.tlschannel.ClientTlsChannel;
 import com.mongodb.internal.connection.tlschannel.TlsChannel;
@@ -48,6 +48,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
@@ -55,57 +56,34 @@ import static java.util.Optional.ofNullable;
 
 /**
  * A {@code StreamFactoryFactory} that supports TLS/SSL.  The implementation supports asynchronous usage.
- *
- * @since 3.10
- * @deprecated There is no replacement for this class.
  */
-@Deprecated
 public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Closeable {
 
     private static final Logger LOGGER = Loggers.getLogger("connection.tls");
 
     private final SelectorMonitor selectorMonitor;
     private final AsynchronousTlsChannelGroup group;
-    private final boolean ownsGroup;
     private final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
 
     /**
      * Construct a new instance
      */
     public TlsChannelStreamFactoryFactory() {
-        this(new AsynchronousTlsChannelGroup(), true);
-    }
-
-    /**
-     * Construct a new instance with the given {@code AsynchronousTlsChannelGroup}.  Callers are required to close the provided group
-     * in order to free up resources.
-     *
-     * @param group the group
-     * @deprecated Prefer {@link #TlsChannelStreamFactoryFactory()}
-     */
-    @Deprecated
-    public TlsChannelStreamFactoryFactory(final AsynchronousTlsChannelGroup group) {
-        this(group, false);
-    }
-
-    private TlsChannelStreamFactoryFactory(final AsynchronousTlsChannelGroup group, final boolean ownsGroup) {
-        this.group = group;
-        this.ownsGroup = ownsGroup;
+        this.group = new AsynchronousTlsChannelGroup();
         selectorMonitor = new SelectorMonitor();
         selectorMonitor.start();
     }
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
+        assertTrue(sslSettings.isEnabled());
         return serverAddress -> new TlsChannelStream(serverAddress, socketSettings, sslSettings, bufferPool, group, selectorMonitor);
     }
 
     @Override
     public void close() {
         selectorMonitor.close();
-        if (ownsGroup) {
-            group.shutdown();
-        }
+        group.shutdown();
     }
 
     private static class SelectorMonitor implements Closeable {

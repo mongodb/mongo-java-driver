@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
-import com.mongodb.annotations.ThreadSafe;
-import org.bson.ByteBuf;
+import com.mongodb.ServerAddress;
 
 /**
- * A provider of instances of ByteBuf.
- *
- * @since 3.0
- * @deprecated There is no replacement for this interface.
+ * A factory for streams.
  */
-@Deprecated
-@ThreadSafe
-public interface BufferProvider {
+public interface StreamFactory {
     /**
-     * Gets a buffer with the givens capacity.
+     * Create a Stream to the given address
      *
-     * @param size the size required for the buffer
-     * @return a ByteBuf with the given size, which is now owned by the caller and must be released.
+     * @param serverAddress the address
+     * @return the stream
      */
-    ByteBuf getBuffer(int size);
+    Stream create(ServerAddress serverAddress);
 }

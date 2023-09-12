@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.connection.BufferProvider;
+import com.mongodb.internal.connection.BufferProvider;
 import com.mongodb.internal.connection.ByteBufferBsonOutput;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
@@ -26,7 +26,6 @@ import org.bson.codecs.DecoderContext;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-@SuppressWarnings("deprecation")
 class DBDecoderAdapter implements Decoder<DBObject> {
     private final DBDecoder decoder;
     private final DBCollection collection;

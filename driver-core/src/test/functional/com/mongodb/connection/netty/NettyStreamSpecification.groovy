@@ -1,5 +1,6 @@
 package com.mongodb.connection.netty
 
+import com.mongodb.internal.connection.netty.NettyStreamFactory
 import util.spock.annotations.Slow
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException

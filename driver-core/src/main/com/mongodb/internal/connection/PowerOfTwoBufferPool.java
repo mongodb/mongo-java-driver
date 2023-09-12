@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -34,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@SuppressWarnings("deprecation")
 public class PowerOfTwoBufferPool implements BufferProvider {
 
     /**

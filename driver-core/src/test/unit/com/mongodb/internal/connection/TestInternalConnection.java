@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.RequestContext;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
@@ -47,7 +46,6 @@ import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureEx
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
-@SuppressWarnings("deprecation")
 class TestInternalConnection implements InternalConnection {
 
     private static class Interaction {

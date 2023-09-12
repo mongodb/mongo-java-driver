@@ -21,12 +21,11 @@ import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactory
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString

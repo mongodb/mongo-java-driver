@@ -5,7 +5,6 @@ import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.AsyncCompletionHandler
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import spock.lang.IgnoreIf

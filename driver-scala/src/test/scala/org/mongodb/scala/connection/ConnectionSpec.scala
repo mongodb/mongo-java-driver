@@ -16,25 +16,14 @@
 
 package org.mongodb.scala.connection
 
-import java.net.{ InetAddress, InetSocketAddress }
-
 import com.mongodb.{ ServerAddress => JServerAddress }
 import org.mongodb.scala.{ BaseSpec, ServerAddress }
 import org.scalatestplus.mockito.MockitoSugar
 
+import java.net.{ InetAddress, InetSocketAddress }
 import scala.collection.JavaConverters._
 
 class ConnectionSpec extends BaseSpec with MockitoSugar {
-
-  "The connection namespace" should "have a AsynchronousSocketChannelStreamFactoryFactory companion" in {
-    val asynchronousSocketChannelStreamFactoryFactory = AsynchronousSocketChannelStreamFactoryFactory()
-    asynchronousSocketChannelStreamFactoryFactory shouldBe a[StreamFactoryFactory]
-  }
-
-  it should "have a NettyStreamFactoryFactory companion" in {
-    val nettyStreamFactoryFactory = NettyStreamFactoryFactory()
-    nettyStreamFactoryFactory shouldBe a[StreamFactoryFactory]
-  }
 
   it should "have a ClusterSettings companion" in {
     val scalaSetting = ClusterSettings.builder().hosts(List(ServerAddress()).asJava).build()
