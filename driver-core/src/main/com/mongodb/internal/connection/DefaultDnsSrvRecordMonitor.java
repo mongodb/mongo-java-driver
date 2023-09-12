@@ -106,7 +106,7 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
 
                 try {
                     Thread.sleep(getRescanFrequencyMillis());
-                } catch (InterruptedException e) {
+                } catch (InterruptedException closed) {
                     // fall through
                 }
                 clusterType = dnsSrvRecordInitializer.getClusterType();
@@ -130,4 +130,3 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
         }
     }
 }
-

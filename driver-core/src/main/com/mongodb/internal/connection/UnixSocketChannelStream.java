@@ -39,6 +39,7 @@ public class UnixSocketChannelStream extends SocketStream {
         this.address = address;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected Socket initializeSocket() throws IOException {
         return UnixSocketChannel.open((UnixSocketAddress) address.getUnixSocketAddress()).socket();

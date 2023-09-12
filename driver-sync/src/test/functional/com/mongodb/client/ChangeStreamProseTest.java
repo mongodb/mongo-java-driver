@@ -76,7 +76,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         public void run() {
             try {
                 cursor.next();
-            } catch (final MongoInterruptedException e) {
+            } catch (MongoInterruptedException e) {
                 interruptedExceptionOccurred = true;
             } finally {
                 cursor.close();

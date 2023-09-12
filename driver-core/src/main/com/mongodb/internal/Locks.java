@@ -16,10 +16,10 @@
 
 package com.mongodb.internal;
 
-import com.mongodb.MongoInterruptedException;
-
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
+
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -45,8 +45,7 @@ public final class Locks {
                 lock.unlock();
             }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new MongoInterruptedException("Interrupted waiting for lock", e);
+            throw interruptAndCreateMongoInterruptedException("Interrupted waiting for lock", e);
         }
     }
 

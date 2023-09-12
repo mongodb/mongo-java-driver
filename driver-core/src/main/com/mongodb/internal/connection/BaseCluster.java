@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoIncompatibleDriverException;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;
@@ -60,6 +59,7 @@ import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Comparator.comparingInt;
@@ -142,7 +142,7 @@ abstract class BaseCluster implements Cluster {
             }
 
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(format("Interrupted while waiting for a server that matches %s", serverSelector), e);
+            throw interruptAndCreateMongoInterruptedException(format("Interrupted while waiting for a server that matches %s", serverSelector), e);
         }
     }
 
@@ -211,7 +211,7 @@ abstract class BaseCluster implements Cluster {
             }
             return curDescription;
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted while waiting to connect", e);
+            throw interruptAndCreateMongoInterruptedException("Interrupted while waiting to connect", e);
         }
     }
 
@@ -516,7 +516,7 @@ abstract class BaseCluster implements Cluster {
 
                 try {
                     currentPhase.await(waitTimeNanos, NANOSECONDS);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException closed) {
                     // The cluster has been closed and the while loop will exit.
                 }
             }

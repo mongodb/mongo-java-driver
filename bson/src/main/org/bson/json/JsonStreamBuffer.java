@@ -88,7 +88,7 @@ class JsonStreamBuffer implements JsonBuffer {
             }
             return nextChar;
 
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new JsonParseException(e);
         }
     }

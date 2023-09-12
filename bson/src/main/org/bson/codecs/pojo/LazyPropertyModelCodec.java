@@ -27,6 +27,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.String.format;
 import static org.bson.codecs.pojo.PojoSpecializationHelper.specializeTypeData;
@@ -35,7 +37,7 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
     private final PropertyModel<T> propertyModel;
     private final CodecRegistry registry;
     private final PropertyCodecRegistry propertyCodecRegistry;
-
+    private final Lock codecLock = new ReentrantLock();
     private volatile Codec<T> codec;
 
     LazyPropertyModelCodec(final PropertyModel<T> propertyModel, final CodecRegistry registry,
@@ -61,11 +63,17 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
     }
 
     private Codec<T> getPropertyModelCodec() {
+        Codec<T> codec = this.codec;
         if (codec == null) {
-            synchronized (this) {
+            codecLock.lock();
+            try {
+                codec = this.codec;
                 if (codec == null) {
                     codec = createCodec();
+                    this.codec = codec;
                 }
+            } finally {
+                codecLock.unlock();
             }
         }
         return codec;

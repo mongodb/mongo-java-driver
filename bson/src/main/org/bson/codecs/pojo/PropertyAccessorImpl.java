@@ -41,7 +41,7 @@ final class PropertyAccessorImpl<T> implements PropertyAccessor<T> {
             } else {
                 throw getError(null);
             }
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw getError(e);
         }
     }
@@ -56,7 +56,7 @@ final class PropertyAccessorImpl<T> implements PropertyAccessor<T> {
                     propertyMetadata.getField().set(instance, value);
                 }
             }
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw setError(e);
         }
     }

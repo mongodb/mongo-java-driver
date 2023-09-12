@@ -324,7 +324,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def result = execute(operation, async)
 
         then:
-        result.containsKey('stages') || result.containsKey('queryPlanner')
+        result.containsKey('stages') || result.containsKey('queryPlanner') || result.containsKey('shards')
 
         where:
         async << [true, false]

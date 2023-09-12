@@ -59,14 +59,13 @@ import org.bson.codecs.Decoder;
 import org.bson.io.ByteBufferBsonInput;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
-import java.nio.channels.ClosedByInterruptException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -88,6 +87,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.getSnapshotTimestamp;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
+import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
 
 /**
@@ -705,10 +705,12 @@ public class InternalStreamConnection implements InternalConnection {
     private MongoException translateWriteException(final Throwable e) {
         if (e instanceof MongoException) {
             return (MongoException) e;
+        }
+        Optional<MongoInterruptedException> interruptedException = translateInterruptedException(e, "Interrupted while sending message");
+        if (interruptedException.isPresent()) {
+            return interruptedException.get();
         } else if (e instanceof IOException) {
             return new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
-        } else if (e instanceof InterruptedException) {
-            return new MongoInternalException("Thread interrupted exception", e);
         } else {
             return new MongoInternalException("Unexpected exception", e);
         }
@@ -717,18 +719,16 @@ public class InternalStreamConnection implements InternalConnection {
     private MongoException translateReadException(final Throwable e) {
         if (e instanceof MongoException) {
             return (MongoException) e;
+        }
+        Optional<MongoInterruptedException> interruptedException = translateInterruptedException(e, "Interrupted while receiving message");
+        if (interruptedException.isPresent()) {
+            return interruptedException.get();
         } else if (e instanceof SocketTimeoutException) {
             return new MongoSocketReadTimeoutException("Timeout while receiving message", getServerAddress(), e);
-        } else if (e instanceof InterruptedIOException) {
-            return new MongoInterruptedException("Interrupted while receiving message", (InterruptedIOException) e);
-        } else if (e instanceof ClosedByInterruptException) {
-            return new MongoInterruptedException("Interrupted while receiving message", (ClosedByInterruptException) e);
         } else if (e instanceof IOException) {
             return new MongoSocketReadException("Exception receiving message", getServerAddress(), e);
         } else if (e instanceof RuntimeException) {
             return new MongoInternalException("Unexpected runtime exception", e);
-        } else if (e instanceof InterruptedException) {
-            return new MongoInternalException("Interrupted exception", e);
         } else {
             return new MongoInternalException("Unexpected exception", e);
         }

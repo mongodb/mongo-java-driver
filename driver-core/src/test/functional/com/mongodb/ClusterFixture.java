@@ -90,6 +90,7 @@ import static com.mongodb.connection.ClusterType.SHARDED;
 import static com.mongodb.connection.ClusterType.STANDALONE;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
@@ -733,7 +734,7 @@ public final class ClusterFixture {
                 Thread.sleep(10);
                 count = referenceCounted.getCount();
             } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted", e);
+                throw interruptAndCreateMongoInterruptedException("Interrupted", e);
             }
         }
         return count;

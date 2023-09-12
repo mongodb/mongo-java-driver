@@ -22,12 +22,15 @@ import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
 import org.bson.ByteBuf;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,8 +39,13 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
+import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -74,7 +82,18 @@ public class SocketStream implements Stream {
         }
     }
 
+    @SuppressWarnings("deprecation")
     protected Socket initializeSocket() throws IOException {
+        ProxySettings proxySettings = settings.getProxySettings();
+        if (proxySettings.isProxyEnabled()) {
+            if (sslSettings.isEnabled()) {
+                assertTrue(socketFactory instanceof SSLSocketFactory);
+                SSLSocketFactory sslSocketFactory = (SSLSocketFactory) socketFactory;
+                return initializeSslSocketOverSocksProxy(sslSocketFactory);
+            }
+            return initializeSocketOverSocksProxy();
+        }
+
         Iterator<InetSocketAddress> inetSocketAddresses = address.getSocketAddresses().iterator();
         while (inetSocketAddresses.hasNext()) {
             Socket socket = socketFactory.createSocket();
@@ -89,6 +108,46 @@ public class SocketStream implements Stream {
         }
 
         throw new MongoSocketException("Exception opening socket", getAddress());
+    }
+
+    private SSLSocket initializeSslSocketOverSocksProxy(final SSLSocketFactory sslSocketFactory) throws IOException {
+        final String serverHost = address.getHost();
+        final int serverPort = address.getPort();
+
+        SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
+        configureSocket(socksProxy, settings);
+        InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
+        socksProxy.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
+
+        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
+        //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
+        //So it is possible to set SSL parameters before handshake is done.
+        configureSslSocket(sslSocket, sslSettings, inetSocketAddress);
+        return sslSocket;
+    }
+
+
+    /**
+     * Creates an unresolved {@link InetSocketAddress}.
+     * This method is used to create an address that is meant to be resolved by a SOCKS proxy.
+     */
+    private static InetSocketAddress toSocketAddress(final String serverHost, final int serverPort) {
+        return InetSocketAddress.createUnresolved(serverHost, serverPort);
+    }
+
+    private Socket initializeSocketOverSocksProxy() throws IOException {
+        Socket createdSocket = socketFactory.createSocket();
+        configureSocket(createdSocket, settings);
+        /*
+          Wrap the configured socket with SocksSocket to add extra functionality.
+          Reason for separate steps: We can't directly extend Java 11 methods within 'SocksSocket'
+          to configure itself.
+         */
+        SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
+
+        socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
+                settings.getConnectTimeout(TimeUnit.MILLISECONDS));
+        return socksProxy;
     }
 
     @Override
@@ -137,7 +196,10 @@ public class SocketStream implements Stream {
         try {
             return read(numBytes);
         } finally {
-            socket.setSoTimeout(curTimeout);
+            if (!socket.isClosed()) {
+                // `socket` may be closed if the current thread is virtual, and it is interrupted while reading
+                socket.setSoTimeout(curTimeout);
+            }
         }
     }
 

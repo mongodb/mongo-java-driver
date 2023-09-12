@@ -45,7 +45,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -89,6 +90,11 @@ public abstract class AbstractRetryableWritesTest {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
+        // Remove this as part of JAVA-5125
+        if (isSharded() && serverVersionLessThan(5, 0)) {
+            assumeFalse(description.contains("succeeds after WriteConcernError"));
+            assumeFalse(description.contains("fails after multiple retryable writeConcernErrors"));
+        }
         collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
         BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder();
@@ -254,7 +260,7 @@ public abstract class AbstractRetryableWritesTest {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getArray("data"), test.asDocument(),
-                        !isDiscoverableReplicaSet() || skipTest(testDocument, test.asDocument())});
+                        skipTest(testDocument, test.asDocument())});
             }
         }
         return data;

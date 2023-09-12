@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
@@ -46,6 +45,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveCommands;
 import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveHelloCommands;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -174,7 +174,7 @@ public class TestCommandListener implements CommandListener {
                         throw new MongoTimeoutException("Timeout waiting for event");
                     }
                 } catch (InterruptedException e) {
-                    throw new MongoInterruptedException("Interrupted waiting for event", e);
+                    throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
                 }
             }
             return getCommandStartedEvents(numEvents);
@@ -192,7 +192,7 @@ public class TestCommandListener implements CommandListener {
                         throw new MongoTimeoutException("Timeout waiting for event");
                     }
                 } catch (InterruptedException e) {
-                    throw new MongoInterruptedException("Interrupted waiting for event", e);
+                    throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
                 }
             }
         } finally {

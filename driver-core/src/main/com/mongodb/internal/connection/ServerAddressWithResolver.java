@@ -51,6 +51,7 @@ final class ServerAddressWithResolver extends ServerAddress {
         this.resolver = inetAddressResolver == null ? DEFAULT_INET_ADDRESS_RESOLVER : inetAddressResolver;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public InetSocketAddress getSocketAddress() {
         if (resolver == null) {
@@ -60,6 +61,7 @@ final class ServerAddressWithResolver extends ServerAddress {
         return getSocketAddresses().get(0);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public List<InetSocketAddress> getSocketAddresses() {
         if (resolver == null) {

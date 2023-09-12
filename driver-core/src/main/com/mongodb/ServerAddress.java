@@ -188,7 +188,9 @@ public class ServerAddress implements Serializable {
      * Gets the underlying socket address
      *
      * @return socket address
+     * @deprecated Prefer {@link InetAddress#getByName(String)}
      */
+    @Deprecated
     public InetSocketAddress getSocketAddress() {
         try {
             return new InetSocketAddress(InetAddress.getByName(host), port);
@@ -203,7 +205,9 @@ public class ServerAddress implements Serializable {
      * @return array of socket addresses
      *
      * @since 3.9
+     * @deprecated Prefer {@link InetAddress#getAllByName(String)}
      */
+    @Deprecated
     public List<InetSocketAddress> getSocketAddresses() {
         try {
             InetAddress[] inetAddresses = InetAddress.getAllByName(host);

@@ -20,7 +20,6 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.JsonTestServerVersionChecker;
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -83,6 +82,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT;
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -524,8 +524,7 @@ public abstract class AbstractConnectionPoolTest {
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new MongoInterruptedException(null, e);
+            throw interruptAndCreateMongoInterruptedException(null, e);
         }
     }
 

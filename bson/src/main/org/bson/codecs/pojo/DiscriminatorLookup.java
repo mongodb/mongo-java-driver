@@ -65,7 +65,7 @@ final class DiscriminatorLookup {
         Class<?> clazz = null;
         try {
             clazz = Class.forName(discriminator);
-        } catch (final ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             // Ignore
         }
         return clazz;

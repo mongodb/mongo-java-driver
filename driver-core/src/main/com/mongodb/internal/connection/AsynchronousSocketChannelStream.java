@@ -54,6 +54,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         this.group = group;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
         isTrue("unopened", getChannel() == null);

@@ -63,8 +63,7 @@ public class MongoClientFactory implements ObjectFactory {
      * Note: Not all options that can be specified via {@link com.mongodb.MongoClientOptions} can be specified via the connection string.
      */
     @Override
-    public Object getObjectInstance(final Object obj, final Name name, final Context nameCtx, final Hashtable<?, ?> environment)
-            throws Exception {
+    public Object getObjectInstance(final Object obj, final Name name, final Context nameCtx, final Hashtable<?, ?> environment) {
 
         // Some app servers, e.g. Wildfly, use the environment to pass location information to an ObjectFactory
         String connectionString = null;

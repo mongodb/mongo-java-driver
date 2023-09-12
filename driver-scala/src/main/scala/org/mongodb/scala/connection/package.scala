@@ -42,6 +42,22 @@ package object connection {
   type SocketSettings = com.mongodb.connection.SocketSettings
 
   /**
+   * This setting is only applicable when communicating with a MongoDB server using the synchronous variant of `MongoClient`.
+   *
+   * This setting is furthermore ignored if:
+   * <ul>
+   *    <li>the communication is via `com.mongodb.UnixServerAddress` (Unix domain socket).</li>
+   *    <li>a `StreamFactoryFactory` is `MongoClientSettings.Builder.streamFactoryFactory` configured.</li>
+   * </ul>
+   *
+   * @see [[org.mongodb.scala.connection.SocketSettings]]
+   * @see [[org.mongodb.scala.AutoEncryptionSettings]]
+   * @see [[org.mongodb.scala.ClientEncryptionSettings]]
+   * @since 4.11
+   */
+  type ProxySettings = com.mongodb.connection.ProxySettings
+
+  /**
    * Settings for connecting to MongoDB via SSL.
    */
   type SslSettings = com.mongodb.connection.SslSettings
