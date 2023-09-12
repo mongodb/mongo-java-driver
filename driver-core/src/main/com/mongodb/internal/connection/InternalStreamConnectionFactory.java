@@ -22,7 +22,6 @@ import com.mongodb.MongoDriverInformation;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerId;
-import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -34,7 +33,6 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 
-@SuppressWarnings("deprecation")
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
     private final boolean isMonitoringConnection;

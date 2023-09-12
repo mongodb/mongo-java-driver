@@ -25,8 +25,6 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
-import com.mongodb.connection.StreamFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -39,7 +37,6 @@ import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
 
 @Ignore
-@SuppressWarnings("deprecation")
 public class PlainAuthenticatorTest {
     private InternalConnection internalConnection;
     private ConnectionDescription connectionDescription;

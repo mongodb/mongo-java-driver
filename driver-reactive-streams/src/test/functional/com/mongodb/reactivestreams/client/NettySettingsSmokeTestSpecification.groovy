@@ -17,7 +17,7 @@
 package com.mongodb.reactivestreams.client
 
 import com.mongodb.MongoClientSettings
-import com.mongodb.connection.netty.NettyStreamFactoryFactory
+import com.mongodb.connection.TransportSettings
 import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.oio.OioSocketChannel
 import org.bson.Document
@@ -27,18 +27,19 @@ import static Fixture.getMongoClientBuilderFromConnectionString
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION
 
 @SuppressWarnings('deprecation')
-class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecification {
+class NettySettingsSmokeTestSpecification extends FunctionalSpecification {
 
     private MongoClient mongoClient
 
     def 'should allow a custom Event Loop Group and Socket Channel'() {
         given:
         def eventLoopGroup = new OioEventLoopGroup()
-        def streamFactoryFactory = NettyStreamFactoryFactory.builder()
+        def nettySettings = TransportSettings.nettyBuilder()
                 .eventLoopGroup(eventLoopGroup)
-                .socketChannelClass(OioSocketChannel).build()
+                .socketChannelClass(OioSocketChannel)
+                .build()
         MongoClientSettings settings = getMongoClientBuilderFromConnectionString()
-                .streamFactoryFactory(streamFactoryFactory).build()
+                .transportSettings(nettySettings).build()
         def document = new Document('a', 1)
 
         when:

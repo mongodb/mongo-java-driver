@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty;
+package com.mongodb.internal.connection.netty;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.Stream;
-import com.mongodb.connection.StreamFactory;
+import com.mongodb.internal.connection.Stream;
+import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.lang.Nullable;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -34,12 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A StreamFactory for Streams based on <a href='http://netty.io/'>Netty</a> 4.x.
- *
- * @since 3.0
- * @deprecated there is no replacement for this class
  */
-@SuppressWarnings("deprecation")
-@Deprecated
 public class NettyStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;
@@ -59,8 +54,6 @@ public class NettyStreamFactory implements StreamFactory {
      * @param allocator the allocator to use for ByteBuf instances
      * @param sslContext the Netty {@link SslContext}
      *                   as specified by {@link NettyStreamFactoryFactory.Builder#sslContext(SslContext)}.
-     *
-     * @since 4.3
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
                               final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> socketChannelClass,
@@ -82,8 +75,6 @@ public class NettyStreamFactory implements StreamFactory {
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
      * @param socketChannelClass the socket channel class
      * @param allocator the allocator to use for ByteBuf instances
-     *
-     * @since 3.3
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
                               final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> socketChannelClass,
@@ -110,8 +101,6 @@ public class NettyStreamFactory implements StreamFactory {
      * @param settings the socket settings
      * @param sslSettings the SSL settings
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
-     *
-     * @since 3.4
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup eventLoopGroup) {
         this(settings, sslSettings, eventLoopGroup, PooledByteBufAllocator.DEFAULT);

@@ -20,13 +20,13 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.internal.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.connection.StreamFactory;
+import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -42,7 +42,6 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
  * A factory for MongoClient instances.
  *
  */
-@SuppressWarnings("deprecation")
 public final class MongoClients {
 
     /**
@@ -110,7 +109,6 @@ public final class MongoClients {
      * @return the client
      * @since 1.8
      */
-    @SuppressWarnings("deprecation")
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         if (settings.getSocketSettings().getProxySettings().isProxyEnabled()) {
             throw new MongoClientException("Proxy is not supported for reactive clients");

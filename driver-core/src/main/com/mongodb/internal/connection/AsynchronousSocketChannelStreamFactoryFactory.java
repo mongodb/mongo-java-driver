@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
+
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 
 import java.nio.channels.AsynchronousChannelGroup;
 
@@ -22,10 +25,7 @@ import java.nio.channels.AsynchronousChannelGroup;
  * A {@code StreamFactoryFactory} implementation for AsynchronousSocketChannel-based streams.
  *
  * @see java.nio.channels.AsynchronousSocketChannel
- * @since 3.1
- * @deprecated There is no replacement for this class.
  */
-@Deprecated
 public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
     private final AsynchronousChannelGroup group;
 

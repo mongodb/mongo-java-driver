@@ -27,7 +27,6 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
@@ -56,7 +55,6 @@ import static java.util.Collections.singletonList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@SuppressWarnings("deprecation")
 public final class DefaultClusterFactory {
     private static final Logger LOGGER = Loggers.getLogger("DefaultClusterFactory");
 
