@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
-import com.mongodb.ServerAddress;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 
 /**
- * A factory for streams.
- *
- * @since 3.0
- * @deprecated There is no replacement for this interface.
+ * A factory of {@code StreamFactory} instances.
  */
-@Deprecated
-public interface StreamFactory {
+public interface StreamFactoryFactory {
+
     /**
-     * Create a Stream to the given address
+     * Create a {@code StreamFactory} with the given settings.
      *
-     * @param serverAddress the address
-     * @return the stream
+     * @param socketSettings the socket settings
+     * @param sslSettings the SSL settings
+     * @return a stream factory that will apply the given settins
      */
-    Stream create(ServerAddress serverAddress);
+    StreamFactory create(SocketSettings socketSettings, SslSettings sslSettings);
 }

@@ -33,7 +33,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
@@ -146,7 +146,7 @@ public abstract class AbstractUnifiedTest {
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @Nullable
-    protected StreamFactoryFactory getStreamFactoryFactory() {
+    protected TransportSettings getTransportSettings() {
         return null;
     }
 
@@ -253,9 +253,9 @@ public abstract class AbstractUnifiedTest {
                 builder.writeConcern(new WriteConcern(clientOptions.getNumber("w").intValue()));
             }
         }
-        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactory();
-        if (streamFactoryFactory != null) {
-            builder.streamFactoryFactory(streamFactoryFactory);
+        TransportSettings transportSettings = getTransportSettings();
+        if (transportSettings != null) {
+            builder.transportSettings(transportSettings);
         }
         mongoClient = createMongoClient(builder.build());
 

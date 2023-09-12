@@ -20,7 +20,7 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractMainTransactionsTest;
 import com.mongodb.client.MongoClient;
-import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -35,7 +35,6 @@ import java.util.Set;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT_PROVIDER;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.assertContextPassedThrough;
 
-@SuppressWarnings("deprecation")
 public class MainTransactionsTest extends AbstractMainTransactionsTest {
     public static final Set<String> SESSION_CLOSE_TIMING_SENSITIVE_TESTS = new HashSet<>(Collections.singletonList(
             "implicit abort"));
@@ -61,8 +60,8 @@ public class MainTransactionsTest extends AbstractMainTransactionsTest {
     }
 
     @Override
-    protected StreamFactoryFactory getStreamFactoryFactory() {
-        return ClusterFixture.getOverriddenStreamFactoryFactory();
+    protected TransportSettings getTransportSettings() {
+        return ClusterFixture.getOverriddenTransportSettings();
     }
 
     @Override

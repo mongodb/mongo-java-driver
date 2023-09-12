@@ -19,10 +19,9 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.TransportSettings;
-import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.oio.OioSocketChannel;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.assertions.Assertions.assertNull;
@@ -36,22 +35,12 @@ class StreamFactoryHelperTest {
         MongoClientSettings settings = MongoClientSettings.builder().build();
         assertNull(StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings));
     }
-
-    @Test
-    void streamFactoryFactoryIsEqualToSettingsStreamFactoryFactory() {
-        NettyStreamFactoryFactory streamFactoryFactory = NettyStreamFactoryFactory.builder().build();
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .streamFactoryFactory(streamFactoryFactory)
-                .build();
-        assertEquals(streamFactoryFactory, StreamFactoryHelper.getStreamFactoryFactoryFromSettings(settings));
-    }
-
     @Test
     void streamFactoryFactoryIsDerivedFromTransportSettings() {
         NettyTransportSettings nettyTransportSettings = TransportSettings.nettyBuilder()
                 .eventLoopGroup(new NioEventLoopGroup())
                 .allocator(PooledByteBufAllocator.DEFAULT)
-                .socketChannelClass(OioSocketChannel.class)
+                .socketChannelClass(io.netty.channel.socket.oio.OioSocketChannel.class)
                 .build();
         MongoClientSettings settings = MongoClientSettings.builder()
                 .transportSettings(nettyTransportSettings)

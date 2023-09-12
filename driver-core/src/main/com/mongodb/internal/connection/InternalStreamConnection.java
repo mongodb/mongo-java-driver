@@ -39,8 +39,6 @@ import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.Stream;
-import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.ResourceUtil;
 import com.mongodb.internal.VisibleForTesting;
@@ -94,7 +92,6 @@ import static java.util.Arrays.asList;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @NotThreadSafe
-@SuppressWarnings("deprecation")
 public class InternalStreamConnection implements InternalConnection {
 
     private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<>(asList(

@@ -27,7 +27,6 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.lang.Nullable;
@@ -41,7 +40,6 @@ import static com.mongodb.internal.event.EventListenerHelper.singleServerListene
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
-@SuppressWarnings("deprecation")
 public class LoadBalancedClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;

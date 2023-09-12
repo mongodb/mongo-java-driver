@@ -31,9 +31,9 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.internal.connection.SocketStreamFactory;
+import com.mongodb.internal.connection.StreamFactory;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
@@ -225,7 +225,6 @@ public final class MongoClientImpl implements MongoClient {
                 settings.getDnsClient(), settings.getInetAddressResolver());
     }
 
-    @SuppressWarnings("deprecation")
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
         StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings);
         SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
