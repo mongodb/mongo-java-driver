@@ -20,7 +20,6 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.MongoInternalException;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
@@ -125,8 +124,8 @@ public final class MongoClients {
                 return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
             }
         } else {
-            return createMongoClient(settings, mongoDriverInformation, getStreamFactory(settings, false),
-                    getStreamFactory(settings, true), null);
+            return createMongoClient(settings, mongoDriverInformation, getStreamFactory(streamFactoryFactory, settings, false),
+                    getStreamFactory(streamFactoryFactory, settings, true), null);
         }
     }
 
@@ -184,11 +183,8 @@ public final class MongoClients {
         return createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory, null);
     }
 
-    private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
-        StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
-        if (streamFactoryFactory == null) {
-            throw new MongoInternalException("should not happen");
-        }
+    private static StreamFactory getStreamFactory(final StreamFactoryFactory streamFactoryFactory, final MongoClientSettings settings,
+            final boolean isHeartbeat) {
         return streamFactoryFactory.create(isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings(),
                 settings.getSslSettings());
     }

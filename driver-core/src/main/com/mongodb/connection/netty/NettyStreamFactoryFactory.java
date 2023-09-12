@@ -48,7 +48,6 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  * @deprecated Prefer {@link NettyTransportSettings}, creatable via {@link TransportSettings#nettyBuilder()} and applied via
  * {@link com.mongodb.MongoClientSettings.Builder#transportSettings(TransportSettings)}
  */
-@SuppressWarnings("deprecation")
 @Deprecated
 public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
@@ -73,13 +72,11 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    @Nullable
     Class<? extends SocketChannel> getSocketChannelClass() {
         return socketChannelClass;
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    @Nullable
     ByteBufAllocator getAllocator() {
         return allocator;
     }
@@ -103,8 +100,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         private SslContext sslContext;
 
         private Builder() {
-            allocator(ByteBufAllocator.DEFAULT);
-            socketChannelClass(NioSocketChannel.class);
         }
 
         /**
@@ -238,13 +233,9 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
     }
 
     private NettyStreamFactoryFactory(final Builder builder) {
-        allocator = builder.allocator;
-        socketChannelClass = builder.socketChannelClass;
-        if (builder.eventLoopGroup != null) {
-            eventLoopGroup = builder.eventLoopGroup;
-        } else {
-            eventLoopGroup = new NioEventLoopGroup();
-        }
+        allocator = builder.allocator == null ? ByteBufAllocator.DEFAULT : builder.allocator;
+        socketChannelClass = builder.socketChannelClass == null ? NioSocketChannel.class : builder.socketChannelClass;
+        eventLoopGroup = builder.eventLoopGroup == null ? new NioEventLoopGroup() : builder.eventLoopGroup;
         sslContext = builder.sslContext;
     }
 }
