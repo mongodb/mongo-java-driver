@@ -44,10 +44,6 @@ public final class NettyTransportSettings extends TransportSettings {
     private final ByteBufAllocator allocator;
     private final SslContext sslContext;
 
-    /**
-     * Gets a builder for an instance of {@code NettyStreamFactoryFactory}.
-     * @return the builder
-     */
     static Builder builder() {
         return new Builder();
     }
@@ -140,8 +136,9 @@ public final class NettyTransportSettings extends TransportSettings {
         }
 
         /**
-         * Build an instance of {@code NettyStreamFactoryFactory}.
-         * @return factory of the netty stream factory
+         * Build an instance of {@code NettyTransportSettings}.
+         *
+         * @return factory for {@code NettyTransportSettings}
          */
         public NettyTransportSettings build() {
             return new NettyTransportSettings(this);

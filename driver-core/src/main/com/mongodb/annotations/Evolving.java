@@ -18,6 +18,7 @@
 
 package com.mongodb.annotations;
 
+import org.bson.codecs.Codec;
 import org.bson.conversions.Bson;
 
 import java.lang.annotation.Documented;
@@ -47,6 +48,11 @@ import java.lang.annotation.Target;
  *   <tr>
  *     <td>Doing so allows/simplifies integrating user code with the API.</td>
  *     <td>{@link Bson}</td>
+ *     <td>Not applicable.</td>
+ *   </tr>
+ *   <tr>
+ *     <td>Doing so allows customizing API behavior.</td>
+ *     <td>{@link Codec}</td>
  *     <td>Not applicable.</td>
  *   </tr>
  *   <tr>
