@@ -512,6 +512,7 @@ public final class MongoClientSettings {
          *
          * @param transportSettings the transport settings
          * @return this
+         * @see #getTransportSettings()
          */
         public Builder transportSettings(final TransportSettings transportSettings) {
             this.transportSettings = notNull("transportSettings", transportSettings);

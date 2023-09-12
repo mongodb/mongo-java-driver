@@ -32,7 +32,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * A {@code TransportSettings} implementation for a <a href="http://netty.io/">Netty</a>-based transport implementation.
+ * {@code TransportSettings} for a <a href="http://netty.io/">Netty</a>-based transport implementation.
  *
  * @since 4.11
  */
@@ -53,7 +53,7 @@ public final class NettyTransportSettings extends TransportSettings {
     }
 
     /**
-     * A builder for an instance of {@code NettyStreamFactoryFactory}.
+     * A builder for an instance of {@link NettyTransportSettings}.
      */
     public static final class Builder {
         private ByteBufAllocator allocator;
@@ -69,6 +69,7 @@ public final class NettyTransportSettings extends TransportSettings {
          *
          * @param allocator the allocator to use for ByteBuf instances
          * @return this
+         * @see #getAllocator()
          */
         public Builder allocator(final ByteBufAllocator allocator) {
             this.allocator = notNull("allocator", allocator);
@@ -80,6 +81,7 @@ public final class NettyTransportSettings extends TransportSettings {
          *
          * @param socketChannelClass the socket channel class
          * @return this
+         * @see #getSocketChannelClass()
          */
         public Builder socketChannelClass(final Class<? extends SocketChannel> socketChannelClass) {
             this.socketChannelClass = notNull("socketChannelClass", socketChannelClass);
@@ -94,6 +96,7 @@ public final class NettyTransportSettings extends TransportSettings {
          *
          * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
          * @return this
+         * @see #getEventLoopGroup()
          */
         public Builder eventLoopGroup(final EventLoopGroup eventLoopGroup) {
             this.eventLoopGroup = notNull("eventLoopGroup", eventLoopGroup);
@@ -125,6 +128,7 @@ public final class NettyTransportSettings extends TransportSettings {
          *
          * @param sslContext The Netty {@link SslContext}, which must be created via {@linkplain SslContextBuilder#forClient()}.
          * @return {@code this}.
+         * @see #getSslContext()
          */
         public Builder sslContext(final SslContext sslContext) {
             this.sslContext = notNull("sslContext", sslContext);

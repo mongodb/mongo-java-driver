@@ -28,9 +28,9 @@ import com.mongodb.annotations.Sealed;
 @Immutable
 public abstract class TransportSettings {
     /**
-     * A builder for NettySettings.
+     * A builder for {@link NettyTransportSettings}.
      *
-     * @return a builder for NettySettings
+     * @return a builder for {@link NettyTransportSettings}
      */
     public static NettyTransportSettings.Builder nettyBuilder() {
         return NettyTransportSettings.builder();
