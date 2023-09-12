@@ -7,11 +7,9 @@ import com.mongodb.MongoCredential
 import com.mongodb.MongoSecurityException
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactory
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.internal.authentication.AwsCredentialHelper
 import org.bson.BsonDocument
 import org.bson.BsonString

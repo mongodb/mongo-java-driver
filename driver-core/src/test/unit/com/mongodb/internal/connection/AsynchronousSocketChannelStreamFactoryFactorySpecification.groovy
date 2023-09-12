@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection
+package com.mongodb.internal.connection
 
 import com.mongodb.ServerAddress
-import com.mongodb.internal.connection.AsynchronousSocketChannelStream
+import com.mongodb.connection.SocketSettings
+import com.mongodb.connection.SslSettings
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.nio.channels.AsynchronousChannelGroup
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -54,6 +56,6 @@ class AsynchronousSocketChannelStreamFactoryFactorySpecification extends Specifi
     ExecutorService service = Executors.newFixedThreadPool(1)
     static final DEFAULT_FACTORY = AsynchronousSocketChannelStreamFactoryFactory.builder().build()
     static final CUSTOM_FACTORY = AsynchronousSocketChannelStreamFactoryFactory.builder()
-            .group(java.nio.channels.AsynchronousChannelGroup.withThreadPool(Executors.newFixedThreadPool(5)))
+            .group(AsynchronousChannelGroup.withThreadPool(Executors.newFixedThreadPool(5)))
             .build()
 }

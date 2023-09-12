@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty
+package com.mongodb.internal.connection.netty
 
-import com.mongodb.internal.connection.netty.NettyByteBuf
+
 import io.netty.buffer.ByteBufAllocator
 import org.bson.ByteBufNIO
 import spock.lang.Specification

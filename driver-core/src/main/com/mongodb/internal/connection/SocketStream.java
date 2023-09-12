@@ -21,11 +21,9 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.Stream;
 import org.bson.ByteBuf;
 
 import javax.net.SocketFactory;
@@ -51,7 +49,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@SuppressWarnings("deprecation")
 public class SocketStream implements Stream {
     private final ServerAddress address;
     private final SocketSettings settings;

@@ -17,11 +17,8 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
@@ -34,7 +31,6 @@ import java.util.concurrent.Callable;
 // https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
 // specification tests
 @RunWith(Parameterized.class)
-@SuppressWarnings("deprecation")
 public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
     private static final Logger LOGGER = Loggers.getLogger(ConnectionPoolAsyncTest.class.getSimpleName());
 

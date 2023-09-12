@@ -25,7 +25,6 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.binding.StaticBindingContext;
 import com.mongodb.internal.selector.ServerAddressSelector;

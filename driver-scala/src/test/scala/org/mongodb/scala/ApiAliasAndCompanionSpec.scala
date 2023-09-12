@@ -178,35 +178,17 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
     diff(local, wrapped) shouldBe empty
   }
 
-  it should "mirror parts of com.mongodb.connection in org.mongdb.scala.connection" in {
+  it should "mirror parts of com.mongodb.connection in org.mongodb.scala.connection" in {
     val packageName = "com.mongodb.connection"
     val javaExclusions = Set(
       "AsyncCompletionHandler",
-      "AsyncConnection",
-      "AsynchronousSocketChannelStreamFactory",
-      "BufferProvider",
-      "Builder",
-      "BulkWriteBatchCombiner",
-      "ChangeEvent",
-      "ChangeListener",
-      "Cluster",
       "ClusterDescription",
-      "ClusterFactory",
       "ClusterId",
-      "Connection",
       "ConnectionDescription",
       "ConnectionId",
-      "DefaultClusterFactory",
-      "DefaultRandomStringGenerator",
-      "QueryResult",
-      "RandomStringGenerator",
-      "Server",
       "ServerDescription",
       "ServerId",
       "ServerVersion",
-      "SocketStreamFactory",
-      "Stream",
-      "SplittablePayload",
       "TopologyVersion"
     )
 

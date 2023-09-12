@@ -28,7 +28,6 @@ import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.internal.inject.SameObjectProvider
 import org.bson.types.ObjectId
 

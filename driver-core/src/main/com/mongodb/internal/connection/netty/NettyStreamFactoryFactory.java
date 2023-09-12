@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty;
+package com.mongodb.internal.connection.netty;
 
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.connection.TransportSettings;
+import com.mongodb.internal.connection.StreamFactory;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import io.netty.buffer.ByteBufAllocator;
@@ -43,12 +42,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * A {@code StreamFactoryFactory} implementation for <a href='http://netty.io/'>Netty</a>-based streams.
- *
- * @since 3.1
- * @deprecated Prefer {@link NettyTransportSettings}, creatable via {@link TransportSettings#nettyBuilder()} and applied via
- * {@link com.mongodb.MongoClientSettings.Builder#transportSettings(TransportSettings)}
  */
-@Deprecated
 public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     private final EventLoopGroup eventLoopGroup;
@@ -60,7 +54,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
     /**
      * Gets a builder for an instance of {@code NettyStreamFactoryFactory}.
      * @return the builder
-     * @since 3.3
      */
     public static Builder builder() {
         return new Builder();
@@ -89,8 +82,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     /**
      * A builder for an instance of {@code NettyStreamFactoryFactory}.
-     *
-     * @since 3.3
      */
     public static final class Builder {
         private ByteBufAllocator allocator;
@@ -178,8 +169,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
          *
          * @param sslContext The Netty {@link SslContext}, which must be created via {@linkplain SslContextBuilder#forClient()}.
          * @return {@code this}.
-         *
-         * @since 4.3
          */
         public Builder sslContext(final SslContext sslContext) {
             this.sslContext = notNull("sslContext", sslContext);

@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
-import com.mongodb.internal.connection.PowerOfTwoBufferPool;
-import com.mongodb.internal.connection.SocketStream;
-import com.mongodb.internal.connection.UnixSocketChannelStream;
-import com.mongodb.lang.Nullable;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -33,15 +31,10 @@ import static java.util.Optional.ofNullable;
 
 /**
  * Factory for creating instances of {@code SocketStream}.
- *
- * @since 3.0
- * @deprecated There is no replacement for this class.
  */
-@Deprecated
 public class SocketStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;
-    private final SocketFactory socketFactory;
     private final BufferProvider bufferProvider = PowerOfTwoBufferPool.DEFAULT;
 
     /**
@@ -51,20 +44,8 @@ public class SocketStreamFactory implements StreamFactory {
      * @param sslSettings whether SSL is enabled.
      */
     public SocketStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
-        this(settings, sslSettings, null);
-    }
-
-    /**
-     * Creates a new factory with the given settings for connecting to servers and a factory for creating connections.
-     *
-     * @param settings      the SocketSettings for connecting to a MongoDB server
-     * @param sslSettings   the SSL for connecting to a MongoDB server
-     * @param socketFactory a SocketFactory for creating connections to servers.
-     */
-    public SocketStreamFactory(final SocketSettings settings, final SslSettings sslSettings, @Nullable final SocketFactory socketFactory) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
-        this.socketFactory = socketFactory;
     }
 
     @Override
@@ -76,9 +57,7 @@ public class SocketStreamFactory implements StreamFactory {
             }
             stream = new UnixSocketChannelStream((UnixServerAddress) serverAddress, settings, sslSettings, bufferProvider);
         } else {
-            if (socketFactory != null) {
-                stream = new SocketStream(serverAddress, settings, sslSettings, socketFactory, bufferProvider);
-            } else if (sslSettings.isEnabled()) {
+            if (sslSettings.isEnabled()) {
                 stream = new SocketStream(serverAddress, settings, sslSettings, getSslContext().getSocketFactory(), bufferProvider);
             } else {
                 stream = new SocketStream(serverAddress, settings, sslSettings, SocketFactory.getDefault(), bufferProvider);

@@ -23,7 +23,6 @@ import com.mongodb.SubjectProvider
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.SocketStreamFactory
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty;
+package com.mongodb.internal.connection.netty;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
@@ -27,8 +27,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.Stream;
-import com.mongodb.internal.connection.netty.NettyByteBuf;
+import com.mongodb.internal.connection.Stream;
 import com.mongodb.lang.Nullable;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -108,7 +107,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * itself in the example above. However, there are no concurrent pending readers because the second operation
  * is invoked after the first operation has completed reading despite the method has not returned yet.
  */
-@SuppressWarnings("deprecation")
 final class NettyStream implements Stream {
     private static final byte NO_SCHEDULE_TIME = 0;
     private final ServerAddress address;
