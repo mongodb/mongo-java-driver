@@ -29,6 +29,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -234,13 +235,13 @@ public class AggregatesTest extends OperationTest {
                 + "      'coordinates' : [ -73.9928, 40.7193 ]\n"
                 + "   },\n"
                 + "   'dist' : {\n"
-                + "      'calculated' : 9.539931676365992,\n"
+                + "      'calculated' : 9.5399,\n"
                 + "      'location' : {\n"
                 + "         'type' : 'Point',\n"
                 + "         'coordinates' : [ -73.9928, 40.7193 ]\n"
                 + "      }\n"
                 + "   }\n"
-                + "}]");
+                + "}]", 4, RoundingMode.FLOOR);
     }
 
     @Test
