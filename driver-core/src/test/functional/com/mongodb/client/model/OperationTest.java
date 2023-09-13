@@ -23,6 +23,8 @@ import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonDouble;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
@@ -31,9 +33,12 @@ import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget;
@@ -108,6 +113,37 @@ public abstract class OperationTest {
         List<BsonDocument> expectedResults = parseToList(expectedResultsAsString);
         List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
         assertEquals(expectedResults, results);
+    }
+
+    protected void assertResults(final List<Bson> pipeline, final String expectedResultsAsString,
+            final int scale, final RoundingMode roundingMode) {
+        List<BsonDocument> expectedResults = parseToList(expectedResultsAsString);
+        List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
+        assertEquals(adjustScale(expectedResults, scale, roundingMode), adjustScale(results, scale, roundingMode));
+    }
+
+    private static List<BsonDocument> adjustScale(final List<BsonDocument> documents, final int scale, final RoundingMode roundingMode) {
+        documents.replaceAll(value -> adjustScale(value, scale, roundingMode).asDocument());
+        return documents;
+    }
+
+    private static BsonValue adjustScale(final BsonValue value, final int scale, final RoundingMode roundingMode) {
+        if (value.isDouble()) {
+            double scaledDoubleValue = BigDecimal.valueOf(value.asDouble().doubleValue())
+                    .setScale(scale, roundingMode)
+                    .doubleValue();
+            return new BsonDouble(scaledDoubleValue);
+        } else if (value.isDocument()) {
+            for (Map.Entry<String, BsonValue> entry : value.asDocument().entrySet()) {
+                entry.setValue(adjustScale(entry.getValue(), scale, roundingMode));
+            }
+        } else if (value.isArray()) {
+            BsonArray array = value.asArray();
+            for (int i = 0; i < array.size(); i++) {
+                array.set(i, adjustScale(array.get(i), scale, roundingMode));
+            }
+        }
+        return value;
     }
 
     protected List<Object> aggregateWithWindowFields(@Nullable final Object partitionBy,
