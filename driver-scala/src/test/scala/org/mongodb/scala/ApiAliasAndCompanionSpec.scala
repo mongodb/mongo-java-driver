@@ -198,7 +198,6 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "ConnectionId",
       "DefaultClusterFactory",
       "DefaultRandomStringGenerator",
-      "NettyTransportSettings",
       "QueryResult",
       "RandomStringGenerator",
       "Server",
@@ -208,8 +207,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "SocketStreamFactory",
       "Stream",
       "SplittablePayload",
-      "TopologyVersion",
-      "TransportSettings"
+      "TopologyVersion"
     )
 
     val filters = FilterBuilder.parse("-com.mongodb.connection.netty.*")
