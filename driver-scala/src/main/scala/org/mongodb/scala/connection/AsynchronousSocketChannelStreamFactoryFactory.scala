@@ -26,6 +26,7 @@ import com.mongodb.connection.{
  * @see java.nio.channels.AsynchronousSocketChannel
  * @since 1.0
  */
+@deprecated("For removal in 5.0", "4.11.0")
 object AsynchronousSocketChannelStreamFactoryFactory {
 
   /**

@@ -16,27 +16,19 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.netty.{ NettyStreamFactoryFactory => JNettyStreamFactoryFactory }
+import com.mongodb.connection.{ TransportSettings => JTransportSettings }
 
 /**
- * A `StreamFactoryFactory` implementation for <a href='http://netty.io/'>Netty</a>-based streams.
+ * An immutable class representing transport settings used for connections to a MongoDB server.
  *
- * @since 1.0
+ * @since 4.11
  */
-@deprecated("For removal in 5.0", "4.11.0")
-object NettyStreamFactoryFactory {
-  def apply(): StreamFactoryFactory = JNettyStreamFactoryFactory.builder().build()
+object TransportSettings {
 
   /**
-   * Create a builder for Netty-based streams
+   * Creates a builder for NettyTransportSettings.
    *
-   * @return the builder
-   * @since 2.2
+   * @return a new Builder for creating NettyTransportSettings.
    */
-  def builder(): Builder = JNettyStreamFactoryFactory.builder()
-
-  /**
-   * NettyStreamFactoryFactory builder type
-   */
-  type Builder = JNettyStreamFactoryFactory.Builder
+  def nettyBuilder(): NettyTransportSettings.Builder = JTransportSettings.nettyBuilder()
 }

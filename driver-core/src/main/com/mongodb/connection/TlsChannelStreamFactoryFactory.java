@@ -57,7 +57,9 @@ import static java.util.Optional.ofNullable;
  * A {@code StreamFactoryFactory} that supports TLS/SSL.  The implementation supports asynchronous usage.
  *
  * @since 3.10
+ * @deprecated There is no replacement for this class.
  */
+@Deprecated
 public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Closeable {
 
     private static final Logger LOGGER = Loggers.getLogger("connection.tls");

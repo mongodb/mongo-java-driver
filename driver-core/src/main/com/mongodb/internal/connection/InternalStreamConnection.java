@@ -94,6 +94,7 @@ import static java.util.Arrays.asList;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @NotThreadSafe
+@SuppressWarnings("deprecation")
 public class InternalStreamConnection implements InternalConnection {
 
     private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<>(asList(

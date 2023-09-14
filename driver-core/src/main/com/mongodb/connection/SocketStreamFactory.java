@@ -35,7 +35,9 @@ import static java.util.Optional.ofNullable;
  * Factory for creating instances of {@code SocketStream}.
  *
  * @since 3.0
+ * @deprecated There is no replacement for this class.
  */
+@Deprecated
 public class SocketStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;

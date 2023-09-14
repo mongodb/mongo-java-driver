@@ -50,6 +50,7 @@ import static java.util.Collections.singletonList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@SuppressWarnings("deprecation")
 public final class DefaultClusterFactory {
 
     public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,

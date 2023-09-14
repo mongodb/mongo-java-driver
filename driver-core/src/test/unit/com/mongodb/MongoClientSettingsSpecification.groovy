@@ -23,6 +23,7 @@ import com.mongodb.connection.ProxySettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.connection.TransportSettings
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import com.mongodb.event.CommandListener
 import com.mongodb.spi.dns.DnsClient
@@ -57,6 +58,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.socketSettings.proxySettings == ProxySettings.builder().build()
         settings.heartbeatSocketSettings == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).build()
         settings.serverSettings == ServerSettings.builder().build()
+        settings.transportSettings == null
         settings.streamFactoryFactory == null
         settings.compressorList == []
         settings.credential == null
@@ -97,6 +99,11 @@ class MongoClientSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
+        builder.transportSettings(null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
         builder.streamFactoryFactory(null)
         then:
         thrown(IllegalArgumentException)
@@ -119,6 +126,7 @@ class MongoClientSettingsSpecification extends Specification {
 
     def 'should build with set configuration'() {
         given:
+        def transportSettings = TransportSettings.nettyBuilder().build()
         def streamFactoryFactory = NettyStreamFactoryFactory.builder().build()
         def credential = MongoCredential.createMongoX509Credential('test')
         def codecRegistry = Stub(CodecRegistry)
@@ -145,6 +153,7 @@ class MongoClientSettingsSpecification extends Specification {
                         builder.applySettings(clusterSettings)
                     }
                 })
+                .transportSettings(transportSettings)
                 .streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
                 .uuidRepresentation(UuidRepresentation.STANDARD)
@@ -166,6 +175,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getCodecRegistry() == codecRegistry
         settings.getCredential() == credential
         settings.getClusterSettings() == clusterSettings
+        settings.getTransportSettings() == transportSettings
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
         settings.getUuidRepresentation() == UuidRepresentation.STANDARD
@@ -525,7 +535,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'heartbeatConnectTimeoutMS', 'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'loggerSettingsBuilder',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
-                        'streamFactoryFactory', 'uuidRepresentation', 'writeConcern']
+                        'streamFactoryFactory', 'transportSettings', 'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected
@@ -540,7 +550,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'applyToSslSettings', 'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList',
                         'compressorList', 'contextProvider', 'credential', 'dnsClient', 'heartbeatConnectTimeoutMS',
                         'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'readConcern', 'readPreference', 'retryReads', 'retryWrites',
-                        'serverApi', 'streamFactoryFactory', 'uuidRepresentation', 'writeConcern']
+                        'serverApi', 'streamFactoryFactory', 'transportSettings', 'uuidRepresentation', 'writeConcern']
         then:
         actual == expected
     }

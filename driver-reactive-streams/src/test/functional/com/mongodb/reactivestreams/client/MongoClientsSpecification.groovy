@@ -16,11 +16,13 @@
 
 package com.mongodb.reactivestreams.client
 
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
+import com.mongodb.connection.TransportSettings
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl
 import org.bson.Document
 import reactor.core.publisher.Mono
@@ -212,5 +214,22 @@ class MongoClientsSpecification extends FunctionalSpecification {
         'mongodb://localhost'                       | []
         'mongodb://localhost/?compressors=zlib'     | [MongoCompressor.createZlibCompressor()]
         'mongodb://localhost/?compressors=zstd'     | [MongoCompressor.createZstdCompressor()]
+    }
+
+    def 'should create client with transport settings'() {
+        given:
+        def nettySettings = TransportSettings.nettyBuilder().build()
+        def settings = MongoClientSettings.builder()
+                .transportSettings(nettySettings)
+                .build()
+
+        when:
+        def client = MongoClients.create(settings)
+
+        then:
+        true
+
+        cleanup:
+        client?.close()
     }
 }

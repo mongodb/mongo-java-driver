@@ -36,7 +36,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A StreamFactory for Streams based on <a href='http://netty.io/'>Netty</a> 4.x.
  *
  * @since 3.0
+ * @deprecated there is no replacement for this class
  */
+@SuppressWarnings("deprecation")
+@Deprecated
 public class NettyStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;

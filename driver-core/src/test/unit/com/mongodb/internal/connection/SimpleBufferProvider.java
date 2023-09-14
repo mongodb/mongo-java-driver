@@ -22,6 +22,7 @@ import org.bson.ByteBufNIO;
 
 import java.nio.ByteBuffer;
 
+@SuppressWarnings("deprecation")
 public class SimpleBufferProvider implements BufferProvider {
     @Override
     public ByteBuf getBuffer(final int size) {
