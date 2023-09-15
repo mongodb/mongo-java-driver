@@ -17,29 +17,20 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
-import com.mongodb.lang.Nullable;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class StreamFactoryHelper {
-    @Nullable
-    public static StreamFactoryFactory getStreamFactoryFactoryFromSettings(final MongoClientSettings settings) {
-        StreamFactoryFactory streamFactoryFactory = null;
-        TransportSettings transportSettings = settings.getTransportSettings();
-        if (transportSettings != null) {
-            if (transportSettings instanceof NettyTransportSettings) {
-                streamFactoryFactory =
-                        NettyStreamFactoryFactory.builder().applySettings((NettyTransportSettings) transportSettings).build();
-            } else {
-                throw new MongoClientException("Unsupported transport settings: " + transportSettings.getClass().getName());
-            }
+    public static StreamFactoryFactory getStreamFactoryFactoryFromSettings(final TransportSettings transportSettings) {
+        if (transportSettings instanceof NettyTransportSettings) {
+            return NettyStreamFactoryFactory.builder().applySettings((NettyTransportSettings) transportSettings).build();
+        } else {
+            throw new MongoClientException("Unsupported transport settings: " + transportSettings.getClass().getName());
         }
-        return streamFactoryFactory;
     }
 
     private StreamFactoryHelper() {

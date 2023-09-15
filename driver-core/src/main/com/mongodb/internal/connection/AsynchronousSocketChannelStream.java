@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.LinkedList;
@@ -44,14 +43,12 @@ import static com.mongodb.assertions.Assertions.isTrue;
 public final class AsynchronousSocketChannelStream extends AsynchronousChannelStream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
-    private final AsynchronousChannelGroup group;
 
     public AsynchronousSocketChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
-                                          final PowerOfTwoBufferPool bufferProvider, final AsynchronousChannelGroup group) {
+                                          final PowerOfTwoBufferPool bufferProvider) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
         this.settings = settings;
-        this.group = group;
     }
 
     @SuppressWarnings("deprecation")
@@ -77,7 +74,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
             SocketAddress socketAddress = socketAddressQueue.poll();
 
             try {
-                AsynchronousSocketChannel attemptConnectionChannel = AsynchronousSocketChannel.open(group);
+                AsynchronousSocketChannel attemptConnectionChannel = AsynchronousSocketChannel.open();
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {
@@ -95,10 +92,6 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
                 handler.failed(t);
             }
         }
-    }
-
-    public AsynchronousChannelGroup getGroup() {
-        return group;
     }
 
     private class OpenCompletionHandler implements CompletionHandler<Void, Object>  {
