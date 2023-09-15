@@ -19,59 +19,14 @@ package com.mongodb.internal.connection;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 
-import java.nio.channels.AsynchronousChannelGroup;
-
 /**
  * A {@code StreamFactoryFactory} implementation for AsynchronousSocketChannel-based streams.
  *
  * @see java.nio.channels.AsynchronousSocketChannel
  */
 public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
-    private final AsynchronousChannelGroup group;
-
-    /**
-     * Gets a builder for an instance of {@code AsynchronousSocketChannelStreamFactoryFactory}.
-     * @return the builder
-     * @since 3.6
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    /**
-     * A builder for an instance of {@code AsynchronousSocketChannelStreamFactoryFactory}.
-     *
-     * @since 3.6
-     */
-    public static final class Builder {
-        private AsynchronousChannelGroup group;
-
-        /**
-         * Sets the {@code AsynchronousChannelGroup}
-         *
-         * @param group the {@code AsynchronousChannelGroup}
-         * @return this
-         */
-        public Builder group(final AsynchronousChannelGroup group) {
-            this.group = group;
-            return this;
-        }
-
-        /**
-         * Build an instance of {@code AsynchronousSocketChannelStreamFactoryFactory}.
-         * @return the AsynchronousSocketChannelStreamFactoryFactory
-         */
-        public AsynchronousSocketChannelStreamFactoryFactory build() {
-            return new AsynchronousSocketChannelStreamFactoryFactory(this);
-        }
-    }
-
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings,  group);
-    }
-
-    private AsynchronousSocketChannelStreamFactoryFactory(final Builder builder) {
-        group = builder.group;
+        return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
     }
 }
