@@ -358,7 +358,7 @@ final class AggregatesSearchIntegrationTest {
                 arguments(
                         "alternate analyzer (`multi` field path)",
                         stageCreator(
-                                text(singleton(fieldPath("title").multi("keyword")), singleton("The Cheat")),
+                                text(singleton(fieldPath("title").multi("keyword")), singleton("Top Gun")),
                                 searchOptions().count(total())
                         ),
                         MFLIX_MOVIES_NS,
@@ -366,7 +366,7 @@ final class AggregatesSearchIntegrationTest {
                                 new Accessory(
                                         emptyList(),
                                         Asserters.firstResult((doc, msgSupplier) -> assertEquals(
-                                                "The Cheat", doc.getString("title").getValue(), msgSupplier))
+                                                "Top Gun", doc.getString("title").getValue(), msgSupplier))
                                 ),
                                 new Accessory(
                                         emptyList(),
