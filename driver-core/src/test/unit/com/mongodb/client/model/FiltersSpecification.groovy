@@ -72,9 +72,9 @@ class FiltersSpecification extends Specification {
 
     def 'eq should render without $eq'() {
         expect:
-        toBson(eq('x', 1)) == parse('{x : 1}')
-        toBson(eq('x', null)) == parse('{x : null}')
-        toBson(eq(1)) == parse('{_id : 1}')
+        toBson(eq('x', 1)) == parse('{x : {$eq: 1}}')
+        toBson(eq('x', null)) == parse('{x : {$eq: null}}')
+        toBson(eq(1)) == parse('{_id : {$eq: 1}}')
     }
 
     def 'should render $ne'() {
@@ -89,13 +89,13 @@ class FiltersSpecification extends Specification {
         toBson(not(gt('x', 1))) == parse('{x : {$not: {$gt: 1}}}')
         toBson(not(regex('x', '^p.*'))) == parse('{x : {$not: /^p.*/}}')
 
-        toBson(not(and(gt('x', 1), eq('y', 20)))) == parse('{$not: {$and: [{x: {$gt: 1}}, {y: 20}]}}')
-        toBson(not(and(eq('x', 1), eq('x', 2)))) == parse('{$not: {$and: [{x: 1}, {x: 2}]}}')
-        toBson(not(and(Filters.in('x', 1, 2), eq('x', 3)))) == parse('{$not: {$and: [{x: {$in: [1, 2]}}, {x: 3}]}}')
+        toBson(not(and(gt('x', 1), eq('y', 20)))) == parse('{$not: {$and: [{x: {$gt: 1}}, {y: {$eq: 20}}]}}')
+        toBson(not(and(eq('x', 1), eq('x', 2)))) == parse('{$not: {$and: [{x: {$eq: 1}}, {x: {$eq: 2}}]}}')
+        toBson(not(and(Filters.in('x', 1, 2), eq('x', 3)))) == parse('{$not: {$and: [{x: {$in: [1, 2]}}, {x: {$eq: 3}}]}}')
 
-        toBson(not(or(gt('x', 1), eq('y', 20)))) == parse('{$not: {$or: [{x: {$gt: 1}}, {y: 20}]}}')
-        toBson(not(or(eq('x', 1), eq('x', 2)))) == parse('{$not: {$or: [{x: 1}, {x: 2}]}}')
-        toBson(not(or(Filters.in('x', 1, 2), eq('x', 3)))) == parse('{$not: {$or: [{x: {$in: [1, 2]}}, {x: 3}]}}')
+        toBson(not(or(gt('x', 1), eq('y', 20)))) == parse('{$not: {$or: [{x: {$gt: 1}}, {y: {$eq: 20}}]}}')
+        toBson(not(or(eq('x', 1), eq('x', 2)))) == parse('{$not: {$or: [{x: {$eq: 1}}, {x: {$eq: 2}}]}}')
+        toBson(not(or(Filters.in('x', 1, 2), eq('x', 3)))) == parse('{$not: {$or: [{x: {$in: [1, 2]}}, {x: {$eq: 3}}]}}')
 
         toBson(not(parse('{$in: [1]}'))) == parse('{$not: {$in: [1]}}')
 
@@ -106,8 +106,8 @@ class FiltersSpecification extends Specification {
 
     def 'should render $nor'() {
         expect:
-        toBson(nor(eq('price', 1))) == parse('{$nor : [{price: 1}]}')
-        toBson(nor(eq('price', 1), eq('sale', true))) == parse('{$nor : [{price: 1}, {sale: true}]}')
+        toBson(nor(eq('price', 1))) == parse('{$nor : [{price: {$eq: 1}}]}')
+        toBson(nor(eq('price', 1), eq('sale', true))) == parse('{$nor : [{price: {$eq: 1}}, {sale: {$eq: true}}]}')
     }
 
     def 'should render $gt'() {
@@ -144,8 +144,8 @@ class FiltersSpecification extends Specification {
 
     def 'should render $or'() {
         expect:
-        toBson(or([eq('x', 1), eq('y', 2)])) == parse('{$or : [{x : 1}, {y : 2}]}')
-        toBson(or(eq('x', 1), eq('y', 2))) == parse('{$or : [{x : 1}, {y : 2}]}')
+        toBson(or([eq('x', 1), eq('y', 2)])) == parse('{$or : [{x : {$eq: 1}}, {y : {$eq: 2}}]}')
+        toBson(or(eq('x', 1), eq('y', 2))) == parse('{$or : [{x : {$eq: 1}}, {y : {$eq: 2}}]}')
     }
 
     def 'and should render empty and using $and'() {
@@ -156,21 +156,21 @@ class FiltersSpecification extends Specification {
 
     def 'and should render using $and'() {
         expect:
-        toBson(and([eq('x', 1), eq('y', 2)])) == parse('{$and: [{x : 1}, {y : 2}]}')
-        toBson(and(eq('x', 1), eq('y', 2))) == parse('{$and: [{x : 1}, {y : 2}]}')
+        toBson(and([eq('x', 1), eq('y', 2)])) == parse('{$and: [{x : {$eq: 1}}, {y : {$eq: 2}}]}')
+        toBson(and(eq('x', 1), eq('y', 2))) == parse('{$and: [{x : {$eq: 1}}, {y : {$eq: 2}}]}')
     }
 
     def 'and should render $and with clashing keys'() {
         expect:
-        toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: 1}, {a: 2}]}')
+        toBson(and([eq('a', 1), eq('a', 2)])) == parse('{$and: [{a: {$eq: 1}}, {a: {$eq: 2}}]}')
     }
 
     def 'and should not flatten nested'() {
         expect:
         toBson(and([and([eq('a', 1), eq('b', 2)]), eq('c', 3)])) ==
-                parse('{$and: [{$and: [{a : 1}, {b : 2}]}, {c : 3}]}')
+                parse('{$and: [{$and: [{a : {$eq: 1}}, {b : {$eq: 2}}]}, {c : {$eq: 3}}]}')
         toBson(and([and([eq('a', 1), eq('a', 2)]), eq('c', 3)])) ==
-                parse('{$and:[{$and: [{a : 1}, {a : 2}]}, {c : 3}]} }')
+                parse('{$and:[{$and: [{a : {$eq: 1}}, {a : {$eq: 2}}]}, {c : {$eq: 3}}]} }')
         toBson(and([lt('a', 1), lt('b', 2)])) ==
                 parse('{$and: [{a : {$lt : 1}}, {b : {$lt : 2}}]}')
         toBson(and([lt('a', 1), lt('a', 2)])) ==
@@ -224,7 +224,7 @@ class FiltersSpecification extends Specification {
                 parse('{results : {$elemMatch : {$gte: 80, $lt: 85}}}')
 
         toBson(elemMatch('results', and(eq('product', 'xyz'), gt('score', 8)))) ==
-                parse('{ results : {$elemMatch : {$and: [{product : "xyz"}, {score : {$gt : 8}}]}}}')
+                parse('{ results : {$elemMatch : {$and: [{product : {$eq: "xyz"}}, {score : {$gt : 8}}]}}}')
     }
 
     def 'should render $in'() {
@@ -668,17 +668,17 @@ class FiltersSpecification extends Specification {
     def 'should render with iterable value'() {
         expect:
         toBson(eq('x', new Document())) == parse('''{
-                                                  x : {}
+                                                  x : {$eq: {}}
                                                }''')
 
         toBson(eq('x', [1, 2, 3])) == parse('''{
-                                                  x : [1, 2, 3]
+                                                  x : {$eq: [1, 2, 3]}
                                                }''')
     }
 
     def 'should create string representation for simple filter'() {
         expect:
-        eq('x', 1).toString() == 'Filter{fieldName=\'x\', value=1}'
+        eq('x', 1).toString() == 'Operator Filter{fieldName=\'x\', operator=\'$eq\', value=1}'
     }
 
     def 'should create string representation for regex filter'() {
@@ -694,10 +694,16 @@ class FiltersSpecification extends Specification {
 
     def 'should create string representation for compound filters'() {
         expect:
-        and(eq('x', 1), eq('y', 2)).toString() == 'And Filter{filters=[Filter{fieldName=\'x\', value=1}, Filter{fieldName=\'y\', value=2}]}'
-        or(eq('x', 1), eq('y', 2)).toString() == 'Or Filter{filters=[Filter{fieldName=\'x\', value=1}, Filter{fieldName=\'y\', value=2}]}'
-        nor(eq('x', 1), eq('y', 2)).toString() == 'Nor Filter{filters=[Filter{fieldName=\'x\', value=1}, Filter{fieldName=\'y\', value=2}]}'
-        not(eq('x', 1)).toString() == 'Not Filter{filter=Filter{fieldName=\'x\', value=1}}'
+        and(eq('x', 1), eq('y', 2)).toString() ==
+                'And Filter{filters=[Operator Filter{fieldName=\'x\', operator=\'$eq\', value=1}' +
+                ', Operator Filter{fieldName=\'y\', operator=\'$eq\', value=2}]}'
+        or(eq('x', 1), eq('y', 2)).toString() ==
+                'Or Filter{filters=[Operator Filter{fieldName=\'x\', operator=\'$eq\', value=1}' +
+                ', Operator Filter{fieldName=\'y\', operator=\'$eq\', value=2}]}'
+        nor(eq('x', 1), eq('y', 2)).toString() ==
+                'Nor Filter{filters=[Operator Filter{fieldName=\'x\', operator=\'$eq\', value=1}' +
+                ', Operator Filter{fieldName=\'y\', operator=\'$eq\', value=2}]}'
+        not(eq('x', 1)).toString() == 'Not Filter{filter=Operator Filter{fieldName=\'x\', operator=\'$eq\', value=1}}'
     }
 
     def 'should create string representation for geo filters'() {

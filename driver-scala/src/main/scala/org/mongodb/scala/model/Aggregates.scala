@@ -16,7 +16,9 @@
 
 package org.mongodb.scala.model
 
+import com.mongodb.annotations.Beta
 import com.mongodb.client.model.fill.FillOutputField
+import com.mongodb.client.model.search.FieldSearchPath
 
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
@@ -25,7 +27,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.densify.{ DensifyOptions, DensifyRange }
 import org.mongodb.scala.model.fill.FillOptions
 import org.mongodb.scala.model.geojson.Point
-import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions }
+import org.mongodb.scala.model.search.{ SearchCollector, SearchOperator, SearchOptions, VectorSearchOptions }
 
 /**
  * Builders for aggregation pipeline stages.
@@ -719,6 +721,54 @@ object Aggregates {
    */
   def searchMeta(collector: SearchCollector, options: SearchOptions): Bson =
     JAggregates.searchMeta(collector, options)
+
+  /**
+   * VAKOTODO
+   *
+   * @param queryVector
+   * @param path
+   * @param index
+   * @param numCandidates
+   * @param limit
+   * @return
+   * @see [[VAKOTODO \$vectorSearch]]
+   * @note Requires MongoDB 7.1 or greater
+   * @since 4.11
+   */
+  @Beta(Array(Beta.Reason.SERVER))
+  def vectorSearch(
+      path: FieldSearchPath,
+      queryVector: Iterable[java.lang.Double],
+      index: String,
+      numCandidates: Long,
+      limit: Long
+  ): Bson =
+    JAggregates.vectorSearch(path, queryVector.asJava, index, numCandidates, limit)
+
+  /**
+   * VAKOTODO
+   *
+   * @param queryVector
+   * @param path
+   * @param index
+   * @param numCandidates
+   * @param limit
+   * @param options
+   * @return
+   * @see [[VAKOTODO \$vectorSearch]]
+   * @note Requires MongoDB 7.1 or greater
+   * @since 4.11
+   */
+  @Beta(Array(Beta.Reason.SERVER))
+  def vectorSearch(
+      path: FieldSearchPath,
+      queryVector: Iterable[java.lang.Double],
+      index: String,
+      numCandidates: Long,
+      limit: Long,
+      options: VectorSearchOptions
+  ): Bson =
+    JAggregates.vectorSearch(path, queryVector.asJava, index, numCandidates, limit, options)
 
   /**
    * Creates an `\$unset` pipeline stage that removes/excludes fields from documents

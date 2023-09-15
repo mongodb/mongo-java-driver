@@ -41,6 +41,7 @@ import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchOperator.exists
 import org.mongodb.scala.model.search.SearchOptions.searchOptions
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
+import org.mongodb.scala.model.search.VectorSearchOptions.vectorSearchOptions
 import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
 
 class AggregatesSpec extends BaseSpec {
@@ -119,8 +120,10 @@ class AggregatesSpec extends BaseSpec {
   }
 
   it should "render $match" in {
-    toBson(`match`(Filters.eq("author", "dave"))) should equal(Document("""{ $match : { author : "dave" } }"""))
-    toBson(filter(Filters.eq("author", "dave"))) should equal(Document("""{ $match : { author : "dave" } }"""))
+    toBson(`match`(Filters.eq("author", "dave"))) should equal(
+      Document("""{ $match : { author : { $eq: "dave" } } }""")
+    )
+    toBson(filter(Filters.eq("author", "dave"))) should equal(Document("""{ $match : { author : { $eq: "dave" } } }"""))
   }
 
   it should "render $facet" in {
@@ -142,9 +145,9 @@ class AggregatesSpec extends BaseSpec {
       )
     ) should equal(
       Document(
-        """{$facet: { "Screen Sizes": [{$unwind: "$attributes"}, {$match: {"attributes.name": "screen size"}},
+        """{$facet: { "Screen Sizes": [{$unwind: "$attributes"}, {$match: {"attributes.name": {$eq: "screen size"}}},
             {$group: { _id: null, count: {$sum: 1} }}],
-      "Manufacturer": [ {$match: {"attributes.name": "manufacturer"}}, {$group: {_id: "$attributes.value", count: {$sum: 1}}},
+      "Manufacturer": [ {$match: {"attributes.name": {$eq: "manufacturer"}}}, {$group: {_id: "$attributes.value", count: {$sum: 1}}},
             {$sort: {count: -1}}, {$limit: 5}]}}"""
       )
     )
@@ -759,6 +762,57 @@ class AggregatesSpec extends BaseSpec {
           }
         }
       }""")
+    )
+  }
+
+  it should "render $vectorSearch" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName").multi("ignored"),
+        List(1.0d, 2.0d),
+        "indexName",
+        2,
+        1,
+        vectorSearchOptions()
+          .filter(Filters.ne("fieldName", "fieldValue"))
+      )
+    ) should equal(
+      Document(
+        """{
+        "$vectorSearch": {
+            "path": "fieldName",
+            "queryVector": [1.0, 2.0],
+            "index": "indexName",
+            "numCandidates": {"$numberLong": "2"},
+            "limit": {"$numberLong": "1"},
+            "filter": {"fieldName": {"$ne": "fieldValue"}}
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $vectorSearch with no options" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName").multi("ignored"),
+        List(1.0d, 2.0d),
+        "indexName",
+        2,
+        1
+      )
+    ) should equal(
+      Document(
+        """{
+        "$vectorSearch": {
+            "path": "fieldName",
+            "queryVector": [1.0, 2.0],
+            "index": "indexName",
+            "numCandidates": {"$numberLong": "2"},
+            "limit": {"$numberLong": "1"}
+        }
+      }"""
+      )
     )
   }
 

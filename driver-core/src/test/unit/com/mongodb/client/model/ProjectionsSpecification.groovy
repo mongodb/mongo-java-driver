@@ -63,7 +63,7 @@ class ProjectionsSpecification extends Specification {
     def 'elemMatch'() {
         expect:
         toBson(elemMatch('x', and(eq('y', 1), eq('z', 2)))) ==
-                parse('{x : {$elemMatch : {$and: [{y : 1}, {z : 2}]}}}')
+                parse('{x : {$elemMatch : {$and: [{y : {$eq: 1}}, {z : {$eq: 2}}]}}}')
     }
 
     def 'slice'() {
@@ -111,7 +111,8 @@ class ProjectionsSpecification extends Specification {
         expect:
         elemMatch('x', and(eq('y', 1), eq('z', 2))).toString() ==
                 'ElemMatch Projection{fieldName=\'x\', ' +
-                'filter=And Filter{filters=[Filter{fieldName=\'y\', value=1}, Filter{fieldName=\'z\', value=2}]}}'
+                'filter=And Filter{filters=[Operator Filter{fieldName=\'y\', operator=\'$eq\', value=1}' +
+                ', Operator Filter{fieldName=\'z\', operator=\'$eq\', value=2}]}}'
     }
 
     def 'should create string representation for fields'() {

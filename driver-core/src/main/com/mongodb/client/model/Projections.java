@@ -16,10 +16,12 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchCount;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchOptions;
+import com.mongodb.client.model.search.VectorSearchOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -194,6 +196,20 @@ public final class Projections {
      */
     public static Bson metaSearchScore(final String fieldName) {
         return meta(fieldName, "searchScore");
+    }
+
+    /**
+     * Creates a projection to the given field name of the vectorSearchScore,
+     * for use with {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions)}.
+     * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "vectorSearchScore"} as the second argument.
+     *
+     * @param fieldName the field name
+     * @return the projection
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @since 4.7
+     */
+    public static Bson metaVectorSearchScore(final String fieldName) {
+        return meta(fieldName, "vectorSearchScore");
     }
 
     /**

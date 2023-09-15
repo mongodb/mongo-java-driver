@@ -76,6 +76,7 @@ import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.Aggregates.vectorSearch
 import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
@@ -97,6 +98,7 @@ import static com.mongodb.client.model.search.SearchOperator.exists
 import static com.mongodb.client.model.search.SearchOptions.searchOptions
 import static com.mongodb.client.model.search.SearchPath.fieldPath
 import static com.mongodb.client.model.search.SearchPath.wildcardPath
+import static com.mongodb.client.model.search.VectorSearchOptions.vectorSearchOptions
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
@@ -241,7 +243,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should render $match'() {
         expect:
-        toBson(match(eq('author', 'dave'))) == parse('{ $match : { author : "dave" } }')
+        toBson(match(eq('author', 'dave'))) == parse('{ $match : { author : { $eq: "dave" } } }')
     }
 
     def 'should render $project'() {
@@ -314,7 +316,7 @@ class AggregatesSpecification extends Specification {
         parse('''{$facet: {
           "Screen Sizes": [
              {$unwind: "$attributes"},
-             {$match: {"attributes.name": "screen size"}},
+             {$match: {"attributes.name": {$eq: "screen size"}}},
              {$group: {
                  _id: null,
                  count: {$sum: 1}
@@ -322,7 +324,7 @@ class AggregatesSpecification extends Specification {
            ],
 
            "Manufacturer": [
-             {$match: {"attributes.name": "manufacturer"}},
+             {$match: {"attributes.name": {$eq: "manufacturer"}}},
              {$group: {_id: "$attributes.value", count: {$sum: 1}}},
              {$sort: {count: -1}}
              {$limit: 5}
@@ -351,7 +353,7 @@ class AggregatesSpecification extends Specification {
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
+            as: "socialNetwork", restrictSearchWithMatch : { "hobbies" : { $eq: "golf" } } } }''')
 
         // with maxDepth and depthField
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
@@ -363,7 +365,7 @@ class AggregatesSpecification extends Specification {
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", maxDepth: 1, depthField: "depth", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
+            as: "socialNetwork", maxDepth: 1, depthField: "depth", restrictSearchWithMatch : { "hobbies" : { $eq: "golf" } } } }''')
     }
 
     def 'should render $skip'() {
@@ -843,6 +845,58 @@ class AggregatesSpecification extends Specification {
                           "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
                         }
                     }
+                }
+        }''')
+    }
+
+    def 'should render $vectorSearch'() {
+        when:
+        BsonDocument vectorSearchDoc = toBson(
+                vectorSearch(
+                        fieldPath('fieldName').multi('ignored'),
+                        [1.0d, 2.0d],
+                        'indexName',
+                        2,
+                        1,
+                        vectorSearchOptions()
+                                .filter(Filters.ne("fieldName", "fieldValue"))
+
+                )
+        )
+
+        then:
+        vectorSearchDoc == parse('''{
+                "$vectorSearch": {
+                    "path": "fieldName",
+                    "queryVector": [1.0, 2.0],
+                    "index": "indexName",
+                    "numCandidates": {"$numberLong": "2"},
+                    "limit": {"$numberLong": "1"},
+                    "filter": {"fieldName": {"$ne": "fieldValue"}}
+                }
+        }''')
+    }
+
+    def 'should render $vectorSearch with no options'() {
+        when:
+        BsonDocument vectorSearchDoc = toBson(
+                vectorSearch(
+                        fieldPath('fieldName'),
+                        [1.0d, 2.0d],
+                        'indexName',
+                        2,
+                        1
+                )
+        )
+
+        then:
+        vectorSearchDoc == parse('''{
+                "$vectorSearch": {
+                    "path": "fieldName",
+                    "queryVector": [1.0, 2.0],
+                    "index": "indexName",
+                    "numCandidates": {"$numberLong": "2"},
+                    "limit": {"$numberLong": "1"}
                 }
         }''')
     }

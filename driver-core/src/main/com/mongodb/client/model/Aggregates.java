@@ -17,14 +17,17 @@
 package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.annotations.Beta;
 import com.mongodb.client.model.densify.DensifyOptions;
 import com.mongodb.client.model.densify.DensifyRange;
 import com.mongodb.client.model.fill.FillOptions;
 import com.mongodb.client.model.fill.FillOutputField;
 import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchOptions;
+import com.mongodb.client.model.search.VectorSearchOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -34,6 +37,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -47,6 +51,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
+import static com.mongodb.client.model.search.VectorSearchOptions.vectorSearchOptions;
 import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static java.util.Arrays.asList;
@@ -931,6 +936,80 @@ public final class Aggregates {
      */
     public static Bson searchMeta(final SearchCollector collector, final SearchOptions options) {
         return new SearchStage("$searchMeta", notNull("collector", collector), notNull("options", options));
+    }
+
+    /**
+     * VAKOTODO
+     * @param path
+     * @param queryVector
+     * @param index
+     * @param numCandidates
+     * @param limit
+     * @return
+     * @mongodb.atlas.manual / @mongodb.driver.dochub VAKOTODO
+     * @mongodb.server.release 7.1
+     * @since 4.11
+     */
+    @Beta(Beta.Reason.SERVER)
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final Iterable<Double> queryVector,
+            final String index,
+            final long numCandidates,
+            final long limit) {
+        return vectorSearch(notNull("path", path), notNull("queryVector", queryVector), notNull("index", index), numCandidates, limit,
+                vectorSearchOptions());
+    }
+
+    /**
+     * VAKOTODO
+     * @param queryVector
+     * @param path
+     * @param index
+     * @param numCandidates
+     * @param limit
+     * @param options
+     * @return
+     * @mongodb.atlas.manual / @mongodb.driver.dochub VAKOTODO
+     * @mongodb.server.release 7.1
+     * @since 4.11
+     */
+    @Beta(Beta.Reason.SERVER)
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final Iterable<Double> queryVector,
+            final String index,
+            final long numCandidates,
+            final long limit,
+            final VectorSearchOptions options) {
+        notNull("path", path);
+        notNull("queryVector", queryVector);
+        notNull("index", index);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                Document specificationDoc = new Document("path", path.toValue())
+                        .append("queryVector", queryVector)
+                        .append("index", index)
+                        .append("numCandidates", numCandidates)
+                        .append("limit", limit);
+                specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+                return new Document("$vectorSearch", specificationDoc).toBsonDocument(documentClass, codecRegistry);
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name=$vectorSearch"
+                        + ", field=" + queryVector
+                        + ", path=" + path
+                        + ", index=" + index
+                        + ", numCandidates=" + numCandidates
+                        + ", limit=" + limit
+                        + ", options=" + options
+                        + '}';
+            }
+        };
     }
 
     /**
