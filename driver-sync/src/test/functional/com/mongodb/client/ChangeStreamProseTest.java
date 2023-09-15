@@ -408,7 +408,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
 
     @Test
     public void test19SplitChangeStreamEvents() {
-        assumeTrue(serverVersionAtLeast(7, 0));
+        assumeTrue(serverVersionAtLeast(6, 0));
         collection.drop();
         database.createCollection(
                 getClass().getName(),
