@@ -41,8 +41,6 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,7 +62,7 @@ public final class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
     private final MongoClientSettings settings;
     private final OperationExecutor executor;
-    private final Closeable externalResourceCloser;
+    private final AutoCloseable externalResourceCloser;
     private final ServerSessionPool serverSessionPool;
     private final ClientSessionHelper clientSessionHelper;
     private final MongoOperationPublisher<Document> mongoOperationPublisher;
@@ -72,7 +70,7 @@ public final class MongoClientImpl implements MongoClient {
     private final AtomicBoolean closed;
 
     public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
-            @Nullable final Closeable externalResourceCloser) {
+            @Nullable final AutoCloseable externalResourceCloser) {
         this(settings, mongoDriverInformation, cluster, null, externalResourceCloser);
     }
 
@@ -82,7 +80,7 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
-                            @Nullable final OperationExecutor executor, @Nullable final Closeable externalResourceCloser) {
+                            @Nullable final OperationExecutor executor, @Nullable final AutoCloseable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
         this.serverSessionPool = new ServerSessionPool(cluster, settings.getServerApi());
@@ -146,7 +144,7 @@ public final class MongoClientImpl implements MongoClient {
             if (externalResourceCloser != null) {
                 try {
                     externalResourceCloser.close();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOGGER.warn("Exception closing resource", e);
                 }
             }

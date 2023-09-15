@@ -32,13 +32,13 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.internal.connection.SocketStreamFactory;
-import com.mongodb.internal.connection.StreamFactory;
-import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.connection.SocketStreamFactory;
+import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -231,12 +231,12 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
-        StreamFactoryFactory streamFactoryFactory = getStreamFactoryFactoryFromSettings(settings);
         SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
-        if (streamFactoryFactory == null) {
+        TransportSettings transportSettings = settings.getTransportSettings();
+        if (transportSettings == null) {
             return new SocketStreamFactory(socketSettings, settings.getSslSettings());
         } else {
-            return streamFactoryFactory.create(socketSettings, settings.getSslSettings());
+            return getStreamFactoryFactoryFromSettings(transportSettings).create(socketSettings, settings.getSslSettings());
         }
     }
 
