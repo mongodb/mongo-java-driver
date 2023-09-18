@@ -60,8 +60,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                                  final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.wrapped = new AtomicReference<>(assertNotNull(wrapped));
-        this.binding = binding;
-        binding.retain();
+        this.binding = binding.retain();
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
         isClosed = new AtomicBoolean();
@@ -164,8 +163,8 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         return maxWireVersion;
     }
 
-    private void cachePostBatchResumeToken(final AsyncAggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-        BsonDocument resumeToken = queryBatchCursor.getPostBatchResumeToken();
+    private void cachePostBatchResumeToken(final AsyncAggregateResponseBatchCursor<RawBsonDocument> commandBatchCursor) {
+        BsonDocument resumeToken = commandBatchCursor.getPostBatchResumeToken();
         if (resumeToken != null) {
             this.resumeToken = resumeToken;
         }

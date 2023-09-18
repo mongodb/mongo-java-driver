@@ -202,13 +202,6 @@ class OperationFunctionalSpecification extends Specification {
         }
     }
 
-    def consumeAsyncResults(cursor) {
-        def batch = next(cursor, true)
-        while (batch != null) {
-            batch = next(cursor, true)
-        }
-    }
-
     void testOperation(Map params) {
         params.async = params.async != null ? params.async : false
         params.result = params.result != null ? params.result : null

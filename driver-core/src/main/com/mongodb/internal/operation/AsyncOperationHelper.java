@@ -18,9 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -35,7 +33,6 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -56,7 +53,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.initialRetry
 import static com.mongodb.internal.operation.CommandOperationHelper.isRetryWritesEnabled;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 final class AsyncOperationHelper {
@@ -309,15 +305,15 @@ final class AsyncOperationHelper {
         };
     }
 
-    static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final ServerAddress serverAddress) {
-        return new AsyncSingleBatchQueryCursor<>(new QueryResult<>(namespace, Collections.emptyList(), 0L, serverAddress));
+    static <T> CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncSingleBatchCursorTransformer(final String resultsFieldName) {
+        return (result, source, connection) ->
+                new AsyncSingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, resultsFieldName), 0);
     }
 
     static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
             final BsonValue comment, final AsyncConnectionSource source, final AsyncConnection connection, final int batchSize) {
-        return new AsyncQueryBatchCursor<>(cursorDocumentToQueryResult(cursorDocument,
-                source.getServerDescription().getAddress()),
-                0, batchSize, 0, decoder, comment, source, connection, cursorDocument);
+        return new AsyncCommandBatchCursor<>(connection.getDescription().getServerAddress(), cursorDocument,
+                0, batchSize, 0, decoder, comment, source, connection);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnection connection) {

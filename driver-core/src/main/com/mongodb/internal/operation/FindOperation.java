@@ -29,7 +29,6 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -57,7 +56,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
@@ -471,13 +469,10 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return cursorType == CursorType.TailableAwait;
     }
 
-    private CommandReadTransformer<BsonDocument, QueryBatchCursor<T>> transformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
-                    connection.getDescription().getServerAddress());
-            return new QueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection,
-                    result);
-        };
+    private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
+        return (result, source, connection) ->
+            new CommandBatchCursor<>(connection.getDescription().getServerAddress(), result, limit, batchSize,
+                    getMaxTimeForCursor(), decoder, comment, source, connection);
     }
 
     private long getMaxTimeForCursor() {
@@ -485,11 +480,9 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
-                    connection.getDescription().getServerAddress());
-            return new AsyncQueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
-                    connection, result);
-        };
+        return (result, source, connection) ->
+            new AsyncCommandBatchCursor<>(connection.getDescription().getServerAddress(), result, limit, batchSize,
+                    getMaxTimeForCursor(), decoder, comment, source, connection);
+
     }
 }

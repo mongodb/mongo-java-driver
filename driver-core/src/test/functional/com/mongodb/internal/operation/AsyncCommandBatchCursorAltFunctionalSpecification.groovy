@@ -21,16 +21,15 @@ import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
+import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.syncadapter.SyncConnection
 import com.mongodb.internal.binding.AsyncConnectionSource
-import com.mongodb.internal.binding.AsyncReadBinding
+import com.mongodb.internal.binding.AsyncReadWriteBinding
 import com.mongodb.internal.connection.AsyncConnection
-import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.QueryResult
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBoolean
@@ -48,6 +47,7 @@ import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
@@ -59,7 +59,6 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.internal.connection.ServerHelper.waitForRelease
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult
 import static com.mongodb.internal.operation.QueryOperationHelper.makeAdditionalGetMoreCall
 import static java.util.Collections.singletonList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -67,9 +66,9 @@ import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 
 @IgnoreIf({ isSharded() && serverVersionLessThan(3, 2) })
-class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecification {
+class AsyncCommandBatchCursorAltFunctionalSpecification extends OperationFunctionalSpecification {
     AsyncConnectionSource connectionSource
-    AsyncQueryBatchCursor<Document> cursor
+    AsyncCommandBatchCursor<Document> cursor
     AsyncConnection connection
 
     def setup() {
@@ -83,7 +82,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         setUpConnectionAndSource(getAsyncBinding())
     }
 
-    private void setUpConnectionAndSource(final AsyncReadBinding binding) {
+    private void setUpConnectionAndSource(final AsyncReadWriteBinding binding) {
         connectionSource = getReadConnectionSource(binding)
         connection = getConnection(connectionSource)
     }
@@ -102,7 +101,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust single batch'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery()
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 0, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 10
@@ -110,19 +111,23 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted on first batch'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery()
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 0, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         when:
         nextBatch()
 
         then:
-        connection.count == 1
-        connectionSource.count == 1
+        getReferenceCountAfterTimeout(connection, 1) == 1
+        getReferenceCountAfterTimeout(connectionSource, 1) == 1
     }
 
     def 'should not retain connection and source after cursor is exhausted on getMore'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 1, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(1, 0)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 1, 1, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         when:
         nextBatch()
@@ -134,7 +139,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should not retain connection and source after cursor is exhausted after first batch'() {
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(10, 10), 10, 10, 0, new DocumentCodec(), null, connectionSource,
+        def (serverAddress, commandResult) = executeQuery(10, 10)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 10, 10, 0, new DocumentCodec(),
+                null, connectionSource,
                 connection)
 
         then:
@@ -144,7 +151,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust single batch with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 0, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(1, 0)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 1, 0, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 1
@@ -153,8 +162,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust multiple batches with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(limit, batchSize), limit, batchSize, 0, new DocumentCodec(), null,
-                connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(limit, batchSize)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, limit, batchSize, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         when:
         def next = nextBatch()
@@ -184,7 +194,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should exhaust multiple batches'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(3)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 2, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 3
@@ -197,7 +209,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should respect batch size'() {
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(3)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 2, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         then:
         cursor.batchSize == 2
@@ -212,7 +226,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should close when exhausted'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery()
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 2, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         when:
         cursor.close()
@@ -230,7 +246,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     def 'should close when not exhausted'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(3)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 2, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         when:
         cursor.close()
@@ -244,10 +262,13 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         given:
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(4, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false)
+
+        def (serverAddress, commandResult) = executeQuery(new BsonDocument('ts',
+                new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false)
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 2, 0, new DocumentCodec(),
+                null, connectionSource, connection)
         def latch = new CountDownLatch(1)
         Thread.start {
             sleep(500)
@@ -272,11 +293,12 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     def 'should block waiting for next batch on a tailable cursor'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData)
-
+        def (serverAddress, commandResult) = executeQuery(new BsonDocument('ts',
+                new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData)
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), null, connectionSource, connection)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 2, maxTimeMS, new DocumentCodec(),
+                null, connectionSource, connection)
         def batch = nextBatch()
 
         then:
@@ -315,10 +337,11 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         given:
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), Document.parse('{}'))
-        def firstBatch = executeQuery(new BsonDocument('_id', BsonNull.VALUE), 0, 1, true, true)
+        def (serverAddress, commandResult) = executeQuery(new BsonDocument('_id', BsonNull.VALUE), 0, 1, true, true)
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 1, 500, new DocumentCodec(), null, connectionSource, connection)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 1, 500, new DocumentCodec(),
+                null, connectionSource, connection)
         Thread.start {
             Thread.sleep(SECONDS.toMillis(2))
             cursor.close()
@@ -328,14 +351,16 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         then:
         cursor.isClosed()
         batch == null
-        //both connection and connectionSource have reference count 1 when we pass them to the AsyncQueryBatchCursor constructor
+        //both connection and connectionSource have reference count 1 when we pass them to the AsyncCommandBatchCursor constructor
         connection.getCount() == 1
         waitForRelease(connectionSource, 1)
     }
 
     def 'should respect limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(6, 3), 6, 2, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(6, 3)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 6, 2, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         expect:
         nextBatch().size() == 3
@@ -347,15 +372,14 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     @IgnoreIf({ isSharded() })
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
-        def firstBatch = executeQuery(5)
-
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), null, connectionSource, connection)
+        def (serverAddress, commandResult) = executeQuery(5)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 5, 0, 0, new DocumentCodec(),
+                null, connectionSource, connection)
+        def serverCursor = new ServerCursor(commandResult.getDocument("cursor").getInt64("id").value, serverAddress)
 
         when:
-        while (connection.getCount() > 1) {
-            Thread.sleep(5)
-        }
-        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, new SyncConnection(connection))
+        checkReferenceCountReachesTarget(connection, 1)
+        makeAdditionalGetMoreCall(getNamespace(), serverCursor, new SyncConnection(connection))
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -365,19 +389,19 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     @IgnoreIf({ isSharded() })
     def 'should throw cursor not found exception'() {
         given:
-        def firstBatch = executeQuery(2)
+        def (serverAddress, commandResult) = executeQuery(2)
 
         when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, 0, new DocumentCodec(), null, connectionSource, connection)
+        cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 0, 2, 0, new DocumentCodec(),
+                null, connectionSource, connection)
 
         def connection = new SyncConnection(getConnection(connectionSource))
-        def serverCursor = cursor.cursor.get()
+        def serverCursor = cursor.getServerCursor()
         connection.command(getNamespace().databaseName,
                 new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                         .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
                 new NoOpFieldNameValidator(), ReadPreference.primary(),
-                new BsonDocumentCodec()
-                , connectionSource)
+                new BsonDocumentCodec(), connectionSource)
         connection.release()
         nextBatch()
 
@@ -399,47 +423,39 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         futureResultCallback.get()
     }
 
-    private QueryResult<Document> executeQuery() {
+    private Tuple2<ServerAddress, BsonDocument> executeQuery() {
         executeQuery(0)
     }
 
-    private QueryResult<Document> executeQuery(int batchSize) {
+    private Tuple2<ServerAddress, BsonDocument> executeQuery(int batchSize) {
         executeQuery(0, batchSize)
     }
 
-    private QueryResult<Document> executeQuery(int limit, int batchSize) {
+    private Tuple2<ServerAddress, BsonDocument> executeQuery(int limit, int batchSize) {
         executeQuery(new BsonDocument(), limit, batchSize, false, false)
     }
 
-    private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData) {
+    private Tuple2<ServerAddress, BsonDocument> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable,
+            boolean awaitData) {
         def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
                 .append('filter', filter)
                 .append('tailable', BsonBoolean.valueOf(tailable))
                 .append('awaitData', BsonBoolean.valueOf(awaitData))
 
-        findCommand.append('limit', new BsonInt32(Math.abs(limit)))
+         findCommand.append('limit', new BsonInt32(Math.abs(limit)))
 
         if (limit >= 0) {
             if (batchSize < 0 && Math.abs(batchSize) < limit) {
                 findCommand.append('limit', new BsonInt32(Math.abs(batchSize)))
-            } else {
+            } else if (batchSize != 0) {
                 findCommand.append('batchSize', new BsonInt32(Math.abs(batchSize)))
-            }
+           }
         }
 
         def futureResultCallback = new FutureResultCallback<BsonDocument>()
         connection.commandAsync(getDatabaseName(), findCommand, NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), connectionSource,
                 futureResultCallback)
-        def response = futureResultCallback.get()
-        cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
-        connection.command(getNamespace().databaseName,
-                new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
-                        .append('collection', new BsonString(namespace.getCollectionName())),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                connectionSource.getServerApi())
+        new Tuple2(connection.getDescription().getServerAddress(), futureResultCallback.get())
     }
 }

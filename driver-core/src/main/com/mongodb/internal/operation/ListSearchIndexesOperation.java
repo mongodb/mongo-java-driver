@@ -34,9 +34,8 @@ import org.bson.codecs.Decoder;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.internal.operation.AsyncOperationHelper.createEmptyAsyncBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
-import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
+
 
 /**
  * An operation that lists Alas Search indexes with the help of {@value #STAGE_LIST_SEARCH_INDEXES} pipeline stage.
@@ -90,7 +89,7 @@ final class ListSearchIndexesOperation<T>
             if (!isNamespaceError(exception)) {
                 throw exception;
             } else {
-                return createEmptyBatchCursor(namespace, decoder, exception.getServerAddress(), cursorBatchSize);
+                return SingleBatchCursor.createEmptyBatchCursor(exception.getServerAddress(), cursorBatchSize);
             }
         }
     }
@@ -101,9 +100,8 @@ final class ListSearchIndexesOperation<T>
             if (exception != null && !isNamespaceError(exception)) {
                 callback.onResult(null, exception);
             } else if (exception != null) {
-                MongoCommandException commandException = (MongoCommandException) exception;
-                AsyncBatchCursor<T> emptyAsyncBatchCursor = createEmptyAsyncBatchCursor(namespace, commandException.getServerAddress());
-                callback.onResult(emptyAsyncBatchCursor, null);
+                int cursorBatchSize = batchSize == null ? 0 : batchSize;
+                callback.onResult(AsyncSingleBatchCursor.createEmptyBatchCursor(cursorBatchSize), null);
             } else {
                 callback.onResult(cursor, null);
             }

@@ -24,23 +24,17 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
-import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
@@ -57,89 +51,69 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.SyncOperationHelper.getMoreCursorDocumentToQueryResult;
-import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_ITERATOR;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CONCURRENT_OPERATION;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.NO_OP_FIELD_NAME_VALIDATOR;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.getMoreCommandDocument;
+import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateCommandException;
+import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
-class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
-    private static final Logger LOGGER = Loggers.getLogger("operation");
-    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
-    private static final String CURSOR = "cursor";
-    private static final String POST_BATCH_RESUME_TOKEN = "postBatchResumeToken";
-    private static final String OPERATION_TIME = "operationTime";
-    private static final String MESSAGE_IF_CLOSED_AS_CURSOR = "Cursor has been closed";
-    private static final String MESSAGE_IF_CLOSED_AS_ITERATOR = "Iterator has been closed";
+class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private final MongoNamespace namespace;
-    private final ServerAddress serverAddress;
     private final int limit;
     private final Decoder<T> decoder;
     private final long maxTimeMS;
-    private int batchSize;
+    @Nullable
     private final BsonValue comment;
+
+    private CommandCursorResult<T> commandCursorResult;
+    private int batchSize;
+    @Nullable
     private List<T> nextBatch;
-    private int count;
-    private BsonDocument postBatchResumeToken;
-    private BsonTimestamp operationTime;
+    private int count = 0;
+
     private final boolean firstBatchEmpty;
-    private int maxWireVersion = 0;
+    private final int maxWireVersion;
     private final ResourceManager resourceManager;
 
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
-        this(firstQueryResult, limit, batchSize, decoder, null, null);
-    }
-
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder,
-            @Nullable final BsonValue comment, @Nullable final ConnectionSource connectionSource) {
-        this(firstQueryResult, limit, batchSize, 0, decoder, comment, connectionSource, null, null);
-    }
-
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
-            final Decoder<T> decoder, @Nullable final BsonValue comment, @Nullable final ConnectionSource connectionSource,
-            @Nullable final Connection connection) {
-        this(firstQueryResult, limit, batchSize, maxTimeMS, decoder, comment, connectionSource, connection, null);
-    }
-
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
-            final Decoder<T> decoder, @Nullable final BsonValue comment, @Nullable final ConnectionSource connectionSource,
-            @Nullable final Connection connection, @Nullable final BsonDocument result) {
+    CommandBatchCursor(
+            final ServerAddress serverAddress,
+            final BsonDocument commandCursorDocument,
+            final int limit, final int batchSize, final long maxTimeMS,
+            final Decoder<T> decoder,
+            @Nullable final BsonValue comment,
+            final ConnectionSource connectionSource,
+            final Connection connection) {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
-        this.maxTimeMS = maxTimeMS;
-        this.namespace = firstQueryResult.getNamespace();
-        this.serverAddress = firstQueryResult.getAddress();
+        initFromCommandCursorDocument(serverAddress, FIRST_BATCH, commandCursorDocument);
+        this.namespace = commandCursorResult.getNamespace();
         this.limit = limit;
-        this.comment = comment;
         this.batchSize = batchSize;
+        this.maxTimeMS = maxTimeMS;
         this.decoder = notNull("decoder", decoder);
-        if (result != null) {
-            this.operationTime = result.getTimestamp(OPERATION_TIME, null);
-            this.postBatchResumeToken = getPostBatchResumeTokenFromResponse(result);
-        }
-        ServerCursor serverCursor = initFromQueryResult(firstQueryResult);
-        if (serverCursor != null) {
-            notNull("connectionSource", connectionSource);
-        }
-        firstBatchEmpty = firstQueryResult.getResults().isEmpty();
+        this.comment = comment;
+
+        firstBatchEmpty = commandCursorResult.getResults().isEmpty();
         Connection connectionToPin = null;
         boolean releaseServerAndResources = false;
-        if (connection != null) {
-            this.maxWireVersion = connection.getDescription().getMaxWireVersion();
-            if (limitReached()) {
-                releaseServerAndResources = true;
-            } else {
-                assertNotNull(connectionSource);
-                if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
-                    connectionToPin = connection;
-                }
-            }
+
+        this.maxWireVersion = connection.getDescription().getMaxWireVersion();
+        if (limitReached()) {
+            releaseServerAndResources = true;
+        } else if (connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER) {
+            connectionToPin = connection;
         }
-        resourceManager = new ResourceManager(connectionSource, connectionToPin, serverCursor);
+
+        resourceManager = new ResourceManager(connectionSource, connectionToPin, commandCursorResult.getServerCursor());
         if (releaseServerAndResources) {
-            resourceManager.releaseServerAndClientResources(assertNotNull(connection));
+            resourceManager.releaseServerAndClientResources(connection);
         }
     }
 
@@ -180,6 +154,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return !resourceManager.operable() || nextBatch == null ? 0 : nextBatch.size();
     }
 
+    @Nullable
     private List<T> doNext() {
         if (!doHasNext()) {
             throw new NoSuchElementException();
@@ -188,6 +163,12 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         List<T> retVal = nextBatch;
         nextBatch = null;
         return retVal;
+    }
+
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    boolean isClosed() {
+        return !resourceManager.operable();
     }
 
     @Override
@@ -243,7 +224,6 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         if (!resourceManager.operable()) {
             throw new IllegalStateException(MESSAGE_IF_CLOSED_AS_ITERATOR);
         }
-
         return resourceManager.serverCursor();
     }
 
@@ -253,17 +233,17 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             throw new IllegalStateException(MESSAGE_IF_CLOSED_AS_ITERATOR);
         }
 
-        return serverAddress;
+        return commandCursorResult.getServerAddress();
     }
 
     @Override
     public BsonDocument getPostBatchResumeToken() {
-        return postBatchResumeToken;
+        return commandCursorResult.getPostBatchResumeToken();
     }
 
     @Override
     public BsonTimestamp getOperationTime() {
-        return operationTime;
+        return commandCursorResult.getOperationTime();
     }
 
     @Override
@@ -281,78 +261,51 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         resourceManager.executeWithConnection(connection -> {
             ServerCursor nextServerCursor;
             try {
-                nextServerCursor = initFromCommandResult(connection.command(namespace.getDatabaseName(),
-                        asGetMoreCommandDocument(serverCursor.getId(), connection.getDescription()),
-                        NO_OP_FIELD_NAME_VALIDATOR,
-                        ReadPreference.primary(),
-                        CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                        assertNotNull(resourceManager.connectionSource)));
+                initFromCommandCursorDocument(connection.getDescription().getServerAddress(), NEXT_BATCH,
+                        assertNotNull(
+                                connection.command(namespace.getDatabaseName(),
+                                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace,
+                                                limit, batchSize, count, maxTimeMS, comment),
+                                NO_OP_FIELD_NAME_VALIDATOR,
+                                ReadPreference.primary(),
+                                CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
+                                assertNotNull(resourceManager.connectionSource))));
+                nextServerCursor = commandCursorResult.getServerCursor();
             } catch (MongoCommandException e) {
                 throw translateCommandException(e, serverCursor);
             }
+
             resourceManager.setServerCursor(nextServerCursor);
-            if (limitReached()) {
+            if (!resourceManager.operable() || limitReached() || nextServerCursor == null) {
                 resourceManager.releaseServerAndClientResources(connection);
             }
         });
     }
 
-    private BsonDocument asGetMoreCommandDocument(final long cursorId, final ConnectionDescription connectionDescription) {
-        BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursorId))
-                                .append("collection", new BsonString(namespace.getCollectionName()));
-
-        int batchSizeForGetMoreCommand = Math.abs(getNumberToReturn(limit, this.batchSize, count));
-        if (batchSizeForGetMoreCommand != 0) {
-            document.append("batchSize", new BsonInt32(batchSizeForGetMoreCommand));
+    private void initFromCommandCursorDocument(final ServerAddress serverAddress, final String fieldNameContainingBatch,
+            final BsonDocument commandCursorDocument) {
+        this.commandCursorResult = new CommandCursorResult<>(serverAddress, fieldNameContainingBatch, commandCursorDocument);
+        this.nextBatch = commandCursorResult.getResults().isEmpty() ? null : commandCursorResult.getResults();
+        this.count += commandCursorResult.getResults().size();
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Received batch of %d documents with cursorId %d from server %s", commandCursorResult.getResults().size(),
+                    commandCursorResult.getCursorId(), commandCursorResult.getServerAddress()));
         }
-        if (maxTimeMS != 0) {
-            document.append("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {
-            putIfNotNull(document, "comment", comment);
-        }
-        return document;
-    }
-
-    @Nullable
-    private ServerCursor initFromQueryResult(final QueryResult<T> queryResult) {
-        nextBatch = queryResult.getResults().isEmpty() ? null : queryResult.getResults();
-        count += queryResult.getResults().size();
-        LOGGER.debug(format("Received batch of %d documents with cursorId %d from server %s", queryResult.getResults().size(),
-                queryResult.getCursorId(), queryResult.getAddress()));
-        return queryResult.getCursor();
-    }
-
-    @Nullable
-    private ServerCursor initFromCommandResult(final BsonDocument getMoreCommandResultDocument) {
-        QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(getMoreCommandResultDocument.getDocument(CURSOR), serverAddress);
-        postBatchResumeToken = getPostBatchResumeTokenFromResponse(getMoreCommandResultDocument);
-        operationTime = getMoreCommandResultDocument.getTimestamp(OPERATION_TIME, null);
-        return initFromQueryResult(queryResult);
     }
 
     private boolean limitReached() {
         return Math.abs(limit) != 0 && count >= Math.abs(limit);
     }
 
-    @Nullable
-    private BsonDocument getPostBatchResumeTokenFromResponse(final BsonDocument result) {
-        BsonDocument cursor = result.getDocument(CURSOR, null);
-        if (cursor != null) {
-            return cursor.getDocument(POST_BATCH_RESUME_TOKEN, null);
-        }
-        return null;
-    }
-
     /**
-     * This class maintains all resources that must be released in {@link QueryBatchCursor#close()}.
+     * This class maintains all resources that must be released in {@link CommandBatchCursor#close()}.
      * It also implements a {@linkplain #doClose() deferred close action} such that it is totally ordered with other operations of
-     * {@link QueryBatchCursor} (methods {@link #tryStartOperation()}/{@link #endOperation()} must be used properly to enforce the order)
-     * despite the method {@link QueryBatchCursor#close()} being called concurrently with those operations.
+     * {@link CommandBatchCursor} (methods {@link #tryStartOperation()}/{@link #endOperation()} must be used properly to enforce the order)
+     * despite the method {@link CommandBatchCursor#close()} being called concurrently with those operations.
      * This total order induces the happens-before order.
      * <p>
-     * The deferred close action does not violate externally observable idempotence of {@link QueryBatchCursor#close()},
-     * because {@link QueryBatchCursor#close()} is allowed to release resources "eventually".
+     * The deferred close action does not violate externally observable idempotence of {@link CommandBatchCursor#close()},
+     * because {@link CommandBatchCursor#close()} is allowed to release resources "eventually".
      * <p>
      * Only methods explicitly documented as thread-safe are thread-safe,
      * others are not and rely on the total order mentioned above.
@@ -369,12 +322,13 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         private volatile ServerCursor serverCursor;
         private volatile boolean skipReleasingServerResourcesOnClose;
 
-        ResourceManager(@Nullable final ConnectionSource connectionSource,
-                @Nullable final Connection connectionToPin, @Nullable final ServerCursor serverCursor) {
+        ResourceManager(final ConnectionSource connectionSource,
+                @Nullable final Connection connectionToPin,
+                @Nullable final ServerCursor serverCursor) {
             lock = new StampedLock().asWriteLock();
             state = State.IDLE;
             if (serverCursor != null) {
-                this.connectionSource = (assertNotNull(connectionSource)).retain();
+                this.connectionSource =  notNull("connectionSource", connectionSource).retain();
                 if (connectionToPin != null) {
                     this.pinnedConnection = connectionToPin.retain();
                     connectionToPin.markAsPinned(Connection.PinningMode.CURSOR);
@@ -395,7 +349,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          * Thread-safe.
          * Executes {@code operation} within the {@link #tryStartOperation()}/{@link #endOperation()} bounds.
          *
-         * @throws IllegalStateException If {@linkplain QueryBatchCursor#close() closed}.
+         * @throws IllegalStateException If {@linkplain CommandBatchCursor#close() closed}.
          */
         @Nullable
         <R> R execute(final String exceptionMessageIfClosed, final Supplier<R> operation) throws IllegalStateException {
@@ -425,7 +379,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                     state = State.OPERATION_IN_PROGRESS;
                     return true;
                 } else if (localState == State.OPERATION_IN_PROGRESS) {
-                    throw new IllegalStateException("Another operation is currently in progress, concurrent operations are not supported");
+                    throw new IllegalStateException(MESSAGE_IF_CONCURRENT_OPERATION);
                 } else {
                     throw fail(state.toString());
                 }
@@ -533,10 +487,10 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         private Connection connection() {
             assertTrue(state != State.IDLE);
-            if (pinnedConnection == null) {
-                return assertNotNull(connectionSource).getConnection();
-            } else {
+            if (pinnedConnection != null) {
                 return assertNotNull(pinnedConnection).retain();
+            } else {
+                return assertNotNull(connectionSource).getConnection();
             }
         }
 

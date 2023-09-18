@@ -17,27 +17,24 @@
 package com.mongodb.internal.operation
 
 import com.mongodb.MongoException
-import com.mongodb.MongoNamespace
-import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.connection.QueryResult
 import org.bson.Document
 import spock.lang.Specification
 
-class AsyncSingleBatchQueryCursorSpecification extends Specification {
+class AsyncSingleBatchCursorSpecification extends Specification {
 
     def 'should work as expected'() {
         given:
-        def cursor = new AsyncSingleBatchQueryCursor<Document>(firstBatch)
+        def cursor = new AsyncSingleBatchCursor<Document>(firstBatch, 0)
 
         when:
         def batch = nextBatch(cursor)
 
         then:
-        batch == firstBatch.getResults()
+        batch == firstBatch
 
         then:
-        nextBatch(cursor) == null
+        nextBatch(cursor) == []
 
         when:
         nextBatch(cursor)
@@ -48,7 +45,7 @@ class AsyncSingleBatchQueryCursorSpecification extends Specification {
 
     def 'should not support setting batchsize'() {
         given:
-        def cursor = new AsyncSingleBatchQueryCursor<Document>(firstBatch)
+        def cursor = new AsyncSingleBatchCursor<Document>(firstBatch, 0)
 
         when:
         cursor.setBatchSize(1)
@@ -58,11 +55,11 @@ class AsyncSingleBatchQueryCursorSpecification extends Specification {
     }
 
 
-    List<Document> nextBatch(AsyncSingleBatchQueryCursor cursor) {
+    List<Document> nextBatch(AsyncSingleBatchCursor cursor) {
         def futureResultCallback = new FutureResultCallback()
         cursor.next(futureResultCallback)
         futureResultCallback.get()
     }
 
-    def firstBatch = new QueryResult(new MongoNamespace('db', 'coll'), [new Document('a', 1)], 0, new ServerAddress())
+    def firstBatch = [new Document('a', 1)]
 }

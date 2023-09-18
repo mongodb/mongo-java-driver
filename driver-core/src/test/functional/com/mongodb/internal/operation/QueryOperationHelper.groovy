@@ -22,9 +22,10 @@ import com.mongodb.MongoNamespace
 import com.mongodb.MongoQueryException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.internal.IgnorableRequestContext
-import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.StaticBindingContext
+import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.OperationContext
@@ -53,18 +54,8 @@ class QueryOperationHelper {
         }
     }
 
-    static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor,
-            ConnectionSource connectionSource) {
-        def connection = connectionSource.getConnection()
-        try {
-            makeAdditionalGetMoreCall(namespace, serverCursor, connection)
-        } finally {
-            connection.release()
-        }
-    }
-
     static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor, Connection connection) {
-        try {
+        makeAdditionalGetMoreCallHandleError(serverCursor) {
             connection.command(namespace.databaseName,
                     new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
                             .append('collection', new BsonString(namespace.getCollectionName())),
@@ -72,6 +63,26 @@ class QueryOperationHelper {
                     new BsonDocumentCodec(),
                     new StaticBindingContext(new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE,
                             new OperationContext()))
+        }
+    }
+
+    static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor, AsyncConnection connection) {
+        def callback = new FutureResultCallback<>()
+        connection.commandAsync(namespace.databaseName,
+                new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
+                        .append('collection', new BsonString(namespace.getCollectionName())),
+                new NoOpFieldNameValidator(), ReadPreference.primary(),
+                new BsonDocumentCodec(),
+                new StaticBindingContext(new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE,
+                        new OperationContext()),
+                callback
+        )
+        makeAdditionalGetMoreCallHandleError(serverCursor) { callback.get() }
+    }
+
+    static void makeAdditionalGetMoreCallHandleError(ServerCursor serverCursor, Runnable runnable) {
+        try {
+            runnable.run()
         } catch (MongoCommandException e) {
             if (e.getErrorCode() == 43) {
                 throw new MongoCursorNotFoundException(serverCursor.getId(), e.getResponse(), serverCursor.getAddress())

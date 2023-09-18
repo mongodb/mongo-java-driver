@@ -64,23 +64,23 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public boolean hasNext() {
-        return resumeableOperation(queryBatchCursor -> {
+        return resumeableOperation(commandBatchCursor -> {
             try {
-                return queryBatchCursor.hasNext();
+                return commandBatchCursor.hasNext();
             } finally {
-                cachePostBatchResumeToken(queryBatchCursor);
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
 
     @Override
     public List<T> next() {
-        return resumeableOperation(queryBatchCursor -> {
+        return resumeableOperation(commandBatchCursor -> {
             try {
-                return convertAndProduceLastId(queryBatchCursor.next(), changeStreamOperation.getDecoder(),
+                return convertAndProduceLastId(commandBatchCursor.next(), changeStreamOperation.getDecoder(),
                         lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(queryBatchCursor);
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
@@ -92,12 +92,12 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public List<T> tryNext() {
-        return resumeableOperation(queryBatchCursor -> {
+        return resumeableOperation(commandBatchCursor -> {
             try {
-                return convertAndProduceLastId(queryBatchCursor.tryNext(), changeStreamOperation.getDecoder(),
+                return convertAndProduceLastId(commandBatchCursor.tryNext(), changeStreamOperation.getDecoder(),
                         lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(queryBatchCursor);
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
@@ -155,9 +155,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return maxWireVersion;
     }
 
-    private void cachePostBatchResumeToken(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-        if (queryBatchCursor.getPostBatchResumeToken() != null) {
-            resumeToken = queryBatchCursor.getPostBatchResumeToken();
+    private void cachePostBatchResumeToken(final AggregateResponseBatchCursor<RawBsonDocument> commandBatchCursor) {
+        if (commandBatchCursor.getPostBatchResumeToken() != null) {
+            resumeToken = commandBatchCursor.getPostBatchResumeToken();
         }
     }
 
@@ -170,7 +170,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                                                final Decoder<T> decoder,
                                                final Consumer<BsonDocument> lastIdConsumer) {
         List<T> results = null;
-        if (rawDocuments != null) {
+        if (rawDocuments != null && !rawDocuments.isEmpty()) {
             results = new ArrayList<>();
             for (RawBsonDocument rawDocument : rawDocuments) {
                 if (!rawDocument.containsKey("_id")) {

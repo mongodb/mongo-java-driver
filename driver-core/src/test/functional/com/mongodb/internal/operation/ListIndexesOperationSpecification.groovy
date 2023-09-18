@@ -16,13 +16,10 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.ServerAddress
-import com.mongodb.ServerCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.internal.async.AsyncBatchCursor
@@ -34,7 +31,6 @@ import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt32
@@ -76,7 +72,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor.next(callback)
 
         then:
-        callback.get() == null
+        callback.get() == []
     }
 
 
@@ -210,7 +206,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor.getBatchSize() == 2
 
         cleanup:
-        consumeAsyncResults(cursor)
+        cursor?.close()
     }
 
     @IgnoreIf({ isSharded() })
@@ -309,11 +305,6 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         decoder: Stub(Decoder),
         threeSixConnectionDescription : Stub(ConnectionDescription) {
             getMaxWireVersion() >> 3
-        },
-        queryResult: Stub(QueryResult) {
-            getNamespace() >> new MongoNamespace('db', 'coll')
-            getResults() >> []
-            getCursor() >> new ServerCursor(1, Stub(ServerAddress))
         },
         commandResult: new BsonDocument('ok', new BsonDouble(1.0))
                 .append('cursor', new BsonDocument('id', new BsonInt64(1)).append('ns', new BsonString('db.coll'))

@@ -13,74 +13,83 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.mongodb.internal.operation;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
-/**
- * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
- * from the operation, and also provides access to the statistics returned in the results.
- */
-class MapReduceInlineResultsCursor<T> implements MapReduceBatchCursor<T> {
-    private final BatchCursor<T> delegate;
-    private final MapReduceStatistics statistics;
+import static java.util.Collections.emptyList;
 
-    MapReduceInlineResultsCursor(final BatchCursor<T> delegate, final MapReduceStatistics statistics) {
-        this.delegate = delegate;
-        this.statistics = statistics;
+class SingleBatchCursor<T> implements BatchCursor<T> {
+
+    static <R> SingleBatchCursor<R> createEmptyBatchCursor(final ServerAddress serverAddress, final int batchSize) {
+        return new SingleBatchCursor<>(emptyList(), batchSize, serverAddress);
     }
 
-    @Override
-    public MapReduceStatistics getStatistics() {
-        return statistics;
+    private final List<T> batch;
+    private final ServerAddress serverAddress;
+    private final int batchSize;
+    private boolean hasNext;
+
+    SingleBatchCursor(final List<T> batch, final int batchSize, final ServerAddress serverAddress) {
+        this.batch = batch;
+        this.serverAddress = serverAddress;
+        this.batchSize = batchSize;
+        this.hasNext = !batch.isEmpty();
+    }
+
+    public List<T> getBatch() {
+        return batch;
     }
 
     @Override
     public boolean hasNext() {
-        return delegate.hasNext();
+        return hasNext;
     }
 
     @Override
     public List<T> next() {
-        return delegate.next();
+        if (hasNext) {
+            hasNext = false;
+            return batch;
+        }
+        throw new NoSuchElementException();
     }
 
     @Override
     public int available() {
-        return delegate.available();
+        return hasNext ? 1 : 0;
     }
 
     @Override
     public void setBatchSize(final int batchSize) {
-        delegate.setBatchSize(batchSize);
+        // NOOP
     }
 
     @Override
     public int getBatchSize() {
-        return delegate.getBatchSize();
+        return batchSize;
     }
 
     @Override
     public List<T> tryNext() {
-        return delegate.tryNext();
+        return hasNext ? next() : null;
     }
 
     @Override
     public ServerCursor getServerCursor() {
-        return delegate.getServerCursor();
+        return null;
     }
 
     @Override
     public ServerAddress getServerAddress() {
-        return delegate.getServerAddress();
+        return serverAddress;
     }
 
     @Override
     public void close() {
-        delegate.close();
     }
 }

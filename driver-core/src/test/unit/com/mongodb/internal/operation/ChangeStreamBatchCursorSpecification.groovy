@@ -23,11 +23,11 @@ import spock.lang.Specification
 
 class ChangeStreamBatchCursorSpecification extends Specification {
 
-    def 'should call the underlying QueryBatchCursor'() {
+    def 'should call the underlying CommandBatchCursor'() {
         given:
         def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Stub(ReadBinding)
-        def wrapped = Mock(QueryBatchCursor)
+        def wrapped = Mock(CommandBatchCursor)
         def resumeToken = new BsonDocument('_id': new BsonInt32(1))
         def cursor = new ChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, resumeToken,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
