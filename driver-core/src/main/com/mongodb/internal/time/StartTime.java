@@ -29,16 +29,16 @@ public interface StartTime {
     Duration elapsed();
 
     /**
-     * @see TimePoint#asDeadline()
+     * @see TimePoint#asTimeout()
      */
-    Deadline asDeadline();
+    Timeout asTimeout();
 
     /**
-     * Returns an {@linkplain Deadline#isInfinite() infinite} deadline if
-     * {@code timeoutValue} is negative, an expired deadline if
-     * {@code timeoutValue} is 0, otherwise a deadline in {@code durationNanos}.
+     * Returns an {@linkplain Timeout#isInfinite() infinite} timeout if
+     * {@code timeoutValue} is negative, an expired timeout if
+     * {@code timeoutValue} is 0, otherwise a timeout in {@code durationNanos}.
      * <p>
-     * Note that some code might ignore a deadline, and attempt to perform
+     * Note that some code might ignore a timeout, and attempt to perform
      * the operation in question at least once.</p>
      * <p>
      * Note that the contract of this method is also used in some places to
@@ -48,7 +48,7 @@ public interface StartTime {
      *
      * @see TimePoint#fromNowOrInfiniteIfNegative(long, TimeUnit)
      */
-    Deadline fromNowOrInfiniteIfNegative(long timeoutValue, TimeUnit timeUnit);
+    Timeout fromNowOrInfiniteIfNegative(long timeoutValue, TimeUnit timeUnit);
 
     /**
      * @return a StartPoint, as of now

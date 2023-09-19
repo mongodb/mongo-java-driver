@@ -43,7 +43,7 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.time.Deadline;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
@@ -119,7 +119,6 @@ import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVICE_ID;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.WAIT_QUEUE_TIMEOUT_MS;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
-import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -194,12 +193,12 @@ final class DefaultConnectionPool implements ConnectionPool {
     @Override
     public InternalConnection get(final OperationContext operationContext, final long timeoutValue, final TimeUnit timeUnit) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
-        Deadline deadline = checkoutStart.fromNowOrInfiniteIfNegative(timeoutValue, timeUnit);
+        Timeout timeout = checkoutStart.fromNowOrInfiniteIfNegative(timeoutValue, timeUnit);
         try {
             stateAndGeneration.throwIfClosedOrPaused();
-            PooledConnection connection = getPooledConnection(deadline, checkoutStart);
+            PooledConnection connection = getPooledConnection(timeout, checkoutStart);
             if (!connection.opened()) {
-                connection = openConcurrencyLimiter.openOrGetAvailable(connection, deadline, checkoutStart);
+                connection = openConcurrencyLimiter.openOrGetAvailable(connection, timeout, checkoutStart);
             }
             connection.checkedOutForOperation(operationContext);
             connectionCheckedOut(operationContext, connection, checkoutStart);
@@ -212,7 +211,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     @Override
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
-        Deadline deadline = checkoutStart.fromNowOrInfiniteIfNegative(settings.getMaxWaitTime(NANOSECONDS), NANOSECONDS);
+        Timeout timeout = checkoutStart.fromNowOrInfiniteIfNegative(settings.getMaxWaitTime(NANOSECONDS), NANOSECONDS);
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
@@ -229,13 +228,13 @@ final class DefaultConnectionPool implements ConnectionPool {
             eventSendingCallback.onResult(null, e);
             return;
         }
-        asyncWorkManager.enqueue(new Task(deadline, checkoutStart, t -> {
+        asyncWorkManager.enqueue(new Task(timeout, checkoutStart, t -> {
             if (t != null) {
                 eventSendingCallback.onResult(null, t);
             } else {
                 PooledConnection connection;
                 try {
-                    connection = getPooledConnection(deadline, checkoutStart);
+                    connection = getPooledConnection(timeout, checkoutStart);
                 } catch (Exception e) {
                     eventSendingCallback.onResult(null, e);
                     return;
@@ -244,7 +243,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                     eventSendingCallback.onResult(connection, null);
                 } else {
                     openConcurrencyLimiter.openAsyncWithConcurrencyLimit(
-                            connection, deadline, checkoutStart, eventSendingCallback);
+                            connection, timeout, checkoutStart, eventSendingCallback);
                 }
             }
         }));
@@ -334,12 +333,12 @@ final class DefaultConnectionPool implements ConnectionPool {
         return stateAndGeneration.generation();
     }
 
-    private PooledConnection getPooledConnection(final Deadline deadline, final StartTime startTime) throws MongoTimeoutException {
+    private PooledConnection getPooledConnection(final Timeout timeout, final StartTime startTime) throws MongoTimeoutException {
         try {
-            UsageTrackingInternalConnection internalConnection = pool.get(deadline.remainingOrNegativeForInfinite(NANOSECONDS), NANOSECONDS);
+            UsageTrackingInternalConnection internalConnection = pool.get(timeout.remainingOrNegativeForInfinite(NANOSECONDS), NANOSECONDS);
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
-                internalConnection = pool.get(deadline.remainingOrNegativeForInfinite(NANOSECONDS), NANOSECONDS);
+                internalConnection = pool.get(timeout.remainingOrNegativeForInfinite(NANOSECONDS), NANOSECONDS);
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
@@ -931,19 +930,19 @@ final class DefaultConnectionPool implements ConnectionPool {
             desiredConnectionSlots = new LinkedList<>();
         }
 
-        PooledConnection openOrGetAvailable(final PooledConnection connection, final Deadline deadline,
+        PooledConnection openOrGetAvailable(final PooledConnection connection, final Timeout timeout,
                 final StartTime startTime)
                 throws MongoTimeoutException {
             PooledConnection result = openWithConcurrencyLimit(
-                    connection, OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, deadline, startTime);
+                    connection, OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, timeout, startTime);
             return assertNotNull(result);
         }
 
         void openImmediatelyAndTryHandOverOrRelease(final PooledConnection connection) throws MongoTimeoutException {
             StartTime startTime = StartTime.now();
-            Deadline deadline = startTime.asDeadline();
+            Timeout timeout = startTime.asTimeout();
             assertNull(openWithConcurrencyLimit(
-                    connection, OpenWithConcurrencyLimitMode.TRY_HAND_OVER_OR_RELEASE, deadline, startTime));
+                    connection, OpenWithConcurrencyLimitMode.TRY_HAND_OVER_OR_RELEASE, timeout, startTime));
         }
 
         /**
@@ -974,7 +973,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          *     </li>
          * </ol>
          *
-         * @param deadline Applies only to the first phase.
+         * @param timeout Applies only to the first phase.
          * @return An {@linkplain PooledConnection#opened() opened} connection which is
          * either the specified {@code connection},
          * or potentially a different one if {@code mode} is {@link OpenWithConcurrencyLimitMode#TRY_GET_AVAILABLE},
@@ -983,12 +982,12 @@ final class DefaultConnectionPool implements ConnectionPool {
          */
         @Nullable
         private PooledConnection openWithConcurrencyLimit(final PooledConnection connection,
-                final OpenWithConcurrencyLimitMode mode, final Deadline deadline, final StartTime startTime)
+                final OpenWithConcurrencyLimitMode mode, final Timeout timeout, final StartTime startTime)
                 throws MongoTimeoutException {
             PooledConnection availableConnection;
             try {//phase one
                 availableConnection = acquirePermitOrGetAvailableOpenedConnection(
-                        mode == OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, deadline, startTime);
+                        mode == OpenWithConcurrencyLimitMode.TRY_GET_AVAILABLE, timeout, startTime);
             } catch (Exception e) {
                 connection.closeSilently();
                 throw e;
@@ -1012,7 +1011,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
-         * This method is similar to {@link #openWithConcurrencyLimit(PooledConnection, OpenWithConcurrencyLimitMode, Deadline, StartTime)}
+         * This method is similar to {@link #openWithConcurrencyLimit(PooledConnection, OpenWithConcurrencyLimitMode, Timeout, StartTime)}
          * with the following differences:
          * <ul>
          *     <li>It does not have the {@code mode} parameter and acts as if this parameter were
@@ -1025,7 +1024,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          * </ul>
          */
         void openAsyncWithConcurrencyLimit(
-                final PooledConnection connection, final Deadline timeout, final StartTime startTime,
+                final PooledConnection connection, final Timeout timeout, final StartTime startTime,
                 final SingleResultCallback<PooledConnection> callback) {
             PooledConnection availableConnection;
             try {//phase one
@@ -1060,7 +1059,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          */
         @Nullable
         private PooledConnection acquirePermitOrGetAvailableOpenedConnection(final boolean tryGetAvailable,
-                final Deadline timeout, final StartTime startTime)
+                final Timeout timeout, final StartTime startTime)
                 throws MongoTimeoutException, MongoInterruptedException {
             PooledConnection availableConnection = null;
             boolean expressedDesireToGetAvailableConnection = false;
@@ -1177,7 +1176,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     /**
-     * @see OpenConcurrencyLimiter#openWithConcurrencyLimit(PooledConnection, OpenWithConcurrencyLimitMode, Deadline, StartTime)
+     * @see OpenConcurrencyLimiter#openWithConcurrencyLimit(PooledConnection, OpenWithConcurrencyLimitMode, Timeout, StartTime)
      */
     private enum OpenWithConcurrencyLimitMode {
         TRY_GET_AVAILABLE,
@@ -1371,7 +1370,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             while (state != State.CLOSED) {
                 try {
                     Task task = tasks.take();
-                    if (task.deadline().hasExpired()) {
+                    if (task.timeout().hasExpired()) {
                         task.failAsTimedOut();
                     } else {
                         task.execute();
@@ -1423,13 +1422,13 @@ final class DefaultConnectionPool implements ConnectionPool {
      */
     @NotThreadSafe
     final class Task {
-        private final Deadline deadline;
+        private final Timeout timeout;
         private final StartTime startTime;
         private final Consumer<RuntimeException> action;
         private boolean completed;
 
-        Task(final Deadline deadline, final StartTime startTime, final Consumer<RuntimeException> action) {
-            this.deadline = deadline;
+        Task(final Timeout timeout, final StartTime startTime, final Consumer<RuntimeException> action) {
+            this.timeout = timeout;
             this.startTime = startTime;
             this.action = action;
         }
@@ -1452,8 +1451,8 @@ final class DefaultConnectionPool implements ConnectionPool {
             action.accept(failureSupplier.get());
         }
 
-        Deadline deadline() {
-            return deadline;
+        Timeout timeout() {
+            return timeout;
         }
     }
 

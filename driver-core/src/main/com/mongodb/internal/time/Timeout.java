@@ -15,8 +15,6 @@
  */
 package com.mongodb.internal.time;
 
-import com.mongodb.MongoInterruptedException;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
@@ -24,9 +22,12 @@ import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMon
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
+ * A Timeout is a "deadline", point in time by which something must happen.
+ *
  * @see TimePoint
  */
-public interface Deadline {
+public interface Timeout {
+
 
     /**
      * @see TimePoint#isInfinite()
@@ -58,20 +59,20 @@ public interface Deadline {
     }
 
     /**
-     * @return an infinite (non-expiring) deadline
+     * @return an infinite (non-expiring) timeout
      */
-    static Deadline infinite() {
+    static Timeout infinite() {
         return TimePoint.infinite();
     }
 
     /**
      * @param duration the positive duration, in the specified time unit.
      * @param unit the time unit.
-     * @return a deadline that expires in the specified duration after now.
+     * @return a timeout that expires in the specified duration after now.
      */
-    static Deadline expiresIn(final long duration, final TimeUnit unit) {
+    static Timeout expiresIn(final long duration, final TimeUnit unit) {
         if (duration < 0) {
-            throw new AssertionError("Deadline must not be in the past");
+            throw new AssertionError("Timeouts must not be in the past");
         }
         return TimePoint.now().fromNowOrInfiniteIfNegative(duration, unit);
     }
@@ -79,7 +80,7 @@ public interface Deadline {
     /**
      * {@linkplain Condition#awaitNanos(long)} awaits} on the provided
      * condition. Will {@linkplain Condition#await()} await} without a waiting
-     * time if this deadline is infinite.
+     * time if this timeout is infinite.
      * @param condition the condition.
      */
     default void awaitOn(final Condition condition) {
@@ -87,7 +88,7 @@ public interface Deadline {
             if (isInfinite()) {
                 condition.await();
             } else {
-                // the deadline will track this remaining time
+                // the timeout will track this remaining time
                 //noinspection ResultOfMethodCallIgnored
                 condition.awaitNanos(remaining(NANOSECONDS));
             }

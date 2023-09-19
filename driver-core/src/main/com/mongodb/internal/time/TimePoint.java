@@ -42,7 +42,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * This class is not part of the public API and may be removed or changed at any time.</p>
  */
 @Immutable
-class TimePoint implements Comparable<TimePoint>, StartTime, Deadline {
+class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     @Nullable
     private final Long nanos;
 
@@ -83,10 +83,10 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Deadline {
     }
 
     /**
-     * @return this TimePoint, as a deadline. Convenience for {@link StartTime}
+     * @return this TimePoint, as a Timeout. Convenience for {@link StartTime}
      */
     @Override
-    public Deadline asDeadline() {
+    public Timeout asTimeout() {
         return this;
     }
 
@@ -99,8 +99,8 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Deadline {
      *
      * @param unit the time unit
      * @return the remaining time
-     * @throws AssertionError if the deadline is infinite. Always check if the
-     * deadline {@link #isInfinite()} before calling.
+     * @throws AssertionError if the timeout is infinite. Always check if the
+     * timeout {@link #isInfinite()} before calling.
      */
     @Override
     public long remaining(final TimeUnit unit) {

@@ -55,7 +55,7 @@ public class ClientSideOperationTimeout {
             if (timeoutMS == 0) {
                 this.timeout = Timeout.infinite();
             } else {
-                this.timeout = Timeout.startNow(timeoutMS, MILLISECONDS);
+                this.timeout = Timeout.expiresIn(timeoutMS, MILLISECONDS);
             }
         }
     }
@@ -75,7 +75,7 @@ public class ClientSideOperationTimeout {
      * @return true if the timeout has been set and it has expired
      */
     public boolean expired() {
-        return timeout != null && timeout.expired();
+        return timeout != null && timeout.hasExpired();
     }
 
     /**
