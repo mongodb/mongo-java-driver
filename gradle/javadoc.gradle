@@ -17,7 +17,7 @@ import static org.gradle.util.CollectionUtils.single
  */
 
 
-def projectsThatDoNotPublishJavaDocs = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor")
+def projectsThatDoNotPublishJavaDocs = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor") + project("driver-lambda")
 def javaMainProjects = subprojects - projectsThatDoNotPublishJavaDocs
 
 task docs {
