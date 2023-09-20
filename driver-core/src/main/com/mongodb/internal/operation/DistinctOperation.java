@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -53,6 +54,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String VALUES = "values";
 
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final String fieldName;
@@ -62,9 +64,10 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private Collation collation;
     private BsonValue comment;
 
-    public DistinctOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public DistinctOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final String fieldName, final Decoder<T> decoder) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);

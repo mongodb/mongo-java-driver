@@ -20,7 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
@@ -54,16 +54,16 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private Boolean bypassDocumentValidation;
     private List<BsonDocument> arrayFilters;
 
-    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public FindAndUpdateOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final BsonDocument update) {
-        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
+        super(timeoutSettings, namespace, writeConcern, retryWrites, decoder);
         this.update = notNull("update", update);
         this.updatePipeline = null;
     }
 
-    public FindAndUpdateOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public FindAndUpdateOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final List<BsonDocument> update) {
-        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
+        super(timeoutSettings, namespace, writeConcern, retryWrites, decoder);
         this.updatePipeline = update;
         this.update = null;
     }

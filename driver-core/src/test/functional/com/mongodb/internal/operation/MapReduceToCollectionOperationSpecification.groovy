@@ -37,9 +37,9 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
-import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -49,7 +49,7 @@ import static com.mongodb.client.model.Filters.gte
 class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpecification {
     def mapReduceInputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceInput')
     def mapReduceOutputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceOutput')
-    def mapReduceOperation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), mapReduceInputNamespace,
+    def mapReduceOperation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, mapReduceInputNamespace,
             new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
             new BsonJavaScript('function(key, values){ return values.length; }'),
             mapReduceOutputNamespace.getCollectionName(), null)
@@ -66,8 +66,9 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     def cleanup() {
-        new DropCollectionOperation(CSOT_TIMEOUT.get(), mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
-        new DropCollectionOperation(CSOT_TIMEOUT.get(), mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding())
     }
 
     def 'should have the correct defaults'() {
@@ -77,7 +78,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def out = 'outCollection'
 
         when:
-        def operation =  new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), mapF, reduceF, out, null)
+        def operation =  new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, getNamespace(), mapF, reduceF, out, null)
 
         then:
         operation.getMapFunction() == mapF
@@ -113,7 +114,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def writeConcern = WriteConcern.MAJORITY
 
         when:
-        def operation =  new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), mapF, reduceF, out, writeConcern)
+        def operation =  new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, getNamespace(), mapF, reduceF, out, writeConcern)
                 .action(action)
                 .databaseName(dbName)
                 .finalizeFunction(finalizeF)
@@ -181,7 +182,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         getCollectionHelper().insertDocuments(new BsonDocument())
 
         when:
-        def operation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), mapReduceInputNamespace,
+        def operation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
                 new BsonJavaScript('function(key, values){ return values.length; }'),
                 'collectionOut', null)
@@ -215,7 +216,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new BsonDocument())
-        def operation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), mapReduceInputNamespace,
+        def operation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
                 new BsonJavaScript('function(key, values){ return values.length; }'),
                 'collectionOut', new WriteConcern(5))
@@ -247,7 +248,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def dbName = 'dbName'
 
         when:
-        def operation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
+        def operation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, getNamespace(), mapF, reduceF, out,
+                WriteConcern.MAJORITY)
         def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
                 .append('map', mapF)
                 .append('reduce', reduceF)
@@ -262,7 +264,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 ReadPreference.primary(), false)
 
         when:
-        operation = new MapReduceToCollectionOperation(CSOT_MAX_TIME.get(), getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
+        operation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, getNamespace(), mapF, reduceF, out,
+                WriteConcern.MAJORITY)
                 .action(action)
                 .databaseName(dbName)
                 .finalizeFunction(finalizeF)
@@ -308,7 +311,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
 
         def document = Document.parse('{_id: 1, str: "foo"}')
         getCollectionHelper(mapReduceInputNamespace).insertDocuments(document)
-        def operation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), mapReduceInputNamespace,
+        def operation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, mapReduceInputNamespace,
                 new BsonJavaScript('function(){ emit( this._id, this.str ); }'),
                 new BsonJavaScript('function(key, values){ return values; }'),
                 'collectionOut', null)

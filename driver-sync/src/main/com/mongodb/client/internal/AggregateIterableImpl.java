@@ -24,6 +24,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
@@ -67,9 +68,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
             final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
-            @Nullable final Long timeoutMS) {
+            final TimeoutSettings timeoutSettings) {
         this(clientSession, new MongoNamespace(databaseName, "ignored"), documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads, timeoutMS);
+                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads, timeoutSettings);
     }
 
     @SuppressWarnings("checkstyle:ParameterNumber")
@@ -77,10 +78,10 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
             final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel, final boolean retryReads,
-            @Nullable final Long timeoutMS) {
-        super(clientSession, executor, readConcern, readPreference, retryReads, timeoutMS);
+            final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
         this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                true, retryReads, timeoutMS);
+                true, retryReads, timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);

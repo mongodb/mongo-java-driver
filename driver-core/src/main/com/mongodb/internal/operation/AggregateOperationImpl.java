@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -59,6 +60,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static final String FIRST_BATCH = "firstBatch";
     private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
 
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
@@ -74,18 +76,19 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private BsonValue hint;
     private BsonDocument variables;
 
-    AggregateOperationImpl(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    AggregateOperationImpl(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
-        this(clientSideOperationTimeout, namespace, pipeline, decoder,
+        this(timeoutSettings, namespace, pipeline, decoder,
                 defaultAggregateTarget(notNull("aggregationLevel", aggregationLevel),
                         notNull("namespace", namespace).getCollectionName()),
                 defaultPipelineCreator(pipeline));
     }
 
-    AggregateOperationImpl(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    AggregateOperationImpl(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregateTarget aggregateTarget,
             final PipelineCreator pipelineCreator) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
@@ -161,6 +164,9 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return hint;
     }
 
+    public TimeoutSettings getTimeoutSettings() {
+        return clientSideOperationTimeout.getTimeoutSettings();
+    }
     public ClientSideOperationTimeout getClientSideOperationTimeout() {
         return clientSideOperationTimeout;
     }

@@ -20,18 +20,20 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 
 /**
  * An abstract class for defining operations for managing Atlas Search indexes.
@@ -39,12 +41,16 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final TimeoutSettings timeoutSettings;
+    private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
 
-    AbstractWriteSearchIndexOperation(final MongoNamespace mongoNamespace,
+    AbstractWriteSearchIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
                                       final WriteConcern writeConcern) {
-        this.namespace = mongoNamespace;
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.namespace = namespace;
         this.writeConcern = writeConcern;
     }
 

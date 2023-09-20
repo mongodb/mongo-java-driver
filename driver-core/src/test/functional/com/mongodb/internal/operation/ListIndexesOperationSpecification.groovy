@@ -44,8 +44,8 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
@@ -56,7 +56,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return empty list for nonexistent collection'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
 
         when:
         def cursor = operation.execute(getBinding())
@@ -68,7 +68,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return empty list for nonexistent collection asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
 
         when:
         AsyncBatchCursor cursor = executeAsync(operation)
@@ -82,7 +82,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -98,7 +98,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return default index on Collection that exists asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -114,10 +114,10 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(CSOT_NO_TIMEOUT.get(), namespace,
+        new CreateIndexesOperation(TIMEOUT_SETTINGS, namespace,
                 [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique (true)], null).execute(getBinding())
 
         when:
@@ -134,10 +134,10 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(CSOT_NO_TIMEOUT.get(), namespace,
+        new CreateIndexesOperation(TIMEOUT_SETTINGS, namespace,
                 [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(getBinding())
 
         when:
@@ -154,7 +154,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should use the set batchSize of collections'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec()).batchSize(2)
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec()).batchSize(2)
         collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection2', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection3', new BsonInt32(1)))
@@ -185,7 +185,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should use the set batchSize of collections asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec()).batchSize(2)
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec()).batchSize(2)
         collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection2', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection3', new BsonInt32(1)))
@@ -216,7 +216,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception'() {
         given:
-        def operation = new ListIndexesOperation(CSOT_MAX_TIME.get(), getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
 
         enableMaxTimeFailPoint()
@@ -247,7 +247,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
         }
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), helper.namespace, helper.decoder)
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, helper.namespace, helper.decoder)
 
         when: '3.6.0'
         operation.execute(readBinding)
@@ -273,7 +273,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
             getReadPreference() >> readPreference
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
-        def operation = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), helper.namespace, helper.decoder)
+        def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, helper.namespace, helper.decoder)
 
         when: '3.6.0'
         operation.executeAsync(readBinding, Stub(SingleResultCallback))

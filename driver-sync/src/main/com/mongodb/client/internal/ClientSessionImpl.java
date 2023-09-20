@@ -26,7 +26,6 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
-import com.mongodb.internal.ClientSideOperationTimeouts;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.ReadOperation;
@@ -146,10 +145,11 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 commitInProgress = true;
+                Long maxCommitTime = transactionOptions.getMaxCommitTime(MILLISECONDS);
                 delegate.getOperationExecutor().execute(
                         new CommitTransactionOperation(
                                 // TODO (CSOT) - JAVA-4067
-                                ClientSideOperationTimeouts.withMaxCommitMS(null, transactionOptions.getMaxCommitTime(MILLISECONDS)),
+                                delegate.getTimeoutSettings().withMaxCommitMS(maxCommitTime == null ? 0 : maxCommitTime),
                                 assertNotNull(transactionOptions.getWriteConcern()),
                         transactionState == TransactionState.COMMITTED)
                                 .recoveryToken(getRecoveryToken()),
@@ -181,9 +181,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
+                Long maxCommitTime = transactionOptions.getMaxCommitTime(MILLISECONDS);
                 delegate.getOperationExecutor().execute(new AbortTransactionOperation(
                         // TODO (CSOT) - JAVA-4067
-                        ClientSideOperationTimeouts.withMaxCommitMS(null, transactionOptions.getMaxCommitTime(MILLISECONDS)),
+                        delegate.getTimeoutSettings().withMaxCommitMS(maxCommitTime == null ? 0 : maxCommitTime),
                         assertNotNull(transactionOptions.getWriteConcern()))
                         .recoveryToken(getRecoveryToken()), readConcern, this);
             }

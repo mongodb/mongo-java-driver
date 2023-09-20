@@ -23,6 +23,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -72,6 +73,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
 public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String FIRST_BATCH = "firstBatch";
 
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -96,9 +98,10 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private boolean showRecordId;
     private Boolean allowDiskUse;
 
-    public FindOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public FindOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final Decoder<T> decoder) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -350,7 +353,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     @Override
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                        final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(clientSideOperationTimeout, getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(timeoutSettings, getNamespace().getDatabaseName(),
                 asExplainCommand(getCommand(clientSideOperationTimeout, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }
@@ -358,7 +361,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     @Override
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(clientSideOperationTimeout, getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(timeoutSettings, getNamespace().getDatabaseName(),
                 asExplainCommand(getCommand(clientSideOperationTimeout, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION), verbosity),
                 resultDecoder);
     }

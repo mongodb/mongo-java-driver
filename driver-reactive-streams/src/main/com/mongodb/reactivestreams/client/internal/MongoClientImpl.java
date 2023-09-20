@@ -21,6 +21,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -45,7 +46,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -104,7 +104,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
                                                                      settings.getUuidRepresentation(),
                                                                      settings.getAutoEncryptionSettings(),
-                                                                     settings.getTimeout(TimeUnit.MILLISECONDS),
+                                                                     TimeoutSettings.create(settings),
                                                                      this.executor);
         this.closed = new AtomicBoolean();
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
@@ -242,6 +242,10 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public ClusterDescription getClusterDescription() {
         return getCluster().getCurrentDescription();
+    }
+
+    TimeoutSettings getTimeoutSettings() {
+        return mongoOperationPublisher.getTimeoutSettings();
     }
 
 }

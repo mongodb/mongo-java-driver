@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -34,9 +35,9 @@ final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "dropSearchIndex";
     private final String indexName;
 
-    DropSearchIndexOperation(final MongoNamespace namespace, final String indexName,
+    DropSearchIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace, final String indexName,
                              final WriteConcern writeConcern) {
-        super(namespace, writeConcern);
+        super(timeoutSettings, namespace, writeConcern);
         this.indexName = indexName;
     }
 

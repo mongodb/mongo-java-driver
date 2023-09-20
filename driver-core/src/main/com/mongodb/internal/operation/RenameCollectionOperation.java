@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -49,15 +50,17 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;
     private final WriteConcern writeConcern;
     private boolean dropTarget;
 
-    public RenameCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace originalNamespace,
+    public RenameCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace originalNamespace,
             final MongoNamespace newNamespace, @Nullable final WriteConcern writeConcern) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
         this.newNamespace = notNull("newNamespace", newNamespace);
         this.writeConcern = writeConcern;

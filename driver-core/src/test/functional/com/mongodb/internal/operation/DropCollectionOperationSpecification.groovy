@@ -24,8 +24,8 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
-import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -39,7 +39,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        new DropCollectionOperation(CSOT_TIMEOUT.get(), getNamespace(), WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, getNamespace(), WriteConcern.ACKNOWLEDGED).execute(getBinding())
 
         then:
         !collectionNameExists(getCollectionName())
@@ -52,7 +52,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        executeAsync(new DropCollectionOperation(CSOT_TIMEOUT.get(), getNamespace(), WriteConcern.ACKNOWLEDGED))
+        executeAsync(new DropCollectionOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, getNamespace(), WriteConcern.ACKNOWLEDGED))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -63,7 +63,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        new DropCollectionOperation(CSOT_TIMEOUT.get(), namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
+        new DropCollectionOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
 
         then:
         !collectionNameExists('nonExistingCollection')
@@ -75,7 +75,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        executeAsync(new DropCollectionOperation(CSOT_TIMEOUT.get(), namespace, WriteConcern.ACKNOWLEDGED))
+        executeAsync(new DropCollectionOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, namespace, WriteConcern.ACKNOWLEDGED))
 
         then:
         !collectionNameExists('nonExistingCollection')
@@ -86,7 +86,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
         assert collectionNameExists(getCollectionName())
-        def operation = new DropCollectionOperation(CSOT_TIMEOUT.get(), getNamespace(), new WriteConcern(5))
+        def operation = new DropCollectionOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, getNamespace(), new WriteConcern(5))
 
         when:
         async ? executeAsync(operation) : operation.execute(getBinding())
@@ -101,7 +101,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
     }
 
     def collectionNameExists(String collectionName) {
-        def cursor = new ListCollectionsOperation(CSOT_NO_TIMEOUT.get(), databaseName, new DocumentCodec()).execute(getBinding())
+        def cursor = new ListCollectionsOperation(TIMEOUT_SETTINGS, databaseName, new DocumentCodec()).execute(getBinding())
         if (!cursor.hasNext()) {
             return false
         }

@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
@@ -40,17 +41,17 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     private final OperationExecutor executor;
     private final ReadPreference readPreference;
     private final boolean retryReads;
-    private final Long timeoutMS;
+    private final TimeoutSettings timeoutSettings;
     private Integer batchSize;
 
     public MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
-                             final ReadPreference readPreference, final boolean retryReads, @Nullable final Long timeoutMS) {
+                             final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
         this.clientSession = clientSession;
         this.executor = notNull("executor", executor);
         this.readConcern = notNull("readConcern", readConcern);
         this.readPreference = notNull("readPreference", readPreference);
         this.retryReads = notNull("retryReads", retryReads);
-        this.timeoutMS = timeoutMS;
+        this.timeoutSettings = timeoutSettings;
     }
 
     public abstract ReadOperation<BatchCursor<TResult>> asReadOperation();
@@ -76,9 +77,8 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return retryReads;
     }
 
-    @Nullable
-    protected Long getTimeoutMS() {
-        return timeoutMS;
+    protected TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
     }
 
     @Nullable

@@ -25,8 +25,8 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
-import static com.mongodb.ClusterFixture.CSOT_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
@@ -44,7 +44,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         assert databaseNameExists(databaseName)
 
         when:
-        execute(new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, WriteConcern.ACKNOWLEDGED), async)
+        execute(new DropDatabaseOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, databaseName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(databaseName)
@@ -59,7 +59,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         def dbName = 'nonExistingDatabase'
 
         when:
-        execute(new DropDatabaseOperation(CSOT_TIMEOUT.get(), dbName, WriteConcern.ACKNOWLEDGED), async)
+        execute(new DropDatabaseOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, dbName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(dbName)
@@ -75,7 +75,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
 
         // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
         def w = serverVersionAtLeast(4, 0) ? 2 : 5
-        def operation = new DropDatabaseOperation(CSOT_TIMEOUT.get(), databaseName, new WriteConcern(w))
+        def operation = new DropDatabaseOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, databaseName, new WriteConcern(w))
         if (serverVersionAtLeast(4, 0)) {
             configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
                     'mode : {times : 1}, ' +
@@ -96,7 +96,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     def databaseNameExists(String databaseName) {
-        new ListDatabasesOperation(CSOT_NO_TIMEOUT.get(), new DocumentCodec()).execute(getBinding()).next()*.name.contains(databaseName)
+        new ListDatabasesOperation(TIMEOUT_SETTINGS, new DocumentCodec()).execute(getBinding()).next()*.name.contains(databaseName)
     }
 
 }

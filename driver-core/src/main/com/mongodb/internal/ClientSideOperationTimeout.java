@@ -21,7 +21,6 @@ import com.mongodb.lang.Nullable;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -31,33 +30,18 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class ClientSideOperationTimeout {
 
-    private final Long timeoutMS;
-    private final long maxAwaitTimeMS;
-
-    // Deprecated operation based operation timeouts
-    private final long maxTimeMS;
-    private final long maxCommitTimeMS;
+    private final TimeoutSettings timeoutSettings;
 
     @Nullable
-    private Timeout timeout;
+    private final Timeout timeout;
 
-    public ClientSideOperationTimeout(@Nullable final Long timeoutMS,
-                                      final long maxAwaitTimeMS,
-                                      final long maxTimeMS,
-                                      final long maxCommitTimeMS) {
-        isTrueArgument("timeoutMS must be >= 0", timeoutMS == null || timeoutMS >= 0);
-        this.timeoutMS = timeoutMS;
-        this.maxAwaitTimeMS = maxAwaitTimeMS;
-        this.maxTimeMS = timeoutMS == null ? maxTimeMS : 0;
-        this.maxCommitTimeMS = timeoutMS == null ? maxCommitTimeMS : 0;
+    public ClientSideOperationTimeout(final TimeoutSettings timeoutSettings) {
+        this(timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
+    }
 
-        if (timeoutMS != null) {
-            if (timeoutMS == 0) {
-                this.timeout = Timeout.infinite();
-            } else {
-                this.timeout = Timeout.startNow(timeoutMS, MILLISECONDS);
-            }
-        }
+    ClientSideOperationTimeout(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+        this.timeoutSettings = timeoutSettings;
+        this.timeout = timeout;
     }
 
     /**
@@ -66,7 +50,7 @@ public class ClientSideOperationTimeout {
      * @return true if a timeout has been set.
      */
     public boolean hasTimeoutMS() {
-        return timeoutMS != null;
+        return timeoutSettings.getTimeoutMS() != null;
     }
 
     /**
@@ -85,6 +69,7 @@ public class ClientSideOperationTimeout {
      * @return timeout to use.
      */
     public long timeoutOrAlternative(final long alternativeTimeoutMS) {
+        Long timeoutMS = timeoutSettings.getTimeoutMS();
         if (timeoutMS == null) {
             return alternativeTimeoutMS;
         } else if (timeoutMS == 0) {
@@ -101,6 +86,7 @@ public class ClientSideOperationTimeout {
      * @return the minimum value to use.
      */
     public long calculateMin(final long alternativeTimeoutMS) {
+        Long timeoutMS = timeoutSettings.getTimeoutMS();
         if (timeoutMS == null) {
             return alternativeTimeoutMS;
         } else if (timeoutMS == 0) {
@@ -112,16 +98,20 @@ public class ClientSideOperationTimeout {
         }
     }
 
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
     public long getMaxAwaitTimeMS() {
-        return maxAwaitTimeMS;
+        return timeoutSettings.getMaxAwaitTimeMS();
     }
 
     public long getMaxTimeMS() {
-        return timeoutOrAlternative(maxTimeMS);
+        return timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
     }
 
     public long getMaxCommitTimeMS() {
-        return timeoutOrAlternative(maxCommitTimeMS);
+        return timeoutOrAlternative(timeoutSettings.getMaxCommitTimeMS());
     }
 
     private long timeoutRemainingMS() {
@@ -129,13 +119,12 @@ public class ClientSideOperationTimeout {
         return timeout.isInfinite() ? 0 : timeout.remaining(MILLISECONDS);
     }
 
+
     @Override
     public String toString() {
         return "ClientSideOperationTimeout{"
-                + "timeoutMS=" + timeoutMS
-                + ", maxAwaitTimeMS=" + maxAwaitTimeMS
-                + ", maxTimeMS=" + maxTimeMS
-                + ", maxCommitTimeMS=" + maxCommitTimeMS
+                + "timeoutContext=" + timeoutSettings
+                + ", timeout=" + timeout
                 + '}';
     }
 
@@ -148,12 +137,19 @@ public class ClientSideOperationTimeout {
             return false;
         }
         final ClientSideOperationTimeout that = (ClientSideOperationTimeout) o;
-        return maxAwaitTimeMS == that.maxAwaitTimeMS && maxTimeMS == that.maxTimeMS && maxCommitTimeMS == that.maxCommitTimeMS
-                && Objects.equals(timeoutMS, that.timeoutMS);
+        return Objects.equals(timeoutSettings, that.timeoutSettings) && Objects.equals(timeout, that.timeout);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeoutMS, maxAwaitTimeMS, maxTimeMS, maxCommitTimeMS);
+        return Objects.hash(timeoutSettings, timeout);
+    }
+
+    @Nullable
+    private static Timeout calculateTimeout(@Nullable final Long timeoutMS) {
+        if (timeoutMS != null) {
+            return timeoutMS == 0 ? Timeout.infinite() : Timeout.startNow(timeoutMS, MILLISECONDS);
+        }
+        return null;
     }
 }

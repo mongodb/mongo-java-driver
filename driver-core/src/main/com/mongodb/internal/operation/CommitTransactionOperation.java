@@ -25,7 +25,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -50,13 +50,13 @@ public class CommitTransactionOperation extends TransactionOperation {
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
 
-    public CommitTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteConcern writeConcern) {
-        this(clientSideOperationTimeout, writeConcern, false);
+    public CommitTransactionOperation(final TimeoutSettings timeoutSettings, final WriteConcern writeConcern) {
+        this(timeoutSettings, writeConcern, false);
     }
 
-    public CommitTransactionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final WriteConcern writeConcern,
+    public CommitTransactionOperation(final TimeoutSettings timeoutSettings, final WriteConcern writeConcern,
             final boolean alreadyCommitted) {
-        super(clientSideOperationTimeout, writeConcern);
+        super(timeoutSettings, writeConcern);
         this.alreadyCommitted = alreadyCommitted;
     }
 

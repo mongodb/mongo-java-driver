@@ -41,6 +41,7 @@ import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
@@ -75,7 +76,8 @@ class MongoClientSpecification extends Specification {
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', withUuidRepresentation(codecRegistry, UNSPECIFIED), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, null, null, new TestOperationExecutor([]))
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, null,
+                TIMEOUT_SETTINGS, new TestOperationExecutor([]))
     }
 
     def 'should use ListDatabasesIterableImpl correctly'() {
@@ -90,14 +92,14 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, Document,
-                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, null))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, TIMEOUT_SETTINGS))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, null))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, TIMEOUT_SETTINGS))
 
         when:
         def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session) as MongoIterable<String>
@@ -105,7 +107,8 @@ class MongoClientSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, null).nameOnly(true))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, TIMEOUT_SETTINGS)
+                .nameOnly(true))
 
         cleanup:
         client?.close()
@@ -134,7 +137,7 @@ class MongoClientSpecification extends Specification {
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
                 withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
-                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true, null),
+                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true, TIMEOUT_SETTINGS),
                 ['codec'])
 
         when:
@@ -144,7 +147,7 @@ class MongoClientSpecification extends Specification {
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
                 withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
                 readPreference, readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT,
-                true, null), ['codec'])
+                true, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
@@ -153,7 +156,7 @@ class MongoClientSpecification extends Specification {
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
                 withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
                 readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
-                ChangeStreamLevel.CLIENT, true, null), ['codec'])
+                ChangeStreamLevel.CLIENT, true, TIMEOUT_SETTINGS), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]

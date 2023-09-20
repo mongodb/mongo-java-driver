@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -47,7 +48,7 @@ public class MongoOperationPublisherTest {
     private static final MongoOperationPublisher<Document> DEFAULT_MOP = new MongoOperationPublisher<>(
             MONGO_NAMESPACE, Document.class, MongoClientSettings.getDefaultCodecRegistry(), ReadPreference.primary(),
             ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true, UuidRepresentation.STANDARD,
-            null, 100L, OPERATION_EXECUTOR);
+            null, TIMEOUT_SETTINGS_WITH_TIMEOUT, OPERATION_EXECUTOR);
 
     @Test
     public void withCodecRegistry() {
@@ -106,7 +107,7 @@ public class MongoOperationPublisherTest {
 
     @Test
     public void withTimeout() {
-        assertEquals(DEFAULT_MOP, DEFAULT_MOP.withTimeout(100, TimeUnit.MILLISECONDS));
+        assertEquals(DEFAULT_MOP, DEFAULT_MOP.withTimeout(60_000, TimeUnit.MILLISECONDS));
         assertEquals(1000, DEFAULT_MOP.withTimeout(1000, TimeUnit.MILLISECONDS).getTimeoutMS());
     }
 

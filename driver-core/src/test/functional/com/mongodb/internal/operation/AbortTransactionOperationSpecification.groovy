@@ -21,7 +21,7 @@ import org.bson.BsonDocument
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.MAJORITY
 
@@ -34,13 +34,13 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
         def expectedCommand = BsonDocument.parse('{abortTransaction: 1}')
 
         when:
-        def operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), ACKNOWLEDGED)
+        def operation = new AbortTransactionOperation(TIMEOUT_SETTINGS, ACKNOWLEDGED)
 
         then:
         testOperationInTransaction(operation, [4, 0, 0], expectedCommand, async, cannedResult)
 
         when:
-        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), MAJORITY)
+        operation = new AbortTransactionOperation(TIMEOUT_SETTINGS, MAJORITY)
         expectedCommand.put('writeConcern', MAJORITY.asDocument())
 
         then:
@@ -57,14 +57,14 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
 
         when:
         def writeConcern = MAJORITY.withWTimeout(10, TimeUnit.MILLISECONDS)
-        def operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
+        def operation = new AbortTransactionOperation(TIMEOUT_SETTINGS, writeConcern)
 
         then:
         testOperationRetries(operation, [4, 0, 0], expectedCommand, async, cannedResult, true)
 
         when:
         writeConcern = MAJORITY
-        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
+        operation = new AbortTransactionOperation(TIMEOUT_SETTINGS, writeConcern)
         expectedCommand.put('writeConcern', writeConcern.asDocument())
 
         then:
@@ -72,7 +72,7 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
 
         when:
         writeConcern = ACKNOWLEDGED
-        operation = new AbortTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
+        operation = new AbortTransactionOperation(TIMEOUT_SETTINGS, writeConcern)
         expectedCommand.remove('writeConcern')
 
         then:

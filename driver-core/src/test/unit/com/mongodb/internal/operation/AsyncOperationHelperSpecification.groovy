@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.ClientSideOperationTimeout
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -36,7 +37,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync
@@ -90,8 +91,9 @@ class AsyncOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableWriteAsync(CSOT_NO_TIMEOUT.get(), asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
-                commandCreator, FindAndModifyHelper.asyncTransformer(), { cmd -> cmd }, callback)
+        executeRetryableWriteAsync(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), asyncWriteBinding, dbName, primary(),
+                new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.asyncTransformer(),
+                { cmd -> cmd }, callback)
 
         then:
         2 * connection.commandAsync(dbName, command, _, primary(), decoder, *_) >> { it.last().onResult(results.poll(), null) }
@@ -147,7 +149,8 @@ class AsyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableReadAsync(CSOT_NO_TIMEOUT.get(), asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
+        executeRetryableReadAsync(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), asyncReadBinding, dbName, commandCreator,
+                decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

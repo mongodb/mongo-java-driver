@@ -32,6 +32,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -63,12 +64,14 @@ final class MongoClientDelegate {
     private final CodecRegistry codecRegistry;
     @Nullable
     private final SynchronousContextProvider contextProvider;
+    private final TimeoutSettings timeoutSettings;
     private final AtomicBoolean closed;
 
     MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
                         @Nullable final Crypt crypt, @Nullable final ServerApi serverApi,
-                        @Nullable final SynchronousContextProvider contextProvider) {
+                        @Nullable final SynchronousContextProvider contextProvider,
+                        final TimeoutSettings timeoutSettings) {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
         this.contextProvider = contextProvider;
@@ -77,6 +80,7 @@ final class MongoClientDelegate {
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;
         this.serverApi = serverApi;
+        this.timeoutSettings = timeoutSettings;
         this.closed = new AtomicBoolean();
     }
 
@@ -123,6 +127,10 @@ final class MongoClientDelegate {
 
     public ServerSessionPool getServerSessionPool() {
         return serverSessionPool;
+    }
+
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
     }
 
     private class DelegateOperationExecutor implements OperationExecutor {

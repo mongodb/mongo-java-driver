@@ -21,7 +21,7 @@ import org.bson.BsonDocument
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.MAJORITY
 
@@ -34,13 +34,13 @@ class CommitTransactionOperationSpecification extends OperationFunctionalSpecifi
         def expectedCommand = BsonDocument.parse('{commitTransaction: 1}')
 
         when:
-        def operation = new CommitTransactionOperation(CSOT_NO_TIMEOUT.get(), ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, ACKNOWLEDGED)
 
         then:
         testOperationInTransaction(operation, [4, 0, 0], expectedCommand, async, cannedResult)
 
         when:
-        operation = new CommitTransactionOperation(CSOT_NO_TIMEOUT.get(), MAJORITY)
+        operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, MAJORITY)
         expectedCommand.put('writeConcern', MAJORITY.asDocument())
 
         then:
@@ -57,14 +57,14 @@ class CommitTransactionOperationSpecification extends OperationFunctionalSpecifi
 
         when:
         def writeConcern = MAJORITY.withWTimeout(10, TimeUnit.MILLISECONDS)
-        def operation = new CommitTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
+        def operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, writeConcern)
 
         then:
         testOperationRetries(operation, [4, 0, 0], expectedCommand, async, cannedResult, true)
 
         when:
         writeConcern = MAJORITY
-        operation = new CommitTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
+        operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, writeConcern)
         expectedCommand.put('writeConcern', writeConcern.withWTimeout(10000, TimeUnit.MILLISECONDS).asDocument())
 
         then:
@@ -72,7 +72,7 @@ class CommitTransactionOperationSpecification extends OperationFunctionalSpecifi
 
         when:
         writeConcern = ACKNOWLEDGED
-        operation = new CommitTransactionOperation(CSOT_NO_TIMEOUT.get(), writeConcern)
+        operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, writeConcern)
         expectedCommand.put('writeConcern', writeConcern.withW('majority').withWTimeout(10000, TimeUnit.MILLISECONDS).asDocument())
 
         then:
@@ -88,7 +88,7 @@ class CommitTransactionOperationSpecification extends OperationFunctionalSpecifi
         def expectedCommand = BsonDocument.parse('{commitTransaction: 1, writeConcern: {w: "majority", wtimeout: 10000}}')
 
         when:
-        def operation = new CommitTransactionOperation(CSOT_NO_TIMEOUT.get(), ACKNOWLEDGED, true)
+        def operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, ACKNOWLEDGED, true)
 
         then:
         testOperationInTransaction(operation, [4, 0, 0], expectedCommand, async, cannedResult, true)

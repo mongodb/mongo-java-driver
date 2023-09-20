@@ -45,7 +45,7 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
@@ -61,7 +61,7 @@ class GridFSBucketSpecification extends Specification {
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
         new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern,
-                JAVA_LEGACY, null, null, executor)
+                JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
     }
 
     def 'should return the correct bucket name'() {
@@ -584,7 +584,7 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == primary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(CSOT_NO_TIMEOUT.get(),
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(TIMEOUT_SETTINGS,
                 new MongoNamespace('test.fs.files'), decoder).filter(new BsonDocument()))
 
         when:
@@ -595,7 +595,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(
-                new FindOperation<GridFSFile>(CSOT_NO_TIMEOUT.get(), new MongoNamespace('test.fs.files'), decoder).filter(filter))
+                new FindOperation<GridFSFile>(TIMEOUT_SETTINGS, new MongoNamespace('test.fs.files'), decoder).filter(filter))
     }
 
     def 'should throw an exception if file not found when opening by name'() {

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,7 +44,7 @@ public class DistinctPublisherImplTest extends TestHelper {
         DistinctPublisher<Document> publisher =
                 new DistinctPublisherImpl<>(null, createMongoOperationPublisher(executor), fieldName, new Document());
 
-        DistinctOperation<Document> expectedOperation = new DistinctOperation<>(CSOT_NO_TIMEOUT.get(), NAMESPACE, fieldName,
+        DistinctOperation<Document> expectedOperation = new DistinctOperation<>(TIMEOUT_SETTINGS, NAMESPACE, fieldName,
                                                                                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true).filter(new BsonDocument());
 

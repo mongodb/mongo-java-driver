@@ -45,6 +45,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
@@ -69,9 +70,9 @@ public final class AsyncOperations<TDocument> {
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
             final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
-            final boolean retryWrites, final boolean retryReads,  @Nullable final Long timeoutMS) {
+            final boolean retryWrites, final boolean retryReads, final TimeoutSettings timeoutSettings) {
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                retryWrites, retryReads, timeoutMS);
+                retryWrites, retryReads, timeoutSettings);
     }
 
     public MongoNamespace getNamespace() {
@@ -106,9 +107,8 @@ public final class AsyncOperations<TDocument> {
         return operations.isRetryReads();
     }
 
-    @Nullable
-    public Long getTimeoutMS() {
-        return operations.getTimeoutMS();
+    public TimeoutSettings getTimeoutSettings() {
+        return operations.getTimeoutSettings();
     }
 
     public AsyncReadOperation<Long> countDocuments(final Bson filter, final CountOptions options) {

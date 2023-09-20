@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -65,6 +66,7 @@ import static java.util.Arrays.asList;
  */
 public class
 MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
@@ -86,10 +88,11 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     private Collation collation;
     private static final List<String> VALID_ACTIONS = asList("replace", "merge", "reduce");
 
-    public MapReduceToCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public MapReduceToCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, @Nullable final String collectionName,
             @Nullable final WriteConcern writeConcern) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -279,7 +282,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(clientSideOperationTimeout, namespace.getDatabaseName(),
+        return new CommandReadOperation<>(timeoutSettings, namespace.getDatabaseName(),
                                           ExplainHelper.asExplainCommand(getCommand(null), explainVerbosity),
                                           new BsonDocumentCodec());
     }

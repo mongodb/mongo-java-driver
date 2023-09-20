@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -49,6 +50,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
@@ -64,9 +66,10 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     private BsonValue comment;
     private BsonDocument variables;
 
-    protected BaseFindAndModifyOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    protected BaseFindAndModifyOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
