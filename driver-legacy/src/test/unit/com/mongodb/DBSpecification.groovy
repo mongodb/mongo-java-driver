@@ -77,6 +77,7 @@ class DBSpecification extends Specification {
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         mongo.codecRegistry >> getDefaultCodecRegistry()
+        mongo.timeoutSettings >> TIMEOUT_SETTINGS
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -146,6 +147,7 @@ class DBSpecification extends Specification {
             getCodecRegistry() >> MongoClient.defaultCodecRegistry
         }
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        mongo.timeoutSettings >> TIMEOUT_SETTINGS
         def executor = new TestOperationExecutor([1L, 2L, 3L])
 
         def databaseName = 'test'
@@ -182,6 +184,7 @@ class DBSpecification extends Specification {
         given:
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        mongo.timeoutSettings >> TIMEOUT_SETTINGS
         def executor = new TestOperationExecutor([Stub(BatchCursor), Stub(BatchCursor)])
 
         def databaseName = 'test'
