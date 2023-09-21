@@ -42,7 +42,7 @@ interface ConnectionPool extends Closeable {
      * @param timeout This is not a timeout for the whole {@link #get(OperationContext, long, TimeUnit)},
      * see {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
      * <p>
-     * See {@link StartTime#fromNowOrInfiniteIfNegative(long, TimeUnit)}.</p>
+     * See {@link StartTime#timeoutAfterOrInfiniteIfNegative(long, TimeUnit)}.</p>
      * @throws MongoConnectionPoolClearedException If detects that the pool is {@linkplain #invalidate(Throwable) paused}.
      */
     InternalConnection get(OperationContext operationContext, long timeout, TimeUnit timeUnit) throws MongoConnectionPoolClearedException;

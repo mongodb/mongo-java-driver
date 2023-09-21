@@ -19,6 +19,9 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * A point in time used to track how much time has elapsed. In contrast to a
+ * Timeout, it is guaranteed to not be in the future, and is never infinite.
+ *
  * @see TimePoint
  */
 public interface StartTime {
@@ -46,9 +49,9 @@ public interface StartTime {
      * e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
      * so it cannot be changed without updating those methods.</p>
      *
-     * @see TimePoint#fromNowOrInfiniteIfNegative(long, TimeUnit)
+     * @see TimePoint#timeoutAfterOrInfiniteIfNegative(long, TimeUnit)
      */
-    Timeout fromNowOrInfiniteIfNegative(long timeoutValue, TimeUnit timeUnit);
+    Timeout timeoutAfterOrInfiniteIfNegative(long timeoutValue, TimeUnit timeUnit);
 
     /**
      * @return a StartPoint, as of now

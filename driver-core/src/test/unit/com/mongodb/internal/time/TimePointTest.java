@@ -148,7 +148,7 @@ final class TimePointTest {
     @ValueSource(longs = {1, 7, 10, 100, 1000})
     void remaining(final long durationNanos) {
         TimePoint start = TimePoint.now();
-        Timeout timeout = start.fromNowOrInfiniteIfNegative(durationNanos, NANOSECONDS);
+        Timeout timeout = start.timeoutAfterOrInfiniteIfNegative(durationNanos, NANOSECONDS);
         while (!timeout.hasExpired()) {
             long remainingNanosUpperBound = Math.max(0, durationNanos - TimePoint.now().durationSince(start).toNanos());
             long remainingNanos = timeout.remaining(NANOSECONDS);
@@ -219,11 +219,11 @@ final class TimePointTest {
     void fromNowOrInfinite() {
         TimePoint timePoint = TimePoint.now();
         assertAll(
-                () -> assertFalse(TimePoint.now().fromNowOrInfiniteIfNegative(1L, NANOSECONDS).isInfinite()),
-                () -> assertEquals(timePoint, timePoint.fromNowOrInfiniteIfNegative(0, NANOSECONDS)),
-                () -> assertNotEquals(TimePoint.infinite(), timePoint.fromNowOrInfiniteIfNegative(1, NANOSECONDS)),
-                () -> assertNotEquals(timePoint, timePoint.fromNowOrInfiniteIfNegative(1, NANOSECONDS)),
-                () -> assertNotEquals(TimePoint.infinite(), timePoint.fromNowOrInfiniteIfNegative(Long.MAX_VALUE - 1, NANOSECONDS)));
+                () -> assertFalse(TimePoint.now().timeoutAfterOrInfiniteIfNegative(1L, NANOSECONDS).isInfinite()),
+                () -> assertEquals(timePoint, timePoint.timeoutAfterOrInfiniteIfNegative(0, NANOSECONDS)),
+                () -> assertNotEquals(TimePoint.infinite(), timePoint.timeoutAfterOrInfiniteIfNegative(1, NANOSECONDS)),
+                () -> assertNotEquals(timePoint, timePoint.timeoutAfterOrInfiniteIfNegative(1, NANOSECONDS)),
+                () -> assertNotEquals(TimePoint.infinite(), timePoint.timeoutAfterOrInfiniteIfNegative(Long.MAX_VALUE - 1, NANOSECONDS)));
     }
 
     @ParameterizedTest
@@ -274,7 +274,7 @@ final class TimePointTest {
     @MethodSource("durationArguments")
     void convertsUnits(final long duration, final TimeUnit unit) {
         TimePoint start = TimePoint.now();
-        TimePoint end = start.fromNowOrInfiniteIfNegative(duration, unit);
+        TimePoint end = start.timeoutAfterOrInfiniteIfNegative(duration, unit);
         if (duration < 0) {
             assertTrue(end.isInfinite());
         } else {

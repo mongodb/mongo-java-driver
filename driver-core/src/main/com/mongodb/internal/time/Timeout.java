@@ -74,13 +74,14 @@ public interface Timeout {
         if (duration < 0) {
             throw new AssertionError("Timeouts must not be in the past");
         }
-        return TimePoint.now().fromNowOrInfiniteIfNegative(duration, unit);
+        return TimePoint.now().timeoutAfterOrInfiniteIfNegative(duration, unit);
     }
 
     /**
      * {@linkplain Condition#awaitNanos(long)} awaits} on the provided
      * condition. Will {@linkplain Condition#await()} await} without a waiting
-     * time if this timeout is infinite.
+     * time if this timeout is infinite. The {@link #hasExpired()} method is not
+     * checked by this method, and should be called outside of this method.
      * @param condition the condition.
      */
     default void awaitOn(final Condition condition) {

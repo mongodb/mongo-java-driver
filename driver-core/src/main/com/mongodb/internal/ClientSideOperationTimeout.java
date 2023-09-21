@@ -74,7 +74,7 @@ public class ClientSideOperationTimeout {
      *
      * @return true if the timeout has been set and it has expired
      */
-    public boolean expired() {
+    public boolean hasExpired() {
         return timeout != null && timeout.hasExpired();
     }
 

@@ -162,7 +162,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
      * @return a TimePoint that is the given number of timeUnits in the future
      */
     @Override
-    public TimePoint fromNowOrInfiniteIfNegative(final long timeoutValue, final TimeUnit timeUnit) {
+    public TimePoint timeoutAfterOrInfiniteIfNegative(final long timeoutValue, final TimeUnit timeUnit) {
         if (timeoutValue < 0) {
             return infinite();
         }

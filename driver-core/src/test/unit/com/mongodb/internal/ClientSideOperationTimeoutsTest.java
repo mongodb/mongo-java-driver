@@ -106,9 +106,9 @@ final class ClientSideOperationTimeoutsTest {
                     ClientSideOperationTimeout noTimeout = NO_TIMEOUT;
                     sleep(100);
                     assertAll(
-                            () -> assertFalse(noTimeout.expired()),
-                            () -> assertFalse(longTimeout.expired()),
-                            () -> assertTrue(smallTimeout.expired())
+                            () -> assertFalse(noTimeout.hasExpired()),
+                            () -> assertFalse(longTimeout.hasExpired()),
+                            () -> assertTrue(smallTimeout.hasExpired())
                     );
                 })
         );
