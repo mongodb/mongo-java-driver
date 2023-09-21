@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
@@ -42,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -76,18 +78,33 @@ final class TimePointTest {
     }
 
     @Test
-    void timeoutAwaitOn() throws InterruptedException {
+    void timeoutAwaitOnCondition() throws InterruptedException {
         Condition condition = mock(Condition.class);
 
-        Timeout.infinite().awaitOn(condition);
+        Timeout.infinite().awaitOn(condition, () -> "ignored");
         verify(condition, times(1)).await();
         verifyNoMoreInteractions(condition);
 
         reset(condition);
 
-        Timeout.expiresIn(100, NANOSECONDS).awaitOn(condition);
+        Timeout.expiresIn(100, NANOSECONDS).awaitOn(condition, () -> "ignored");
         verify(condition, times(1)).awaitNanos(anyLong());
         verifyNoMoreInteractions(condition);
+    }
+
+    @Test
+    void timeoutAwaitOnLatch() throws InterruptedException {
+        CountDownLatch latch = mock(CountDownLatch.class);
+
+        Timeout.infinite().awaitOn(latch, () -> "ignored");
+        verify(latch, times(1)).await();
+        verifyNoMoreInteractions(latch);
+
+        reset(latch);
+
+        Timeout.expiresIn(100, NANOSECONDS).awaitOn(latch, () -> "ignored");
+        verify(latch, times(1)).await(anyLong(), any(TimeUnit.class));
+        verifyNoMoreInteractions(latch);
     }
 
     // TimePoint

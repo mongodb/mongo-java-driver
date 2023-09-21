@@ -1092,7 +1092,8 @@ final class DefaultConnectionPool implements ConnectionPool {
                     if (timeout.hasExpired()) {
                         throw createTimeoutException(startTime);
                     }
-                    timeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition);
+                    timeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition,
+                            () -> "acquiring permit or getting available opened connection");
                 }
                 if (availableConnection == null) {
                     assertTrue(permits > 0);

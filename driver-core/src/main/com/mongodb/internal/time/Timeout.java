@@ -15,8 +15,13 @@
  */
 package com.mongodb.internal.time;
 
+import com.mongodb.MongoInterruptedException;
+import com.mongodb.lang.Nullable;
+
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
+import java.util.function.Supplier;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -28,6 +33,18 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  */
 public interface Timeout {
 
+    /**
+     * @param other other timeout
+     * @return The earliest of this and the other, if the other is not null
+     */
+    default Timeout orEarlier(@Nullable final Timeout other) {
+        if (other == null) {
+            return this;
+        }
+        TimePoint tpa = (TimePoint) this;
+        TimePoint tpb = (TimePoint) other;
+        return tpa.compareTo(tpb) < 0 ? tpa : tpb;
+    }
 
     /**
      * @see TimePoint#isInfinite()
@@ -83,8 +100,9 @@ public interface Timeout {
      * time if this timeout is infinite. The {@link #hasExpired()} method is not
      * checked by this method, and should be called outside of this method.
      * @param condition the condition.
+     * @param action supplies the name of the action, for {@link MongoInterruptedException}
      */
-    default void awaitOn(final Condition condition) {
+    default void awaitOn(final Condition condition, final Supplier<String> action) {
         try {
             if (isInfinite()) {
                 condition.await();
@@ -94,7 +112,29 @@ public interface Timeout {
                 condition.awaitNanos(remaining(NANOSECONDS));
             }
         } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(null, e);
+            throw interruptAndCreateMongoInterruptedException("Interrupted while " + action.get(), e);
+        }
+    }
+
+    /**
+     * {@linkplain CountDownLatch#await(long, TimeUnit) awaits} on the provided
+     * condition. Will {@linkplain CountDownLatch#await()} await} without a waiting
+     * time if this timeout is infinite. The {@link #hasExpired()} method is not
+     * checked by this method, and should be called outside of this method.
+     * @param latch the latch.
+     * @param action supplies the name of the action, for {@link MongoInterruptedException}
+     */
+    default void awaitOn(final CountDownLatch latch, final Supplier<String> action) {
+        try {
+            if (isInfinite()) {
+                latch.await();
+            } else {
+                // the timeout will track this remaining time
+                //noinspection ResultOfMethodCallIgnored
+                latch.await(this.remaining(NANOSECONDS), NANOSECONDS);
+            }
+        } catch (InterruptedException e) {
+            throw interruptAndCreateMongoInterruptedException("Interrupted while " + action.get(), e);
         }
     }
 }
