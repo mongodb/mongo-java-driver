@@ -23,8 +23,7 @@ import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.internal.VisibleForTesting;
-import com.mongodb.internal.time.TimePoint;
-import com.mongodb.internal.time.Timeout;
+import com.mongodb.internal.time.StartTime;
 import com.mongodb.lang.Nullable;
 
 import java.util.Deque;
@@ -145,7 +144,7 @@ public class ConcurrentPool<T> implements Pool<T> {
      * Gets an object from the pool. Blocks until an object is available, or the specified {@code timeout} expires,
      * or the pool is {@linkplain #close() closed}/{@linkplain #pause(Supplier) paused}.
      *
-     * @param timeout See {@link Timeout#started(long, TimeUnit, TimePoint)}.
+     * @param timeout See {@link StartTime#timeoutAfterOrInfiniteIfNegative(long, TimeUnit)}.
      * @param timeUnit the time unit of the timeout
      * @return An object from the pool, or null if can't get one in the given waitTime
      * @throws MongoTimeoutException if the timeout has been exceeded
@@ -229,7 +228,7 @@ public class ConcurrentPool<T> implements Pool<T> {
     }
 
     /**
-     * @param timeout See {@link Timeout#started(long, TimeUnit, TimePoint)}.
+     * @param timeout See {@link StartTime#timeoutAfterOrInfiniteIfNegative(long, TimeUnit)}.
      */
     @VisibleForTesting(otherwise = PRIVATE)
     boolean acquirePermit(final long timeout, final TimeUnit timeUnit) {
@@ -389,7 +388,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          * This method also emulates the eager {@link InterruptedException} behavior of
          * {@link java.util.concurrent.Semaphore#tryAcquire(long, TimeUnit)}.
          *
-         * @param timeout See {@link Timeout#started(long, TimeUnit, TimePoint)}.
+         * @param timeout See {@link StartTime#timeoutAfterOrInfiniteIfNegative(long, TimeUnit)}.
          */
         boolean acquirePermit(final long timeout, final TimeUnit unit) throws MongoInterruptedException {
             long remainingNanos = unit.toNanos(timeout);

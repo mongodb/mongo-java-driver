@@ -15,23 +15,83 @@
  */
 package com.mongodb.internal.time;
 
+import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 final class TimePointTest {
+
+    private final AtomicLong currentNanos = new AtomicLong();
+    private final TimePoint mockTimePoint = new TimePoint(0L) {
+        @Override
+        long currentNanos() {
+            return currentNanos.get();
+        }
+    };
+
+    // Timeout
+
+    @Test
+    void timeoutExpiresIn() {
+        assertAll(
+                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES)),
+                () -> assertTrue(Timeout.expiresIn(0L, NANOSECONDS).hasExpired()),
+                () -> assertFalse(Timeout.expiresIn(1L, NANOSECONDS).isInfinite()),
+                () -> assertFalse(Timeout.expiresIn(1000, MINUTES).hasExpired()));
+    }
+
+    @Test
+    void timeoutInfinite() {
+        assertEquals(Timeout.infinite(), TimePoint.infinite());
+    }
+
+    @Test
+    void timeoutAwaitOn() throws InterruptedException {
+        Condition condition = mock(Condition.class);
+
+        Timeout.infinite().awaitOn(condition);
+        verify(condition, times(1)).await();
+        verifyNoMoreInteractions(condition);
+
+        reset(condition);
+
+        Timeout.expiresIn(100, NANOSECONDS).awaitOn(condition);
+        verify(condition, times(1)).awaitNanos(anyLong());
+        verifyNoMoreInteractions(condition);
+    }
+
+    // TimePoint
+
     @Test
     void now() {
         TimePoint timePointLowerBound = TimePoint.at(System.nanoTime());
@@ -42,6 +102,65 @@ final class TimePointTest {
     }
 
     @Test
+    void infinite() {
+        TimePoint infinite = TimePoint.infinite();
+        TimePoint now = TimePoint.now();
+        assertEquals(0, infinite.compareTo(TimePoint.infinite()));
+        assertTrue(infinite.compareTo(now) > 0);
+        assertTrue(now.compareTo(infinite) < 0);
+    }
+
+    @Test
+    void isInfinite() {
+        assertAll(
+                () -> assertTrue(TimePoint.infinite().isInfinite()),
+                () -> assertFalse(TimePoint.now().isInfinite()));
+    }
+
+    @Test
+    void asTimeout() {
+        TimePoint t1 = TimePoint.now();
+        assertSame(t1, t1.asTimeout());
+        TimePoint t2 = TimePoint.infinite();
+        assertSame(t2, t2.asTimeout());
+    }
+
+
+    @Test
+    void remaining() {
+        assertAll(
+                () -> assertThrows(AssertionError.class, () -> TimePoint.infinite().remaining(NANOSECONDS)),
+                () -> assertEquals(0, TimePoint.now().remaining(NANOSECONDS))
+        );
+        Timeout earlier = TimePoint.at(System.nanoTime() - 100);
+        assertEquals(0, earlier.remaining(NANOSECONDS));
+        assertTrue(earlier.hasExpired());
+
+        currentNanos.set(-100);
+        assertEquals(100, mockTimePoint.remaining(NANOSECONDS));
+        currentNanos.set(-1000000);
+        assertEquals(1, mockTimePoint.remaining(MILLISECONDS));
+        currentNanos.set(-1000000 + 1);
+        assertEquals(0, mockTimePoint.remaining(MILLISECONDS));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1, 7, 10, 100, 1000})
+    void remaining(final long durationNanos) {
+        TimePoint start = TimePoint.now();
+        Timeout timeout = start.timeoutAfterOrInfiniteIfNegative(durationNanos, NANOSECONDS);
+        while (!timeout.hasExpired()) {
+            long remainingNanosUpperBound = Math.max(0, durationNanos - TimePoint.now().durationSince(start).toNanos());
+            long remainingNanos = timeout.remaining(NANOSECONDS);
+            long remainingNanosLowerBound = Math.max(0, durationNanos - TimePoint.now().durationSince(start).toNanos());
+            assertTrue(remainingNanos >= remainingNanosLowerBound, "remaining nanos is too low");
+            assertTrue(remainingNanos <= remainingNanosUpperBound, "remaining nanos is too high");
+            Thread.yield();
+        }
+        assertTrue(TimePoint.now().durationSince(start).toNanos() >= durationNanos, "expired too early");
+    }
+
+    @Test
     void elapsed() {
         TimePoint timePoint = TimePoint.now();
         Duration elapsedLowerBound = TimePoint.now().durationSince(timePoint);
@@ -49,43 +168,62 @@ final class TimePointTest {
         Duration elapsedUpperBound = TimePoint.now().durationSince(timePoint);
         assertTrue(elapsed.compareTo(elapsedLowerBound) >= 0, "the elapsed is too low");
         assertTrue(elapsed.compareTo(elapsedUpperBound) <= 0, "the elapsed is too high");
+        assertThrows(AssertionError.class, () -> TimePoint.infinite().elapsed());
+
+        currentNanos.set(100);
+        assertEquals(100, mockTimePoint.elapsed().toNanos());
+        currentNanos.set(1000000);
+        assertEquals(1, mockTimePoint.elapsed().toMillis());
+        currentNanos.set(1000000 - 1);
+        assertEquals(0, mockTimePoint.elapsed().toMillis());
+    }
+
+    @Test
+    void hasExpired() {
+        assertAll(
+                () -> assertFalse(Timeout.infinite().hasExpired()),
+                () -> assertTrue(TimePoint.now().hasExpired()),
+                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES)),
+                () -> assertFalse(Timeout.expiresIn(1000, MINUTES).hasExpired()));
     }
 
     @ParameterizedTest
     @MethodSource("earlierNanosAndNanosArguments")
-    void durationSince(final long earlierNanos, final long nanos) {
-        Duration expectedDuration = Duration.ofNanos(nanos - earlierNanos);
+    void durationSince(final Long earlierNanos, @Nullable final Long nanos) {
         TimePoint earlierTimePoint = TimePoint.at(earlierNanos);
         TimePoint timePoint = TimePoint.at(nanos);
+
+        if (nanos == null) {
+            assertThrows(AssertionError.class, () -> timePoint.durationSince(earlierTimePoint));
+            return;
+        }
+
+        Duration expectedDuration = Duration.ofNanos(nanos - earlierNanos);
         assertFalse(expectedDuration.isNegative());
         assertEquals(expectedDuration, timePoint.durationSince(earlierTimePoint));
         assertEquals(expectedDuration.negated(), earlierTimePoint.durationSince(timePoint));
     }
 
     @ParameterizedTest
-    @MethodSource("earlierNanosAndNanosArguments")
-    void compareTo(final long earlierNanos, final long nanos) {
-        TimePoint earlierTimePoint = TimePoint.at(earlierNanos);
-        TimePoint timePoint = TimePoint.at(nanos);
-        if (earlierNanos == nanos) {
-            assertEquals(0, earlierTimePoint.compareTo(timePoint));
-            assertEquals(0, timePoint.compareTo(earlierTimePoint));
-            assertEquals(earlierTimePoint, timePoint);
-            assertEquals(timePoint, earlierTimePoint);
-        } else {
-            assertTrue(earlierTimePoint.compareTo(timePoint) < 0);
-            assertTrue(timePoint.compareTo(earlierTimePoint) > 0);
-            assertNotEquals(earlierTimePoint, timePoint);
-            assertNotEquals(timePoint, earlierTimePoint);
-        }
+    @ValueSource(longs = {1, 7, Long.MAX_VALUE / 2, Long.MAX_VALUE - 1})
+    void remainingNanos(final long durationNanos) {
+        TimePoint start = TimePoint.now();
+        TimePoint timeout = start.add(Duration.ofNanos(durationNanos));
+        assertEquals(durationNanos, timeout.durationSince(start).toNanos());
+        assertEquals(Math.max(0, durationNanos - 1), timeout.durationSince(start.add(Duration.ofNanos(1))).toNanos());
+        assertEquals(0, timeout.durationSince(start.add(Duration.ofNanos(durationNanos))).toNanos());
+        assertEquals(-1, timeout.durationSince(start.add(Duration.ofNanos(durationNanos + 1))).toNanos());
     }
 
-    private static Stream<Arguments> earlierNanosAndNanosArguments() {
-        Collection<Long> earlierNanos = asList(Long.MIN_VALUE, Long.MIN_VALUE / 2, 0L, Long.MAX_VALUE / 2, Long.MAX_VALUE);
-        Collection<Long> durationsInNanos = asList(0L, 1L, Long.MAX_VALUE / 2, Long.MAX_VALUE);
-        return earlierNanos.stream()
-                .flatMap(earlier -> durationsInNanos.stream()
-                        .map(durationNanos -> arguments(earlier, earlier + durationNanos)));
+    @Test
+    void fromNowOrInfinite() {
+        TimePoint timePoint = TimePoint.now();
+        assertAll(
+                () -> assertFalse(TimePoint.now().timeoutAfterOrInfiniteIfNegative(1L, NANOSECONDS).isInfinite()),
+                () -> assertEquals(timePoint, timePoint.timeoutAfterOrInfiniteIfNegative(0, NANOSECONDS)),
+                () -> assertNotEquals(TimePoint.infinite(), timePoint.timeoutAfterOrInfiniteIfNegative(1, NANOSECONDS)),
+                () -> assertNotEquals(timePoint, timePoint.timeoutAfterOrInfiniteIfNegative(1, NANOSECONDS)),
+                () -> assertNotEquals(TimePoint.infinite(), timePoint.timeoutAfterOrInfiniteIfNegative(Long.MAX_VALUE - 1, NANOSECONDS)));
     }
 
     @ParameterizedTest
@@ -104,6 +242,52 @@ final class TimePointTest {
         return nanos.stream()
                 .flatMap(nano -> durationsInNanos.stream()
                         .map(durationNanos -> arguments(nano, Duration.ofNanos(durationNanos))));
+    }
+
+    @ParameterizedTest
+    @MethodSource("earlierNanosAndNanosArguments")
+    void compareTo(final Long earlierNanos, final Long nanos) {
+        TimePoint earlierTimePoint = TimePoint.at(earlierNanos);
+        TimePoint timePoint = TimePoint.at(nanos);
+        if (Objects.equals(earlierNanos, nanos)) {
+            assertEquals(0, earlierTimePoint.compareTo(timePoint));
+            assertEquals(0, timePoint.compareTo(earlierTimePoint));
+            assertEquals(earlierTimePoint, timePoint);
+            assertEquals(timePoint, earlierTimePoint);
+        } else {
+            assertTrue(earlierTimePoint.compareTo(timePoint) < 0);
+            assertTrue(timePoint.compareTo(earlierTimePoint) > 0);
+            assertNotEquals(earlierTimePoint, timePoint);
+            assertNotEquals(timePoint, earlierTimePoint);
+        }
+    }
+
+    private static Stream<Arguments> earlierNanosAndNanosArguments() {
+        Collection<Long> earlierNanos = asList(Long.MIN_VALUE, Long.MIN_VALUE / 2, 0L, Long.MAX_VALUE / 2, Long.MAX_VALUE);
+        Collection<Long> durationsInNanos = asList(0L, 1L, Long.MAX_VALUE / 2, Long.MAX_VALUE, null);
+        return earlierNanos.stream()
+                .flatMap(earlier -> durationsInNanos.stream()
+                        .map(durationNanos -> arguments(earlier, durationNanos == null ? null : earlier + durationNanos)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("durationArguments")
+    void convertsUnits(final long duration, final TimeUnit unit) {
+        TimePoint start = TimePoint.now();
+        TimePoint end = start.timeoutAfterOrInfiniteIfNegative(duration, unit);
+        if (duration < 0) {
+            assertTrue(end.isInfinite());
+        } else {
+            assertEquals(unit.toNanos(duration), end.durationSince(start).toNanos());
+        }
+    }
+
+    private static Stream<Arguments> durationArguments() {
+        return Stream.of(TimeUnit.values())
+                .flatMap(unit -> Stream.of(
+                        Arguments.of(-7, unit),
+                        Arguments.of(0, unit),
+                        Arguments.of(7, unit)));
     }
 
     private TimePointTest() {

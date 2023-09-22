@@ -292,7 +292,7 @@ public final class SocksSocket extends Socket {
         if (timeoutMs == 0) {
             return Timeout.infinite();
         }
-        return Timeout.startNow(timeoutMs, TimeUnit.MILLISECONDS);
+        return Timeout.expiresIn(timeoutMs, TimeUnit.MILLISECONDS);
     }
 
     private static int remainingMillis(final Timeout timeout) throws IOException {

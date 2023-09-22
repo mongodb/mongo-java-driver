@@ -522,11 +522,11 @@ public class DefaultConnectionPoolTest {
             }
         };
         Collection<Future<?>> tasks = new ArrayList<>();
-        Timeout duration = Timeout.startNow(durationNanos);
+        Timeout timeout = Timeout.expiresIn(durationNanos, NANOSECONDS);
         for (int i = 0; i < concurrentUsersCount; i++) {
             if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously and check in
                 tasks.add(executor.submit(() -> {
-                    while (!(duration.expired() || Thread.currentThread().isInterrupted())) {
+                    while (!(timeout.hasExpired() || Thread.currentThread().isInterrupted())) {
                         spontaneouslyInvalidateReady.run();
                         InternalConnection conn = null;
                         try {
@@ -542,7 +542,7 @@ public class DefaultConnectionPoolTest {
                 }));
             } else if (checkoutAsync) {//check out asynchronously and check in
                 tasks.add(executor.submit(() -> {
-                    while (!(duration.expired() || Thread.currentThread().isInterrupted())) {
+                    while (!(timeout.hasExpired() || Thread.currentThread().isInterrupted())) {
                         spontaneouslyInvalidateReady.run();
                         CompletableFuture<InternalConnection> futureCheckOutCheckIn = new CompletableFuture<>();
                         pool.getAsync(new OperationContext(), (conn, t) -> {

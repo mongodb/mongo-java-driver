@@ -267,7 +267,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)
             throws InterruptedException {
-        assertPoll(queue, allowed, required, Timeout.startNow(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
+        assertPoll(queue, allowed, required, Timeout.expiresIn(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required,
@@ -275,7 +275,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
         Set<Class<?>> encountered = new HashSet<>();
         while (true) {
             Object element;
-            if (timeout.isImmediate()) {
+            if (timeout.hasExpired()) {
                 element = queue.poll();
             } else if (timeout.isInfinite()) {
                 element = queue.take();
@@ -299,7 +299,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                     return;
                 }
             }
-            if (timeout.expired()) {
+            if (timeout.hasExpired()) {
                 fail(format("encountered %s, required %s", encountered, required));
             }
         }
