@@ -50,6 +50,19 @@ object Filters {
   def eq[TItem](fieldName: String, value: TItem): Bson = JFilters.eq(fieldName, value)
 
   /**
+   * Creates a filter that matches all documents where the value of the field name equals the specified value.
+   * Unlike `Filters.eq`, this method creates a full form of `\$eq`.
+   *
+   * @param fieldName the field name
+   * @param value     the value
+   * @tparam TItem the value type
+   * @return the filter
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/eq \$eq]]
+   * @since 4.11
+   */
+  def eqFull[TItem](fieldName: String, value: TItem): Bson = JFilters.eqFull(fieldName, value)
+
+  /**
    * Allows the use of aggregation expressions within the query language.
    *
    * @param expression the aggregation expression

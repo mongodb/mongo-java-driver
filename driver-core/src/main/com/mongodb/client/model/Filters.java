@@ -84,9 +84,25 @@ public final class Filters {
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
+     * @see #eqFull(String, Object)
      */
     public static <TItem> Bson eq(final String fieldName, @Nullable final TItem value) {
         return new SimpleEncodingFilter<>(fieldName, value);
+    }
+
+    /**
+     * Creates a filter that matches all documents where the value of the field name equals the specified value.
+     * Unlike {@link #eq(String, Object)}, this method creates a full form of {@code $eq}.
+     *
+     * @param fieldName the field name
+     * @param value     the value, which may be null
+     * @param <TItem>   the value type
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/eq $eq
+     * @since 4.11
+     */
+    public static <TItem> Bson eqFull(final String fieldName, @Nullable final TItem value) {
+        return new OperatorFilter<>("$eq", fieldName, value);
     }
 
     /**

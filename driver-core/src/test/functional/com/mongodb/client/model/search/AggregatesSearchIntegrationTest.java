@@ -56,7 +56,7 @@ import static com.mongodb.client.model.Aggregates.limit;
 import static com.mongodb.client.model.Aggregates.project;
 import static com.mongodb.client.model.Aggregates.replaceWith;
 import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.eqFull;
 import static com.mongodb.client.model.Filters.gt;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.in;
@@ -291,14 +291,14 @@ final class AggregatesSearchIntegrationTest {
         assertAll(
                 () -> asserter.accept(lt("year", 2016)),
                 () -> asserter.accept(lte("year", 2016)),
-                () -> asserter.accept(eq("year", 2016)),
+                () -> asserter.accept(eqFull("year", 2016)),
                 () -> asserter.accept(gte("year", 2016)),
                 () -> asserter.accept(gt("year", 2015)),
                 () -> asserter.accept(ne("year", 2016)),
                 () -> asserter.accept(in("year", 2000, 2016)),
                 () -> asserter.accept(nin("year", 2000, 2016)),
                 () -> asserter.accept(and(gte("year", 2015), lte("year", 2016))),
-                () -> asserter.accept(or(eq("year", 2015), eq("year", 2016)))
+                () -> asserter.accept(or(eqFull("year", 2015), eqFull("year", 2016)))
         );
     }
 

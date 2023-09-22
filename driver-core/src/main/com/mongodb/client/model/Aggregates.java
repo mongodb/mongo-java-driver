@@ -1011,8 +1011,8 @@ public final class Aggregates {
             @Override
             public String toString() {
                 return "Stage{name=$vectorSearch"
-                        + ", field=" + queryVector
                         + ", path=" + path
+                        + ", queryVector=" + queryVector
                         + ", index=" + index
                         + ", numCandidates=" + numCandidates
                         + ", limit=" + limit

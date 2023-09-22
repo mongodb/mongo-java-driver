@@ -39,6 +39,8 @@ public interface VectorSearchOptions extends Bson {
      * {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions) queryVector}.
      * One may use {@link Filters} to create this filter, though not all filters may be supported.
      * See the MongoDB documentation for the list of supported filters.
+     * <p>
+     * Note that for now one has to use {@link Filters#eqFull(String, Object)} instead of {@link Filters#eq(String, Object)}.</p>
      * @return A new {@link VectorSearchOptions}.
      */
     VectorSearchOptions filter(Bson filter);
