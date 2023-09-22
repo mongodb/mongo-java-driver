@@ -240,11 +240,11 @@ final class AggregatesSearchIntegrationTest {
     @BeforeEach
     void beforeEach() {
         assumeTrue(isAtlasSearchTest());
-        assumeTrue(serverVersionAtLeast(7, 1));
     }
 
     @Test
     void vectorSearch() {
+        assumeTrue(serverVersionAtLeast(7, 1));
         CollectionHelper<BsonDocument> collectionHelper = collectionHelpers.get(MFLIX_EMBEDDED_MOVIES_NS);
         int limit = 2;
         assertAll(
@@ -278,6 +278,7 @@ final class AggregatesSearchIntegrationTest {
 
     @Test
     void vectorSearchSupportedFilters() {
+        assumeTrue(serverVersionAtLeast(7, 1));
         CollectionHelper<BsonDocument> collectionHelper = collectionHelpers.get(MFLIX_EMBEDDED_MOVIES_NS);
         Consumer<Bson> asserter = filter -> {
             List<Bson> pipeline = singletonList(

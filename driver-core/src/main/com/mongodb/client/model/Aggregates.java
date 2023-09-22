@@ -943,9 +943,9 @@ public final class Aggregates {
      * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
      * to extract the relevance score assigned to each found document.
      *
-     * @param queryVector The query vector.
+     * @param queryVector The query vector. The number of dimensions must match that of the {@code index}.
      * @param path The field to be searched.
-     * @param index The name of the index to use. This index predetermines the number of components of {@code queryVector}.
+     * @param index The name of the index to use.
      * @param numCandidates The number of candidates.
      * @param limit The limit on the number of documents produced by the pipeline stage.
      * @return The {@code $vectorSearch} pipeline stage.
@@ -971,9 +971,9 @@ public final class Aggregates {
      * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
      * to extract the relevance score assigned to each found document.
      *
-     * @param queryVector The query vector.
+     * @param queryVector The query vector. The number of dimensions must match that of the {@code index}.
      * @param path The field to be searched.
-     * @param index The name of the index to use. This index predetermines the number of components of {@code queryVector}.
+     * @param index The name of the index to use.
      * @param numCandidates The number of candidates.
      * @param limit The limit on the number of documents produced by the pipeline stage.
      * @param options Optional {@code $vectorSearch} pipeline stage fields.

@@ -727,11 +727,11 @@ object Aggregates {
    * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
    * to extract the relevance score assigned to each found document.
    *
-   * @param queryVector   The query vector.
-   * @param path          The field to be searched.
-   * @param index         The name of the index to use. This index predetermines the number of components of `queryVector`.
+   * @param queryVector The query vector. The number of dimensions must match that of the `index`.
+   * @param path The field to be searched.
+   * @param index The name of the index to use.
    * @param numCandidates The number of candidates.
-   * @param limit         The limit on the number of documents produced by the pipeline stage.
+   * @param limit The limit on the number of documents produced by the pipeline stage.
    * @return The `\$vectorSearch` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
    * @note Requires MongoDB 7.1 or greater
@@ -752,9 +752,9 @@ object Aggregates {
    * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
    * to extract the relevance score assigned to each found document.
    *
-   * @param queryVector The query vector.
+   * @param queryVector The query vector. The number of dimensions must match that of the `index`.
    * @param path The field to be searched.
-   * @param index The name of the index to use. This index predetermines the number of components of `queryVector`.
+   * @param index The name of the index to use.
    * @param numCandidates The number of candidates.
    * @param limit The limit on the number of documents produced by the pipeline stage.
    * @param options Optional `\$vectorSearch` pipeline stage fields.
