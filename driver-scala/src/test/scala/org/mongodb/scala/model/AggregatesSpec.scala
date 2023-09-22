@@ -120,10 +120,8 @@ class AggregatesSpec extends BaseSpec {
   }
 
   it should "render $match" in {
-    toBson(`match`(Filters.eq("author", "dave"))) should equal(
-      Document("""{ $match : { author : { $eq: "dave" } } }""")
-    )
-    toBson(filter(Filters.eq("author", "dave"))) should equal(Document("""{ $match : { author : { $eq: "dave" } } }"""))
+    toBson(`match`(Filters.eq("author", "dave"))) should equal(Document("""{ $match : { author : "dave" } }"""))
+    toBson(filter(Filters.eq("author", "dave"))) should equal(Document("""{ $match : { author : "dave" } }"""))
   }
 
   it should "render $facet" in {
@@ -145,9 +143,9 @@ class AggregatesSpec extends BaseSpec {
       )
     ) should equal(
       Document(
-        """{$facet: { "Screen Sizes": [{$unwind: "$attributes"}, {$match: {"attributes.name": {$eq: "screen size"}}},
+        """{$facet: { "Screen Sizes": [{$unwind: "$attributes"}, {$match: {"attributes.name": "screen size"}},
             {$group: { _id: null, count: {$sum: 1} }}],
-      "Manufacturer": [ {$match: {"attributes.name": {$eq: "manufacturer"}}}, {$group: {_id: "$attributes.value", count: {$sum: 1}}},
+      "Manufacturer": [ {$match: {"attributes.name": "manufacturer"}}, {$group: {_id: "$attributes.value", count: {$sum: 1}}},
             {$sort: {count: -1}}, {$limit: 5}]}}"""
       )
     )

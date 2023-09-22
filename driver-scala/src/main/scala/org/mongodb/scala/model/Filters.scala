@@ -38,7 +38,8 @@ import org.mongodb.scala.bson.conversions.Bson
 object Filters {
 
   /**
-   * Creates a filter that matches all documents where the value of the field name equals the specified value.
+   * Creates a filter that matches all documents where the value of the field name equals the specified value. Note that this doesn't
+   * actually generate a `\$eq` operator, as the query language doesn't require it.
    *
    * @param fieldName the field name
    * @param value     the value
@@ -60,7 +61,8 @@ object Filters {
   def expr[TExpression](expression: TExpression): Bson = JFilters.expr(expression)
 
   /**
-   * Creates a filter that matches all documents where the value of the field name equals the specified value.
+   * Creates a filter that matches all documents where the value of the field name equals the specified value. Note that this does
+   * actually generate a `\$eq` operator, as the query language doesn't require it.
    *
    * A friendly alias for the `eq` method.
    *

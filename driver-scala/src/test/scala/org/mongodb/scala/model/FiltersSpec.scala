@@ -46,11 +46,11 @@ class FiltersSpec extends BaseSpec {
   }
 
   it should "render without $eq" in {
-    toBson(model.Filters.eq("x", 1)) should equal(Document("""{x : {$eq: 1}}"""))
-    toBson(model.Filters.eq("x", null)) should equal(Document("""{x : {$eq: null}}"""))
+    toBson(model.Filters.eq("x", 1)) should equal(Document("""{x : 1}"""))
+    toBson(model.Filters.eq("x", null)) should equal(Document("""{x : null}"""))
 
-    toBson(model.Filters.equal("x", 1)) should equal(Document("""{x : {$eq: 1}}"""))
-    toBson(model.Filters.equal("x", null)) should equal(Document("""{x : {$eq: null}}"""))
+    toBson(model.Filters.equal("x", 1)) should equal(Document("""{x : 1}"""))
+    toBson(model.Filters.equal("x", null)) should equal(Document("""{x : null}"""))
   }
 
   it should "render $ne" in {
@@ -63,30 +63,30 @@ class FiltersSpec extends BaseSpec {
     toBson(model.Filters.not(model.Filters.gt("x", 1))) should equal(Document("""{x : {$not: {$gt: 1}}}"""))
     toBson(model.Filters.not(model.Filters.regex("x", "^p.*"))) should equal(Document("""{x : {$not: /^p.*/}}"""))
     toBson(model.Filters.not(model.Filters.and(model.Filters.gt("x", 1), model.Filters.eq("y", 20)))) should equal(
-      Document("""{$not: {$and: [{x: {$gt: 1}}, {y: {$eq: 20}}]}}""")
+      Document("""{$not: {$and: [{x: {$gt: 1}}, {y: 20}]}}""")
     )
     toBson(model.Filters.not(model.Filters.and(model.Filters.eq("x", 1), model.Filters.eq("x", 2)))) should equal(
-      Document("""{$not: {$and: [{x: {$eq: 1}}, {x: {$eq: 2}}]}}""")
+      Document("""{$not: {$and: [{x: 1}, {x: 2}]}}""")
     )
     toBson(model.Filters.not(model.Filters.and(model.Filters.in("x", 1, 2), model.Filters.eq("x", 3)))) should equal(
-      Document("""{$not: {$and: [{x: {$in: [1, 2]}}, {x: {$eq: 3}}]}}""")
+      Document("""{$not: {$and: [{x: {$in: [1, 2]}}, {x: 3}]}}""")
     )
     toBson(model.Filters.not(model.Filters.or(model.Filters.gt("x", 1), model.Filters.eq("y", 20)))) should equal(
-      Document("""{$not: {$or: [{x: {$gt: 1}}, {y: {$eq: 20}}]}}""")
+      Document("""{$not: {$or: [{x: {$gt: 1}}, {y: 20}]}}""")
     )
     toBson(model.Filters.not(model.Filters.or(model.Filters.eq("x", 1), model.Filters.eq("x", 2)))) should equal(
-      Document("""{$not: {$or: [{x: {$eq: 1}}, {x: {$eq: 2}}]}}""")
+      Document("""{$not: {$or: [{x: 1}, {x: 2}]}}""")
     )
     toBson(model.Filters.not(model.Filters.or(model.Filters.in("x", 1, 2), model.Filters.eq("x", 3)))) should equal(
-      Document("""{$not: {$or: [{x: {$in: [1, 2]}}, {x: {$eq: 3}}]}}""")
+      Document("""{$not: {$or: [{x: {$in: [1, 2]}}, {x: 3}]}}""")
     )
     toBson(model.Filters.not(Document("$in" -> List(1)))) should equal(Document("""{$not: {$in: [1]}}"""))
   }
 
   it should "render $nor" in {
-    toBson(model.Filters.nor(model.Filters.eq("price", 1))) should equal(Document("""{$nor : [{price: {$eq: 1}}]}"""))
+    toBson(model.Filters.nor(model.Filters.eq("price", 1))) should equal(Document("""{$nor : [{price: 1}]}"""))
     toBson(model.Filters.nor(model.Filters.eq("price", 1), model.Filters.eq("sale", true))) should equal(
-      Document("""{$nor : [{price: {$eq: 1}}, {sale: {$eq: true}}]}""")
+      Document("""{$nor : [{price: 1}, {sale: true}]}""")
     )
   }
 
@@ -117,7 +117,7 @@ class FiltersSpec extends BaseSpec {
 
   it should "render $or" in {
     toBson(model.Filters.or(model.Filters.eq("x", 1), model.Filters.eq("y", 2))) should equal(
-      Document("""{$or : [{x : {$eq: 1}}, {y : {$eq: 2}}]}""")
+      Document("""{$or : [{x : 1}, {y : 2}]}""")
     )
   }
 
@@ -127,7 +127,7 @@ class FiltersSpec extends BaseSpec {
 
   it should "and should render using $and" in {
     toBson(model.Filters.and(model.Filters.eq("x", 1), model.Filters.eq("y", 2))) should equal(
-      Document("""{$and: [{x : {$eq: 1}}, {y : {$eq: 2}}]}""")
+      Document("""{$and: [{x : 1}, {y : 2}]}""")
     )
   }
 
@@ -140,10 +140,10 @@ class FiltersSpec extends BaseSpec {
   it should "and should flatten nested" in {
     toBson(
       model.Filters.and(model.Filters.and(model.Filters.eq("a", 1), model.Filters.eq("b", 2)), model.Filters.eq("c", 3))
-    ) should equal(Document("""{$and: [{$and: [{a : {$eq: 1}}, {b : {$eq: 2}}]}, {c : {$eq: 3}}]}"""))
+    ) should equal(Document("""{$and: [{$and: [{a : 1}, {b : 2}]}, {c : 3}]}"""))
     toBson(
       model.Filters.and(model.Filters.and(model.Filters.eq("a", 1), model.Filters.eq("a", 2)), model.Filters.eq("c", 3))
-    ) should equal(Document("""{$and: [{$and:[{a : {$eq: 1}}, {a : {$eq: 2}}]}, {c : {$eq: 3}}] }"""))
+    ) should equal(Document("""{$and: [{$and:[{a : 1}, {a : 2}]}, {c : 3}] }"""))
     toBson(model.Filters.and(model.Filters.lt("a", 1), model.Filters.lt("b", 2))) should equal(
       Document("""{$and: [{a : {$lt : 1}}, {b : {$lt : 2} }]}""")
     )
@@ -163,7 +163,7 @@ class FiltersSpec extends BaseSpec {
     toBson(
       model.Filters
         .elemMatch("results", model.Filters.and(model.Filters.eq("product", "xyz"), model.Filters.gt("score", 8)))
-    ) should equal(Document("""{ results : {$elemMatch : {$and: [{product : {$eq: "xyz"}}, {score : {$gt : 8}}]}}}"""))
+    ) should equal(Document("""{ results : {$elemMatch : {$and: [{product : "xyz"}, {score : {$gt : 8}}]}}}"""))
   }
 
   it should "render $in" in {

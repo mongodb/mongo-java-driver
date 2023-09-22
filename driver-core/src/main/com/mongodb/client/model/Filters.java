@@ -61,7 +61,8 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents where the value of _id field equals the specified value.
+     * Creates a filter that matches all documents where the value of _id field equals the specified value. Note that this doesn't
+     * actually generate a $eq operator, as the query language doesn't require it.
      *
      * @param value     the value, which may be null
      * @param <TItem>   the value type
@@ -75,7 +76,8 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents where the value of the field name equals the specified value.
+     * Creates a filter that matches all documents where the value of the field name equals the specified value. Note that this doesn't
+     * actually generate a $eq operator, as the query language doesn't require it.
      *
      * @param fieldName the field name
      * @param value     the value, which may be null
@@ -84,7 +86,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/eq $eq
      */
     public static <TItem> Bson eq(final String fieldName, @Nullable final TItem value) {
-        return new OperatorFilter<>("$eq", fieldName, value);
+        return new SimpleEncodingFilter<>(fieldName, value);
     }
 
     /**

@@ -243,7 +243,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should render $match'() {
         expect:
-        toBson(match(eq('author', 'dave'))) == parse('{ $match : { author : { $eq: "dave" } } }')
+        toBson(match(eq('author', 'dave'))) == parse('{ $match : { author : "dave" } }')
     }
 
     def 'should render $project'() {
@@ -316,7 +316,7 @@ class AggregatesSpecification extends Specification {
         parse('''{$facet: {
           "Screen Sizes": [
              {$unwind: "$attributes"},
-             {$match: {"attributes.name": {$eq: "screen size"}}},
+             {$match: {"attributes.name": "screen size"}},
              {$group: {
                  _id: null,
                  count: {$sum: 1}
@@ -324,7 +324,7 @@ class AggregatesSpecification extends Specification {
            ],
 
            "Manufacturer": [
-             {$match: {"attributes.name": {$eq: "manufacturer"}}},
+             {$match: {"attributes.name": "manufacturer"}},
              {$group: {_id: "$attributes.value", count: {$sum: 1}}},
              {$sort: {count: -1}}
              {$limit: 5}
@@ -353,7 +353,7 @@ class AggregatesSpecification extends Specification {
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", restrictSearchWithMatch : { "hobbies" : { $eq: "golf" } } } }''')
+            as: "socialNetwork", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
 
         // with maxDepth and depthField
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
@@ -365,7 +365,7 @@ class AggregatesSpecification extends Specification {
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
                 .maxDepth(1).depthField('depth').restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
-            as: "socialNetwork", maxDepth: 1, depthField: "depth", restrictSearchWithMatch : { "hobbies" : { $eq: "golf" } } } }''')
+            as: "socialNetwork", maxDepth: 1, depthField: "depth", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
     }
 
     def 'should render $skip'() {
