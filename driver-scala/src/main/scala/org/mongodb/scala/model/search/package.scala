@@ -222,7 +222,7 @@ package object search {
   /**
    * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
    *
-   * @see [[VAKOTODO \$vectorSearch syntax]]
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
    */
   @Sealed
   @Beta(Array(Beta.Reason.SERVER))

@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchCount;
@@ -165,6 +166,7 @@ public final class Projections {
      * @since 4.1
      * @see #metaTextScore(String)
      * @see #metaSearchScore(String)
+     * @see #metaVectorSearchScore(String)
      * @see #metaSearchHighlights(String)
      */
     public static Bson meta(final String fieldName, final String metaFieldName) {
@@ -206,8 +208,10 @@ public final class Projections {
      * @param fieldName the field name
      * @return the projection
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @since 4.7
+     * @mongodb.server.release 7.1
+     * @since 4.11
      */
+    @Beta(Beta.Reason.SERVER)
     public static Bson metaVectorSearchScore(final String fieldName) {
         return meta(fieldName, "vectorSearchScore");
     }

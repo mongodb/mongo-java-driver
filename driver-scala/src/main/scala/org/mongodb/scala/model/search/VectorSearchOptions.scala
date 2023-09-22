@@ -21,7 +21,7 @@ import com.mongodb.client.model.search.{ VectorSearchOptions => JVectorSearchOpt
 /**
  * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
  *
- * @see [[VAKOTODO \$vectorSearch syntax]]
+ * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
  * @note Requires MongoDB 7.1 or greater
  * @since 4.11
  */

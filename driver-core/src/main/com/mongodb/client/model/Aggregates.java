@@ -939,14 +939,19 @@ public final class Aggregates {
     }
 
     /**
-     * VAKOTODO
-     * @param path
-     * @param queryVector
-     * @param index
-     * @param numCandidates
-     * @param limit
-     * @return
-     * @mongodb.atlas.manual / @mongodb.driver.dochub VAKOTODO
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param queryVector The query vector.
+     * @param path The field to be searched.
+     * @param index The name of the index to use. This index predetermines the number of components of {@code queryVector}.
+     * @param numCandidates The number of candidates.
+     * @param limit The limit on the number of documents produced by the pipeline stage.
+     * @return The {@code $vectorSearch} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
      * @mongodb.server.release 7.1
      * @since 4.11
      */
@@ -962,15 +967,20 @@ public final class Aggregates {
     }
 
     /**
-     * VAKOTODO
-     * @param queryVector
-     * @param path
-     * @param index
-     * @param numCandidates
-     * @param limit
-     * @param options
-     * @return
-     * @mongodb.atlas.manual / @mongodb.driver.dochub VAKOTODO
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param queryVector The query vector.
+     * @param path The field to be searched.
+     * @param index The name of the index to use. This index predetermines the number of components of {@code queryVector}.
+     * @param numCandidates The number of candidates.
+     * @param limit The limit on the number of documents produced by the pipeline stage.
+     * @param options Optional {@code $vectorSearch} pipeline stage fields.
+     * @return The {@code $vectorSearch} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
      * @mongodb.server.release 7.1
      * @since 4.11
      */

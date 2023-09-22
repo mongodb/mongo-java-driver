@@ -723,15 +723,17 @@ object Aggregates {
     JAggregates.searchMeta(collector, options)
 
   /**
-   * VAKOTODO
+   * Creates a `\$vectorSearch` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
+   * to extract the relevance score assigned to each found document.
    *
-   * @param queryVector
-   * @param path
-   * @param index
-   * @param numCandidates
-   * @param limit
-   * @return
-   * @see [[VAKOTODO \$vectorSearch]]
+   * @param queryVector   The query vector.
+   * @param path          The field to be searched.
+   * @param index         The name of the index to use. This index predetermines the number of components of `queryVector`.
+   * @param numCandidates The number of candidates.
+   * @param limit         The limit on the number of documents produced by the pipeline stage.
+   * @return The `\$vectorSearch` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
    * @note Requires MongoDB 7.1 or greater
    * @since 4.11
    */
@@ -746,16 +748,18 @@ object Aggregates {
     JAggregates.vectorSearch(path, queryVector.asJava, index, numCandidates, limit)
 
   /**
-   * VAKOTODO
+   * Creates a `\$vectorSearch` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
+   * to extract the relevance score assigned to each found document.
    *
-   * @param queryVector
-   * @param path
-   * @param index
-   * @param numCandidates
-   * @param limit
-   * @param options
-   * @return
-   * @see [[VAKOTODO \$vectorSearch]]
+   * @param queryVector The query vector.
+   * @param path The field to be searched.
+   * @param index The name of the index to use. This index predetermines the number of components of `queryVector`.
+   * @param numCandidates The number of candidates.
+   * @param limit The limit on the number of documents produced by the pipeline stage.
+   * @param options Optional `\$vectorSearch` pipeline stage fields.
+   * @return The `\$vectorSearch` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
    * @note Requires MongoDB 7.1 or greater
    * @since 4.11
    */

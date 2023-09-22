@@ -112,6 +112,7 @@ object Projections {
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/meta/ meta]]
    * @see [[Projections.metaTextScore]]
    * @see [[Projections.metaSearchScore]]
+   * @see [[Projections.metaVectorSearchScore]]
    * @see [[Projections.metaSearchHighlights]]
    * @since 4.1
    */
@@ -138,6 +139,19 @@ object Projections {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
    */
   def metaSearchScore(fieldName: String): Bson = JProjections.metaSearchScore(fieldName)
+
+  /**
+   * Creates a projection to the given field name of the vectorSearchScore,
+   * for use with `Aggregates.vectorSearch(FieldSearchPath, Iterable, String, Long, Long, VectorSearchOptions)`.
+   * Calling this method is equivalent to calling [[Projections.meta]] with `"vectorSearchScore"` as the second argument.
+   *
+   * @param fieldName the field name
+   * @return the projection
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
+   * @note Requires MongoDB 7.1 or greater
+   * @since 4.11
+   */
+  def metaVectorSearchScore(fieldName: String): Bson = JProjections.metaVectorSearchScore(fieldName)
 
   /**
    * Creates a projection to the given field name of the searchHighlights,

@@ -18,13 +18,14 @@ package com.mongodb.client.model.search;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 
 /**
  * Represents optional fields of the {@code $vectorSearch} pipeline stage of an aggregation pipeline.
  *
  * @see Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions)
- * @mongodb.atlas.manual / @mongodb.driver.dochub VAKOTODO
+ * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
  * @mongodb.server.release 7.1
  * @since 4.11
  */
@@ -34,7 +35,10 @@ public interface VectorSearchOptions extends Bson {
     /**
      * Creates a new {@link VectorSearchOptions} with the filter specified.
      *
-     * @param filter VAKOTODO
+     * @param filter A filter that is applied before applying the
+     * {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions) queryVector}.
+     * One may use {@link Filters} to create this filter, though not all filters may be supported.
+     * See the MongoDB documentation for the list of supported filters.
      * @return A new {@link VectorSearchOptions}.
      */
     VectorSearchOptions filter(Bson filter);
