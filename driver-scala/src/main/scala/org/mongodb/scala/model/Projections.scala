@@ -148,7 +148,7 @@ object Projections {
    * @param fieldName the field name
    * @return the projection
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
-   * @note Requires MongoDB 7.1 or greater
+   * @note Requires MongoDB 6.0.10 or greater
    * @since 4.11
    */
   def metaVectorSearchScore(fieldName: String): Bson = JProjections.metaVectorSearchScore(fieldName)

@@ -208,7 +208,7 @@ public final class Projections {
      * @param fieldName the field name
      * @return the projection
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @mongodb.server.release 7.1
+     * @mongodb.server.release 6.0.10
      * @since 4.11
      */
     @Beta(Beta.Reason.SERVER)

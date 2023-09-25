@@ -734,7 +734,7 @@ object Aggregates {
    * @param limit The limit on the number of documents produced by the pipeline stage.
    * @return The `\$vectorSearch` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
-   * @note Requires MongoDB 7.1 or greater
+   * @note Requires MongoDB 6.0.10 or greater
    * @since 4.11
    */
   @Beta(Array(Beta.Reason.SERVER))
@@ -760,7 +760,7 @@ object Aggregates {
    * @param options Optional `\$vectorSearch` pipeline stage fields.
    * @return The `\$vectorSearch` pipeline stage.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
-   * @note Requires MongoDB 7.1 or greater
+   * @note Requires MongoDB 6.0.10 or greater
    * @since 4.11
    */
   @Beta(Array(Beta.Reason.SERVER))
