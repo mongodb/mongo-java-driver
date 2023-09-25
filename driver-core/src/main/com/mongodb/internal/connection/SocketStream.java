@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
@@ -40,11 +41,13 @@ import java.net.SocketTimeoutException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
+import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -78,8 +81,14 @@ public class SocketStream implements Stream {
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
         } catch (IOException e) {
-            close();
-            throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
+            try {
+                close();
+            } catch (Exception closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw translateInterruptedException(e, "Interrupted while connecting")
+                    .<MongoException>map(Function.identity())
+                    .orElseGet(() -> new MongoSocketOpenException("Exception opening socket", getAddress(), e));
         }
     }
 
