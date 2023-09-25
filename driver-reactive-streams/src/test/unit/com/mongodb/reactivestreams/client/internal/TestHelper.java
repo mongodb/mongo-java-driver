@@ -52,6 +52,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -96,7 +97,7 @@ public class TestHelper {
         return new MongoOperationPublisher<>(NAMESPACE, Document.class,
                                              getDefaultCodecRegistry(), ReadPreference.primary(), ReadConcern.DEFAULT,
                                              WriteConcern.ACKNOWLEDGED, true, true,
-                                             UuidRepresentation.STANDARD, null, null, executor);
+                                             UuidRepresentation.STANDARD, null, TIMEOUT_SETTINGS, executor);
     }
 
 

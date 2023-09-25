@@ -21,6 +21,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -45,6 +46,7 @@ import static java.util.Collections.singletonList;
 final class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
@@ -60,11 +62,12 @@ final class ListSearchIndexesOperation<T>
     private final String indexName;
     private final boolean retryReads;
 
-    ListSearchIndexesOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    ListSearchIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final Decoder<T> decoder, @Nullable final String indexName, @Nullable final Integer batchSize,
             @Nullable final Collation collation, @Nullable final BsonValue comment, @Nullable final Boolean allowDiskUse,
             final boolean retryReads) {
-        this.clientSideOperationTimeout = clientSideOperationTimeout;
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
@@ -119,7 +122,8 @@ final class ListSearchIndexesOperation<T>
         BsonDocument searchDefinition = getSearchDefinition();
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
 
-        return new AggregateOperation<>(clientSideOperationTimeout, namespace, singletonList(listSearchIndexesStage), decoder)
+        return new AggregateOperation<>(clientSideOperationTimeout.getTimeoutSettings(), namespace, singletonList(listSearchIndexesStage),
+                decoder)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)

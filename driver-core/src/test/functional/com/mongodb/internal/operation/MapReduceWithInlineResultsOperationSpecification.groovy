@@ -46,8 +46,8 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static com.mongodb.connection.ServerType.STANDALONE
@@ -56,7 +56,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSIO
 
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
     private final bsonDocumentCodec = new BsonDocumentCodec()
-    def mapReduceOperation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT.get(),
+    def mapReduceOperation = new MapReduceWithInlineResultsOperation<BsonDocument>(TIMEOUT_SETTINGS,
             getNamespace(),
             new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
             new BsonJavaScript('function(key, values){ return values.length; }'),
@@ -77,7 +77,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         when:
         def mapF = new BsonJavaScript('function(){ }')
         def reduceF = new BsonJavaScript('function(key, values){ }')
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT.get(), helper.namespace, mapF, reduceF,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(TIMEOUT_SETTINGS, helper.namespace, mapF, reduceF,
                 bsonDocumentCodec)
 
         then:
@@ -101,7 +101,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         def finalizeF = new BsonJavaScript('function(key, value){}')
         def mapF = new BsonJavaScript('function(){ }')
         def reduceF = new BsonJavaScript('function(key, values){ }')
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT.get(), helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(TIMEOUT_SETTINGS, helper.namespace,
                 mapF, reduceF, bsonDocumentCodec)
                 .filter(filter)
                 .finalizeFunction(finalizeF)
@@ -141,7 +141,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
-        def operation = new MapReduceWithInlineResultsOperation<Document>(CSOT_NO_TIMEOUT.get(), helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<Document>(TIMEOUT_SETTINGS, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         then:
@@ -153,7 +153,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
     def 'should create the expected command'() {
         when:
-        def operation = new MapReduceWithInlineResultsOperation<Document>(CSOT_MAX_TIME.get(), helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
         def expectedCommand = new BsonDocument('mapreduce', new BsonString(helper.namespace.getCollectionName()))
             .append('map', operation.getMapFunction())
@@ -203,7 +203,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')
         getCollectionHelper().insertDocuments(document)
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT.get(),
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(TIMEOUT_SETTINGS,
                 namespace,
                 new BsonJavaScript('function(){ emit( this.str, 1 ); }'),
                 new BsonJavaScript('function(key, values){ return Array.sum(values); }'),
@@ -241,7 +241,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               }''')
         appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT.get(), helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(TIMEOUT_SETTINGS, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:
@@ -290,7 +290,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               }''')
         appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
 
-        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(CSOT_NO_TIMEOUT.get(), helper.namespace,
+        def operation = new MapReduceWithInlineResultsOperation<BsonDocument>(TIMEOUT_SETTINGS, helper.namespace,
                 new BsonJavaScript('function(){ }'), new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
 
         when:

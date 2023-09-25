@@ -22,6 +22,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ExplainableReadOperation;
 import com.mongodb.internal.operation.ReadOperation;
@@ -55,11 +56,11 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     ListSearchIndexesIterableImpl(final MongoNamespace namespace, final OperationExecutor executor,
                                          final ReadConcern readConcern, final Class<TResult> resultClass,
                                          final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                         final boolean retryReads, @Nullable final Long timeoutMS) {
-        super(null, executor, readConcern, readPreference, retryReads, timeoutMS);
+                                         final boolean retryReads, final TimeoutSettings timeoutSettings) {
+        super(null, executor, readConcern, readPreference, retryReads, timeoutSettings);
 
         this.resultClass = resultClass;
-        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutMS);
+        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.codecRegistry = codecRegistry;
     }
 

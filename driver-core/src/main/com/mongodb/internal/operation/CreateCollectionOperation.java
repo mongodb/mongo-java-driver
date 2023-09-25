@@ -27,6 +27,7 @@ import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -72,6 +73,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private static final BsonDocument ENCRYPT_CLUSTERED_INDEX = BsonDocument.parse("{key: {_id: 1}, unique: true}");
     private static final BsonArray SAFE_CONTENT_ARRAY = new BsonArray(
             singletonList(BsonDocument.parse("{key: {__safeContent__: 1}, name: '__safeContent___1'}")));
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final String databaseName;
     private final String collectionName;
@@ -94,9 +96,10 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private String clusteredIndexName;
     private BsonDocument encryptedFields;
 
-    public CreateCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
+    public CreateCollectionOperation(final TimeoutSettings timeoutSettings, final String databaseName,
             final String collectionName, @Nullable final WriteConcern writeConcern) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
         this.writeConcern = writeConcern;

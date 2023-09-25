@@ -26,7 +26,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -42,7 +43,7 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
         ListDatabasesPublisher<Document> publisher = new ListDatabasesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
-        ListDatabasesOperation<Document> expectedOperation = new ListDatabasesOperation<>(CSOT_MAX_TIME.get(),
+        ListDatabasesOperation<Document> expectedOperation = new ListDatabasesOperation<>(TIMEOUT_SETTINGS,
                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true);
 
@@ -59,7 +60,9 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
                 .maxTime(100, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation
+        expectedOperation = new ListDatabasesOperation<>(TIMEOUT_SETTINGS_WITH_MAX_TIME,
+                getDefaultCodecRegistry().get(Document.class))
+                .retryReads(true)
                 .authorizedDatabasesOnly(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)));
 

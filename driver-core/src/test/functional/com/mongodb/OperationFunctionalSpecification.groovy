@@ -64,7 +64,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.TIMEOUT
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.executeAsync
@@ -110,13 +110,13 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
-        new MixedBulkWriteOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), [new InsertRequest(new BsonDocument())], true,
+        new MixedBulkWriteOperation(TIMEOUT_SETTINGS, getNamespace(), [new InsertRequest(new BsonDocument())], true,
                 ACKNOWLEDGED, false).execute(binding)
         binding.release()
     }
 
     void acknowledgeWrite(final AsyncSingleConnectionBinding binding) {
-        executeAsync(new MixedBulkWriteOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), [new InsertRequest(new BsonDocument())],
+        executeAsync(new MixedBulkWriteOperation(TIMEOUT_SETTINGS, getNamespace(), [new InsertRequest(new BsonDocument())],
                 true, ACKNOWLEDGED, false), binding)
         binding.release()
     }

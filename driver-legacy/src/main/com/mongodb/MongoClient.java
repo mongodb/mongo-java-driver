@@ -28,6 +28,7 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.SingleServerBinding;
@@ -822,6 +823,10 @@ public class MongoClient implements Closeable {
 
     MongoClientImpl getDelegate() {
         return delegate;
+    }
+
+    TimeoutSettings getTimeoutSettings() {
+        return delegate.getTimeoutSettings();
     }
 
     private ExecutorService createCursorCleaningService() {

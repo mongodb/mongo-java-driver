@@ -21,6 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
@@ -43,9 +44,9 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
 
     ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
             final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
-            final boolean retryReads, @Nullable final Long timeoutMS) {
-        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutMS);
-        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutMS);
+            final boolean retryReads, final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings);
+        this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
     }
 

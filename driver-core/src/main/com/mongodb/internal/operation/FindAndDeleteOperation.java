@@ -20,7 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -37,9 +37,9 @@ import org.bson.conversions.Bson;
  */
 public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
 
-    public FindAndDeleteOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public FindAndDeleteOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder) {
-        super(clientSideOperationTimeout, namespace, writeConcern, retryWrites, decoder);
+        super(timeoutSettings, namespace, writeConcern, retryWrites, decoder);
     }
 
     @Override

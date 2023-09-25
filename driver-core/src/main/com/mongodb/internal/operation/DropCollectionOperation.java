@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -62,15 +63,17 @@ import static java.util.Collections.singletonList;
 public class DropCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private static final String ENCRYPT_PREFIX = "enxcol_.";
     private static final BsonValueCodec BSON_VALUE_CODEC = new BsonValueCodec();
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private BsonDocument encryptedFields;
     private boolean autoEncryptedFields;
 
-    public DropCollectionOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public DropCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             @Nullable final WriteConcern writeConcern) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = writeConcern;
     }
@@ -217,7 +220,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     private ListCollectionsOperation<BsonValue> listCollectionOperation() {
-        return new ListCollectionsOperation<>(clientSideOperationTimeout, namespace.getDatabaseName(), BSON_VALUE_CODEC)
+        return new ListCollectionsOperation<>(timeoutSettings, namespace.getDatabaseName(), BSON_VALUE_CODEC)
                 .filter(new BsonDocument("name", new BsonString(namespace.getCollectionName())))
                 .batchSize(1);
     }

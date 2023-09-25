@@ -83,7 +83,7 @@ final class ListDatabasesPublisherImpl<T> extends BatchCursorPublisher<T> implem
     }
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-// initialBatchSize is ignored for distinct operations.
+        // initialBatchSize is ignored for distinct operations.
         return getOperations().listDatabases(getDocumentClass(), filter, nameOnly, maxTimeMS, authorizedDatabasesOnly, comment);
     }
 }

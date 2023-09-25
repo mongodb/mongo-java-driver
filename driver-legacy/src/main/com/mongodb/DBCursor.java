@@ -430,7 +430,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
         return new FindOperation<>(
-                collection.getClientSideOperationTimeout(findOptions.getMaxTime(MILLISECONDS), findOptions.getMaxAwaitTime(MILLISECONDS)),
+                collection.getTimeoutSettings(findOptions.getMaxTime(MILLISECONDS), findOptions.getMaxAwaitTime(MILLISECONDS)),
                 collection.getNamespace(), decoder)
                 .filter(collection.wrapAllowNull(filter))
                 .batchSize(findOptions.getBatchSize())

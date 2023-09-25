@@ -16,13 +16,13 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.ClientSideOperationTimeout
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.binding.WriteBinding
@@ -35,7 +35,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer
@@ -105,8 +105,9 @@ class SyncOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableWrite(CSOT_NO_TIMEOUT.get(), writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
-                FindAndModifyHelper.transformer())  { cmd -> cmd }
+        executeRetryableWrite(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), writeBinding, dbName, primary(),
+                new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.transformer())
+                { cmd -> cmd }
 
         then:
         2 * connection.command(dbName, command, _, primary(), decoder, writeBinding) >> { results.poll() }
@@ -135,7 +136,8 @@ class SyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableRead(CSOT_NO_TIMEOUT.get(), readBinding, dbName, commandCreator, decoder, function, false)
+        executeRetryableRead(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), readBinding, dbName, commandCreator, decoder,
+                function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription

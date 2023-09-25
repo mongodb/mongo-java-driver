@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -48,24 +49,27 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private final String indexName;
     private final BsonDocument indexKeys;
     private final WriteConcern writeConcern;
 
-    public DropIndexOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public DropIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final String indexName, @Nullable final WriteConcern writeConcern) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.indexName = notNull("indexName", indexName);
         this.indexKeys = null;
         this.writeConcern = writeConcern;
     }
 
-    public DropIndexOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final MongoNamespace namespace,
+    public DropIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final BsonDocument indexKeys, @Nullable final WriteConcern writeConcern) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.indexKeys = notNull("indexKeys", indexKeys);
         this.indexName = null;

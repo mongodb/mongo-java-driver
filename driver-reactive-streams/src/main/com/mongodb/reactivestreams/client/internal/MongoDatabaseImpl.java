@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 /**
@@ -85,8 +86,8 @@ public final class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public Long getTimeout(final TimeUnit timeUnit) {
-        Long timeoutMS = mongoOperationPublisher.getTimeoutMS();
-        return (timeoutMS != null) ? notNull("timeUnit", timeUnit).convert(timeoutMS, TimeUnit.MILLISECONDS) : null;
+        Long timeoutMS = mongoOperationPublisher.getTimeoutSettings().getTimeoutMS();
+        return timeoutMS == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
     }
 
     MongoOperationPublisher<Document> getMongoOperationPublisher() {

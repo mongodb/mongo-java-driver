@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
@@ -47,10 +48,10 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
             final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-            final OperationExecutor executor, final boolean retryReads, @Nullable final Long timeoutMS) {
-        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutMS); // TODO: read concern?
+            final OperationExecutor executor, final boolean retryReads, final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings); // TODO: read concern?
         this.collectionNamesOnly = collectionNamesOnly;
-        this.operations = new SyncOperations<>(BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutMS);
+        this.operations = new SyncOperations<>(BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.resultClass = notNull("resultClass", resultClass);
     }

@@ -35,6 +35,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
@@ -50,7 +51,6 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
@@ -86,8 +86,9 @@ public final class MongoClientImpl implements MongoClient {
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
                 withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
-                (SynchronousContextProvider) settings.getContextProvider());
+                (SynchronousContextProvider) settings.getContextProvider(), TimeoutSettings.create(settings));
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+
         LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 
@@ -95,7 +96,7 @@ public final class MongoClientImpl implements MongoClient {
     public MongoDatabase getDatabase(final String databaseName) {
         return new MongoDatabaseImpl(databaseName, delegate.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
                 settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(), settings.getUuidRepresentation(),
-                settings.getAutoEncryptionSettings(), getTimeoutMS(), delegate.getOperationExecutor());
+                settings.getAutoEncryptionSettings(), delegate.getTimeoutSettings(), delegate.getOperationExecutor());
     }
 
     @Override
@@ -208,7 +209,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                                final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<>(clientSession, "admin", delegate.getCodecRegistry(), settings.getReadPreference(),
                 settings.getReadConcern(), delegate.getOperationExecutor(), pipeline, resultClass, ChangeStreamLevel.CLIENT,
-                settings.getRetryReads(), getTimeoutMS());
+                settings.getRetryReads(), delegate.getTimeoutSettings());
     }
 
     public Cluster getCluster() {
@@ -242,7 +243,7 @@ public final class MongoClientImpl implements MongoClient {
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
-                delegate.getOperationExecutor(), settings.getRetryReads(), getTimeoutMS());
+                delegate.getOperationExecutor(), settings.getRetryReads(), delegate.getTimeoutSettings());
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
@@ -257,15 +258,15 @@ public final class MongoClientImpl implements MongoClient {
         return delegate.getOperationExecutor();
     }
 
+    public TimeoutSettings getTimeoutSettings() {
+        return delegate.getTimeoutSettings();
+    }
+
     public MongoClientSettings getSettings() {
         return settings;
     }
 
     public MongoDriverInformation getMongoDriverInformation() {
         return mongoDriverInformation;
-    }
-
-    private @Nullable Long getTimeoutMS() {
-        return settings.getTimeout(TimeUnit.MILLISECONDS);
     }
 }

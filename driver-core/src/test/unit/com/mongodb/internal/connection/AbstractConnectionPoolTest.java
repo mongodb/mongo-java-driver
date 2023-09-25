@@ -80,7 +80,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
@@ -475,7 +475,7 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     private static void executeAdminCommand(final BsonDocument command) {
-        new CommandReadOperation<>(CSOT_NO_TIMEOUT.get(), "admin", command, new BsonDocumentCodec())
+        new CommandReadOperation<>(TIMEOUT_SETTINGS, "admin", command, new BsonDocumentCodec())
                 .execute(ClusterFixture.getBinding());
     }
 

@@ -34,12 +34,11 @@ import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME;
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -61,7 +60,7 @@ public class MapReducePublisherImplTest extends TestHelper {
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION);
 
         MapReduceWithInlineResultsOperation<Document> expectedOperation = new MapReduceWithInlineResultsOperation<>(
-                CSOT_NO_TIMEOUT.get(), NAMESPACE, new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION),
+                TIMEOUT_SETTINGS, NAMESPACE, new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION),
                 getDefaultCodecRegistry().get(Document.class)).verbose(true);
 
         // default input should be as expected
@@ -81,13 +80,13 @@ public class MapReducePublisherImplTest extends TestHelper {
                 .filter(new Document("filter", 1))
                 .finalizeFunction(FINALIZE_FUNCTION)
                 .limit(999)
-                .maxTime(100, SECONDS)
+                .maxTime(100, MILLISECONDS)
                 .scope(new Document("scope", 1))
                 .sort(Sorts.ascending("sort"))
                 .verbose(false);
 
         expectedOperation = new MapReduceWithInlineResultsOperation<>(
-                CSOT_MAX_TIME.get(), NAMESPACE, new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION),
+                TIMEOUT_SETTINGS_WITH_MAX_TIME, NAMESPACE, new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION),
                 getDefaultCodecRegistry().get(Document.class))
                 .verbose(true)
                 .collation(COLLATION)
@@ -116,9 +115,9 @@ public class MapReducePublisherImplTest extends TestHelper {
                 new MapReducePublisherImpl<>(null, createMongoOperationPublisher(executor), MAP_FUNCTION, REDUCE_FUNCTION)
                         .collectionName(NAMESPACE.getCollectionName());
 
-        MapReduceToCollectionOperation expectedOperation = new MapReduceToCollectionOperation(CSOT_NO_TIMEOUT.get(), NAMESPACE,
-                new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION), NAMESPACE.getCollectionName(),
-                WriteConcern.ACKNOWLEDGED).verbose(true);
+        MapReduceToCollectionOperation expectedOperation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE,
+                                                                                              new BsonJavaScript(MAP_FUNCTION), new BsonJavaScript(REDUCE_FUNCTION), NAMESPACE.getCollectionName(),
+                                                                                              WriteConcern.ACKNOWLEDGED).verbose(true);
 
         // default input should be as expected
         Flux.from(publisher.toCollection()).blockFirst();
@@ -137,7 +136,7 @@ public class MapReducePublisherImplTest extends TestHelper {
                 .sort(Sorts.ascending("sort"))
                 .verbose(false);
 
-        expectedOperation = new MapReduceToCollectionOperation(CSOT_MAX_TIME.get(), NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
+        expectedOperation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, NAMESPACE, new BsonJavaScript(MAP_FUNCTION),
                 new BsonJavaScript(REDUCE_FUNCTION), NAMESPACE.getCollectionName(), WriteConcern.ACKNOWLEDGED)
                 .verbose(true)
                 .collation(COLLATION)

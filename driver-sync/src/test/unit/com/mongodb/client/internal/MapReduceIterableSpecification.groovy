@@ -42,8 +42,8 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -64,7 +64,7 @@ class MapReduceIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def mapReduceIterable = new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, 'map', 'reduce', null)
+                readConcern, writeConcern, executor, 'map', 'reduce', TIMEOUT_SETTINGS)
 
         when: 'default input should be as expected'
         mapReduceIterable.iterator()
@@ -73,7 +73,7 @@ class MapReduceIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(CSOT_NO_TIMEOUT.get(), namespace,
+        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(TIMEOUT_SETTINGS, namespace,
                 new BsonJavaScript('map'), new BsonJavaScript('reduce'), new DocumentCodec())
                 .verbose(true))
         readPreference == secondary()
@@ -92,7 +92,7 @@ class MapReduceIterableSpecification extends Specification {
         operation = (executor.getReadOperation() as MapReduceIterableImpl.WrappedMapReduceReadOperation<Document>).getOperation()
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(CSOT_MAX_TIME.get(), namespace,
+        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace,
                 new BsonJavaScript('map'), new BsonJavaScript('reduce'), new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .finalizeFunction(new BsonJavaScript('finalize'))
@@ -111,7 +111,7 @@ class MapReduceIterableSpecification extends Specification {
         when: 'mapReduce to a collection'
         def collectionNamespace = new MongoNamespace('dbName', 'collName')
         def mapReduceIterable = new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, 'map', 'reduce', null)
+                readPreference, readConcern, writeConcern, executor, 'map', 'reduce', TIMEOUT_SETTINGS)
                 .collectionName(collectionNamespace.getCollectionName())
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new Document('filter', 1))
@@ -131,7 +131,7 @@ class MapReduceIterableSpecification extends Specification {
         mapReduceIterable.iterator()
 
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
-        def expectedOperation = new MapReduceToCollectionOperation(CSOT_MAX_TIME.get(), namespace,
+        def expectedOperation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace,
                 new BsonJavaScript('map'), new BsonJavaScript('reduce'), 'collName', writeConcern)
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
@@ -174,7 +174,7 @@ class MapReduceIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def mapReduceIterable = new MapReduceIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, 'map', 'reduce', null)
+                readConcern, writeConcern, executor, 'map', 'reduce', TIMEOUT_SETTINGS)
 
         when:
         mapReduceIterable.first()
@@ -199,7 +199,7 @@ class MapReduceIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([null, batchCursor, null, batchCursor, null])
         def mapReduceIterable = new MapReduceIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, 'map', 'reduce', null)
+                readConcern, writeConcern, executor, 'map', 'reduce', TIMEOUT_SETTINGS)
                 .collectionName('collName')
 
         when:
@@ -232,7 +232,7 @@ class MapReduceIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def mapReduceIterable = new MapReduceIterableImpl(null, namespace, BsonDocument, BsonDocument, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, 'map', 'reduce', null)
+                readPreference, readConcern, writeConcern, executor, 'map', 'reduce', TIMEOUT_SETTINGS)
 
 
         when: 'The operation fails with an exception'
@@ -249,7 +249,7 @@ class MapReduceIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                'map', 'reduce', null).iterator()
+                'map', 'reduce', TIMEOUT_SETTINGS).iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -278,7 +278,7 @@ class MapReduceIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new MapReduceIterableImpl(null, namespace, BsonDocument, BsonDocument, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, 'map', 'reduce', null)
+                readConcern, writeConcern, executor, 'map', 'reduce', TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -322,7 +322,7 @@ class MapReduceIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(OperationExecutor), 'map', 'reduce', null)
+                readConcern, writeConcern, Stub(OperationExecutor), 'map', 'reduce', TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null

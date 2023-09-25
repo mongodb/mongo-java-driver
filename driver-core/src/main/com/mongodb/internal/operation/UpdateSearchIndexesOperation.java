@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutSettings;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -32,9 +33,9 @@ final class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     private static final String COMMAND_NAME = "updateSearchIndex";
     private final SearchIndexRequest request;
 
-    UpdateSearchIndexesOperation(final MongoNamespace namespace, final SearchIndexRequest request,
+    UpdateSearchIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace, final SearchIndexRequest request,
                                  final WriteConcern writeConcern) {
-        super(namespace, writeConcern);
+        super(timeoutSettings, namespace, writeConcern);
         this.request = request;
     }
 

@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -49,14 +50,15 @@ import static java.util.Collections.singletonList;
  */
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonValue comment;
 
-    public EstimatedDocumentCountOperation(final ClientSideOperationTimeout clientSideOperationTimeout,
-            final MongoNamespace namespace) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+    public EstimatedDocumentCountOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
     }
 

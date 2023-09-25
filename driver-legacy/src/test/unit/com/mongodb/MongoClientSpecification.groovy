@@ -30,6 +30,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.json.JsonObject
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.MongoCredential.createMongoX509Credential
@@ -339,7 +340,7 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getCodecRegistry(), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD, null, null,
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD, null, TIMEOUT_SETTINGS,
                 client.getOperationExecutor()))
     }
 

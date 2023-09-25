@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -67,6 +68,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+    private final TimeoutSettings timeoutSettings;
     private final ClientSideOperationTimeout clientSideOperationTimeout;
     private final String databaseName;
     private final Decoder<T> decoder;
@@ -76,9 +78,9 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private boolean nameOnly;
     private BsonValue comment;
 
-    public ListCollectionsOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final String databaseName,
-            final Decoder<T> decoder) {
-        this.clientSideOperationTimeout = notNull("clientSideOperationTimeout", clientSideOperationTimeout);
+    public ListCollectionsOperation(final TimeoutSettings timeoutSettings, final String databaseName, final Decoder<T> decoder) {
+        this.timeoutSettings = timeoutSettings;
+        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
     }

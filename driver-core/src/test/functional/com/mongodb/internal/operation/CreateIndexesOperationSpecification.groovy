@@ -24,7 +24,7 @@ import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.internal.ClientSideOperationTimeout
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.bulk.IndexRequest
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -36,8 +36,8 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.CSOT_MAX_TIME
-import static com.mongodb.ClusterFixture.CSOT_NO_TIMEOUT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
@@ -86,7 +86,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     def 'should throw execution timeout exception from execute'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
-        def operation = createOperation(CSOT_MAX_TIME.get(), [new IndexRequest(keys)])
+        def operation = createOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, [new IndexRequest(keys)])
 
         enableMaxTimeFailPoint()
 
@@ -462,7 +462,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     def 'should throw on write concern error'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
-        def operation = new CreateIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), [new IndexRequest(keys)], new WriteConcern(5))
+        def operation = new CreateIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), [new IndexRequest(keys)], new WriteConcern(5))
 
         when:
         execute(operation, async)
@@ -559,7 +559,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
     List<Document> getIndexes() {
         def indexes = []
-        def cursor = new ListIndexesOperation(CSOT_NO_TIMEOUT.get(), getNamespace(), new DocumentCodec()).execute(getBinding())
+        def cursor = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec()).execute(getBinding())
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())
         }
@@ -575,11 +575,11 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     }
 
     def createOperation(final List<IndexRequest> requests) {
-        createOperation(CSOT_NO_TIMEOUT.get(), requests)
+        createOperation(TIMEOUT_SETTINGS, requests)
     }
 
-    def createOperation(final ClientSideOperationTimeout clientSideOperationTimeout, final List<IndexRequest> requests) {
-        new CreateIndexesOperation(clientSideOperationTimeout, getNamespace(), requests, null)
+    def createOperation(final TimeoutSettings timeoutSettings, final List<IndexRequest> requests) {
+        new CreateIndexesOperation(timeoutSettings, getNamespace(), requests, null)
     }
 
 }
