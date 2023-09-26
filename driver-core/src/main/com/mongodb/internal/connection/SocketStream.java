@@ -81,11 +81,7 @@ public class SocketStream implements Stream {
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
         } catch (IOException e) {
-            try {
-                close();
-            } catch (Exception closeException) {
-                e.addSuppressed(closeException);
-            }
+            close();
             throw translateInterruptedException(e, "Interrupted while connecting")
                     .<MongoException>map(Function.identity())
                     .orElseGet(() -> new MongoSocketOpenException("Exception opening socket", getAddress(), e));
@@ -249,7 +245,7 @@ public class SocketStream implements Stream {
             if (socket != null) {
                 socket.close();
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             // ignore
         }
     }
