@@ -16,11 +16,7 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 
 /**

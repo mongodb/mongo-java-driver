@@ -263,7 +263,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private void getMore(final AsyncConnection connection, final ServerCursor cursor, final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId(), connection.getDescription()),
                 NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
-                connectionSource, new CommandResultSingleResultCallback(connection, cursor, callback));
+                connectionSource.getOperationContext(), new CommandResultSingleResultCallback(connection, cursor, callback));
    }
 
     private BsonDocument asGetMoreCommandDocument(final long cursorId, final ConnectionDescription connectionDescription) {
@@ -313,7 +313,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
         connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
-                ReadPreference.primary(), new BsonDocumentCodec(), connectionSource, (result, t) -> {
+                ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getOperationContext(), (result, t) -> {
                     connection.release();
                     connectionSource.release();
                 });

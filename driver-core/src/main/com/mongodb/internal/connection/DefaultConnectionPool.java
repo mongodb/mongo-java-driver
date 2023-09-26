@@ -21,7 +21,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.RequestContext;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterId;
@@ -43,7 +42,6 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
@@ -53,9 +51,9 @@ import com.mongodb.internal.event.EventReasonMessageResolver;
 import com.mongodb.internal.inject.OptionalProvider;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
@@ -215,7 +213,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
             SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
-                connection.checkedOutForOperation(operationContext);
+                assertNotNull(connection).checkedOutForOperation(operationContext);
                 connectionCheckedOut(operationContext, connection, checkoutStart);
                 errHandlingCallback.onResult(connection, null);
             } else {
@@ -620,7 +618,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
         private Connection.PinningMode pinningMode;
-        private OperationContext operationContext;
+        private long operationId;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -632,10 +630,10 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         /**
-         * Associates this with the operation context and establishes the checked out start time
+         * Associates this with the operation id and establishes the checked out start time
          */
         public void checkedOutForOperation(final OperationContext operationContext) {
-            this.operationContext = operationContext;
+            this.operationId = operationContext.getId();
         }
 
         @Override
@@ -686,8 +684,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             logEventMessage("Connection checked in",
                     "Connection checked in: address={}:{}, driver-generated ID={}",
                     connectionId.getLocalValue());
-
-            connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId, operationContext.getId()));
+            connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId, operationId));
         }
 
         void release() {
@@ -759,22 +756,21 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                final RequestContext requestContext, final OperationContext operationContext) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
             isTrue("open", !isClosed.get());
-            return wrapped.sendAndReceive(message, decoder, sessionContext, requestContext, operationContext);
+            return wrapped.sendAndReceive(message, decoder, operationContext);
         }
 
         @Override
-        public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
             isTrue("open", !isClosed.get());
-            wrapped.send(message, decoder, sessionContext);
+            wrapped.send(message, decoder, operationContext);
         }
 
         @Override
-        public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+        public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
             isTrue("open", !isClosed.get());
-            return wrapped.receive(decoder, sessionContext);
+            return wrapped.receive(decoder, operationContext);
         }
 
         @Override
@@ -784,9 +780,9 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext, final int additionalTimeout) {
+        public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext, final int additionalTimeout) {
             isTrue("open", !isClosed.get());
-            return wrapped.receive(decoder, sessionContext, additionalTimeout);
+            return wrapped.receive(decoder, operationContext, additionalTimeout);
         }
 
         @Override
@@ -796,10 +792,10 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
+        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                final OperationContext operationContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, requestContext, operationContext, (result, t) -> callback.onResult(result, t));
+            wrapped.sendAndReceiveAsync(message, decoder, operationContext, callback);
         }
 
         @Override
@@ -817,7 +813,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.receiveMessageAsync(responseTo, (result, t) -> callback.onResult(result, t));
+            wrapped.receiveMessageAsync(responseTo, callback);
         }
 
         @Override

@@ -19,9 +19,9 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
@@ -86,7 +86,7 @@ class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final BindingContext context, final boolean responseExpected,
+            final OperationContext operationContext, final boolean responseExpected,
             @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
@@ -108,7 +108,7 @@ class CryptConnection implements Connection {
                 new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()));
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                new RawBsonDocumentCodec(), context, responseExpected, null, null);
+                new RawBsonDocumentCodec(), operationContext, responseExpected, null, null);
 
         if (encryptedResponse == null) {
             return null;
@@ -124,8 +124,8 @@ class CryptConnection implements Connection {
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, context, true, null, null);
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext) {
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, null, null);
     }
 
     @SuppressWarnings("unchecked")

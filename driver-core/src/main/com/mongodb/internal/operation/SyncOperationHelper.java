@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -209,7 +208,7 @@ final class SyncOperationHelper {
                                 commandCreator.create(binding.getOperationContext(),
                                         source.getServerDescription(),
                                         connection.getDescription()),
-                                new NoOpFieldNameValidator(), primary(), BSON_DOCUMENT_CODEC, binding)),
+                                new NoOpFieldNameValidator(), primary(), BSON_DOCUMENT_CODEC, binding.getOperationContext())),
                         connection));
     }
 
@@ -218,7 +217,8 @@ final class SyncOperationHelper {
                                    final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
         return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection) ->
                 transformer.apply(assertNotNull(
-                        connection.command(database, command, new NoOpFieldNameValidator(), primary(), decoder, binding)), connection));
+                        connection.command(database, command, new NoOpFieldNameValidator(), primary(), decoder,
+                                binding.getOperationContext())), connection));
     }
 
     @Nullable
@@ -226,7 +226,8 @@ final class SyncOperationHelper {
                                 final Connection connection, final CommandWriteTransformer<BsonDocument, T> transformer) {
         notNull("binding", binding);
         return transformer.apply(assertNotNull(
-                connection.command(database, command, new NoOpFieldNameValidator(), primary(), BSON_DOCUMENT_CODEC, binding)),
+                connection.command(database, command, new NoOpFieldNameValidator(), primary(), BSON_DOCUMENT_CODEC,
+                        binding.getOperationContext())),
                 connection);
     }
 
@@ -249,7 +250,7 @@ final class SyncOperationHelper {
             return withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection) -> {
                 int maxWireVersion = connection.getDescription().getMaxWireVersion();
                 try {
-                    retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(connection.getDescription(),sessionContext));
+                    retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(connection.getDescription(), sessionContext));
                     BsonDocument command = retryState.attachment(AttachmentKeys.command())
                             .map(previousAttemptCommand -> {
                                 assertFalse(firstAttempt);
@@ -262,7 +263,7 @@ final class SyncOperationHelper {
                             .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false)
                             .attach(AttachmentKeys.command(), command, false);
                     return transformer.apply(assertNotNull(connection.command(database, command, fieldNameValidator, readPreference,
-                                    commandResultDecoder, binding)),
+                                    commandResultDecoder, binding.getOperationContext())),
                             connection);
                 } catch (MongoException e) {
                     if (!firstAttempt) {
@@ -292,8 +293,13 @@ final class SyncOperationHelper {
         BsonDocument command = commandCreator.create(binding.getOperationContext(), source.getServerDescription(),
                 connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
-        return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
-                source.getReadPreference(), decoder, binding)), source, connection);
+        // TODO REVERT
+        D result = connection.command(database, command, new NoOpFieldNameValidator(),
+                source.getReadPreference(), decoder, binding.getOperationContext());
+        if (result == null) {
+            return null;
+        }
+        return transformer.apply(result, source, connection);
     }
 
 

@@ -48,6 +48,8 @@ public class TimeoutSettings {
     @Nullable
     private final Long wTimeoutMS;
 
+    public static final TimeoutSettings DEFAULT = create(MongoClientSettings.builder().build());
+
     public static TimeoutSettings create(final MongoClientSettings settings) {
         return new TimeoutSettings(settings.getClusterSettings().getServerSelectionTimeout(TimeUnit.MILLISECONDS),
                 settings.getSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS),

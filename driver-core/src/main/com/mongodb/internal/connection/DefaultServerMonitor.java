@@ -210,6 +210,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 long start = System.nanoTime();
                 try {
                     SessionContext sessionContext = new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
+                    OperationContext operationContext = OperationContext.create(sessionContext, serverApi);
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
@@ -219,15 +220,15 @@ class DefaultServerMonitor implements ServerMonitor {
                         }
 
                         connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
-                                sessionContext);
+                                operationContext);
                     }
 
                     BsonDocument helloResult;
                     if (shouldStreamResponses(currentServerDescription)) {
-                        helloResult = connection.receive(new BsonDocumentCodec(), sessionContext,
+                        helloResult = connection.receive(new BsonDocumentCodec(), operationContext,
                                 Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                     } else {
-                        helloResult = connection.receive(new BsonDocumentCodec(), sessionContext);
+                        helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
                     }
 
                     long elapsedTimeNanos = System.nanoTime() - start;

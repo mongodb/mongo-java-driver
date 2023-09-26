@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;

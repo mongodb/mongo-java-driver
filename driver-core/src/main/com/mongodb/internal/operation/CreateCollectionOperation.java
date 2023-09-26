@@ -26,7 +26,6 @@ import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;

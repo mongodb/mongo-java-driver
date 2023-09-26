@@ -28,7 +28,6 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;

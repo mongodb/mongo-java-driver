@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCommandException;
-import com.mongodb.RequestContext;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
@@ -35,7 +34,6 @@ import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -65,7 +63,6 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final ConnectionDescription description;
     @Nullable
     private final CommandListener commandListener;
-    private final RequestContext requestContext;
     private final OperationContext operationContext;
     private final StructuredLogger logger;
     private final LoggerSettings loggerSettings;
@@ -77,12 +74,14 @@ class LoggingCommandEventSender implements CommandEventSender {
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
             final ConnectionDescription description,
-            @Nullable final CommandListener commandListener, final RequestContext requestContext, final OperationContext operationContext,
-            final CommandMessage message, final ByteBufferBsonOutput bsonOutput, final StructuredLogger logger,
+            @Nullable final CommandListener commandListener,
+            final OperationContext operationContext,
+            final CommandMessage message,
+            final ByteBufferBsonOutput bsonOutput,
+            final StructuredLogger logger,
             final LoggerSettings loggerSettings) {
         this.description = description;
         this.commandListener = commandListener;
-        this.requestContext = requestContext;
         this.operationContext = operationContext;
         this.logger = logger;
         this.loggerSettings = loggerSettings;
@@ -112,7 +111,7 @@ class LoggingCommandEventSender implements CommandEventSender {
                     ? new BsonDocument() : commandDocument;
 
             sendCommandStartedEvent(message, message.getNamespace().getDatabaseName(), commandName, commandDocumentForEvent, description,
-                    assertNotNull(commandListener), requestContext, operationContext);
+                    assertNotNull(commandListener), operationContext);
         }
         // the buffer underlying the command document may be released after the started event, so set to null to ensure it's not used
         // when sending the failed or succeeded event
@@ -143,7 +142,7 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (eventRequired()) {
             sendCommandFailedEvent(message, commandName, description, elapsedTimeNanos, commandEventException, commandListener,
-                    requestContext, operationContext);
+                    operationContext);
         }
     }
 
@@ -179,7 +178,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         if (eventRequired()) {
             BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
             sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
-                    elapsedTimeNanos, commandListener, requestContext, operationContext);
+                    elapsedTimeNanos, commandListener, operationContext);
         }
     }
 

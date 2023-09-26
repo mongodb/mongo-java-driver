@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -65,13 +64,11 @@ public final class CommandHelper {
         }
     }
 
-    // TODO - Get OperationContext from internal Connection
     static void executeCommandAsync(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
                                     @Nullable final ServerApi serverApi, final InternalConnection internalConnection,
                                     final SingleResultCallback<BsonDocument> callback) {
         internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
-                new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new OperationContext(null, null, null, null),
+                new BsonDocumentCodec(), OperationContext.create(NoOpSessionContext.INSTANCE, serverApi),
                 (result, t) -> {
                     if (t != null) {
                         callback.onResult(null, t);
@@ -95,16 +92,15 @@ public final class CommandHelper {
         }
     }
 
-    // TODO Clean up
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
                                                @Nullable final ClusterClock clusterClock,
-                                               final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi,
+                                               final ClusterConnectionMode clusterConnectionMode,
+                                               @Nullable final ServerApi serverApi,
                                                final InternalConnection internalConnection) {
         SessionContext sessionContext = clusterClock == null ? NoOpSessionContext.INSTANCE
                 : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
         return assertNotNull(internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection,
-                        clusterConnectionMode, serverApi), new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE,
-                new OperationContext(null, null, null, null)));
+                        clusterConnectionMode, serverApi), new BsonDocumentCodec(), OperationContext.create(sessionContext, serverApi)));
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,

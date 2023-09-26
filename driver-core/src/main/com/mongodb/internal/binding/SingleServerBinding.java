@@ -17,18 +17,13 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
-import com.mongodb.ServerApi;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ServerAddressSelector;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 

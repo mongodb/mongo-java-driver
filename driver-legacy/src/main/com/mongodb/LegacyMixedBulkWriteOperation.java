@@ -110,6 +110,11 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public WriteConcernResult execute(final WriteBinding binding) {
         try {
             BulkWriteResult result = new MixedBulkWriteOperation(timeoutSettings, namespace, writeRequests,

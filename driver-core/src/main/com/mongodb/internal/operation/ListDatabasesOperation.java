@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;

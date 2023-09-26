@@ -18,23 +18,18 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.ReadPreferenceWithFallbackServerSelector;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;

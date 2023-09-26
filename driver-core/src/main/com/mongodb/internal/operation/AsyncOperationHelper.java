@@ -22,7 +22,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -204,15 +203,7 @@ final class AsyncOperationHelper {
                 (source, connection, releasingCallback) ->
                         executeCommandAsync(binding, database, commandCreator.create(
                                 binding.getOperationContext(), source.getServerDescription(), connection.getDescription()),
-                                connection, transformer,
-                                (result, commandExecutionError) -> {
-                                    try {
-                                        releasingCallback.onResult(result, null);
-                                    } catch (Throwable mongoCommandException) {
-                                        releasingCallback.onResult(null, mongoCommandException);
-                                    }
-                                }
-                        )
+                                connection, transformer, releasingCallback)
         );
     }
 
@@ -226,7 +217,7 @@ final class AsyncOperationHelper {
         SingleResultCallback<T> addingRetryableLabelCallback = addingRetryableLabelCallback(callback,
                 connection.getDescription().getMaxWireVersion());
         connection.commandAsync(database, command, new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                binding, transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
+                binding.getOperationContext(), transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
     }
 
     static <T, R> void executeRetryableWriteAsync(
@@ -280,14 +271,15 @@ final class AsyncOperationHelper {
                             addingRetryableLabelCallback.onResult(null, t);
                             return;
                         }
-                        connection.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, binding,
-                                transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
+                        connection.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
+                                operationContext, transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
                     });
         }).whenComplete(binding::release);
 
         asyncWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, OperationHelper.LOGGER)));
     }
 
+    // TODO just pass OPContext
     static <D, T> void createReadCommandAndExecuteAsync(
             final RetryState retryState,
             final AsyncReadBinding binding,
@@ -307,7 +299,7 @@ final class AsyncOperationHelper {
             return;
         }
         connection.commandAsync(database, command, new NoOpFieldNameValidator(), source.getReadPreference(), decoder,
-                binding, transformingReadCallback(transformer, source, connection, callback));
+                binding.getOperationContext(), transformingReadCallback(transformer, source, connection, callback));
     }
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,

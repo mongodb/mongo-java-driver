@@ -29,7 +29,6 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -295,16 +294,16 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                final BindingContext context) {
-            return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, context);
+                final OperationContext operationContext) {
+            return wrapped.command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext);
         }
 
         @Override
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                final BindingContext context, final boolean responseExpected,
+                final OperationContext operationContext, final boolean responseExpected,
                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
-            return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, context,
+            return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, operationContext,
                     responseExpected, payload, payloadFieldNameValidator);
         }
 
@@ -356,19 +355,19 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
-                final SingleResultCallback<T> callback) {
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final OperationContext operationContext, final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                    context, callback);
+                    operationContext, callback);
         }
 
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
-                final boolean responseExpected, @Nullable final SplittablePayload payload,
+                @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                final OperationContext operationContext, final boolean responseExpected, @Nullable final SplittablePayload payload,
                 @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder,
-                    context, responseExpected, payload, payloadFieldNameValidator, callback);
+                    operationContext, responseExpected, payload, payloadFieldNameValidator, callback);
         }
 
         @Override

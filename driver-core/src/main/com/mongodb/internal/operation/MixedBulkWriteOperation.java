@@ -22,7 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
@@ -404,14 +403,15 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     @Nullable
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
-                binding, shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
+                binding.getOperationContext(), shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator());
     }
 
+    // TODO - just pass in opContext
     private void executeCommandAsync(final AsyncWriteBinding binding, final AsyncConnection connection, final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
-                binding, shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
+                binding.getOperationContext(), shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator(), callback);
     }
 
