@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -47,7 +47,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonDocument filter;
@@ -58,7 +58,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     public CountOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -118,14 +118,14 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public Long execute(final ReadBinding binding) {
-        return executeRetryableRead(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
-                getCommandCreator(binding.getSessionContext()), DECODER, transformer(), retryReads);
+        return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
+                                    getCommandCreator(binding.getSessionContext()), DECODER, transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
-                getCommandCreator(binding.getSessionContext()), DECODER, asyncTransformer(), retryReads, callback);
+        executeRetryableReadAsync(timeoutContext, binding, namespace.getDatabaseName(),
+                                  getCommandCreator(binding.getSessionContext()), DECODER, asyncTransformer(), retryReads, callback);
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
@@ -137,7 +137,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+        return (timeoutContext, serverDescription, connectionDescription) -> {
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
 
             appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
@@ -146,7 +146,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
             putIfNotZero(document, "limit", limit);
             putIfNotZero(document, "skip", skip);
             putIfNotNull(document, "hint", hint);
-            putIfNotZero(document, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+            putIfNotZero(document, "maxTimeMS", timeoutContext.getMaxTimeMS());
 
             if (collation != null) {
                 document.put("collation", collation.asDocument());

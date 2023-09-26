@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -42,7 +42,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonDocument filter;
@@ -54,7 +54,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
 
     public CountDocumentsOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -149,7 +149,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     private AggregateOperation<BsonDocument> getAggregateOperation() {
-        return new AggregateOperation<>(clientSideOperationTimeout.getTimeoutSettings(), namespace, getPipeline(), DECODER)
+        return new AggregateOperation<>(timeoutContext.getTimeoutSettings(), namespace, getPipeline(), DECODER)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)

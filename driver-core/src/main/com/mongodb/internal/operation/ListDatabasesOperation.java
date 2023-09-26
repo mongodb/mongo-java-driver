@@ -17,7 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -49,7 +49,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  */
 public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final Decoder<T> decoder;
     private boolean retryReads;
     private BsonDocument filter;
@@ -59,7 +59,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     public ListDatabasesOperation(final TimeoutSettings timeoutSettings, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -111,15 +111,15 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(clientSideOperationTimeout, binding, "admin", getCommandCreator(),
-                CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);
+        return executeRetryableRead(timeoutContext, binding, "admin", getCommandCreator(),
+                                    CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(clientSideOperationTimeout, binding, "admin", getCommandCreator(),
-                CommandResultDocumentCodec.create(decoder, "databases"), asyncTransformer(),
-                retryReads, errorHandlingCallback(callback, LOGGER));
+        executeRetryableReadAsync(timeoutContext, binding, "admin", getCommandCreator(),
+                                  CommandResultDocumentCodec.create(decoder, "databases"), asyncTransformer(),
+                                  retryReads, errorHandlingCallback(callback, LOGGER));
     }
 
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
@@ -137,12 +137,12 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     private CommandCreator getCommandCreator() {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+        return (timeoutContext, serverDescription, connectionDescription) -> {
             BsonDocument command = new BsonDocument("listDatabases", new BsonInt32(1));
             putIfNotNull(command, "filter", filter);
             putIfNotNull(command, "nameOnly", nameOnly);
             putIfNotNull(command, "authorizedDatabases", authorizedDatabasesOnly);
-            putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+            putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
             putIfNotNull(command, "comment", comment);
             return command;
         };

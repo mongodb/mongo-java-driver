@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -45,12 +45,12 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  */
 public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final WriteConcern writeConcern;
 
     TransactionOperation(final TimeoutSettings timeoutSettings, final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
@@ -61,20 +61,20 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     @Override
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        return executeRetryableWrite(clientSideOperationTimeout, binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
+        return executeRetryableWrite(timeoutContext, binding, "admin", null, new NoOpFieldNameValidator(),
+                                     new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        executeRetryableWriteAsync(clientSideOperationTimeout, binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
-                errorHandlingCallback(callback, LOGGER));
+        executeRetryableWriteAsync(timeoutContext, binding, "admin", null, new NoOpFieldNameValidator(),
+                                   new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
+                                   errorHandlingCallback(callback, LOGGER));
     }
 
     CommandCreator getCommandCreator() {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+        return (timeoutContext, serverDescription, connectionDescription) -> {
             BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
             if (!writeConcern.isServerDefault()) {
                 command.put("writeConcern", writeConcern.asDocument());

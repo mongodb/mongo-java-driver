@@ -19,7 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -51,14 +51,14 @@ import static java.util.Collections.singletonList;
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonValue comment;
 
     public EstimatedDocumentCountOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -80,9 +80,9 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     @Override
     public Long execute(final ReadBinding binding) {
         try {
-            return executeRetryableRead(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
-                    getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
-                    transformer(), retryReads);
+            return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
+                                        getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
+                                        transformer(), retryReads);
         } catch (MongoCommandException e) {
             return assertNotNull(rethrowIfNotNamespaceError(e, 0L));
         }
@@ -90,10 +90,10 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
-                getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
-                asyncTransformer(), retryReads,
-                (result, t) -> {
+        executeRetryableReadAsync(timeoutContext, binding, namespace.getDatabaseName(),
+                                  getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
+                                  asyncTransformer(), retryReads,
+                                  (result, t) -> {
                     if (isNamespaceError(t)) {
                         callback.onResult(0L, null);
                     } else {
@@ -115,10 +115,10 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+        return (timeoutContext, serverDescription, connectionDescription) -> {
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
-            putIfNotZero(document, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+            putIfNotZero(document, "maxTimeMS", timeoutContext.getMaxTimeMS());
             if (comment != null) {
                 document.put("comment", comment);
             }

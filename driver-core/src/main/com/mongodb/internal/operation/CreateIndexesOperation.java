@@ -26,7 +26,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -68,7 +68,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  */
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
@@ -77,7 +77,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     public CreateIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final List<IndexRequest> requests, @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
@@ -219,7 +219,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             values.add(getIndex(request));
         }
         command.put("indexes", new BsonArray(values));
-        putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+        putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
         appendWriteConcernToCommand(writeConcern, command);
         if (commitQuorum != null) {
             if (serverIsAtLeastVersionFourDotFour(description)) {

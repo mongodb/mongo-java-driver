@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -69,7 +69,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  */
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final String databaseName;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -80,7 +80,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     public ListCollectionsOperation(final TimeoutSettings timeoutSettings, final String databaseName, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
     }
@@ -138,8 +138,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
                 try {
-                    return createReadCommandAndExecute(clientSideOperationTimeout, retryState, binding, source, databaseName,
-                            getCommandCreator(), createCommandDecoder(), commandTransformer(), connection);
+                    return createReadCommandAndExecute(timeoutContext, retryState, binding, source, databaseName,
+                                                       getCommandCreator(), createCommandDecoder(), commandTransformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
                             source.getServerDescription().getAddress(), batchSize));
@@ -161,8 +161,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                         binding.getSessionContext()), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(clientSideOperationTimeout, retryState, binding, source, databaseName,
-                                        getCommandCreator(), createCommandDecoder(), asyncTransformer(), connection, (result, t) -> {
+                                createReadCommandAndExecuteAsync(timeoutContext, retryState, binding, source, databaseName,
+                                                                 getCommandCreator(), createCommandDecoder(), asyncTransformer(), connection, (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {
                                                 releasingCallback.onResult(null, t);
                                             } else {
@@ -191,12 +191,12 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     }
 
     private CommandOperationHelper.CommandCreator getCommandCreator() {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> {
+        return (timeoutContext, serverDescription, connectionDescription) -> {
             BsonDocument command = new BsonDocument("listCollections", new BsonInt32(1))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             putIfNotNull(command, "filter", filter);
             putIfTrue(command, "nameOnly", nameOnly);
-            putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+            putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
             putIfNotNull(command, "comment", comment);
             return command;
         };

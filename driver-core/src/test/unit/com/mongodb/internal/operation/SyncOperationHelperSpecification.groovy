@@ -22,7 +22,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.internal.ClientSideOperationTimeout
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.binding.WriteBinding
@@ -105,7 +105,7 @@ class SyncOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableWrite(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), writeBinding, dbName, primary(),
+        executeRetryableWrite(new TimeoutContext(TIMEOUT_SETTINGS), writeBinding, dbName, primary(),
                 new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.transformer())
                 { cmd -> cmd }
 
@@ -136,7 +136,7 @@ class SyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableRead(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), readBinding, dbName, commandCreator, decoder,
+        executeRetryableRead(new TimeoutContext(TIMEOUT_SETTINGS), readBinding, dbName, commandCreator, decoder,
                 function, false)
 
         then:

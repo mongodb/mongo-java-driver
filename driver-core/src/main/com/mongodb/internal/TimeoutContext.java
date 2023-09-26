@@ -24,22 +24,22 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * Client Side Operation Timeout.
+ * Timeout Context.
  *
- * <p>Includes support for the deprecated {@code maxTimeMS} and {@code maxCommitTimeMS} operation configurations</p>
+ * <p>The context for handling timeouts in relation to the Client Side Operation Timeout specification.</p>
  */
-public class ClientSideOperationTimeout {
+public class TimeoutContext {
 
     private final TimeoutSettings timeoutSettings;
 
     @Nullable
     private final Timeout timeout;
 
-    public ClientSideOperationTimeout(final TimeoutSettings timeoutSettings) {
+    public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
     }
 
-    ClientSideOperationTimeout(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+    TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
         this.timeoutSettings = timeoutSettings;
         this.timeout = timeout;
     }
@@ -122,7 +122,7 @@ public class ClientSideOperationTimeout {
 
     @Override
     public String toString() {
-        return "ClientSideOperationTimeout{"
+        return "timeoutContext{"
                 + "timeoutContext=" + timeoutSettings
                 + ", timeout=" + timeout
                 + '}';
@@ -136,7 +136,7 @@ public class ClientSideOperationTimeout {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ClientSideOperationTimeout that = (ClientSideOperationTimeout) o;
+        final TimeoutContext that = (TimeoutContext) o;
         return Objects.equals(timeoutSettings, that.timeoutSettings) && Objects.equals(timeout, that.timeout);
     }
 

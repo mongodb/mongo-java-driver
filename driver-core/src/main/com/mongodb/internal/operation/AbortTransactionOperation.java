@@ -50,8 +50,8 @@ public class AbortTransactionOperation extends TransactionOperation {
     CommandCreator getCommandCreator() {
         CommandCreator creator = super.getCommandCreator();
         if (recoveryToken != null) {
-            return (clientSideOperationTimeout, serverDescription, connectionDescription) ->
-                    creator.create(clientSideOperationTimeout, serverDescription, connectionDescription)
+            return (timeoutContext, serverDescription, connectionDescription) ->
+                    creator.create(timeoutContext, serverDescription, connectionDescription)
                             .append("recoveryToken", recoveryToken);
         }
         return creator;
