@@ -158,17 +158,15 @@ abstract class BaseCluster implements Cluster {
         isTrue("open", !isClosed());
 
         boolean selectionFailureLogged = false;
-        ClusterDescription currentDescription;
 
         StartTime startTime = StartTime.now();
         Timeout timeout = startServerSelectionTimeout(startTime);
-
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
-            currentDescription = description;
+            ClusterDescription currentDescription = description;
 
             if (currentDescription.getType() != ClusterType.UNKNOWN) {
-                break;
+                return currentDescription;
             }
 
             if (timeout.hasExpired()) {
@@ -195,7 +193,6 @@ abstract class BaseCluster implements Cluster {
             Timeout heartbeatLimitedTimeout = timeout.orEarlier(startMinWaitHeartbeatTimeout());
             heartbeatLimitedTimeout.awaitOn(currentPhaseLatch, () -> "waiting to connect");
         }
-        return currentDescription;
     }
 
     public ClusterId getClusterId() {
