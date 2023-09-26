@@ -132,6 +132,11 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return wrapped.getTimeoutSettings();
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return wrapped.execute(binding);
     }

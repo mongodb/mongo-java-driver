@@ -171,6 +171,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return this;
     }
 
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return wrapped.getTimeoutSettings();
+    }
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {

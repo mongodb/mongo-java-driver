@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReadBinding;
 
 /**
@@ -24,6 +25,12 @@ import com.mongodb.internal.binding.ReadBinding;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface ReadOperation<T> {
+
+    /**
+     * @return the timeout settings for this operation
+     */
+    TimeoutSettings getTimeoutSettings();
+
     /**
      * General execute which can return anything of type T
      *

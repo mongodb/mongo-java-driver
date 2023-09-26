@@ -126,6 +126,11 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Long execute(final ReadBinding binding) {
         BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding);
         return cursor.hasNext() ? getCountFromAggregateResults(cursor.next()) : 0;

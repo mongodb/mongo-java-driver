@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -31,6 +32,11 @@ class VoidWriteOperationThenCursorReadOperation<T> implements AsyncReadOperation
                                               final AsyncReadOperation<AsyncBatchCursor<T>> cursorReadOperation) {
         this.writeOperation = writeOperation;
         this.cursorReadOperation = cursorReadOperation;
+    }
+
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return writeOperation.getTimeoutSettings();
     }
 
     @Override

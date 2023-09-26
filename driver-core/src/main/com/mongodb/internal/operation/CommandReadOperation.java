@@ -51,6 +51,11 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public T execute(final ReadBinding binding) {
         return executeRetryableRead(timeoutContext, binding, databaseName, getCommandCreator(), decoder,
                                     (result, source, connection) -> result, false);

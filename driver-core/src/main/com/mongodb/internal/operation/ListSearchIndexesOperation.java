@@ -79,6 +79,11 @@ final class ListSearchIndexesOperation<T>
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         try {
             return asAggregateOperation().execute(binding);

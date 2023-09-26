@@ -93,6 +93,11 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding);
         return withConnection(binding, connection -> {

@@ -117,6 +117,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Long execute(final ReadBinding binding) {
         return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
                                     getCommandCreator(binding.getSessionContext()), DECODER, transformer(), retryReads);

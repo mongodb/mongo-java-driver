@@ -130,6 +130,11 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             executeCommand(binding, databaseName, getCommand(), new BsonDocumentCodec(),

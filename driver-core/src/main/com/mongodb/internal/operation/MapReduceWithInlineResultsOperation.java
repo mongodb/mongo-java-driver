@@ -175,6 +175,11 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
                                     getCommandCreator(binding.getSessionContext()),
