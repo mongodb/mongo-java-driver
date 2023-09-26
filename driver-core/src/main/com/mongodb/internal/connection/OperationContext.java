@@ -15,6 +15,12 @@
  */
 package com.mongodb.internal.connection;
 
+import com.mongodb.RequestContext;
+import com.mongodb.ServerApi;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -23,12 +29,45 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OperationContext {
     private static final AtomicLong NEXT_ID = new AtomicLong(0);
     private final long id;
+    private final SessionContext sessionContext;
+    private final RequestContext requestContext;
+    private final TimeoutContext timeoutContext;
+    @Nullable
+    private final ServerApi serverApi;
 
+    // TODO Remove
     public OperationContext() {
+        this(null, null, null, null);
+    }
+
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            @Nullable final ServerApi serverApi) {
         id = NEXT_ID.incrementAndGet();
+        this.requestContext = requestContext;
+        this.sessionContext = sessionContext;
+        this.timeoutContext = timeoutContext;
+        this.serverApi = serverApi;
     }
 
     public long getId() {
         return id;
     }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public RequestContext getRequestContext() {
+        return requestContext;
+    }
+
+    public TimeoutContext getTimeoutContext() {
+        return timeoutContext;
+    }
+
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
+    }
 }
+
