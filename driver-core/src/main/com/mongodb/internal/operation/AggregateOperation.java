@@ -146,18 +146,18 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        // TODO (CSOT) JAVA-5172
-        return new CommandReadOperation<>(wrapped.getTimeoutSettings(), getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(null, MIN_WIRE_VERSION),
-                        verbosity), resultDecoder);
+        return createExplainableOperation(verbosity, resultDecoder);
     }
 
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        // TODO (CSOT) JAVA-5172
+        return createExplainableOperation(verbosity, resultDecoder);
+    }
+
+    <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(wrapped.getTimeoutSettings(), getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(null, MIN_WIRE_VERSION),
-                        verbosity), resultDecoder);
+                (operationContext, serverDescription, connectionDescription) ->
+                        asExplainCommand(wrapped.getCommand(operationContext, MIN_WIRE_VERSION), verbosity), resultDecoder);
     }
 
     MongoNamespace getNamespace() {

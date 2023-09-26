@@ -37,9 +37,11 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandWriteTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
+import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandWriteTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
@@ -264,11 +266,11 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         return createExplainableOperation(explainVerbosity);
     }
 
-    // TODO (CSOT) JAVA-5172
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(timeoutSettings, namespace.getDatabaseName(),
-                                          ExplainHelper.asExplainCommand(getCommandCreator().create(null, null, null), explainVerbosity),
-                                          new BsonDocumentCodec());
+        return new CommandReadOperation<>(timeoutSettings, getNamespace().getDatabaseName(),
+                (operationContext, serverDescription, connectionDescription) ->
+                        asExplainCommand(getCommandCreator().create(operationContext, serverDescription, connectionDescription),
+                                explainVerbosity), new BsonDocumentCodec());
     }
 
     private CommandWriteTransformer<BsonDocument, MapReduceStatistics> transformer() {
@@ -287,7 +289,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         };
     }
 
-    private CommandOperationHelper.CommandCreator getCommandCreator() {
+    private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
             if (!serverIsAtLeastVersionFourDotFour(connectionDescription)) {

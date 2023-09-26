@@ -46,7 +46,6 @@ import static java.util.Arrays.asList;
 @SuppressWarnings("overloads")
 final class CommandOperationHelper {
 
-    // TODO - pass in op context
     interface CommandCreator {
         BsonDocument create(
                 OperationContext operationContext,

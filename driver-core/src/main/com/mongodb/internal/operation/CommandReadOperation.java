@@ -36,14 +36,19 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
     private final TimeoutSettings timeoutSettings;
     private final String databaseName;
-    private final BsonDocument command;
+    private final CommandCreator commandCreator;
     private final Decoder<T> decoder;
 
     public CommandReadOperation(final TimeoutSettings timeoutSettings, final String databaseName,
             final BsonDocument command, final Decoder<T> decoder) {
+        this(timeoutSettings, databaseName, (operationContext, serverDescription, connectionDescription) -> command, decoder);
+    }
+
+    public CommandReadOperation(final TimeoutSettings timeoutSettings, final String databaseName,
+            final CommandCreator commandCreator, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
         this.databaseName = notNull("databaseName", databaseName);
-        this.command = notNull("command", command);
+        this.commandCreator = notNull("commandCreator", commandCreator);
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -54,18 +59,13 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, databaseName, getCommandCreator(), decoder,
+        return executeRetryableRead(binding, databaseName, commandCreator, decoder,
                                     (result, source, connection) -> result, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, databaseName, getCommandCreator(), decoder,
+        executeRetryableReadAsync(binding, databaseName, commandCreator, decoder,
                                   (result, source, connection) -> result, false, callback);
-    }
-
-    // TODO (CSOT) - JAVA-5098 - should the command be modified for CSOT?
-    private CommandCreator getCommandCreator() {
-        return (operationContext, serverDescription, connectionDescription) -> command;
     }
 }

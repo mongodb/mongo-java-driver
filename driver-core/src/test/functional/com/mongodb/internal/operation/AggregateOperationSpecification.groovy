@@ -315,23 +315,22 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         [async, timeoutSettings] << [[true, false], [TIMEOUT_SETTINGS_WITH_MAX_TIME, TIMEOUT_SETTINGS_WITH_TIMEOUT]].combinations()
     }
 
-    // TODO (CSOT) JAVA-5172
-//    @IgnoreIf({ serverVersionLessThan(3, 6)})
-//    def 'should be able to explain an empty pipeline'() {
-//        given:
-//        def operation = new AggregateOperation(TIMEOUT_SETTINGS, getNamespace(), [], new BsonDocumentCodec())
-//        operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
-//                            operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
-//
-//        when:
-//        def result = execute(operation, async)
-//
-//        then:
-//        result.containsKey('stages') || result.containsKey('queryPlanner') || result.containsKey('shards')
-//
-//        where:
-//        async << [true, false]
-//    }
+    @IgnoreIf({ serverVersionLessThan(3, 6)})
+    def 'should be able to explain an empty pipeline'() {
+        given:
+        def operation = new AggregateOperation(TIMEOUT_SETTINGS, getNamespace(), [], new BsonDocumentCodec())
+        operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
+                            operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
+
+        when:
+        def result = execute(operation, async)
+
+        then:
+        result.containsKey('stages') || result.containsKey('queryPlanner') || result.containsKey('shards')
+
+        where:
+        async << [true, false]
+    }
 
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to aggregate with collation'() {

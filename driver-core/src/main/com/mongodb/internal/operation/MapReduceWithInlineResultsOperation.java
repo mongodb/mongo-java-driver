@@ -196,10 +196,10 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return createExplainableOperation(explainVerbosity);
     }
 
-    // TODO (CSOT) JAVA-5172
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<>(timeoutSettings, namespace.getDatabaseName(),
-                asExplainCommand(getCommandCreator().create(null, null, null),
+                (operationContext, serverDescription, connectionDescription) ->
+                        asExplainCommand(getCommandCreator().create(operationContext, serverDescription, connectionDescription),
                         explainVerbosity), new BsonDocumentCodec());
     }
 
