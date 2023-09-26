@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.MongoInterruptedException;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -35,10 +34,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 
 class KeyManagementService {
     private static final Logger LOGGER = Loggers.getLogger("client");
@@ -66,7 +63,7 @@ class KeyManagementService {
             socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()), timeoutMillis);
         } catch (IOException e) {
             closeSocket(socket);
-            throw translateInterruptedExceptionAndThrow(e, "Interrupted while connecting");
+            throw e;
         }
 
         try {
@@ -78,7 +75,7 @@ class KeyManagementService {
             outputStream.write(bytes);
         } catch (IOException e) {
             closeSocket(socket);
-            throw translateInterruptedExceptionAndThrow(e, "Interrupted while writing");
+            throw e;
         }
 
         try {
@@ -103,19 +100,6 @@ class KeyManagementService {
             socket.close();
         } catch (IOException | RuntimeException e) {
             // ignore
-        }
-    }
-
-    /**
-     * @return Never.
-     */
-    private static RuntimeException translateInterruptedExceptionAndThrow(final IOException e, final String message) throws IOException,
-            MongoInterruptedException {
-        Optional<MongoInterruptedException> interruptedException = translateInterruptedException(e, message);
-        if (interruptedException.isPresent()) {
-            throw interruptedException.get();
-        } else {
-            throw e;
         }
     }
 }
