@@ -29,7 +29,6 @@ import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandListener
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.diagnostics.logging.Logger
 import com.mongodb.internal.logging.StructuredLogger
 import com.mongodb.internal.validator.NoOpFieldNameValidator

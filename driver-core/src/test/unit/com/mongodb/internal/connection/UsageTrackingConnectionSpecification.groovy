@@ -16,13 +16,11 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32

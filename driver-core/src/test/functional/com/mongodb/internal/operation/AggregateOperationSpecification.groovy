@@ -315,7 +315,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         [async, timeoutSettings] << [[true, false], [TIMEOUT_SETTINGS_WITH_MAX_TIME, TIMEOUT_SETTINGS_WITH_TIMEOUT]].combinations()
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 6)})
+    @IgnoreIf({ serverVersionLessThan(3, 6) })
     def 'should be able to explain an empty pipeline'() {
         given:
         def operation = new AggregateOperation(TIMEOUT_SETTINGS, getNamespace(), [], new BsonDocumentCodec())
