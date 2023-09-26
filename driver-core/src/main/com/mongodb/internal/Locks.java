@@ -16,6 +16,8 @@
 
 package com.mongodb.internal;
 
+import com.mongodb.MongoInterruptedException;
+
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 
@@ -37,13 +39,17 @@ public final class Locks {
     }
 
     public static <V, E extends Exception> V checkedWithLock(final Lock lock, final CheckedSupplier<V, E> supplier) throws E {
+        lockInterruptibly(lock);
+        try {
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
         try {
             lock.lockInterruptibly();
-            try {
-                return supplier.get();
-            } finally {
-                lock.unlock();
-            }
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted waiting for lock", e);
         }
