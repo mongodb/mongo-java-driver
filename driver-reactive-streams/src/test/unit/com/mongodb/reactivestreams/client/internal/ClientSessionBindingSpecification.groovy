@@ -37,6 +37,8 @@ import com.mongodb.internal.session.ClientSessionContext
 import com.mongodb.reactivestreams.client.ClientSession
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.getOperationContext
+
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
@@ -196,6 +198,6 @@ class ClientSessionBindingSpecification extends Specification {
                 new ClusterDescription(ClusterConnectionMode.MULTIPLE, ClusterType.REPLICA_SET, [])
             }
         }
-        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
+        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getOperationContext())
     }
 }

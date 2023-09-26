@@ -32,6 +32,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
@@ -39,9 +40,12 @@ import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -152,7 +156,7 @@ final class MongoClientDelegate {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null);
+            ReadBinding binding = getReadBinding(operation.getTimeoutSettings(), readPreference, readConcern, actualClientSession, session == null);
 
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
@@ -175,7 +179,7 @@ final class MongoClientDelegate {
             }
 
             ClientSession actualClientSession = getClientSession(session);
-            WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null);
+            WriteBinding binding = getWriteBinding(operation.getTimeoutSettings(), readConcern, actualClientSession, session == null);
 
             try {
                 return operation.execute(binding);
@@ -188,19 +192,27 @@ final class MongoClientDelegate {
             }
         }
 
-        WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(primary(), readConcern, session, ownsSession);
+        WriteBinding getWriteBinding(final TimeoutSettings timeoutSettings, final ReadConcern readConcern, final ClientSession session,
+                final boolean ownsSession) {
+            return getReadWriteBinding(timeoutSettings, primary(), readConcern, session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, final ReadConcern readConcern,
-                                   final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(readPreference, readConcern, session, ownsSession);
+        ReadBinding getReadBinding(final TimeoutSettings timeoutSettings, final ReadPreference readPreference,
+                final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(timeoutSettings, readPreference, readConcern, session, ownsSession);
         }
 
-        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
-                                             final ClientSession session, final boolean ownsSession) {
+        ReadWriteBinding getReadWriteBinding(final TimeoutSettings timeoutSettings, final ReadPreference readPreference,
+                final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
+
+            OperationContext operationContext = new OperationContext(
+                    getRequestContext(),
+                    new ReadConcernAwareNoOpSessionContext(readConcern),
+                    new TimeoutContext(timeoutSettings),
+                    serverApi);
+
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern, serverApi, getContext());
+                    getReadPreferenceForBinding(readPreference, session), readConcern, operationContext);
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -209,13 +221,14 @@ final class MongoClientDelegate {
             return new ClientSessionBinding(session, ownsSession, readWriteBinding);
         }
 
-        private RequestContext getContext() {
+        private RequestContext getRequestContext() {
             RequestContext context = null;
             if (contextProvider != null) {
                 context = contextProvider.getContext();
             }
             return context == null ? IgnorableRequestContext.INSTANCE : context;
         }
+
 
         private void labelException(final ClientSession session, final MongoException e) {
             if (session.hasActiveTransaction() && (e instanceof MongoSocketException || e instanceof MongoTimeoutException

@@ -35,12 +35,7 @@ public class OperationContext {
     @Nullable
     private final ServerApi serverApi;
 
-    // TODO Remove
-    public OperationContext() {
-        this(null, null, null, null);
-    }
-
-    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+    public OperationContext( final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
         id = NEXT_ID.incrementAndGet();
         this.requestContext = requestContext;

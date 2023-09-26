@@ -49,9 +49,6 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     private final Cluster cluster;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
-    @Nullable
-    private final ServerApi serverApi;
-    private final RequestContext requestContext;
     private final OperationContext operationContext;
 
     /**
@@ -60,18 +57,15 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
      * @param readConcern    a non-null read concern
-     * @param serverApi      a server API, which may be null
-     * @param requestContext the request context
+     * @param operationContext the operation context
      * <p>This class is not part of the public API and may be removed or changed at any time</p>
      */
     public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-            @Nullable final ServerApi serverApi, final RequestContext requestContext) {
+            final OperationContext operationContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        this.readConcern = (notNull("readConcern", readConcern));
-        this.serverApi = serverApi;
-        this.requestContext = notNull("requestContext", requestContext);
-        operationContext = new OperationContext();
+        this.readConcern = notNull("readConcern", readConcern);
+        this.operationContext = notNull("operationContext", operationContext);
     }
 
     @Override
@@ -98,12 +92,12 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     @Override
     @Nullable
     public ServerApi getServerApi() {
-        return serverApi;
+        return operationContext.getServerApi();
     }
 
     @Override
     public RequestContext getRequestContext() {
-        return requestContext;
+        return operationContext.getRequestContext();
     }
 
     @Override
@@ -184,12 +178,12 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         @Override
         @Nullable
         public ServerApi getServerApi() {
-            return serverApi;
+            return operationContext.getServerApi();
         }
 
         @Override
         public RequestContext getRequestContext() {
-            return requestContext;
+            return operationContext.getRequestContext();
         }
 
         @Override

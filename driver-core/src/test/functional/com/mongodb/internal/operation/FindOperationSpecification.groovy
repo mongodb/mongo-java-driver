@@ -61,6 +61,7 @@ import static com.mongodb.ClusterFixture.executeSync
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
+import static com.mongodb.ClusterFixture.getOperationContext
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -465,10 +466,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def operation = new FindOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
-        def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null,
-                IgnorableRequestContext.INSTANCE)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, null,
-                IgnorableRequestContext.INSTANCE)
+        def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT, getOperationContext())
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary(), ReadConcern.DEFAULT,
+                getOperationContext())
 
         when:
         def result = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
@@ -492,9 +492,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def hedgeOptions = isHedgeEnabled != null ?
                 ReadPreferenceHedgeOptions.builder().enabled(isHedgeEnabled as boolean).build() : null
         def readPreference = ReadPreference.primaryPreferred().withHedgeOptions(hedgeOptions)
-        def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
-        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, null,
-                IgnorableRequestContext.INSTANCE)
+        def syncBinding = new ClusterBinding(getCluster(), readPreference, ReadConcern.DEFAULT, getOperationContext())
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), readPreference, ReadConcern.DEFAULT, getOperationContext())
         def cursor = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
         def firstBatch = {
             if (async) {

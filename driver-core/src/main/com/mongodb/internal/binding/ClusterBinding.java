@@ -22,10 +22,10 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.connection.ServerTuple;
@@ -48,27 +48,21 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     private final Cluster cluster;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
-    @Nullable
-    private final ServerApi serverApi;
-    private final RequestContext requestContext;
     private final OperationContext operationContext;
 
     /**
      * Creates an instance.
-     * @param cluster        a non-null Cluster which will be used to select a server to bind to
-     * @param readPreference a non-null ReadPreference for read operations
-     * @param readConcern    a non-null read concern
-     * @param serverApi      a server API, which may be null
-     * @param requestContext the request context
+     * @param cluster          a non-null Cluster which will be used to select a server to bind to
+     * @param readPreference   a non-null ReadPreference for read operations
+     * @param readConcern      a non-null read concern
+     * @param operationContext the operation context
      */
     public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern,
-                          @Nullable final ServerApi serverApi, final RequestContext requestContext) {
+                          final OperationContext operationContext) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);
-        this.serverApi = serverApi;
-        this.requestContext = notNull("requestContext", requestContext);
-        operationContext = new OperationContext();
+        this.operationContext = notNull("operationContext", operationContext);
     }
 
     /**
@@ -92,18 +86,18 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
 
     @Override
     public SessionContext getSessionContext() {
-        return new ReadConcernAwareNoOpSessionContext(readConcern);
+        return operationContext.getSessionContext();
     }
 
     @Override
     @Nullable
     public ServerApi getServerApi() {
-        return serverApi;
+        return operationContext.getServerApi();
     }
 
     @Override
     public RequestContext getRequestContext() {
-        return requestContext;
+        return operationContext.getRequestContext();
     }
 
     @Override
@@ -168,12 +162,12 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
 
         @Override
         public ServerApi getServerApi() {
-            return serverApi;
+            return operationContext.getServerApi();
         }
 
         @Override
         public RequestContext getRequestContext() {
-            return requestContext;
+            return operationContext.getRequestContext();
         }
 
         @Override
