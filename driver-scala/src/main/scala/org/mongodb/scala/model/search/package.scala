@@ -27,6 +27,7 @@ import com.mongodb.annotations.{ Beta, Sealed }
  * on which they are called. This allows storing and using such instances as templates.
  *
  * @see `Aggregates.search`
+ * @see `Aggregates.vectorSearch`
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/ Atlas Search]]
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/ Atlas Search aggregation pipeline stages]]
  * @since 4.7
@@ -217,6 +218,17 @@ package object search {
   @Sealed
   @Beta(Array(Beta.Reason.CLIENT))
   type SearchOptions = com.mongodb.client.model.search.SearchOptions
+
+  /**
+   * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @note Requires MongoDB 6.0.10 or greater
+   * @since 4.11
+   */
+  @Sealed
+  @Beta(Array(Beta.Reason.SERVER))
+  type VectorSearchOptions = com.mongodb.client.model.search.VectorSearchOptions
 
   /**
    * Highlighting options.

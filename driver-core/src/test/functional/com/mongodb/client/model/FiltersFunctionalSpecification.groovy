@@ -80,6 +80,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
     def 'eq'() {
         expect:
         find(eq('x', 1)) == [a]
+        find(eq('_id', 2)) == [b]
         find(eq(2)) == [b]
     }
 

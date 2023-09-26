@@ -41,6 +41,7 @@ import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchOperator.exists
 import org.mongodb.scala.model.search.SearchOptions.searchOptions
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
+import org.mongodb.scala.model.search.VectorSearchOptions.vectorSearchOptions
 import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
 
 class AggregatesSpec extends BaseSpec {
@@ -759,6 +760,57 @@ class AggregatesSpec extends BaseSpec {
           }
         }
       }""")
+    )
+  }
+
+  it should "render $vectorSearch" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName").multi("ignored"),
+        List(1.0d, 2.0d),
+        "indexName",
+        2,
+        1,
+        vectorSearchOptions()
+          .filter(Filters.ne("fieldName", "fieldValue"))
+      )
+    ) should equal(
+      Document(
+        """{
+        "$vectorSearch": {
+            "path": "fieldName",
+            "queryVector": [1.0, 2.0],
+            "index": "indexName",
+            "numCandidates": {"$numberLong": "2"},
+            "limit": {"$numberLong": "1"},
+            "filter": {"fieldName": {"$ne": "fieldValue"}}
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $vectorSearch with no options" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName").multi("ignored"),
+        List(1.0d, 2.0d),
+        "indexName",
+        2,
+        1
+      )
+    ) should equal(
+      Document(
+        """{
+        "$vectorSearch": {
+            "path": "fieldName",
+            "queryVector": [1.0, 2.0],
+            "index": "indexName",
+            "numCandidates": {"$numberLong": "2"},
+            "limit": {"$numberLong": "1"}
+        }
+      }"""
+      )
     )
   }
 
