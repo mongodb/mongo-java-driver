@@ -65,22 +65,6 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return wrapped.getSessionContext();
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return wrapped.getServerApi();
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return wrapped.getRequestContext();
-    }
-
-    @Override
     public OperationContext getOperationContext() {
         return wrapped.getOperationContext();
     }
@@ -119,23 +103,8 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return wrapped.getSessionContext();
-        }
-
-        @Override
         public OperationContext getOperationContext() {
             return wrapped.getOperationContext();
-        }
-
-        @Override
-        public ServerApi getServerApi() {
-            return wrapped.getServerApi();
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return wrapped.getRequestContext();
         }
 
         @Override

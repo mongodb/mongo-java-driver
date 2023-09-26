@@ -45,12 +45,10 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  */
 public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final WriteConcern writeConcern;
 
     TransactionOperation(final TimeoutSettings timeoutSettings, final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
@@ -65,21 +63,21 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
 
     @Override
     public Void execute(final WriteBinding binding) {
-        isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        return executeRetryableWrite(timeoutContext, binding, "admin", null, new NoOpFieldNameValidator(),
+        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
+        return executeRetryableWrite(binding, "admin", null, new NoOpFieldNameValidator(),
                                      new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        executeRetryableWriteAsync(timeoutContext, binding, "admin", null, new NoOpFieldNameValidator(),
+        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
+        executeRetryableWriteAsync(binding, "admin", null, new NoOpFieldNameValidator(),
                                    new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
                                    errorHandlingCallback(callback, LOGGER));
     }
 
     CommandCreator getCommandCreator() {
-        return (timeoutContext, serverDescription, connectionDescription) -> {
+        return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
             if (!writeConcern.isServerDefault()) {
                 command.put("writeConcern", writeConcern.asDocument());

@@ -42,14 +42,12 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  */
 abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
 
     AbstractWriteSearchIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
                                       final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = namespace;
         this.writeConcern = writeConcern;
     }

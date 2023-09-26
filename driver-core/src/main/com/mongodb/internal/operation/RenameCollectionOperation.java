@@ -51,7 +51,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;
     private final WriteConcern writeConcern;
@@ -60,7 +59,6 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     public RenameCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace originalNamespace,
             final MongoNamespace newNamespace, @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
         this.newNamespace = notNull("newNamespace", newNamespace);
         this.writeConcern = writeConcern;

@@ -25,7 +25,6 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -147,15 +146,17 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
+        // TODO (CSOT) JAVA-5172
         return new CommandReadOperation<>(wrapped.getTimeoutSettings(), getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(wrapped.getTimeoutContext(), NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                asExplainCommand(wrapped.getCommand(null, MIN_WIRE_VERSION),
                         verbosity), resultDecoder);
     }
 
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
+        // TODO (CSOT) JAVA-5172
         return new CommandReadOperation<>(wrapped.getTimeoutSettings(), getNamespace().getDatabaseName(),
-                asExplainCommand(wrapped.getCommand(wrapped.getTimeoutContext(), NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                asExplainCommand(wrapped.getCommand(null, MIN_WIRE_VERSION),
                         verbosity), resultDecoder);
     }
 

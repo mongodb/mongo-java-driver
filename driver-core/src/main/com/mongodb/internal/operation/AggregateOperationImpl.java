@@ -19,15 +19,14 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -60,7 +59,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static final String FIRST_BATCH = "firstBatch";
     private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final Decoder<T> decoder;
@@ -87,7 +85,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregateTarget aggregateTarget,
             final PipelineCreator pipelineCreator) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
@@ -167,9 +164,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     public TimeoutSettings getTimeoutSettings() {
         return timeoutSettings;
     }
-    public TimeoutContext getTimeoutContext() {
-        return timeoutContext;
-    }
 
     AggregateOperationImpl<T> hint(@Nullable final BsonValue hint) {
         isTrueArgument("BsonString or BsonDocument", hint == null || hint.isDocument() || hint.isString());
@@ -179,32 +173,30 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
-                getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
+        return executeRetryableRead(binding, namespace.getDatabaseName(),
+                getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                 transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-       executeRetryableReadAsync(timeoutContext, binding, namespace.getDatabaseName(),
-               getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(this.decoder, FIELD_NAMES_WITH_RESULT),
+       executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+               getCommandCreator(), CommandResultDocumentCodec.create(this.decoder, FIELD_NAMES_WITH_RESULT),
                asyncTransformer(), retryReads,
                errHandlingCallback);
     }
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (timeoutContext, serverDescription, connectionDescription) ->
-                getCommand(timeoutContext, sessionContext, connectionDescription.getMaxWireVersion());
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> 
+                getCommand(operationContext, connectionDescription.getMaxWireVersion());
     }
 
-    BsonDocument getCommand(final TimeoutContext timeoutContext, final SessionContext sessionContext,
-            final int maxWireVersion) {
+    BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
-
-        appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
+        appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
-        long maxTimeMS = timeoutContext.getMaxTimeMS();
+        long maxTimeMS = operationContext.getTimeoutContext().getMaxTimeMS();
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }
@@ -240,7 +232,8 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private CommandReadTransformer<BsonDocument, QueryBatchCursor<T>> transformer() {
         return (result, source, connection) -> {
             QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-            long maxAwaitTimeMS = timeoutContext.getMaxAwaitTimeMS();
+            // TODO (CSOT) JAVA-4058
+            long maxAwaitTimeMS = timeoutSettings.getMaxAwaitTimeMS();
             return new QueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, comment,
                     source, connection, result);
         };
@@ -249,7 +242,8 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection) -> {
             QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-            long maxAwaitTimeMS = timeoutContext.getMaxAwaitTimeMS();
+            // TODO (CSOT) JAVA-4058
+            long maxAwaitTimeMS = timeoutSettings.getMaxAwaitTimeMS();
             return new AsyncQueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
                     comment, source, connection, result);
         };

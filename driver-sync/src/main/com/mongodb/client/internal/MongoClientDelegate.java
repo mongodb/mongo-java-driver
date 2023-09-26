@@ -48,6 +48,7 @@ import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -205,20 +206,22 @@ final class MongoClientDelegate {
         ReadWriteBinding getReadWriteBinding(final TimeoutSettings timeoutSettings, final ReadPreference readPreference,
                 final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
 
-            OperationContext operationContext = new OperationContext(
-                    getRequestContext(),
-                    new ReadConcernAwareNoOpSessionContext(readConcern),
-                    new TimeoutContext(timeoutSettings),
-                    serverApi);
-
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern, operationContext);
+                    getReadPreferenceForBinding(readPreference, session), readConcern, getOperationContext(timeoutSettings, readConcern));
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
             }
 
             return new ClientSessionBinding(session, ownsSession, readWriteBinding);
+        }
+
+        private OperationContext getOperationContext(final TimeoutSettings timeoutSettings, final ReadConcern readConcern) {
+            return new OperationContext(
+                    getRequestContext(),
+                    new ReadConcernAwareNoOpSessionContext(readConcern),
+                    new TimeoutContext(timeoutSettings),
+                    serverApi);
         }
 
         private RequestContext getRequestContext() {

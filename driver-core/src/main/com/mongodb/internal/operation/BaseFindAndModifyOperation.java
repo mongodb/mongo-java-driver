@@ -51,7 +51,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  */
 public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
@@ -69,7 +68,6 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     protected BaseFindAndModifyOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
@@ -78,18 +76,19 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeRetryableWrite(timeoutContext, binding, getDatabaseName(), null, getFieldNameValidator(),
+        return executeRetryableWrite(binding, getDatabaseName(), null, getFieldNameValidator(),
                                      CommandResultDocumentCodec.create(getDecoder(), "value"),
-                                     getCommandCreator(binding.getSessionContext()),
+                                     getCommandCreator(),
                                      FindAndModifyHelper.transformer(),
                                      cmd -> cmd);
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableWriteAsync(timeoutContext, binding, getDatabaseName(), null, getFieldNameValidator(),
+        executeRetryableWriteAsync(binding, getDatabaseName(), null, getFieldNameValidator(),
                                    CommandResultDocumentCodec.create(getDecoder(), "value"),
-                                   getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
+                                   getCommandCreator(),
+                FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
     }
 
     public MongoNamespace getNamespace() {
@@ -192,8 +191,10 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
     protected abstract void specializeCommand(BsonDocument initialCommand, ConnectionDescription connectionDescription);
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (timeoutContext, serverDescription, connectionDescription) -> {
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
+            SessionContext sessionContext = operationContext.getSessionContext();
+
             BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
             putIfNotNull(commandDocument, "query", getFilter());
             putIfNotNull(commandDocument, "fields", getProjection());
@@ -201,8 +202,9 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
             specializeCommand(commandDocument, connectionDescription);
 
-            putIfNotZero(commandDocument, "maxTimeMS", timeoutContext.getMaxTimeMS());
-            if (getWriteConcern().isAcknowledged() && !getWriteConcern().isServerDefault() && !sessionContext.hasActiveTransaction()) {
+            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            if (getWriteConcern().isAcknowledged() && !getWriteConcern().isServerDefault()
+                    && !sessionContext.hasActiveTransaction()) {
                 commandDocument.put("writeConcern", getWriteConcern().asDocument());
             }
             if (getCollation() != null) {

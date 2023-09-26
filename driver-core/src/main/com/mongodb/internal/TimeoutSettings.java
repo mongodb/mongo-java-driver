@@ -76,6 +76,10 @@ public class TimeoutSettings {
         this.wTimeoutMS = wTimeoutMS;
     }
 
+    public TimeoutSettings connectionOnly() {
+        return new TimeoutSettings(serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, null);
+    }
+
     public TimeoutSettings withTimeoutMS(final long timeoutMS) {
         return new TimeoutSettings(timeoutMS, defaultTimeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS);

@@ -120,19 +120,18 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     CommandCreator getCommandCreator() {
-        CommandCreator creator = (timeoutContext, serverDescription, connectionDescription) -> {
+        CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
-                    .create(timeoutContext, serverDescription, connectionDescription);
-            long maxCommitTimeMS = timeoutContext.getMaxCommitTimeMS();
-            putIfNotZero(command, "maxTimeMS", maxCommitTimeMS);
+                    .create(operationContext, serverDescription, connectionDescription);
+            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxCommitTimeMS());
             return command;
         };
         if (alreadyCommitted) {
-            return (timeoutContext, serverDescription, connectionDescription) ->
-                    getRetryCommandModifier().apply(creator.create(timeoutContext, serverDescription, connectionDescription));
+            return (operationContext, serverDescription, connectionDescription) ->
+                    getRetryCommandModifier().apply(creator.create(operationContext, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
-                return (timeoutContext, serverDescription, connectionDescription) ->
-                        creator.create(timeoutContext, serverDescription, connectionDescription)
+                return (operationContext, serverDescription, connectionDescription) ->
+                        creator.create(operationContext, serverDescription, connectionDescription)
                                 .append("recoveryToken", recoveryToken);
         }
         return creator;

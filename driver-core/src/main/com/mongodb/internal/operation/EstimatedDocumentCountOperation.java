@@ -51,14 +51,12 @@ import static java.util.Collections.singletonList;
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonValue comment;
 
     public EstimatedDocumentCountOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -85,8 +83,8 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     @Override
     public Long execute(final ReadBinding binding) {
         try {
-            return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
-                                        getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
+            return executeRetryableRead(binding, namespace.getDatabaseName(),
+                                        getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
                                         transformer(), retryReads);
         } catch (MongoCommandException e) {
             return assertNotNull(rethrowIfNotNamespaceError(e, 0L));
@@ -95,8 +93,8 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(timeoutContext, binding, namespace.getDatabaseName(),
-                                  getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+                                  getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
                                   asyncTransformer(), retryReads,
                                   (result, t) -> {
                     if (isNamespaceError(t)) {
@@ -119,11 +117,11 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
         return (result.getNumber("n")).longValue();
     }
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (timeoutContext, serverDescription, connectionDescription) -> {
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
-            appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
-            putIfNotZero(document, "maxTimeMS", timeoutContext.getMaxTimeMS());
+            appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), document);
+            putIfNotZero(document, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
             if (comment != null) {
                 document.put("comment", comment);
             }

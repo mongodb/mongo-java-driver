@@ -50,7 +50,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  */
 public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final String databaseName;
     private final String viewName;
     private final String viewOn;
@@ -61,7 +60,6 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     public CreateViewOperation(final TimeoutSettings timeoutSettings, final String databaseName,
             final String viewName, final String viewOn, final List<BsonDocument> pipeline, final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.viewName = notNull("viewName", viewName);
         this.viewOn = notNull("viewOn", viewOn);

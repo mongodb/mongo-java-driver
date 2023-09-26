@@ -68,7 +68,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  */
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -78,7 +77,6 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     public ListIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -121,9 +119,9 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         RetryState retryState = initialRetryState(retryReads);
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
+                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
                 try {
-                    return createReadCommandAndExecute(timeoutContext, retryState, binding, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(),
                                                        getCommandCreator(), createCommandDecoder(), transformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
@@ -143,12 +141,12 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                             (source, connection, releasingCallback) -> {
                                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
-                                        binding.getSessionContext()), releasingCallback)) {
+                                        binding.getOperationContext()), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(timeoutContext, retryState, binding, source,
-                                                                 namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(), asyncTransformer(),
-                                                                 connection, (result, t) -> {
+                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
+                                        getCommandCreator(), createCommandDecoder(), asyncTransformer(), connection,
+                                        (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {
                                                 releasingCallback.onResult(null, t);
                                             } else {
@@ -165,11 +163,11 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     private CommandCreator getCommandCreator() {
-        return (timeoutContext, serverDescription, connectionDescription) -> {
+        return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
 
-            putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
+            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
             putIfNotNull(command, "comment", comment);
             return command;
         };

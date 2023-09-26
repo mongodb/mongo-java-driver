@@ -42,7 +42,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonDocument filter;
@@ -54,7 +53,6 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
 
     public CountDocumentsOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -154,7 +152,7 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
     }
 
     private AggregateOperation<BsonDocument> getAggregateOperation() {
-        return new AggregateOperation<>(timeoutContext.getTimeoutSettings(), namespace, getPipeline(), DECODER)
+        return new AggregateOperation<>(timeoutSettings, namespace, getPipeline(), DECODER)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)

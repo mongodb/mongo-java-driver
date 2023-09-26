@@ -85,22 +85,6 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return new ReadConcernAwareNoOpSessionContext(readConcern);
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return operationContext.getServerApi();
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return operationContext.getRequestContext();
-    }
-
-    @Override
     public OperationContext getOperationContext() {
         return operationContext;
     }
@@ -168,22 +152,6 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         @Override
         public ServerDescription getServerDescription() {
             return serverDescription;
-        }
-
-        @Override
-        public SessionContext getSessionContext() {
-            return new ReadConcernAwareNoOpSessionContext(readConcern);
-        }
-
-        @Override
-        @Nullable
-        public ServerApi getServerApi() {
-            return operationContext.getServerApi();
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return operationContext.getRequestContext();
         }
 
         @Override

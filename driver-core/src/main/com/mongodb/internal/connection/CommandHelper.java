@@ -65,12 +65,14 @@ public final class CommandHelper {
         }
     }
 
+    // TODO - Get OperationContext from internal Connection
     static void executeCommandAsync(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
                                     @Nullable final ServerApi serverApi, final InternalConnection internalConnection,
                                     final SingleResultCallback<BsonDocument> callback) {
         internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
                 new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new OperationContext(), (result, t) -> {
+                NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new OperationContext(null, null, null, null),
+                (result, t) -> {
                     if (t != null) {
                         callback.onResult(null, t);
                     } else {
@@ -93,6 +95,7 @@ public final class CommandHelper {
         }
     }
 
+    // TODO Clean up
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
                                                @Nullable final ClusterClock clusterClock,
                                                final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi,
@@ -101,7 +104,7 @@ public final class CommandHelper {
                 : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
         return assertNotNull(internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection,
                         clusterConnectionMode, serverApi), new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE,
-                new OperationContext()));
+                new OperationContext(null, null, null, null)));
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,

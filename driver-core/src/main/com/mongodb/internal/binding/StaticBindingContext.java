@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+// TODO use OperationContext only
 public class StaticBindingContext implements BindingContext {
     private final SessionContext sessionContext;
     private final ServerApi serverApi;
@@ -38,22 +39,6 @@ public class StaticBindingContext implements BindingContext {
         this.serverApi = serverApi;
         this.requestContext = requestContext;
         this.operationContext = operationContext;
-    }
-
-    @Override
-    public SessionContext getSessionContext() {
-        return sessionContext;
-    }
-
-    @Nullable
-    @Override
-    public ServerApi getServerApi() {
-        return serverApi;
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return requestContext;
     }
 
     @Override

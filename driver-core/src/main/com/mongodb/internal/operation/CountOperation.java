@@ -47,7 +47,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonDocument filter;
@@ -58,7 +57,6 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     public CountOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -123,14 +121,14 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public Long execute(final ReadBinding binding) {
-        return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
-                                    getCommandCreator(binding.getSessionContext()), DECODER, transformer(), retryReads);
+        return executeRetryableRead(binding, namespace.getDatabaseName(),
+                                    getCommandCreator(), DECODER, transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(timeoutContext, binding, namespace.getDatabaseName(),
-                                  getCommandCreator(binding.getSessionContext()), DECODER, asyncTransformer(), retryReads, callback);
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+                                  getCommandCreator(), DECODER, asyncTransformer(), retryReads, callback);
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
@@ -141,17 +139,17 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         return (result, source, connection) -> (result.getNumber("n")).longValue();
     }
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (timeoutContext, serverDescription, connectionDescription) -> {
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
 
-            appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
+            appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), document);
 
             putIfNotNull(document, "query", filter);
             putIfNotZero(document, "limit", limit);
             putIfNotZero(document, "skip", skip);
             putIfNotNull(document, "hint", hint);
-            putIfNotZero(document, "maxTimeMS", timeoutContext.getMaxTimeMS());
+            putIfNotZero(document, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
 
             if (collation != null) {
                 document.put("collation", collation.asDocument());
