@@ -73,19 +73,20 @@ class AsyncOperationHelperSpecification extends Specification {
             _ * getDescription() >> connectionDescription
         }
 
+        def operationContext = OPERATION_CONTEXT.withSessionContext(
+                Stub(SessionContext) {
+                    hasSession() >> true
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
         def connectionSource = Stub(AsyncConnectionSource) {
-            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
-            _ * getServerDescription() >> serverDescription
+            getServerDescription() >> serverDescription
+            getOperationContext() >> operationContext
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
 
         when:
@@ -108,11 +109,9 @@ class AsyncOperationHelperSpecification extends Specification {
         def callback = Stub(SingleResultCallback)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
-            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def connectionDescription = Stub(ConnectionDescription)

@@ -131,7 +131,6 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadPreference() >> readPreference
-            getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def operation = new ListDatabasesOperation(TIMEOUT_SETTINGS, helper.decoder)
