@@ -29,6 +29,8 @@ import spock.lang.Unroll
 import javax.management.ObjectName
 import java.lang.management.ManagementFactory
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+
 class JMXConnectionPoolListenerSpecification extends Specification {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress('host1', 27018))
 
@@ -47,8 +49,8 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         provider.ready()
 
         when:
-        provider.get(new OperationContext())
-        provider.get(new OperationContext()).close()
+        provider.get(OPERATION_CONTEXT)
+        provider.get(OPERATION_CONTEXT).close()
 
         then:
         with(jmxListener.getMBean(SERVER_ID)) {

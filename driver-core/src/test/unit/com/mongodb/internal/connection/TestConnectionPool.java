@@ -17,11 +17,9 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -53,18 +51,17 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                    final RequestContext requestContext, final OperationContext operationContext) {
+            public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+            public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+            public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
                 throw new UnsupportedOperationException();
             }
 
@@ -75,8 +72,7 @@ public class TestConnectionPool implements ConnectionPool {
 
             @Override
             public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                    final SessionContext sessionContext, final RequestContext requestContext, final OperationContext operationContext,
-                    final SingleResultCallback<T> callback) {
+                    final OperationContext operationContext, final SingleResultCallback<T> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
@@ -151,7 +147,7 @@ public class TestConnectionPool implements ConnectionPool {
         if (exceptionToThrow != null) {
             callback.onResult(null, exceptionToThrow);
         } else {
-            callback.onResult(get(new OperationContext()), null);
+            callback.onResult(get(operationContext), null);
         }
     }
 

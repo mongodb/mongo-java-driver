@@ -21,15 +21,15 @@ import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.syncadapter.SyncConnection
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
+import com.mongodb.internal.binding.SimpleSessionContext
 import com.mongodb.internal.connection.AsyncConnection
-import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.connection.QueryResult
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
@@ -48,6 +48,7 @@ import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
@@ -68,6 +69,7 @@ import static org.junit.Assert.fail
 
 @IgnoreIf({ isSharded() && serverVersionLessThan(3, 2) })
 class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecification {
+    OperationContext operationContext
     AsyncConnectionSource connectionSource
     AsyncQueryBatchCursor<Document> cursor
     AsyncConnection connection
@@ -80,10 +82,11 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         collectionHelper.insertDocuments(documents,
                                          isDiscoverableReplicaSet() ? WriteConcern.MAJORITY : WriteConcern.ACKNOWLEDGED,
                                          getBinding())
-        setUpConnectionAndSource(getAsyncBinding())
+        setUpConnectionAndSource(getAsyncBinding(OPERATION_CONTEXT.withSessionContext(new SimpleSessionContext())))
     }
 
     private void setUpConnectionAndSource(final AsyncReadBinding binding) {
+        operationContext = binding.operationContext
         connectionSource = getReadConnectionSource(binding)
         connection = getConnection(connectionSource)
     }
@@ -355,7 +358,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         while (connection.getCount() > 1) {
             Thread.sleep(5)
         }
-        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, new SyncConnection(connection))
+        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, new SyncConnection(connection), operationContext)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -376,8 +379,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
                 new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                         .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
                 new NoOpFieldNameValidator(), ReadPreference.primary(),
-                new BsonDocumentCodec()
-                , connectionSource)
+                new BsonDocumentCodec(), connectionSource.operationContext)
         connection.release()
         nextBatch()
 
@@ -429,17 +431,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
         def futureResultCallback = new FutureResultCallback<BsonDocument>()
         connection.commandAsync(getDatabaseName(), findCommand, NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
-                CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), connectionSource,
+                CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), operationContext,
                 futureResultCallback)
         def response = futureResultCallback.get()
         cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
-    }
-
-    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
-        connection.command(getNamespace().databaseName,
-                new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
-                        .append('collection', new BsonString(namespace.getCollectionName())),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
-                connectionSource.getServerApi())
     }
 }

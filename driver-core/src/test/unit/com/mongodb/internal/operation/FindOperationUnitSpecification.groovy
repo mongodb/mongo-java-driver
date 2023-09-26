@@ -28,8 +28,8 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
+import static com.mongodb.CursorType.TailableAwait
 
 class FindOperationUnitSpecification extends OperationUnitSpecification {
 

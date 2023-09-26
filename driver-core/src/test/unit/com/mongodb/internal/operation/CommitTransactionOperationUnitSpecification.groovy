@@ -18,22 +18,26 @@ package com.mongodb.internal.operation
 
 import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
+import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.internal.binding.AsyncWriteBinding
 import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.session.SessionContext
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 
 class CommitTransactionOperationUnitSpecification extends OperationUnitSpecification {
     def 'should add UnknownTransactionCommitResult error label to MongoTimeoutException'() {
         given:
+        def sessionContext = Stub(SessionContext) {
+            getReadConcern() >> ReadConcern.DEFAULT
+            hasActiveTransaction() >> true
+        }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> { throw new MongoTimeoutException('Time out!') }
-            getSessionContext() >> Stub(SessionContext) {
-                hasActiveTransaction() >> true
-            }
+            getOperationContext() >> OPERATION_CONTEXT.withSessionContext(sessionContext)
         }
         def operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, WriteConcern.ACKNOWLEDGED)
 
@@ -47,13 +51,15 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
 
     def 'should add UnknownTransactionCommitResult error label to MongoTimeoutException asynchronously'() {
         given:
+        def sessionContext = Stub(SessionContext) {
+            getReadConcern() >> ReadConcern.DEFAULT
+            hasActiveTransaction() >> true
+        }
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> {
                 it[0].onResult(null, new MongoTimeoutException('Time out!'))
             }
-            getSessionContext() >> Stub(SessionContext) {
-                hasActiveTransaction() >> true
-            }
+            getOperationContext() >> OPERATION_CONTEXT.withSessionContext(sessionContext)
         }
         def operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, WriteConcern.ACKNOWLEDGED)
         def callback = new FutureResultCallback()

@@ -44,6 +44,7 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -238,14 +239,14 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
-            getServerApi() >> null
-            getReadPreference() >> readPreference
             getConnection() >> connection
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
-            getServerApi() >> null
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListIndexesOperation(TIMEOUT_SETTINGS, helper.namespace, helper.decoder)
 
@@ -254,7 +255,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, readBinding) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
         1 * connection.release()
 
         where:

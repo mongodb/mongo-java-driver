@@ -24,14 +24,14 @@ import com.mongodb.internal.connection.OperationContext;
 
 import static org.bson.assertions.Assertions.notNull;
 
-public final class AsyncSessionBinding implements AsyncReadWriteBinding {
+public final class AsyncOperationContextBinding implements AsyncReadWriteBinding {
 
     private final AsyncReadWriteBinding wrapped;
     private final OperationContext operationContext;
 
-    public AsyncSessionBinding(final AsyncReadWriteBinding wrapped) {
+    public AsyncOperationContextBinding(final AsyncReadWriteBinding wrapped, final OperationContext operationContext) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.operationContext = wrapped.getOperationContext().withSessionContext(new SimpleSessionContext());
+        this.operationContext = operationContext;
     }
 
     @Override

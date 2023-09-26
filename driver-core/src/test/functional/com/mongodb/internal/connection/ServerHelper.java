@@ -23,6 +23,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.selector.ServerAddressSelector;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getAsyncCluster;
 import static com.mongodb.ClusterFixture.getCluster;
 import static com.mongodb.assertions.Assertions.fail;
@@ -44,9 +45,8 @@ public final class ServerHelper {
     }
 
     public static void waitForLastRelease(final ServerAddress address, final Cluster cluster) {
-        OperationContext operationContext = new OperationContext();
         ConcurrentPool<UsageTrackingInternalConnection> pool = connectionPool(
-                cluster.selectServer(new ServerAddressSelector(address), operationContext).getServer());
+                cluster.selectServer(new ServerAddressSelector(address), OPERATION_CONTEXT).getServer());
         long startTime = System.currentTimeMillis();
         while (pool.getInUseCount() > 0) {
             try {
@@ -63,7 +63,7 @@ public final class ServerHelper {
 
     private static void checkPool(final ServerAddress address, final Cluster cluster) {
         ConcurrentPool<UsageTrackingInternalConnection> pool = connectionPool(
-                cluster.selectServer(new ServerAddressSelector(address), new OperationContext()).getServer());
+                cluster.selectServer(new ServerAddressSelector(address), OPERATION_CONTEXT).getServer());
         if (pool.getInUseCount() > 0) {
             throw new IllegalStateException("Connection pool in use count is " + pool.getInUseCount());
         }

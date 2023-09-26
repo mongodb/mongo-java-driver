@@ -28,6 +28,7 @@ import com.mongodb.event.ClusterListener
 import com.mongodb.internal.selector.WritableServerSelector
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
 import static com.mongodb.connection.ClusterType.UNKNOWN
@@ -140,7 +141,7 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
-        cluster.selectServer(new WritableServerSelector(), new OperationContext())
+        cluster.selectServer(new WritableServerSelector(), OPERATION_CONTEXT)
 
         then:
         thrown(MongoIncompatibleDriverException)

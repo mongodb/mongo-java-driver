@@ -1,6 +1,5 @@
 package com.mongodb.internal.connection
 
-import util.spock.annotations.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.BufferProvider
@@ -9,6 +8,7 @@ import com.mongodb.connection.SslSettings
 import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
+import util.spock.annotations.Slow
 
 import javax.net.SocketFactory
 import java.util.concurrent.TimeUnit

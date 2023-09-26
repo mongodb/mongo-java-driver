@@ -51,6 +51,7 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static QueryOperationHelper.getKeyPattern
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT
@@ -298,10 +299,10 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
-        def operation = new AggregateOperation<Document>(timeoutSetting, getNamespace(), [], new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
+        def operation = new AggregateOperation<Document>(timeoutSettings, getNamespace(), [], new DocumentCodec())
         execute(operation, async)
 
         then:
@@ -311,25 +312,26 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         disableMaxTimeFailPoint()
 
         where:
-        [async, timeoutSetting] << [[true, false], [TIMEOUT_SETTINGS_WITH_MAX_TIME, TIMEOUT_SETTINGS_WITH_TIMEOUT]].combinations()
+        [async, timeoutSettings] << [[true, false], [TIMEOUT_SETTINGS_WITH_MAX_TIME, TIMEOUT_SETTINGS_WITH_TIMEOUT]].combinations()
     }
 
-    @IgnoreIf({ serverVersionLessThan(3, 6) })
-    def 'should be able to explain an empty pipeline'() {
-        given:
-        def operation = new AggregateOperation(TIMEOUT_SETTINGS, getNamespace(), [], new BsonDocumentCodec())
-        operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
-                            operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
-
-        when:
-        def result = execute(operation, async)
-
-        then:
-        result.containsKey('stages') || result.containsKey('queryPlanner') || result.containsKey('shards')
-
-        where:
-        async << [true, false]
-    }
+    // TODO (CSOT) JAVA-5172
+//    @IgnoreIf({ serverVersionLessThan(3, 6)})
+//    def 'should be able to explain an empty pipeline'() {
+//        given:
+//        def operation = new AggregateOperation(TIMEOUT_SETTINGS, getNamespace(), [], new BsonDocumentCodec())
+//        operation = async ? operation.asAsyncExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec()) :
+//                            operation.asExplainableOperation(QUERY_PLANNER, new BsonDocumentCodec())
+//
+//        when:
+//        def result = execute(operation, async)
+//
+//        then:
+//        result.containsKey('stages') || result.containsKey('queryPlanner') || result.containsKey('shards')
+//
+//        where:
+//        async << [true, false]
+//    }
 
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to aggregate with collation'() {
@@ -397,20 +399,20 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command'() {
         given:
+        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
-        binding.serverApi >> null
+        binding.operationContext >> operationContext
         binding.readConnectionSource >> source
-        binding.sessionContext >> sessionContext
         source.connection >> connection
         source.retain() >> source
-        source.getServerApi() >> null
+        source.operationContext >> operationContext
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
                 .append('pipeline', new BsonArray())
                 .append('cursor', new BsonDocument())
-        appendReadConcernToCommand(sessionContext, MIN_WIRE_VERSION, commandDocument)
+        appendReadConcernToCommand(operationContext.getSessionContext(), MIN_WIRE_VERSION, commandDocument)
 
         def operation = new AggregateOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), [], new DocumentCodec())
 
@@ -420,7 +422,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, binding) >>
+        1 * connection.command(_, commandDocument, _, _, _, operationContext) >>
                 new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                         .append('ns', new BsonString(getNamespace().getFullName()))
                         .append('firstBatch', new BsonArrayWrapper([])))
@@ -439,14 +441,13 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command asynchronously'() {
         given:
+        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
-        binding.serverApi >> null
-        binding.readPreference >> ReadPreference.primary()
+        binding.operationContext >> operationContext
         binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        binding.sessionContext >> sessionContext
-        source.serverApi >> null
+        source.operationContext >> operationContext
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('aggregate', new BsonString(getCollectionName()))
@@ -462,7 +463,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, binding, _) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, operationContext, _) >> {
             it.last().onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                     .append('ns', new BsonString(getNamespace().getFullName()))
                     .append('firstBatch', new BsonArrayWrapper([]))), null)

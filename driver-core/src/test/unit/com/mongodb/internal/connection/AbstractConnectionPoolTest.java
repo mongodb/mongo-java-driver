@@ -574,7 +574,7 @@ public abstract class AbstractConnectionPoolTest {
 
         @Override
         public InternalConnection get(final OperationContext operationContext, final long timeout, final TimeUnit timeUnit) {
-            InternalConnection result = pool.get(new OperationContext(), timeout, timeUnit);
+            InternalConnection result = pool.get(operationContext, timeout, timeUnit);
             updateConnectionIdLocalValueAdjustment(result);
             return result;
         }
