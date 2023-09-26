@@ -66,7 +66,7 @@ class KeyManagementService {
             socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()), timeoutMillis);
         } catch (IOException e) {
             closeSocket(socket);
-            throw handleInterruptAndThrow(e, "Interrupted while connecting");
+            throw translateInterruptedExceptionAndThrow(e, "Interrupted while connecting");
         }
 
         try {
@@ -78,7 +78,7 @@ class KeyManagementService {
             outputStream.write(bytes);
         } catch (IOException e) {
             closeSocket(socket);
-            throw handleInterruptAndThrow(e, "Interrupted while writing");
+            throw translateInterruptedExceptionAndThrow(e, "Interrupted while writing");
         }
 
         try {
@@ -109,7 +109,7 @@ class KeyManagementService {
     /**
      * @return Never.
      */
-    private static RuntimeException handleInterruptAndThrow(final IOException e, final String message) throws IOException,
+    private static RuntimeException translateInterruptedExceptionAndThrow(final IOException e, final String message) throws IOException,
             MongoInterruptedException {
         Optional<MongoInterruptedException> interruptedException = translateInterruptedException(e, message);
         if (interruptedException.isPresent()) {
