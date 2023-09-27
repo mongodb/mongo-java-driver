@@ -192,7 +192,7 @@ final class SyncOperationHelper {
         Supplier<T> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
                 withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
-                    return createReadCommandAndExecute(retryState, binding, source, database,
+                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, database,
                                                        commandCreator, decoder, transformer, connection);
                 })
         );

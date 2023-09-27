@@ -130,8 +130,12 @@ final class AsyncOperationHelper {
                 errorHandlingCallback.onResult(null, supplierException);
             } else {
                 Assertions.assertNotNull(resource);
-                AsyncCallbackSupplier<R> curriedFunction = c -> function.apply(resource, c);
-                curriedFunction.whenComplete(resource::release).get(errorHandlingCallback);
+                try {
+                    AsyncCallbackSupplier<R> curriedFunction = c -> function.apply(resource, c);
+                    curriedFunction.whenComplete(resource::release).get(errorHandlingCallback);
+                } catch (Exception e) {
+                    errorHandlingCallback.onResult(null, e);
+                }
             }
         });
     }
