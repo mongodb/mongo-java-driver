@@ -263,11 +263,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 .orElseThrow(Assertions::fail);
         BulkWriteBatch currentBatch = currentBulkWriteTracker.batch().orElseThrow(Assertions::fail);
         int maxWireVersion = connection.getDescription().getMaxWireVersion();
+        OperationContext operationContext = binding.getOperationContext();
         while (currentBatch.shouldProcessBatch()) {
             try {
-                BsonDocument result = executeCommand(connection, currentBatch, binding);
-
-                if (currentBatch.getRetryWrites() && !binding.getOperationContext().getSessionContext().hasActiveTransaction()) {
+                BsonDocument result = executeCommand(operationContext, connection, currentBatch);
+                if (currentBatch.getRetryWrites() && !operationContext.getSessionContext().hasActiveTransaction()) {
                     MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
                             connection.getDescription().getServerAddress(), "errMsg");
                     if (writeConcernBasedError != null) {
@@ -310,9 +310,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             if (loopState.breakAndCompleteIf(() -> !currentBatch.shouldProcessBatch(), iterationCallback)) {
                 return;
             }
-            executeCommandAsync(binding, connection, currentBatch, (result, t) -> {
+            OperationContext operationContext = binding.getOperationContext();
+            executeCommandAsync(operationContext, connection, currentBatch, (result, t) -> {
                 if (t == null) {
-                    if (currentBatch.getRetryWrites() && !binding.getOperationContext().getSessionContext().hasActiveTransaction()) {
+                    if (currentBatch.getRetryWrites() && !operationContext.getSessionContext().hasActiveTransaction()) {
                         MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
                                 connection.getDescription().getServerAddress(), "errMsg");
                         if (writeConcernBasedError != null) {
@@ -401,17 +402,16 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     }
 
     @Nullable
-    private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
+    private BsonDocument executeCommand(final OperationContext operationContext, final Connection connection, final BulkWriteBatch batch) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
-                binding.getOperationContext(), shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
+                operationContext, shouldAcknowledge(batch, operationContext.getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator());
     }
 
-    // TODO - just pass in opContext
-    private void executeCommandAsync(final AsyncWriteBinding binding, final AsyncConnection connection, final BulkWriteBatch batch,
+    private void executeCommandAsync(final OperationContext operationContext, final AsyncConnection connection, final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
-                binding.getOperationContext(), shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
+                operationContext, shouldAcknowledge(batch, operationContext.getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator(), callback);
     }
 

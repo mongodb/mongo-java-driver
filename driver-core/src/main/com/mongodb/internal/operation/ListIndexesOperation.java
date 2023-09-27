@@ -120,7 +120,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, namespace.getDatabaseName(),
                                                        getCommandCreator(), createCommandDecoder(), transformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
@@ -143,8 +143,9 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                         binding.getOperationContext()), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
-                                        getCommandCreator(), createCommandDecoder(), asyncTransformer(), connection,
+                                createReadCommandAndExecuteAsync(retryState, binding.getOperationContext(), source,
+                                        namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
+                                        asyncTransformer(), connection,
                                         (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {
                                                 releasingCallback.onResult(null, t);

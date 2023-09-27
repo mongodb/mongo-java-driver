@@ -283,23 +283,18 @@ final class SyncOperationHelper {
     @Nullable
     static <D, T> T createReadCommandAndExecute(
             final RetryState retryState,
-            final ReadBinding binding,
+            final OperationContext operationContext,
             final ConnectionSource source,
             final String database,
             final CommandCreator commandCreator,
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
             final Connection connection) {
-        BsonDocument command = commandCreator.create(binding.getOperationContext(), source.getServerDescription(),
+        BsonDocument command = commandCreator.create(operationContext, source.getServerDescription(),
                 connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
-        // TODO REVERT
-        D result = connection.command(database, command, new NoOpFieldNameValidator(),
-                source.getReadPreference(), decoder, binding.getOperationContext());
-        if (result == null) {
-            return null;
-        }
-        return transformer.apply(result, source, connection);
+        return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
+                source.getReadPreference(), decoder, operationContext)), source, connection);
     }
 
 

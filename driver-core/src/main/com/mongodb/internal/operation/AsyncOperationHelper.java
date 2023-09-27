@@ -175,17 +175,18 @@ final class AsyncOperationHelper {
             final SingleResultCallback<T> callback) {
         RetryState retryState = initialRetryState(retryReads);
         binding.retain();
+        OperationContext operationContext = binding.getOperationContext();
         AsyncCallbackSupplier<T> asyncRead = decorateReadWithRetriesAsync(retryState, binding.getOperationContext(),
                 (AsyncCallbackSupplier<T>) funcCallback ->
                         withAsyncSourceAndConnection(sourceAsyncSupplier, false, funcCallback,
                                 (source, connection, releasingCallback) -> {
                                     if (retryState.breakAndCompleteIfRetryAnd(
                                             () -> !OperationHelper.canRetryRead(source.getServerDescription(),
-                                                    binding.getOperationContext()),
+                                                    operationContext),
                                             releasingCallback)) {
                                         return;
                                     }
-                                    createReadCommandAndExecuteAsync(retryState, binding, source, database,
+                                    createReadCommandAndExecuteAsync(retryState, operationContext, source, database,
                                                                      commandCreator, decoder, transformer, connection, releasingCallback);
                                 })
         ).whenComplete(binding::release);
@@ -279,10 +280,9 @@ final class AsyncOperationHelper {
         asyncWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, OperationHelper.LOGGER)));
     }
 
-    // TODO just pass OPContext
     static <D, T> void createReadCommandAndExecuteAsync(
             final RetryState retryState,
-            final AsyncReadBinding binding,
+            final OperationContext operationContext,
             final AsyncConnectionSource source,
             final String database,
             final CommandCreator commandCreator,
@@ -292,14 +292,14 @@ final class AsyncOperationHelper {
             final SingleResultCallback<T> callback) {
         BsonDocument command;
         try {
-            command = commandCreator.create(binding.getOperationContext(), source.getServerDescription(), connection.getDescription());
+            command = commandCreator.create(operationContext, source.getServerDescription(), connection.getDescription());
             retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
         } catch (IllegalArgumentException e) {
             callback.onResult(null, e);
             return;
         }
         connection.commandAsync(database, command, new NoOpFieldNameValidator(), source.getReadPreference(), decoder,
-                binding.getOperationContext(), transformingReadCallback(transformer, source, connection, callback));
+                operationContext, transformingReadCallback(transformer, source, connection, callback));
     }
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,

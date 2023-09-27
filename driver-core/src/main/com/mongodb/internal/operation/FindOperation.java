@@ -302,7 +302,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, namespace.getDatabaseName(),
                                                        getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                        transformer(), connection);
                 } catch (MongoCommandException e) {
@@ -327,9 +327,10 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                     return;
                                 }
                                 SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
-                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
-                                                                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
-                                                                 asyncTransformer(), connection, wrappedCallback);
+                                createReadCommandAndExecuteAsync(retryState, binding.getOperationContext(), source,
+                                        namespace.getDatabaseName(), getCommandCreator(),
+                                        CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
+                                        asyncTransformer(), connection, wrappedCallback);
                             })
                 ).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
