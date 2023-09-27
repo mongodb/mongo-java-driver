@@ -31,7 +31,7 @@ public final class AsyncOperationContextBinding implements AsyncReadWriteBinding
 
     public AsyncOperationContextBinding(final AsyncReadWriteBinding wrapped, final OperationContext operationContext) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.operationContext = notNull("operationContext", operationContext);;
+        this.operationContext = notNull("operationContext", operationContext);
     }
 
     @Override
