@@ -19,6 +19,7 @@ package com.mongodb.internal;
 import com.mongodb.MongoInterruptedException;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -52,6 +53,23 @@ public final class Locks {
             lock.lockInterruptibly();
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted waiting for lock", e);
+        }
+    }
+
+    public static void lockInterruptiblyUnfair(
+            // The type must be `ReentrantLock`, not `Lock`,
+            // because only `ReentrantLock.tryLock` is documented to have the barging behavior.
+            final ReentrantLock lock) throws MongoInterruptedException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw interruptAndCreateMongoInterruptedException(null, null);
+        }
+        // `ReentrantLock.tryLock` is unfair
+        if (!lock.tryLock()) {
+            try {
+                lock.lockInterruptibly();
+            } catch (InterruptedException e) {
+                throw interruptAndCreateMongoInterruptedException(null, e);
+            }
         }
     }
 

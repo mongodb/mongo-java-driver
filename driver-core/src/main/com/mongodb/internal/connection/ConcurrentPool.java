@@ -42,6 +42,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -515,17 +516,4 @@ public class ConcurrentPool<T> implements Pool<T> {
         return size == INFINITE_SIZE ? "infinite" : Integer.toString(size);
     }
 
-    static void lockInterruptiblyUnfair(final ReentrantLock lock) throws MongoInterruptedException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw interruptAndCreateMongoInterruptedException(null, null);
-        }
-        // `ReentrantLock.tryLock` is unfair
-        if (!lock.tryLock()) {
-            try {
-                lock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw interruptAndCreateMongoInterruptedException(null, e);
-            }
-        }
-    }
 }

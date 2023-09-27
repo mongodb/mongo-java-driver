@@ -103,7 +103,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
 import static com.mongodb.internal.Locks.lockInterruptibly;
-import static com.mongodb.internal.connection.ConcurrentPool.lockInterruptiblyUnfair;
+import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static com.mongodb.internal.logging.LogMessage.Component.CONNECTION;
