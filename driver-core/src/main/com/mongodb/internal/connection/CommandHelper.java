@@ -20,6 +20,9 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -68,7 +71,7 @@ public final class CommandHelper {
                                     @Nullable final ServerApi serverApi, final InternalConnection internalConnection,
                                     final SingleResultCallback<BsonDocument> callback) {
         internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
-                new BsonDocumentCodec(), OperationContext.create(NoOpSessionContext.INSTANCE, serverApi),
+                new BsonDocumentCodec(), createOperationContext(NoOpSessionContext.INSTANCE, serverApi),
                 (result, t) -> {
                     if (t != null) {
                         callback.onResult(null, t);
@@ -92,6 +95,11 @@ public final class CommandHelper {
         }
     }
 
+    static OperationContext createOperationContext(final SessionContext sessionContext, @Nullable final ServerApi serverApi) {
+        return new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                new TimeoutContext(TimeoutSettings.DEFAULT), serverApi);
+    }
+
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
                                                @Nullable final ClusterClock clusterClock,
                                                final ClusterConnectionMode clusterConnectionMode,
@@ -100,7 +108,7 @@ public final class CommandHelper {
         SessionContext sessionContext = clusterClock == null ? NoOpSessionContext.INSTANCE
                 : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
         return assertNotNull(internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection,
-                        clusterConnectionMode, serverApi), new BsonDocumentCodec(), OperationContext.create(sessionContext, serverApi)));
+                        clusterConnectionMode, serverApi), new BsonDocumentCodec(), createOperationContext(sessionContext, serverApi)));
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,

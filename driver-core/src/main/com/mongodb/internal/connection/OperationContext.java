@@ -17,9 +17,8 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
-import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
@@ -37,23 +36,9 @@ public class OperationContext {
     @Nullable
     private final ServerApi serverApi;
 
-    public static OperationContext create(final SessionContext sessionContext, @Nullable final ServerApi serverApi) {
-        return new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
-                new TimeoutContext(TimeoutSettings.DEFAULT), serverApi);
-    }
-
-    public static OperationContext create(final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
-        return new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                new TimeoutContext(timeoutSettings.connectionOnly()), serverApi);
-    }
-
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverApi);
-    }
-
-    public OperationContext withTimeoutSettings(final TimeoutSettings timeoutSettings) {
-        return new OperationContext(id, requestContext, sessionContext, new TimeoutContext(timeoutSettings), serverApi);
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
@@ -81,7 +66,8 @@ public class OperationContext {
         return serverApi;
     }
 
-    private OperationContext(final long id, final RequestContext requestContext, final SessionContext sessionContext,
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public OperationContext(final long id, final RequestContext requestContext, final SessionContext sessionContext,
             final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
         this.id = id;

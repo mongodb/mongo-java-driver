@@ -78,7 +78,7 @@ final class MongoClientDelegate {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
         this.contextProvider = contextProvider;
-        this.serverSessionPool = new ServerSessionPool(cluster, OperationContext.create(timeoutSettings, serverApi));
+        this.serverSessionPool = new ServerSessionPool(cluster, timeoutSettings, serverApi);
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;
