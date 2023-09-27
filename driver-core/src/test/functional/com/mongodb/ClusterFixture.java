@@ -316,11 +316,19 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding(final TimeoutSettings timeoutSettings) {
-        return getBinding(getCluster(), ReadPreference.primary(), OPERATION_CONTEXT.withTimeoutSettings(timeoutSettings));
+        return getBinding(getCluster(), ReadPreference.primary(), createNewOperationContext(timeoutSettings));
     }
 
     public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
         return getBinding(getCluster(), readPreference, OPERATION_CONTEXT);
+    }
+
+    public static OperationContext createNewOperationContext(final TimeoutSettings timeoutSettings) {
+        return new OperationContext(OPERATION_CONTEXT.getId(),
+                OPERATION_CONTEXT.getRequestContext(),
+                OPERATION_CONTEXT.getSessionContext(),
+                new TimeoutContext(timeoutSettings),
+                OPERATION_CONTEXT.getServerApi());
     }
 
     private static ReadWriteBinding getBinding(final Cluster cluster,
@@ -359,7 +367,7 @@ public final class ClusterFixture {
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final TimeoutSettings timeoutSettings) {
-        return getAsyncBinding(OPERATION_CONTEXT.withTimeoutSettings(timeoutSettings));
+        return getAsyncBinding(createNewOperationContext(timeoutSettings));
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final OperationContext operationContext) {

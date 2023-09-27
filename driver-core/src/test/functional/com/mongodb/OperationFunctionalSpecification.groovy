@@ -67,6 +67,7 @@ import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
+import static com.mongodb.ClusterFixture.createNewOperationContext
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
@@ -281,8 +282,7 @@ class OperationFunctionalSpecification extends Specification {
                           BsonDocument expectedCommand=null, Boolean checkSecondaryOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = OPERATION_CONTEXT
-                .withTimeoutSettings(operation.getTimeoutSettings())
+        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern
@@ -359,8 +359,7 @@ class OperationFunctionalSpecification extends Specification {
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSecondaryOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
                            ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = OPERATION_CONTEXT
-                .withTimeoutSettings(operation.getTimeoutSettings())
+        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern
