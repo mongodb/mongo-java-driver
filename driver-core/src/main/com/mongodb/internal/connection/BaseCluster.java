@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoIncompatibleDriverException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;
@@ -35,6 +36,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
+import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -59,7 +62,6 @@ import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
-import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Comparator.comparingInt;
@@ -102,47 +104,31 @@ abstract class BaseCluster implements Cluster {
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
 
-        try {
-            CountDownLatch currentPhase = phase.get();
-            ClusterDescription curDescription = description;
-            ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
-            ServerTuple serverTuple = selectServer(compositeServerSelector, curDescription);
+        ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
+        boolean selectionFailureLogged = false;
+        StartTime startTime = StartTime.now();
+        Timeout timeout = startServerSelectionTimeout(startTime);
 
-            boolean selectionFailureLogged = false;
+        while (true) {
+            CountDownLatch currentPhaseLatch = phase.get();
+            ClusterDescription currentDescription = description;
+            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription);
 
-            long startTimeNanos = System.nanoTime();
-            long curTimeNanos = startTimeNanos;
-            long maxWaitTimeNanos = getMaxWaitTimeNanos();
-
-            while (true) {
-                throwIfIncompatible(curDescription);
-
-                if (serverTuple != null) {
-                    return serverTuple;
-                }
-
-                if (curTimeNanos - startTimeNanos > maxWaitTimeNanos) {
-                    throw createTimeoutException(serverSelector, curDescription);
-                }
-
-                if (!selectionFailureLogged) {
-                    logServerSelectionFailure(serverSelector, curDescription);
-                    selectionFailureLogged = true;
-                }
-
-                connect();
-
-                currentPhase.await(Math.min(maxWaitTimeNanos - (curTimeNanos - startTimeNanos), getMinWaitTimeNanos()), NANOSECONDS);
-
-                curTimeNanos = System.nanoTime();
-
-                currentPhase = phase.get();
-                curDescription = description;
-                serverTuple = selectServer(compositeServerSelector, curDescription);
+            throwIfIncompatible(currentDescription);
+            if (serverTuple != null) {
+                return serverTuple;
             }
-
-        } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(format("Interrupted while waiting for a server that matches %s", serverSelector), e);
+            if (timeout.hasExpired()) {
+                throw createTimeoutException(serverSelector, currentDescription, startTime);
+            }
+            if (!selectionFailureLogged) {
+                logServerSelectionFailure(serverSelector, currentDescription, timeout);
+                selectionFailureLogged = true;
+            }
+            connect();
+            Timeout heartbeatLimitedTimeout = timeout.orEarlier(startMinWaitHeartbeatTimeout());
+            heartbeatLimitedTimeout.awaitOn(currentPhaseLatch,
+                    () -> format("waiting for a server that matches %s", serverSelector));
         }
     }
 
@@ -154,8 +140,10 @@ abstract class BaseCluster implements Cluster {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Asynchronously selecting server with selector %s", serverSelector));
         }
-        ServerSelectionRequest request = new ServerSelectionRequest(serverSelector, getCompositeServerSelector(serverSelector),
-                                                                    getMaxWaitTimeNanos(), callback);
+        StartTime startTime = StartTime.now();
+        Timeout timeout = startServerSelectionTimeout(startTime);
+        ServerSelectionRequest request = new ServerSelectionRequest(
+                serverSelector, getCompositeServerSelector(serverSelector), timeout, startTime, callback);
 
         CountDownLatch currentPhase = phase.get();
         ClusterDescription currentDescription = description;
@@ -169,49 +157,41 @@ abstract class BaseCluster implements Cluster {
     public ClusterDescription getDescription() {
         isTrue("open", !isClosed());
 
-        try {
-            CountDownLatch currentPhase = phase.get();
-            ClusterDescription curDescription = description;
+        boolean selectionFailureLogged = false;
 
-            boolean selectionFailureLogged = false;
+        StartTime startTime = StartTime.now();
+        Timeout timeout = startServerSelectionTimeout(startTime);
+        while (true) {
+            CountDownLatch currentPhaseLatch = phase.get();
+            ClusterDescription currentDescription = description;
 
-            long startTimeNanos = System.nanoTime();
-            long curTimeNanos = startTimeNanos;
-            long maxWaitTimeNanos = getMaxWaitTimeNanos();
-
-            while (curDescription.getType() == ClusterType.UNKNOWN) {
-
-                if (curTimeNanos - startTimeNanos > maxWaitTimeNanos) {
-                    throw new MongoTimeoutException(format("Timed out after %d ms while waiting to connect. Client view of cluster state "
-                                                           + "is %s",
-                                                           settings.getServerSelectionTimeout(MILLISECONDS),
-                                                           curDescription.getShortDescription()));
-                }
-
-                if (!selectionFailureLogged) {
-                    if (LOGGER.isInfoEnabled()) {
-                        if (settings.getServerSelectionTimeout(MILLISECONDS) < 0) {
-                            LOGGER.info("Cluster description not yet available. Waiting indefinitely.");
-                        } else {
-                            LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
-                                               settings.getServerSelectionTimeout(MILLISECONDS)));
-                        }
-                    }
-                    selectionFailureLogged = true;
-                }
-
-                connect();
-
-                currentPhase.await(Math.min(maxWaitTimeNanos - (curTimeNanos - startTimeNanos), getMinWaitTimeNanos()), NANOSECONDS);
-
-                curTimeNanos = System.nanoTime();
-
-                currentPhase = phase.get();
-                curDescription = description;
+            if (currentDescription.getType() != ClusterType.UNKNOWN) {
+                return currentDescription;
             }
-            return curDescription;
-        } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException("Interrupted while waiting to connect", e);
+
+            if (timeout.hasExpired()) {
+                throw new MongoTimeoutException(format(
+                        "Timed out after %d ms while waiting to connect. Client view of cluster state is %s",
+                        startTime.elapsed().toMillis(),
+                        currentDescription.getShortDescription()));
+            }
+
+            if (!selectionFailureLogged) {
+                if (LOGGER.isInfoEnabled()) {
+                    if (timeout.isInfinite()) {
+                        LOGGER.info("Cluster description not yet available. Waiting indefinitely.");
+                    } else {
+                        LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
+                                timeout.remaining(MILLISECONDS)));
+                    }
+                }
+                selectionFailureLogged = true;
+            }
+
+            connect();
+
+            Timeout heartbeatLimitedTimeout = timeout.orEarlier(startMinWaitHeartbeatTimeout());
+            heartbeatLimitedTimeout.awaitOn(currentPhaseLatch, () -> "waiting to connect");
         }
     }
 
@@ -280,19 +260,20 @@ abstract class BaseCluster implements Cluster {
         withLock(() -> phase.getAndSet(new CountDownLatch(1)).countDown());
     }
 
-    private long getMaxWaitTimeNanos() {
-        if (settings.getServerSelectionTimeout(NANOSECONDS) < 0) {
-            return Long.MAX_VALUE;
-        }
-        return settings.getServerSelectionTimeout(NANOSECONDS);
+    private Timeout startServerSelectionTimeout(final StartTime startTime) {
+        long ms = settings.getServerSelectionTimeout(MILLISECONDS);
+        return startTime.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
-    private long getMinWaitTimeNanos() {
-        return serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS);
+    private Timeout startMinWaitHeartbeatTimeout() {
+        long minHeartbeatFrequency = serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS);
+        minHeartbeatFrequency = Math.max(0, minHeartbeatFrequency);
+        return Timeout.expiresIn(minHeartbeatFrequency, NANOSECONDS);
     }
 
-    private boolean handleServerSelectionRequest(final ServerSelectionRequest request, final CountDownLatch currentPhase,
-                                                 final ClusterDescription description) {
+    private boolean handleServerSelectionRequest(
+            final ServerSelectionRequest request, final CountDownLatch currentPhase,
+            final ClusterDescription description) {
         try {
             if (currentPhase != request.phase) {
                 CountDownLatch prevPhase = request.phase;
@@ -308,21 +289,23 @@ abstract class BaseCluster implements Cluster {
                 ServerTuple serverTuple = selectServer(request.compositeSelector, description);
                 if (serverTuple != null) {
                     if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(format("Asynchronously selected server %s", serverTuple.getServerDescription().getAddress()));
+                        LOGGER.trace(format("Asynchronously selected server %s", 
+                                serverTuple.getServerDescription().getAddress()));
                     }
                     request.onResult(serverTuple, null);
                     return true;
                 }
                 if (prevPhase == null) {
-                    logServerSelectionFailure(request.originalSelector, description);
+                    logServerSelectionFailure(request.originalSelector, description, request.getTimeout());
                 }
             }
 
-            if (request.timedOut()) {
+            if (request.getTimeout().hasExpired()) {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("Asynchronously failed server selection after timeout");
                 }
-                request.onResult(null, createTimeoutException(request.originalSelector, description));
+                request.onResult(null, createTimeoutException(
+                        request.originalSelector, description, request.getStartTime()));
                 return true;
             }
 
@@ -333,14 +316,15 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    private void logServerSelectionFailure(final ServerSelector serverSelector, final ClusterDescription curDescription) {
+    private void logServerSelectionFailure(final ServerSelector serverSelector,
+            final ClusterDescription curDescription, final Timeout timeout) {
         if (LOGGER.isInfoEnabled()) {
-            if (settings.getServerSelectionTimeout(MILLISECONDS) < 0) {
+            if (timeout.isInfinite()) {
                 LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting indefinitely.",
                                    serverSelector, curDescription));
             } else {
                 LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                                   serverSelector, curDescription, settings.getServerSelectionTimeout(MILLISECONDS)));
+                                   serverSelector, curDescription, timeout.remaining(MILLISECONDS)));
             }
         }
     }
@@ -426,27 +410,29 @@ abstract class BaseCluster implements Cluster {
         return new MongoIncompatibleDriverException(message, curDescription);
     }
 
-    private MongoTimeoutException createTimeoutException(final ServerSelector serverSelector, final ClusterDescription curDescription) {
-        return new MongoTimeoutException(format("Timed out after %d ms while waiting for a server that matches %s. "
-                                                + "Client view of cluster state is %s",
-                                                settings.getServerSelectionTimeout(MILLISECONDS), serverSelector,
-                                                curDescription.getShortDescription()));
+    private MongoTimeoutException createTimeoutException(final ServerSelector serverSelector,
+            final ClusterDescription curDescription, final StartTime startTime) {
+        return new MongoTimeoutException(format(
+                "Timed out after %d ms while waiting for a server that matches %s. Client view of cluster state is %s",
+                startTime.elapsed().toMillis(),
+                serverSelector,
+                curDescription.getShortDescription()));
     }
 
     private static final class ServerSelectionRequest {
         private final ServerSelector originalSelector;
         private final ServerSelector compositeSelector;
-        private final long maxWaitTimeNanos;
         private final SingleResultCallback<ServerTuple> callback;
-        private final long startTimeNanos = System.nanoTime();
+        private final Timeout timeout;
+        private final StartTime startTime;
         private CountDownLatch phase;
 
         ServerSelectionRequest(final ServerSelector serverSelector, final ServerSelector compositeSelector,
-                               final long maxWaitTimeNanos,
-                               final SingleResultCallback<ServerTuple> callback) {
+                final Timeout timeout, final StartTime startTime, final SingleResultCallback<ServerTuple> callback) {
             this.originalSelector = serverSelector;
             this.compositeSelector = compositeSelector;
-            this.maxWaitTimeNanos = maxWaitTimeNanos;
+            this.timeout = timeout;
+            this.startTime = startTime;
             this.callback = callback;
         }
 
@@ -458,12 +444,12 @@ abstract class BaseCluster implements Cluster {
             }
         }
 
-        boolean timedOut() {
-            return System.nanoTime() - startTimeNanos > maxWaitTimeNanos;
+        Timeout getTimeout() {
+            return timeout;
         }
 
-        long getRemainingTime() {
-            return startTimeNanos + maxWaitTimeNanos - System.nanoTime();
+        StartTime getStartTime() {
+            return startTime;
         }
     }
 
@@ -498,25 +484,28 @@ abstract class BaseCluster implements Cluster {
             while (!isClosed) {
                 CountDownLatch currentPhase = phase.get();
                 ClusterDescription curDescription = description;
-                long waitTimeNanos = Long.MAX_VALUE;
+
+                Timeout timeout = Timeout.infinite();
 
                 for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
                     ServerSelectionRequest nextRequest = iter.next();
                     if (handleServerSelectionRequest(nextRequest, currentPhase, curDescription)) {
                         iter.remove();
                     } else {
-                        waitTimeNanos = Math.min(nextRequest.getRemainingTime(), Math.min(getMinWaitTimeNanos(), waitTimeNanos));
+                        timeout = timeout
+                                .orEarlier(nextRequest.getTimeout())
+                                .orEarlier(startMinWaitHeartbeatTimeout());
                     }
                 }
 
                 // if there are any waiters that were not satisfied, connect
-                if (waitTimeNanos < Long.MAX_VALUE) {
+                if (!timeout.isInfinite()) {
                     connect();
                 }
 
                 try {
-                    currentPhase.await(waitTimeNanos, NANOSECONDS);
-                } catch (InterruptedException closed) {
+                    timeout.awaitOn(currentPhase, () -> "ignored");
+                } catch (MongoInterruptedException closed) {
                     // The cluster has been closed and the while loop will exit.
                 }
             }

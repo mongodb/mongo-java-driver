@@ -149,8 +149,10 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         @Override
         public Connection getConnection() {
-            return cluster.selectServer(new ServerAddressSelector(serverAddress), operationContext)
-                    .getServer().getConnection(operationContext);
+            return cluster
+                    .selectServer(new ServerAddressSelector(serverAddress), operationContext)
+                    .getServer()
+                    .getConnection(operationContext);
         }
 
         @Override
