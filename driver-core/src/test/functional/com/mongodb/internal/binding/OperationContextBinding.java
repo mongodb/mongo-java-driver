@@ -29,7 +29,7 @@ public class OperationContextBinding implements ReadWriteBinding {
 
     public OperationContextBinding(final ReadWriteBinding wrapped, final OperationContext operationContext) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.operationContext = operationContext;
+        this.operationContext = notNull("operationContext", operationContext);
     }
 
     @Override
