@@ -377,7 +377,7 @@ class DefaultServerSpecification extends Specification {
         }
 
         @Override
-        TestCommandProtocol sessionContext(final SessionContext sessionContext) {
+        TestCommandProtocol withSessionContext(final SessionContext sessionContext) {
             contextClusterTime = sessionContext.clusterTime
             sessionContext.advanceClusterTime(responseDocument.getDocument('$clusterTime'))
             sessionContext.advanceOperationTime(responseDocument.getTimestamp('operationTime'))

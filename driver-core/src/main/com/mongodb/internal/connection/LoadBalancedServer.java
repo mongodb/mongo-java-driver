@@ -159,8 +159,8 @@ public class LoadBalancedServer implements ClusterableServer {
         @Override
         public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection, final SessionContext sessionContext) {
             try {
-                protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-                return protocol.execute(connection);
+                return protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                        .execute(connection);
             } catch (MongoWriteConcernWithResponseException e) {
                 return (T) e.getResponse();
             } catch (MongoException e) {
@@ -173,8 +173,8 @@ public class LoadBalancedServer implements ClusterableServer {
         @Override
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-            protocol.executeAsync(connection, errorHandlingCallback((result, t) -> {
+            protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                    .executeAsync(connection, errorHandlingCallback((result, t) -> {
                 if (t != null) {
                     if (t instanceof MongoWriteConcernWithResponseException) {
                         callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
