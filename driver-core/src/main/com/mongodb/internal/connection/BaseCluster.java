@@ -107,7 +107,7 @@ abstract class BaseCluster implements Cluster {
         ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
         boolean selectionFailureLogged = false;
         StartTime startTime = StartTime.now();
-        Timeout timeout = startServerSelectionTimeout(startTime, operationContext);
+        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout(startTime);
 
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
@@ -141,7 +141,7 @@ abstract class BaseCluster implements Cluster {
             LOGGER.trace(format("Asynchronously selecting server with selector %s", serverSelector));
         }
         StartTime startTime = StartTime.now();
-        Timeout timeout = startServerSelectionTimeout(startTime, operationContext);
+        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout(startTime);
         ServerSelectionRequest request = new ServerSelectionRequest(
                 serverSelector, getCompositeServerSelector(serverSelector), timeout, startTime, callback);
 
@@ -216,11 +216,6 @@ abstract class BaseCluster implements Cluster {
 
     private void updatePhase() {
         withLock(() -> phase.getAndSet(new CountDownLatch(1)).countDown());
-    }
-
-    private Timeout startServerSelectionTimeout(final StartTime startTime, final OperationContext operationContext) {
-        long ms = operationContext.getTimeoutContext().getTimeoutSettings().getServerSelectionTimeoutMS();
-        return startTime.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
     private Timeout startMinWaitHeartbeatTimeout() {

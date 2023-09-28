@@ -65,7 +65,6 @@ import static com.mongodb.internal.event.EventListenerHelper.singleClusterListen
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @ThreadSafe
 final class LoadBalancedCluster implements Cluster {
@@ -216,7 +215,7 @@ final class LoadBalancedCluster implements Cluster {
         }
         Locks.withLock(lock, () -> {
             StartTime startTime = StartTime.now();
-            Timeout timeout = startServerSelectionTimeout(startTime, operationContext);
+            Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout(startTime);
             while (!initializationCompleted) {
                 if (isClosed()) {
                     throw createShutdownException();
@@ -236,7 +235,7 @@ final class LoadBalancedCluster implements Cluster {
             callback.onResult(null, createShutdownException());
             return;
         }
-        Timeout timeout = startServerSelectionTimeout(StartTime.now(), operationContext);
+        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout(StartTime.now());
         ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(timeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
@@ -306,11 +305,6 @@ final class LoadBalancedCluster implements Cluster {
                             + "Resolution exception was '%s'",
                     startTime.elapsed().toMillis(), settings.getSrvHost(), localSrvResolutionException));
         }
-    }
-
-    private Timeout startServerSelectionTimeout(final StartTime startTime, final OperationContext operationContext) {
-        long ms = operationContext.getTimeoutContext().getTimeoutSettings().getServerSelectionTimeoutMS();
-        return startTime.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
     private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
