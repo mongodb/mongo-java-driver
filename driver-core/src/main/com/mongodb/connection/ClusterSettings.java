@@ -567,7 +567,7 @@ public final class ClusterSettings {
                + ", serverSelector='" + serverSelector + '\''
                + ", clusterListeners='" + clusterListeners + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
-               + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
+               + ", localThreshold='" + localThresholdMS + " ms" + '\''
                + '}';
     }
 
