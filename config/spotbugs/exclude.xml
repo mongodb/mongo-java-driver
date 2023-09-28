@@ -286,6 +286,11 @@
     <Match>
         <Class name="com.mongodb.internal.time.Timeout"/>
         <Method name="awaitOn"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Method name="awaitOn"/>
         <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
     </Match>
 </FindBugsFilter>

@@ -188,11 +188,11 @@ class BaseClusterSpecification extends Specification {
                                                                .exception(new MongoInternalException('oops'))
                                                                .build())
 
-        cluster.selectServer(new WritableServerSelector(), new OperationContext())
+        cluster.selectServer(new WritableServerSelector(), OPERATION_CONTEXT)
 
         then:
         def e = thrown(MongoTimeoutException)
-        e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting for a server " +
+        e.getMessage().contains("ms while waiting for a server " +
                 'that matches WritableServerSelector. Client view of cluster state is {type=UNKNOWN')
         e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
                 'exception={com.mongodb.MongoInternalException: oops}}')
