@@ -21,10 +21,11 @@ import java.util.EventListener;
 /**
  * A listener for cluster-related events.
  * <p>
- * It does not have to be thread-safe. All events received by {@link ClusterListener}, {@link ServerListener},
+ * All events received by {@link ClusterListener}, {@link ServerListener},
  * {@link ServerMonitorListener} are totally ordered (and the event order implies the happens-before order), provided that the listeners
- * are not shared by different {@code MongoClient}s. This means that even if you have a single class implementing all of
- * {@link ClusterListener}, {@link ServerListener}, {@link ServerMonitorListener}, it does not have to be thread-safe.
+ * are not shared by different {@code MongoClient}s. This guarantee holds even if you have a single class implementing
+ * all of {@link ClusterListener}, {@link ServerListener}, {@link ServerMonitorListener}. However, if a listener writes to shared memory,
+ * the write actions still must be synchronized with read actions from that shared memory.
  * </p>
  * @see ServerListener
  * @see ServerMonitorListener
