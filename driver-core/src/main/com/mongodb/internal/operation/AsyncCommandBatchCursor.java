@@ -44,7 +44,6 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -78,10 +77,10 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
     private final AtomicInteger count = new AtomicInteger();
     private final AtomicBoolean processedInitial = new AtomicBoolean();
-    private final AtomicReference<CommandCursorResult<T>> commandCursorResult = new AtomicReference<>();
     private final int maxWireVersion;
     private final boolean firstBatchEmpty;
     private final ResourceManager resourceManager;
+    private volatile CommandCursorResult<T> commandCursorResult;
     private int batchSize;
 
     AsyncCommandBatchCursor(
@@ -131,7 +130,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         boolean cursorClosed = localServerCursor == null;
         List<T> batchResults = emptyList();
         if (!processedInitial.getAndSet(true) && !firstBatchEmpty) {
-            batchResults = commandCursorResult.get().getResults();
+            batchResults = commandCursorResult.getResults();
         }
 
         if (cursorClosed || !batchResults.isEmpty()) {
@@ -167,12 +166,12 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
     @Override
     public BsonDocument getPostBatchResumeToken() {
-        return commandCursorResult.get().getPostBatchResumeToken();
+        return commandCursorResult.getPostBatchResumeToken();
     }
 
     @Override
     public BsonTimestamp getOperationTime() {
-        return commandCursorResult.get().getOperationTime();
+        return commandCursorResult.getOperationTime();
     }
 
     @Override
@@ -249,7 +248,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             LOGGER.debug(format("Received batch of %d documents with cursorId %d from server %s", cursorResult.getResults().size(),
                     cursorResult.getCursorId(), cursorResult.getServerAddress()));
         }
-        this.commandCursorResult.set(cursorResult);
+        this.commandCursorResult = cursorResult;
         return cursorResult;
     }
 
