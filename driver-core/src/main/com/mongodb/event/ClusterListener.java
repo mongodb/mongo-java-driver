@@ -25,7 +25,8 @@ import java.util.EventListener;
  * {@link ServerMonitorListener} are totally ordered (and the event order implies the happens-before order), provided that the listeners
  * are not shared by different {@code MongoClient}s. This guarantee holds even if you have a single class implementing
  * all of {@link ClusterListener}, {@link ServerListener}, {@link ServerMonitorListener}. However, if a listener writes to shared memory,
- * the write actions still must be synchronized with read actions from that shared memory.
+ * the write actions still must be synchronized with read actions from that shared memory,
+ * if the read actions are done not as part of executing any of the listener methods by a @code MongoClient}.
  * </p>
  * @see ServerListener
  * @see ServerMonitorListener
