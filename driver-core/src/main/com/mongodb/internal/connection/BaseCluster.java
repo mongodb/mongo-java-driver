@@ -107,12 +107,12 @@ abstract class BaseCluster implements Cluster {
         ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
         boolean selectionFailureLogged = false;
         StartTime startTime = StartTime.now();
-        Timeout timeout = startServerSelectionTimeout(startTime);
+        Timeout timeout = startServerSelectionTimeout(startTime, operationContext);
 
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
             ClusterDescription currentDescription = description;
-            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription);
+            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, operationContext);
 
             throwIfIncompatible(currentDescription);
             if (serverTuple != null) {
@@ -141,15 +141,15 @@ abstract class BaseCluster implements Cluster {
             LOGGER.trace(format("Asynchronously selecting server with selector %s", serverSelector));
         }
         StartTime startTime = StartTime.now();
-        Timeout timeout = startServerSelectionTimeout(startTime);
+        Timeout timeout = startServerSelectionTimeout(startTime, operationContext);
         ServerSelectionRequest request = new ServerSelectionRequest(
                 serverSelector, getCompositeServerSelector(serverSelector), timeout, startTime, callback);
 
         CountDownLatch currentPhase = phase.get();
         ClusterDescription currentDescription = description;
 
-        if (!handleServerSelectionRequest(request, currentPhase, currentDescription)) {
-            notifyWaitQueueHandler(request);
+        if (!handleServerSelectionRequest(request, currentPhase, currentDescription, operationContext)) {
+            notifyWaitQueueHandler(request, operationContext);
         }
     }
 
@@ -218,8 +218,8 @@ abstract class BaseCluster implements Cluster {
         withLock(() -> phase.getAndSet(new CountDownLatch(1)).countDown());
     }
 
-    private Timeout startServerSelectionTimeout(final StartTime startTime) {
-        long ms = settings.getServerSelectionTimeout(MILLISECONDS);
+    private Timeout startServerSelectionTimeout(final StartTime startTime, final OperationContext operationContext) {
+        long ms = operationContext.getTimeoutContext().getTimeoutSettings().getServerSelectionTimeoutMS();
         return startTime.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
@@ -231,7 +231,7 @@ abstract class BaseCluster implements Cluster {
 
     private boolean handleServerSelectionRequest(
             final ServerSelectionRequest request, final CountDownLatch currentPhase,
-            final ClusterDescription description) {
+            final ClusterDescription description, final OperationContext operationContext) {
         try {
             if (currentPhase != request.phase) {
                 CountDownLatch prevPhase = request.phase;
@@ -244,7 +244,7 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
 
-                ServerTuple serverTuple = selectServer(request.compositeSelector, description);
+                ServerTuple serverTuple = selectServer(request.compositeSelector, description, operationContext);
                 if (serverTuple != null) {
                     if (LOGGER.isTraceEnabled()) {
                         LOGGER.trace(format("Asynchronously selected server %s",
@@ -289,8 +289,8 @@ abstract class BaseCluster implements Cluster {
 
     @Nullable
     private ServerTuple selectServer(final ServerSelector serverSelector,
-            final ClusterDescription clusterDescription) {
-        return selectServer(serverSelector, clusterDescription, this::getServer);
+            final ClusterDescription clusterDescription, final OperationContext operationContext) {
+        return selectServer(serverSelector, clusterDescription, serverAddress -> getServer(serverAddress, operationContext));
     }
 
     @Nullable
@@ -411,7 +411,7 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
+    private void notifyWaitQueueHandler(final ServerSelectionRequest request, final OperationContext operationContext) {
         withLock(() -> {
             if (isClosed) {
                 return;
@@ -420,7 +420,7 @@ abstract class BaseCluster implements Cluster {
             waitQueue.add(request);
 
             if (waitQueueHandler == null) {
-                waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
+                waitQueueHandler = new Thread(new WaitQueueHandler(operationContext), "cluster-" + clusterId.getValue());
                 waitQueueHandler.setDaemon(true);
                 waitQueueHandler.start();
             } else {
@@ -438,6 +438,12 @@ abstract class BaseCluster implements Cluster {
     }
 
     private final class WaitQueueHandler implements Runnable {
+        private final OperationContext operationContext;
+
+        WaitQueueHandler(final OperationContext operationContext) {
+            this.operationContext = operationContext;
+        }
+
         public void run() {
             while (!isClosed) {
                 CountDownLatch currentPhase = phase.get();
@@ -447,7 +453,7 @@ abstract class BaseCluster implements Cluster {
 
                 for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
                     ServerSelectionRequest nextRequest = iter.next();
-                    if (handleServerSelectionRequest(nextRequest, currentPhase, curDescription)) {
+                    if (handleServerSelectionRequest(nextRequest, currentPhase, curDescription, operationContext)) {
                         iter.remove();
                     } else {
                         timeout = timeout

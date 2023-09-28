@@ -45,7 +45,7 @@ public interface Cluster extends Closeable {
 
     @Nullable
     @VisibleForTesting(otherwise = PRIVATE)
-    ClusterableServer getServer(ServerAddress serverAddress);
+    ClusterableServer getServer(ServerAddress serverAddress, OperationContext operationContext);
 
     /**
      * Get the current description of this cluster.

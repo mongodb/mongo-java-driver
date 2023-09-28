@@ -181,9 +181,9 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ClusterableServer getServer(final ServerAddress serverAddress, final OperationContext operationContext) {
         isTrue("open", !isClosed());
-        waitForSrv();
+        waitForSrv(operationContext);
         return assertNotNull(server);
     }
 
@@ -202,7 +202,7 @@ final class LoadBalancedCluster implements Cluster {
     @Override
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
-        waitForSrv();
+        waitForSrv(operationContext);
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
@@ -210,13 +210,13 @@ final class LoadBalancedCluster implements Cluster {
     }
 
 
-    private void waitForSrv() {
+    private void waitForSrv(final OperationContext operationContext) {
         if (initializationCompleted) {
             return;
         }
         Locks.withLock(lock, () -> {
             StartTime startTime = StartTime.now();
-            Timeout timeout = startServerSelectionTimeout(startTime);
+            Timeout timeout = startServerSelectionTimeout(startTime, operationContext);
             while (!initializationCompleted) {
                 if (isClosed()) {
                     throw createShutdownException();
@@ -236,7 +236,7 @@ final class LoadBalancedCluster implements Cluster {
             callback.onResult(null, createShutdownException());
             return;
         }
-        Timeout timeout = startServerSelectionTimeout(StartTime.now());
+        Timeout timeout = startServerSelectionTimeout(StartTime.now(), operationContext);
         ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(timeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
@@ -308,8 +308,8 @@ final class LoadBalancedCluster implements Cluster {
         }
     }
 
-    private Timeout startServerSelectionTimeout(final StartTime startTime) {
-        long ms = settings.getServerSelectionTimeout(MILLISECONDS);
+    private Timeout startServerSelectionTimeout(final StartTime startTime, final OperationContext operationContext) {
+        long ms = operationContext.getTimeoutContext().getTimeoutSettings().getServerSelectionTimeoutMS();
         return startTime.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 

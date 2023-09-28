@@ -77,7 +77,7 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, STANDALONE)
 
         then:
-        cluster.getServer(firstServer) == factory.getServer(firstServer)
+        cluster.getServer(firstServer, OPERATION_CONTEXT) == factory.getServer(firstServer)
 
         cleanup:
         cluster?.close()
@@ -91,7 +91,7 @@ class SingleServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.getServer(firstServer)
+        cluster.getServer(firstServer, OPERATION_CONTEXT)
 
         then:
         thrown(IllegalStateException)

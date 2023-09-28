@@ -69,7 +69,7 @@ public final class SingleServerCluster extends BaseCluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ClusterableServer getServer(final ServerAddress serverAddress, final OperationContext operationContext) {
         isTrue("open", !isClosed());
         return assertNotNull(server.get());
     }

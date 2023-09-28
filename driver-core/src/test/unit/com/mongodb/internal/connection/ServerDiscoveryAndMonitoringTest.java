@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getClusterDescription;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
@@ -120,7 +121,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
         if (expectedServerDescriptionDocument.isDocument("pool")) {
             int expectedGeneration = expectedServerDescriptionDocument.getDocument("pool").getNumber("generation").intValue();
-            DefaultServer server = (DefaultServer) getCluster().getServer(new ServerAddress(serverName));
+            DefaultServer server = (DefaultServer) getCluster().getServer(new ServerAddress(serverName), OPERATION_CONTEXT);
             assertEquals(expectedGeneration, server.getConnectionPool().getGeneration());
         }
     }

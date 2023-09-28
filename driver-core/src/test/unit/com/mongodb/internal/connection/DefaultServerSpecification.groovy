@@ -392,7 +392,7 @@ class DefaultServerSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress) {
+            ClusterableServer getServer(final ServerAddress serverAddress, OperationContext operationContext) {
                 throw new UnsupportedOperationException()
             }
 
