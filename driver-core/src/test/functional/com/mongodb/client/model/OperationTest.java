@@ -18,14 +18,17 @@ package com.mongodb.client.model;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
+import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.internal.connection.ServerHelper;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
@@ -39,8 +42,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget;
 import static com.mongodb.ClusterFixture.getAsyncBinding;
 import static com.mongodb.ClusterFixture.getBinding;
@@ -54,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public abstract class OperationTest {
 
     protected static final DocumentCodec DOCUMENT_DECODER = new DocumentCodec();
+    protected static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
 
     @BeforeEach
     public void beforeEach() {
@@ -77,15 +84,15 @@ public abstract class OperationTest {
         return new CollectionHelper<>(new BsonDocumentCodec(), namespace);
     }
 
-    private String getDatabaseName() {
+    protected String getDatabaseName() {
         return ClusterFixture.getDefaultDatabaseName();
     }
 
-    private String getCollectionName() {
+    protected String getCollectionName() {
         return "test";
     }
 
-    MongoNamespace getNamespace() {
+    protected MongoNamespace getNamespace() {
         return new MongoNamespace(getDatabaseName(), getCollectionName());
     }
 
@@ -96,7 +103,6 @@ public abstract class OperationTest {
     public static BsonDocument toBsonDocument(final BsonDocument bsonDocument) {
         return getDefaultCodecRegistry().get(BsonDocument.class).decode(bsonDocument.asBsonReader(), DecoderContext.builder().build());
     }
-
 
     protected List<Bson> assertPipeline(final String stageAsString, final Bson stage) {
         List<Bson> pipeline = Collections.singletonList(stage);
@@ -158,5 +164,26 @@ public abstract class OperationTest {
         return actual.stream()
                 .map(doc -> doc.get("result"))
                 .collect(toList());
+    }
+
+    protected <T> void ifNotNull(@Nullable final T maybeNull, final Consumer<T> consumer) {
+        if (maybeNull != null) {
+            consumer.accept(maybeNull);
+        }
+    }
+
+    protected void sleep(final long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T> T block(final Consumer<FutureResultCallback<T>> consumer) {
+        FutureResultCallback<T> cb = new FutureResultCallback<>();
+        consumer.accept(cb);
+        return cb.get(TIMEOUT, TimeUnit.SECONDS);
     }
 }

@@ -62,14 +62,14 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
 
     private final MongoNamespace namespace;
     private final Lock lock;
-    volatile State state;
+    private volatile State state;
     @Nullable
-    volatile CS connectionSource;
+    private volatile CS connectionSource;
     @Nullable
-    volatile C pinnedConnection;
+    private volatile C pinnedConnection;
     @Nullable
-    volatile ServerCursor serverCursor;
-    volatile boolean skipReleasingServerResourcesOnClose;
+    private volatile ServerCursor serverCursor;
+    private volatile boolean skipReleasingServerResourcesOnClose;
 
     CursorResourceManager(
             final MongoNamespace namespace,
@@ -92,11 +92,29 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
         this.serverCursor = serverCursor;
     }
 
+    public State getState() {
+        return state;
+    }
+
+    @Nullable
+    public CS getConnectionSource() {
+        return connectionSource;
+    }
+
+    @Nullable
+    public C getPinnedConnection() {
+        return pinnedConnection;
+    }
+
+    public boolean isSkipReleasingServerResourcesOnClose() {
+        return skipReleasingServerResourcesOnClose;
+    }
+
     abstract void markAsPinned(C connectionToPin, Connection.PinningMode pinningMode);
 
-    abstract void executeWithConnection(final Consumer<C> action);
+    abstract void executeWithConnection(Consumer<C> action);
 
-    abstract <R> void executeWithConnection(final Consumer<C> action, final SingleResultCallback<R> callback);
+    abstract <R> void executeWithConnection(Consumer<C> action, SingleResultCallback<R> callback);
 
     /**
      * This method is never executed concurrently with either itself or other operations
@@ -104,7 +122,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
      */
     abstract void doClose();
 
-    abstract void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor, final C connection);
+    abstract void killServerCursor(MongoNamespace namespace, ServerCursor serverCursor, C connection);
 
     /**
      * Thread-safe.
@@ -198,8 +216,12 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
      * Thread-safe.
      */
     @Nullable
-    ServerCursor serverCursor() {
+    ServerCursor getServerCursor() {
         return serverCursor;
+    }
+
+    void unsetServerCursor() {
+        this.serverCursor = null;
     }
 
     void setServerCursor(@Nullable final ServerCursor serverCursor) {

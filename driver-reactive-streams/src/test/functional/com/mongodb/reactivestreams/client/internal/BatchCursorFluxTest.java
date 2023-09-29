@@ -318,7 +318,6 @@ public class BatchCursorFluxTest {
                             Flux.fromIterable(asList(1, 2))
                                     .flatMap(x -> Flux.from(collection.find()))
                                     .take(1)
-
                     )
                     .collectList()
                     .block(TIMEOUT_DURATION);

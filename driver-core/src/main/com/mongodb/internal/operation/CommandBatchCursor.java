@@ -120,7 +120,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return false;
         }
 
-        while (resourceManager.serverCursor() != null) {
+        while (resourceManager.getServerCursor() != null) {
             getMore();
             if (!resourceManager.operable()) {
                 throw new IllegalStateException(MESSAGE_IF_CLOSED_AS_CURSOR);
@@ -200,7 +200,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return false;
         }
 
-        if (resourceManager.serverCursor() != null) {
+        if (resourceManager.getServerCursor() != null) {
             getMore();
         }
 
@@ -213,7 +213,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         if (!resourceManager.operable()) {
             throw new IllegalStateException(MESSAGE_IF_CLOSED_AS_ITERATOR);
         }
-        return resourceManager.serverCursor();
+        return resourceManager.getServerCursor();
     }
 
     @Override
@@ -246,7 +246,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     }
 
     private void getMore() {
-        ServerCursor serverCursor = assertNotNull(resourceManager.serverCursor());
+        ServerCursor serverCursor = assertNotNull(resourceManager.getServerCursor());
         resourceManager.executeWithConnection(connection -> {
             ServerCursor nextServerCursor;
             try {
@@ -258,7 +258,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                                 NO_OP_FIELD_NAME_VALIDATOR,
                                 ReadPreference.primary(),
                                 CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
-                                assertNotNull(resourceManager.connectionSource))));
+                                assertNotNull(resourceManager.getConnectionSource()))));
                 nextServerCursor = commandCursor.getServerCursor();
             } catch (MongoCommandException e) {
                 throw translateCommandException(e, serverCursor);
@@ -291,7 +291,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     @ThreadSafe
     private static final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
 
-        public ResourceManager(
+        ResourceManager(
                 final MongoNamespace namespace,
                 final ConnectionSource connectionSource,
                 @Nullable final Connection connectionToPin,
@@ -318,11 +318,12 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         }
 
         private Connection connection() {
-            assertTrue(state != State.IDLE);
+            assertTrue(getState() != State.IDLE);
+            Connection pinnedConnection = getPinnedConnection();
             if (pinnedConnection != null) {
                 return assertNotNull(pinnedConnection).retain();
             } else {
-                return assertNotNull(connectionSource).getConnection();
+                return assertNotNull(getConnectionSource()).getConnection();
             }
         }
 
@@ -355,19 +356,19 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         @Override
         void doClose() {
-            if (skipReleasingServerResourcesOnClose) {
-                serverCursor = null;
+            if (isSkipReleasingServerResourcesOnClose()) {
+                unsetServerCursor();
             }
 
             try {
-                if (serverCursor != null) {
+                if (getServerCursor() != null) {
                     executeWithConnection(this::releaseServerResources);
                 }
             } catch (MongoException e) {
                 // ignore exceptions when releasing server resources
             } finally {
                 // guarantee that regardless of exceptions, `serverCursor` is null and client resources are released
-                serverCursor = null;
+                unsetServerCursor();
                 releaseClientResources();
             }
         }
@@ -375,7 +376,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         @Override
         void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor, final Connection connection) {
             connection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, serverCursor),
-                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), assertNotNull(connectionSource));
+                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), assertNotNull(getConnectionSource()));
             releaseClientResources();
         }
     }

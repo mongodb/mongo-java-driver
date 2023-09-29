@@ -187,13 +187,7 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         batch == thirdBatch
         connectionB.getCount() == 0
         connectionSource.getCount() == 0
-
-        when:
-        batch = nextBatch(cursor)
-
-        then:
-        batch.isEmpty()
-        connectionSource.getCount() == 0
+        cursor.isClosed()
     }
 
 

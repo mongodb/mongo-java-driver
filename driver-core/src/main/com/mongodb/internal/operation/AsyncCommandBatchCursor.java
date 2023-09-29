@@ -119,7 +119,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             return;
         }
 
-        ServerCursor localServerCursor = resourceManager.serverCursor();
+        ServerCursor localServerCursor = resourceManager.getServerCursor();
         boolean cursorClosed = localServerCursor == null;
         List<T> batchResults = emptyList();
         if (!processedInitial.getAndSet(true) && !firstBatchEmpty) {
@@ -180,7 +180,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
     @Nullable
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     ServerCursor getServerCursor() {
-        return resourceManager.serverCursor();
+        return resourceManager.getServerCursor();
     }
 
     private void getMore(final ServerCursor cursor, final SingleResultCallback<List<T>> callback) {
@@ -192,7 +192,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 getMoreCommandDocument(cursor.getId(), connection.getDescription(), namespace,
                         limit, batchSize, count.get(), maxTimeMS, comment),
                 NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
-                CommandResultDocumentCodec.create(decoder, NEXT_BATCH), assertNotNull(resourceManager.connectionSource),
+                CommandResultDocumentCodec.create(decoder, NEXT_BATCH), assertNotNull(resourceManager.getConnectionSource()),
                 (commandResult, t) -> {
                     if (t != null) {
                         Throwable translatedException =
@@ -224,6 +224,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                         resourceManager.endOperation();
                         if (limitReached()) {
                             resourceManager.releaseServerAndClientResources(connection);
+                            close();
                         }
                         connection.release();
                         callback.onResult(commandCursor.getResults(), null);
@@ -272,11 +273,12 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
         @Override
         <R> void executeWithConnection(final Consumer<AsyncConnection> action, final SingleResultCallback<R> callback) {
-            assertTrue(state != State.IDLE);
+            assertTrue(getState() != State.IDLE);
+            AsyncConnection pinnedConnection = getPinnedConnection();
             if (pinnedConnection != null) {
                 executeWithConnection(assertNotNull(pinnedConnection).retain(), null, action, callback);
             } else {
-                assertNotNull(connectionSource).getConnection((conn, t) -> executeWithConnection(conn, t, action, callback));
+                assertNotNull(getConnectionSource()).getConnection((conn, t) -> executeWithConnection(conn, t, action, callback));
             }
         }
 
@@ -290,10 +292,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 callback.onResult(null, t);
             } else {
                 AsyncCallbackSupplier<R> curriedFunction = c -> function.accept(connection);
-                curriedFunction.whenComplete(() -> {
-                    System.out.println("COMPLETED!!!!");
-                    connection.release();
-                }).get((result, error) -> {
+                curriedFunction.whenComplete(connection::release).get((result, error) -> {
                     if (error instanceof MongoSocketException) {
                         onCorruptedConnection(connection);
                     }
@@ -304,17 +303,17 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
         @Override
         void doClose() {
-            if (skipReleasingServerResourcesOnClose) {
-                serverCursor = null;
+            if (isSkipReleasingServerResourcesOnClose()) {
+                unsetServerCursor();
             }
 
-            if (serverCursor != null) {
+            if (getServerCursor() != null) {
                 executeWithConnection(conn -> {
                     releaseServerResources(conn);
                     conn.release();
                 }, (r, t) -> {
                     // guarantee that regardless of exceptions, `serverCursor` is null and client resources are released
-                    serverCursor = null;
+                    unsetServerCursor();
                     releaseClientResources();
                 });
             } else {
@@ -325,9 +324,13 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         @Override
         void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor, final AsyncConnection connection) {
             connection
+                    .retain()
                     .commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, serverCursor),
-                            NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), assertNotNull(connectionSource),
-                            (r, t) -> releaseClientResources());
+                            NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
+                            assertNotNull(getConnectionSource()), (r, t) -> {
+                                connection.release();
+                                releaseClientResources();
+                            });
         }
     }
 }
