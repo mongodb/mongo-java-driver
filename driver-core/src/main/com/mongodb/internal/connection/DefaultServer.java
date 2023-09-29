@@ -204,8 +204,9 @@ class DefaultServer implements ClusterableServer {
         public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection,
                              final SessionContext sessionContext) {
             try {
-                protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-                return protocol.execute(connection);
+                return protocol
+                        .withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                        .execute(connection);
             } catch (MongoException e) {
                 try {
                     sdam.handleExceptionAfterHandshake(SdamIssue.specific(e, sdam.context(connection)));
@@ -227,8 +228,8 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-            protocol.executeAsync(connection, errorHandlingCallback((result, t) -> {
+            protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                    .executeAsync(connection, errorHandlingCallback((result, t) -> {
                 if (t != null) {
                     try {
                         sdam.handleExceptionAfterHandshake(SdamIssue.specific(t, sdam.context(connection)));

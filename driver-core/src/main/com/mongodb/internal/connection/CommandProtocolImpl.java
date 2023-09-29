@@ -40,7 +40,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final Decoder<T> commandResultDecoder;
     private final boolean responseExpected;
     private final ClusterConnectionMode clusterConnectionMode;
-    private OperationContext operationContext;
+    private final OperationContext operationContext;
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
@@ -85,9 +85,10 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     }
 
     @Override
-    public CommandProtocolImpl<T> sessionContext(final SessionContext sessionContext) {
-        this.operationContext = operationContext.withSessionContext(sessionContext);
-        return this;
+    public CommandProtocolImpl<T> withSessionContext(final SessionContext sessionContext) {
+        return new CommandProtocolImpl<>(namespace.getDatabaseName(), command, commandFieldNameValidator, readPreference,
+                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
+                operationContext.withSessionContext(sessionContext));
     }
 
     private CommandMessage getCommandMessage(final InternalConnection connection) {
