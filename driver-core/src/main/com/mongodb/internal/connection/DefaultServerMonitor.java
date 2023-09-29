@@ -52,6 +52,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
+import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
@@ -117,12 +119,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     @Override
     public void connect() {
-        lock.lock();
-        try {
-            condition.signal();
-        } finally {
-            lock.unlock();
-        }
+        withLock(lock, condition::signal);
     }
 
     @Override
@@ -244,14 +241,11 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (Throwable t) {
                 averageRoundTripTime.reset();
-                InternalConnection localConnection;
-                lock.lock();
-                try {
-                    localConnection = connection;
+                InternalConnection localConnection = withLock(lock, () -> {
+                    InternalConnection result = connection;
                     connection = null;
-                } finally {
-                    lock.unlock();
-                }
+                    return result;
+                });
                 if (localConnection != null) {
                     localConnection.close();
                 }
@@ -300,7 +294,7 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private long waitForSignalOrTimeout() throws InterruptedException {
-            lock.lock();
+            lockInterruptibly(lock);
             try {
                 return condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS));
             } finally {
@@ -309,16 +303,14 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         public void cancelCurrentCheck() {
-            InternalConnection localConnection = null;
-            lock.lock();
-            try {
+            InternalConnection localConnection = withLock(lock, () -> {
                 if (connection != null && !currentCheckCancelled) {
-                    localConnection = connection;
+                    InternalConnection result = connection;
                     currentCheckCancelled = true;
+                    return result;
                 }
-            } finally {
-                lock.unlock();
-            }
+                return null;
+            });
             if (localConnection != null) {
                 localConnection.close();
             }
