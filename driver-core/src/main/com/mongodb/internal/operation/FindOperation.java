@@ -355,19 +355,19 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     @Override
     public <R> ReadOperation<R> asExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                        final Decoder<R> resultDecoder) {
-        // TODO (CSOT) JAVA-5172
-        return new CommandReadOperation<>(timeoutSettings, getNamespace().getDatabaseName(),
-                asExplainCommand(getCommand(null, MIN_WIRE_VERSION), verbosity),
-                resultDecoder);
+        return createExplainableOperation(verbosity, resultDecoder);
     }
 
     @Override
     public <R> AsyncReadOperation<R> asAsyncExplainableOperation(@Nullable final ExplainVerbosity verbosity,
                                                                  final Decoder<R> resultDecoder) {
-        // TODO (CSOT) JAVA-5172
+        return createExplainableOperation(verbosity, resultDecoder);
+    }
+
+    <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(timeoutSettings, getNamespace().getDatabaseName(),
-                asExplainCommand(getCommand(null, MIN_WIRE_VERSION), verbosity),
-                resultDecoder);
+                (operationContext, serverDescription, connectionDescription) ->
+                        asExplainCommand(getCommand(operationContext, MIN_WIRE_VERSION), verbosity), resultDecoder);
     }
 
     private BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
