@@ -21,7 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -67,7 +67,7 @@ import static java.util.Arrays.asList;
 public class
 MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -92,7 +92,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
             final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, @Nullable final String collectionName,
             @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -324,7 +324,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         putIfNotNull(commandDocument, "scope", getScope());
         putIfTrue(commandDocument, "verbose", isVerbose());
         putIfNotZero(commandDocument, "limit", getLimit());
-        putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+        putIfNotZero(commandDocument, "maxTimeMS", timeoutContext.getMaxTimeMS());
         putIfTrue(commandDocument, "jsMode", isJsMode());
         if (bypassDocumentValidation != null && description != null) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));

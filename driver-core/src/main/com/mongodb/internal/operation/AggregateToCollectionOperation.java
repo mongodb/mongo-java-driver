@@ -21,7 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -58,7 +58,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConc
  */
 public class AggregateToCollectionOperation implements AsyncReadOperation<Void>, ReadOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -81,7 +81,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
             final List<BsonDocument> pipeline, @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern,
             final AggregationLevel aggregationLevel) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
@@ -155,11 +155,11 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
     @Override
     public Void execute(final ReadBinding binding) {
-        return executeRetryableRead(clientSideOperationTimeout, binding,
-                () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),
-                namespace.getDatabaseName(),
-                (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(),
-                new BsonDocumentCodec(), (result, source, connection) -> {
+        return executeRetryableRead(timeoutContext, binding,
+                                    () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),
+                                    namespace.getDatabaseName(),
+                                    (timeoutContext, serverDescription, connectionDescription) -> getCommand(),
+                                    new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                             connection.getDescription().getMaxWireVersion());
                     return null;
@@ -168,12 +168,12 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Void> callback) {
-        executeRetryableReadAsync(clientSideOperationTimeout, binding,
-                (connectionSourceCallback) ->
+        executeRetryableReadAsync(timeoutContext, binding,
+                                  (connectionSourceCallback) ->
                         binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary(), connectionSourceCallback),
-                namespace.getDatabaseName(),
-                (clientSideOperationTimeout, serverDescription, connectionDescription) -> getCommand(),
-                new BsonDocumentCodec(), (result, source, connection) -> {
+                                  namespace.getDatabaseName(),
+                                  (timeoutContext, serverDescription, connectionDescription) -> getCommand(),
+                                  new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
                             connection.getDescription().getMaxWireVersion());
                     return null;
@@ -186,7 +186,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
         commandDocument.put("pipeline", new BsonArray(pipeline));
-        long maxTimeMS = clientSideOperationTimeout.getMaxTimeMS();
+        long maxTimeMS = timeoutContext.getMaxTimeMS();
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }

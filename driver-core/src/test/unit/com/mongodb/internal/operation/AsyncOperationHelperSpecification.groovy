@@ -23,7 +23,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.internal.ClientSideOperationTimeout
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -91,7 +91,7 @@ class AsyncOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableWriteAsync(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), asyncWriteBinding, dbName, primary(),
+        executeRetryableWriteAsync(new TimeoutContext(TIMEOUT_SETTINGS), asyncWriteBinding, dbName, primary(),
                 new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.asyncTransformer(),
                 { cmd -> cmd }, callback)
 
@@ -149,7 +149,7 @@ class AsyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableReadAsync(new ClientSideOperationTimeout(TIMEOUT_SETTINGS), asyncReadBinding, dbName, commandCreator,
+        executeRetryableReadAsync(new TimeoutContext(TIMEOUT_SETTINGS), asyncReadBinding, dbName, commandCreator,
                 decoder, function, false, callback)
 
         then:

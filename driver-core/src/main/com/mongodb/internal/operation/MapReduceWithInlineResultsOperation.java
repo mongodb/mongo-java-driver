@@ -20,7 +20,7 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -62,7 +62,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
                                                                ReadOperation<MapReduceBatchCursor<T>> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -79,7 +79,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     public MapReduceWithInlineResultsOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -176,17 +176,17 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
 
     @Override
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
-                getCommandCreator(binding.getSessionContext()),
-                CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
+        return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
+                                    getCommandCreator(binding.getSessionContext()),
+                                    CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
         SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(clientSideOperationTimeout, binding, namespace.getDatabaseName(),
-                getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, "results"),
-                asyncTransformer(), false, errHandlingCallback);
+        executeRetryableReadAsync(timeoutContext, binding, namespace.getDatabaseName(),
+                                  getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, "results"),
+                                  asyncTransformer(), false, errHandlingCallback);
     }
 
     public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
@@ -199,7 +199,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<>(timeoutSettings, namespace.getDatabaseName(),
-                asExplainCommand(getCommand(clientSideOperationTimeout, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                asExplainCommand(getCommand(timeoutContext, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
                         explainVerbosity), new BsonDocumentCodec());
     }
 
@@ -214,11 +214,11 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) ->
-                getCommand(clientSideOperationTimeout, sessionContext, connectionDescription.getMaxWireVersion());
+        return (timeoutContext, serverDescription, connectionDescription) ->
+                getCommand(timeoutContext, sessionContext, connectionDescription.getMaxWireVersion());
     }
 
-    private BsonDocument getCommand(final ClientSideOperationTimeout clientSideOperationTimeout, final SessionContext sessionContext,
+    private BsonDocument getCommand(final TimeoutContext timeoutContext, final SessionContext sessionContext,
             final int maxWireVersion) {
         BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
                                            .append("map", getMapFunction())
@@ -232,7 +232,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         putIfTrue(commandDocument, "verbose", isVerbose());
         appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
         putIfNotZero(commandDocument, "limit", getLimit());
-        putIfNotZero(commandDocument, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+        putIfNotZero(commandDocument, "maxTimeMS", timeoutContext.getMaxTimeMS());
         putIfTrue(commandDocument, "jsMode", isJsMode());
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());

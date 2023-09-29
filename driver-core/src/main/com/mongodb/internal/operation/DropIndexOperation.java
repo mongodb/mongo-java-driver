@@ -19,7 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -50,7 +50,7 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  */
 public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final String indexName;
     private final BsonDocument indexKeys;
@@ -59,7 +59,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     public DropIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final String indexName, @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.indexName = notNull("indexName", indexName);
         this.indexKeys = null;
@@ -69,7 +69,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     public DropIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final BsonDocument indexKeys, @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.indexKeys = notNull("indexKeys", indexKeys);
         this.indexName = null;
@@ -121,7 +121,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
             command.put("index", indexKeys);
         }
 
-        putIfNotZero(command, "maxTimeMS", clientSideOperationTimeout.getMaxTimeMS());
+        putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
         appendWriteConcernToCommand(writeConcern, command);
         return command;
     }

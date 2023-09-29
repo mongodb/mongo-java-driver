@@ -20,7 +20,7 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -47,7 +47,7 @@ final class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     @Nullable
@@ -67,7 +67,7 @@ final class ListSearchIndexesOperation<T>
             @Nullable final Collation collation, @Nullable final BsonValue comment, @Nullable final Boolean allowDiskUse,
             final boolean retryReads) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
@@ -122,8 +122,8 @@ final class ListSearchIndexesOperation<T>
         BsonDocument searchDefinition = getSearchDefinition();
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
 
-        return new AggregateOperation<>(clientSideOperationTimeout.getTimeoutSettings(), namespace, singletonList(listSearchIndexesStage),
-                decoder)
+        return new AggregateOperation<>(timeoutContext.getTimeoutSettings(), namespace, singletonList(listSearchIndexesStage),
+                                        decoder)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)

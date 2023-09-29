@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.ClientSideOperationTimeout;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -36,7 +36,7 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  */
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
     private final TimeoutSettings timeoutSettings;
-    private final ClientSideOperationTimeout clientSideOperationTimeout;
+    private final TimeoutContext timeoutContext;
     private final String databaseName;
     private final BsonDocument command;
     private final Decoder<T> decoder;
@@ -44,7 +44,7 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
     public CommandReadOperation(final TimeoutSettings timeoutSettings, final String databaseName,
             final BsonDocument command, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.clientSideOperationTimeout = new ClientSideOperationTimeout(timeoutSettings);
+        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.command = notNull("command", command);
         this.decoder = notNull("decoder", decoder);
@@ -52,18 +52,18 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeRetryableRead(clientSideOperationTimeout, binding, databaseName, getCommandCreator(), decoder,
-                (result, source, connection) -> result, false);
+        return executeRetryableRead(timeoutContext, binding, databaseName, getCommandCreator(), decoder,
+                                    (result, source, connection) -> result, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(clientSideOperationTimeout, binding, databaseName, getCommandCreator(), decoder,
-                (result, source, connection) -> result, false, callback);
+        executeRetryableReadAsync(timeoutContext, binding, databaseName, getCommandCreator(), decoder,
+                                  (result, source, connection) -> result, false, callback);
     }
 
     // TODO (CSOT) - JAVA-5098 - should the command be modified for CSOT?
     private CommandCreator getCommandCreator() {
-        return (clientSideOperationTimeout, serverDescription, connectionDescription) -> command;
+        return (timeoutContext, serverDescription, connectionDescription) -> command;
     }
 }
