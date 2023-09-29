@@ -41,6 +41,8 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.createNewOperationContext
+
 class OperationUnitSpecification extends Specification {
 
     // Have to add to this map for every server release
@@ -94,6 +96,12 @@ class OperationUnitSpecification extends Specification {
     def testSyncOperation(operation, List<Integer> serverVersion, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null,
                           Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
+                .withSessionContext(Stub(SessionContext) {
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
+
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -103,20 +111,16 @@ class OperationUnitSpecification extends Specification {
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
             getReadPreference() >> readPreference
-            getServerApi() >> null
+            getOperationContext() >> operationContext
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
-            getServerApi() >> null
-            getSessionContext() >> Stub(SessionContext) {
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource() >> connectionSource
+            getOperationContext() >> operationContext
         }
 
         if (checkCommand) {
@@ -148,6 +152,13 @@ class OperationUnitSpecification extends Specification {
     def testAsyncOperation(operation, List<Integer> serverVersion, result = null,
                            Boolean checkCommand=true, BsonDocument expectedCommand=null,
                            Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
+
+        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
+                .withSessionContext(Stub(SessionContext) {
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
+
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -155,22 +166,18 @@ class OperationUnitSpecification extends Specification {
         }
 
         def connectionSource = Stub(AsyncConnectionSource) {
-            getServerApi() >> null
-            getReadPreference() >> readPreference
             getConnection(_) >> { it[0].onResult(connection, null) }
+            getReadPreference() >> readPreference
+            getOperationContext() >> getOperationContext() >> operationContext
         }
         def readBinding = Stub(AsyncReadBinding) {
-            getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
-            getSessionContext() >> Stub(SessionContext) {
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(AsyncWriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getOperationContext() >> operationContext
         }
         def callback = new FutureResultCallback()
 

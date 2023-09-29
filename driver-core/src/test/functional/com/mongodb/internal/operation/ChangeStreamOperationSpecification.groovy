@@ -52,6 +52,7 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
@@ -632,15 +633,16 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should set the startAtOperationTime on the sync cursor'() {
         given:
+        def operationContext = OPERATION_CONTEXT.withSessionContext(
+                Stub(SessionContext) {
+                    getReadConcern() >> ReadConcern.DEFAULT
+                    getOperationTime() >> new BsonTimestamp()
+                })
         def changeStream
         def binding = Stub(ReadBinding) {
-            getSessionContext() >> Stub(SessionContext) {
-                getReadConcern() >> ReadConcern.DEFAULT
-                getOperationTime() >> new BsonTimestamp()
-            }
-            getServerApi() >> null
+            getOperationContext() >> operationContext
             getReadConnectionSource() >> Stub(ConnectionSource) {
-                getServerApi() >> null
+                getOperationContext() >> operationContext
                 getConnection() >> Stub(Connection) {
                      command(*_) >> {
                          changeStream = getChangeStream(it[1])
@@ -688,16 +690,17 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should set the startAtOperationTime on the async cursor'() {
         given:
+        def operationContext = OPERATION_CONTEXT.withSessionContext(
+                Stub(SessionContext) {
+                    getReadConcern() >> ReadConcern.DEFAULT
+                    getOperationTime() >> new BsonTimestamp()
+                })
         def changeStream
         def binding = Stub(AsyncReadBinding) {
-            getServerApi() >> null
-            getSessionContext() >> Stub(SessionContext) {
-                getReadConcern() >> ReadConcern.DEFAULT
-                getOperationTime() >> new BsonTimestamp()
-            }
+            getOperationContext() >> operationContext
             getReadConnectionSource(_) >> {
                 it.last().onResult(Stub(AsyncConnectionSource) {
-                    getServerApi() >> null
+                    getOperationContext() >> operationContext
                     getConnection(_) >> {
                         it.last().onResult(Stub(AsyncConnection) {
                             commandAsync(*_) >> {

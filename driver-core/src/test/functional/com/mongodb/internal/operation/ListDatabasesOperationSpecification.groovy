@@ -34,6 +34,7 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
@@ -98,14 +99,14 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
-            getReadPreference() >> readPreference
-            getServerApi() >> null
             getConnection() >> connection
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListDatabasesOperation(TIMEOUT_SETTINGS, helper.decoder)
 
@@ -114,7 +115,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, _, readPreference, _, readBinding) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -130,7 +131,6 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadPreference() >> readPreference
-            getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def operation = new ListDatabasesOperation(TIMEOUT_SETTINGS, helper.decoder)

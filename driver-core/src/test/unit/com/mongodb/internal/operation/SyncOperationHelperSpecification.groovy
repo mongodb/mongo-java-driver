@@ -22,7 +22,6 @@ import com.mongodb.ReadPreference
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.binding.WriteBinding
@@ -35,7 +34,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer
@@ -54,12 +53,12 @@ class SyncOperationHelperSpecification extends Specification {
         def connection = Mock(Connection)
         def function = Stub(CommandWriteTransformer)
         def connectionSource = Stub(ConnectionSource) {
-            getServerApi() >> null
             getConnection() >> connection
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def writeBinding = Stub(WriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource() >> connectionSource
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def connectionDescription = Stub(ConnectionDescription)
 
@@ -68,12 +67,18 @@ class SyncOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, primary(), decoder, writeBinding) >> new BsonDocument()
+        1 * connection.command(dbName, command, _, primary(), decoder, OPERATION_CONTEXT) >> new BsonDocument()
         1 * connection.release()
     }
 
     def 'should retry with retryable exception'() {
         given:
+        def operationContext = OPERATION_CONTEXT
+                .withSessionContext(Stub(SessionContext) {
+                    hasSession() >> true
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
         def dbName = 'db'
         def command = BsonDocument.parse('''{findAndModify: "coll", query: {a: 1}, new: false, update: {$inc: {a :1}}, txnNumber: 1}''')
         def commandCreator = { csot, serverDescription, connectionDescription -> command }
@@ -93,24 +98,20 @@ class SyncOperationHelperSpecification extends Specification {
             _ * getServerDescription() >> Stub(ServerDescription) {
                 getLogicalSessionTimeoutMinutes() >> 1
             }
+            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
-            getServerApi() >> null
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
 
         when:
-        executeRetryableWrite(new TimeoutContext(TIMEOUT_SETTINGS), writeBinding, dbName, primary(),
+        executeRetryableWrite(writeBinding, dbName, primary(),
                 new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.transformer())
                 { cmd -> cmd }
 
         then:
-        2 * connection.command(dbName, command, _, primary(), decoder, writeBinding) >> { results.poll() }
+        2 * connection.command(dbName, command, _, primary(), decoder, operationContext) >> { results.poll() }
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -128,20 +129,20 @@ class SyncOperationHelperSpecification extends Specification {
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
             getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableRead(new TimeoutContext(TIMEOUT_SETTINGS), readBinding, dbName, commandCreator, decoder,
-                function, false)
+        executeRetryableRead(readBinding, dbName, commandCreator, decoder, function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, _, readPreference, decoder, readBinding) >> new BsonDocument()
+        1 * connection.command(dbName, command, _, readPreference, decoder, OPERATION_CONTEXT) >> new BsonDocument()
         1 * connection.release()
 
         where:

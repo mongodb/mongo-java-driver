@@ -30,6 +30,8 @@ import org.junit.runners.Parameterized;
 
 import java.util.concurrent.Callable;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+
 // Implementation of
 // https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
 // specification tests
@@ -48,7 +50,7 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
             FutureResultCallback<InternalConnection> callback = new FutureResultCallback<>();
             return () -> {
                 try {
-                    getPool().getAsync(new OperationContext(), (connection, t) -> {
+                    getPool().getAsync(OPERATION_CONTEXT, (connection, t) -> {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {

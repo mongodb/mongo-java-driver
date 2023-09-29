@@ -282,7 +282,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
             it.last().onResult(response, null)
         }
         1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), _, primary(), _,
-                connectionSource, *_) >> {
+                connectionSource.operationContext, *_) >> {
                 it.last().onResult(null, null)
         }
 

@@ -43,6 +43,7 @@ import util.spock.annotations.Slow
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -359,7 +360,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), null, connectionSource, connection)
 
         when:
-        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, connection)
+        makeAdditionalGetMoreCall(getNamespace(), firstBatch.cursor, connection, OPERATION_CONTEXT)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -529,7 +530,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         connection.command(getNamespace().databaseName,
                 new BsonDocument('killCursors', new BsonString(namespace.getCollectionName()))
                         .append('cursors', new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), connectionSource)
+                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.operationContext)
         connection.release()
         cursor.next()
 
@@ -633,7 +634,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
             def response = connection.command(getDatabaseName(), findCommand,
                     NO_OP_FIELD_NAME_VALIDATOR, readPreference,
-                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), connectionSource)
+                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), connectionSource.getOperationContext())
             cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } finally {
             connection.release()

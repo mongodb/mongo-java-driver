@@ -16,19 +16,18 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 
@@ -174,8 +173,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().build(), SINGLE, null),
-                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new OperationContext())
+                MessageSettings.builder().build(), SINGLE, null), new BsonDocumentCodec(),  OPERATION_CONTEXT)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -193,8 +191,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
                 MessageSettings.builder().build(), SINGLE, null),
-                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, IgnorableRequestContext.INSTANCE, new OperationContext(),
-                futureResultCallback)
+                new BsonDocumentCodec(), OPERATION_CONTEXT, futureResultCallback)
         futureResultCallback.get()
 
         then:

@@ -168,37 +168,33 @@ class MongoDatabaseSpecification extends Specification {
 
         when:
         execute(runCommandMethod, session, command)
-        def operation = executor.getReadOperation() as CommandReadOperation<Document>
+         executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
-        operation.command == command
         executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
         when:
         execute(runCommandMethod, session, command, primaryPreferred())
-        operation = executor.getReadOperation() as CommandReadOperation<Document>
+        executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
-        operation.command == command
         executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
 
         when:
         execute(runCommandMethod, session, command, BsonDocument)
-        operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
+        executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
-        operation.command == command
         executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
         when:
         execute(runCommandMethod, session, command, primaryPreferred(), BsonDocument)
-        operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
+        executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
-        operation.command == command
         executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
 

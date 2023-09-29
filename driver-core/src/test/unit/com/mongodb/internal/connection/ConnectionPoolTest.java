@@ -28,6 +28,8 @@ import org.junit.runners.Parameterized;
 
 import java.util.concurrent.Callable;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+
 // Implementation of
 // https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
 // specification tests
@@ -45,7 +47,7 @@ public class ConnectionPoolTest extends AbstractConnectionPoolTest {
         if (name.equals("checkOut")) {
             return () -> {
                 try {
-                    InternalConnection connection = getPool().get(new OperationContext());
+                    InternalConnection connection = getPool().get(OPERATION_CONTEXT);
                     if (operation.containsKey("label")) {
                         getConnectionMap().put(operation.getString("label").getValue(), connection);
                     }

@@ -22,19 +22,14 @@ import com.mongodb.MongoNamespace
 import com.mongodb.MongoQueryException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.ConnectionSource
-import com.mongodb.internal.binding.StaticBindingContext
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-
-import static com.mongodb.ClusterFixture.getServerApi
 
 class QueryOperationHelper {
 
@@ -57,21 +52,21 @@ class QueryOperationHelper {
             ConnectionSource connectionSource) {
         def connection = connectionSource.getConnection()
         try {
-            makeAdditionalGetMoreCall(namespace, serverCursor, connection)
+            makeAdditionalGetMoreCall(namespace, serverCursor, connection, connectionSource.operationContext)
         } finally {
             connection.release()
         }
     }
 
-    static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor, Connection connection) {
+    static void makeAdditionalGetMoreCall(MongoNamespace namespace, ServerCursor serverCursor, Connection connection,
+            OperationContext operationContext) {
         try {
             connection.command(namespace.databaseName,
                     new BsonDocument('getMore', new BsonInt64(serverCursor.getId()))
                             .append('collection', new BsonString(namespace.getCollectionName())),
                     new NoOpFieldNameValidator(), ReadPreference.primary(),
                     new BsonDocumentCodec(),
-                    new StaticBindingContext(new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE,
-                            new OperationContext()))
+                    operationContext)
         } catch (MongoCommandException e) {
             if (e.getErrorCode() == 43) {
                 throw new MongoCursorNotFoundException(serverCursor.getId(), e.getResponse(), serverCursor.getAddress())

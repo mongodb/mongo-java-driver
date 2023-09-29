@@ -29,7 +29,6 @@ import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandListener
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.diagnostics.logging.Logger
 import com.mongodb.internal.logging.StructuredLogger
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -39,6 +38,7 @@ import org.bson.BsonInt32
 import org.bson.BsonString
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
@@ -61,10 +61,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Stub(Logger) {
             isDebugEnabled() >> debugLoggingEnabled
         }
-        def context = new OperationContext()
+        def operationContext = OPERATION_CONTEXT
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                IgnorableRequestContext.INSTANCE, context, message, bsonOutput, new StructuredLogger(logger),
-                LoggerSettings.builder().build())
+                operationContext, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()
@@ -73,17 +72,16 @@ class LoggingCommandEventSenderSpecification extends Specification {
         sender.sendFailedEvent(failureException)
 
         then:
-        commandListener.eventsWereDelivered(
-                [
-                        new CommandStartedEvent(null, context.id, message.getId(), connectionDescription, namespace.databaseName,
-                                commandDocument.getFirstKey(), commandDocument.append('$db', new BsonString(namespace.databaseName))),
-                        new CommandSucceededEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(),
-                                new BsonDocument(), 1),
-                        new CommandSucceededEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(),
-                                replyDocument, 1),
-                        new CommandFailedEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(), 1,
-                                failureException)
-                ])
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(null, operationContext.id, message.getId(), connectionDescription, namespace.databaseName,
+                        commandDocument.getFirstKey(), commandDocument.append('$db', new BsonString(namespace.databaseName))),
+                new CommandSucceededEvent(null, operationContext.id, message.getId(), connectionDescription,
+                        commandDocument.getFirstKey(), new BsonDocument(), 1),
+                new CommandSucceededEvent(null, operationContext.id, message.getId(), connectionDescription,
+                        commandDocument.getFirstKey(), replyDocument, 1),
+                new CommandFailedEvent(null, operationContext.id, message.getId(), connectionDescription,
+                        commandDocument.getFirstKey(), 1, failureException)
+        ])
 
         where:
         debugLoggingEnabled << [true, false]
@@ -106,9 +104,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def operationContext = new OperationContext()
+        def operationContext = OPERATION_CONTEXT
         def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
-                IgnorableRequestContext.INSTANCE, operationContext, message, bsonOutput, new StructuredLogger(logger),
+                operationContext, message, bsonOutput, new StructuredLogger(logger),
                 LoggerSettings.builder().build())
         when:
         sender.sendStartedEvent()
@@ -162,10 +160,10 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def operationContext = new OperationContext()
+        def operationContext = OPERATION_CONTEXT
 
-        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, null,
-                operationContext, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, null, operationContext,
+                message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()
@@ -195,10 +193,9 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
-        def operationContext = new OperationContext()
+        def operationContext = OPERATION_CONTEXT
         def sender = new LoggingCommandEventSender(['createUser'] as Set, [] as Set, connectionDescription, null,
-                IgnorableRequestContext.INSTANCE, operationContext, message, bsonOutput, new StructuredLogger(logger),
-                LoggerSettings.builder().build())
+                operationContext, message, bsonOutput, new StructuredLogger(logger), LoggerSettings.builder().build())
 
         when:
         sender.sendStartedEvent()

@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.RequestContext;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
@@ -25,7 +24,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -165,10 +163,9 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                                final RequestContext requestContext, final OperationContext operationContext) {
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            message.encode(bsonOutput, sessionContext);
+            message.encode(bsonOutput, operationContext.getSessionContext());
             sendMessage(bsonOutput.getByteBuffers(), message.getId());
         }
         try (ResponseBuffers responseBuffers = receiveMessage(message.getId())) {
@@ -183,12 +180,12 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+    public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
+    public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
         throw new UnsupportedOperationException();
     }
 
@@ -205,11 +202,10 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-            final SessionContext sessionContext, final RequestContext requestContext, final OperationContext operationContext,
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext,
             final SingleResultCallback<T> callback) {
         try {
-            T result = sendAndReceive(message, decoder, sessionContext, requestContext, operationContext);
+            T result = sendAndReceive(message, decoder, operationContext);
             callback.onResult(result, null);
         } catch (MongoException ex) {
             callback.onResult(null, ex);

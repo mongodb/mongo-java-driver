@@ -46,6 +46,7 @@ import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT
@@ -410,14 +411,14 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
-            getServerApi() >> null
-            getReadPreference() >> readPreference
             getConnection() >> connection
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListCollectionsOperation(TIMEOUT_SETTINGS, helper.dbName, helper.decoder)
 
@@ -426,7 +427,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, readBinding) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -437,14 +438,14 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         given:
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
-            getReadPreference() >> readPreference
-            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(AsyncReadBinding) {
-            getReadPreference() >> readPreference
-            getServerApi() >> null
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListCollectionsOperation(TIMEOUT_SETTINGS, helper.dbName, helper.decoder)
 
@@ -453,7 +454,8 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, _, readPreference, *_) >> { it.last().onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, OPERATION_CONTEXT, *_) >> {
+            it.last().onResult(helper.commandResult, null) }
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]

@@ -26,8 +26,6 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
-import com.mongodb.internal.IgnorableRequestContext;
-import com.mongodb.internal.binding.StaticBindingContext;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
@@ -39,6 +37,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
@@ -103,7 +102,7 @@ public class SingleServerClusterTest {
         setUpCluster(getPrimary());
 
         // when
-        ServerTuple serverTuple = cluster.selectServer(clusterDescription -> getPrimaries(clusterDescription), new OperationContext());
+        ServerTuple serverTuple = cluster.selectServer(clusterDescription -> getPrimaries(clusterDescription), OPERATION_CONTEXT);
 
         // then
         assertTrue(serverTuple.getServerDescription().isOk());
@@ -115,14 +114,13 @@ public class SingleServerClusterTest {
         ServerAddress secondary = getSecondary();
         setUpCluster(secondary);
         String collectionName = getClass().getName();
-        Connection connection = cluster.selectServer(new ServerAddressSelector(secondary), new OperationContext()).getServer()
-                .getConnection(new OperationContext());
+        OperationContext operationContext = OPERATION_CONTEXT;
+        Connection connection = cluster.selectServer(new ServerAddressSelector(secondary), operationContext).getServer()
+                .getConnection(operationContext);
 
         // when
         BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("count", new BsonString(collectionName)),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                new StaticBindingContext(NoOpSessionContext.INSTANCE, getServerApi(), IgnorableRequestContext.INSTANCE,
-                        new OperationContext()));
+                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
 
         // then
         assertEquals(new BsonDouble(1.0).intValue(), result.getNumber("ok").intValue());

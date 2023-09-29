@@ -38,6 +38,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 
 class QueryBatchCursorSpecification extends Specification {
@@ -53,7 +54,7 @@ class QueryBatchCursorSpecification extends Specification {
         }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> { connection }
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
         }
         connectionSource.retain() >> connectionSource
 
@@ -81,7 +82,7 @@ class QueryBatchCursorSpecification extends Specification {
         cursor.hasNext()
 
         then:
-        1 * connection.command(NAMESPACE.getDatabaseName(), expectedCommand, _, _, _, connectionSource) >> {
+        1 * connection.command(NAMESPACE.getDatabaseName(), expectedCommand, _, _, _, OPERATION_CONTEXT) >> {
             reply
         }
         1 * connection.release()
@@ -102,7 +103,7 @@ class QueryBatchCursorSpecification extends Specification {
             _ * command(*_) >> { throw new MongoSocketException('No MongoD', SERVER_ADDRESS) }
         }
         def connectionSource = Stub(ConnectionSource) {
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
             getConnection() >> { connection }
         }
         connectionSource.retain() >> connectionSource
@@ -132,7 +133,7 @@ class QueryBatchCursorSpecification extends Specification {
         }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> { throw new MongoSocketOpenException("can't open socket", SERVER_ADDRESS, new IOException()) }
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
         }
         connectionSource.retain() >> connectionSource
 

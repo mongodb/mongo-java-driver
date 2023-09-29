@@ -20,6 +20,8 @@ import com.mongodb.MongoTimeoutException;
 
 import java.util.concurrent.CountDownLatch;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+
 class TimeoutTrackingConnectionGetter implements Runnable {
     private final ConnectionPool connectionPool;
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -37,7 +39,7 @@ class TimeoutTrackingConnectionGetter implements Runnable {
     @Override
     public void run() {
         try {
-            InternalConnection connection = connectionPool.get(new OperationContext());
+            InternalConnection connection = connectionPool.get(OPERATION_CONTEXT);
             connection.close();
         } catch (MongoTimeoutException e) {
             gotTimeout = true;

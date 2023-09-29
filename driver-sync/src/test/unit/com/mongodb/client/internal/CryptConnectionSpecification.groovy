@@ -22,13 +22,9 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
-import com.mongodb.internal.IgnorableRequestContext
-import com.mongodb.internal.binding.StaticBindingContext
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.NoOpSessionContext
-import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
@@ -49,6 +45,7 @@ import org.bson.codecs.RawBsonDocumentCodec
 import org.bson.io.BasicOutputBuffer
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
 
@@ -73,14 +70,12 @@ class CryptConnectionSpecification extends Specification {
                 .append('cursor', new BsonDocument('firstBatch',
                 new BsonArray([new BsonDocument('_id', new BsonInt32(1))
                                        .append('ssid', new BsonString('555-55-5555'))]))))
-        def operationContext = new OperationContext()
-        def context = new StaticBindingContext(NoOpSessionContext.INSTANCE, null, IgnorableRequestContext.INSTANCE, operationContext)
 
         when:
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('find', 'test')
                         .append('filter', new Document('ssid', '555-55-5555')), codec),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), codec, context)
+                new NoOpFieldNameValidator(), ReadPreference.primary(), codec, OPERATION_CONTEXT)
 
         then:
         _ * wrappedConnection.getDescription() >> {
@@ -92,7 +87,7 @@ class CryptConnectionSpecification extends Specification {
              encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, context, true, null, null) >> {
+                _ as RawBsonDocumentCodec, OPERATION_CONTEXT, true, null, null) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse) >> {
@@ -121,14 +116,12 @@ class CryptConnectionSpecification extends Specification {
 
         def encryptedResponse = toRaw(new BsonDocument('ok', new BsonInt32(1)))
         def decryptedResponse = encryptedResponse
-        def operationContext = new OperationContext()
-        def context = new StaticBindingContext(NoOpSessionContext.INSTANCE, null, IgnorableRequestContext.INSTANCE, operationContext)
 
         when:
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
                 new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                context, true, payload, new NoOpFieldNameValidator(),)
+                OPERATION_CONTEXT, true, payload, new NoOpFieldNameValidator(),)
 
         then:
         _ * wrappedConnection.getDescription() >> {
@@ -145,7 +138,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, context, true, null, null,) >> {
+                _ as RawBsonDocumentCodec, OPERATION_CONTEXT, true, null, null,) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse) >> {
@@ -176,13 +169,11 @@ class CryptConnectionSpecification extends Specification {
 
         def encryptedResponse = toRaw(new BsonDocument('ok', new BsonInt32(1)))
         def decryptedResponse = encryptedResponse
-        def operationContext = new OperationContext()
-        def context = new StaticBindingContext(NoOpSessionContext.INSTANCE, null, IgnorableRequestContext.INSTANCE, operationContext)
 
         when:
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), context, true, payload,
+                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT, true, payload,
                 new NoOpFieldNameValidator())
 
         then:
@@ -199,7 +190,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, context, true, null, null,) >> {
+                _ as RawBsonDocumentCodec, OPERATION_CONTEXT, true, null, null,) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse) >> {

@@ -36,8 +36,8 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.internal.connection.DescriptionHelper.createConnectionDescription
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription
-import static org.bson.BsonDocument.parse
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
+import static org.bson.BsonDocument.parse
 
 class DescriptionHelperSpecification extends Specification {
     private final ServerAddress serverAddress = new ServerAddress('localhost', 27018)

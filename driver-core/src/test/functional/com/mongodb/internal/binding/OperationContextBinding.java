@@ -23,13 +23,13 @@ import com.mongodb.internal.connection.OperationContext;
 
 import static org.bson.assertions.Assertions.notNull;
 
-public class SessionBinding implements ReadWriteBinding {
+public class OperationContextBinding implements ReadWriteBinding {
     private final ReadWriteBinding wrapped;
     private final OperationContext operationContext;
 
-    public SessionBinding(final ReadWriteBinding wrapped) {
+    public OperationContextBinding(final ReadWriteBinding wrapped, final OperationContext operationContext) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.operationContext = wrapped.getOperationContext().withSessionContext(new SimpleSessionContext());
+        this.operationContext = notNull("operationContext", operationContext);
     }
 
     @Override

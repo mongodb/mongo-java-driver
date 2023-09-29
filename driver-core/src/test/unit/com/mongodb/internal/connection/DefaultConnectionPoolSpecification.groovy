@@ -20,7 +20,6 @@ import com.mongodb.MongoConnectionPoolClearedException
 import com.mongodb.MongoServerUnavailableException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
-import com.mongodb.logging.TestLoggingInterceptor
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -31,6 +30,7 @@ import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.inject.EmptyProvider
 import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.internal.logging.LogMessage
+import com.mongodb.logging.TestLoggingInterceptor
 import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Subject
@@ -41,6 +41,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.connection.ConnectionPoolSettings.builder
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
@@ -74,7 +75,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.ready()
 
         expect:
-        pool.get(new OperationContext()) != null
+        pool.get(OPERATION_CONTEXT) != null
     }
 
     def 'should reuse released connection'() throws InterruptedException {
@@ -84,8 +85,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.ready()
 
         when:
-        pool.get(new OperationContext()).close()
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT).close()
+        pool.get(OPERATION_CONTEXT)
 
         then:
         1 * connectionFactory.create(SERVER_ID, _)
@@ -98,7 +99,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.ready()
 
         when:
-        pool.get(new OperationContext()).close()
+        pool.get(OPERATION_CONTEXT).close()
 
         then:
         !connectionFactory.getCreatedConnections().get(0).isClosed()
@@ -111,13 +112,13 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.ready()
 
         when:
-        def first = pool.get(new OperationContext())
+        def first = pool.get(OPERATION_CONTEXT)
 
         then:
         first != null
 
         when:
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT)
 
         then:
         thrown(MongoTimeoutException)
@@ -128,7 +129,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 builder().maxSize(1).maxWaitTime(50, MILLISECONDS).build(), mockSdamProvider())
         pool.ready()
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT)
 
         when:
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool)
@@ -214,7 +215,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         when:
         pool.ready()
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT)
 
         then:
         1 * listener.connectionCreated { it.connectionId.serverId == SERVER_ID }
@@ -252,7 +253,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         "Connection pool ready for ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}" == poolReadyLogMessage
 
         when: 'connection is created'
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT)
         then: '"connection created" and "connection ready" log messages are emitted'
         def createdLogMessage = getMessage( "Connection created")
         def readyLogMessage = getMessage("Connection ready")
@@ -262,7 +263,7 @@ class DefaultConnectionPoolSpecification extends Specification {
                 ", driver-generated ID=${driverConnectionId}, established in=\\d+ ms"
 
         when: 'connection is released back into the pool on close'
-        pool.get(new OperationContext()).close()
+        pool.get(OPERATION_CONTEXT).close()
         then: '"connection check out" and "connection checked in" log messages are emitted'
         def checkoutStartedMessage = getMessage("Connection checkout started")
         def connectionCheckedInMessage = getMessage("Connection checked in")
@@ -297,7 +298,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         "Connection pool closed for ${SERVER_ADDRESS.getHost()}:${SERVER_ADDRESS.getPort()}"  == poolClosedLogMessage
 
         when: 'connection checked out on closed pool'
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT)
         then:
         thrown(MongoServerUnavailableException)
         def connectionCheckoutFailedInMessage = getMessage("Connection checkout failed")
@@ -320,7 +321,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 builder().maxSize(1).maxWaitTime(50, MILLISECONDS).build(), mockSdamProvider())
         pool.ready()
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT)
 
         when:
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool)
@@ -343,7 +344,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         when:
         pool.ready()
-        pool.get(new OperationContext()).close()
+        pool.get(OPERATION_CONTEXT).close()
         //not cool - but we have no way of waiting for connection to become idle
         Thread.sleep(500)
         pool.close();
@@ -390,7 +391,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         when:
         try {
-            pool.get(new OperationContext())
+            pool.get(OPERATION_CONTEXT)
         } catch (UncheckedIOException e) {
             if ('expected failure' != e.getMessage()) {
                 throw e
@@ -428,7 +429,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(10)
                 .addConnectionPoolListener(listener).build(), mockSdamProvider())
         pool.ready()
-        def connection = pool.get(new OperationContext())
+        def connection = pool.get(OPERATION_CONTEXT)
         connection.close()
 
         when:
@@ -462,11 +463,11 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(1)
                 .addConnectionPoolListener(listener).build(), mockSdamProvider())
         pool.ready()
-        def connection = pool.get(new OperationContext())
+        def connection = pool.get(OPERATION_CONTEXT)
         connection.close()
 
         when:
-        connection = pool.get(new OperationContext())
+        connection = pool.get(OPERATION_CONTEXT)
 
         then:
         1 * listener.connectionCheckedOut { it.connectionId.serverId == SERVER_ID }
@@ -488,7 +489,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         connection.close()
 
         when:
-        connection = pool.get(new OperationContext())
+        connection = pool.get(OPERATION_CONTEXT)
 
         then:
         1 * listener.connectionCheckedOut { it.connectionId.serverId == SERVER_ID }
@@ -514,7 +515,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         when:
         try {
-            pool.get(new OperationContext())
+            pool.get(OPERATION_CONTEXT)
         } catch (UncheckedIOException e) {
             if ('expected failure' != e.getMessage()) {
                 throw e
@@ -559,7 +560,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         when:
         try {
-            pool.get(new OperationContext())
+            pool.get(OPERATION_CONTEXT)
         } catch (MongoConnectionPoolClearedException e) {
             caught = e
         }
@@ -574,7 +575,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         CompletableFuture<Throwable> caught = new CompletableFuture<>()
 
         when:
-        pool.getAsync(new OperationContext()) { InternalConnection result, Throwable t ->
+        pool.getAsync(OPERATION_CONTEXT) { InternalConnection result, Throwable t ->
             if (t != null) {
                 caught.complete(t)
             }
@@ -594,7 +595,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         when:
         pool.invalidate(cause)
         try {
-            pool.get(new OperationContext())
+            pool.get(OPERATION_CONTEXT)
         } catch (MongoConnectionPoolClearedException e) {
             caught = e
         }
@@ -625,7 +626,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(1)
                 .addConnectionPoolListener(listener).build(), mockSdamProvider())
         pool.ready()
-        def connection = pool.get(new OperationContext())
+        def connection = pool.get(OPERATION_CONTEXT)
         pool.close()
 
         when:
@@ -669,7 +670,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool.ready()
 
         when:
-        def connection = pool.get(new OperationContext())
+        def connection = pool.get(OPERATION_CONTEXT)
         def connectionLatch = selectConnectionAsync(pool)
         connection.close()
 
@@ -682,7 +683,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 builder().maxSize(1).maxWaitTime(5, MILLISECONDS).build(), mockSdamProvider())
         pool.ready()
-        pool.get(new OperationContext())
+        pool.get(OPERATION_CONTEXT)
         def firstConnectionLatch = selectConnectionAsync(pool)
         def secondConnectionLatch = selectConnectionAsync(pool)
 
@@ -718,7 +719,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
     def selectConnectionAsync(DefaultConnectionPool pool) {
         def serverLatch = new ConnectionLatch()
-        pool.getAsync(new OperationContext()) { InternalConnection result, Throwable e ->
+        pool.getAsync(OPERATION_CONTEXT) { InternalConnection result, Throwable e ->
             serverLatch.connection = result
             serverLatch.throwable = e
             serverLatch.latch.countDown()
