@@ -45,6 +45,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureEx
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
+@SuppressWarnings("deprecation")
 class TestInternalConnection implements InternalConnection {
 
     private static class Interaction {

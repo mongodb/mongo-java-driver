@@ -25,6 +25,7 @@
  *
  * @see com.mongodb.client.model.Aggregates#search(SearchOperator, SearchOptions)
  * @see com.mongodb.client.model.Aggregates#search(SearchCollector, SearchOptions)
+ * @see com.mongodb.client.model.Aggregates#vectorSearch(FieldSearchPath, java.lang.Iterable, java.lang.String, long, long, VectorSearchOptions)
  * @mongodb.atlas.manual atlas-search/ Atlas Search
  * @mongodb.atlas.manual atlas-search/query-syntax/ Atlas Search aggregation pipeline stages
  * @since 4.7

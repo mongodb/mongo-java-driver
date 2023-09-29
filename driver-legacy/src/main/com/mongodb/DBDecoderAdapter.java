@@ -26,6 +26,7 @@ import org.bson.codecs.DecoderContext;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+@SuppressWarnings("deprecation")
 class DBDecoderAdapter implements Decoder<DBObject> {
     private final DBDecoder decoder;
     private final DBCollection collection;

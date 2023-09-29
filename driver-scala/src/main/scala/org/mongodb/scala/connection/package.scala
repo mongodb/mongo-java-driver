@@ -63,13 +63,29 @@ package object connection {
   type SslSettings = com.mongodb.connection.SslSettings
 
   /**
+   * Transport settings for the driver.
+   *
+   * @since 4.11
+   */
+  type TransportSettings = com.mongodb.connection.TransportSettings
+
+  /**
+   * TransportSettings for a Netty-based transport implementation.
+   *
+   * @since 4.11
+   */
+  type NettyTransportSettings = com.mongodb.connection.NettyTransportSettings
+
+  /**
    * The factory for streams.
    */
+  @deprecated("For removal in 5.0", "4.11.0")
   type StreamFactory = com.mongodb.connection.StreamFactory
 
   /**
    * A factory of `StreamFactory` instances.
    */
+  @deprecated("For removal in 5.0", "4.11.0")
   type StreamFactoryFactory = com.mongodb.connection.StreamFactoryFactory
 
   /**
@@ -77,6 +93,7 @@ package object connection {
    *
    * @see java.nio.channels.AsynchronousSocketChannel
    */
+  @deprecated("For removal in 5.0", "4.11.0")
   type AsynchronousSocketChannelStreamFactoryFactory =
     com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 
@@ -86,6 +103,7 @@ package object connection {
    * @see java.nio.channels.AsynchronousSocketChannel
    * @since 2.2
    */
+  @deprecated("For removal in 5.0", "4.11.0")
   type AsynchronousSocketChannelStreamFactoryFactoryBuilder =
     com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory.Builder
 
@@ -93,12 +111,14 @@ package object connection {
    * A `StreamFactoryFactory` implementation for Netty-based streams.
    * @since 2.2
    */
+  @deprecated("For removal in 5.0", "4.11.0")
   type NettyStreamFactoryFactory = com.mongodb.connection.netty.NettyStreamFactoryFactory
 
   /**
    * A `StreamFactoryFactory` builder for Netty-based streams.
    * @since 2.2
    */
+  @deprecated("For removal in 5.0", "4.11.0")
   type NettyStreamFactoryFactoryBuilder = com.mongodb.connection.netty.NettyStreamFactoryFactory.Builder
 
   /**
@@ -106,5 +126,6 @@ package object connection {
    *
    * @since 2.6
    */
+  @deprecated("For removal in 5.0", "4.11.0")
   type TlsChannelStreamFactoryFactory = com.mongodb.connection.TlsChannelStreamFactoryFactory
 }

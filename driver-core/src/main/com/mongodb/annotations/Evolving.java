@@ -18,7 +18,7 @@
 
 package com.mongodb.annotations;
 
-import com.mongodb.connection.StreamFactoryFactory;
+import org.bson.codecs.Codec;
 import org.bson.conversions.Bson;
 
 import java.lang.annotation.Documented;
@@ -52,7 +52,7 @@ import java.lang.annotation.Target;
  *   </tr>
  *   <tr>
  *     <td>Doing so allows customizing API behavior.</td>
- *     <td>{@link StreamFactoryFactory}</td>
+ *     <td>{@link Codec}</td>
  *     <td>Not applicable.</td>
  *   </tr>
  *   <tr>

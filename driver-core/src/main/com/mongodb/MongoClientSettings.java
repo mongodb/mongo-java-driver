@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
@@ -64,6 +65,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * @since 3.7
  */
+@SuppressWarnings("deprecation")
 @Immutable
 public final class MongoClientSettings {
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
@@ -91,6 +93,7 @@ public final class MongoClientSettings {
     private final boolean retryReads;
     private final ReadConcern readConcern;
     private final MongoCredential credential;
+    private final TransportSettings transportSettings;
     private final StreamFactoryFactory streamFactoryFactory;
     private final List<CommandListener> commandListeners;
     private final CodecRegistry codecRegistry;
@@ -213,6 +216,7 @@ public final class MongoClientSettings {
         private boolean retryReads = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
+        private TransportSettings transportSettings;
         private StreamFactoryFactory streamFactoryFactory;
         private List<CommandListener> commandListeners = new ArrayList<>();
 
@@ -258,6 +262,7 @@ public final class MongoClientSettings {
             dnsClient = settings.getDnsClient();
             timeoutMS = settings.getTimeout(MILLISECONDS);
             inetAddressResolver = settings.getInetAddressResolver();
+            transportSettings = settings.getTransportSettings();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             contextProvider = settings.getContextProvider();
@@ -499,9 +504,27 @@ public final class MongoClientSettings {
          * @param streamFactoryFactory the stream factory factory
          * @return this
          * @see #getStreamFactoryFactory()
+         * @deprecated Prefer {@link #transportSettings(TransportSettings)}
          */
+        @Deprecated
         public Builder streamFactoryFactory(final StreamFactoryFactory streamFactoryFactory) {
             this.streamFactoryFactory = notNull("streamFactoryFactory", streamFactoryFactory);
+            return this;
+        }
+
+        /**
+         * Sets the {@link TransportSettings} to apply.
+         *
+         * <p>
+         * If transport settings are applied, application of {@link #streamFactoryFactory} is ignored.
+         * </p>
+         *
+         * @param transportSettings the transport settings
+         * @return this
+         * @see #getTransportSettings()
+         */
+        public Builder transportSettings(final TransportSettings transportSettings) {
+            this.transportSettings = notNull("transportSettings", transportSettings);
             return this;
         }
 
@@ -814,10 +837,25 @@ public final class MongoClientSettings {
      *
      * @return the stream factory factory
      * @see Builder#streamFactoryFactory(StreamFactoryFactory)
+     * @deprecated  Prefer {@link #getTransportSettings()}
      */
+    @Deprecated
     @Nullable
     public StreamFactoryFactory getStreamFactoryFactory() {
         return streamFactoryFactory;
+    }
+
+    /**
+     * Gets the settings for the underlying transport implementation
+     *
+     * @return the settings for the underlying transport implementation
+     *
+     * @since 4.11
+     * @see Builder#transportSettings(TransportSettings)
+     */
+    @Nullable
+    public TransportSettings getTransportSettings() {
+        return transportSettings;
     }
 
     /**
@@ -1053,6 +1091,7 @@ public final class MongoClientSettings {
                 && Objects.equals(writeConcern, that.writeConcern)
                 && Objects.equals(readConcern, that.readConcern)
                 && Objects.equals(credential, that.credential)
+                && Objects.equals(transportSettings, that.transportSettings)
                 && Objects.equals(streamFactoryFactory, that.streamFactoryFactory)
                 && Objects.equals(commandListeners, that.commandListeners)
                 && Objects.equals(codecRegistry, that.codecRegistry)
@@ -1076,11 +1115,12 @@ public final class MongoClientSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, readConcern, credential, streamFactoryFactory,
-                commandListeners, codecRegistry, loggerSettings, clusterSettings, socketSettings, heartbeatSocketSettings,
-                connectionPoolSettings, serverSettings, sslSettings, applicationName, compressorList, uuidRepresentation, serverApi,
-                autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly, heartbeatConnectTimeoutSetExplicitly, dnsClient,
-                inetAddressResolver, contextProvider, timeoutMS);
+        return Objects.hash(readPreference, writeConcern, retryWrites, retryReads, readConcern, credential, transportSettings,
+                streamFactoryFactory, commandListeners, codecRegistry, loggerSettings, clusterSettings, socketSettings,
+                heartbeatSocketSettings, connectionPoolSettings, serverSettings, sslSettings, applicationName, compressorList,
+                uuidRepresentation, serverApi, autoEncryptionSettings, heartbeatSocketTimeoutSetExplicitly,
+                heartbeatConnectTimeoutSetExplicitly, dnsClient, inetAddressResolver, contextProvider, timeoutMS);
+
     }
 
     @Override
@@ -1092,6 +1132,7 @@ public final class MongoClientSettings {
                 + ", retryReads=" + retryReads
                 + ", readConcern=" + readConcern
                 + ", credential=" + credential
+                + ", transportSettings=" + transportSettings
                 + ", streamFactoryFactory=" + streamFactoryFactory
                 + ", commandListeners=" + commandListeners
                 + ", codecRegistry=" + codecRegistry
@@ -1122,6 +1163,7 @@ public final class MongoClientSettings {
         retryReads = builder.retryReads;
         readConcern = builder.readConcern;
         credential = builder.credential;
+        transportSettings = builder.transportSettings;
         streamFactoryFactory = builder.streamFactoryFactory;
         codecRegistry = builder.codecRegistry;
         commandListeners = builder.commandListeners;

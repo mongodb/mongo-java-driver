@@ -34,6 +34,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 
+@SuppressWarnings("deprecation")
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
     private final boolean isMonitoringConnection;

@@ -22,7 +22,9 @@ import com.mongodb.ServerAddress;
  * A factory for streams.
  *
  * @since 3.0
+ * @deprecated There is no replacement for this interface.
  */
+@Deprecated
 public interface StreamFactory {
     /**
      * Create a Stream to the given address

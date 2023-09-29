@@ -76,6 +76,7 @@ import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unionWith
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.Aggregates.vectorSearch
 import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
@@ -97,6 +98,7 @@ import static com.mongodb.client.model.search.SearchOperator.exists
 import static com.mongodb.client.model.search.SearchOptions.searchOptions
 import static com.mongodb.client.model.search.SearchPath.fieldPath
 import static com.mongodb.client.model.search.SearchPath.wildcardPath
+import static com.mongodb.client.model.search.VectorSearchOptions.vectorSearchOptions
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
@@ -843,6 +845,58 @@ class AggregatesSpecification extends Specification {
                           "facetName": { "type": "string", "path": "fieldName", "numBuckets": 3 }
                         }
                     }
+                }
+        }''')
+    }
+
+    def 'should render $vectorSearch'() {
+        when:
+        BsonDocument vectorSearchDoc = toBson(
+                vectorSearch(
+                        fieldPath('fieldName').multi('ignored'),
+                        [1.0d, 2.0d],
+                        'indexName',
+                        2,
+                        1,
+                        vectorSearchOptions()
+                                .filter(Filters.ne("fieldName", "fieldValue"))
+
+                )
+        )
+
+        then:
+        vectorSearchDoc == parse('''{
+                "$vectorSearch": {
+                    "path": "fieldName",
+                    "queryVector": [1.0, 2.0],
+                    "index": "indexName",
+                    "numCandidates": {"$numberLong": "2"},
+                    "limit": {"$numberLong": "1"},
+                    "filter": {"fieldName": {"$ne": "fieldValue"}}
+                }
+        }''')
+    }
+
+    def 'should render $vectorSearch with no options'() {
+        when:
+        BsonDocument vectorSearchDoc = toBson(
+                vectorSearch(
+                        fieldPath('fieldName'),
+                        [1.0d, 2.0d],
+                        'indexName',
+                        2,
+                        1
+                )
+        )
+
+        then:
+        vectorSearchDoc == parse('''{
+                "$vectorSearch": {
+                    "path": "fieldName",
+                    "queryVector": [1.0, 2.0],
+                    "index": "indexName",
+                    "numCandidates": {"$numberLong": "2"},
+                    "limit": {"$numberLong": "1"}
                 }
         }''')
     }

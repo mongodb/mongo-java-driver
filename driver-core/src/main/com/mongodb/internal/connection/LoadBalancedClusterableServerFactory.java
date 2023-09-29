@@ -41,6 +41,7 @@ import static com.mongodb.internal.event.EventListenerHelper.singleServerListene
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
+@SuppressWarnings("deprecation")
 public class LoadBalancedClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;

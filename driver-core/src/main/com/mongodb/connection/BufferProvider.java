@@ -23,7 +23,9 @@ import org.bson.ByteBuf;
  * A provider of instances of ByteBuf.
  *
  * @since 3.0
+ * @deprecated There is no replacement for this interface.
  */
+@Deprecated
 @ThreadSafe
 public interface BufferProvider {
     /**

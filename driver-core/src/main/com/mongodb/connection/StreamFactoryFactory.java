@@ -20,7 +20,9 @@ package com.mongodb.connection;
  * A factory of {@code StreamFactory} instances.
  *
  * @since 3.1
+ * @deprecated There is no replacement for this interface.
  */
+@Deprecated
 public interface StreamFactoryFactory {
 
     /**

@@ -92,6 +92,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
+@SuppressWarnings("deprecation")
 public abstract class AbstractUnifiedTest {
     private final String filename;
     private final String description;

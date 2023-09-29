@@ -107,6 +107,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * itself in the example above. However, there are no concurrent pending readers because the second operation
  * is invoked after the first operation has completed reading despite the method has not returned yet.
  */
+@SuppressWarnings("deprecation")
 final class NettyStream implements Stream {
     private static final byte NO_SCHEDULE_TIME = 0;
     private final ServerAddress address;

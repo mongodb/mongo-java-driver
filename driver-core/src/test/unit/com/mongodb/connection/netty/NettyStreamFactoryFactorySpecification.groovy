@@ -19,16 +19,39 @@ package com.mongodb.connection.netty
 import com.mongodb.ServerAddress
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.connection.TransportSettings
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.UnpooledByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.channel.socket.oio.OioSocketChannel
+import io.netty.handler.ssl.SslContextBuilder
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class NettyStreamFactoryFactorySpecification extends Specification {
+
+    def 'should apply NettingSettings'() {
+        given:
+        def nettySettings = TransportSettings.nettyBuilder()
+                .allocator(UnpooledByteBufAllocator.DEFAULT)
+                .socketChannelClass(OioSocketChannel)
+                .eventLoopGroup(new OioEventLoopGroup())
+                .sslContext(SslContextBuilder.forClient().build())
+            .build()
+
+        when:
+        def factoryFactory = NettyStreamFactoryFactory.builder()
+                .applySettings(nettySettings)
+                .build()
+
+        then:
+        factoryFactory.getAllocator() == nettySettings.getAllocator()
+        factoryFactory.getEventLoopGroup() == nettySettings.getEventLoopGroup();
+        factoryFactory.getSocketChannelClass() == nettySettings.getSocketChannelClass()
+        factoryFactory.getSslContext() == nettySettings.getSslContext()
+    }
 
     @Unroll
     def 'should create the expected #description NettyStream'() {

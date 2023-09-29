@@ -45,11 +45,13 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
+import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@SuppressWarnings("deprecation")
 public class SocketStream implements Stream {
     private final ServerAddress address;
     private final SocketSettings settings;
@@ -78,7 +80,8 @@ public class SocketStream implements Stream {
             inputStream = socket.getInputStream();
         } catch (IOException e) {
             close();
-            throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
+            throw translateInterruptedException(e, "Interrupted while connecting")
+                    .orElseThrow(() -> new MongoSocketOpenException("Exception opening socket", getAddress(), e));
         }
     }
 
@@ -239,7 +242,7 @@ public class SocketStream implements Stream {
             if (socket != null) {
                 socket.close();
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             // ignore
         }
     }
