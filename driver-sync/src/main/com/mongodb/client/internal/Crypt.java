@@ -351,8 +351,7 @@ public class Crypt implements Closeable {
             cryptContext.completeKeyDecryptors();
         } catch (Throwable t) {
             throw translateInterruptedException(t, "Interrupted while doing IO")
-                    .<MongoException>map(Function.identity())
-                    .orElseGet(() -> wrapInMongoException(t));
+                    .orElseThrow(() -> wrapInMongoException(t));
         }
     }
 
