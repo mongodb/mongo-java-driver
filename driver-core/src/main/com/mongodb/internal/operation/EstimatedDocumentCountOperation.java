@@ -78,6 +78,11 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Long execute(final ReadBinding binding) {
         try {
             return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),

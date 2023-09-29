@@ -154,6 +154,11 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Void execute(final ReadBinding binding) {
         return executeRetryableRead(timeoutContext, binding,
                                     () -> binding.getReadConnectionSource(FIVE_DOT_ZERO_WIRE_VERSION, ReadPreference.primary()),

@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -234,6 +235,11 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         }
 
         @Override
+        public TimeoutSettings getTimeoutSettings() {
+            return operation.getTimeoutSettings();
+        }
+
+        @Override
         public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
             operation.executeAsync(binding, callback::onResult);
         }
@@ -248,6 +254,11 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
         AsyncWriteOperation<MapReduceStatistics> getOperation() {
             return operation;
+        }
+
+        @Override
+        public TimeoutSettings getTimeoutSettings() {
+            return operation.getTimeoutSettings();
         }
 
         @Override

@@ -110,6 +110,11 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(timeoutContext, binding, "admin", getCommandCreator(),
                                     CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);

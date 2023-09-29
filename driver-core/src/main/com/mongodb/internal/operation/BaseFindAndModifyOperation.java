@@ -183,6 +183,11 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
         return this;
     }
 
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
     protected abstract FieldNameValidator getFieldNameValidator();
 
     protected abstract void specializeCommand(BsonDocument initialCommand, ConnectionDescription connectionDescription);

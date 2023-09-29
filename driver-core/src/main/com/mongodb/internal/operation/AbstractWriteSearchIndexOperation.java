@@ -55,6 +55,11 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             try {

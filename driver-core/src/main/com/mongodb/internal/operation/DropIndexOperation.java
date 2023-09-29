@@ -81,6 +81,11 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             try {

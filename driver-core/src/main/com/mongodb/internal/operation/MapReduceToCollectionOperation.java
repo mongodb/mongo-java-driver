@@ -64,8 +64,7 @@ import static java.util.Arrays.asList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class
-MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
+public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
     private final TimeoutSettings timeoutSettings;
     private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
@@ -238,6 +237,11 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     public MapReduceToCollectionOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
+    }
+
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
     }
 
     @Override

@@ -59,6 +59,11 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
         return executeRetryableWrite(timeoutContext, binding, "admin", null, new NoOpFieldNameValidator(),

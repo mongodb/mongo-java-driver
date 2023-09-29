@@ -113,6 +113,11 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
+    @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             try {

@@ -59,7 +59,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static final String CURSOR = "cursor";
     private static final String FIRST_BATCH = "firstBatch";
     private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
-
     private final TimeoutSettings timeoutSettings;
     private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
@@ -164,8 +163,9 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return hint;
     }
 
+    @Override
     public TimeoutSettings getTimeoutSettings() {
-        return timeoutContext.getTimeoutSettings();
+        return timeoutSettings;
     }
     public TimeoutContext getTimeoutContext() {
         return timeoutContext;
