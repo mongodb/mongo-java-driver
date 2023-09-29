@@ -45,10 +45,8 @@ import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -80,7 +78,7 @@ final class MongoClientDelegate {
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
         this.contextProvider = contextProvider;
-        this.serverSessionPool = new ServerSessionPool(cluster, serverApi);
+        this.serverSessionPool = new ServerSessionPool(cluster, timeoutSettings, serverApi);
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
         this.crypt = crypt;

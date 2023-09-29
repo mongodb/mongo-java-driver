@@ -17,9 +17,7 @@
 package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
@@ -27,8 +25,6 @@ import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>

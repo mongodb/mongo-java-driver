@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
@@ -65,7 +66,8 @@ public class OperationContext {
         return serverApi;
     }
 
-    private OperationContext(final long id, final RequestContext requestContext, final SessionContext sessionContext,
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public OperationContext(final long id, final RequestContext requestContext, final SessionContext sessionContext,
             final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
         this.id = id;

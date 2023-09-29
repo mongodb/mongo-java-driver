@@ -165,7 +165,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
 
         @Override
         public OperationContext getOperationContext() {
-            return wrapped.getOperationContext();
+            return operationContext;
         }
 
         @Override
@@ -265,7 +265,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
-                return getOperationContext().getSessionContext().getReadConcern();
+                return wrapped.getOperationContext().getSessionContext().getReadConcern();
             }
         }
     }

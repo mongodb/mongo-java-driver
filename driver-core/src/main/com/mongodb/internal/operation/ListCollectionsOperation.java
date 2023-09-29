@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -141,7 +140,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, databaseName,
+                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, databaseName,
                                                        getCommandCreator(), createCommandDecoder(), commandTransformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
@@ -164,7 +163,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                         binding.getOperationContext()), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(retryState, binding, source, databaseName,
+                                createReadCommandAndExecuteAsync(retryState, binding.getOperationContext(), source, databaseName,
                                                                  getCommandCreator(), createCommandDecoder(), asyncTransformer(), connection,
                                         (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {

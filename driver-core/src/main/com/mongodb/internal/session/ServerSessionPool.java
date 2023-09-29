@@ -23,7 +23,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.binding.StaticBindingContext;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
@@ -138,10 +137,9 @@ public class ServerSessionPool {
                 return Collections.emptyList();
             }, operationContext).getServer().getConnection(operationContext);
 
-            // TODO feed operationContext to command.
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
-                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), null);
+                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), operationContext);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {

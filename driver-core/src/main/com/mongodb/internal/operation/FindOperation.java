@@ -22,7 +22,6 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -30,10 +29,8 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.QueryResult;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -305,7 +302,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
                 retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, namespace.getDatabaseName(),
                                                        getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                        transformer(), connection);
                 } catch (MongoCommandException e) {
@@ -330,9 +327,10 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
                                     return;
                                 }
                                 SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
-                                createReadCommandAndExecuteAsync(retryState, binding, source, namespace.getDatabaseName(),
-                                                                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
-                                                                 asyncTransformer(), connection, wrappedCallback);
+                                createReadCommandAndExecuteAsync(retryState, binding.getOperationContext(), source,
+                                        namespace.getDatabaseName(), getCommandCreator(),
+                                        CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
+                                        asyncTransformer(), connection, wrappedCallback);
                             })
                 ).whenComplete(binding::release);
         asyncRead.get(errorHandlingCallback(callback, LOGGER));

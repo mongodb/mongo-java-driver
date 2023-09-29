@@ -188,7 +188,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     private CommandCreator getCommandCreator() {
-        return (operationContext, serverDescription, connectionDescription) -> 
+        return (operationContext, serverDescription, connectionDescription) ->
                 getCommand(operationContext, connectionDescription.getMaxWireVersion());
     }
 

@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -130,8 +129,9 @@ public class CountDocumentsOperation implements AsyncReadOperation<Long>, ReadOp
 
     @Override
     public Long execute(final ReadBinding binding) {
-        BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding);
-        return cursor.hasNext() ? getCountFromAggregateResults(cursor.next()) : 0;
+        try (BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding)) {
+            return cursor.hasNext() ? getCountFromAggregateResults(cursor.next()) : 0;
+        }
     }
 
     @Override

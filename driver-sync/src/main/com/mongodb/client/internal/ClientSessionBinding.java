@@ -223,7 +223,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
-               return getOperationContext().getSessionContext().getReadConcern();
+               return wrapped.getOperationContext().getSessionContext().getReadConcern();
             }
         }
     }
