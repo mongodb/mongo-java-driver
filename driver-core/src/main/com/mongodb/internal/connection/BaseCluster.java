@@ -289,7 +289,7 @@ abstract class BaseCluster implements Cluster {
                 ServerTuple serverTuple = selectServer(request.compositeSelector, description);
                 if (serverTuple != null) {
                     if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(format("Asynchronously selected server %s", 
+                        LOGGER.trace(format("Asynchronously selected server %s",
                                 serverTuple.getServerDescription().getAddress()));
                     }
                     request.onResult(serverTuple, null);
