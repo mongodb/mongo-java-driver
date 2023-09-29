@@ -23,6 +23,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
@@ -118,6 +119,7 @@ public final class Entities {
     private final Map<String, TestLoggingInterceptor> clientLoggingInterceptors = new HashMap<>();
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
+    private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
     private final Map<String, ClusterDescription> topologyDescriptions = new HashMap<>();
     private final Map<String, Long> successCounts = new HashMap<>();
@@ -278,6 +280,10 @@ public final class Entities {
         return getEntity(id + "-server-listener", clientServerListeners, "server listener");
     }
 
+    public TestClusterListener getClusterListener(final String id) {
+        return getEntity(id + "-cluster-listener", clientClusterListeners, "cluster listener");
+    }
+
     private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
         T entity = entities.get(id);
         if (entity == null) {
@@ -361,9 +367,13 @@ public final class Entities {
         clientSettingsBuilder.applicationName(id);
         clientSettingsBuilder.applyToLoggerSettings(builder -> builder.maxDocumentLength(10_000));
 
-        TestServerListener testClusterListener = new TestServerListener();
-        clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerListener(testClusterListener));
-        putEntity(id + "-server-listener", testClusterListener, clientServerListeners);
+        TestServerListener testServerListener = new TestServerListener();
+        clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerListener(testServerListener));
+        putEntity(id + "-server-listener", testServerListener, clientServerListeners);
+
+        TestClusterListener testClusterListener = new TestClusterListener();
+        clientSettingsBuilder.applyToClusterSettings(builder -> builder.addClusterListener(testClusterListener));
+        putEntity(id + "-cluster-listener", testClusterListener, clientClusterListeners);
 
         if (entity.containsKey("observeEvents")) {
             List<String> ignoreCommandMonitoringEvents = entity
@@ -485,6 +495,7 @@ public final class Entities {
                         }
                         break;
                     case "appname":
+                    case "appName":
                         clientSettingsBuilder.applicationName(value.asString().getValue());
                         break;
                     default:

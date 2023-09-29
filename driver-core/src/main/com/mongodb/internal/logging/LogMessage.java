@@ -42,7 +42,8 @@ public final class LogMessage {
 
     public enum Component {
         COMMAND,
-        CONNECTION
+        CONNECTION,
+        SERVERSELECTION
     }
 
     public enum Level {

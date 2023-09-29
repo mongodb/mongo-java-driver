@@ -20,17 +20,28 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.lang.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.withLock;
 
-class TestClusterListener implements ClusterListener {
-    private ClusterOpeningEvent clusterOpeningEvent;
-    private ClusterClosedEvent clusterClosingEvent;
-    private final List<ClusterDescriptionChangedEvent> clusterDescriptionChangedEvents = new ArrayList<>();
+public final class TestClusterListener implements ClusterListener {
+    @Nullable
+    private volatile ClusterOpeningEvent clusterOpeningEvent;
+    @Nullable
+    private volatile ClusterClosedEvent clusterClosingEvent;
+    private final ArrayList<ClusterDescriptionChangedEvent> clusterDescriptionChangedEvents = new ArrayList<>();
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition newClusterDescriptionChangedEventCondition = lock.newCondition();
 
     @Override
     public void clusterOpening(final ClusterOpeningEvent event) {
@@ -47,22 +58,62 @@ class TestClusterListener implements ClusterListener {
     @Override
     public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
         notNull("event", event);
-        clusterDescriptionChangedEvents.add(event);
+        withLock(lock, () -> {
+            clusterDescriptionChangedEvents.add(event);
+            newClusterDescriptionChangedEventCondition.signalAll();
+        });
     }
 
+    @Nullable
     public ClusterOpeningEvent getClusterOpeningEvent() {
         return clusterOpeningEvent;
     }
 
+    @Nullable
     public ClusterClosedEvent getClusterClosingEvent() {
         return clusterClosingEvent;
     }
 
     public List<ClusterDescriptionChangedEvent> getClusterDescriptionChangedEvents() {
-        return clusterDescriptionChangedEvents;
+        return withLock(lock, () -> new ArrayList<>(clusterDescriptionChangedEvents));
     }
 
+    /**
+     * Calling this method concurrently with {@link #waitForClusterDescriptionChangedEvents(Predicate, int, Duration)},
+     * may result in {@link #waitForClusterDescriptionChangedEvents(Predicate, int, Duration)} not working as expected.
+     */
     public void clearClusterDescriptionChangedEvents() {
-        clusterDescriptionChangedEvents.clear();
+        withLock(lock, clusterDescriptionChangedEvents::clear);
+    }
+
+    /**
+     * Calling this method concurrently with {@link #clearClusterDescriptionChangedEvents()},
+     * may result in {@link #waitForClusterDescriptionChangedEvents(Predicate, int, Duration)} not working as expected.
+     */
+    public void waitForClusterDescriptionChangedEvents(
+            final Predicate<ClusterDescriptionChangedEvent> matcher, final int count, final Duration duration)
+            throws InterruptedException, TimeoutException {
+        long nanosRemaining = duration.toNanos();
+        lock.lockInterruptibly();
+        try {
+            long observedCount = unguardedCount(matcher);
+            while (observedCount < count) {
+                if (nanosRemaining <= 0) {
+                    throw new TimeoutException(String.format("Timed out waiting for %d %s events. The observed count is %d.",
+                            count, ClusterDescriptionChangedEvent.class.getSimpleName(), observedCount));
+                }
+                nanosRemaining = newClusterDescriptionChangedEventCondition.awaitNanos(nanosRemaining);
+                observedCount = unguardedCount(matcher);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Must be guarded by {@link #lock}.
+     */
+    private long unguardedCount(final Predicate<ClusterDescriptionChangedEvent> matcher) {
+        return clusterDescriptionChangedEvents.stream().filter(matcher).count();
     }
 }
