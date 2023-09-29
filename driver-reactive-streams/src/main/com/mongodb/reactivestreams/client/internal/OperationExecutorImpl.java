@@ -26,9 +26,13 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
@@ -78,10 +82,11 @@ public class OperationExecutorImpl implements OperationExecutor {
 
         return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, this)
-                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), readPreference, readConcern, clientSession,
-                                session == null && clientSession != null))
+                        .map(clientSession -> getReadWriteBinding(operation.getTimeoutSettings(), getContext(subscriber),
+                                readPreference, readConcern, clientSession, session == null && clientSession != null))
                         .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(subscriber), readPreference, readConcern, session, false)))
+                                getReadWriteBinding(operation.getTimeoutSettings(), getContext(subscriber),
+                                        readPreference, readConcern, session, false)))
                         .flatMap(binding -> {
                             if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
@@ -114,10 +119,11 @@ public class OperationExecutorImpl implements OperationExecutor {
 
         return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, this)
-                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), primary(), readConcern,
-                                clientSession, session == null && clientSession != null))
+                        .map(clientSession -> getReadWriteBinding(operation.getTimeoutSettings(), getContext(subscriber),
+                                primary(), readConcern, clientSession, session == null && clientSession != null))
                         .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(subscriber), primary(), readConcern, session, false)))
+                                getReadWriteBinding(operation.getTimeoutSettings(), getContext(subscriber), primary(),
+                                        readConcern, session, false)))
                         .flatMap(binding ->
                                 Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
                                     try {
@@ -158,11 +164,16 @@ public class OperationExecutorImpl implements OperationExecutor {
         }
     }
 
-    private AsyncReadWriteBinding getReadWriteBinding(final RequestContext requestContext, final ReadPreference readPreference,
-            final ReadConcern readConcern, @Nullable final ClientSession session, final boolean ownsSession) {
+    private AsyncReadWriteBinding getReadWriteBinding(final TimeoutSettings timeoutSettings, final RequestContext requestContext,
+            final ReadPreference readPreference, final ReadConcern readConcern, @Nullable final ClientSession session,
+            final boolean ownsSession) {
         notNull("readPreference", readPreference);
         AsyncClusterAwareReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
-            getReadPreferenceForBinding(readPreference, session), readConcern, mongoClient.getSettings().getServerApi(), requestContext);
+                getReadPreferenceForBinding(readPreference, session), readConcern,
+                new OperationContext(requestContext,
+                        new ReadConcernAwareNoOpSessionContext(readConcern),
+                        new TimeoutContext(timeoutSettings),
+                        mongoClient.getSettings().getServerApi()));
         Crypt crypt = mongoClient.getCrypt();
         if (crypt != null) {
             readWriteBinding = new CryptBinding(readWriteBinding, crypt);

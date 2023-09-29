@@ -30,6 +30,8 @@ import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.session.ClientSessionContext
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.getOperationContext
+
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
@@ -163,6 +165,6 @@ class ClientSessionBindingSpecification extends Specification {
 
     private ReadWriteBinding createStubBinding() {
         def cluster = Stub(Cluster)
-        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
+        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getOperationContext())
     }
 }
