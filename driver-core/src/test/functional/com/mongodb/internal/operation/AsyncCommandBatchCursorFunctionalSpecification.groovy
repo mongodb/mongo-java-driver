@@ -84,12 +84,6 @@ class AsyncCommandBatchCursorFunctionalSpecification extends OperationFunctional
 
     def cleanup() {
         cursor?.close()
-        getReferenceCountAfterTimeout(connectionSource, 1)
-        getReferenceCountAfterTimeout(connection, 1)
-        cleanupConnectionAndSource()
-    }
-
-    private void cleanupConnectionAndSource() {
         connection?.release()
         connectionSource?.release()
     }
@@ -179,6 +173,10 @@ class AsyncCommandBatchCursorFunctionalSpecification extends OperationFunctional
 
         then:
         counter == expectedTotal
+
+        then:
+        checkReferenceCountReachesTarget(connectionSource, 1)
+        checkReferenceCountReachesTarget(connection, 1)
 
         where:
         limit | batchSize | expectedTotal
@@ -274,17 +272,15 @@ class AsyncCommandBatchCursorFunctionalSpecification extends OperationFunctional
 
     @IgnoreIf({ isSharded() })
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
-        given:
+        when:
         def (serverAddress, commandResult) = executeFindCommand(5)
         cursor = new AsyncCommandBatchCursor<Document>(serverAddress, commandResult, 5, 0, 0, new DocumentCodec(),
                 null, connectionSource, connection)
 
-        when:
-        nextBatch()
-
         then:
-        cursor.isClosed()
         cursor.getServerCursor() == null
+        checkReferenceCountReachesTarget(connectionSource, 1)
+        checkReferenceCountReachesTarget(connection, 1)
     }
 
     @IgnoreIf({ !isStandalone() })

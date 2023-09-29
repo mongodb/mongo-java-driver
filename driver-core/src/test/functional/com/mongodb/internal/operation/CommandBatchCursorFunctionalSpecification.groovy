@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
@@ -78,10 +79,8 @@ class CommandBatchCursorFunctionalSpecification extends OperationFunctionalSpeci
 
     def cleanup() {
         cursor?.close()
-        cleanupConnectionAndSource()
-    }
-
-    private void cleanupConnectionAndSource() {
+        getReferenceCountAfterTimeout(connectionSource, 1)
+        getReferenceCountAfterTimeout(connection, 1)
         connection?.release()
         connectionSource?.release()
     }
@@ -176,6 +175,10 @@ class CommandBatchCursorFunctionalSpecification extends OperationFunctionalSpeci
 
         then:
         cursor.iterator().sum { it.size() } == expectedTotal
+
+        then:
+        checkReferenceCountReachesTarget(connectionSource, 1)
+        checkReferenceCountReachesTarget(connection, 1)
 
         where:
         limit | batchSize | expectedTotal
@@ -419,6 +422,7 @@ class CommandBatchCursorFunctionalSpecification extends OperationFunctionalSpeci
                 null, connectionSource, connection)
 
         then:
+        cursor.getServerCursor() == null
         checkReferenceCountReachesTarget(connectionSource, 1)
         checkReferenceCountReachesTarget(connection, 1)
     }
