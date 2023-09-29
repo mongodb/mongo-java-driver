@@ -30,6 +30,7 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -192,8 +193,8 @@ final class OperationHelper {
         return true;
     }
 
-    static boolean canRetryRead(final ServerDescription serverDescription, final SessionContext sessionContext) {
-        if (sessionContext.hasActiveTransaction()) {
+    static boolean canRetryRead(final ServerDescription serverDescription, final OperationContext operationContext) {
+        if (operationContext.getSessionContext().hasActiveTransaction()) {
             LOGGER.debug("retryReads set to true but in an active transaction.");
             return false;
         }

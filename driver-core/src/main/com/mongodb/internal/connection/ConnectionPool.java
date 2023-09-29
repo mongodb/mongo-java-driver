@@ -38,7 +38,7 @@ interface ConnectionPool extends Closeable {
     InternalConnection get(OperationContext operationContext) throws MongoConnectionPoolClearedException;
 
     /**
-     * @param operationContext operation context
+     * @param operationContext the operation context
      * @param timeout This is not a timeout for the whole {@link #get(OperationContext, long, TimeUnit)},
      * see {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
      * <p>

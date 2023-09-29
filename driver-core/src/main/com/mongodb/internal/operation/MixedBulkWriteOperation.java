@@ -79,7 +79,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final List<? extends WriteRequest> writeRequests;
     private final boolean ordered;
@@ -93,7 +92,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final List<? extends WriteRequest> writeRequests, final boolean ordered, final WriteConcern writeConcern,
             final boolean retryWrites) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.writeRequests = notNull("writes", writeRequests);
         this.ordered = ordered;
@@ -201,7 +199,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 ConnectionDescription connectionDescription = connection.getDescription();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
-                SessionContext sessionContext = binding.getSessionContext();
+                SessionContext sessionContext = binding.getOperationContext().getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
                 if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext), connectionDescription, sessionContext)) {
                     handleMongoWriteConcernWithResponseException(retryState, true);
@@ -235,7 +233,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 ConnectionDescription connectionDescription = connection.getDescription();
                 // attach `maxWireVersion` ASAP because it is used to check whether we can retry
                 retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true);
-                SessionContext sessionContext = binding.getSessionContext();
+                SessionContext sessionContext = binding.getOperationContext().getSessionContext();
                 WriteConcern writeConcern = getAppliedWriteConcern(sessionContext);
                 if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(sessionContext), connectionDescription, sessionContext)
                         && handleMongoWriteConcernWithResponseExceptionAsync(retryState, releasingCallback)) {
@@ -269,7 +267,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         while (currentBatch.shouldProcessBatch()) {
             try {
                 BsonDocument result = executeCommand(connection, currentBatch, binding);
-                if (currentBatch.getRetryWrites() && !binding.getSessionContext().hasActiveTransaction()) {
+
+                if (currentBatch.getRetryWrites() && !binding.getOperationContext().getSessionContext().hasActiveTransaction()) {
                     MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
                             connection.getDescription().getServerAddress(), "errMsg");
                     if (writeConcernBasedError != null) {
@@ -314,7 +313,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             }
             executeCommandAsync(binding, connection, currentBatch, (result, t) -> {
                 if (t == null) {
-                    if (currentBatch.getRetryWrites() && !binding.getSessionContext().hasActiveTransaction()) {
+                    if (currentBatch.getRetryWrites() && !binding.getOperationContext().getSessionContext().hasActiveTransaction()) {
                         MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
                                 connection.getDescription().getServerAddress(), "errMsg");
                         if (writeConcernBasedError != null) {
@@ -405,14 +404,15 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     @Nullable
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
-                binding, shouldAcknowledge(batch, binding.getSessionContext()), batch.getPayload(), batch.getFieldNameValidator());
+                binding, shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
+                batch.getPayload(), batch.getFieldNameValidator());
     }
 
     private void executeCommandAsync(final AsyncWriteBinding binding, final AsyncConnection connection, final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
-                binding, shouldAcknowledge(batch, binding.getSessionContext()), batch.getPayload(), batch.getFieldNameValidator(),
-                callback);
+                binding, shouldAcknowledge(batch, binding.getOperationContext().getSessionContext()),
+                batch.getPayload(), batch.getFieldNameValidator(), callback);
     }
 
     private WriteConcern getAppliedWriteConcern(final SessionContext sessionContext) {

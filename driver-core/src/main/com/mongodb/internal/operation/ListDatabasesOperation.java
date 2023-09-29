@@ -49,7 +49,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  */
 public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final Decoder<T> decoder;
     private boolean retryReads;
     private BsonDocument filter;
@@ -59,7 +58,6 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     public ListDatabasesOperation(final TimeoutSettings timeoutSettings, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -116,13 +114,13 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(timeoutContext, binding, "admin", getCommandCreator(),
+        return executeRetryableRead(binding, "admin", getCommandCreator(),
                                     CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(timeoutContext, binding, "admin", getCommandCreator(),
+        executeRetryableReadAsync(binding, "admin", getCommandCreator(),
                                   CommandResultDocumentCodec.create(decoder, "databases"), asyncTransformer(),
                                   retryReads, errorHandlingCallback(callback, LOGGER));
     }
@@ -142,12 +140,12 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     }
 
     private CommandCreator getCommandCreator() {
-        return (timeoutContext, serverDescription, connectionDescription) -> {
+        return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = new BsonDocument("listDatabases", new BsonInt32(1));
             putIfNotNull(command, "filter", filter);
             putIfNotNull(command, "nameOnly", nameOnly);
             putIfNotNull(command, "authorizedDatabases", authorizedDatabasesOnly);
-            putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
+            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
             putIfNotNull(command, "comment", comment);
             return command;
         };

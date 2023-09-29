@@ -18,11 +18,8 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
@@ -30,9 +27,8 @@ import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.ClientSessionContext;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 import static org.bson.assertions.Assertions.assertNotNull;
@@ -45,14 +41,14 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
     private final ClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
-    private final ClientSessionContext sessionContext;
+    private final OperationContext operationContext;
 
     public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final ClusterAwareReadWriteBinding wrapped) {
         this.wrapped = wrapped;
         wrapped.retain();
         this.session = notNull("session", session);
         this.ownsSession = ownsSession;
-        this.sessionContext = new SyncClientSessionContext(session);
+        this.operationContext = wrapped.getOperationContext().withSessionContext(new SyncClientSessionContext(session));
     }
 
     @Override
@@ -111,24 +107,8 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return sessionContext;
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return wrapped.getServerApi();
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return wrapped.getRequestContext();
-    }
-
-    @Override
     public OperationContext getOperationContext() {
-        return wrapped.getOperationContext();
+        return operationContext;
     }
 
     private boolean isConnectionSourcePinningRequired() {
@@ -164,23 +144,8 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return sessionContext;
-        }
-
-        @Override
         public OperationContext getOperationContext() {
-            return wrapped.getOperationContext();
-        }
-
-        @Override
-        public ServerApi getServerApi() {
-            return wrapped.getServerApi();
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return wrapped.getRequestContext();
+            return operationContext;
         }
 
         @Override
@@ -258,7 +223,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
-               return wrapped.getSessionContext().getReadConcern();
+               return getOperationContext().getSessionContext().getReadConcern();
             }
         }
     }

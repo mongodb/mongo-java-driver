@@ -76,14 +76,16 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Nullable
     @Override
+    // TODO Pass OperationContext
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
             final BindingContext context, final boolean responseExpected,
             @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
                         commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
-                        context.getServerApi(), context.getRequestContext(), context.getOperationContext()),
-                context.getSessionContext());
+                        context.getOperationContext().getServerApi(), context.getOperationContext().getRequestContext(),
+                        context.getOperationContext()),
+                context.getOperationContext().getSessionContext());
     }
 
     @Override
@@ -101,8 +103,9 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
             @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
                         commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
-                        context.getServerApi(), context.getRequestContext(), context.getOperationContext()),
-                context.getSessionContext(), callback);
+                        context.getOperationContext().getServerApi(), context.getOperationContext().getRequestContext(),
+                        context.getOperationContext()),
+                context.getOperationContext().getSessionContext(), callback);
     }
 
     @Override

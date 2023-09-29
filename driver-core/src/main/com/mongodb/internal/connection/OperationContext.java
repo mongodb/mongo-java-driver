@@ -35,13 +35,13 @@ public class OperationContext {
     @Nullable
     private final ServerApi serverApi;
 
-    public OperationContext( final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
-        id = NEXT_ID.incrementAndGet();
-        this.requestContext = requestContext;
-        this.sessionContext = sessionContext;
-        this.timeoutContext = timeoutContext;
-        this.serverApi = serverApi;
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverApi);
+    }
+
+    public OperationContext withSessionContext(final SessionContext sessionContext) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverApi);
     }
 
     public long getId() {
@@ -63,6 +63,16 @@ public class OperationContext {
     @Nullable
     public ServerApi getServerApi() {
         return serverApi;
+    }
+
+    private OperationContext(final long id, final RequestContext requestContext, final SessionContext sessionContext,
+            final TimeoutContext timeoutContext,
+            @Nullable final ServerApi serverApi) {
+        this.id = id;
+        this.requestContext = requestContext;
+        this.sessionContext = sessionContext;
+        this.timeoutContext = timeoutContext;
+        this.serverApi = serverApi;
     }
 }
 

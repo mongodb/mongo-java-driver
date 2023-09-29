@@ -60,22 +60,6 @@ public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return wrapped.getSessionContext();
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return wrapped.getServerApi();
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return wrapped.getRequestContext();
-    }
-
-    @Override
     public OperationContext getOperationContext() {
         return wrapped.getOperationContext();
     }
@@ -90,7 +74,6 @@ public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
             }
         });
     }
-
 
     @Override
     public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
@@ -148,22 +131,6 @@ public class CryptBinding implements AsyncClusterAwareReadWriteBinding {
         @Override
         public ServerDescription getServerDescription() {
             return wrapped.getServerDescription();
-        }
-
-        @Override
-        public SessionContext getSessionContext() {
-            return wrapped.getSessionContext();
-        }
-
-        @Override
-        @Nullable
-        public ServerApi getServerApi() {
-            return wrapped.getServerApi();
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return wrapped.getRequestContext();
         }
 
         @Override

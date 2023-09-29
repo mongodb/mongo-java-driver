@@ -18,8 +18,6 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -31,7 +29,6 @@ import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.ClientSessionContext;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonTimestamp;
@@ -47,13 +44,13 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     private final AsyncClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
-    private final ClientSessionContext sessionContext;
+    private final OperationContext operationContext;
 
     public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final AsyncClusterAwareReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped).retain();
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
-        this.sessionContext = new AsyncClientSessionContext(session);
+        this.operationContext = wrapped.getOperationContext().withSessionContext(new AsyncClientSessionContext(session));
     }
 
     @Override
@@ -87,24 +84,8 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return sessionContext;
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return wrapped.getServerApi();
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return wrapped.getRequestContext();
-    }
-
-    @Override
     public OperationContext getOperationContext() {
-        return wrapped.getOperationContext();
+        return operationContext;
     }
 
     private void getPinnedConnectionSource(final boolean isRead, final SingleResultCallback<AsyncConnectionSource> callback) {
@@ -180,22 +161,6 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         @Override
         public ServerDescription getServerDescription() {
             return wrapped.getServerDescription();
-        }
-
-        @Override
-        public SessionContext getSessionContext() {
-            return sessionContext;
-        }
-
-        @Override
-        @Nullable
-        public ServerApi getServerApi() {
-            return wrapped.getServerApi();
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return wrapped.getRequestContext();
         }
 
         @Override
@@ -300,7 +265,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
             } else {
-                return wrapped.getSessionContext().getReadConcern();
+                return getOperationContext().getSessionContext().getReadConcern();
             }
         }
     }

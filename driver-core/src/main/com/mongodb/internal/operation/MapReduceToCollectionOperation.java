@@ -51,6 +51,8 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandWriteTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
+import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 import static java.util.Arrays.asList;
@@ -66,7 +68,6 @@ import static java.util.Arrays.asList;
  */
 public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -91,7 +92,6 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
             final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, @Nullable final String collectionName,
             @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -246,23 +246,12 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
 
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> assertNotNull(executeCommand(binding, namespace.getDatabaseName(),
-                getCommand(connection.getDescription()), connection, transformer())));
+        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), transformer());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        withAsyncConnection(binding, (connection, t) -> {
-            SingleResultCallback<MapReduceStatistics> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-            if (t != null) {
-                errHandlingCallback.onResult(null, t);
-            } else {
-                executeCommandAsync(binding, namespace.getDatabaseName(),
-                        getCommand(connection.getDescription()), connection, transformerAsync(),
-                        releasingCallback(errHandlingCallback, connection));
-
-            }
-        });
+        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), transformerAsync(), callback);
     }
 
     /**
@@ -285,9 +274,10 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         return createExplainableOperation(explainVerbosity);
     }
 
+    // TODO (CSOT) JAVA-5172
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<>(timeoutSettings, namespace.getDatabaseName(),
-                                          ExplainHelper.asExplainCommand(getCommand(null), explainVerbosity),
+                                          ExplainHelper.asExplainCommand(getCommandCreator().create(null, null, null), explainVerbosity),
                                           new BsonDocumentCodec());
     }
 
@@ -307,38 +297,38 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         };
     }
 
-    // TODO this should be a command creator passing in clientside operation timeout
-    private BsonDocument getCommand(@Nullable final ConnectionDescription description) {
-        BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
-        if (description != null && !serverIsAtLeastVersionFourDotFour(description)) {
-            putIfTrue(outputDocument, "sharded", isSharded());
-            putIfTrue(outputDocument, "nonAtomic", isNonAtomic());
-        }
-        if (getDatabaseName() != null) {
-            outputDocument.put("db", new BsonString(getDatabaseName()));
-        }
-        BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
-                                           .append("map", getMapFunction())
-                                           .append("reduce", getReduceFunction())
-                                           .append("out", outputDocument);
+    private CommandOperationHelper.CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
+            if (!serverIsAtLeastVersionFourDotFour(connectionDescription)) {
+                putIfTrue(outputDocument, "sharded", isSharded());
+                putIfTrue(outputDocument, "nonAtomic", isNonAtomic());
+            }
+            if (getDatabaseName() != null) {
+                outputDocument.put("db", new BsonString(getDatabaseName()));
+            }
+            BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
+                    .append("map", getMapFunction())
+                    .append("reduce", getReduceFunction())
+                    .append("out", outputDocument);
 
-        putIfNotNull(commandDocument, "query", getFilter());
-        putIfNotNull(commandDocument, "sort", getSort());
-        putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
-        putIfNotNull(commandDocument, "scope", getScope());
-        putIfTrue(commandDocument, "verbose", isVerbose());
-        putIfNotZero(commandDocument, "limit", getLimit());
-        putIfNotZero(commandDocument, "maxTimeMS", timeoutContext.getMaxTimeMS());
-        putIfTrue(commandDocument, "jsMode", isJsMode());
-        if (bypassDocumentValidation != null && description != null) {
-            commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
-        }
-        if (description != null) {
+            putIfNotNull(commandDocument, "query", getFilter());
+            putIfNotNull(commandDocument, "sort", getSort());
+            putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
+            putIfNotNull(commandDocument, "scope", getScope());
+            putIfTrue(commandDocument, "verbose", isVerbose());
+            putIfNotZero(commandDocument, "limit", getLimit());
+            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            putIfTrue(commandDocument, "jsMode", isJsMode());
+            if (bypassDocumentValidation != null) {
+                commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
+            }
             appendWriteConcernToCommand(writeConcern, commandDocument);
-        }
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
-        }
-        return commandDocument;
+            if (collation != null) {
+                commandDocument.put("collation", collation.asDocument());
+            }
+            return commandDocument;
+        };
     }
+
 }

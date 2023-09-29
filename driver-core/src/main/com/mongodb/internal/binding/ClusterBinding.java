@@ -85,22 +85,6 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return operationContext.getSessionContext();
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return operationContext.getServerApi();
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return operationContext.getRequestContext();
-    }
-
-    @Override
     public OperationContext getOperationContext() {
         return operationContext;
     }
@@ -151,23 +135,8 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return new ReadConcernAwareNoOpSessionContext(readConcern);
-        }
-
-        @Override
         public OperationContext getOperationContext() {
             return operationContext;
-        }
-
-        @Override
-        public ServerApi getServerApi() {
-            return operationContext.getServerApi();
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return operationContext.getRequestContext();
         }
 
         @Override

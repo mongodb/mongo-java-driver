@@ -25,8 +25,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -47,17 +45,12 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.IndexHelper.generateIndexName;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
-import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
@@ -68,7 +61,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  */
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
@@ -77,7 +69,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     public CreateIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final List<IndexRequest> requests, @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
@@ -119,34 +110,24 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> {
-            try {
-                executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                        connection, writeConcernErrorTransformer());
-            } catch (MongoCommandException e) {
-                throw checkForDuplicateKeyError(e);
-            }
-            return null;
-        });
+        try {
+            executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer());
+        } catch (MongoCommandException e) {
+            throw checkForDuplicateKeyError(e);
+        }
+        return null;
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, (connection, t) -> {
-            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-            if (t != null) {
-                errHandlingCallback.onResult(null, t);
-            } else {
-                SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                try {
-                    executeCommandAsync(binding, namespace.getDatabaseName(),
-                            getCommand(connection.getDescription()), connection, writeConcernErrorTransformerAsync(),
-                            (result, t12) -> wrappedCallback.onResult(null, translateException(t12)));
-                } catch (Throwable t1) {
-                    wrappedCallback.onResult(null, t1);
-                }
-            }
-        });
+        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformerAsync(),
+                ((result, t) -> {
+                    if (t != null) {
+                        callback.onResult(null, translateException(t));
+                    } else {
+                        callback.onResult(result, null);
+                    }
+                }));
     }
 
     @SuppressWarnings("deprecation")
@@ -217,24 +198,26 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return index;
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description) {
-        BsonDocument command = new BsonDocument("createIndexes", new BsonString(namespace.getCollectionName()));
-        List<BsonDocument> values = new ArrayList<>();
-        for (IndexRequest request : requests) {
-            values.add(getIndex(request));
-        }
-        command.put("indexes", new BsonArray(values));
-        putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
-        appendWriteConcernToCommand(writeConcern, command);
-        if (commitQuorum != null) {
-            if (serverIsAtLeastVersionFourDotFour(description)) {
-                command.put("commitQuorum", commitQuorum.toBsonValue());
-            } else {
-                throw new MongoClientException("Specifying a value for the create index commit quorum option "
-                        + "requires a minimum MongoDB version of 4.4");
+    private CommandOperationHelper.CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument command = new BsonDocument("createIndexes", new BsonString(namespace.getCollectionName()));
+            List<BsonDocument> values = new ArrayList<>();
+            for (IndexRequest request : requests) {
+                values.add(getIndex(request));
             }
-        }
-        return command;
+            command.put("indexes", new BsonArray(values));
+            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            appendWriteConcernToCommand(writeConcern, command);
+            if (commitQuorum != null) {
+                if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {
+                    command.put("commitQuorum", commitQuorum.toBsonValue());
+                } else {
+                    throw new MongoClientException("Specifying a value for the create index commit quorum option "
+                            + "requires a minimum MongoDB version of 4.4");
+                }
+            }
+            return command;
+        };
     }
 
     @Nullable

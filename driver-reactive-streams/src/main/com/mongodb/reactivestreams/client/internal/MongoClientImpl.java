@@ -86,7 +86,8 @@ public final class MongoClientImpl implements MongoClient {
                             @Nullable final OperationExecutor executor, @Nullable final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
-        this.serverSessionPool = new ServerSessionPool(cluster, settings.getServerApi());
+        TimeoutSettings timeoutSettings = TimeoutSettings.create(settings);
+        this.serverSessionPool = new ServerSessionPool(cluster, timeoutSettings, settings.getServerApi());
         this.clientSessionHelper = new ClientSessionHelper(this, serverSessionPool);
         AutoEncryptionSettings autoEncryptSettings = settings.getAutoEncryptionSettings();
         this.crypt = autoEncryptSettings != null ? Crypts.createCrypt(this, autoEncryptSettings) : null;
@@ -104,7 +105,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                      settings.getRetryWrites(), settings.getRetryReads(),
                                                                      settings.getUuidRepresentation(),
                                                                      settings.getAutoEncryptionSettings(),
-                                                                     TimeoutSettings.create(settings),
+                                                                     timeoutSettings,
                                                                      this.executor);
         this.closed = new AtomicBoolean();
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);

@@ -74,7 +74,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private static final BsonArray SAFE_CONTENT_ARRAY = new BsonArray(
             singletonList(BsonDocument.parse("{key: {__safeContent__: 1}, name: '__safeContent___1'}")));
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final String databaseName;
     private final String collectionName;
     private final WriteConcern writeConcern;
@@ -99,7 +98,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     public CreateCollectionOperation(final TimeoutSettings timeoutSettings, final String databaseName,
             final String collectionName, @Nullable final WriteConcern writeConcern) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
         this.writeConcern = writeConcern;

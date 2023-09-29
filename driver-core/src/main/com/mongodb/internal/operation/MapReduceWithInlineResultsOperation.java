@@ -62,7 +62,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
                                                                ReadOperation<MapReduceBatchCursor<T>> {
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -79,7 +78,6 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     public MapReduceWithInlineResultsOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
             final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -181,17 +179,17 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
 
     @Override
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(timeoutContext, binding, namespace.getDatabaseName(),
-                                    getCommandCreator(binding.getSessionContext()),
-                                    CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
+        return executeRetryableRead(binding, namespace.getDatabaseName(),
+                getCommandCreator(),
+                CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
         SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(timeoutContext, binding, namespace.getDatabaseName(),
-                                  getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, "results"),
-                                  asyncTransformer(), false, errHandlingCallback);
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+                getCommandCreator(), CommandResultDocumentCodec.create(decoder, "results"),
+                asyncTransformer(), false, errHandlingCallback);
     }
 
     public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
@@ -202,9 +200,10 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return createExplainableOperation(explainVerbosity);
     }
 
+    // TODO (CSOT) JAVA-5172
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<>(timeoutSettings, namespace.getDatabaseName(),
-                asExplainCommand(getCommand(timeoutContext, NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                asExplainCommand(getCommandCreator().create(null, null, null),
                         explainVerbosity), new BsonDocumentCodec());
     }
 
@@ -218,31 +217,28 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                 MapReduceHelper.createStatistics(result));
     }
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (timeoutContext, serverDescription, connectionDescription) ->
-                getCommand(timeoutContext, sessionContext, connectionDescription.getMaxWireVersion());
-    }
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
 
-    private BsonDocument getCommand(final TimeoutContext timeoutContext, final SessionContext sessionContext,
-            final int maxWireVersion) {
-        BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
-                                           .append("map", getMapFunction())
-                                           .append("reduce", getReduceFunction())
-                                           .append("out", new BsonDocument("inline", new BsonInt32(1)));
+            BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
+                    .append("map", getMapFunction())
+                    .append("reduce", getReduceFunction())
+                    .append("out", new BsonDocument("inline", new BsonInt32(1)));
 
-        putIfNotNull(commandDocument, "query", getFilter());
-        putIfNotNull(commandDocument, "sort", getSort());
-        putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
-        putIfNotNull(commandDocument, "scope", getScope());
-        putIfTrue(commandDocument, "verbose", isVerbose());
-        appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
-        putIfNotZero(commandDocument, "limit", getLimit());
-        putIfNotZero(commandDocument, "maxTimeMS", timeoutContext.getMaxTimeMS());
-        putIfTrue(commandDocument, "jsMode", isJsMode());
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
-        }
-        return commandDocument;
+            putIfNotNull(commandDocument, "query", getFilter());
+            putIfNotNull(commandDocument, "sort", getSort());
+            putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
+            putIfNotNull(commandDocument, "scope", getScope());
+            putIfTrue(commandDocument, "verbose", isVerbose());
+            appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), commandDocument);
+            putIfNotZero(commandDocument, "limit", getLimit());
+            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            putIfTrue(commandDocument, "jsMode", isJsMode());
+            if (collation != null) {
+                commandDocument.put("collation", collation.asDocument());
+            }
+            return commandDocument;
+        };
     }
 
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {

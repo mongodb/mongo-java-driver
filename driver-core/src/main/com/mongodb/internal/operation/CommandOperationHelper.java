@@ -47,10 +47,11 @@ import static java.util.Arrays.asList;
 @SuppressWarnings("overloads")
 final class CommandOperationHelper {
 
-
+    // TODO - pass in op context
     interface CommandCreator {
         BsonDocument create(
-                TimeoutContext timeoutContext, ServerDescription serverDescription,
+                OperationContext operationContext,
+                ServerDescription serverDescription,
                 ConnectionDescription connectionDescription);
     }
 

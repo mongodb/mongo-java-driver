@@ -47,7 +47,6 @@ final class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
     private final TimeoutSettings timeoutSettings;
-    private final TimeoutContext timeoutContext;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     @Nullable
@@ -67,7 +66,6 @@ final class ListSearchIndexesOperation<T>
             @Nullable final Collation collation, @Nullable final BsonValue comment, @Nullable final Boolean allowDiskUse,
             final boolean retryReads) {
         this.timeoutSettings = timeoutSettings;
-        this.timeoutContext = new TimeoutContext(timeoutSettings);
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
@@ -126,9 +124,7 @@ final class ListSearchIndexesOperation<T>
     private AggregateOperation<T> asAggregateOperation() {
         BsonDocument searchDefinition = getSearchDefinition();
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
-
-        return new AggregateOperation<>(timeoutContext.getTimeoutSettings(), namespace, singletonList(listSearchIndexesStage),
-                                        decoder)
+        return new AggregateOperation<>(timeoutSettings, namespace, singletonList(listSearchIndexesStage), decoder)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)
