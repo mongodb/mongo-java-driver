@@ -39,6 +39,8 @@ import org.bson.BsonTimestamp;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
+import static com.mongodb.connection.ClusterType.SHARDED;
+import static java.util.Objects.requireNonNull;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -62,31 +64,6 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     }
 
     @Override
-    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        isConnectionSourcePinningRequired((isConnectionSourcePinningRequired, t) -> {
-            if (t != null) {
-                callback.onResult(null, t);
-            } else if (isConnectionSourcePinningRequired) {
-                getPinnedConnectionSource(true, callback);
-            } else {
-                wrapped.getReadConnectionSource(new WrappingCallback(callback));
-            }
-        });
-    }
-
-    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        isConnectionSourcePinningRequired((isConnectionSourcePinningRequired, t) -> {
-            if (t != null) {
-                callback.onResult(null, t);
-            } else if (isConnectionSourcePinningRequired) {
-                getPinnedConnectionSource(false, callback);
-            } else {
-                wrapped.getWriteConnectionSource(new WrappingCallback(callback));
-            }
-        });
-    }
-
-    @Override
     public SessionContext getSessionContext() {
         return sessionContext;
     }
@@ -107,28 +84,49 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         return wrapped.getOperationContext();
     }
 
-    private void getPinnedConnectionSource(final boolean isRead, final SingleResultCallback<AsyncConnectionSource> callback) {
+    @Override
+    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+        getConnectionSource(wrapped::getReadConnectionSource, callback);
+    }
+
+    @Override
+    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
+        getConnectionSource(wrappedConnectionSourceCallback ->
+                wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, wrappedConnectionSourceCallback),
+                callback);
+    }
+
+    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+        getConnectionSource(wrapped::getWriteConnectionSource, callback);
+    }
+
+    private interface AsyncConnectionSourceSupplier {
+        void getConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+    }
+
+    private void getConnectionSource(final AsyncConnectionSourceSupplier connectionSourceSupplier,
+            final SingleResultCallback<AsyncConnectionSource> callback) {
         WrappingCallback wrappingCallback = new WrappingCallback(callback);
-        TransactionContext<AsyncConnection> transactionContext = TransactionContext.get(session);
-        if (transactionContext == null) {
-            SingleResultCallback<AsyncConnectionSource> connectionSourceCallback = (result, t) -> {
+
+        if (!session.hasActiveTransaction()) {
+            connectionSourceSupplier.getConnectionSource(wrappingCallback);
+        } else if (TransactionContext.get(session) == null) {
+            connectionSourceSupplier.getConnectionSource((source, t) -> {
                 if (t != null) {
                     wrappingCallback.onResult(null, t);
                 } else {
-                    TransactionContext<AsyncConnection> newTransactionContext = new TransactionContext<>(
-                            wrapped.getCluster().getDescription().getType());
-                    session.setTransactionContext(result.getServerDescription().getAddress(), newTransactionContext);
-                    newTransactionContext.release();  // The session is responsible for retaining a reference to the context
-                    wrappingCallback.onResult(result, null);
+                    ClusterType clusterType = requireNonNull(source).getServerDescription().getClusterType();
+                    if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
+                        TransactionContext<AsyncConnection> transactionContext = new TransactionContext<>(clusterType);
+                        session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
+                        transactionContext.release();  // The session is responsible for retaining a reference to the context
+                    }
+                    wrappingCallback.onResult(source, null);
                 }
-            };
-            if (isRead) {
-                wrapped.getReadConnectionSource(connectionSourceCallback);
-            } else {
-                wrapped.getWriteConnectionSource(connectionSourceCallback);
-            }
+            });
         } else {
-            wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()), new WrappingCallback(callback));
+            wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()), wrappingCallback);
         }
     }
 
@@ -136,12 +134,6 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
     public AsyncReadWriteBinding retain() {
         super.retain();
         return this;
-    }
-
-    @Override
-    public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
-            final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, callback);
     }
 
     @Override
@@ -154,19 +146,6 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
             }
         }
         return count;
-    }
-
-    private void isConnectionSourcePinningRequired(final SingleResultCallback<Boolean> callback) {
-        try {
-            callback.onResult(isConnectionSourcePinningRequired(), null);
-        } catch (Exception e) {
-            callback.onResult(null, e);
-        }
-    }
-
-    private boolean isConnectionSourcePinningRequired() {
-        ClusterType clusterType = wrapped.getCluster().getDescription().getType();
-        return session.hasActiveTransaction() && (clusterType == ClusterType.SHARDED || clusterType == LOAD_BALANCED);
     }
 
     private class SessionBindingAsyncConnectionSource implements AsyncConnectionSource {
@@ -218,7 +197,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
-                            transactionContext.pinConnection(connection, AsyncConnection::markAsPinned);
+                            transactionContext.pinConnection(requireNonNull(connection), AsyncConnection::markAsPinned);
                             callback.onResult(connection, null);
                         }
                     });
