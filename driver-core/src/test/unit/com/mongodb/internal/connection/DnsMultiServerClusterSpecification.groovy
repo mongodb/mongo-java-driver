@@ -98,7 +98,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         factory.sendNotification(secondServer, SHARD_ROUTER)
         def firstTestServer = factory.getServer(firstServer)
         def secondTestServer = factory.getServer(secondServer)
-        def clusterDescription = cluster.getDescription()
+        def clusterDescription = cluster.getCurrentDescription()
 
         then: 'events are generated, description includes hosts, exception is cleared, and servers are open'
         2 * clusterListener.clusterDescriptionChanged(_)
@@ -112,7 +112,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         initializer.initialize([secondServer, thirdServer])
         factory.sendNotification(secondServer, SHARD_ROUTER)
         def thirdTestServer = factory.getServer(thirdServer)
-        clusterDescription = cluster.getDescription()
+        clusterDescription = cluster.getCurrentDescription()
 
         then: 'events are generated, description is updated, and the removed server is closed'
         1 * clusterListener.clusterDescriptionChanged(_)
@@ -125,7 +125,7 @@ class DnsMultiServerClusterSpecification extends Specification {
 
         when: 'the listener is initialized with another exception'
         initializer.initialize(exception)
-        clusterDescription = cluster.getDescription()
+        clusterDescription = cluster.getCurrentDescription()
 
         then: 'the exception is ignored'
         0 * clusterListener.clusterDescriptionChanged(_)

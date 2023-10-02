@@ -80,22 +80,13 @@ public class SingleServerClusterTest {
     }
 
     @Test
-    public void shouldGetDescription() {
-        // given
-        setUpCluster(getPrimary());
-
-        // expect
-        assertNotNull(cluster.getDescription());
-    }
-
-    @Test
     public void descriptionShouldIncludeSettings() {
         // given
         setUpCluster(getPrimary());
 
         // expect
-        assertNotNull(cluster.getDescription().getClusterSettings());
-        assertNotNull(cluster.getDescription().getServerSettings());
+        assertNotNull(cluster.getCurrentDescription().getClusterSettings());
+        assertNotNull(cluster.getCurrentDescription().getServerSettings());
     }
 
     @Test

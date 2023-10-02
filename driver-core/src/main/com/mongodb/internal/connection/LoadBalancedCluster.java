@@ -175,13 +175,6 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterDescription getDescription() {
-        isTrue("open", !isClosed());
-        waitForSrv();
-        return description;
-    }
-
-    @Override
     public ClusterId getClusterId() {
         return clusterId;
     }
