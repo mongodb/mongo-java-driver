@@ -147,6 +147,4 @@ tasks.javadocJar.configure {
 // ===========================
 //     Sources publishing configuration
 // ===========================
-tasks.sourcesJar {
-    from(project.sourceSets.main.map { it.kotlin })
-}
+tasks.sourcesJar { from(project.sourceSets.main.map { it.kotlin }) }
