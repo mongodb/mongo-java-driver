@@ -118,26 +118,26 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
         then:
         1 * logger.debug {
-            it == "Command \"ping\" started on database test using a connection with driver-generated ID " +
+            it == "Command \"ping\" started on database \"test\" using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. " +
                     "Command: {\"ping\": 1, " + "\"\$db\": \"test\"}"
         }
         1 * logger.debug {
-            it.matches("Command \"ping\" succeeded in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
+            it.matches("Command \"ping\" succeeded on database \"test\" in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. Command reply: \\{\"ok\": 1}")
         }
         1 * logger.debug {
-            it.matches("Command \"ping\" succeeded in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
+            it.matches("Command \"ping\" succeeded on database \"test\" in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. Command reply: \\{\"ok\": 42}")
         }
         1 * logger.debug({
-            it.matches("Command \"ping\" failed in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
+            it.matches("Command \"ping\" failed on database \"test\" in \\d+\\.\\d+ ms using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}.")
@@ -172,7 +172,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
         then:
         1 * logger.debug {
-            it == "Command \"fake\" started on database test using a connection with driver-generated ID " +
+            it == "Command \"fake\" started on database \"test\" using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. " +
@@ -205,7 +205,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
         then:
         1 * logger.debug {
-            it == "Command \"createUser\" started on database test using a connection with driver-generated ID " +
+            it == "Command \"createUser\" started on database \"test\" using a connection with driver-generated ID " +
                     "${connectionDescription.connectionId.localValue} and server-generated ID " +
                     "${connectionDescription.connectionId.serverValue} to 127.0.0.1:27017. The " +
                     "request ID is ${message.getId()} and the operation ID is ${operationContext.getId()}. Command: {}"
