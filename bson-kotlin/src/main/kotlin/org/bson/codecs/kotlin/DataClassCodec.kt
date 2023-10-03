@@ -85,6 +85,8 @@ internal data class DataClassCodec<T : Any>(
                 if (logger.isTraceEnabled) {
                     logger.trace("Found property not present in the DataClass: $fieldName")
                 }
+            } else if (propertyModel.param.type.isMarkedNullable && reader.currentBsonType == BsonType.NULL) {
+                reader.skipValue()
             } else {
                 try {
                     args[propertyModel.param] = decoderContext.decodeWithChildContext(propertyModel.codec, reader)
