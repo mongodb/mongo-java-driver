@@ -31,6 +31,7 @@ import org.bson.BsonString;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
@@ -139,8 +140,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
      * @throws IllegalStateException Iff another operation is in progress.
      */
     boolean tryStartOperation() throws IllegalStateException {
-        lock.lock();
-        try {
+        return withLock(() -> {
             State localState = state;
             if (!localState.operable()) {
                 return false;
@@ -152,30 +152,26 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
             } else {
                 throw fail(state.toString());
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     /**
      * Thread-safe.
      */
     void endOperation() {
-        boolean doClose = false;
-        lock.lock();
-        try {
+        boolean doClose = withLock(() -> {
             State localState = state;
             if (localState == State.OPERATION_IN_PROGRESS) {
                 state = State.IDLE;
             } else if (localState == State.CLOSE_PENDING) {
                 state = State.CLOSED;
-                doClose = true;
-            } else {
+                return true;
+            } else if (localState != State.CLOSED) {
                 fail(localState.toString());
             }
-        } finally {
-            lock.unlock();
-        }
+            return false;
+        });
+
         if (doClose) {
             doClose();
         }
@@ -185,19 +181,17 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
      * Thread-safe.
      */
     void close() {
-        boolean doClose = false;
-        lock.lock();
-        try {
+        boolean doClose = withLock(() -> {
             State localState = state;
             if (localState == State.OPERATION_IN_PROGRESS) {
                 state = State.CLOSE_PENDING;
             } else if (localState != State.CLOSED) {
                 state = State.CLOSED;
-                doClose = true;
+                return true;
             }
-        } finally {
-            lock.unlock();
-        }
+            return false;
+        });
+
         if (doClose) {
             doClose();
         }
@@ -221,7 +215,9 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     }
 
     void unsetServerCursor() {
-        this.serverCursor = null;
+        withLock(() -> {
+            this.serverCursor = null;
+        });
     }
 
     void setServerCursor(@Nullable final ServerCursor serverCursor) {
@@ -236,10 +232,11 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     }
 
     void releaseServerAndClientResources(final C connection) {
-        lock.lock();
-        ServerCursor localServerCursor = serverCursor;
-        serverCursor = null;
-        lock.unlock();
+        ServerCursor localServerCursor = withLockNullable(() -> {
+            ServerCursor local = serverCursor;
+            serverCursor = null;
+            return local;
+        });
         if (localServerCursor != null) {
             killServerCursor(namespace, localServerCursor, connection);
         } else {
@@ -271,6 +268,34 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
         if (localPinnedConnection != null) {
             localPinnedConnection.release();
             pinnedConnection = null;
+        }
+    }
+
+    private void withLock(final Runnable runnable) {
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Nullable
+    private <T> T withLockNullable(final Supplier<T> supplier) {
+        try {
+            lock.lock();
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private <T> T withLock(final Supplier<T> supplier) {
+        try {
+            lock.lock();
+            return supplier.get();
+        } finally {
+            lock.unlock();
         }
     }
 

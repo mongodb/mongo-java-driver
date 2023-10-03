@@ -116,13 +116,14 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     @Test
     @DisplayName("should get Exceptions for operations on the cursor after closing")
     void shouldGetExceptionsForOperationsOnTheCursorAfterClosing() {
-        BsonDocument commandResult = executeFindCommand();
+        BsonDocument commandResult = executeFindCommand(5);
         cursor = new AsyncCommandBatchCursor<>(getServerAddress(), commandResult, 0, 0, 0, DOCUMENT_DECODER,
                 null, connectionSource, connection);
 
         cursor.close();
-
         assertDoesNotThrow(() -> cursor.close());
+
+        checkReferenceCountReachesTarget(connectionSource, 1);
         assertThrows(MongoException.class, this::cursorNext);
         assertNull(cursor.getServerCursor());
     }
@@ -170,7 +171,6 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     @MethodSource
     @DisplayName("should block waiting for next batch on a tailable cursor")
     void shouldBlockWaitingForNextBatchOnATailableCursor(final boolean awaitData, final int maxTimeMS) {
-
         getCollectionHelper().create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000));
         getCollectionHelper().insertDocuments(DOCUMENT_DECODER, new Document("_id", 1).append("ts", new BsonTimestamp(5, 0)));
 

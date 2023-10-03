@@ -64,9 +64,20 @@ public final class ServerHelper {
     private static void checkPool(final ServerAddress address, final Cluster cluster) {
         ConcurrentPool<UsageTrackingInternalConnection> pool = connectionPool(
                 cluster.selectServer(new ServerAddressSelector(address), new OperationContext()).getServer());
-        if (pool.getInUseCount() > 0) {
-            throw new IllegalStateException("Connection pool in use count is " + pool.getInUseCount());
+
+        int counter = 0;
+        while (counter < 5) {
+            if (pool.getInUseCount() == 0) {
+                return;
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            counter++;
         }
+        throw new IllegalStateException("Connection pool in use count is " + pool.getInUseCount());
     }
 
     private static ConcurrentPool<UsageTrackingInternalConnection> connectionPool(final Server server) {

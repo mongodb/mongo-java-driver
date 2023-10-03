@@ -296,6 +296,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                     if (error instanceof MongoSocketException) {
                         onCorruptedConnection(connection);
                     }
+                    connection.release();
                     callback.onResult(result, error);
                 });
             }
@@ -308,9 +309,9 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             }
 
             if (getServerCursor() != null) {
-                executeWithConnection(conn -> {
-                    releaseServerResources(conn);
-                    conn.release();
+                executeWithConnection(c -> {
+                    releaseServerResources(c);
+                    c.release();
                 }, (r, t) -> {
                     // guarantee that regardless of exceptions, `serverCursor` is null and client resources are released
                     unsetServerCursor();
@@ -323,14 +324,16 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
         @Override
         void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor, final AsyncConnection connection) {
-            connection
-                    .retain()
-                    .commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, serverCursor),
-                            NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
-                            assertNotNull(getConnectionSource()), (r, t) -> {
-                                connection.release();
-                                releaseClientResources();
-                            });
+            connection.retain();
+            AsyncConnectionSource connectionSource = assertNotNull(getConnectionSource()).retain();
+            connection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, serverCursor),
+                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
+                    connectionSource, (r, t) -> {
+                        connectionSource.release();
+                        connection.release();
+                        releaseClientResources();
+                    });
         }
     }
+
 }

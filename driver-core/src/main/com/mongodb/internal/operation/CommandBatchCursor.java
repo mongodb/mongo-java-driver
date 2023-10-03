@@ -374,8 +374,8 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         }
 
         @Override
-        void killServerCursor(final MongoNamespace namespace, final ServerCursor serverCursor, final Connection connection) {
-            connection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, serverCursor),
+        void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor, final Connection localConnection) {
+            localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), assertNotNull(getConnectionSource()));
             releaseClientResources();
         }
