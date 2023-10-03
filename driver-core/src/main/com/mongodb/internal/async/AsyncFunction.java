@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.async.function;
 
-import com.mongodb.internal.async.SingleResultCallback;
+package com.mongodb.internal.async;
+
+import com.mongodb.lang.Nullable;
 
 /**
- * An {@linkplain AsyncCallbackFunction asynchronous callback-based function} of no parameters and no successful result.
- * This class is a callback-based counterpart of {@link Runnable}.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- *
- * @see AsyncCallbackFunction
+ * See tests for usage (AsyncFunctionsTest).
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time
  */
 @FunctionalInterface
-public interface AsyncCallbackRunnable {
+public interface AsyncFunction<T, R> {
     /**
-     * @see AsyncCallbackFunction#apply(Object, SingleResultCallback)
+     * This should not be called externally, but should be implemented as a
+     * lambda. To "finish" an async chain, use one of the "finish" methods.
      */
-    void run(SingleResultCallback<Void> callback);
-
+    void unsafeFinish(@Nullable T value, SingleResultCallback<R> callback);
 }
