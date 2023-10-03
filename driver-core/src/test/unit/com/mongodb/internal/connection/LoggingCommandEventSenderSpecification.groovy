@@ -78,11 +78,11 @@ class LoggingCommandEventSenderSpecification extends Specification {
                         new CommandStartedEvent(null, context.id, message.getId(), connectionDescription, namespace.databaseName,
                                 commandDocument.getFirstKey(), commandDocument.append('$db', new BsonString(namespace.databaseName))),
                         new CommandSucceededEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(),
-                                new BsonDocument(), 1),
+                                namespace.databaseName, new BsonDocument(), 1),
                         new CommandSucceededEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(),
-                                replyDocument, 1),
-                        new CommandFailedEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(), 1,
-                                failureException)
+                                namespace.databaseName, replyDocument, 1),
+                        new CommandFailedEvent(null, context.id, message.getId(), connectionDescription, commandDocument.getFirstKey(),
+                                namespace.databaseName, 1, failureException)
                 ])
 
         where:
