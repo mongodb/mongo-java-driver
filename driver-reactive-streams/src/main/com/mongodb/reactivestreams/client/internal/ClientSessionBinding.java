@@ -111,7 +111,9 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
 
         if (!session.hasActiveTransaction()) {
             connectionSourceSupplier.getConnectionSource(wrappingCallback);
-        } else if (TransactionContext.get(session) == null) {
+            return;
+        }
+        if (TransactionContext.get(session) == null) {
             connectionSourceSupplier.getConnectionSource((source, t) -> {
                 if (t != null) {
                     wrappingCallback.onResult(null, t);
