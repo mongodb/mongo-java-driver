@@ -23,6 +23,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
@@ -40,7 +41,6 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterType.SHARDED;
-import static java.util.Objects.requireNonNull;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -101,24 +101,20 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
         getConnectionSource(wrapped::getWriteConnectionSource, callback);
     }
 
-    private interface AsyncConnectionSourceSupplier {
-        void getConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
-    }
-
-    private void getConnectionSource(final AsyncConnectionSourceSupplier connectionSourceSupplier,
+    private void getConnectionSource(final AsyncCallbackSupplier<AsyncConnectionSource> connectionSourceSupplier,
             final SingleResultCallback<AsyncConnectionSource> callback) {
         WrappingCallback wrappingCallback = new WrappingCallback(callback);
 
         if (!session.hasActiveTransaction()) {
-            connectionSourceSupplier.getConnectionSource(wrappingCallback);
+            connectionSourceSupplier.get(wrappingCallback);
             return;
         }
         if (TransactionContext.get(session) == null) {
-            connectionSourceSupplier.getConnectionSource((source, t) -> {
+            connectionSourceSupplier.get((source, t) -> {
                 if (t != null) {
                     wrappingCallback.onResult(null, t);
                 } else {
-                    ClusterType clusterType = requireNonNull(source).getServerDescription().getClusterType();
+                    ClusterType clusterType = assertNotNull(source).getServerDescription().getClusterType();
                     if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
                         TransactionContext<AsyncConnection> transactionContext = new TransactionContext<>(clusterType);
                         session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
@@ -199,7 +195,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
-                            transactionContext.pinConnection(requireNonNull(connection), AsyncConnection::markAsPinned);
+                            transactionContext.pinConnection(assertNotNull(connection), AsyncConnection::markAsPinned);
                             callback.onResult(connection, null);
                         }
                     });

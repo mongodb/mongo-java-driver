@@ -514,20 +514,19 @@ public final class ClusterFixture {
     }
 
     public static boolean isDiscoverableReplicaSet() {
-        return getClusterDescription(getCluster()).getType() == REPLICA_SET
-                && getClusterDescription(getCluster()).getConnectionMode() == MULTIPLE;
+        return clusterIsType(REPLICA_SET) && getClusterConnectionMode() == MULTIPLE;
     }
 
     public static boolean isSharded() {
-        return getClusterDescription(getCluster()).getType() == SHARDED;
+        return clusterIsType(SHARDED);
     }
 
     public static boolean isStandalone() {
-        return getClusterDescription(getCluster()).getType() == STANDALONE;
+        return clusterIsType(STANDALONE);
     }
 
     public static boolean isLoadBalanced() {
-        return getCluster().getSettings().getMode() == LOAD_BALANCED;
+        return getClusterConnectionMode() == LOAD_BALANCED;
     }
 
     public static boolean isAuthenticated() {
