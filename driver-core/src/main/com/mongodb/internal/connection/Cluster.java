@@ -40,15 +40,6 @@ public interface Cluster extends Closeable {
 
     ClusterSettings getSettings();
 
-    /**
-     * Get the description of this cluster.  This method will not return normally until the cluster type is known.
-     *
-     * @return a ClusterDescription representing the current state of the cluster
-     * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before the cluster type is known
-     * @throws com.mongodb.MongoInterruptedException if interrupted when getting the cluster description
-     */
-    ClusterDescription getDescription();
-
 
     ClusterId getClusterId();
 
