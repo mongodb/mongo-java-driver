@@ -195,16 +195,16 @@ public final class DefaultClusterFactory {
         @Nullable
         public static ClusterEnvironment detectCluster(final String... hosts) {
             for (String host : hosts) {
-                for (ClusterEnvironment value : values()) {
-                    if (value.isVendorHost(host)) {
-                        return value;
+                for (ClusterEnvironment clusterEnvironment : values()) {
+                    if (clusterEnvironment.isExternalClusterProvider(host)) {
+                        return clusterEnvironment;
                     }
                 }
             }
             return null;
         }
 
-        private boolean isVendorHost(final String host) {
+        private boolean isExternalClusterProvider(final String host) {
             for (String hostSuffix : hostSuffixes) {
                 String lowerCaseHost = host.toLowerCase();
                 if (lowerCaseHost.endsWith(hostSuffix)) {
