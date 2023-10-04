@@ -182,6 +182,7 @@ public final class DefaultClusterFactory {
         AWS("https://www.mongodb.com/supportability/documentdb",
                 "DocumentDB",
                 ".docdb.amazonaws.com", ".docdb-elastic.amazonaws.com");
+
         private final String documentationUrl;
         private final String clusterProductName;
         private final String[] hostSuffixes;
