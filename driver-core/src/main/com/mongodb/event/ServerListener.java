@@ -21,7 +21,7 @@ import java.util.EventListener;
 /**
  * A listener for server-related events
  * <p>
- * It does not have to be thread-safe, see {@link ClusterListener} for the details regarding the order of events.
+ * See {@link ClusterListener} for the details regarding the order of events and memory synchronization.
  * </p>
  * @see ClusterListener
  * @see ServerMonitorListener
