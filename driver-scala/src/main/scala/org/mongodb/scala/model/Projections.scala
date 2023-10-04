@@ -32,8 +32,13 @@ import org.mongodb.scala.bson.conversions.Bson
 object Projections {
 
   /**
-   * Creates a projection of a field whose value is computed from the given expression.  Projection with an expression is only supported
-   * using the `\$project` aggregation pipeline stage.
+   * Creates a projection of a field whose value is computed from the given expression.  Projection with an expression
+   * can be used in the $project aggregation pipeline stage.
+   *
+   * <p>
+   * Starting from MongoDB 4.4, projection with an expression is also accepted in various find-related methods
+   * (e.g., `find()`, `findOneAndReplace()`, `findOneAndUpdate()`, `findOneAndDelete()`) within the
+   * `MongoCollection`-based API where projection is supported.
    *
    * @param fieldName     the field name
    * @param  expression   the expression
