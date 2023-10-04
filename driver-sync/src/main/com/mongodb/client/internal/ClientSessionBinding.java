@@ -30,7 +30,10 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.ClientSessionContext;
 
+import java.util.function.Supplier;
+
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
+import static com.mongodb.connection.ClusterType.SHARDED;
 import static org.bson.assertions.Assertions.assertNotNull;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -82,28 +85,17 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        if (isConnectionSourcePinningRequired()) {
-            return new SessionBindingConnectionSource(getPinnedConnectionSource(true));
-        } else {
-            return new SessionBindingConnectionSource(wrapped.getReadConnectionSource());
-        }
+        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getReadConnectionSource));
     }
 
     @Override
     public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
-        if (isConnectionSourcePinningRequired()) {
-            return new SessionBindingConnectionSource(getPinnedConnectionSource(true));
-        } else {
-            return new SessionBindingConnectionSource(wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference));
-        }
+        return new SessionBindingConnectionSource(getConnectionSource(() ->
+                wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference)));
     }
 
     public ConnectionSource getWriteConnectionSource() {
-        if (isConnectionSourcePinningRequired()) {
-            return new SessionBindingConnectionSource(getPinnedConnectionSource(false));
-        } else {
-            return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource());
-        }
+        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getWriteConnectionSource));
     }
 
     @Override
@@ -111,23 +103,23 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         return operationContext;
     }
 
-    private boolean isConnectionSourcePinningRequired() {
-        ClusterType clusterType = wrapped.getCluster().getDescription().getType();
-        return session.hasActiveTransaction() && (clusterType == ClusterType.SHARDED || clusterType == LOAD_BALANCED);
-    }
-
-    private ConnectionSource getPinnedConnectionSource(final boolean isRead) {
-        TransactionContext<Connection> transactionContext = TransactionContext.get(session);
-        ConnectionSource source;
-        if (transactionContext == null) {
-            source = isRead ? wrapped.getReadConnectionSource() : wrapped.getWriteConnectionSource();
-            transactionContext = new TransactionContext<>(wrapped.getCluster().getDescription().getType());
-            session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
-            transactionContext.release();  // The session is responsible for retaining a reference to the context
-        } else {
-            source = wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()));
+    private ConnectionSource getConnectionSource(final Supplier<ConnectionSource> wrappedConnectionSourceSupplier) {
+        if (!session.hasActiveTransaction()) {
+            return wrappedConnectionSourceSupplier.get();
         }
-        return source;
+
+        if (TransactionContext.get(session) == null) {
+            ConnectionSource source = wrappedConnectionSourceSupplier.get();
+            ClusterType clusterType = source.getServerDescription().getClusterType();
+            if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
+                TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
+                session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
+                transactionContext.release();  // The session is responsible for retaining a reference to the context
+            }
+            return source;
+        } else {
+            return wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()));
+        }
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {

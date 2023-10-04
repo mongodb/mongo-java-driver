@@ -1477,20 +1477,6 @@ tasks:
       depends_on:
         - variant: "static-checks"
           name: "static-analysis"
-        - variant: ".tests-variant"
-          name: "test"
-        - variant: ".tests-slow-variant"
-          name: "slow-test"
-        - variant: ".test-gssapi-variant"
-          name: "gssapi-auth-test"
-        - variant: "plain-auth-test"
-          name: "plain-auth-test"
-        - variant: ".test-scala-variant"
-          name: "scala-tests"
-        - variant: ".test-kotlin-variant"
-          name: "kotlin-tests"
-        - variant: ".tests-netty-variant"
-          name: "netty-test"
       commands:
         - func: "publish snapshot"
 

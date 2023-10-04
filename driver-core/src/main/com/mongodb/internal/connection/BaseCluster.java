@@ -153,48 +153,6 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    @Override
-    public ClusterDescription getDescription() {
-        isTrue("open", !isClosed());
-
-        boolean selectionFailureLogged = false;
-
-        StartTime startTime = StartTime.now();
-        Timeout timeout = startServerSelectionTimeout(startTime);
-        while (true) {
-            CountDownLatch currentPhaseLatch = phase.get();
-            ClusterDescription currentDescription = description;
-
-            if (currentDescription.getType() != ClusterType.UNKNOWN) {
-                return currentDescription;
-            }
-
-            if (timeout.hasExpired()) {
-                throw new MongoTimeoutException(format(
-                        "Timed out after %d ms while waiting to connect. Client view of cluster state is %s",
-                        startTime.elapsed().toMillis(),
-                        currentDescription.getShortDescription()));
-            }
-
-            if (!selectionFailureLogged) {
-                if (LOGGER.isInfoEnabled()) {
-                    if (timeout.isInfinite()) {
-                        LOGGER.info("Cluster description not yet available. Waiting indefinitely.");
-                    } else {
-                        LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
-                                timeout.remaining(MILLISECONDS)));
-                    }
-                }
-                selectionFailureLogged = true;
-            }
-
-            connect();
-
-            Timeout heartbeatLimitedTimeout = timeout.orEarlier(startMinWaitHeartbeatTimeout());
-            heartbeatLimitedTimeout.awaitOn(currentPhaseLatch, () -> "waiting to connect");
-        }
-    }
-
     public ClusterId getClusterId() {
         return clusterId;
     }

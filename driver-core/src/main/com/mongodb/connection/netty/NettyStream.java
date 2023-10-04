@@ -68,6 +68,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -286,7 +288,7 @@ final class NettyStream implements Stream {
     private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final long readTimeoutMillis) {
         ByteBuf buffer = null;
         Throwable exceptionResult = null;
-        lock.lock();
+        lockInterruptibly(lock);
         try {
             exceptionResult = pendingException;
             if (exceptionResult == null) {
@@ -344,18 +346,14 @@ final class NettyStream implements Stream {
     }
 
     private void handleReadResponse(@Nullable final io.netty.buffer.ByteBuf buffer, @Nullable final Throwable t) {
-        PendingReader localPendingReader = null;
-        lock.lock();
-        try {
+        PendingReader localPendingReader = withLock(lock, () -> {
             if (buffer != null) {
                 pendingInboundBuffers.add(buffer.retain());
             } else {
                 pendingException = t;
             }
-            localPendingReader = pendingReader;
-        } finally {
-            lock.unlock();
-        }
+            return pendingReader;
+        });
 
         if (localPendingReader != null) {
             //timeouts may be scheduled only by the public read methods
@@ -370,8 +368,7 @@ final class NettyStream implements Stream {
 
     @Override
     public void close() {
-        lock.lock();
-        try {
+        withLock(lock, () ->  {
             isClosed = true;
             if (channel != null) {
                 channel.close();
@@ -382,9 +379,7 @@ final class NettyStream implements Stream {
                 iterator.remove();
                 nextByteBuf.release();
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     @Override
@@ -519,8 +514,7 @@ final class NettyStream implements Stream {
 
         @Override
         public void operationComplete(final ChannelFuture future) {
-            lock.lock();
-            try {
+            withLock(lock, () -> {
                 if (future.isSuccess()) {
                     if (isClosed) {
                         channelFuture.channel().close();
@@ -538,9 +532,7 @@ final class NettyStream implements Stream {
                         initializeChannel(handler, socketAddressQueue);
                     }
                 }
-            } finally {
-                lock.unlock();
-            }
+            });
         }
     }
 

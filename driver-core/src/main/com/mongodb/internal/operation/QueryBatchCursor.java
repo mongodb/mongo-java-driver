@@ -58,6 +58,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.QueryHelper.translateCommandException;
@@ -417,8 +418,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          * @throws IllegalStateException Iff another operation is in progress.
          */
         private boolean tryStartOperation() throws IllegalStateException {
-            lock.lock();
-            try {
+            return withLock(lock, () -> {
                 State localState = state;
                 if (!localState.operable()) {
                     return false;
@@ -430,30 +430,25 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 } else {
                     throw fail(state.toString());
                 }
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         /**
          * Thread-safe.
          */
         private void endOperation() {
-            boolean doClose = false;
-            lock.lock();
-            try {
+            boolean doClose = withLock(lock, () -> {
                 State localState = state;
                 if (localState == State.OPERATION_IN_PROGRESS) {
                     state = State.IDLE;
+                    return false;
                 } else if (localState == State.CLOSE_PENDING) {
                     state = State.CLOSED;
-                    doClose = true;
+                    return true;
                 } else {
-                    fail(localState.toString());
+                    throw fail(localState.toString());
                 }
-            } finally {
-                lock.unlock();
-            }
+            });
             if (doClose) {
                 doClose();
             }
@@ -463,19 +458,17 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          * Thread-safe.
          */
         void close() {
-            boolean doClose = false;
-            lock.lock();
-            try {
+            boolean doClose = withLock(lock, () -> {
                 State localState = state;
                 if (localState == State.OPERATION_IN_PROGRESS) {
                     state = State.CLOSE_PENDING;
+                    return false;
                 } else if (localState != State.CLOSED) {
                     state = State.CLOSED;
-                    doClose = true;
+                    return true;
                 }
-            } finally {
-                lock.unlock();
-            }
+                return false;
+            });
             if (doClose) {
                 doClose();
             }

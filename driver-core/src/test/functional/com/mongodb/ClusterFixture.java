@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -91,6 +92,7 @@ import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static com.mongodb.connection.ClusterType.STANDALONE;
+import static com.mongodb.connection.ClusterType.UNKNOWN;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -154,7 +156,20 @@ public final class ClusterFixture {
     }
 
     public static boolean clusterIsType(final ClusterType clusterType) {
-        return getCluster().getDescription().getType() == clusterType;
+        return getClusterDescription(getCluster()).getType() == clusterType;
+    }
+
+    public static ClusterDescription getClusterDescription(final Cluster cluster) {
+        try {
+            ClusterDescription clusterDescription = cluster.getCurrentDescription();
+            while (clusterDescription.getType() == UNKNOWN) {
+                Thread.sleep(10);
+                clusterDescription = cluster.getCurrentDescription();
+            }
+            return clusterDescription;
+        } catch (InterruptedException e) {
+            throw interruptAndCreateMongoInterruptedException("Interrupted", e);
+        }
     }
 
     public static ServerVersion getServerVersion() {
@@ -496,19 +511,19 @@ public final class ClusterFixture {
     }
 
     public static ServerAddress getPrimary() {
-        List<ServerDescription> serverDescriptions = getPrimaries(getCluster().getDescription());
+        List<ServerDescription> serverDescriptions = getPrimaries(getClusterDescription(getCluster()));
         while (serverDescriptions.isEmpty()) {
             sleep(100);
-            serverDescriptions = getPrimaries(getCluster().getDescription());
+            serverDescriptions = getPrimaries(getClusterDescription(getCluster()));
         }
         return serverDescriptions.get(0).getAddress();
     }
 
     public static ServerAddress getSecondary() {
-        List<ServerDescription> serverDescriptions = getSecondaries(getCluster().getDescription());
+        List<ServerDescription> serverDescriptions = getSecondaries(getClusterDescription(getCluster()));
         while (serverDescriptions.isEmpty()) {
             sleep(100);
-            serverDescriptions = getSecondaries(getCluster().getDescription());
+            serverDescriptions = getSecondaries(getClusterDescription(getCluster()));
         }
         return serverDescriptions.get(0).getAddress();
     }
@@ -545,20 +560,19 @@ public final class ClusterFixture {
     }
 
     public static boolean isDiscoverableReplicaSet() {
-        return getCluster().getDescription().getType() == REPLICA_SET
-                && getCluster().getDescription().getConnectionMode() == MULTIPLE;
+        return clusterIsType(REPLICA_SET) && getClusterConnectionMode() == MULTIPLE;
     }
 
     public static boolean isSharded() {
-        return getCluster().getDescription().getType() == SHARDED;
+        return clusterIsType(SHARDED);
     }
 
     public static boolean isStandalone() {
-        return getCluster().getDescription().getType() == STANDALONE;
+        return clusterIsType(STANDALONE);
     }
 
     public static boolean isLoadBalanced() {
-        return getCluster().getSettings().getMode() == LOAD_BALANCED;
+        return getClusterConnectionMode() == LOAD_BALANCED;
     }
 
     public static boolean isAuthenticated() {

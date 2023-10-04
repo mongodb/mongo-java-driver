@@ -81,12 +81,6 @@ class BaseClusterSpecification extends Specification {
         cluster.getCurrentDescription() == new ClusterDescription(clusterSettings.getMode(), ClusterType.UNKNOWN, [], clusterSettings,
                 factory.getSettings())
 
-        when: 'the description is accessed before initialization'
-        cluster.getDescription()
-
-        then: 'a MongoTimeoutException is thrown'
-        thrown(MongoTimeoutException)
-
         when: 'a server is selected before initialization'
         cluster.selectServer({ def clusterDescription -> [] }, OPERATION_CONTEXT)
 
@@ -194,21 +188,10 @@ class BaseClusterSpecification extends Specification {
                                                                .exception(new MongoInternalException('oops'))
                                                                .build())
 
-        cluster.getDescription()
+        cluster.selectServer(new WritableServerSelector(), new OperationContext())
 
         then:
         def e = thrown(MongoTimeoutException)
-        e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting to connect. " +
-                'Client view of cluster state is {type=UNKNOWN')
-        e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
-                'exception={com.mongodb.MongoInternalException: oops}}')
-        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}')
-
-        when:
-        cluster.selectServer(new WritableServerSelector(), OPERATION_CONTEXT)
-
-        then:
-        e = thrown(MongoTimeoutException)
         e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting for a server " +
                 'that matches WritableServerSelector. Client view of cluster state is {type=UNKNOWN')
         e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
@@ -257,37 +240,6 @@ class BaseClusterSpecification extends Specification {
         def thread = new Thread({
             try {
                 cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()), OPERATION_CONTEXT)
-            } catch (MongoInterruptedException e) {
-                latch.countDown()
-            }
-        })
-        thread.start()
-        sleep(1000)
-        thread.interrupt()
-        def interrupted = latch.await(ClusterFixture.TIMEOUT, SECONDS)
-
-        then:
-        interrupted
-
-        cleanup:
-        cluster?.close()
-    }
-
-    @Slow
-    def 'should wait indefinitely for a cluster description until interrupted'() {
-        given:
-        def cluster = new MultiServerCluster(new ClusterId(),
-                builder().mode(MULTIPLE)
-                        .hosts([firstServer, secondServer, thirdServer])
-                        .serverSelectionTimeout(-1, SECONDS)
-                        .build(),
-                factory)
-
-        when:
-        def latch = new CountDownLatch(1)
-        def thread = new Thread({
-            try {
-                cluster.getDescription()
             } catch (MongoInterruptedException e) {
                 latch.countDown()
             }

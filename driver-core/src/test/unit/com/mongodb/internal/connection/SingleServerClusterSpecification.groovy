@@ -60,9 +60,9 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, STANDALONE)
 
         then:
-        cluster.getDescription().type == ClusterType.STANDALONE
-        cluster.getDescription().connectionMode == SINGLE
-        ClusterDescriptionHelper.getAll(cluster.getDescription()) == getDescriptions()
+        cluster.getCurrentDescription().type == ClusterType.STANDALONE
+        cluster.getCurrentDescription().connectionMode == SINGLE
+        ClusterDescriptionHelper.getAll(cluster.getCurrentDescription()) == getDescriptions()
 
         cleanup:
         cluster?.close()
@@ -110,8 +110,8 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY)
 
         then:
-        cluster.getDescription().type == ClusterType.SHARDED
-        ClusterDescriptionHelper.getAll(cluster.getDescription()) == [] as Set
+        cluster.getCurrentDescription().type == ClusterType.SHARDED
+        ClusterDescriptionHelper.getAll(cluster.getCurrentDescription()) == [] as Set
 
         cleanup:
         cluster?.close()
@@ -127,8 +127,8 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, ServerType.REPLICA_SET_PRIMARY, 'test1')
 
         then:
-        cluster.getDescription().type == REPLICA_SET
-        ClusterDescriptionHelper.getAll(cluster.getDescription()) == getDescriptions()
+        cluster.getCurrentDescription().type == REPLICA_SET
+        ClusterDescriptionHelper.getAll(cluster.getCurrentDescription()) == getDescriptions()
 
         cleanup:
         cluster?.close()

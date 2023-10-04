@@ -126,6 +126,9 @@ class DataClassCodecTest {
     fun testDataClassWithNulls() {
         val dataClass = DataClassWithNulls(null, null, null)
         assertRoundTrips(emptyDocument, dataClass)
+
+        val withStoredNulls = BsonDocument.parse("""{"boolean": null, "string": null, "listSimple": null}""")
+        assertDecodesTo(withStoredNulls, dataClass)
     }
 
     @Test

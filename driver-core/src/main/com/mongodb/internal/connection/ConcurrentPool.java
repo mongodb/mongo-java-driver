@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -41,6 +40,8 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -369,7 +370,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            lockUnfair(lock);
+            lockInterruptiblyUnfair(lock);
             try {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
@@ -426,7 +427,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void releasePermit() {
-            lockUnfair(lock);
+            lockInterruptiblyUnfair(lock);
             try {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
@@ -438,7 +439,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            lockUnfair(lock);
+            lockInterruptiblyUnfair(lock);
             try {
                 if (!paused) {
                     this.paused = true;
@@ -452,7 +453,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         void ready() {
             if (paused) {
-                lockUnfair(lock);
+                lockInterruptiblyUnfair(lock);
                 try {
                     this.paused = false;
                     this.causeSupplier = null;
@@ -467,7 +468,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                lockUnfair(lock);
+                lockInterruptiblyUnfair(lock);
                 try {
                     if (!closed) {
                         closed = true;
@@ -514,32 +515,4 @@ public class ConcurrentPool<T> implements Pool<T> {
         return size == INFINITE_SIZE ? "infinite" : Integer.toString(size);
     }
 
-    static void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
-        try {
-            lock.lockInterruptibly();
-        } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(null, e);
-        }
-    }
-
-    private static void lockInterruptiblyUnfair(final ReentrantLock lock) throws MongoInterruptedException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw interruptAndCreateMongoInterruptedException(null, null);
-        }
-        // `ReentrantLock.tryLock` is unfair
-        if (!lock.tryLock()) {
-            try {
-                lock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw interruptAndCreateMongoInterruptedException(null, e);
-            }
-        }
-    }
-
-    static void lockUnfair(final ReentrantLock lock) {
-        // `ReentrantLock.tryLock` is unfair
-        if (!lock.tryLock()) {
-            lock.lock();
-        }
-    }
 }
