@@ -52,6 +52,7 @@ public final class Locks {
         try {
             lock.lockInterruptibly();
         } catch (InterruptedException e) {
+            lock.unlock();
             throw interruptAndCreateMongoInterruptedException("Interrupted waiting for lock", e);
         }
     }
