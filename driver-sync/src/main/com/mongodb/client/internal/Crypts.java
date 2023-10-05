@@ -18,17 +18,21 @@ package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.crypt.capi.MongoCrypt;
 import com.mongodb.crypt.capi.MongoCrypts;
+import com.mongodb.internal.capi.MongoCryptHelper;
 
 import javax.net.ssl.SSLContext;
 import java.util.Map;
 
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongoCryptOptions;
+import static com.mongodb.internal.capi.MongoCryptHelper.isCryptLibraryAvailable;
+import static com.mongodb.internal.capi.MongoCryptHelper.throwIfCryptLibraryUnavailable;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -36,6 +40,8 @@ import static com.mongodb.internal.capi.MongoCryptHelper.createMongoCryptOptions
 public final class Crypts {
 
     public static Crypt createCrypt(final MongoClientImpl client, final AutoEncryptionSettings settings) {
+        throwIfCryptLibraryUnavailable();
+
         MongoClient sharedInternalClient = null;
         MongoClientSettings keyVaultMongoClientSettings = settings.getKeyVaultMongoClientSettings();
         if (keyVaultMongoClientSettings == null || !settings.isBypassAutoEncryption()) {
@@ -61,6 +67,8 @@ public final class Crypts {
     }
 
     static Crypt create(final MongoClient keyVaultClient, final ClientEncryptionSettings settings) {
+        throwIfCryptLibraryUnavailable();
+
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(settings)),
                 createKeyRetriever(keyVaultClient, settings.getKeyVaultNamespace()),
                 createKeyManagementService(settings.getKmsProviderSslContextMap()),

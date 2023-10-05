@@ -52,6 +52,27 @@ import static java.util.Collections.singletonList;
  */
 public final class MongoCryptHelper {
 
+    /**
+     * DO NOT REMOVE
+     *
+     * While this method is not part of the API, we have agreed with the Quarkus maintainers to maintain it so that it can be used as a
+     * substitution point for native compilation.
+     */
+    public static boolean isCryptLibraryAvailable() {
+        try {
+            Class.forName("com.mongodb.crypt.capi.MongoCrypts");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    public static void throwIfCryptLibraryUnavailable() {
+        if (!isCryptLibraryAvailable()) {
+            throw new MongoClientException("...");
+        }
+    }
+
     public static MongoCryptOptions createMongoCryptOptions(final ClientEncryptionSettings settings) {
         return createMongoCryptOptions(settings.getKmsProviders(), false, emptyList(), emptyMap(), null, null);
     }
