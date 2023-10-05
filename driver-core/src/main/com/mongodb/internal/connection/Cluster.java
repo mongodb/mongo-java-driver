@@ -24,6 +24,7 @@ import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -45,7 +46,7 @@ public interface Cluster extends Closeable {
 
     @Nullable
     @VisibleForTesting(otherwise = PRIVATE)
-    ClusterableServer getServer(ServerAddress serverAddress, OperationContext operationContext);
+    ClusterableServer getServer(ServerAddress serverAddress, Timeout serverSelectionTimeout);
 
     /**
      * Get the current description of this cluster.

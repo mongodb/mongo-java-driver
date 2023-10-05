@@ -104,7 +104,7 @@ public class SingleServerClusterTest {
     public void shouldSuccessfullyQueryASecondaryWithPrimaryReadPreference() {
         // given
         OperationContext operationContext = OPERATION_CONTEXT;
-        ServerAddress secondary = getSecondary(operationContext);
+        ServerAddress secondary = getSecondary();
         setUpCluster(secondary);
         String collectionName = getClass().getName();
         Connection connection = cluster.selectServer(new ServerAddressSelector(secondary), operationContext).getServer()

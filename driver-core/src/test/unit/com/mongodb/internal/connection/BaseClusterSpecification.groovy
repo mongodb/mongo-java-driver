@@ -34,6 +34,7 @@ import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.internal.selector.ReadPreferenceServerSelector
 import com.mongodb.internal.selector.ServerAddressSelector
 import com.mongodb.internal.selector.WritableServerSelector
+import com.mongodb.internal.time.Timeout
 import spock.lang.Specification
 import util.spock.annotations.Slow
 
@@ -68,7 +69,7 @@ class BaseClusterSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress, OperationContext operationContext) {
+            ClusterableServer getServer(final ServerAddress serverAddress, Timeout serverSelectionTimeout) {
                 throw new UnsupportedOperationException()
             }
 

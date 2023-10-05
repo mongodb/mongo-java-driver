@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.time.Timeout;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
 import org.bson.BsonValue;
@@ -121,7 +122,8 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
         if (expectedServerDescriptionDocument.isDocument("pool")) {
             int expectedGeneration = expectedServerDescriptionDocument.getDocument("pool").getNumber("generation").intValue();
-            DefaultServer server = (DefaultServer) getCluster().getServer(new ServerAddress(serverName), OPERATION_CONTEXT);
+            Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().startServerSelectionTimeout();
+            DefaultServer server = (DefaultServer) getCluster().getServer(new ServerAddress(serverName), serverSelectionTimeout);
             assertEquals(expectedGeneration, server.getConnectionPool().getGeneration());
         }
     }

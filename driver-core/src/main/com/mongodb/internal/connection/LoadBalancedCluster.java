@@ -180,9 +180,9 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress, final OperationContext operationContext) {
+    public ClusterableServer getServer(final ServerAddress serverAddress, final Timeout serverSelectionTimeout) {
         isTrue("open", !isClosed());
-        waitForSrv(operationContext);
+        waitForSrv(serverSelectionTimeout);
         return assertNotNull(server);
     }
 
@@ -201,29 +201,27 @@ final class LoadBalancedCluster implements Cluster {
     @Override
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
-        waitForSrv(operationContext);
+        Timeout serverSelectionTimeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
+        waitForSrv(serverSelectionTimeout);
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
         return new ServerTuple(assertNotNull(server), description.getServerDescriptions().get(0));
     }
 
-
-    private void waitForSrv(final OperationContext operationContext) {
+    private void waitForSrv(final Timeout serverSelectionTimeout) {
         if (initializationCompleted) {
             return;
         }
         Locks.withLock(lock, () -> {
-            StartTime startTime = StartTime.now();
-            Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout(startTime);
             while (!initializationCompleted) {
                 if (isClosed()) {
                     throw createShutdownException();
                 }
-                if (timeout.hasExpired()) {
-                    throw createTimeoutException(startTime);
+                if (serverSelectionTimeout.hasExpired()) {
+                    throw createTimeoutException();
                 }
-                timeout.awaitOn(condition, () -> format("resolving SRV records for %s", settings.getSrvHost()));
+                serverSelectionTimeout.awaitOn(condition, () -> format("resolving SRV records for %s", settings.getSrvHost()));
             }
         });
     }
@@ -235,7 +233,7 @@ final class LoadBalancedCluster implements Cluster {
             callback.onResult(null, createShutdownException());
             return;
         }
-        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout(StartTime.now());
+        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
         ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(timeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
@@ -295,15 +293,15 @@ final class LoadBalancedCluster implements Cluster {
                 + "to multiple hosts");
     }
 
-    private MongoTimeoutException createTimeoutException(final StartTime startTime) {
+    private MongoTimeoutException createTimeoutException() {
         MongoException localSrvResolutionException = srvResolutionException;
         if (localSrvResolutionException == null) {
-            return new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s.",
-                    startTime.elapsed().toMillis(), settings.getSrvHost()));
+            return new MongoTimeoutException(format("Timed out while waiting to resolve SRV records for %s.",
+                    settings.getSrvHost()));
         } else {
-            return new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s. "
+            return new MongoTimeoutException(format("Timed out while waiting to resolve SRV records for %s. "
                             + "Resolution exception was '%s'",
-                    startTime.elapsed().toMillis(), settings.getSrvHost(), localSrvResolutionException));
+                    settings.getSrvHost(), localSrvResolutionException));
         }
     }
 
@@ -332,7 +330,6 @@ final class LoadBalancedCluster implements Cluster {
 
     private final class WaitQueueHandler implements Runnable {
         public void run() {
-            StartTime startTime = StartTime.now();
             List<ServerSelectionRequest> timeoutList = new ArrayList<>();
             while (!(isClosed() || initializationCompleted)) {
                 lockInterruptibly(lock);
@@ -363,7 +360,7 @@ final class LoadBalancedCluster implements Cluster {
                 } finally {
                     lock.unlock();
                 }
-                timeoutList.forEach(request -> request.onError(createTimeoutException(startTime)));
+                timeoutList.forEach(request -> request.onError(createTimeoutException()));
                 timeoutList.clear();
             }
 

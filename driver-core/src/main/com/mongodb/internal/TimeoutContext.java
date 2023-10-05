@@ -154,8 +154,8 @@ public class TimeoutContext {
         return null;
     }
 
-    public Timeout startServerSelectionTimeout(final StartTime startTime) {
+    public Timeout startServerSelectionTimeout() {
         long ms = getTimeoutSettings().getServerSelectionTimeoutMS();
-        return startTime.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
+        return StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 }
