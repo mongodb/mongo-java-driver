@@ -158,17 +158,14 @@ public final class DefaultClusterFactory {
         String srvHost = clusterSettings.getSrvHost();
         ClusterEnvironment clusterEnvironment;
         if (srvHost != null) {
-            clusterEnvironment = detectCluster(clusterSettings.getSrvHost());
+            clusterEnvironment = detectCluster(srvHost);
         } else {
             clusterEnvironment = detectCluster(clusterSettings.getHosts()
                     .stream()
                     .map(ServerAddress::getHost)
                     .toArray(String[]::new));
         }
-        log(clusterEnvironment);
-    }
 
-    private void log(@Nullable final ClusterEnvironment clusterEnvironment) {
         if (clusterEnvironment != null) {
             LOGGER.info(format("You appear to be connected to a %s cluster. For more information regarding feature compatibility"
                     + " and support please visit %s", clusterEnvironment.clusterProductName, clusterEnvironment.documentationUrl));
