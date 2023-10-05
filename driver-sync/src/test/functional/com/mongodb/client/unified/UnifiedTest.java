@@ -181,17 +181,22 @@ public abstract class UnifiedTest {
     @Before
     public void setUp() {
         assertTrue(String.format("Unsupported schema version %s", schemaVersion),
-                schemaVersion.startsWith("1.0")
-                        || schemaVersion.startsWith("1.1")
-                        || schemaVersion.startsWith("1.2")
-                        || schemaVersion.startsWith("1.3")
-                        || schemaVersion.startsWith("1.4")
-                        || schemaVersion.startsWith("1.5")
-                        || schemaVersion.startsWith("1.6")
-                        || schemaVersion.startsWith("1.7")
-                        || schemaVersion.startsWith("1.8")
-                        || schemaVersion.startsWith("1.9")
-                        || schemaVersion.startsWith("1.10"));
+                schemaVersion.equals("1.0")
+                        || schemaVersion.equals("1.1")
+                        || schemaVersion.equals("1.2")
+                        || schemaVersion.equals("1.3")
+                        || schemaVersion.equals("1.4")
+                        || schemaVersion.equals("1.5")
+                        || schemaVersion.equals("1.6")
+                        || schemaVersion.equals("1.7")
+                        || schemaVersion.equals("1.8")
+                        || schemaVersion.equals("1.9")
+                        || schemaVersion.equals("1.10")
+                        || schemaVersion.equals("1.11")
+                        || schemaVersion.equals("1.12")
+                        || schemaVersion.equals("1.13")
+                        || schemaVersion.equals("1.14")
+                        || schemaVersion.equals("1.15"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
