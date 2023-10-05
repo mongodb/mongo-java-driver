@@ -28,6 +28,26 @@ import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMon
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class Locks {
+    public static void withUninterruptibleLock(final Lock lock, final Runnable action) {
+        withUninterruptibleLock(lock, () -> {
+            action.run();
+            return null;
+        });
+    }
+
+    public static <V> V withUninterruptibleLock(final Lock lock, final Supplier<V> supplier) {
+        return checkedWithUninterruptibleLock(lock, supplier::get);
+    }
+
+    public static <V, E extends Exception> V checkedWithUninterruptibleLock(final Lock lock, final CheckedSupplier<V, E> supplier) throws E {
+        lock.lock();
+        try {
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public static void withLock(final Lock lock, final Runnable action) {
         withLock(lock, () -> {
             action.run();
@@ -56,20 +76,26 @@ public final class Locks {
         }
     }
 
+    public static void lockUninterruptiblyUnfair(
+            // The type must be `ReentrantLock`, not `Lock`,
+            // because only `ReentrantLock.tryLock` is documented to have the barging (unfair) behavior.
+            final ReentrantLock lock) {
+        // `ReentrantLock.tryLock` is unfair
+        if (!lock.tryLock()) {
+            lock.lock();
+        }
+    }
+
     public static void lockInterruptiblyUnfair(
             // The type must be `ReentrantLock`, not `Lock`,
-            // because only `ReentrantLock.tryLock` is documented to have the barging behavior.
+            // because only `ReentrantLock.tryLock` is documented to have the barging (unfair) behavior.
             final ReentrantLock lock) throws MongoInterruptedException {
         if (Thread.currentThread().isInterrupted()) {
             throw interruptAndCreateMongoInterruptedException(null, null);
         }
         // `ReentrantLock.tryLock` is unfair
         if (!lock.tryLock()) {
-            try {
-                lock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw interruptAndCreateMongoInterruptedException(null, e);
-            }
+            lockInterruptibly(lock);
         }
     }
 

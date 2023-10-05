@@ -43,6 +43,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
+import static com.mongodb.internal.Locks.lockUninterruptiblyUnfair;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -371,7 +372,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            lockInterruptiblyUnfair(lock);
+            lockUninterruptiblyUnfair(lock);
             try {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
@@ -428,7 +429,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void releasePermit() {
-            lockInterruptiblyUnfair(lock);
+            lockUninterruptiblyUnfair(lock);
             try {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
@@ -440,7 +441,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            lockInterruptiblyUnfair(lock);
+            lockUninterruptiblyUnfair(lock);
             try {
                 if (!paused) {
                     this.paused = true;
@@ -454,7 +455,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         void ready() {
             if (paused) {
-                lockInterruptiblyUnfair(lock);
+                lockUninterruptiblyUnfair(lock);
                 try {
                     this.paused = false;
                     this.causeSupplier = null;
@@ -469,7 +470,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                lockInterruptiblyUnfair(lock);
+                lockUninterruptiblyUnfair(lock);
                 try {
                     if (!closed) {
                         closed = true;
@@ -515,5 +516,4 @@ public class ConcurrentPool<T> implements Pool<T> {
     static String sizeToString(final int size) {
         return size == INFINITE_SIZE ? "infinite" : Integer.toString(size);
     }
-
 }

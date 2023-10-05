@@ -68,8 +68,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static com.mongodb.internal.Locks.lockInterruptibly;
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withUninterruptibleLock;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -288,7 +287,7 @@ final class NettyStream implements Stream {
     private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final long readTimeoutMillis) {
         ByteBuf buffer = null;
         Throwable exceptionResult = null;
-        lockInterruptibly(lock);
+        lock.lock();
         try {
             exceptionResult = pendingException;
             if (exceptionResult == null) {
@@ -346,7 +345,7 @@ final class NettyStream implements Stream {
     }
 
     private void handleReadResponse(@Nullable final io.netty.buffer.ByteBuf buffer, @Nullable final Throwable t) {
-        PendingReader localPendingReader = withLock(lock, () -> {
+        PendingReader localPendingReader = withUninterruptibleLock(lock, () -> {
             if (buffer != null) {
                 pendingInboundBuffers.add(buffer.retain());
             } else {
@@ -368,7 +367,7 @@ final class NettyStream implements Stream {
 
     @Override
     public void close() {
-        withLock(lock, () ->  {
+        withUninterruptibleLock(lock, () ->  {
             isClosed = true;
             if (channel != null) {
                 channel.close();
@@ -514,7 +513,7 @@ final class NettyStream implements Stream {
 
         @Override
         public void operationComplete(final ChannelFuture future) {
-            withLock(lock, () -> {
+            withUninterruptibleLock(lock, () -> {
                 if (future.isSuccess()) {
                     if (isClosed) {
                         channelFuture.channel().close();

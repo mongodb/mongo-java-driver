@@ -54,7 +54,7 @@ import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withUninterruptibleLock;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
@@ -147,7 +147,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
      */
     @Override
     public void close() {
-        boolean doClose = withLock(lock, () -> {
+        boolean doClose = withUninterruptibleLock(lock, () -> {
             if (isOperationInProgress) {
                 isClosePending = true;
                 return false;
@@ -182,14 +182,17 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 close();
                 callback.onResult(null, null);
             } else {
-                withLock(lock, () ->  {
+                boolean doGetMore = withUninterruptibleLock(lock, () ->  {
                     if (isClosed()) {
                         callback.onResult(null, new MongoException("next() called after the cursor was closed."));
-                        return;
+                        return false;
                     }
                     isOperationInProgress = true;
+                    return true;
                 });
-                getMore(localCursor, callback);
+                if (doGetMore) {
+                    getMore(localCursor, callback);
+                }
             }
         }
     }
@@ -208,7 +211,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     @Override
     public boolean isClosed() {
-        return withLock(lock, () ->  isClosed || isClosePending);
+        return withUninterruptibleLock(lock, () ->  isClosed || isClosePending);
     }
 
     @Override
@@ -315,7 +318,7 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     }
 
     private void endOperationInProgress() {
-        boolean closePending = withLock(lock, () -> {
+        boolean closePending = withUninterruptibleLock(lock, () -> {
             isOperationInProgress = false;
             return this.isClosePending;
         });

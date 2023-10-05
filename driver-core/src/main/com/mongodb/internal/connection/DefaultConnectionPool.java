@@ -98,12 +98,12 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.event.ConnectionClosedEvent.Reason.ERROR;
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.lockUninterruptiblyUnfair;
+import static com.mongodb.internal.Locks.withUninterruptibleLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
-import static com.mongodb.internal.Locks.lockInterruptibly;
-import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static com.mongodb.internal.logging.LogMessage.Component.CONNECTION;
@@ -1103,7 +1103,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            lockInterruptiblyUnfair(lock);
+            lockUninterruptiblyUnfair(lock);
             try {
                 assertTrue(permits < maxPermits);
                 permits++;
@@ -1141,7 +1141,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          * from threads that are waiting for a permit to open a connection.
          */
         void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
-            lockInterruptiblyUnfair(lock);
+            lockUninterruptiblyUnfair(lock);
             try {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
@@ -1158,7 +1158,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void signalClosedOrPaused() {
-            lockInterruptiblyUnfair(lock);
+            lockUninterruptiblyUnfair(lock);
             try {
                 permitAvailableOrHandedOverOrClosedOrPausedCondition.signalAll();
             } finally {
@@ -1327,16 +1327,16 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void enqueue(final Task task) {
-            lockInterruptibly(lock);
-            try {
+            boolean closed = withUninterruptibleLock(lock, () -> {
                 if (initUnlessClosed()) {
                     tasks.add(task);
-                    return;
+                    return false;
                 }
-            } finally {
-                lock.unlock();
+                return true;
+            });
+            if (closed) {
+                task.failAsClosed();
             }
-            task.failAsClosed();
         }
 
         /**
@@ -1363,7 +1363,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         @Override
         @SuppressWarnings("try")
         public void close() {
-            withLock(lock, () -> {
+            withUninterruptibleLock(lock, () -> {
                 if (state != State.CLOSED) {
                     state = State.CLOSED;
                     if (worker != null) {
@@ -1392,7 +1392,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void failAllTasksAfterClosing() {
-            Queue<Task> localGets = withLock(lock, () -> {
+            Queue<Task> localGets = withUninterruptibleLock(lock, () -> {
                 assertTrue(state == State.CLOSED);
                 // at this point it is guaranteed that no thread enqueues a task
                 Queue<Task> result = tasks;
@@ -1554,7 +1554,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          * The generation is incremented regardless of the returned value.
          */
         boolean pauseAndIncrementGeneration(@Nullable final Throwable cause) {
-            return withLock(lock.writeLock(), () -> {
+            return withUninterruptibleLock(lock.writeLock(), () -> {
                 boolean result = false;
                 if (!paused) {
                     paused = true;
@@ -1578,7 +1578,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         boolean ready() {
             boolean result = false;
             if (paused) {
-                result = withLock(lock.writeLock(), () -> {
+                result = withUninterruptibleLock(lock.writeLock(), () -> {
                     if (paused) {
                         paused = false;
                         cause = null;
@@ -1615,7 +1615,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                 throw pool.poolClosedException();
             }
             if (paused) {
-                withLock(lock.readLock(), () -> {
+                withUninterruptibleLock(lock.readLock(), () -> {
                     if (paused) {
                         throw new MongoConnectionPoolClearedException(serverId, cause);
                     }
