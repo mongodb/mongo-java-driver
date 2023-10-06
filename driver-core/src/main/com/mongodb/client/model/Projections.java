@@ -52,8 +52,20 @@ public final class Projections {
     }
 
     /**
-     * Creates a projection of a field whose value is computed from the given expression.  Projection with an expression is only supported
-     * using the $project aggregation pipeline stage.
+     * Creates a projection of a field whose value is computed from the given expression. Projection with an expression can be used in the
+     * following contexts:
+     * <ul>
+     *   <li>$project aggregation pipeline stage.</li>
+     *   <li>Starting from MongoDB 4.4, it's also accepted in various find-related methods within the
+     *   {@code MongoCollection}-based API where projection is supported, for example:
+     *     <ul>
+     *       <li>{@code find()}</li>
+     *       <li>{@code findOneAndReplace()}</li>
+     *       <li>{@code findOneAndUpdate()}</li>
+     *       <li>{@code findOneAndDelete()}</li>
+     *     </ul>
+     *   </li>
+     * </ul>
      *
      * @param fieldName     the field name
      * @param expression    the expression
