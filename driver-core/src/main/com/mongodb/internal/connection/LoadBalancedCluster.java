@@ -34,6 +34,7 @@ import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.Locks;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -56,7 +57,6 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.internal.Locks.withUninterruptibleLock;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
@@ -212,7 +212,7 @@ final class LoadBalancedCluster implements Cluster {
         if (initializationCompleted) {
             return;
         }
-        withUninterruptibleLock(lock, () -> {
+        Locks.withLock(lock, () -> {
             long remainingTimeNanos = getMaxWaitTimeNanos();
             while (!initializationCompleted) {
                 if (isClosed()) {
@@ -257,7 +257,7 @@ final class LoadBalancedCluster implements Cluster {
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
-            ClusterableServer localServer = withUninterruptibleLock(lock, () -> {
+            ClusterableServer localServer = Locks.withLock(lock, () -> {
                 condition.signalAll();
                 return server;
             });
@@ -317,7 +317,7 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
-        withUninterruptibleLock(lock, () ->  {
+        Locks.withLock(lock, () ->  {
             if (isClosed()) {
                 request.onError(createShutdownException());
                 return;
@@ -381,7 +381,7 @@ final class LoadBalancedCluster implements Cluster {
             // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
             // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
             // requests in it.
-            List<ServerSelectionRequest> shutdownList = withUninterruptibleLock(lock, () -> {
+            List<ServerSelectionRequest> shutdownList = Locks.withLock(lock, () -> {
                 ArrayList<ServerSelectionRequest> result = new ArrayList<>(waitQueue);
                 waitQueue.clear();
                 return result;

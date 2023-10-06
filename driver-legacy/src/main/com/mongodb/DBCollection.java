@@ -85,7 +85,7 @@ import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.Locks.withUninterruptibleLock;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -1803,7 +1803,7 @@ public class DBCollection {
      * @return the factory
      */
     public DBDecoderFactory getDBDecoderFactory() {
-        return withUninterruptibleLock(factoryAndCodecLock, () -> decoderFactory);
+        return withLock(factoryAndCodecLock, () -> decoderFactory);
     }
 
     /**
@@ -1812,7 +1812,7 @@ public class DBCollection {
      * @param factory the factory to set.
      */
     public void setDBDecoderFactory(@Nullable final DBDecoderFactory factory) {
-        withUninterruptibleLock(factoryAndCodecLock, () -> {
+        withLock(factoryAndCodecLock, () -> {
             this.decoderFactory = factory;
 
             //Are we are using default factory?
@@ -1830,7 +1830,7 @@ public class DBCollection {
      * @return the factory
      */
     public DBEncoderFactory getDBEncoderFactory() {
-        return withUninterruptibleLock(factoryAndCodecLock, () -> encoderFactory);
+        return withLock(factoryAndCodecLock, () -> encoderFactory);
     }
 
     /**
@@ -1839,7 +1839,7 @@ public class DBCollection {
      * @param factory the factory to set.
      */
     public void setDBEncoderFactory(@Nullable final DBEncoderFactory factory) {
-        withUninterruptibleLock(factoryAndCodecLock, () -> {
+        withLock(factoryAndCodecLock, () -> {
             this.encoderFactory = factory;
 
             //Are we are using default factory?
@@ -1983,11 +1983,11 @@ public class DBCollection {
     }
 
     DBObjectFactory getObjectFactory() {
-        return withUninterruptibleLock(factoryAndCodecLock, () -> objectFactory);
+        return withLock(factoryAndCodecLock, () -> objectFactory);
     }
 
     void setObjectFactory(final DBCollectionObjectFactory factory) {
-        withUninterruptibleLock(factoryAndCodecLock, () -> {
+        withLock(factoryAndCodecLock, () -> {
             this.objectFactory = factory;
             this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), getDefaultDBObjectCodec());
         });

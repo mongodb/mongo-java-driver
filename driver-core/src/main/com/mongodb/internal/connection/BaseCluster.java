@@ -29,7 +29,6 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
-import com.mongodb.internal.Locks;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -56,6 +55,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
+import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
@@ -223,7 +223,7 @@ abstract class BaseCluster implements Cluster {
 
     @Override
     public void withLock(final Runnable action) {
-        Locks.withLock(lock, action);
+        withInterruptibleLock(lock, action);
     }
 
     private void updatePhase() {

@@ -52,8 +52,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
-import static com.mongodb.internal.Locks.checkedWithUninterruptibleLock;
-import static com.mongodb.internal.Locks.withUninterruptibleLock;
+import static com.mongodb.internal.Locks.checkedWithLock;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
@@ -119,7 +119,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     @Override
     public void connect() {
-        withUninterruptibleLock(lock, condition::signal);
+        withLock(lock, condition::signal);
     }
 
     @Override
@@ -241,7 +241,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (Throwable t) {
                 averageRoundTripTime.reset();
-                InternalConnection localConnection = withUninterruptibleLock(lock, () -> {
+                InternalConnection localConnection = withLock(lock, () -> {
                     InternalConnection result = connection;
                     connection = null;
                     return result;
@@ -294,11 +294,11 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private long waitForSignalOrTimeout() throws InterruptedException {
-            return checkedWithUninterruptibleLock(lock, () -> condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS)));
+            return checkedWithLock(lock, () -> condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS)));
         }
 
         public void cancelCurrentCheck() {
-            InternalConnection localConnection = withUninterruptibleLock(lock, () -> {
+            InternalConnection localConnection = withLock(lock, () -> {
                 if (connection != null && !currentCheckCancelled) {
                     InternalConnection result = connection;
                     currentCheckCancelled = true;

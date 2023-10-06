@@ -57,7 +57,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.Locks.withUninterruptibleLock;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.SyncOperationHelper.getMoreCursorDocumentToQueryResult;
@@ -417,7 +417,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          * @throws IllegalStateException Iff another operation is in progress.
          */
         private boolean tryStartOperation() throws IllegalStateException {
-            return withUninterruptibleLock(lock, () -> {
+            return withLock(lock, () -> {
                 State localState = state;
                 if (!localState.operable()) {
                     return false;
@@ -436,7 +436,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          * Thread-safe.
          */
         private void endOperation() {
-            boolean doClose = withUninterruptibleLock(lock, () -> {
+            boolean doClose = withLock(lock, () -> {
                 State localState = state;
                 if (localState == State.OPERATION_IN_PROGRESS) {
                     state = State.IDLE;
@@ -457,7 +457,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          * Thread-safe.
          */
         void close() {
-            boolean doClose = withUninterruptibleLock(lock, () -> {
+            boolean doClose = withLock(lock, () -> {
                 State localState = state;
                 if (localState == State.OPERATION_IN_PROGRESS) {
                     state = State.CLOSE_PENDING;

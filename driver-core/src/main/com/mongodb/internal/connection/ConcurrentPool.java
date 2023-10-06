@@ -43,7 +43,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
-import static com.mongodb.internal.Locks.withUninterruptibleUnfairLock;
+import static com.mongodb.internal.Locks.withUnfairLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -372,7 +372,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            return withUninterruptibleUnfairLock(lock, () -> {
+            return withUnfairLock(lock, () -> {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
                     //noinspection NonAtomicOperationOnVolatileField
@@ -426,7 +426,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void releasePermit() {
-            withUninterruptibleUnfairLock(lock, () -> {
+            withUnfairLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
                 permits++;
@@ -435,7 +435,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            withUninterruptibleUnfairLock(lock, () -> {
+            withUnfairLock(lock, () -> {
                 if (!paused) {
                     this.paused = true;
                     permitAvailableOrClosedOrPausedCondition.signalAll();
@@ -446,7 +446,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         void ready() {
             if (paused) {
-                withUninterruptibleUnfairLock(lock, () -> {
+                withUnfairLock(lock, () -> {
                     this.paused = false;
                     this.causeSupplier = null;
                 });
@@ -458,7 +458,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                return withUninterruptibleUnfairLock(lock, () -> {
+                return withUnfairLock(lock, () -> {
                     if (!closed) {
                         closed = true;
                         permitAvailableOrClosedOrPausedCondition.signalAll();
