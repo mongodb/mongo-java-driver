@@ -76,11 +76,26 @@ public final class Locks {
         }
     }
 
-    public static void lockUninterruptiblyUnfair(
+    public static void withUninterruptibleUnfairLock(final ReentrantLock lock, final Runnable action) {
+        withUninterruptibleUnfairLock(lock, () -> {
+            action.run();
+            return null;
+        });
+    }
+
+    public static <V> V withUninterruptibleUnfairLock(final ReentrantLock lock, final Supplier<V> supplier) {
+        lockUninterruptiblyUnfair(lock);
+        try {
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private static void lockUninterruptiblyUnfair(
             // The type must be `ReentrantLock`, not `Lock`,
             // because only `ReentrantLock.tryLock` is documented to have the barging (unfair) behavior.
             final ReentrantLock lock) {
-        // `ReentrantLock.tryLock` is unfair
         if (!lock.tryLock()) {
             lock.lock();
         }
@@ -93,7 +108,6 @@ public final class Locks {
         if (Thread.currentThread().isInterrupted()) {
             throw interruptAndCreateMongoInterruptedException(null, null);
         }
-        // `ReentrantLock.tryLock` is unfair
         if (!lock.tryLock()) {
             lockInterruptibly(lock);
         }

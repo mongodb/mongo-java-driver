@@ -99,8 +99,8 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.event.ConnectionClosedEvent.Reason.ERROR;
 import static com.mongodb.internal.Locks.lockInterruptibly;
-import static com.mongodb.internal.Locks.lockUninterruptiblyUnfair;
 import static com.mongodb.internal.Locks.withUninterruptibleLock;
+import static com.mongodb.internal.Locks.withUninterruptibleUnfairLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
@@ -1103,14 +1103,11 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            lockUninterruptiblyUnfair(lock);
-            try {
+            withUninterruptibleUnfairLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 permits++;
                 permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         private void expressDesireToGetAvailableConnection() {
@@ -1141,29 +1138,24 @@ final class DefaultConnectionPool implements ConnectionPool {
          * from threads that are waiting for a permit to open a connection.
          */
         void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
-            lockUninterruptiblyUnfair(lock);
-            try {
+            boolean handedOver = withUninterruptibleUnfairLock(lock, () -> {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
                     if (desiredConnectionSlot.reference == null) {
                         desiredConnectionSlot.reference = new PooledConnection(openConnection);
                         permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
-                        return;
+                        return true;
                     }
                 }
-            } finally {
-                lock.unlock();
+                return false;
+            });
+            if (!handedOver) {
+                pool.release(openConnection);
             }
-            pool.release(openConnection);
         }
 
         void signalClosedOrPaused() {
-            lockUninterruptiblyUnfair(lock);
-            try {
-                permitAvailableOrHandedOverOrClosedOrPausedCondition.signalAll();
-            } finally {
-                lock.unlock();
-            }
+            withUninterruptibleUnfairLock(lock, permitAvailableOrHandedOverOrClosedOrPausedCondition::signalAll);
         }
 
         /**

@@ -43,7 +43,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
-import static com.mongodb.internal.Locks.lockUninterruptiblyUnfair;
+import static com.mongodb.internal.Locks.withUninterruptibleUnfairLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -372,8 +372,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            lockUninterruptiblyUnfair(lock);
-            try {
+            return withUninterruptibleUnfairLock(lock, () -> {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
                     //noinspection NonAtomicOperationOnVolatileField
@@ -382,9 +381,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                 } else {
                     return false;
                 }
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         /**
@@ -429,39 +426,30 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void releasePermit() {
-            lockUninterruptiblyUnfair(lock);
-            try {
+            withUninterruptibleUnfairLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
                 permits++;
                 permitAvailableOrClosedOrPausedCondition.signal();
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            lockUninterruptiblyUnfair(lock);
-            try {
+            withUninterruptibleUnfairLock(lock, () -> {
                 if (!paused) {
                     this.paused = true;
                     permitAvailableOrClosedOrPausedCondition.signalAll();
                 }
                 this.causeSupplier = assertNotNull(causeSupplier);
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         void ready() {
             if (paused) {
-                lockUninterruptiblyUnfair(lock);
-                try {
+                withUninterruptibleUnfairLock(lock, () -> {
                     this.paused = false;
                     this.causeSupplier = null;
-                } finally {
-                    lock.unlock();
-                }
+                });
             }
         }
 
@@ -470,16 +458,14 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                lockUninterruptiblyUnfair(lock);
-                try {
+                return withUninterruptibleUnfairLock(lock, () -> {
                     if (!closed) {
                         closed = true;
                         permitAvailableOrClosedOrPausedCondition.signalAll();
                         return true;
                     }
-                } finally {
-                    lock.unlock();
-                }
+                    return false;
+                });
             }
             return false;
         }
