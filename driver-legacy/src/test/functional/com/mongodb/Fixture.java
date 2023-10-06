@@ -21,6 +21,7 @@ import org.bson.UuidRepresentation;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.getClusterDescription;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 
@@ -97,10 +98,10 @@ public final class Fixture {
 
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
-        List<ServerDescription> serverDescriptions = getPrimaries(mongoClient.getCluster().getDescription());
+        List<ServerDescription> serverDescriptions = getPrimaries(getClusterDescription(mongoClient.getCluster()));
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = getPrimaries(mongoClient.getCluster().getDescription());
+            serverDescriptions = getPrimaries(getClusterDescription(mongoClient.getCluster()));
         }
         return serverDescriptions.get(0).getAddress();
     }

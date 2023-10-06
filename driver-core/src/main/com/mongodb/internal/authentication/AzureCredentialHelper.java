@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 
 /**
@@ -48,7 +49,7 @@ public final class AzureCredentialHelper {
         if (cachedValue.isPresent()) {
             accessToken = cachedValue.get();
         } else {
-            CACHED_ACCESS_TOKEN_LOCK.lock();
+            lockInterruptibly(CACHED_ACCESS_TOKEN_LOCK);
             try {
                 cachedValue = cachedAccessToken.getValue();
                 if (cachedValue.isPresent()) {

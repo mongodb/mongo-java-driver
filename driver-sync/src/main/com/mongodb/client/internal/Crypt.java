@@ -48,6 +48,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
 import static com.mongodb.internal.client.vault.EncryptOptionsHelper.asMongoExplicitEncryptOptions;
+import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -141,7 +142,7 @@ public class Crypt implements Closeable {
        try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command)) {
            return executeStateMachine(encryptionContext, databaseName);
         } catch (MongoCryptException e) {
-            throw wrapInClientException(e);
+            throw wrapInMongoException(e);
         }
     }
 
@@ -156,7 +157,7 @@ public class Crypt implements Closeable {
         try (MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse)) {
             return executeStateMachine(decryptionContext, null);
         } catch (MongoCryptException e) {
-            throw wrapInClientException(e);
+            throw wrapInMongoException(e);
         }
     }
 
@@ -179,7 +180,7 @@ public class Crypt implements Closeable {
                         .build())) {
             return executeStateMachine(dataKeyCreationContext, null);
         } catch (MongoCryptException e) {
-            throw wrapInClientException(e);
+            throw wrapInMongoException(e);
         }
     }
 
@@ -198,7 +199,7 @@ public class Crypt implements Closeable {
                 new BsonDocument("v", value), asMongoExplicitEncryptOptions(options))) {
             return executeStateMachine(encryptionContext, null).getBinary("v");
         } catch (MongoCryptException e) {
-            throw wrapInClientException(e);
+            throw wrapInMongoException(e);
         }
     }
 
@@ -218,7 +219,7 @@ public class Crypt implements Closeable {
                 new BsonDocument("v", expression), asMongoExplicitEncryptOptions(options))) {
             return executeStateMachine(encryptionContext, null).getDocument("v");
         } catch (MongoCryptException e) {
-            throw wrapInClientException(e);
+            throw wrapInMongoException(e);
         }
     }
 
@@ -233,7 +234,7 @@ public class Crypt implements Closeable {
         try (MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value))) {
             return assertNotNull(executeStateMachine(decryptionContext, null).get("v"));
         } catch (MongoCryptException e) {
-            throw wrapInClientException(e);
+            throw wrapInMongoException(e);
         }
     }
 
@@ -256,7 +257,7 @@ public class Crypt implements Closeable {
                 return executeStateMachine(rewrapManyDatakeyContext, null);
             }
         } catch (MongoCryptException e) {
-            throw wrapInClientException(e);
+            throw wrapInMongoException(e);
         }
     }
 
@@ -324,7 +325,7 @@ public class Crypt implements Closeable {
             cryptContext.addMongoOperationResult(markedCommand);
             cryptContext.completeMongoOperation();
         } catch (Throwable t) {
-            throw wrapInClientException(t);
+            throw wrapInMongoException(t);
         }
     }
 
@@ -348,7 +349,8 @@ public class Crypt implements Closeable {
             }
             cryptContext.completeKeyDecryptors();
         } catch (Throwable t) {
-            throw wrapInClientException(t);
+            throw translateInterruptedException(t, "Interrupted while doing IO")
+                    .orElseThrow(() -> wrapInMongoException(t));
         }
     }
 
@@ -366,7 +368,11 @@ public class Crypt implements Closeable {
         }
     }
 
-    private MongoClientException wrapInClientException(final Throwable t) {
-        return new MongoClientException("Exception in encryption library: " + t.getMessage(), t);
+    private MongoException wrapInMongoException(final Throwable t) {
+        if (t instanceof MongoException) {
+            return (MongoException) t;
+        } else {
+            return new MongoClientException("Exception in encryption library: " + t.getMessage(), t);
+        }
     }
 }

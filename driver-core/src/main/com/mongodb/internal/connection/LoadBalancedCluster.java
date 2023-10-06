@@ -34,6 +34,7 @@ import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.Locks;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -56,6 +57,7 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
@@ -110,7 +112,7 @@ final class LoadBalancedCluster implements Cluster {
                     LOGGER.info("SRV resolution completed with hosts: " + hosts);
 
                     List<ServerSelectionRequest> localWaitQueue;
-                    lock.lock();
+                    lockInterruptibly(lock);
                     try {
                         if (isClosed()) {
                             return;
@@ -173,13 +175,6 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterDescription getDescription() {
-        isTrue("open", !isClosed());
-        waitForSrv();
-        return description;
-    }
-
-    @Override
     public ClusterId getClusterId() {
         return clusterId;
     }
@@ -218,8 +213,7 @@ final class LoadBalancedCluster implements Cluster {
         if (initializationCompleted) {
             return;
         }
-        lock.lock();
-        try {
+        Locks.withLock(lock, () -> {
             long remainingTimeNanos = getMaxWaitTimeNanos();
             while (!initializationCompleted) {
                 if (isClosed()) {
@@ -228,13 +222,13 @@ final class LoadBalancedCluster implements Cluster {
                 if (remainingTimeNanos <= 0) {
                     throw createTimeoutException();
                 }
-                remainingTimeNanos = condition.awaitNanos(remainingTimeNanos);
+                try {
+                    remainingTimeNanos = condition.awaitNanos(remainingTimeNanos);
+                } catch (InterruptedException e) {
+                    throw interruptAndCreateMongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
+                }
             }
-        } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     @Override
@@ -264,14 +258,10 @@ final class LoadBalancedCluster implements Cluster {
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
-            ClusterableServer localServer;
-            lock.lock();
-            try {
+            ClusterableServer localServer = Locks.withLock(lock, () -> {
                 condition.signalAll();
-                localServer = server;
-            } finally {
-                lock.unlock();
-            }
+                return server;
+            });
             if (localServer != null) {
                 localServer.close();
             }
@@ -328,8 +318,7 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
-        lock.lock();
-        try {
+        Locks.withLock(lock, () ->  {
             if (isClosed()) {
                 request.onError(createShutdownException());
                 return;
@@ -348,16 +337,14 @@ final class LoadBalancedCluster implements Cluster {
             } else {
                 condition.signalAll();
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     private final class WaitQueueHandler implements Runnable {
         public void run() {
             List<ServerSelectionRequest> timeoutList = new ArrayList<>();
             while (!(isClosed() || initializationCompleted)) {
-                lock.lock();
+                lockInterruptibly(lock);
                 try {
                     if (isClosed() || initializationCompleted) {
                         break;
@@ -395,14 +382,11 @@ final class LoadBalancedCluster implements Cluster {
             // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
             // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
             // requests in it.
-            List<ServerSelectionRequest> shutdownList;
-            lock.lock();
-            try {
-                shutdownList = new ArrayList<>(waitQueue);
+            List<ServerSelectionRequest> shutdownList = Locks.withLock(lock, () -> {
+                ArrayList<ServerSelectionRequest> result = new ArrayList<>(waitQueue);
                 waitQueue.clear();
-            } finally {
-                lock.unlock();
-            }
+                return result;
+            });
             shutdownList.forEach(request -> request.onError(createShutdownException()));
         }
     }
