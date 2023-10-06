@@ -52,7 +52,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
-import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.checkedWithLock;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
@@ -294,12 +294,7 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private long waitForSignalOrTimeout() throws InterruptedException {
-            lockInterruptibly(lock);
-            try {
-                return condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS));
-            } finally {
-                lock.unlock();
-            }
+            return checkedWithLock(lock, () -> condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS)));
         }
 
         public void cancelCurrentCheck() {

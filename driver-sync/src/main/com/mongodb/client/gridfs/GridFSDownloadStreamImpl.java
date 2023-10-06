@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static java.lang.String.format;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
@@ -187,7 +187,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     @Override
     public void close() {
-        withLock(closeLock, () -> {
+        withInterruptibleLock(closeLock, () -> {
             if (!closed) {
                 closed = true;
             }
@@ -196,7 +196,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     }
 
     private void checkClosed() {
-        withLock(closeLock, () -> {
+        withInterruptibleLock(closeLock, () -> {
             if (closed) {
                 throw new MongoGridFSException("The InputStream has been closed");
             }
@@ -204,7 +204,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     }
 
     private void discardCursor() {
-        withLock(cursorLock, () -> {
+        withInterruptibleLock(cursorLock, () -> {
             if (cursor != null) {
                 cursor.close();
                 cursor = null;

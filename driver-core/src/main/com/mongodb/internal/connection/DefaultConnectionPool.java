@@ -98,12 +98,12 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.event.ConnectionClosedEvent.Reason.ERROR;
+import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withUnfairLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
-import static com.mongodb.internal.Locks.lockInterruptibly;
-import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static com.mongodb.internal.logging.LogMessage.Component.CONNECTION;
@@ -1103,14 +1103,11 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            lockInterruptiblyUnfair(lock);
-            try {
+            withUnfairLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 permits++;
                 permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         private void expressDesireToGetAvailableConnection() {
@@ -1141,29 +1138,24 @@ final class DefaultConnectionPool implements ConnectionPool {
          * from threads that are waiting for a permit to open a connection.
          */
         void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
-            lockInterruptiblyUnfair(lock);
-            try {
+            boolean handedOver = withUnfairLock(lock, () -> {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
                     if (desiredConnectionSlot.reference == null) {
                         desiredConnectionSlot.reference = new PooledConnection(openConnection);
                         permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
-                        return;
+                        return true;
                     }
                 }
-            } finally {
-                lock.unlock();
+                return false;
+            });
+            if (!handedOver) {
+                pool.release(openConnection);
             }
-            pool.release(openConnection);
         }
 
         void signalClosedOrPaused() {
-            lockInterruptiblyUnfair(lock);
-            try {
-                permitAvailableOrHandedOverOrClosedOrPausedCondition.signalAll();
-            } finally {
-                lock.unlock();
-            }
+            withUnfairLock(lock, permitAvailableOrHandedOverOrClosedOrPausedCondition::signalAll);
         }
 
         /**
@@ -1327,16 +1319,16 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void enqueue(final Task task) {
-            lockInterruptibly(lock);
-            try {
+            boolean closed = withLock(lock, () -> {
                 if (initUnlessClosed()) {
                     tasks.add(task);
-                    return;
+                    return false;
                 }
-            } finally {
-                lock.unlock();
+                return true;
+            });
+            if (closed) {
+                task.failAsClosed();
             }
-            task.failAsClosed();
         }
 
         /**

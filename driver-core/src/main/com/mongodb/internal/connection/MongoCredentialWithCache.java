@@ -23,7 +23,7 @@ import com.mongodb.lang.Nullable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withInterruptibleLock;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -73,7 +73,7 @@ public class MongoCredentialWithCache {
         private Object cacheValue;
 
         Object get(final Object key) {
-            return withLock(lock, () -> {
+            return withInterruptibleLock(lock, () -> {
                 if (cacheKey != null && cacheKey.equals(key)) {
                     return cacheValue;
                 }
@@ -82,11 +82,10 @@ public class MongoCredentialWithCache {
         }
 
         void set(final Object key, final Object value) {
-            withLock(lock, () -> {
+            withInterruptibleLock(lock, () -> {
                 cacheKey = key;
                 cacheValue = value;
             });
         }
     }
 }
-

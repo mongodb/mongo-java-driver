@@ -40,6 +40,27 @@ public final class Locks {
     }
 
     public static <V, E extends Exception> V checkedWithLock(final Lock lock, final CheckedSupplier<V, E> supplier) throws E {
+        lock.lock();
+        try {
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void withInterruptibleLock(final Lock lock, final Runnable action) throws MongoInterruptedException {
+        withInterruptibleLock(lock, () -> {
+            action.run();
+            return null;
+        });
+    }
+
+    public static <V> V withInterruptibleLock(final Lock lock, final Supplier<V> supplier) throws MongoInterruptedException {
+        return checkedWithInterruptibleLock(lock, supplier::get);
+    }
+
+    public static <V, E extends Exception> V checkedWithInterruptibleLock(final Lock lock, final CheckedSupplier<V, E> supplier)
+            throws MongoInterruptedException, E {
         lockInterruptibly(lock);
         try {
             return supplier.get();
@@ -56,20 +77,51 @@ public final class Locks {
         }
     }
 
+    /**
+     * See {@link #lockInterruptiblyUnfair(ReentrantLock)} before using this method.
+     */
+    public static void withUnfairLock(final ReentrantLock lock, final Runnable action) {
+        withUnfairLock(lock, () -> {
+            action.run();
+            return null;
+        });
+    }
+
+    /**
+     * See {@link #lockInterruptiblyUnfair(ReentrantLock)} before using this method.
+     */
+    public static <V> V withUnfairLock(final ReentrantLock lock, final Supplier<V> supplier) {
+        lockUnfair(lock);
+        try {
+            return supplier.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private static void lockUnfair(
+            // The type must be `ReentrantLock`, not `Lock`,
+            // because only `ReentrantLock.tryLock` is documented to have the barging (unfair) behavior.
+            final ReentrantLock lock) {
+        if (!lock.tryLock()) {
+            lock.lock();
+        }
+    }
+
+    /**
+     * This method allows a thread to attempt acquiring the {@code lock} unfairly despite the {@code lock}
+     * being {@linkplain ReentrantLock#ReentrantLock(boolean) fair}. In most cases you should create an unfair lock,
+     * instead of using this method.
+     */
     public static void lockInterruptiblyUnfair(
             // The type must be `ReentrantLock`, not `Lock`,
-            // because only `ReentrantLock.tryLock` is documented to have the barging behavior.
+            // because only `ReentrantLock.tryLock` is documented to have the barging (unfair) behavior.
             final ReentrantLock lock) throws MongoInterruptedException {
         if (Thread.currentThread().isInterrupted()) {
             throw interruptAndCreateMongoInterruptedException(null, null);
         }
-        // `ReentrantLock.tryLock` is unfair
         if (!lock.tryLock()) {
-            try {
-                lock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw interruptAndCreateMongoInterruptedException(null, e);
-            }
+            lockInterruptibly(lock);
         }
     }
 
