@@ -57,8 +57,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentT
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 
-;
-
 /**
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
  * ensures that the value of the {@code name} field of each returned document is the simple name of the collection rather than the full
