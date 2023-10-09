@@ -27,11 +27,11 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class AsyncChangeStreamBatchCursorSpecification extends Specification {
 
-    def 'should call the underlying AsyncQueryBatchCursor'() {
+    def 'should call the underlying AsyncCommandBatchCursor'() {
         given:
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
-        def wrapped = Mock(AsyncQueryBatchCursor)
+        def wrapped = Mock(AsyncCommandBatchCursor)
         def callback = Stub(SingleResultCallback)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
@@ -46,7 +46,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         cursor.next(callback)
 
         then:
-        1 * wrapped.next(_) >> { it[0].onResult(null, null) }
+        1 * wrapped.next(_) >> { it[0].onResult([], null) }
 
         when:
         cursor.close()
@@ -66,7 +66,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
     def 'should not close the cursor in next if the cursor was closed before next completed'() {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
-        def wrapped = Mock(AsyncQueryBatchCursor)
+        def wrapped = Mock(AsyncCommandBatchCursor)
         def callback = Stub(SingleResultCallback)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
@@ -78,7 +78,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         1 * wrapped.next(_) >> {
             // Simulate the user calling close while wrapped.next() is in flight
             cursor.close()
-            it[0].onResult(null, null)
+            it[0].onResult([], null)
         }
 
         then:
@@ -91,7 +91,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
     def 'should throw a MongoException when next/tryNext is called after the cursor is closed'() {
         def changeStreamOpertation = Stub(ChangeStreamOperation)
         def binding = Mock(AsyncReadBinding)
-        def wrapped = Mock(AsyncQueryBatchCursor)
+        def wrapped = Mock(AsyncCommandBatchCursor)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
 

@@ -728,7 +728,7 @@ public final class ClusterFixture {
         int count = referenceCounted.getCount();
         while (count > target) {
             try {
-                if (System.currentTimeMillis() > startTime + 5000) {
+                if (System.currentTimeMillis() > startTime + TIMEOUT_DURATION.toMillis()) {
                     return count;
                 }
                 sleep(10);

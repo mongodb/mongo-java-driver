@@ -95,7 +95,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
                             }
                         })
                         .doOnSuccess(results -> {
-                            if (results != null) {
+                            if (!results.isEmpty()) {
                                 results
                                         .stream()
                                         .filter(Objects::nonNull)

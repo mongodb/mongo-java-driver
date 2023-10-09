@@ -79,7 +79,7 @@ echo $second
   -Dorg.mongodb.test.uri=${SINGLE_MONGOS_LB_URI} \
   -Dorg.mongodb.test.multi.mongos.uri=${MULTI_MONGOS_LB_URI} \
   ${GRADLE_EXTRA_VARS} --stacktrace --info --continue driver-core:test \
-  --tests QueryBatchCursorFunctionalSpecification
+  --tests CommandBatchCursorSpecification
 third=$?
 echo $third
 
