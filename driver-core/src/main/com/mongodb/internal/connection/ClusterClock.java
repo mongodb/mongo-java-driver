@@ -22,7 +22,7 @@ import org.bson.BsonTimestamp;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withInterruptibleLock;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -33,19 +33,19 @@ public class ClusterClock {
     private BsonDocument clusterTime;
 
     public BsonDocument getCurrent() {
-        return withLock(lock, () -> clusterTime);
+        return withInterruptibleLock(lock, () -> clusterTime);
     }
 
     public BsonTimestamp getClusterTime() {
-        return withLock(lock, () -> clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null);
+        return withInterruptibleLock(lock, () -> clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null);
     }
 
     public void advance(@Nullable final BsonDocument other) {
-        withLock(lock, () -> this.clusterTime = greaterOf(other));
+        withInterruptibleLock(lock, () -> this.clusterTime = greaterOf(other));
     }
 
     public BsonDocument greaterOf(@Nullable final BsonDocument other) {
-        return withLock(lock, () -> {
+        return withInterruptibleLock(lock, () -> {
             if (other == null) {
                 return clusterTime;
             } else if (clusterTime == null) {

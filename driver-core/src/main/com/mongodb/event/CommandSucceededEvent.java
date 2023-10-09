@@ -42,10 +42,35 @@ public final class CommandSucceededEvent extends CommandEvent {
      * @param requestId the request id
      * @param connectionDescription the connection description
      * @param commandName the command name
+     * @param databaseName the database name
+     * @param response the command response
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
+     * @since 4.11
+     */
+    public CommandSucceededEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
+            final ConnectionDescription connectionDescription, final String commandName,
+            final String databaseName, final BsonDocument response, final long elapsedTimeNanos) {
+        super(requestContext, operationId, requestId, connectionDescription, commandName, databaseName);
+        this.response = response;
+        isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
+        this.elapsedTimeNanos = elapsedTimeNanos;
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param requestContext the request context
+     * @param operationId the operation id
+     * @param requestId the request id
+     * @param connectionDescription the connection description
+     * @param commandName the command name
      * @param response the command response
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
      * @since 4.10
+     * @deprecated Prefer
+     * {@link CommandSucceededEvent#CommandSucceededEvent(RequestContext, long, int, ConnectionDescription, String, String, BsonDocument, long)}
      */
+    @Deprecated
     public CommandSucceededEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
             final ConnectionDescription connectionDescription, final String commandName, final BsonDocument response,
             final long elapsedTimeNanos) {
@@ -65,7 +90,7 @@ public final class CommandSucceededEvent extends CommandEvent {
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
      * @since 4.4
      * @deprecated Prefer
-     * {@link CommandSucceededEvent#CommandSucceededEvent(RequestContext, long, int, ConnectionDescription, String, BsonDocument, long)}
+     * {@link CommandSucceededEvent#CommandSucceededEvent(RequestContext, long, int, ConnectionDescription, String, String, BsonDocument, long)}
      */
     @Deprecated
     public CommandSucceededEvent(@Nullable final RequestContext requestContext, final int requestId,

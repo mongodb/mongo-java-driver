@@ -64,6 +64,7 @@ public class FindOneAndUpdateOptions {
      * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
+     * @see Projections
      */
     public FindOneAndUpdateOptions projection(@Nullable final Bson projection) {
         this.projection = projection;

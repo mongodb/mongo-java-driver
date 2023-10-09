@@ -2146,22 +2146,21 @@ buildvariants:
 - matrix_name: "aws-auth-test"
   matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",
                  aws-credential-provider: "*" }
-  display_name: "MONGODB-AWS Auth test ${version} ${jdk} ${aws-credential-provider}"
+  display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu2004-small
   tasks:
     - name: "aws-auth-test-with-regular-aws-credentials"
+
+- matrix_name: "aws-ec2-auth-test"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk17"], version: ["7.0"], os: "ubuntu", aws-credential-provider: "*" }
+  display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider}"
+  run_on: ubuntu2004-small
+  tasks:
+    - name: "aws-auth-test-with-aws-EC2-credentials"
     - name: "aws-auth-test-with-assume-role-credentials"
     - name: "aws-auth-test-with-aws-credentials-as-environment-variables"
     - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
-    - name: "aws-auth-test-with-aws-EC2-credentials"
     - name: "aws-auth-test-with-web-identity-credentials"
-
-#- matrix_name: "aws-ecs-auth-test"
-#  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu" }
-#  display_name: "MONGODB-AWS ECS Auth test ${version} ${jdk}"
-#  run_on: ubuntu2004-small
-#  tasks:
-#    - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
   matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }

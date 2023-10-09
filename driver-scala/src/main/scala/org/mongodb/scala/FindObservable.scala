@@ -121,6 +121,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Projection]]
    * @param projection the project document, which may be null.
    * @return this
+   * @see [[org.mongodb.scala.model.Projections]]
    */
   def projection(projection: Bson): FindObservable[TResult] = {
     wrapped.projection(projection)

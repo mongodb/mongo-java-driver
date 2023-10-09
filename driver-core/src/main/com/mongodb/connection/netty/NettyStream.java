@@ -68,7 +68,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
@@ -288,7 +287,7 @@ final class NettyStream implements Stream {
     private void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler, final long readTimeoutMillis) {
         ByteBuf buffer = null;
         Throwable exceptionResult = null;
-        lockInterruptibly(lock);
+        lock.lock();
         try {
             exceptionResult = pendingException;
             if (exceptionResult == null) {

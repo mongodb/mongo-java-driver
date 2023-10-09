@@ -289,13 +289,14 @@ public final class ProtocolHelper {
         }
     }
 
-    static void sendCommandSucceededEvent(final RequestMessage message, final String commandName, final BsonDocument response,
-            final ConnectionDescription connectionDescription, final long elapsedTimeNanos, final CommandListener commandListener,
-            final OperationContext operationContext) {
+    static void sendCommandSucceededEvent(final RequestMessage message, final String commandName, final String databaseName,
+            final BsonDocument response, final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
+            final CommandListener commandListener, final OperationContext operationContext) {
         notNull("operationContext", operationContext);
         try {
             commandListener.commandSucceeded(new CommandSucceededEvent(getRequestContextForEvent(operationContext.getRequestContext()),
-                    operationContext.getId(), message.getId(), connectionDescription, commandName, response, elapsedTimeNanos));
+                    operationContext.getId(), message.getId(), connectionDescription, commandName, databaseName, response,
+                    elapsedTimeNanos));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
                 PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command succeeded event to listener %s", commandListener), e);
@@ -303,13 +304,15 @@ public final class ProtocolHelper {
         }
     }
 
-    static void sendCommandFailedEvent(final RequestMessage message, final String commandName,
+    static void sendCommandFailedEvent(final RequestMessage message, final String commandName, final String databaseName,
             final ConnectionDescription connectionDescription, final long elapsedTimeNanos,
             final Throwable throwable, final CommandListener commandListener, final OperationContext operationContext) {
         notNull("operationContext", operationContext);
         try {
             commandListener.commandFailed(new CommandFailedEvent(getRequestContextForEvent(operationContext.getRequestContext()),
-                    operationContext.getId(), message.getId(), connectionDescription, commandName, elapsedTimeNanos, throwable));
+                    operationContext.getId(), message.getId(), connectionDescription, commandName, databaseName, elapsedTimeNanos,
+                    throwable));
+
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
                 PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command failed event to listener %s", commandListener), e);

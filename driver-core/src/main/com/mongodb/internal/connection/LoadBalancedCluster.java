@@ -60,7 +60,6 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -113,7 +112,7 @@ final class LoadBalancedCluster implements Cluster {
                     LOGGER.info("SRV resolution completed with hosts: " + hosts);
 
                     List<ServerSelectionRequest> localWaitQueue;
-                    lockInterruptibly(lock);
+                    lock.lock();
                     try {
                         if (isClosed()) {
                             return;
@@ -341,7 +340,7 @@ final class LoadBalancedCluster implements Cluster {
             StartTime startTime = StartTime.now();
             List<ServerSelectionRequest> timeoutList = new ArrayList<>();
             while (!(isClosed() || initializationCompleted)) {
-                lockInterruptibly(lock);
+                lock.lock();
                 try {
                     if (isClosed() || initializationCompleted) {
                         break;

@@ -76,6 +76,11 @@ final class EventMatcher {
                         expected.getString("commandName").getValue(), actual.getCommandName());
             }
 
+            if (expected.containsKey("databaseName")) {
+                assertEquals(context.getMessage("Expected database names to match"),
+                        expected.getString("databaseName").getValue(), actual.getDatabaseName());
+            }
+
             if (expected.containsKey("hasServiceId")) {
                 boolean hasServiceId = expected.getBoolean("hasServiceId").getValue();
                 ObjectId serviceId = actual.getConnectionDescription().getServiceId();
@@ -100,10 +105,6 @@ final class EventMatcher {
                 assertEquals(context.getMessage("Expected CommandStartedEvent"), eventType, "commandStartedEvent");
                 CommandStartedEvent actualCommandStartedEvent = (CommandStartedEvent) actual;
 
-                if (expected.containsKey("databaseName")) {
-                    assertEquals(context.getMessage("Expected database names to match"),
-                            expected.getString("databaseName").getValue(), actualCommandStartedEvent.getDatabaseName());
-                }
                 if (expected.containsKey("command")) {
                     valueMatcher.assertValuesMatch(expected.getDocument("command"), actualCommandStartedEvent.getCommand());
                 }

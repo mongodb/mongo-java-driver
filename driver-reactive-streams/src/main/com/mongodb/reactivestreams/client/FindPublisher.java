@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.Projections;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -104,6 +105,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
+     * @see Projections
      */
     FindPublisher<TResult> projection(@Nullable Bson projection);
     /**

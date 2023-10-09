@@ -310,7 +310,7 @@ public final class Aggregates {
      * the {@code from} collection is ignored.
      *
      * @param from          the name of the collection in the same database to
-     *                      perform the join with. May be {$code null} if the
+     *                      perform the join with. Must be {$code null} if the
      *                      first pipeline stage is $documents.
      * @param pipeline      the pipeline to run on the joined collection.
      * @param as            the name of the new array field to add to the input documents.
@@ -332,7 +332,7 @@ public final class Aggregates {
      *
      * @param <TExpression> the Variable value expression type
      * @param from          the name of the collection in the same database to
-     *                      perform the join with. May be {$code null} if the
+     *                      perform the join with. Must be {$code null} if the
      *                      first pipeline stage is $documents.
      * @param let           the variables to use in the pipeline field stages.
      * @param pipeline      the pipeline to run on the joined collection.

@@ -30,7 +30,7 @@ import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withInterruptibleLock;
 
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final ClientSession clientSession;
@@ -78,7 +78,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     @Override
     public void abort() {
-        withLock(closeLock, () -> {
+        withInterruptibleLock(closeLock, () -> {
             checkClosed();
             closed = true;
         });
@@ -138,7 +138,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     @Override
     public void close() {
-        boolean alreadyClosed = withLock(closeLock, () -> {
+        boolean alreadyClosed = withInterruptibleLock(closeLock, () -> {
             boolean prevClosed = closed;
             closed = true;
             return prevClosed;
@@ -180,7 +180,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     }
 
     private void checkClosed() {
-        withLock(closeLock, () -> {
+        withInterruptibleLock(closeLock, () -> {
             if (closed) {
                 throw new MongoGridFSException("The OutputStream has been closed");
             }

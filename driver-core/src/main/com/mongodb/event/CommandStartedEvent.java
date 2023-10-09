@@ -27,7 +27,6 @@ import org.bson.BsonDocument;
  * @since 3.1
  */
 public final class CommandStartedEvent extends CommandEvent {
-    private final String databaseName;
     private final BsonDocument command;
 
     /**
@@ -45,8 +44,7 @@ public final class CommandStartedEvent extends CommandEvent {
     public CommandStartedEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
             final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
             final BsonDocument command) {
-        super(requestContext, operationId, requestId, connectionDescription, commandName);
-        this.databaseName = databaseName;
+        super(requestContext, operationId, requestId, connectionDescription, commandName, databaseName);
         this.command = command;
     }
 
@@ -85,15 +83,6 @@ public final class CommandStartedEvent extends CommandEvent {
     public CommandStartedEvent(final int requestId, final ConnectionDescription connectionDescription,
             final String databaseName, final String commandName, final BsonDocument command) {
         this(null, requestId, connectionDescription, databaseName, commandName, command);
-    }
-
-    /**
-     * Gets the database on which the operation will be executed.
-     *
-     * @return the database name
-     */
-    public String getDatabaseName() {
-        return databaseName;
     }
 
     /**

@@ -182,14 +182,17 @@ class AsyncQueryBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
                 close();
                 callback.onResult(null, null);
             } else {
-                withLock(lock, () ->  {
+                boolean doGetMore = withLock(lock, () ->  {
                     if (isClosed()) {
                         callback.onResult(null, new MongoException("next() called after the cursor was closed."));
-                        return;
+                        return false;
                     }
                     isOperationInProgress = true;
+                    return true;
                 });
-                getMore(localCursor, callback);
+                if (doGetMore) {
+                    getMore(localCursor, callback);
+                }
             }
         }
     }
