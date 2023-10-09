@@ -50,7 +50,7 @@ public final class CommandFailedEvent extends CommandEvent {
     public CommandFailedEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
             final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
             final long elapsedTimeNanos, final Throwable throwable) {
-        super(requestContext, operationId, requestId, connectionDescription, commandName, databaseName);
+        super(requestContext, operationId, requestId, connectionDescription, databaseName, commandName);
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
         this.throwable = throwable;

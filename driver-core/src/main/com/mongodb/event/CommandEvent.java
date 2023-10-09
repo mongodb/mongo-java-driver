@@ -42,12 +42,12 @@ public abstract class CommandEvent {
      * @param operationId           the operation id
      * @param requestId             the request id
      * @param connectionDescription the connection description
-     * @param commandName           the command name
      * @param databaseName          the database name
+     * @param commandName           the command name
      * @since 4.11
      */
     public CommandEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
-            final ConnectionDescription connectionDescription, final String commandName, final String databaseName) {
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName) {
         this.requestContext = requestContext;
         this.requestId = requestId;
         this.connectionDescription = connectionDescription;
@@ -70,7 +70,7 @@ public abstract class CommandEvent {
     @Deprecated
     public CommandEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
             final ConnectionDescription connectionDescription, final String commandName) {
-        this(requestContext, -1, requestId, connectionDescription, commandName, "");
+        this(requestContext, -1, requestId, connectionDescription, "", commandName);
     }
 
     /**
@@ -85,7 +85,7 @@ public abstract class CommandEvent {
     @Deprecated
     public CommandEvent(@Nullable final RequestContext requestContext, final int requestId,
             final ConnectionDescription connectionDescription, final String commandName) {
-        this(requestContext, -1, requestId, connectionDescription, commandName, "");
+        this(requestContext, -1, requestId, connectionDescription, "", commandName);
     }
 
     /**
