@@ -294,8 +294,9 @@ public final class ProtocolHelper {
             final CommandListener commandListener, final OperationContext operationContext) {
         notNull("operationContext", operationContext);
         try {
+
             commandListener.commandSucceeded(new CommandSucceededEvent(getRequestContextForEvent(operationContext.getRequestContext()),
-                    operationContext.getId(), message.getId(), connectionDescription, commandName, databaseName, response,
+                    operationContext.getId(), message.getId(), connectionDescription, databaseName, commandName, response,
                     elapsedTimeNanos));
         } catch (Exception e) {
             if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
@@ -310,7 +311,7 @@ public final class ProtocolHelper {
         notNull("operationContext", operationContext);
         try {
             commandListener.commandFailed(new CommandFailedEvent(getRequestContextForEvent(operationContext.getRequestContext()),
-                    operationContext.getId(), message.getId(), connectionDescription, commandName, databaseName, elapsedTimeNanos,
+                    operationContext.getId(), message.getId(), connectionDescription, databaseName, commandName, elapsedTimeNanos,
                     throwable));
 
         } catch (Exception e) {
