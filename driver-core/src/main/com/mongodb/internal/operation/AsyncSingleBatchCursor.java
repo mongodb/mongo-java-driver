@@ -26,7 +26,7 @@ import static java.util.Collections.emptyList;
 
 class AsyncSingleBatchCursor<T> implements AsyncBatchCursor<T> {
 
-    static <R> AsyncSingleBatchCursor<R> createEmptyBatchCursor(final int batchSize) {
+    static <R> AsyncSingleBatchCursor<R> createEmptyAsyncSingleBatchCursor(final int batchSize) {
         return new AsyncSingleBatchCursor<>(emptyList(), batchSize);
     }
 

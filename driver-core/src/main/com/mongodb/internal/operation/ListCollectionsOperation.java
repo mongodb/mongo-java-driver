@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoCommandException;;
+import com.mongodb.MongoCommandException;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -42,6 +42,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.createReadComm
 import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
@@ -49,11 +50,14 @@ import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromB
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
+import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
+
+;
 
 /**
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
@@ -145,7 +149,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                             createCommandDecoder(), commandTransformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e,
-                            SingleBatchCursor.createEmptyBatchCursor(source.getServerDescription().getAddress(), batchSize));
+                            createEmptySingleBatchCursor(source.getServerDescription().getAddress(), batchSize));
                 }
             })
         );
@@ -171,7 +175,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                             } else {
                                                 releasingCallback.onResult(result != null
                                                         ? result
-                                                        : AsyncSingleBatchCursor.createEmptyBatchCursor(batchSize), null);
+                                                        : createEmptyAsyncSingleBatchCursor(batchSize), null);
                                             }
                                         });
                             })

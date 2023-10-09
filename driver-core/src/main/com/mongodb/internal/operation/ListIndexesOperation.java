@@ -42,6 +42,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.createReadComm
 import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
@@ -50,6 +51,7 @@ import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromB
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
+import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
@@ -125,7 +127,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                             createCommandDecoder(), transformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e,
-                            SingleBatchCursor.createEmptyBatchCursor(source.getServerDescription().getAddress(), batchSize));
+                            createEmptySingleBatchCursor(source.getServerDescription().getAddress(), batchSize));
                 }
             })
         );
@@ -151,7 +153,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                             } else {
                                                 releasingCallback.onResult(result != null
                                                                 ? result
-                                                                : AsyncSingleBatchCursor.createEmptyBatchCursor(batchSize),
+                                                                : createEmptyAsyncSingleBatchCursor(batchSize),
                                                         null);
                                             }
                                         });

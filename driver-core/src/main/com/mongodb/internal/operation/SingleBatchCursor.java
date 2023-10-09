@@ -25,7 +25,7 @@ import static java.util.Collections.emptyList;
 
 class SingleBatchCursor<T> implements BatchCursor<T> {
 
-    static <R> SingleBatchCursor<R> createEmptyBatchCursor(final ServerAddress serverAddress, final int batchSize) {
+    static <R> SingleBatchCursor<R> createEmptySingleBatchCursor(final ServerAddress serverAddress, final int batchSize) {
         return new SingleBatchCursor<>(emptyList(), batchSize, serverAddress);
     }
 

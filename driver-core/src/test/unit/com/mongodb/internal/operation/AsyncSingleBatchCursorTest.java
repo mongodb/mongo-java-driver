@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
-import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyBatchCursor;
+import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,7 +55,7 @@ class AsyncSingleBatchCursorTest {
     @Test
     @DisplayName("should work as expected emptyCursor")
     void shouldWorkAsExpectedEmptyCursor() {
-        try (AsyncSingleBatchCursor<Document> cursor = createEmptyBatchCursor(0)) {
+        try (AsyncSingleBatchCursor<Document> cursor = createEmptyAsyncSingleBatchCursor(0)) {
             assertIterableEquals(emptyList(), nextBatch(cursor));
             assertTrue(cursor.isClosed());
 

@@ -34,7 +34,9 @@ import org.bson.codecs.Decoder;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
+import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 
 
 /**
@@ -89,7 +91,7 @@ final class ListSearchIndexesOperation<T>
             if (!isNamespaceError(exception)) {
                 throw exception;
             } else {
-                return SingleBatchCursor.createEmptyBatchCursor(exception.getServerAddress(), cursorBatchSize);
+                return createEmptySingleBatchCursor(exception.getServerAddress(), cursorBatchSize);
             }
         }
     }
@@ -101,7 +103,7 @@ final class ListSearchIndexesOperation<T>
                 callback.onResult(null, exception);
             } else if (exception != null) {
                 int cursorBatchSize = batchSize == null ? 0 : batchSize;
-                callback.onResult(AsyncSingleBatchCursor.createEmptyBatchCursor(cursorBatchSize), null);
+                callback.onResult(createEmptyAsyncSingleBatchCursor(cursorBatchSize), null);
             } else {
                 callback.onResult(cursor, null);
             }

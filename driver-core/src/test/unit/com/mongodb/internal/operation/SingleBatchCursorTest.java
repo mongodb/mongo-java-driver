@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.connection.tlschannel.util.Util.assertTrue;
+import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
@@ -59,7 +60,7 @@ class SingleBatchCursorTest {
     @Test
     @DisplayName("should work as expected emptyCursor")
     void shouldWorkAsExpectedEmptyCursor() {
-        try (SingleBatchCursor<Document> cursor = SingleBatchCursor.createEmptyBatchCursor(SERVER_ADDRESS, 0)) {
+        try (SingleBatchCursor<Document> cursor = createEmptySingleBatchCursor(SERVER_ADDRESS, 0)) {
             assertEquals(SERVER_ADDRESS, cursor.getServerAddress());
             assertEquals(0, cursor.available());
             assertNull(cursor.getServerCursor());
