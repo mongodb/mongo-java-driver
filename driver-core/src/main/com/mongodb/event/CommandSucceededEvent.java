@@ -50,7 +50,7 @@ public final class CommandSucceededEvent extends CommandEvent {
     public CommandSucceededEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
             final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
             final BsonDocument response, final long elapsedTimeNanos) {
-        super(requestContext, operationId, requestId, connectionDescription, commandName, databaseName);
+        super(requestContext, operationId, requestId, connectionDescription, databaseName, commandName);
         this.response = response;
         isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;

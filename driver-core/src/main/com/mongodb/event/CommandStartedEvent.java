@@ -44,7 +44,7 @@ public final class CommandStartedEvent extends CommandEvent {
     public CommandStartedEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
             final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
             final BsonDocument command) {
-        super(requestContext, operationId, requestId, connectionDescription, commandName, databaseName);
+        super(requestContext, operationId, requestId, connectionDescription, databaseName, commandName);
         this.command = command;
     }
 
