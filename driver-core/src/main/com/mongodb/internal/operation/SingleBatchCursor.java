@@ -41,10 +41,6 @@ class SingleBatchCursor<T> implements BatchCursor<T> {
         this.hasNext = !batch.isEmpty();
     }
 
-    public List<T> getBatch() {
-        return batch;
-    }
-
     @Override
     public boolean hasNext() {
         return hasNext;
