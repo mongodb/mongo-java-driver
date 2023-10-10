@@ -58,6 +58,7 @@ final class LogMatcher {
 
      static BsonDocument asDocument(final LogMessage message) {
         BsonDocument document = new BsonDocument();
+        // VAKOTODO map "serverSelection" -> "cluster" here?
         document.put("component", new BsonString(message.getComponent().name().toLowerCase()));
         document.put("level", new BsonString(message.getLevel().name().toLowerCase()));
         document.put("hasFailure", BsonBoolean.valueOf(message.getException() != null));

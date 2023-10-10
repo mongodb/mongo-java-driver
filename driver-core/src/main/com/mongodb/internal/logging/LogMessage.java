@@ -74,6 +74,7 @@ public final class LogMessage {
             COMMAND_NAME("commandName"),
             REQUEST_ID("requestId"),
             OPERATION_ID("operationId"),
+            OPERATION("operation"),
             SERVICE_ID("serviceId"),
             SERVER_CONNECTION_ID("serverConnectionId"),
             DRIVER_CONNECTION_ID("driverConnectionId"),
@@ -83,11 +84,15 @@ public final class LogMessage {
             COMMAND_CONTENT("command"),
             REASON_DESCRIPTION("reason"),
             ERROR_DESCRIPTION("error"),
+            FAILURE("failure"),
             MAX_IDLE_TIME_MS("maxIdleTimeMS"),
             MIN_POOL_SIZE("minPoolSize"),
             MAX_POOL_SIZE("maxPoolSize"),
             MAX_CONNECTING("maxConnecting"),
-            WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS");
+            WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS"),
+            SELECTOR("selector"),
+            TOPOLOGY_DESCRIPTION("topologyDescription"),
+            REMAINING_TIME_MS("remainingTimeMS");
 
             private final String value;
 
