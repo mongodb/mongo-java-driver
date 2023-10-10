@@ -856,25 +856,6 @@ functions:
             perl -p -i -e "s|ABSOLUTE_PATH_REPLACEMENT_TOKEN|${DRIVERS_TOOLS}|g" $filename
           done
 
-  "windows fix":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          for i in $(find ${DRIVERS_TOOLS}/.evergreen ${PROJECT_DIRECTORY}/.evergreen -name \*.sh); do
-            cat $i | tr -d '\r' > $i.new
-            mv $i.new $i
-          done
-
-  "make files executable":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          for i in $(find ${DRIVERS_TOOLS}/.evergreen ${PROJECT_DIRECTORY}/.evergreen -name \*.sh); do
-            chmod +x $i
-          done
-
   "run perf tests":
     - command: shell.exec
       type: test
@@ -894,9 +875,7 @@ functions:
 pre:
   - func: "fetch source"
   - func: "prepare resources"
-  - func: "windows fix"
   - func: "fix absolute paths"
-  - func: "make files executable"
 
 post:
   - func: "upload mo artifacts"
@@ -1864,7 +1843,6 @@ task_groups:
     setup_group:
       - func: fetch source
       - func: prepare resources
-      - func: make files executable
       - command: subprocess.exec
         params:
           working_dir: src
@@ -1894,7 +1872,6 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
-      - func: make files executable
       - command: shell.exec
         params:
           shell: "bash"
@@ -1930,7 +1907,6 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
-      - func: make files executable
       - command: shell.exec
         params:
           shell: "bash"
