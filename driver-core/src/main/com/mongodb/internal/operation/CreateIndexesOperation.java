@@ -111,11 +111,10 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     @Override
     public Void execute(final WriteBinding binding) {
         try {
-            executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer());
+            return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer());
         } catch (MongoCommandException e) {
             throw checkForDuplicateKeyError(e);
         }
-        return null;
     }
 
     @Override

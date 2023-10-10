@@ -286,6 +286,19 @@
     <Match>
         <Class name="com.mongodb.internal.time.Timeout"/>
         <Method name="awaitOn"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Method name="awaitOn"/>
         <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
     </Match>
+
+    <!-- Void method returning null but @NotNull API -->
+    <Match>
+        <Class name="com.mongodb.internal.operation.DropIndexOperation"/>
+        <Method name="execute"/>
+        <Bug pattern="NP_NONNULL_RETURN_VIOLATION"/>
+    </Match>
+
 </FindBugsFilter>
