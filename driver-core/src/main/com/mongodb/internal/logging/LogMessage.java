@@ -22,10 +22,13 @@ import com.mongodb.lang.Nullable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static java.util.function.Function.identity;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -41,12 +44,34 @@ public final class LogMessage {
     private final String format;
 
     public enum Component {
-        COMMAND,
-        CONNECTION,
-        SERVERSELECTION
+        COMMAND("command"),
+        CONNECTION("connection"),
+        SERVER_SELECTION("serverSelection");
+
+        private static final Map<String, Component> INDEX;
+
+        static {
+            INDEX = Stream.of(Component.values()).collect(Collectors.toMap(Component::getValue, identity()));
+        }
+
+        private final String value;
+
+        Component(final String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public static Component of(final String value) {
+            Component result = INDEX.get(value);
+            return assertNotNull(result);
+        }
     }
 
     public enum Level {
+        INFO,
         DEBUG
     }
 
@@ -74,6 +99,9 @@ public final class LogMessage {
             COMMAND_NAME("commandName"),
             REQUEST_ID("requestId"),
             OPERATION_ID("operationId"),
+            /**
+             * Not supported.
+             */
             OPERATION("operation"),
             SERVICE_ID("serviceId"),
             SERVER_CONNECTION_ID("serverConnectionId"),

@@ -64,7 +64,7 @@ import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
-import static com.mongodb.internal.logging.LogMessage.Component.SERVERSELECTION;
+import static com.mongodb.internal.logging.LogMessage.Component.SERVER_SELECTION;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.FAILURE;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.OPERATION_ID;
@@ -74,6 +74,7 @@ import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_HOST;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_DESCRIPTION;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
+import static com.mongodb.internal.logging.LogMessage.Level.INFO;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -120,7 +121,6 @@ abstract class BaseCluster implements Cluster {
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
-            // VAKOTODO think of simplifying the toString of driver selectors
             logServerSelectionStarted(operationContext, serverSelector, curDescription);
             ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
             ServerTuple serverTuple = selectServer(compositeServerSelector, curDescription);
@@ -502,13 +502,13 @@ abstract class BaseCluster implements Cluster {
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
-                    SERVERSELECTION, DEBUG, "Server selection started", clusterId,
+                    SERVER_SELECTION, DEBUG, "Server selection started", clusterId,
                     asList(
-                            new Entry(OPERATION, "VAKOTODO"),
+                            new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
-                    "Server selection started for operation {} with ID {}. Selector: {}, topology description: {}"));
+                    "Server selection started for operation[ {}] with ID {}. Selector: {}, topology description: {}"));
         }
     }
 
@@ -518,17 +518,17 @@ abstract class BaseCluster implements Cluster {
             final Long remainingTimeNanos,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
-        if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+        if (STRUCTURED_LOGGER.isRequired(INFO, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
-                    SERVERSELECTION, DEBUG, "Waiting for suitable server to become available", clusterId,
+                    SERVER_SELECTION, INFO, "Waiting for suitable server to become available", clusterId,
                     asList(
-                            new Entry(OPERATION, "VAKOTODO"),
+                            new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(REMAINING_TIME_MS, remainingTimeNanos == null ? null : NANOSECONDS.toMillis(remainingTimeNanos)),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
-                    "Waiting for server to become available for operation {} with ID {}.[ Remaining time: {} ms.]" +
-                            " Selector: {}, topology description: {}."));
+                    "Waiting for server to become available for operation[ {}] with ID {}.[ Remaining time: {} ms.]"
+                            + " Selector: {}, topology description: {}."));
         }
     }
 
@@ -539,14 +539,14 @@ abstract class BaseCluster implements Cluster {
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
-                    SERVERSELECTION, DEBUG, "Server selection failed", clusterId,
+                    SERVER_SELECTION, DEBUG, "Server selection failed", clusterId,
                     asList(
-                            new Entry(OPERATION, "VAKOTODO"),
+                            new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(FAILURE, failure.toString()),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
-                    "Server selection failed for operation {} with ID {}. Failure: {}. Selector: {}, topology description: {}"));
+                    "Server selection failed for operation[ {}] with ID {}. Failure: {}. Selector: {}, topology description: {}"));
         }
     }
 
@@ -557,16 +557,16 @@ abstract class BaseCluster implements Cluster {
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
-                    SERVERSELECTION, DEBUG, "Server selection succeeded", clusterId,
+                    SERVER_SELECTION, DEBUG, "Server selection succeeded", clusterId,
                     asList(
-                            new Entry(OPERATION, "VAKOTODO"),
+                            new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(SERVER_HOST, serverAddress.getHost()),
                             new Entry(SERVER_PORT, serverAddress instanceof UnixServerAddress ? null : serverAddress.getPort()),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
-                    "Server selection succeeded for operation {} with ID {}. Selected server: {}[:{}]." +
-                            " Selector: {}, topology description: {}"));
+                    "Server selection succeeded for operation[ {}] with ID {}. Selected server: {}[:{}]."
+                            + " Selector: {}, topology description: {}"));
         }
     }
 }

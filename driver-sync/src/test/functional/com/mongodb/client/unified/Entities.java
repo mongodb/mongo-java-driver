@@ -537,8 +537,7 @@ public final class Entities {
 
     private static LogMessage.Component toComponent(final Map.Entry<String, BsonValue> entry) {
         String componentName = entry.getKey();
-      return   LogMessage.Component
-                .valueOf(componentName.toUpperCase());
+      return LogMessage.Component.of(componentName);
     }
 
     private static LogMessage.Level toLevel(final Map.Entry<String, BsonValue> entry) {
