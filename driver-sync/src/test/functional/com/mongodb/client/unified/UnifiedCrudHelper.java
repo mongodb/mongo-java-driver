@@ -101,8 +101,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -157,22 +155,14 @@ final class UnifiedCrudHelper {
         return ReadPreference.valueOf(mode, tagSets, maxStalenessSeconds, TimeUnit.SECONDS);
     }
 
-    private static List<TagSet> tagSets(final BsonArray tagSets) {
-        List<Tag> tags = tagSets.stream()
-                .map(tagBson -> {
-                    if (!tagBson.isDocument()) {
-                        throw new UnsupportedOperationException("Expected a document, but got " + tagBson.getBsonType()
-                                + ": " + tagBson);
-                    }
-                    BsonDocument tagDoc = tagBson.asDocument();
-                    if (tagDoc.size() != 1) {
-                        throw new UnsupportedOperationException("Expected a document with a single field, but got " + tagDoc);
-                    }
-                    String tagName = tagDoc.getFirstKey();
-                    return new Tag(tagName, tagDoc.getString(tagName).getValue());
-                })
+    private static List<TagSet> tagSets(final BsonArray tagSetsBson) {
+        return tagSetsBson.stream()
+                .map(tagSetBson -> new TagSet(tagSetBson.asDocument()
+                        .entrySet()
+                        .stream()
+                        .map(entry -> new Tag(entry.getKey(), entry.getValue().asString().getValue()))
+                        .collect(toList())))
                 .collect(toList());
-        return tags.isEmpty() ? emptyList() : singletonList(new TagSet(tags));
     }
 
     private OperationResult resultOf(final Supplier<BsonValue> operationResult) {
