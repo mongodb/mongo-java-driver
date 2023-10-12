@@ -35,7 +35,6 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
-import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
@@ -106,20 +105,19 @@ abstract class BaseCluster implements Cluster {
 
         ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
         boolean selectionFailureLogged = false;
-        StartTime startTime = StartTime.now();
-        Timeout timeout = startServerSelectionTimeout(startTime);
+        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
 
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
             ClusterDescription currentDescription = description;
-            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription);
+            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, timeout);
 
             throwIfIncompatible(currentDescription);
             if (serverTuple != null) {
                 return serverTuple;
             }
             if (timeout.hasExpired()) {
-                throw createTimeoutException(serverSelector, currentDescription, startTime);
+                throw createTimeoutException(serverSelector, currentDescription);
             }
             if (!selectionFailureLogged) {
                 logServerSelectionFailure(serverSelector, currentDescription, timeout);
@@ -140,10 +138,9 @@ abstract class BaseCluster implements Cluster {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Asynchronously selecting server with selector %s", serverSelector));
         }
-        StartTime startTime = StartTime.now();
-        Timeout timeout = startServerSelectionTimeout(startTime);
+        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(
-                serverSelector, getCompositeServerSelector(serverSelector), timeout, startTime, callback);
+                serverSelector, getCompositeServerSelector(serverSelector), timeout, callback);
 
         CountDownLatch currentPhase = phase.get();
         ClusterDescription currentDescription = description;
@@ -218,11 +215,6 @@ abstract class BaseCluster implements Cluster {
         withLock(() -> phase.getAndSet(new CountDownLatch(1)).countDown());
     }
 
-    private Timeout startServerSelectionTimeout(final StartTime startTime) {
-        long ms = settings.getServerSelectionTimeout(MILLISECONDS);
-        return startTime.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
-    }
-
     private Timeout startMinWaitHeartbeatTimeout() {
         long minHeartbeatFrequency = serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS);
         minHeartbeatFrequency = Math.max(0, minHeartbeatFrequency);
@@ -244,7 +236,7 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
 
-                ServerTuple serverTuple = selectServer(request.compositeSelector, description);
+                ServerTuple serverTuple = selectServer(request.compositeSelector, description, request.getTimeout());
                 if (serverTuple != null) {
                     if (LOGGER.isTraceEnabled()) {
                         LOGGER.trace(format("Asynchronously selected server %s",
@@ -262,8 +254,7 @@ abstract class BaseCluster implements Cluster {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("Asynchronously failed server selection after timeout");
                 }
-                request.onResult(null, createTimeoutException(
-                        request.originalSelector, description, request.getStartTime()));
+                request.onResult(null, createTimeoutException(request.originalSelector, description));
                 return true;
             }
 
@@ -289,8 +280,11 @@ abstract class BaseCluster implements Cluster {
 
     @Nullable
     private ServerTuple selectServer(final ServerSelector serverSelector,
-            final ClusterDescription clusterDescription) {
-        return selectServer(serverSelector, clusterDescription, this::getServer);
+            final ClusterDescription clusterDescription, final Timeout serverSelectionTimeout) {
+        return selectServer(
+                serverSelector,
+                clusterDescription,
+                serverAddress -> getServer(serverAddress, serverSelectionTimeout));
     }
 
     @Nullable
@@ -369,10 +363,9 @@ abstract class BaseCluster implements Cluster {
     }
 
     private MongoTimeoutException createTimeoutException(final ServerSelector serverSelector,
-            final ClusterDescription curDescription, final StartTime startTime) {
+            final ClusterDescription curDescription) {
         return new MongoTimeoutException(format(
-                "Timed out after %d ms while waiting for a server that matches %s. Client view of cluster state is %s",
-                startTime.elapsed().toMillis(),
+                "Timed out while waiting for a server that matches %s. Client view of cluster state is %s",
                 serverSelector,
                 curDescription.getShortDescription()));
     }
@@ -382,15 +375,13 @@ abstract class BaseCluster implements Cluster {
         private final ServerSelector compositeSelector;
         private final SingleResultCallback<ServerTuple> callback;
         private final Timeout timeout;
-        private final StartTime startTime;
         private CountDownLatch phase;
 
         ServerSelectionRequest(final ServerSelector serverSelector, final ServerSelector compositeSelector,
-                final Timeout timeout, final StartTime startTime, final SingleResultCallback<ServerTuple> callback) {
+                final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
             this.originalSelector = serverSelector;
             this.compositeSelector = compositeSelector;
             this.timeout = timeout;
-            this.startTime = startTime;
             this.callback = callback;
         }
 
@@ -404,10 +395,6 @@ abstract class BaseCluster implements Cluster {
 
         Timeout getTimeout() {
             return timeout;
-        }
-
-        StartTime getStartTime() {
-            return startTime;
         }
     }
 
@@ -438,6 +425,10 @@ abstract class BaseCluster implements Cluster {
     }
 
     private final class WaitQueueHandler implements Runnable {
+
+        WaitQueueHandler() {
+        }
+
         public void run() {
             while (!isClosed) {
                 CountDownLatch currentPhase = phase.get();
@@ -446,12 +437,12 @@ abstract class BaseCluster implements Cluster {
                 Timeout timeout = Timeout.infinite();
 
                 for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
-                    ServerSelectionRequest nextRequest = iter.next();
-                    if (handleServerSelectionRequest(nextRequest, currentPhase, curDescription)) {
+                    ServerSelectionRequest currentRequest = iter.next();
+                    if (handleServerSelectionRequest(currentRequest, currentPhase, curDescription)) {
                         iter.remove();
                     } else {
                         timeout = timeout
-                                .orEarlier(nextRequest.getTimeout())
+                                .orEarlier(currentRequest.getTimeout())
                                 .orEarlier(startMinWaitHeartbeatTimeout());
                     }
                 }

@@ -39,6 +39,7 @@ import com.mongodb.event.ServerListener
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.internal.session.SessionContext
+import com.mongodb.internal.time.Timeout
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -392,7 +393,7 @@ class DefaultServerSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress) {
+            ClusterableServer getServer(final ServerAddress serverAddress, Timeout serverSelectionTimeout) {
                 throw new UnsupportedOperationException()
             }
 

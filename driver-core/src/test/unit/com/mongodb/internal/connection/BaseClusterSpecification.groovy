@@ -34,6 +34,7 @@ import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.internal.selector.ReadPreferenceServerSelector
 import com.mongodb.internal.selector.ServerAddressSelector
 import com.mongodb.internal.selector.WritableServerSelector
+import com.mongodb.internal.time.Timeout
 import spock.lang.Specification
 import util.spock.annotations.Slow
 
@@ -68,7 +69,7 @@ class BaseClusterSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress) {
+            ClusterableServer getServer(final ServerAddress serverAddress, Timeout serverSelectionTimeout) {
                 throw new UnsupportedOperationException()
             }
 
@@ -188,11 +189,11 @@ class BaseClusterSpecification extends Specification {
                                                                .exception(new MongoInternalException('oops'))
                                                                .build())
 
-        cluster.selectServer(new WritableServerSelector(), new OperationContext())
+        cluster.selectServer(new WritableServerSelector(), OPERATION_CONTEXT)
 
         then:
         def e = thrown(MongoTimeoutException)
-        e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting for a server " +
+        e.getMessage().contains("ms while waiting for a server " +
                 'that matches WritableServerSelector. Client view of cluster state is {type=UNKNOWN')
         e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
                 'exception={com.mongodb.MongoInternalException: oops}}')

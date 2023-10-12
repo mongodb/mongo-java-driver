@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal;
 
+import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 
@@ -151,5 +152,10 @@ public class TimeoutContext {
             return timeoutMS == 0 ? Timeout.infinite() : Timeout.expiresIn(timeoutMS, MILLISECONDS);
         }
         return null;
+    }
+
+    public Timeout startServerSelectionTimeout() {
+        long ms = getTimeoutSettings().getServerSelectionTimeoutMS();
+        return StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 }

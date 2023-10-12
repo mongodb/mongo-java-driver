@@ -26,6 +26,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
@@ -122,7 +123,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ClusterableServer getServer(final ServerAddress serverAddress, final Timeout serverSelectionTimeout) {
         isTrue("is open", !isClosed());
 
         ServerTuple serverTuple = addressToServerTupleMap.get(serverAddress);

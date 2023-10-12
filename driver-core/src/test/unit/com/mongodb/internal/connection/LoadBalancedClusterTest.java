@@ -234,7 +234,7 @@ public class LoadBalancedClusterTest {
 
         MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class),
                 OPERATION_CONTEXT));
-        assertEquals("Timed out after 5 ms while waiting to resolve SRV records for foo.bar.com.", exception.getMessage());
+        assertTrue(exception.getMessage().contains("while waiting to resolve SRV records for foo.bar.com"));
     }
 
     @Test
@@ -261,9 +261,9 @@ public class LoadBalancedClusterTest {
 
         MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class),
                 OPERATION_CONTEXT));
-        assertEquals("Timed out after 10 ms while waiting to resolve SRV records for foo.bar.com. "
-                        + "Resolution exception was 'com.mongodb.MongoConfigurationException: Unable to resolve SRV record'",
-                exception.getMessage());
+
+        assertTrue(exception.getMessage().contains("while waiting to resolve SRV records for foo.bar.com"));
+        assertTrue(exception.getMessage().contains("Resolution exception was 'com.mongodb.MongoConfigurationException: Unable to resolve SRV record'"));
     }
 
     @Test
@@ -292,7 +292,7 @@ public class LoadBalancedClusterTest {
         cluster.selectServerAsync(mock(ServerSelector.class), OPERATION_CONTEXT, callback);
 
         MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, callback::get);
-        assertEquals("Timed out after 5 ms while waiting to resolve SRV records for foo.bar.com.", exception.getMessage());
+        assertTrue(exception.getMessage().contains("while waiting to resolve SRV records for foo.bar.com"));
     }
 
     @Test
@@ -321,9 +321,8 @@ public class LoadBalancedClusterTest {
         cluster.selectServerAsync(mock(ServerSelector.class), OPERATION_CONTEXT, callback);
 
         MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, callback::get);
-        assertEquals("Timed out after 10 ms while waiting to resolve SRV records for foo.bar.com. "
-                        + "Resolution exception was 'com.mongodb.MongoConfigurationException: Unable to resolve SRV record'",
-                exception.getMessage());
+        assertTrue(exception.getMessage().contains("while waiting to resolve SRV records for foo.bar.com"));
+        assertTrue(exception.getMessage().contains("Resolution exception was 'com.mongodb.MongoConfigurationException: Unable to resolve SRV record'"));
     }
 
     @Test
