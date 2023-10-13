@@ -84,7 +84,7 @@ public class TestServerListener implements ServerListener {
             throw new IllegalArgumentException();
         }
         long nanosRemaining = duration.toNanos();
-        lock.lockInterruptibly();
+        lock.lock();
         try {
             long observedCount = unguardedCount(matcher);
             while (observedCount < count) {

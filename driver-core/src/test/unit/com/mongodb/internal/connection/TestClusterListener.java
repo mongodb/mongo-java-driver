@@ -94,7 +94,7 @@ public final class TestClusterListener implements ClusterListener {
             final Predicate<ClusterDescriptionChangedEvent> matcher, final int count, final Duration duration)
             throws InterruptedException, TimeoutException {
         long nanosRemaining = duration.toNanos();
-        lock.lockInterruptibly();
+        lock.lock();
         try {
             long observedCount = unguardedCount(matcher);
             while (observedCount < count) {
