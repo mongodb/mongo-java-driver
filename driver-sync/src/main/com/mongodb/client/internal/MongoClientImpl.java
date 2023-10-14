@@ -43,6 +43,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -54,6 +55,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
+import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
 import static com.mongodb.internal.connection.StreamFactoryHelper.getStreamFactoryFactoryFromSettings;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
@@ -227,16 +229,18 @@ public final class MongoClientImpl implements MongoClient {
                 getStreamFactory(settings, false), getStreamFactory(settings, true),
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
                 settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
-                settings.getDnsClient(), settings.getInetAddressResolver());
+                settings.getDnsClient());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
         SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
         TransportSettings transportSettings = settings.getTransportSettings();
+        InetAddressResolver inetAddressResolver = getInetAddressResolver(settings);
         if (transportSettings == null) {
-            return new SocketStreamFactory(socketSettings, settings.getSslSettings());
+            return new SocketStreamFactory(inetAddressResolver, socketSettings, settings.getSslSettings());
         } else {
-            return getStreamFactoryFactoryFromSettings(transportSettings).create(socketSettings, settings.getSslSettings());
+            return getStreamFactoryFactoryFromSettings(transportSettings, inetAddressResolver)
+                    .create(socketSettings, settings.getSslSettings());
         }
     }
 

@@ -1,6 +1,5 @@
 package com.mongodb.internal.connection
 
-import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.AsyncCompletionHandler
@@ -24,7 +23,7 @@ class AsyncSocketChannelStreamSpecification extends Specification {
         def port = 27017
         def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS).build()
         def sslSettings = SslSettings.builder().build()
-        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory()
+        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory(new DefaultInetAddressResolver())
         def factory = factoryFactory.create(socketSettings, sslSettings)
         def inetAddresses = [new InetSocketAddress(InetAddress.getByName('192.168.255.255'), port),
                              new InetSocketAddress(InetAddress.getByName('127.0.0.1'), port)]
@@ -48,7 +47,7 @@ class AsyncSocketChannelStreamSpecification extends Specification {
         def port = 27017
         def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS).build()
         def sslSettings = SslSettings.builder().build()
-        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory()
+        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory(new DefaultInetAddressResolver())
 
         def factory = factoryFactory.create(socketSettings, sslSettings)
 
@@ -65,25 +64,6 @@ class AsyncSocketChannelStreamSpecification extends Specification {
 
         then:
         thrown(MongoSocketOpenException)
-    }
-
-    @IgnoreIf({ getSslSettings().isEnabled() })
-    def 'should fail AsyncCompletionHandler if name resolution fails'() {
-        given:
-        def serverAddress = Stub(ServerAddress)
-        def exception = new MongoSocketException('Temporary failure in name resolution', serverAddress)
-        serverAddress.getSocketAddresses() >> { throw exception }
-
-        def stream = new AsynchronousSocketChannelStream(serverAddress,
-                SocketSettings.builder().connectTimeout(100, MILLISECONDS).build(),
-                new PowerOfTwoBufferPool())
-        def callback = new CallbackErrorHolder()
-
-        when:
-        stream.openAsync(callback)
-
-        then:
-        callback.getError().is(exception)
     }
 
     class CallbackErrorHolder implements AsyncCompletionHandler<Void> {

@@ -39,7 +39,7 @@ class StreamSocketAddressSpecification extends Specification {
         def socket2 = SocketFactory.default.createSocket()
         socketFactory.createSocket() >>> [socket0, socket1, socket2]
 
-        def socketStream = new SocketStream(serverAddress, socketSettings, sslSettings, socketFactory, bufferProvider)
+        def socketStream = new SocketStream(serverAddress, null, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
         socketStream.open()
@@ -76,7 +76,7 @@ class StreamSocketAddressSpecification extends Specification {
         def socket2 = SocketFactory.default.createSocket()
         socketFactory.createSocket() >>> [socket0, socket1, socket2]
 
-        def socketStream = new SocketStream(serverAddress, socketSettings, sslSettings, socketFactory, bufferProvider)
+        def socketStream = new SocketStream(serverAddress, null, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
         socketStream.open()

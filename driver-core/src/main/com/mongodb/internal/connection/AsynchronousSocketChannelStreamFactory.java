@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -29,6 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final PowerOfTwoBufferPool bufferProvider = PowerOfTwoBufferPool.DEFAULT;
     private final SocketSettings settings;
+    private final InetAddressResolver inetAddressResolver;
 
     /**
      * Create a new factory with the default {@code BufferProvider} and {@code AsynchronousChannelGroup}.
@@ -36,14 +38,16 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
      * @param settings    the settings for the connection to a MongoDB server
      * @param sslSettings the settings for connecting via SSL
      */
-    public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
+    public AsynchronousSocketChannelStreamFactory(final InetAddressResolver inetAddressResolver, final SocketSettings settings,
+            final SslSettings sslSettings) {
         assertFalse(sslSettings.isEnabled());
+        this.inetAddressResolver = inetAddressResolver;
         this.settings = notNull("settings", settings);
     }
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new AsynchronousSocketChannelStream(serverAddress, settings, bufferProvider);
+        return new AsynchronousSocketChannelStream(serverAddress, inetAddressResolver, settings, bufferProvider);
     }
 
 }

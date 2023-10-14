@@ -36,7 +36,6 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
-import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.util.List;
 
@@ -68,7 +67,7 @@ public final class DefaultClusterFactory {
                                  @Nullable final String applicationName,
                                  @Nullable final MongoDriverInformation mongoDriverInformation,
                                  final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
-                                 @Nullable final DnsClient dnsClient, @Nullable final InetAddressResolver inetAddressResolver) {
+                                 @Nullable final DnsClient dnsClient) {
 
         detectAndLogClusterEnvironment(originalClusterSettings);
 
@@ -104,14 +103,14 @@ public final class DefaultClusterFactory {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
                     applicationName, mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(),
-                    compressorList, serverApi, inetAddressResolver);
+                    compressorList, serverApi);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings,
                     streamFactory, heartbeatStreamFactory, credential, loggerSettings, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
-                    serverApi, inetAddressResolver);
+                    serverApi);
 
             if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
                 return new SingleServerCluster(clusterId, clusterSettings, serverFactory);

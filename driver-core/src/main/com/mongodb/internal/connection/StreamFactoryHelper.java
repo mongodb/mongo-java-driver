@@ -20,14 +20,18 @@ import com.mongodb.MongoClientException;
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class StreamFactoryHelper {
-    public static StreamFactoryFactory getStreamFactoryFactoryFromSettings(final TransportSettings transportSettings) {
+    public static StreamFactoryFactory getStreamFactoryFactoryFromSettings(final TransportSettings transportSettings,
+            final InetAddressResolver inetAddressResolver) {
         if (transportSettings instanceof NettyTransportSettings) {
-            return NettyStreamFactoryFactory.builder().applySettings((NettyTransportSettings) transportSettings).build();
+            return NettyStreamFactoryFactory.builder().applySettings((NettyTransportSettings) transportSettings)
+                    .inetAddressResolver(inetAddressResolver)
+                    .build();
         } else {
             throw new MongoClientException("Unsupported transport settings: " + transportSettings.getClass().getName());
         }
