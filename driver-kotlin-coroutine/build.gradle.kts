@@ -31,7 +31,7 @@ repositories {
     google()
 }
 
-base.archivesName.set("mongodb-driver-kotlin-coroutine")
+base.archivesName.set("driver-kotlin-coroutine")
 
 description = "The MongoDB Kotlin Coroutine Driver"
 
@@ -84,10 +84,8 @@ kotlin { explicitApi() }
 
 tasks.withType<KotlinCompile> { kotlinOptions.jvmTarget = "1.8" }
 
-tasks.jar {
-    manifest {
-        attributes("Automatic-Module-Name" to "org.mongodb.driver.kotlin.coroutine")
-    }
+afterEvaluate {
+    tasks.jar { manifest { attributes("Automatic-Module-Name" to "org.mongodb.driver.kotlin.coroutine") } }
 }
 
 // ===========================
