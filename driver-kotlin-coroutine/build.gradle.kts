@@ -84,8 +84,10 @@ kotlin { explicitApi() }
 
 tasks.withType<KotlinCompile> { kotlinOptions.jvmTarget = "1.8" }
 
-afterEvaluate {
-    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.driver.kotlin.coroutine'
+tasks.jar {
+    manifest {
+        attributes("Automatic-Module-Name" to "org.mongodb.driver.kotlin.coroutine")
+    }
 }
 
 // ===========================
