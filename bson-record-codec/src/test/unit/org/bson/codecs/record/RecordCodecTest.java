@@ -22,6 +22,7 @@ import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
+import org.bson.BsonNull;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.codecs.DecoderContext;
@@ -49,6 +50,7 @@ import org.bson.codecs.record.samples.TestRecordWithMapOfListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithMapOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithNestedParameterized;
 import org.bson.codecs.record.samples.TestRecordWithNestedParameterizedRecord;
+import org.bson.codecs.record.samples.TestRecordWithNullableAnnotation;
 import org.bson.codecs.record.samples.TestRecordWithParameterizedRecord;
 import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.codecs.record.samples.TestSelfReferentialHolderRecord;
@@ -317,6 +319,22 @@ public class RecordCodecTest {
                 new BsonDocument("_id", new BsonObjectId(identifier))
                         .append("a", new BsonInt32(14)),
                 document);
+
+        // when
+        var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        // then
+        assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testRecordWithStoredNulls() {
+        var codec = createRecordCodec(TestRecordWithNullableAnnotation.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var identifier = new ObjectId();
+        var testRecord = new TestRecordWithNullableAnnotation(identifier, null);
+
+        var document = new BsonDocument("_id", new BsonObjectId(identifier))
+                .append("name", new BsonNull());
 
         // when
         var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
