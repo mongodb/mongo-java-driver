@@ -62,6 +62,7 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         private final Codec<?> codec;
         private final int index;
         private final String fieldName;
+        private final boolean isNullable;
 
         private ComponentModel(final List<Type> typeParameters, final RecordComponent component, final CodecRegistry codecRegistry,
                 final int index) {
@@ -70,6 +71,7 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             this.codec = computeCodec(typeParameters, component, codecRegistry);
             this.index = index;
             this.fieldName = computeFieldName(component);
+            this.isNullable = checkFieldIsNullable(component);
         }
 
         String getComponentName() {
@@ -154,6 +156,14 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                 return getAnnotationOnField(component, org.bson.codecs.pojo.annotations.BsonProperty.class).value();
             }
             return component.getName();
+        }
+
+        private static boolean checkFieldIsNullable(final RecordComponent component) {
+            try {
+                return component.getDeclaringRecord().getDeclaredField(component.getName()).isAnnotationPresent(Nullable.class);
+            } catch (NoSuchFieldException e) {
+                throw new AssertionError(format("Unexpectedly missing the declared field for recordComponent %s", component), e);
+            }
         }
 
         private static <T extends Annotation> boolean isAnnotationPresentOnField(final RecordComponent component,
@@ -275,6 +285,8 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Found property not present in the ClassModel: %s", fieldName));
                 }
+            } else if (reader.getCurrentBsonType() == BsonType.NULL && componentModel.isNullable) {
+                reader.readNull();
             } else {
                 constructorArguments[componentModel.index] = decoderContext.decodeWithChildContext(componentModel.codec, reader);
             }
