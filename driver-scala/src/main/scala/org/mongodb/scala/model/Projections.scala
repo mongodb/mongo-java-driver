@@ -35,7 +35,7 @@ object Projections {
    * Creates a projection of a field whose value is computed from the given expression. Projection with an expression can be used in the
    * following contexts:
    * <ul>
-   *    <li>$project aggregation pipeline stage.</li>
+   *    <li>\$project aggregation pipeline stage.</li>
    *    <li>Starting from MongoDB 4.4, it's also accepted in various find-related methods within the
    * `MongoCollection`-based API where projection is supported, for example:
    *        <ul>
