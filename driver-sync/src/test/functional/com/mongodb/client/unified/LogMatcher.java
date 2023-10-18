@@ -17,6 +17,7 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.internal.Exceptions.MongoCommandExceptions;
 import com.mongodb.internal.logging.LogMessage;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -79,7 +80,9 @@ final class LogMatcher {
     }
 
     private static boolean exceptionIsRedacted(final Throwable exception) {
-        return exception instanceof MongoCommandException && ((MongoCommandException) exception).getResponse().isEmpty();
+        return exception instanceof MongoCommandException
+                && MongoCommandExceptions.SecurityInsensitiveResponseField.fieldNames()
+                        .containsAll(((MongoCommandException) exception).getResponse().keySet());
     }
 
     private static BsonValue asBsonValue(final Object value) {
