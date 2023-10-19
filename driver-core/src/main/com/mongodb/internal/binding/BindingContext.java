@@ -23,5 +23,11 @@ import com.mongodb.internal.connection.OperationContext;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface BindingContext {
+
+    /**
+     * Note: Will return the same operation context if called multiple times.
+     *
+     * @return the operation context for the binding context.
+     */
     OperationContext getOperationContext();
 }
