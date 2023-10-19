@@ -25,7 +25,8 @@ import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
@@ -87,35 +88,30 @@ public final class StructuredLogger {
         }
         switch (logMessage.getLevel()) {
             case DEBUG:
-                logUnstructured(logMessage, Logger::isDebugEnabled, Logger::debug, Logger::debug);
+                logUnstructured(logMessage, logger::isDebugEnabled, logger::debug, logger::debug);
                 break;
             case INFO:
-                logUnstructured(logMessage, Logger::isInfoEnabled, Logger::info, Logger::info);
+                logUnstructured(logMessage, logger::isInfoEnabled, logger::info, logger::info);
                 break;
             default:
                 throw new UnsupportedOperationException();
         }
     }
 
-    private void logUnstructured(
+    private static void logUnstructured(
             final LogMessage logMessage,
-            final Predicate<Logger> loggingEnabled,
-            final BiConsumer<Logger, String> doLog,
-            final TriConsumer<Logger, String, Throwable> doLogWithException) {
-        if (loggingEnabled.test(logger)) {
+            final Supplier<Boolean> loggingEnabled,
+            final Consumer<String> doLog,
+            final BiConsumer<String, Throwable> doLogWithException) {
+        if (loggingEnabled.get()) {
             LogMessage.UnstructuredLogMessage unstructuredLogMessage = logMessage.toUnstructuredLogMessage();
             String message = unstructuredLogMessage.interpolate();
             Throwable exception = logMessage.getException();
             if (exception == null) {
-                doLog.accept(logger, message);
+                doLog.accept(message);
             } else {
-                doLogWithException.accept(logger, message, exception);
+                doLogWithException.accept(message, exception);
             }
         }
-    }
-
-    @FunctionalInterface
-    private interface TriConsumer<A, B, C> {
-        void accept(A a, B b, C c);
     }
 }

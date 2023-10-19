@@ -17,6 +17,7 @@
 package com.mongodb.internal.logging;
 
 import com.mongodb.connection.ClusterId;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.function.Function.identity;
 
 /**
@@ -60,10 +62,12 @@ public final class LogMessage {
             this.value = value;
         }
 
+        @VisibleForTesting(otherwise = PRIVATE)
         public String getValue() {
             return value;
         }
 
+        @VisibleForTesting(otherwise = PRIVATE)
         public static Component of(final String value) {
             Component result = INDEX.get(value);
             return assertNotNull(result);
