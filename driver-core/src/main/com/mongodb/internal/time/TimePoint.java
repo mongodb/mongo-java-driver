@@ -219,8 +219,12 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     @Override
     public String toString() {
+        long remainingMs = nanos == null
+                ? -1
+                : TimeUnit.MILLISECONDS.convert(currentNanos() - nanos, NANOSECONDS);
         return "TimePoint{"
                 + "nanos=" + nanos
+                + "remainingMs=" + remainingMs
                 + '}';
     }
 }

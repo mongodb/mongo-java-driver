@@ -105,26 +105,26 @@ abstract class BaseCluster implements Cluster {
 
         ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
         boolean selectionFailureLogged = false;
-        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
+        Timeout serverSelectionTimeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
 
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
             ClusterDescription currentDescription = description;
-            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, timeout);
+            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, serverSelectionTimeout);
 
             throwIfIncompatible(currentDescription);
             if (serverTuple != null) {
                 return serverTuple;
             }
-            if (timeout.hasExpired()) {
+            if (serverSelectionTimeout.hasExpired()) {
                 throw createTimeoutException(serverSelector, currentDescription);
             }
             if (!selectionFailureLogged) {
-                logServerSelectionFailure(serverSelector, currentDescription, timeout);
+                logServerSelectionFailure(serverSelector, currentDescription, serverSelectionTimeout);
                 selectionFailureLogged = true;
             }
             connect();
-            Timeout heartbeatLimitedTimeout = timeout.orEarlier(startMinWaitHeartbeatTimeout());
+            Timeout heartbeatLimitedTimeout = serverSelectionTimeout.orEarlier(startMinWaitHeartbeatTimeout());
             heartbeatLimitedTimeout.awaitOn(currentPhaseLatch,
                     () -> format("waiting for a server that matches %s", serverSelector));
         }
