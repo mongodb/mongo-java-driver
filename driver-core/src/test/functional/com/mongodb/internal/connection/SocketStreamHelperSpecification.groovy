@@ -86,8 +86,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getSocketAddresses(getPrimary(), null).get(0), SocketSettings.builder().build(),
-                sslSettings)
+        SocketStreamHelper.initialize(socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0), SocketSettings.
+                builder().build(), sslSettings)
 
         then:
         socket.getSSLParameters().endpointIdentificationAlgorithm == (sslSettings.invalidHostNameAllowed ? null : 'HTTPS')
