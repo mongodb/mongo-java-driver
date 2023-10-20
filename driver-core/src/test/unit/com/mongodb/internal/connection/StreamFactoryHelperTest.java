@@ -24,8 +24,6 @@ import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("deprecation")
@@ -33,7 +31,7 @@ class StreamFactoryHelperTest {
 
     @Test
     void streamFactoryFactoryIsDerivedFromTransportSettings() {
-        InetAddressResolver inetAddressResolver = (String host) -> Collections.emptyList();
+        InetAddressResolver inetAddressResolver = new DefaultInetAddressResolver();
         NettyTransportSettings nettyTransportSettings = TransportSettings.nettyBuilder()
                 .eventLoopGroup(new NioEventLoopGroup())
                 .allocator(PooledByteBufAllocator.DEFAULT)

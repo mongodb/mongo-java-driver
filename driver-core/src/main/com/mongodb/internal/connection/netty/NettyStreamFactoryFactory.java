@@ -226,6 +226,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         socketChannelClass = builder.socketChannelClass == null ? NioSocketChannel.class : builder.socketChannelClass;
         eventLoopGroup = builder.eventLoopGroup == null ? new NioEventLoopGroup() : builder.eventLoopGroup;
         sslContext = builder.sslContext;
-        inetAddressResolver = notNull("inetAddressResolver", builder.inetAddressResolver);
+        inetAddressResolver = builder.inetAddressResolver;
     }
 }
