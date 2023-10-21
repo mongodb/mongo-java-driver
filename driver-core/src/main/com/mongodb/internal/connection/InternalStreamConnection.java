@@ -28,7 +28,6 @@ import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
-import com.mongodb.UnixServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -48,7 +47,6 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
-import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
@@ -118,8 +116,6 @@ public class InternalStreamConnection implements InternalConnection {
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
     private final StreamFactory streamFactory;
     private final InternalConnectionInitializer connectionInitializer;
-    private final InetAddressResolver inetAddressResolver;
-
     private volatile ConnectionDescription description;
     private volatile ServerDescription initialServerDescription;
     private volatile Stream stream;
@@ -150,10 +146,9 @@ public class InternalStreamConnection implements InternalConnection {
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final ServerId serverId,
             final ConnectionGenerationSupplier connectionGenerationSupplier,
             final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
-            final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer,
-            @Nullable final InetAddressResolver inetAddressResolver) {
+            final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this(clusterConnectionMode, false, serverId, connectionGenerationSupplier, streamFactory, compressorList,
-                LoggerSettings.builder().build(), commandListener, connectionInitializer, inetAddressResolver);
+                LoggerSettings.builder().build(), commandListener, connectionInitializer);
     }
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
@@ -161,8 +156,7 @@ public class InternalStreamConnection implements InternalConnection {
             final ConnectionGenerationSupplier connectionGenerationSupplier,
             final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
             final LoggerSettings loggerSettings,
-            final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer,
-            @Nullable final InetAddressResolver inetAddressResolver) {
+            final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.isMonitoringConnection = isMonitoringConnection;
         this.serverId = notNull("serverId", serverId);
@@ -179,7 +173,6 @@ public class InternalStreamConnection implements InternalConnection {
                 .type(ServerType.UNKNOWN)
                 .state(ServerConnectionState.CONNECTING)
                 .build();
-        this.inetAddressResolver = inetAddressResolver;
         if (clusterConnectionMode != ClusterConnectionMode.LOAD_BALANCED) {
             generation = connectionGenerationSupplier.getGeneration();
         }
@@ -203,7 +196,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void open() {
         isTrue("Open already called", stream == null);
-        stream = streamFactory.create(getServerAddressWithResolver());
+        stream = streamFactory.create(serverId.getAddress());
         try {
             stream.open();
 
@@ -226,7 +219,7 @@ public class InternalStreamConnection implements InternalConnection {
     public void openAsync(final SingleResultCallback<Void> callback) {
         isTrue("Open already called", stream == null, callback);
         try {
-            stream = streamFactory.create(getServerAddressWithResolver());
+            stream = streamFactory.create(serverId.getAddress());
             stream.openAsync(new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(@Nullable final Void aVoid) {
@@ -262,14 +255,6 @@ public class InternalStreamConnection implements InternalConnection {
         } catch (Throwable t) {
             close();
             callback.onResult(null, t);
-        }
-    }
-
-    private ServerAddress getServerAddressWithResolver() {
-        if (serverId.getAddress() instanceof UnixServerAddress) {
-            return serverId.getAddress();
-        } else {
-            return new ServerAddressWithResolver(serverId.getAddress(), inetAddressResolver);
         }
     }
 

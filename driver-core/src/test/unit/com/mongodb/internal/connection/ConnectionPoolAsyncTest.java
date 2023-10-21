@@ -80,9 +80,9 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
     @Override
     protected StreamFactory createStreamFactory(final SocketSettings socketSettings, final SslSettings sslSettings) {
         if (sslSettings.isEnabled()) {
-            return new TlsChannelStreamFactoryFactory().create(socketSettings, sslSettings);
+            return new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver()).create(socketSettings, sslSettings);
         } else {
-            return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+            return new AsynchronousSocketChannelStreamFactory(new DefaultInetAddressResolver(), socketSettings, sslSettings);
         }
 
     }

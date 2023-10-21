@@ -221,12 +221,11 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         }
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
                 new ClusterClock(),
-                new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(SocketSettings.builder()
-                        .connectTimeout(500, TimeUnit.MILLISECONDS)
-                        .build(),
-                        getSslSettings()), getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null,
-                        getServerApi(), null),
-                        getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam))
+                new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(new DefaultInetAddressResolver(),
+                        SocketSettings.builder().connectTimeout(500, TimeUnit.MILLISECONDS).build(), getSslSettings()),
+                        getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null,
+                        getServerApi()),
+                getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam))
         serverMonitor.start()
         serverMonitor
     }

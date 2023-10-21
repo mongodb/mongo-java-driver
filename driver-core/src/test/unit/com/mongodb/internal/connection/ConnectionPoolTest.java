@@ -70,6 +70,6 @@ public class ConnectionPoolTest extends AbstractConnectionPoolTest {
 
     @Override
     protected StreamFactory createStreamFactory(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new SocketStreamFactory(socketSettings, sslSettings);
+        return new SocketStreamFactory(new DefaultInetAddressResolver(), socketSettings, sslSettings);
     }
 }

@@ -34,13 +34,12 @@ public class UnixSocketChannelStream extends SocketStream {
 
     public UnixSocketChannelStream(final UnixServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
                             final BufferProvider bufferProvider) {
-        super(address, settings, sslSettings, SocketFactory.getDefault(), bufferProvider);
+        super(address, new DefaultInetAddressResolver(), settings, sslSettings, SocketFactory.getDefault(), bufferProvider);
         this.address = address;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     protected Socket initializeSocket() throws IOException {
-        return UnixSocketChannel.open((UnixSocketAddress) address.getUnixSocketAddress()).socket();
+        return UnixSocketChannel.open(new UnixSocketAddress(address.getHost())).socket();
     }
 }
