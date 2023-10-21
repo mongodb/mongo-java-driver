@@ -48,6 +48,14 @@ public final class Exceptions {
             return response.getArray("errorLabels", new BsonArray());
         }
 
+        private static BsonNumber extractErrorCodeAsBson(final BsonDocument response) {
+            return response.getNumber("code", new BsonInt32(-1));
+        }
+
+        private static BsonString extractErrorCodeNameAsBson(final BsonDocument response) {
+            return response.getString("codeName", new BsonString(""));
+        }
+
         /**
          * Constructs a {@link MongoCommandException} with the data from the {@code original} redacted for security purposes.
          */
@@ -60,14 +68,6 @@ public final class Exceptions {
             MongoCommandException result = new MongoCommandException(redactedResponse, original.getServerAddress());
             result.setStackTrace(original.getStackTrace());
             return result;
-        }
-
-        private static BsonNumber extractErrorCodeAsBson(final BsonDocument response) {
-            return response.getNumber("code", new BsonInt32(-1));
-        }
-
-        private static BsonString extractErrorCodeNameAsBson(final BsonDocument response) {
-            return response.getString("codeName", new BsonString(""));
         }
 
         @VisibleForTesting(otherwise = PRIVATE)
