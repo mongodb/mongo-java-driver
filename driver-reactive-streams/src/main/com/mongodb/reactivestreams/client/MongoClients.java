@@ -30,9 +30,11 @@ import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
 import static com.mongodb.internal.connection.StreamFactoryHelper.getStreamFactoryFactoryFromSettings;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 
@@ -113,14 +115,15 @@ public final class MongoClients {
             throw new MongoClientException("Proxy is not supported for reactive clients");
         }
 
+        InetAddressResolver inetAddressResolver = getInetAddressResolver(settings);
         StreamFactoryFactory streamFactoryFactory;
         TransportSettings transportSettings = settings.getTransportSettings();
         if (transportSettings != null) {
-            streamFactoryFactory = getStreamFactoryFactoryFromSettings(transportSettings);
+            streamFactoryFactory = getStreamFactoryFactoryFromSettings(transportSettings, inetAddressResolver);
         } else if (settings.getSslSettings().isEnabled()) {
-            streamFactoryFactory = new TlsChannelStreamFactoryFactory();
+            streamFactoryFactory = new TlsChannelStreamFactoryFactory(inetAddressResolver);
         } else {
-            streamFactoryFactory = new AsynchronousSocketChannelStreamFactoryFactory();
+            streamFactoryFactory = new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver);
         }
         StreamFactory streamFactory = getStreamFactory(streamFactoryFactory, settings, false);
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
@@ -150,7 +153,7 @@ public final class MongoClients {
                 InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
                 streamFactory, heartbeatStreamFactory, settings.getCredential(), settings.getLoggerSettings(),
                 getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
-                settings.getCompressorList(), settings.getServerApi(), settings.getDnsClient(), settings.getInetAddressResolver());
+                settings.getCompressorList(), settings.getServerApi(), settings.getDnsClient());
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {

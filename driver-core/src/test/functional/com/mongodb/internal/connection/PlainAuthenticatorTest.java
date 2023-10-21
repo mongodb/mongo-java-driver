@@ -43,7 +43,7 @@ public class PlainAuthenticatorTest {
     private String userName;
     private String source;
     private String password;
-    private final StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
+    private final StreamFactory streamFactory = new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), getSslSettings());
 
     @Before
     public void setUp() {
@@ -52,8 +52,8 @@ public class PlainAuthenticatorTest {
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         internalConnection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE, streamFactory, null, null,
-                null, Collections.emptyList(), LoggerSettings.builder().build(), null, getServerApi(),
-                null).create(new ServerId(new ClusterId(),
+                null, Collections.emptyList(), LoggerSettings.builder().build(), null, getServerApi()
+        ).create(new ServerId(new ClusterId(),
                 new ServerAddress(host)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
     }

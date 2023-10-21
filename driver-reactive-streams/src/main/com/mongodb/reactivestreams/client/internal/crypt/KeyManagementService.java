@@ -21,11 +21,12 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.internal.connection.AsynchronousChannelStream;
+import com.mongodb.internal.connection.DefaultInetAddressResolver;
 import com.mongodb.internal.connection.Stream;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
-import com.mongodb.crypt.capi.MongoKeyDecryptor;
-import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
@@ -51,7 +52,7 @@ class KeyManagementService implements Closeable {
 
     KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, final int timeoutMillis) {
         this.kmsProviderSslContextMap = kmsProviderSslContextMap;
-        this.tlsChannelStreamFactoryFactory = new TlsChannelStreamFactoryFactory();
+        this.tlsChannelStreamFactoryFactory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver());
         this.timeoutMillis = timeoutMillis;
     }
 

@@ -27,7 +27,8 @@ class AsynchronousSocketChannelStreamFactoryFactorySpecification extends Specifi
     @Unroll
     def 'should create the expected #description AsynchronousSocketChannelStream'() {
         given:
-        def factory = new AsynchronousSocketChannelStreamFactoryFactory().create(socketSettings, sslSettings)
+        def factory = new AsynchronousSocketChannelStreamFactoryFactory(new DefaultInetAddressResolver())
+                .create(socketSettings, sslSettings)
 
         when:
         AsynchronousSocketChannelStream stream = factory.create(serverAddress) as AsynchronousSocketChannelStream

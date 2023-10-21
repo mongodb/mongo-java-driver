@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package com.mongodb
+package com.mongodb.internal.connection;
 
+import com.mongodb.spi.dns.InetAddressResolver;
 
-import spock.lang.Specification
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
 
-class UnixServerAddressSpecification extends Specification {
+import static java.util.Arrays.asList;
 
-    def 'should return the path for the host'() {
-        when:
-        def path = '/tmp/mongodb.sock'
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public class DefaultInetAddressResolver implements InetAddressResolver {
 
-        then:
-        new UnixServerAddress(path).getHost() == path
-    }
-
-    def 'should throw if the path does not end with .sock'() {
-        when:
-        new UnixServerAddress('localhost')
-
-        then:
-        thrown(IllegalArgumentException)
+    @Override
+    public List<InetAddress> lookupByName(final String host) throws UnknownHostException {
+        return asList(InetAddress.getAllByName(host));
     }
 }

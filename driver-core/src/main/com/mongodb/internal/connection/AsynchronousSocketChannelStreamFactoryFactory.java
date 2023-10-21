@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 /**
  * A {@code StreamFactoryFactory} implementation for AsynchronousSocketChannel-based streams.
@@ -25,8 +26,14 @@ import com.mongodb.connection.SslSettings;
  * @see java.nio.channels.AsynchronousSocketChannel
  */
 public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
+    private final InetAddressResolver inetAddressResolver;
+
+    public AsynchronousSocketChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
+        this.inetAddressResolver = inetAddressResolver;
+    }
+
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+        return new AsynchronousSocketChannelStreamFactory(inetAddressResolver, socketSettings, sslSettings);
     }
 }

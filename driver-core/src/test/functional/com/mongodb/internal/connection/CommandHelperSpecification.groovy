@@ -49,7 +49,7 @@ class CommandHelperSpecification extends Specification {
     def setup() {
         connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi(), null)
+                getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
     }

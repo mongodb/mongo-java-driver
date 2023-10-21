@@ -29,6 +29,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.connection.Stream;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
@@ -68,6 +69,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -110,6 +112,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 final class NettyStream implements Stream {
     private static final byte NO_SCHEDULE_TIME = 0;
     private final ServerAddress address;
+    private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
     private final SslSettings sslSettings;
     private final EventLoopGroup workerGroup;
@@ -136,10 +139,12 @@ final class NettyStream implements Stream {
     private ReadTimeoutTask readTimeoutTask;
     private long readTimeoutMillis = NO_SCHEDULE_TIME;
 
-    NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
-                final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator,
-                @Nullable final SslContext sslContext) {
+    NettyStream(final ServerAddress address, final InetAddressResolver inetAddressResolver, final SocketSettings settings,
+            final SslSettings sslSettings, final EventLoopGroup workerGroup,
+            final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator,
+            @Nullable final SslContext sslContext) {
         this.address = address;
+        this.inetAddressResolver = inetAddressResolver;
         this.settings = settings;
         this.sslSettings = sslSettings;
         this.workerGroup = workerGroup;
@@ -166,7 +171,7 @@ final class NettyStream implements Stream {
         Queue<SocketAddress> socketAddressQueue;
 
         try {
-            socketAddressQueue = new LinkedList<>(address.getSocketAddresses());
+            socketAddressQueue = new LinkedList<>(getSocketAddresses(address, inetAddressResolver));
         } catch (Throwable t) {
             handler.failed(t);
             return;
