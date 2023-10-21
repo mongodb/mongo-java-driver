@@ -1,15 +1,19 @@
 package com.mongodb.connection.netty
 
-import com.mongodb.internal.connection.netty.NettyStreamFactory
-import util.spock.annotations.Slow
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.AsyncCompletionHandler
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.internal.connection.netty.NettyStreamFactory
+import com.mongodb.spi.dns.InetAddressResolver
+import io.netty.buffer.PooledByteBufAllocator
+import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.socket.nio.NioSocketChannel
 import spock.lang.IgnoreIf
 import spock.lang.Specification
+import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -22,19 +26,20 @@ class NettyStreamSpecification extends Specification {
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should successfully connect with working ip address group'() {
         given:
-        def port = 27017
         SocketSettings socketSettings = SocketSettings.builder().connectTimeout(1000, TimeUnit.MILLISECONDS).build()
         SslSettings sslSettings = SslSettings.builder().build()
-        def factory = new NettyStreamFactory(socketSettings, sslSettings)
+        def inetAddressResolver = new InetAddressResolver() {
+            @Override
+            List<InetAddress> lookupByName(String host) {
+                [InetAddress.getByName('192.168.255.255'),
+                 InetAddress.getByName('1.2.3.4'),
+                 InetAddress.getByName('127.0.0.1')]
+            }
+        }
+        def factory = new NettyStreamFactory(inetAddressResolver, socketSettings, sslSettings, new NioEventLoopGroup(),
+                NioSocketChannel, PooledByteBufAllocator.DEFAULT, null)
 
-        def inetAddresses = [new InetSocketAddress(InetAddress.getByName('192.168.255.255'), port),
-                             new InetSocketAddress(InetAddress.getByName('1.2.3.4'), port),
-                             new InetSocketAddress(InetAddress.getByName('127.0.0.1'), port)]
-
-        def serverAddress = Stub(ServerAddress)
-        serverAddress.getSocketAddresses() >> inetAddresses
-
-        def stream = factory.create(serverAddress)
+        def stream = factory.create(new ServerAddress())
 
         when:
         stream.open()
@@ -47,19 +52,20 @@ class NettyStreamSpecification extends Specification {
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw exception with non-working ip address group'() {
         given:
-        def port = 27017
         SocketSettings socketSettings = SocketSettings.builder().connectTimeout(1000, TimeUnit.MILLISECONDS).build()
         SslSettings sslSettings = SslSettings.builder().build()
-        def factory = new NettyStreamFactory(socketSettings, sslSettings)
+        def inetAddressResolver = new InetAddressResolver() {
+            @Override
+            List<InetAddress> lookupByName(String host) {
+                [InetAddress.getByName('192.168.255.255'),
+                 InetAddress.getByName('1.2.3.4'),
+                 InetAddress.getByName('1.2.3.5')]
+            }
+        }
+        def factory = new NettyStreamFactory(inetAddressResolver, socketSettings, sslSettings, new NioEventLoopGroup(),
+                NioSocketChannel, PooledByteBufAllocator.DEFAULT, null)
 
-        def inetAddresses = [new InetSocketAddress(InetAddress.getByName('192.168.255.255'), port),
-                             new InetSocketAddress(InetAddress.getByName('1.2.3.4'), port),
-                             new InetSocketAddress(InetAddress.getByName('1.2.3.5'), port)]
-
-        def serverAddress = Stub(ServerAddress)
-        serverAddress.getSocketAddresses() >> inetAddresses
-
-        def stream = factory.create(serverAddress)
+        def stream = factory.create(new ServerAddress())
 
         when:
         stream.open()
@@ -75,8 +81,17 @@ class NettyStreamSpecification extends Specification {
         def exception = new MongoSocketException('Temporary failure in name resolution', serverAddress)
         serverAddress.getSocketAddresses() >> { throw exception }
 
-        def stream = new NettyStreamFactory(SocketSettings.builder().connectTimeout(1000, TimeUnit.MILLISECONDS).build(),
-                SslSettings.builder().build()).create(serverAddress)
+        SocketSettings socketSettings = SocketSettings.builder().connectTimeout(1000, TimeUnit.MILLISECONDS).build()
+        SslSettings sslSettings = SslSettings.builder().build()
+        def inetAddressResolver = new InetAddressResolver() {
+            @Override
+            List<InetAddress> lookupByName(String host) {
+                throw exception
+            }
+        }
+        def stream = new NettyStreamFactory(inetAddressResolver, socketSettings, sslSettings, new NioEventLoopGroup(),
+                NioSocketChannel, PooledByteBufAllocator.DEFAULT, null)
+                .create(new ServerAddress())
         def callback = new CallbackErrorHolder()
 
         when:

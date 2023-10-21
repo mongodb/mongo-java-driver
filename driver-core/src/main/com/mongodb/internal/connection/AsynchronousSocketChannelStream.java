@@ -22,6 +22,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -36,29 +37,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class AsynchronousSocketChannelStream extends AsynchronousChannelStream {
     private final ServerAddress serverAddress;
+    private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
 
-    public AsynchronousSocketChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
-                                          final PowerOfTwoBufferPool bufferProvider) {
+    public AsynchronousSocketChannelStream(final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
+            final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
+        this.inetAddressResolver = inetAddressResolver;
         this.settings = settings;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
         isTrue("unopened", getChannel() == null);
         Queue<SocketAddress> socketAddressQueue;
 
         try {
-            socketAddressQueue = new LinkedList<>(serverAddress.getSocketAddresses());
+            socketAddressQueue = new LinkedList<>(getSocketAddresses(serverAddress, inetAddressResolver));
         } catch (Throwable t) {
             handler.failed(t);
             return;

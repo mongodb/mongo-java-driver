@@ -6,6 +6,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.AsyncCompletionHandler
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.spi.dns.InetAddressResolver
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 import util.spock.annotations.Slow
@@ -21,18 +22,21 @@ class AsyncSocketChannelStreamSpecification extends Specification {
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should successfully connect with working ip address list'() {
         given:
-        def port = 27017
         def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS).build()
         def sslSettings = SslSettings.builder().build()
-        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory()
+
+        def inetAddressResolver = new InetAddressResolver() {
+            @Override
+            List<InetAddress> lookupByName(String host) {
+                [InetAddress.getByName('192.168.255.255'),
+                 InetAddress.getByName('127.0.0.1')]
+            }
+        }
+
+        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver)
         def factory = factoryFactory.create(socketSettings, sslSettings)
-        def inetAddresses = [new InetSocketAddress(InetAddress.getByName('192.168.255.255'), port),
-                             new InetSocketAddress(InetAddress.getByName('127.0.0.1'), port)]
 
-        def serverAddress = Stub(ServerAddress)
-        serverAddress.getSocketAddresses() >> inetAddresses
-
-        def stream = factory.create(serverAddress)
+        def stream = factory.create(new ServerAddress('host1'))
 
         when:
         stream.open()
@@ -45,20 +49,20 @@ class AsyncSocketChannelStreamSpecification extends Specification {
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should fail to connect with non-working ip address list'() {
         given:
-        def port = 27017
         def socketSettings = SocketSettings.builder().connectTimeout(100, MILLISECONDS).build()
         def sslSettings = SslSettings.builder().build()
-        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory()
 
+        def inetAddressResolver = new InetAddressResolver() {
+            @Override
+            List<InetAddress> lookupByName(String host) {
+                [InetAddress.getByName('192.168.255.255'),
+                 InetAddress.getByName('1.2.3.4')]
+            }
+        }
+
+        def factoryFactory = new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver)
         def factory = factoryFactory.create(socketSettings, sslSettings)
-
-        def inetAddresses = [new InetSocketAddress(InetAddress.getByName('192.168.255.255'), port),
-                             new InetSocketAddress(InetAddress.getByName('1.2.3.4'), port)]
-
-        def serverAddress = Stub(ServerAddress)
-        serverAddress.getSocketAddresses() >> inetAddresses
-
-        def stream = factory.create(serverAddress)
+        def stream = factory.create(new ServerAddress())
 
         when:
         stream.open()
@@ -70,11 +74,16 @@ class AsyncSocketChannelStreamSpecification extends Specification {
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should fail AsyncCompletionHandler if name resolution fails'() {
         given:
-        def serverAddress = Stub(ServerAddress)
+        def serverAddress = new ServerAddress()
         def exception = new MongoSocketException('Temporary failure in name resolution', serverAddress)
-        serverAddress.getSocketAddresses() >> { throw exception }
 
-        def stream = new AsynchronousSocketChannelStream(serverAddress,
+        def inetAddressResolver = new InetAddressResolver() {
+            @Override
+            List<InetAddress> lookupByName(String host) {
+                throw exception
+            }
+        }
+        def stream = new AsynchronousSocketChannelStream(serverAddress, inetAddressResolver,
                 SocketSettings.builder().connectTimeout(100, MILLISECONDS).build(),
                 new PowerOfTwoBufferPool())
         def callback = new CallbackErrorHolder()

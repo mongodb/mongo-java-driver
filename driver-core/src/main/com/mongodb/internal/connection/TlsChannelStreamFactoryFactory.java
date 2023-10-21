@@ -30,6 +30,7 @@ import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannelGr
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static java.util.Optional.ofNullable;
@@ -64,11 +66,13 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
     private final SelectorMonitor selectorMonitor;
     private final AsynchronousTlsChannelGroup group;
     private final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
+    private final InetAddressResolver inetAddressResolver;
 
     /**
      * Construct a new instance
      */
-    public TlsChannelStreamFactoryFactory() {
+    public TlsChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
+        this.inetAddressResolver = inetAddressResolver;
         this.group = new AsynchronousTlsChannelGroup();
         selectorMonitor = new SelectorMonitor();
         selectorMonitor.start();
@@ -77,7 +81,8 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
         assertTrue(sslSettings.isEnabled());
-        return serverAddress -> new TlsChannelStream(serverAddress, socketSettings, sslSettings, bufferPool, group, selectorMonitor);
+        return serverAddress -> new TlsChannelStream(serverAddress, inetAddressResolver, socketSettings, sslSettings, bufferPool, group,
+                selectorMonitor);
     }
 
     @Override
@@ -161,12 +166,14 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
         private final AsynchronousTlsChannelGroup group;
         private final SelectorMonitor selectorMonitor;
+        private final InetAddressResolver inetAddressResolver;
         private final SslSettings sslSettings;
 
-        TlsChannelStream(final ServerAddress serverAddress, final SocketSettings settings, final SslSettings sslSettings,
-                         final PowerOfTwoBufferPool bufferProvider, final AsynchronousTlsChannelGroup group,
-                         final SelectorMonitor selectorMonitor) {
+        TlsChannelStream(final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
+                final SocketSettings settings, final SslSettings sslSettings, final PowerOfTwoBufferPool bufferProvider,
+                final AsynchronousTlsChannelGroup group, final SelectorMonitor selectorMonitor) {
             super(serverAddress, settings, bufferProvider);
+            this.inetAddressResolver = inetAddressResolver;
             this.sslSettings = sslSettings;
             this.group = group;
             this.selectorMonitor = selectorMonitor;
@@ -177,7 +184,6 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
             return true;
         }
 
-        @SuppressWarnings("deprecation")
         @Override
         public void openAsync(final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);
@@ -194,7 +200,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
                     socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, getSettings().getSendBufferSize());
                 }
 
-                socketChannel.connect(getServerAddress().getSocketAddress());
+                socketChannel.connect(getSocketAddresses(getServerAddress(), inetAddressResolver).get(0));
 
                 selectorMonitor.register(socketChannel, () -> {
                     try {
