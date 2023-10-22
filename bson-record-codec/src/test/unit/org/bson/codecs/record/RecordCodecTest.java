@@ -50,7 +50,7 @@ import org.bson.codecs.record.samples.TestRecordWithMapOfListOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithMapOfRecords;
 import org.bson.codecs.record.samples.TestRecordWithNestedParameterized;
 import org.bson.codecs.record.samples.TestRecordWithNestedParameterizedRecord;
-import org.bson.codecs.record.samples.TestRecordWithNullableAnnotation;
+import org.bson.codecs.record.samples.TestRecordWithNullableField;
 import org.bson.codecs.record.samples.TestRecordWithParameterizedRecord;
 import org.bson.codecs.record.samples.TestRecordWithPojoAnnotations;
 import org.bson.codecs.record.samples.TestSelfReferentialHolderRecord;
@@ -329,9 +329,9 @@ public class RecordCodecTest {
 
     @Test
     public void testRecordWithStoredNulls() {
-        var codec = createRecordCodec(TestRecordWithNullableAnnotation.class, Bson.DEFAULT_CODEC_REGISTRY);
+        var codec = createRecordCodec(TestRecordWithNullableField.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecordWithNullableAnnotation(identifier, null);
+        var testRecord = new TestRecordWithNullableField(identifier, null);
 
         var document = new BsonDocument("_id", new BsonObjectId(identifier))
                 .append("name", new BsonNull());

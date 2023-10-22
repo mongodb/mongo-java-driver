@@ -71,7 +71,7 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             this.codec = computeCodec(typeParameters, component, codecRegistry);
             this.index = index;
             this.fieldName = computeFieldName(component);
-            this.isNullable = checkFieldIsNullable(component);
+            this.isNullable = !component.getType().isPrimitive();
         }
 
         String getComponentName() {
@@ -156,14 +156,6 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                 return getAnnotationOnField(component, org.bson.codecs.pojo.annotations.BsonProperty.class).value();
             }
             return component.getName();
-        }
-
-        private static boolean checkFieldIsNullable(final RecordComponent component) {
-            try {
-                return component.getDeclaringRecord().getDeclaredField(component.getName()).isAnnotationPresent(Nullable.class);
-            } catch (NoSuchFieldException e) {
-                throw new AssertionError(format("Unexpectedly missing the declared field for recordComponent %s", component), e);
-            }
         }
 
         private static <T extends Annotation> boolean isAnnotationPresentOnField(final RecordComponent component,
