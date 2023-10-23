@@ -21,11 +21,11 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public final class PojoCodecProviderTest extends PojoTestCase {
 

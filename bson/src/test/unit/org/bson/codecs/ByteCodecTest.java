@@ -18,7 +18,9 @@ package org.bson.codecs;
 
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class ByteCodecTest extends CodecTestCase {
 
@@ -36,19 +38,22 @@ public final class ByteCodecTest extends CodecTestCase {
         roundTrip(new Document("a", 9.9999999999999992), expected);
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMinRange() {
-        roundTrip(new Document("a", Integer.MIN_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () ->
+                roundTrip(new Document("a", Integer.MIN_VALUE)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMaxRange() {
-        roundTrip(new Document("a", Integer.MAX_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () ->
+                roundTrip(new Document("a", Integer.MAX_VALUE)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingLossyDoubleValues() {
-        roundTrip(new Document("a", 9.9999999999999991));
+        assertThrows(BsonInvalidOperationException.class, () ->
+                roundTrip(new Document("a", 9.9999999999999991)));
     }
 
     @Override

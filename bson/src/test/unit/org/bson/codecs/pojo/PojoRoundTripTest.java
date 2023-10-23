@@ -102,37 +102,25 @@ import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
 import org.bson.types.ObjectId;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
-@RunWith(Parameterized.class)
 public final class PojoRoundTripTest extends PojoTestCase {
 
-    private final String name;
-    private final Object model;
-    private final PojoCodecProvider.Builder builder;
-    private final String json;
-
-    public PojoRoundTripTest(final String name, final Object model, final String json, final PojoCodecProvider.Builder builder) {
-        this.name = name;
-        this.model = model;
-        this.json = json;
-        this.builder = builder;
-    }
-
-    @Test
-    public void test() {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("data")
+    public void test(final String name, final Object model, final String json, final PojoCodecProvider.Builder builder) {
         roundTrip(builder, model, json);
         threadedRoundTrip(builder, model, json);
     }
@@ -540,16 +528,15 @@ public final class PojoRoundTripTest extends PojoTestCase {
         return data;
     }
 
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        List<Object[]> data = new ArrayList<>();
+    public static Stream<Arguments> data() {
+        List<Arguments> data = new ArrayList<>();
 
         for (TestData testData : testCases()) {
-            data.add(new Object[]{format("%s", testData.getName()), testData.getModel(), testData.getJson(), testData.getBuilder()});
-            data.add(new Object[]{format("%s [Auto]", testData.getName()), testData.getModel(), testData.getJson(), AUTOMATIC_BUILDER});
-            data.add(new Object[]{format("%s [Package]", testData.getName()), testData.getModel(), testData.getJson(), PACKAGE_BUILDER});
+            data.add(Arguments.of(format("%s", testData.getName()), testData.getModel(), testData.getJson(), testData.getBuilder()));
+            data.add(Arguments.of(format("%s [Auto]", testData.getName()), testData.getModel(), testData.getJson(), AUTOMATIC_BUILDER));
+            data.add(Arguments.of(format("%s [Package]", testData.getName()), testData.getModel(), testData.getJson(), PACKAGE_BUILDER));
         }
-        return data;
+        return data.stream();
     }
 
     private static final PojoCodecProvider.Builder AUTOMATIC_BUILDER = PojoCodecProvider.builder().automatic(true);

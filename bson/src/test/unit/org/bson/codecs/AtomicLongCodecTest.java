@@ -18,11 +18,12 @@ package org.bson.codecs;
 
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class AtomicLongCodecTest extends CodecTestCase {
 
@@ -44,20 +45,20 @@ public final class AtomicLongCodecTest extends CodecTestCase {
         roundTrip(new Document("a", 9.9999999999999992), new AtomicLongComparator(expected));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingLossyDoubleValues() {
         Document original = new Document("a", 9.9999999999999991);
-        roundTrip(original, new AtomicLongComparator(original));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(original, new AtomicLongComparator(original)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMinRange() {
-        roundTrip(new Document("a", -Double.MAX_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", -Double.MAX_VALUE)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMaxRange() {
-        roundTrip(new Document("a", Double.MAX_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", Double.MAX_VALUE)));
     }
 
     @Override
@@ -74,9 +75,7 @@ public final class AtomicLongCodecTest extends CodecTestCase {
 
         @Override
         public void apply(final Document result) {
-            assertEquals("Codec Round Trip",
-                    expected.get("a", AtomicLong.class).get(),
-                    result.get("a", AtomicLong.class).get());
+            assertEquals(expected.get("a", AtomicLong.class).get(), result.get("a", AtomicLong.class).get());
         }
     }
 

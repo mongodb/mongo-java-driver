@@ -26,7 +26,7 @@ import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -41,11 +41,12 @@ import java.util.Locale;
 import java.util.function.Function;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 public class JsonReaderTest {
@@ -872,11 +873,11 @@ public class JsonReaderTest {
         });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testClosedState() {
         AbstractBsonReader bsonReader = new JsonReader("");
         bsonReader.close();
-        bsonReader.readBinaryData();
+        assertThrows(IllegalStateException.class, () -> bsonReader.readBinaryData());
     }
 
     @Test
@@ -1015,14 +1016,15 @@ public class JsonReaderTest {
     }
 
     // testing that JsonReader uses internal UuidStringValidator, as UUID.fromString accepts this UUID
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testInvalidUuid() {
         // first hyphen out of place
         String json = "{ \"$uuid\" : \"73ff-d26444b-34c6-990e8e-7d1dfc035d4\"}}";
-        testStringAndStream(json, bsonReader -> {
-            bsonReader.readBinaryData();
-            return null;
-        });
+        assertThrows(JsonParseException.class, () ->
+                testStringAndStream(json, bsonReader -> {
+                    bsonReader.readBinaryData();
+                    return null;
+                }));
     }
 
     @Test
@@ -1305,7 +1307,7 @@ public class JsonReaderTest {
     }
 
     private void testStringAndStream(final String json, final Function<AbstractBsonReader, Void> testFunc,
-                                     final Class<? extends RuntimeException> exClass) {
+            final Class<? extends RuntimeException> exClass) {
         try {
             testFunc.apply(new JsonReader(json));
         } catch (Exception e) {
