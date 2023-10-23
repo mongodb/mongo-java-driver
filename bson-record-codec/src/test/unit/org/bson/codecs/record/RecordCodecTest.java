@@ -22,6 +22,7 @@ import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonNull;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
@@ -331,16 +332,29 @@ public class RecordCodecTest {
     public void testRecordWithStoredNulls() {
         var codec = createRecordCodec(TestRecordWithNullableField.class, Bson.DEFAULT_CODEC_REGISTRY);
         var identifier = new ObjectId();
-        var testRecord = new TestRecordWithNullableField(identifier, null);
+        var testRecord = new TestRecordWithNullableField(identifier, null, 42);
 
         var document = new BsonDocument("_id", new BsonObjectId(identifier))
-                .append("name", new BsonNull());
+                .append("name", new BsonNull())
+                .append("age", new BsonInt32(42));
 
         // when
         var decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
 
         // then
         assertEquals(testRecord, decoded);
+    }
+
+    @Test
+    public void testExceptionsWithStoredNullsOnPrimitiveField() {
+        var codec = createRecordCodec(TestRecordWithNullableField.class, Bson.DEFAULT_CODEC_REGISTRY);
+
+        var document = new BsonDocument("_id", new BsonObjectId(new ObjectId()))
+                .append("name", new BsonString("Felix"))
+                .append("age", new BsonNull());
+
+        assertThrows(BsonInvalidOperationException.class, () ->
+                codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build()));
     }
 
     @Test

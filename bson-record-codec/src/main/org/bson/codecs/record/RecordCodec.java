@@ -16,6 +16,7 @@
 
 package org.bson.codecs.record;
 
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
@@ -277,7 +278,10 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace(format("Found property not present in the ClassModel: %s", fieldName));
                 }
-            } else if (reader.getCurrentBsonType() == BsonType.NULL && componentModel.isNullable) {
+            } else if (reader.getCurrentBsonType() == BsonType.NULL) {
+                if (!componentModel.isNullable) {
+                    throw new BsonInvalidOperationException(format("Null value on primitive field: %s", componentModel.fieldName));
+                }
                 reader.readNull();
             } else {
                 constructorArguments[componentModel.index] = decoderContext.decodeWithChildContext(componentModel.codec, reader);

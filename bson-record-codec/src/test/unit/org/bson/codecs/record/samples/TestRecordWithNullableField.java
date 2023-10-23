@@ -19,5 +19,5 @@ package org.bson.codecs.record.samples;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.types.ObjectId;
 
-public record TestRecordWithNullableField(@BsonId ObjectId id, String name) {
+public record TestRecordWithNullableField(@BsonId ObjectId id, String name, int age) {
 }
