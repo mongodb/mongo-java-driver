@@ -35,6 +35,7 @@ import util.spock.annotations.Slow
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
@@ -57,7 +58,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 .create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         thrown(MongoSocketOpenException)
@@ -69,7 +70,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
                 [], LoggerSettings.builder().build(), null, getServerApi(), null).create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
         def countCommand = new BsonDocument('count', new BsonString(getCollectionName()))
@@ -93,7 +94,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         thrown(MongoSocketOpenException)
@@ -105,7 +106,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
                 [], LoggerSettings.builder().build(), null, getServerApi(), null).create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
         def countCommand = new BsonDocument('count', new BsonString(getCollectionName()))

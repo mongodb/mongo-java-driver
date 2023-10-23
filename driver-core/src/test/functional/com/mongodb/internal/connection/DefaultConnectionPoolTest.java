@@ -26,6 +26,8 @@ import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.ConnectionCreatedEvent;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.internal.inject.OptionalProvider;
@@ -399,7 +401,12 @@ public class DefaultConnectionPoolTest {
         provider.ready();
         List<InternalConnection> connections = new ArrayList<>();
         for (int i = 0; i < openConnectionsCount; i++) {
-            connections.add(provider.get(OPERATION_CONTEXT, 0, NANOSECONDS));
+            OperationContext operationContextWithZeroMaxWait = new OperationContext(
+                    OPERATION_CONTEXT.getRequestContext(),
+                    OPERATION_CONTEXT.getSessionContext(),
+                    new TimeoutContext(new TimeoutSettings(30_000, 10_000, 0, null, 0)),
+                    OPERATION_CONTEXT.getServerApi());
+            connections.add(provider.get(operationContextWithZeroMaxWait));
         }
         acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener);
         int previousIdx = 0;
@@ -417,7 +424,7 @@ public class DefaultConnectionPoolTest {
                     return connectionId;
                 }));
                 Runnable checkOut = () -> receivedFutures.add(cachedExecutor.submit(() -> {
-                    InternalConnection connection = provider.get(OPERATION_CONTEXT, TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                    InternalConnection connection = provider.get(OPERATION_CONTEXT);
                     return connection.getDescription().getConnectionId();
                 }));
                 if (ThreadLocalRandom.current().nextBoolean()) {
@@ -531,7 +538,7 @@ public class DefaultConnectionPoolTest {
                         spontaneouslyInvalidateReady.run();
                         InternalConnection conn = null;
                         try {
-                            conn = pool.get(OPERATION_CONTEXT, TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS);
+                            conn = pool.get(OPERATION_CONTEXT);
                         } catch (MongoConnectionPoolClearedException e) {
                             // expected because we spontaneously invalidate `pool`
                         } finally {
@@ -638,7 +645,7 @@ public class DefaultConnectionPoolTest {
             doAnswer(invocation -> {
                 doOpen.run();
                 return null;
-            }).when(connection).open();
+            }).when(connection).open(OPERATION_CONTEXT);
             doAnswer(invocation -> {
                 SingleResultCallback<?> callback = invocation.getArgument(0, SingleResultCallback.class);
                 asyncOpenExecutor.execute(() -> {
@@ -646,7 +653,7 @@ public class DefaultConnectionPoolTest {
                     callback.onResult(null, null);
                 });
                 return null;
-            }).when(connection).openAsync(any());
+            }).when(connection).openAsync(OPERATION_CONTEXT, any());
             return connection;
         };
         return new ControllableConnectionFactory(connectionFactory, openDurationHandle);

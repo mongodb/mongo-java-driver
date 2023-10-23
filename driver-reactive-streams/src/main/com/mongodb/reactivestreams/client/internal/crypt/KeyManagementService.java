@@ -26,6 +26,7 @@ import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
@@ -74,7 +75,8 @@ class KeyManagementService implements Closeable {
 
         return Mono.<Void>create(sink -> {
             Stream stream = streamFactory.create(serverAddress);
-            stream.openAsync(new AsyncCompletionHandler<Void>() {
+            OperationContext operationContext = OperationContext.todoOperationContext();
+            stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(@Nullable final Void ignored) {
                     streamWrite(stream, keyDecryptor, sink);

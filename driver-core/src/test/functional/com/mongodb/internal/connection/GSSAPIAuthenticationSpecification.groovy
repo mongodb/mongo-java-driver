@@ -37,6 +37,7 @@ import javax.security.auth.Subject
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.ClusterFixture.getCredential
@@ -219,10 +220,10 @@ class GSSAPIAuthenticationSpecification extends Specification {
     private static void openConnection(final InternalConnection connection, final boolean async) {
         if (async) {
             FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>()
-            connection.openAsync(futureResultCallback)
+            connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
             futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS)
         } else {
-            connection.open()
+            connection.open(OPERATION_CONTEXT)
         }
     }
 }

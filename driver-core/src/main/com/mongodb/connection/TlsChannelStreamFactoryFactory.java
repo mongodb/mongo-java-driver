@@ -21,6 +21,7 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.connection.ExtendedAsynchronousByteChannel;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
 import com.mongodb.internal.connection.tlschannel.ClientTlsChannel;
@@ -201,7 +202,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
         @SuppressWarnings("deprecation")
         @Override
-        public void openAsync(final AsyncCompletionHandler<Void> handler) {
+        public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);
             try {
                 SocketChannel socketChannel = SocketChannel.open();

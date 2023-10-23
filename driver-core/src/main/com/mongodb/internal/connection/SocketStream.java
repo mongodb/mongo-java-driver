@@ -39,14 +39,12 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -73,9 +71,9 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public void open() {
+    public void open(final OperationContext operationContext) {
         try {
-            socket = initializeSocket();
+            socket = initializeSocket(operationContext);
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
         } catch (IOException e) {
@@ -86,22 +84,22 @@ public class SocketStream implements Stream {
     }
 
     @SuppressWarnings("deprecation")
-    protected Socket initializeSocket() throws IOException {
+    protected Socket initializeSocket(final OperationContext operationContext) throws IOException {
         ProxySettings proxySettings = settings.getProxySettings();
         if (proxySettings.isProxyEnabled()) {
             if (sslSettings.isEnabled()) {
                 assertTrue(socketFactory instanceof SSLSocketFactory);
                 SSLSocketFactory sslSocketFactory = (SSLSocketFactory) socketFactory;
-                return initializeSslSocketOverSocksProxy(sslSocketFactory);
+                return initializeSslSocketOverSocksProxy(operationContext, sslSocketFactory);
             }
-            return initializeSocketOverSocksProxy();
+            return initializeSocketOverSocksProxy(operationContext);
         }
 
         Iterator<InetSocketAddress> inetSocketAddresses = address.getSocketAddresses().iterator();
         while (inetSocketAddresses.hasNext()) {
             Socket socket = socketFactory.createSocket();
             try {
-                SocketStreamHelper.initialize(socket, inetSocketAddresses.next(), settings, sslSettings);
+                SocketStreamHelper.initialize(operationContext, socket, inetSocketAddresses.next(), settings, sslSettings);
                 return socket;
             } catch (SocketTimeoutException e) {
                 if (!inetSocketAddresses.hasNext()) {
@@ -113,14 +111,15 @@ public class SocketStream implements Stream {
         throw new MongoSocketException("Exception opening socket", getAddress());
     }
 
-    private SSLSocket initializeSslSocketOverSocksProxy(final SSLSocketFactory sslSocketFactory) throws IOException {
+    private SSLSocket initializeSslSocketOverSocksProxy(final OperationContext operationContext,
+            final SSLSocketFactory sslSocketFactory) throws IOException {
         final String serverHost = address.getHost();
         final int serverPort = address.getPort();
 
         SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
         configureSocket(socksProxy, settings);
         InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
-        socksProxy.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
+        socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
 
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
         //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
@@ -138,7 +137,7 @@ public class SocketStream implements Stream {
         return InetSocketAddress.createUnresolved(serverHost, serverPort);
     }
 
-    private Socket initializeSocketOverSocksProxy() throws IOException {
+    private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {
         Socket createdSocket = socketFactory.createSocket();
         configureSocket(createdSocket, settings);
         /*
@@ -149,7 +148,7 @@ public class SocketStream implements Stream {
         SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
 
         socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
-                settings.getConnectTimeout(TimeUnit.MILLISECONDS));
+                operationContext.getTimeoutContext().getConnectTimeoutMs());
         return socksProxy;
     }
 
@@ -207,7 +206,7 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
         throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 

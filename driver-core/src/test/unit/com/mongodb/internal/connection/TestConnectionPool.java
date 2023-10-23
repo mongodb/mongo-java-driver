@@ -26,7 +26,6 @@ import org.bson.codecs.Decoder;
 import org.bson.types.ObjectId;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class TestConnectionPool implements ConnectionPool {
 
@@ -103,12 +102,12 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public void open() {
+            public void open(final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet");
             }
 
             @Override
-            public void openAsync(final SingleResultCallback<Void> callback) {
+            public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
                 callback.onResult(null, new UnsupportedOperationException("Not implemented yet"));
             }
 
@@ -132,14 +131,6 @@ public class TestConnectionPool implements ConnectionPool {
                 return 0;
             }
         };
-    }
-
-    @Override
-    public InternalConnection get(final OperationContext operationContext, final long timeout, final TimeUnit timeUnit) {
-        if (exceptionToThrow != null) {
-            throw exceptionToThrow;
-        }
-        return get(operationContext);
     }
 
     @Override

@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.OperationContext;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
@@ -36,14 +37,15 @@ public interface Stream extends BufferProvider{
      *
      * @throws IOException if an I/O error occurs
      */
-    void open() throws IOException;
+    void open(OperationContext operationContext) throws IOException;
 
     /**
      * Open the stream asynchronously.
      *
-     * @param handler the completion handler for opening the stream
+     * @param operationContext
+     * @param handler          the completion handler for opening the stream
      */
-    void openAsync(AsyncCompletionHandler<Void> handler);
+    void openAsync(OperationContext operationContext, AsyncCompletionHandler<Void> handler);
 
     /**
      * Write each buffer in the list to the stream in order, blocking until all are completely written.

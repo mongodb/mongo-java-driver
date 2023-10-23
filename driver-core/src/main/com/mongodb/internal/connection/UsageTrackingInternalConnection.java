@@ -49,8 +49,8 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void open() {
-        wrapped.open();
+    public void open(final OperationContext operationContext) {
+        wrapped.open(operationContext);
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;
         if (getDescription().getServiceId() != null) {
@@ -59,8 +59,8 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void openAsync(final SingleResultCallback<Void> callback) {
-        wrapped.openAsync((result, t) -> {
+    public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        wrapped.openAsync(operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {

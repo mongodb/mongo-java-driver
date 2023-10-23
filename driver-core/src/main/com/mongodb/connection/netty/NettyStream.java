@@ -28,6 +28,7 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.netty.NettyByteBuf;
 import com.mongodb.lang.Nullable;
 import io.netty.bootstrap.Bootstrap;
@@ -156,15 +157,15 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public void open() throws IOException {
+    public void open(final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
-        openAsync(handler);
+        openAsync(operationContext, handler);
         handler.get();
     }
 
     @SuppressWarnings("deprecation")
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
         Queue<SocketAddress> socketAddressQueue;
 
         try {
@@ -174,10 +175,11 @@ final class NettyStream implements Stream {
             return;
         }
 
-        initializeChannel(handler, socketAddressQueue);
+        initializeChannel(operationContext, handler, socketAddressQueue);
     }
 
-    private void initializeChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
+    private void initializeChannel(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler,
+            final Queue<SocketAddress> socketAddressQueue) {
         if (socketAddressQueue.isEmpty()) {
             handler.failed(new MongoSocketException("Exception opening socket", getAddress()));
         } else {
@@ -186,8 +188,8 @@ final class NettyStream implements Stream {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(workerGroup);
             bootstrap.channel(socketChannelClass);
-
-            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                    operationContext.getTimeoutContext().getConnectTimeoutMs());
             bootstrap.option(ChannelOption.TCP_NODELAY, true);
             bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 
@@ -221,7 +223,7 @@ final class NettyStream implements Stream {
                 }
             });
             ChannelFuture channelFuture = bootstrap.connect(nextAddress);
-            channelFuture.addListener(new OpenChannelFutureListener(socketAddressQueue, channelFuture, handler));
+            channelFuture.addListener(new OpenChannelFutureListener(operationContext, socketAddressQueue, channelFuture, handler));
         }
     }
 
@@ -503,9 +505,12 @@ final class NettyStream implements Stream {
         private final Queue<SocketAddress> socketAddressQueue;
         private final ChannelFuture channelFuture;
         private final AsyncCompletionHandler<Void> handler;
+        private final OperationContext operationContext;
 
-        OpenChannelFutureListener(final Queue<SocketAddress> socketAddressQueue, final ChannelFuture channelFuture,
-                                  final AsyncCompletionHandler<Void> handler) {
+        OpenChannelFutureListener(final OperationContext operationContext,
+                final Queue<SocketAddress> socketAddressQueue, final ChannelFuture channelFuture,
+                final AsyncCompletionHandler<Void> handler) {
+            this.operationContext = operationContext;
             this.socketAddressQueue = socketAddressQueue;
             this.channelFuture = channelFuture;
             this.handler = handler;
@@ -528,7 +533,7 @@ final class NettyStream implements Stream {
                     } else if (socketAddressQueue.isEmpty()) {
                         handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
                     } else {
-                        initializeChannel(handler, socketAddressQueue);
+                        initializeChannel(operationContext, handler, socketAddressQueue);
                     }
                 }
             });

@@ -114,7 +114,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def getOpenedConnection() {
         def connection = getConnection()
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
         connection
     }
 
@@ -132,7 +132,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 .lastUpdateTimeNanos(connection.getInitialServerDescription().getLastUpdateTime(NANOSECONDS))
                 .build()
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         connection.opened()
@@ -159,7 +159,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 .build()
 
         when:
-        connection.openAsync(futureResultCallback)
+        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -177,7 +177,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 failedInitializer, null)
 
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         thrown MongoInternalException
@@ -195,7 +195,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
-        connection.openAsync(futureResultCallback)
+        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
         futureResultCallback.get()
 
         then:

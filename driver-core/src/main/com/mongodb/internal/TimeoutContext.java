@@ -158,4 +158,13 @@ public class TimeoutContext {
         long ms = getTimeoutSettings().getServerSelectionTimeoutMS();
         return StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
+
+    public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
+        final long ms = getTimeoutSettings().getMaxWaitTimeMS();
+        return checkoutStart.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
+    }
+
+    public int getConnectTimeoutMs() {
+        return (int) getTimeoutSettings().getConnectTimeoutMS();
+    }
 }

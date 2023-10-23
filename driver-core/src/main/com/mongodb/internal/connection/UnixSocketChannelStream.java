@@ -42,7 +42,7 @@ public class UnixSocketChannelStream extends SocketStream {
 
     @SuppressWarnings("deprecation")
     @Override
-    protected Socket initializeSocket() throws IOException {
+    protected Socket initializeSocket(final OperationContext operationContext) throws IOException {
         return UnixSocketChannel.open((UnixSocketAddress) address.getUnixSocketAddress()).socket();
     }
 }

@@ -203,11 +203,11 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void open() {
+    public void open(final OperationContext operationContext) {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(getServerAddressWithResolver());
         try {
-            stream.open();
+            stream.open(operationContext);
 
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
             initAfterHandshakeStart(initializationDescription);
@@ -225,11 +225,11 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void openAsync(final SingleResultCallback<Void> callback) {
+    public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         isTrue("Open already called", stream == null, callback);
         try {
             stream = streamFactory.create(getServerAddressWithResolver());
-            stream.openAsync(new AsyncCompletionHandler<Void>() {
+            stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(@Nullable final Void aVoid) {
                     connectionInitializer.startHandshakeAsync(InternalStreamConnection.this,

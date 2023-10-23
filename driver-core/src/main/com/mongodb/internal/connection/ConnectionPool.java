@@ -18,14 +18,11 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.time.StartTime;
-import org.bson.types.ObjectId;
 import com.mongodb.lang.Nullable;
+import org.bson.types.ObjectId;
 
 import java.io.Closeable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An instance of an implementation must be created in the {@linkplain #invalidate(Throwable) paused} state.
@@ -33,19 +30,10 @@ import java.util.concurrent.TimeUnit;
 @ThreadSafe
 interface ConnectionPool extends Closeable {
     /**
-     * Is equivalent to {@link #get(OperationContext, long, TimeUnit)} called with {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
-     */
-    InternalConnection get(OperationContext operationContext) throws MongoConnectionPoolClearedException;
-
-    /**
      * @param operationContext the operation context
-     * @param timeout This is not a timeout for the whole {@link #get(OperationContext, long, TimeUnit)},
-     * see {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)}.
-     * <p>
-     * See {@link StartTime#timeoutAfterOrInfiniteIfNegative(long, TimeUnit)}.</p>
      * @throws MongoConnectionPoolClearedException If detects that the pool is {@linkplain #invalidate(Throwable) paused}.
      */
-    InternalConnection get(OperationContext operationContext, long timeout, TimeUnit timeUnit) throws MongoConnectionPoolClearedException;
+    InternalConnection get(OperationContext operationContext) throws MongoConnectionPoolClearedException;
 
     /**
      * Completes the {@code callback} with a {@link MongoConnectionPoolClearedException}

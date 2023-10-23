@@ -50,7 +50,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.openedAt == Long.MAX_VALUE
 
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         connection.openedAt <= System.currentTimeMillis()
@@ -66,7 +66,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.openedAt == Long.MAX_VALUE
 
         when:
-        connection.openAsync(futureResultCallback)
+        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -81,7 +81,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.lastUsedAt == Long.MAX_VALUE
 
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
@@ -97,7 +97,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.lastUsedAt == Long.MAX_VALUE
 
         when:
-        connection.openAsync(futureResultCallback)
+        connection.openAsync(OPERATION_CONTEXT, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -107,7 +107,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendMessage'() {
         given:
         def connection = createConnection()
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
@@ -122,7 +122,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendMessage asynchronously'() {
         given:
         def connection = createConnection()
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
 
@@ -138,7 +138,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on receiveMessage'() {
         given:
         def connection = createConnection()
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
         def openedLastUsedAt = connection.lastUsedAt
         when:
         connection.receiveMessage(1)
@@ -151,7 +151,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on receiveMessage asynchronously'() {
         given:
         def connection = createConnection()
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
 
@@ -167,7 +167,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendAndReceive'() {
         given:
         def connection = createConnection()
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
@@ -183,7 +183,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     def 'lastUsedAt should be set on sendAndReceive asynchronously'() {
         given:
         def connection = createConnection()
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
         def openedLastUsedAt = connection.lastUsedAt
         def futureResultCallback = new FutureResultCallback<Void>()
 

@@ -13,6 +13,7 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getSslSettings
 
 class NettyStreamSpecification extends Specification {
@@ -36,7 +37,7 @@ class NettyStreamSpecification extends Specification {
         def stream = factory.create(serverAddress)
 
         when:
-        stream.open()
+        stream.open(OPERATION_CONTEXT)
 
         then:
         !stream.isClosed()
@@ -61,7 +62,7 @@ class NettyStreamSpecification extends Specification {
         def stream = factory.create(serverAddress)
 
         when:
-        stream.open()
+        stream.open(OPERATION_CONTEXT)
 
         then:
         thrown(MongoSocketOpenException)
@@ -79,7 +80,7 @@ class NettyStreamSpecification extends Specification {
         def callback = new CallbackErrorHolder()
 
         when:
-        stream.openAsync(callback)
+        stream.openAsync(OPERATION_CONTEXT, callback)
 
         then:
         callback.getError().is(exception)
