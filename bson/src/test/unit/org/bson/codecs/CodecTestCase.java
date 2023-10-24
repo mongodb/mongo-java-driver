@@ -36,7 +36,7 @@ import java.util.HashMap;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 abstract class CodecTestCase {
 
@@ -82,7 +82,7 @@ abstract class CodecTestCase {
     }
 
     public void roundTrip(final Document input, final Document expected) {
-        roundTrip(input, result -> assertEquals("Codec Round Trip", expected, result));
+        roundTrip(input, result -> assertEquals(expected, result));
     }
 
     <T> OutputBuffer encode(final Codec<T> codec, final T value) {
@@ -119,7 +119,7 @@ abstract class CodecTestCase {
 
         @Override
         public void apply(final T result) {
-            assertEquals("Codec Round Trip", original, result);
+            assertEquals(original, result);
         }
     }
 

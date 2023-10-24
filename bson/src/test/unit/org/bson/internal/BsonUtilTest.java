@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.bson.assertions.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
@@ -122,7 +123,7 @@ final class BsonUtilTest {
         } else if (expected instanceof BsonJavaScriptWithScope) {
             assertEquals(BsonJavaScriptWithScope.class, actualClass);
         } else {
-            org.bson.assertions.Assertions.fail("Unexpected " + expected.getClass().toString());
+            fail("Unexpected " + expected.getClass().toString());
         }
     }
 
