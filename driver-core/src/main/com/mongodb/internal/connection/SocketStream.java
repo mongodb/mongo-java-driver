@@ -26,6 +26,7 @@ import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
 import javax.net.SocketFactory;
@@ -207,7 +208,7 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final SingleResultCallback<Void> callback) {
         throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 

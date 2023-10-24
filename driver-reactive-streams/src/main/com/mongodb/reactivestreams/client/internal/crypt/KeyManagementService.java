@@ -85,7 +85,7 @@ class KeyManagementService implements Closeable {
                     stream.close();
                     sink.error(t);
                 }
-            });
+            }.asCallback());
         }).onErrorMap(this::unWrapException);
     }
 

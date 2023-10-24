@@ -72,6 +72,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
@@ -205,15 +206,16 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void open() {
-        isTrue("Open already called", stream == null);
-        stream = streamFactory.create(getServerAddressWithResolver());
         try {
+            isTrue("Open already called", stream == null);
+            stream = streamFactory.create(getServerAddressWithResolver());
             stream.open();
 
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
-            initAfterHandshakeStart(initializationDescription);
 
+            initAfterHandshakeStart(initializationDescription);
             initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
+
             initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
@@ -227,45 +229,27 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
-        isTrue("Open already called", stream == null, callback);
-        try {
-            stream = streamFactory.create(getServerAddressWithResolver());
-            stream.openAsync(new AsyncCompletionHandler<Void>() {
-                @Override
-                public void completed(@Nullable final Void aVoid) {
-                    connectionInitializer.startHandshakeAsync(InternalStreamConnection.this,
-                            (initialResult, initialException) -> {
-                                    if (initialException != null) {
-                                        close();
-                                        callback.onResult(null, initialException);
-                                    } else {
-                                        assertNotNull(initialResult);
-                                        initAfterHandshakeStart(initialResult);
-                                        connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, (completedResult, completedException) ->  {
-                                                        if (completedException != null) {
-                                                            close();
-                                                            callback.onResult(null, completedException);
-                                                        } else {
-                                                            assertNotNull(completedResult);
-                                                            initAfterHandshakeFinish(completedResult);
-                                                            callback.onResult(null, null);
-                                                        }
-                                                });
-                                    }
-                            });
-                }
-
-                @Override
-                public void failed(final Throwable t) {
-                    close();
-                    callback.onResult(null, t);
-                }
-            });
-        } catch (Throwable t) {
+        beginAsync().thenRun(
+            beginAsync().thenRun(c -> {
+                isTrue("Open already called", stream == null, callback);
+                stream = streamFactory.create(getServerAddressWithResolver());
+                stream.openAsync(c);
+            }).<InternalConnectionInitializationDescription>thenSupply(c -> {
+                connectionInitializer.startHandshakeAsync(this, c);
+            }).<InternalConnectionInitializationDescription>thenApply((initializationDescription, c)  -> {
+                initAfterHandshakeStart(assertNotNull(initializationDescription));
+                connectionInitializer.finishHandshakeAsync(this, initializationDescription, c);
+            }).thenConsume((initializationDescription, c)  -> {
+                initAfterHandshakeFinish(assertNotNull(initializationDescription));
+            })
+        ).onErrorIf(t -> true, (t, c) -> {
             close();
-            callback.onResult(null, t);
-        }
+            if (t instanceof MongoException) {
+                throw (MongoException) t;
+            } else {
+                throw new MongoException(assertNotNull(t).toString(), t);
+            }
+        }).finish(callback);
     }
 
     private ServerAddress getServerAddressWithResolver() {
@@ -336,7 +320,7 @@ public class InternalStreamConnection implements InternalConnection {
     public void close() {
         // All but the first call is a no-op
         if (!isClosed.getAndSet(true) && (stream != null)) {
-                stream.close();
+            stream.close();
         }
     }
 
@@ -352,8 +336,9 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Nullable
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                                final RequestContext requestContext, final OperationContext operationContext) {
+    public <T> T sendAndReceive(final CommandMessage message,
+            final Decoder<T> decoder, final SessionContext sessionContext,
+            final RequestContext requestContext, final OperationContext operationContext) {
         CommandEventSender commandEventSender;
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
@@ -476,8 +461,10 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-            final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
+    public <T> void sendAndReceiveAsync(final CommandMessage message,
+            final Decoder<T> decoder, final SessionContext sessionContext,
+            final RequestContext requestContext, final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
         notNull("stream is open", stream, callback);
 
         if (isClosed()) {
@@ -575,11 +562,9 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         notNull("stream is open", stream);
-
         if (isClosed()) {
             throw new MongoSocketClosedException("Cannot write to a closed stream", getServerAddress());
         }
-
         try {
             stream.write(byteBuffers);
         } catch (Exception e) {
@@ -609,14 +594,14 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        notNull("stream is open", stream, callback);
+        beginAsync().thenRun(c -> {
+            notNull("stream is open", stream, callback);
+            if (isClosed()) {
+                throw new MongoSocketClosedException("Can not read from a closed socket", getServerAddress());
+            }
 
-        if (isClosed()) {
-            callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
-            return;
-        }
-
-        writeAsync(byteBuffers, errorHandlingCallback(callback, LOGGER));
+            writeAsync(byteBuffers, errorHandlingCallback(callback, LOGGER));
+        }).finish(callback);
     }
 
     private void writeAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {

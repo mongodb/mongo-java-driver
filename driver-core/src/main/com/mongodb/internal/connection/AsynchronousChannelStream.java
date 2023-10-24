@@ -127,7 +127,7 @@ public abstract class AsynchronousChannelStream implements Stream {
     @Override
     public void open() throws IOException {
         FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
-        openAsync(handler);
+        openAsync(handler.asCallback());
         handler.getOpen();
     }
 

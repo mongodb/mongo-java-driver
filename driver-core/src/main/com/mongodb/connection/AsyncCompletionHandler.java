@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
 /**
@@ -38,4 +39,14 @@ public interface AsyncCompletionHandler<T> {
      * @param t the exception that describes the failure
      */
     void failed(Throwable t);
+
+    default SingleResultCallback<T> asCallback() {
+        return (r, t) -> {
+            if (t != null) {
+                failed(t);
+            } else {
+                completed(r);
+            }
+        };
+    }
 }

@@ -76,7 +76,7 @@ class NettyStreamSpecification extends Specification {
 
         def stream = new NettyStreamFactory(SocketSettings.builder().connectTimeout(1000, TimeUnit.MILLISECONDS).build(),
                 SslSettings.builder().build()).create(serverAddress)
-        def callback = new CallbackErrorHolder()
+        def callback = new CallbackErrorHolder().asCallback()
 
         when:
         stream.openAsync(callback)

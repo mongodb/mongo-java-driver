@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public interface Stream extends BufferProvider{
      *
      * @param handler the completion handler for opening the stream
      */
-    void openAsync(AsyncCompletionHandler<Void> handler);
+    void openAsync(SingleResultCallback<Void> handler);
 
     /**
      * Write each buffer in the list to the stream in order, blocking until all are completely written.

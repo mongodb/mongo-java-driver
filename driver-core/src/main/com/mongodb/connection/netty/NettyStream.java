@@ -28,6 +28,7 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.netty.NettyByteBuf;
 import com.mongodb.lang.Nullable;
 import io.netty.bootstrap.Bootstrap;
@@ -158,13 +159,14 @@ final class NettyStream implements Stream {
     @Override
     public void open() throws IOException {
         FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
-        openAsync(handler);
+        openAsync(handler.asCallback());
         handler.get();
     }
 
     @SuppressWarnings("deprecation")
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final SingleResultCallback<Void> callback) {
+        AsyncCompletionHandler<Void> handler = callback.toHandler();
         Queue<SocketAddress> socketAddressQueue;
 
         try {

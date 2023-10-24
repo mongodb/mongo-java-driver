@@ -21,6 +21,7 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
@@ -56,7 +57,9 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
 
     @SuppressWarnings("deprecation")
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final SingleResultCallback<Void> callback) {
+        AsyncCompletionHandler<Void> handler = callback.toHandler();
+
         isTrue("unopened", getChannel() == null);
         Queue<SocketAddress> socketAddressQueue;
 
