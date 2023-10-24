@@ -17,9 +17,10 @@
 package org.bson.json;
 
 import org.bson.BsonRegularExpression;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class JsonScannerTest {
 
@@ -497,41 +498,41 @@ public class JsonScannerTest {
         assertEquals(',', buffer.read());
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testInvalidRegularExpression() {
         String json = "\t /pattern/nsk,";
         JsonBuffer buffer = new JsonStringBuffer(json);
         JsonScanner scanner = new JsonScanner(buffer);
-        scanner.nextToken();
+        assertThrows(JsonParseException.class, () -> scanner.nextToken());
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testInvalidRegularExpressionNoEnd() {
         String json = "/b";
         JsonBuffer buffer = new JsonStringBuffer(json);
         JsonScanner scanner = new JsonScanner(buffer);
-        scanner.nextToken();
+        assertThrows(JsonParseException.class, () ->scanner.nextToken());
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testInvalidInput() {
         String json = "\t &&";
         JsonScanner scanner = new JsonScanner(json);
-        scanner.nextToken();
+        assertThrows(JsonParseException.class, () -> scanner.nextToken());
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testInvalidNumber() {
         String json = "\t 123a]";
         JsonScanner scanner = new JsonScanner(json);
-        scanner.nextToken();
+        assertThrows(JsonParseException.class, () -> scanner.nextToken());
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testInvalidInfinity() {
         String json = "\t -Infinnity]";
         JsonScanner scanner = new JsonScanner(json);
-        scanner.nextToken();
+        assertThrows(JsonParseException.class, () -> scanner.nextToken());
     }
 }
 

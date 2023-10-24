@@ -17,15 +17,15 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.pojo.entities.GenericHolderModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.singletonList;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("rawtypes")
 public final class TypeDataTest {

@@ -19,7 +19,9 @@ package org.bson.codecs;
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
 import org.bson.types.Decimal128;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class FloatCodecTest extends CodecTestCase {
 
@@ -43,19 +45,19 @@ public final class FloatCodecTest extends CodecTestCase {
         roundTrip(new Document("a", Decimal128.parse("10")), expected);
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMinRange() {
-        roundTrip(new Document("a", -Double.MAX_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", -Double.MAX_VALUE)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMaxRange() {
-        roundTrip(new Document("a", Double.MAX_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", Double.MAX_VALUE)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingLossyDecimal128Values() {
-        roundTrip(new Document("a", Decimal128.parse("10.0")));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", Decimal128.parse("10.0"))));
     }
 
     @Override

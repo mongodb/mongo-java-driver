@@ -28,7 +28,7 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,9 +38,9 @@ import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 // Don't convert to Spock, as Groovy intercepts equals/hashCode methods that we are trying to test
 public class DocumentTest {
@@ -75,8 +75,7 @@ public class DocumentTest {
 
     @Test
     public void toJsonShouldReturnEquivalent() {
-        assertEquals(new DocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()),
-                     document);
+        assertEquals(new DocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()), document);
     }
 
     // Test to ensure that toJson does not reorder _id field
