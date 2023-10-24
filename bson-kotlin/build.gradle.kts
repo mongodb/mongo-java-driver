@@ -149,4 +149,6 @@ tasks.javadocJar.configure {
 // ===========================
 tasks.sourcesJar { from(project.sourceSets.main.map { it.kotlin }) }
 
-afterEvaluate { tasks.jar { manifest { attributes("Automatic-Module-Name" to "org.mongodb.bson.kotlin") } } }
+afterEvaluate {
+    tasks.jar { manifest { attributes["Automatic-Module-Name"] = "org.mongodb.bson.kotlin" } }
+}
