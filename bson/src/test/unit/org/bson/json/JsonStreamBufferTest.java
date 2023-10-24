@@ -16,12 +16,13 @@
 
 package org.bson.json;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class JsonStreamBufferTest {
 
@@ -51,12 +52,12 @@ public class JsonStreamBufferTest {
         assertEquals(2, buffer.getPosition());
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testEOFCheck() {
         JsonStreamBuffer buffer = new JsonStreamBuffer(new InputStreamReader(new ByteArrayInputStream("".getBytes())));
 
         buffer.read();
-        buffer.read();
+        assertThrows(JsonParseException.class, () -> buffer.read());
     }
 
     @Test

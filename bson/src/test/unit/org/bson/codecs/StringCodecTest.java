@@ -23,17 +23,18 @@ import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StringCodecTest {
 
     private final DecoderContext decoderContext = DecoderContext.builder().build();
     private final EncoderContext encoderContext = EncoderContext.builder().build();
-    private final Codec<String> parent =  new StringCodec();
+    private final Codec<String> parent = new StringCodec();
     @SuppressWarnings("unchecked")
     private final Codec<String> child = ((RepresentationConfigurable<String>) parent).withRepresentation(BsonType.OBJECT_ID);
 
@@ -50,9 +51,9 @@ public class StringCodecTest {
         assertEquals(((RepresentationConfigurable) child).getRepresentation(), BsonType.STRING);
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidRepresentation() {
-        ((RepresentationConfigurable) parent).withRepresentation(BsonType.INT32);
+        assertThrows(CodecConfigurationException.class, () -> ((RepresentationConfigurable) parent).withRepresentation(BsonType.INT32));
     }
 
 
@@ -66,20 +67,24 @@ public class StringCodecTest {
         assertEquals(stringId, "5f5a6cc03237b5e06d6b887b");
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void testDecodeOnObjectIdWithStringRep() {
-        BsonReader reader = new JsonReader("{'_id':  ObjectId('5f5a6cc03237b5e06d6b887b'), 'name': 'Brian'}");
-        reader.readStartDocument();
-        reader.readName();
-        parent.decode(reader, decoderContext);
+        assertThrows(BsonInvalidOperationException.class, () -> {
+            BsonReader reader = new JsonReader("{'_id':  ObjectId('5f5a6cc03237b5e06d6b887b'), 'name': 'Brian'}");
+            reader.readStartDocument();
+            reader.readName();
+            parent.decode(reader, decoderContext);
+        });
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void testDecodeOnStringWithObjectIdRep() {
-        BsonReader reader = new JsonReader("{'name': 'Brian'");
-        reader.readStartDocument();
-        reader.readName();
-        child.decode(reader, decoderContext);
+        assertThrows(BsonInvalidOperationException.class, () -> {
+            BsonReader reader = new JsonReader("{'name': 'Brian'");
+            reader.readStartDocument();
+            reader.readName();
+            child.decode(reader, decoderContext);
+        });
     }
 
     @Test

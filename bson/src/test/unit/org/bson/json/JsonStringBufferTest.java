@@ -16,9 +16,10 @@
 
 package org.bson.json;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class JsonStringBufferTest {
 
@@ -48,11 +49,11 @@ public class JsonStringBufferTest {
         assertEquals(2, buffer.getPosition());
     }
 
-    @Test(expected = JsonParseException.class)
+    @Test
     public void testEOFCheck() {
         JsonStringBuffer buffer = new JsonStringBuffer("");
 
         buffer.read();
-        buffer.read();
+        assertThrows(JsonParseException.class, () -> buffer.read());
     }
 }

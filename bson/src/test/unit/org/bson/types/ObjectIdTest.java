@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,11 +30,11 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ObjectIdTest {
     @Test
@@ -167,8 +167,7 @@ public class ObjectIdTest {
     @Test
     public void testToHexString() {
         assertEquals("000000000000000000000000", new ObjectId(new byte[12]).toHexString());
-        assertEquals("7fffffff007fff7fff007fff",
-                new ObjectId(new byte[]{127, -1, -1, -1, 0, 127, -1, 127, -1, 0, 127, -1}).toHexString());
+        assertEquals("7fffffff007fff7fff007fff", new ObjectId(new byte[]{127, -1, -1, -1, 0, 127, -1, 127, -1, 0, 127, -1}).toHexString());
     }
 
     private Date getDate(final String s) throws ParseException {
@@ -211,8 +210,7 @@ public class ObjectIdTest {
                         46, 79, 98, 106, 101, 99, 116, 73, 100, 36, 83, 101, 114, 105, 97, 108, 105, 122, 97, 116, 105, 111, 110, 80, 114,
                         111, 120, 121, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 1, 91, 0, 5, 98, 121, 116, 101, 115, 116, 0, 2, 91, 66, 120, 112, 117,
                         114, 0, 2, 91, 66, -84, -13, 23, -8, 6, 8, 84, -32, 2, 0, 0, 120, 112, 0, 0, 0, 12, 95, -113, 79, -49, 39, 81, 111,
-                        5, -25, -22, -27, -66},
-                baos.toByteArray());
+                        5, -25, -22, -27, -66}, baos.toByteArray());
 
         // when
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
