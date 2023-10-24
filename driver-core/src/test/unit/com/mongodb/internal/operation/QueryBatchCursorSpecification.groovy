@@ -163,9 +163,7 @@ class QueryBatchCursorSpecification extends Specification {
         }
         List<Document> firstBatch = [new Document()]
         QueryResult<Document> initialResult = new QueryResult<>(NAMESPACE, firstBatch, 1, SERVER_ADDRESS)
-        Object getMoreResponse = useCommand
-                ? emptyGetMoreCommandResponse(NAMESPACE, getMoreResponseHasCursor ? 42 : 0)
-                : emptyGetMoreQueryResponse(NAMESPACE, SERVER_ADDRESS, getMoreResponseHasCursor ? 42 : 0)
+        Object getMoreResponse = emptyGetMoreCommandResponse(NAMESPACE, getMoreResponseHasCursor ? 42 : 0)
 
         when:
         QueryBatchCursor<Document> cursor = new QueryBatchCursor<>(initialResult, 0, 0, 0, new DocumentCodec(), null, connSource, conn)
@@ -179,24 +177,14 @@ class QueryBatchCursorSpecification extends Specification {
 
         then:
         // simulate the user calling `close` while `getMore` is in flight
-        if (useCommand) {
-            // in LB mode the same connection is used to execute both `getMore` and `killCursors`
-            int numberOfInvocations = serverType == ServerType.LOAD_BALANCER
-                    ? getMoreResponseHasCursor ? 2 : 1
-                    : 1
-            numberOfInvocations * conn.command(*_) >> {
-                // `getMore` command
-                cursor.close()
-                getMoreResponse
-            } >> {
-                // `killCursors` command
-                null
-            }
-        } else {
-            1 * conn.getMore(*_) >> {
-                cursor.close()
-                getMoreResponse
-            }
+        // in LB mode the same connection is used to execute both `getMore` and `killCursors`
+        numberOfInvocations * conn.command(*_) >> {
+            // `getMore` command
+            cursor.close()
+            getMoreResponse
+        } >> {
+            // `killCursors` command
+            null
         }
 
         then:
@@ -208,11 +196,11 @@ class QueryBatchCursorSpecification extends Specification {
         connSource.getCount() == 1
 
         where:
-        serverVersion                | useCommand | getMoreResponseHasCursor | serverType
-        new ServerVersion([5, 0, 0]) | true       | true                     | ServerType.LOAD_BALANCER
-        new ServerVersion([5, 0, 0]) | true       | false                    | ServerType.LOAD_BALANCER
-        new ServerVersion([3, 2, 0]) | true       | true                     | ServerType.STANDALONE
-        new ServerVersion([3, 2, 0]) | true       | false                    | ServerType.STANDALONE
+        serverVersion                | getMoreResponseHasCursor | serverType                | numberOfInvocations
+        new ServerVersion([5, 0, 0]) | true                     | ServerType.LOAD_BALANCER  | 2
+        new ServerVersion([5, 0, 0]) | false                    | ServerType.LOAD_BALANCER  | 1
+        new ServerVersion([3, 2, 0]) | true                     | ServerType.STANDALONE     | 2
+        new ServerVersion([3, 2, 0]) | false                    | ServerType.STANDALONE     | 1
     }
 
     def 'should close cursor after getMore finishes if cursor was closed while getMore was in progress and getMore throws exception'() {
@@ -349,9 +337,5 @@ class QueryBatchCursorSpecification extends Specification {
                 .append('cursor', new BsonDocument('id', new BsonInt64(cursorId))
                         .append('ns', new BsonString(namespace.getFullName()))
                         .append('nextBatch', new BsonArrayWrapper([])))
-    }
-
-    private static <T> QueryResult<T> emptyGetMoreQueryResponse(MongoNamespace namespace, ServerAddress serverAddress, long cursorId) {
-        new QueryResult(namespace, [], cursorId, serverAddress)
     }
 }

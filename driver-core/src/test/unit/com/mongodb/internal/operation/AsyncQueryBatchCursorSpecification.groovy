@@ -309,6 +309,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def connectionB = referenceCountedAsyncConnection(serverVersion)
         def connectionSource = getAsyncConnectionSource(serverType, connectionA, connectionB)
         def initialResult = queryResult()
+        def connectionBInvocations = getMoreResponseHasCursor && serverType == ServerType.STANDALONE ? 1 : 0
 
         when:
         def cursor = new AsyncQueryBatchCursor<Document>(initialResult, 0, 0, 0, CODEC, null, connectionSource, connectionA)
@@ -330,11 +331,17 @@ class AsyncQueryBatchCursorSpecification extends Specification {
                 ((SingleResultCallback<?>) it.last()).onResult(response2, null)
         }
 
+        connectionBInvocations * connectionB.commandAsync(*_) >> {
+            // `killCursors` command
+            ((SingleResultCallback<?>) it.last()).onResult(response2, null)
+        }
+
         then:
         noExceptionThrown()
 
         then:
         connectionA.getCount() == 0
+        connectionB.getCount() == 0
         cursor.isClosed()
 
         where:
