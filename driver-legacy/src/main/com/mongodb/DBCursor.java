@@ -369,7 +369,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual reference/command/explain Explain Output
      * @mongodb.server.release 3.0
      */
-    @Deprecated
     public DBObject explain() {
         return executor.execute(getQueryOperation(collection.getObjectCodec())
                         .asExplainableOperation(null, getDefaultCodecRegistry().get(DBObject.class)),
