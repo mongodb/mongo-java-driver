@@ -59,7 +59,7 @@ import static java.util.Optional.ofNullable;
 /**
  * A {@code StreamFactoryFactory} that supports TLS/SSL.  The implementation supports asynchronous usage.
  */
-public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Closeable {
+public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
 
     private static final Logger LOGGER = Loggers.getLogger("connection.tls");
 

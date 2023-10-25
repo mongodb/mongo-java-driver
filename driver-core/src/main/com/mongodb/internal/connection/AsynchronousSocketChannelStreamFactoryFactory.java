@@ -36,4 +36,8 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
         return new AsynchronousSocketChannelStreamFactory(inetAddressResolver, socketSettings, sslSettings);
     }
+
+    @Override
+    public void close() {
+    }
 }
