@@ -105,15 +105,6 @@ public abstract class ReadPreference {
      * True if this read preference allows reading from a secondary member of a replica set.
      *
      * @return if reading from a secondary is ok
-     * @deprecated Prefer {@link #isSecondaryOk()}
-     */
-    @Deprecated
-    public abstract boolean isSlaveOk();
-
-    /**
-     * True if this read preference allows reading from a secondary member of a replica set.
-     *
-     * @return if reading from a secondary is ok
      * @since 4.4
      */
     public abstract boolean isSecondaryOk();
@@ -694,11 +685,6 @@ public abstract class ReadPreference {
         @Override
         public TaggableReadPreference withHedgeOptions(final ReadPreferenceHedgeOptions hedgeOptions) {
             throw new UnsupportedOperationException("Primary read preference can not also specify hedge");
-        }
-
-        @Override
-        public boolean isSlaveOk() {
-            return false;
         }
 
         @Override
