@@ -58,7 +58,10 @@ test {
     maxParallelForks = 1
 }
 
-jar.manifest.attributes['Import-Package'] =  [
-        '!scala.*',
-        '*'
-].join(',')
+afterEvaluate {
+    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.bson.scala'
+    jar.manifest.attributes['Import-Package'] = [
+            '!scala.*',
+            '*'
+    ].join(',')
+}
