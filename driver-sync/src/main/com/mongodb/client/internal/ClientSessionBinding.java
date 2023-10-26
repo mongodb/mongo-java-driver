@@ -34,6 +34,7 @@ import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
@@ -89,17 +90,18 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getReadConnectionSource));
+        return getConnectionSource(wrapped::getReadConnectionSource);
     }
 
     @Override
     public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
-        return new SessionBindingConnectionSource(getConnectionSource(() ->
-                wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference)));
+        Supplier<ConnectionSource> supplier = () ->
+                wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference);
+        return getConnectionSource(supplier);
     }
 
     public ConnectionSource getWriteConnectionSource() {
-        return new SessionBindingConnectionSource(getConnectionSource(wrapped::getWriteConnectionSource));
+        return getConnectionSource(wrapped::getWriteConnectionSource);
     }
 
     @Override
@@ -123,23 +125,24 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         return wrapped.getOperationContext();
     }
 
-    private ConnectionSource getConnectionSource(final Supplier<ConnectionSource> wrappedConnectionSourceSupplier) {
-        if (!session.hasActiveTransaction()) {
-            return wrappedConnectionSourceSupplier.get();
-        }
+    private ConnectionSource getConnectionSource(final Supplier<ConnectionSource> connectionSourceSupplier) {
+        Function<ConnectionSource, ConnectionSource> wrapper = c -> new SessionBindingConnectionSource(c);
 
-        if (TransactionContext.get(session) == null) {
-            ConnectionSource source = wrappedConnectionSourceSupplier.get();
-            ClusterType clusterType = source.getServerDescription().getClusterType();
-            if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
-                TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
-                session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
-                transactionContext.release();  // The session is responsible for retaining a reference to the context
-            }
-            return source;
-        } else {
-            return wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()));
+        if (!session.hasActiveTransaction()) {
+            return wrapper.apply(connectionSourceSupplier.get());
         }
+        if (TransactionContext.get(session) != null) {
+            return wrapper.apply(
+                    wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress())));
+        }
+        ConnectionSource source = connectionSourceSupplier.get();
+        ClusterType clusterType = source.getServerDescription().getClusterType();
+        if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
+            TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
+            session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
+            transactionContext.release();  // The session is responsible for retaining a reference to the context
+        }
+        return wrapper.apply(source);
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {
@@ -183,18 +186,16 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
         @Override
         public Connection getConnection() {
             TransactionContext<Connection> transactionContext = TransactionContext.get(session);
-            if (transactionContext != null && transactionContext.isConnectionPinningRequired()) {
-                Connection pinnedConnection = transactionContext.getPinnedConnection();
-                if (pinnedConnection == null) {
-                    Connection connection = wrapped.getConnection();
-                    transactionContext.pinConnection(connection, Connection::markAsPinned);
-                    return connection;
-                } else {
-                    return pinnedConnection.retain();
-                }
-            } else {
+            if (transactionContext == null || !transactionContext.isConnectionPinningRequired()) {
                 return wrapped.getConnection();
             }
+            Connection pinnedConnection = transactionContext.getPinnedConnection();
+            if (pinnedConnection != null) {
+                return pinnedConnection.retain();
+            }
+            Connection connection = wrapped.getConnection();
+            transactionContext.pinConnection(connection, Connection::markAsPinned);
+            return connection;
         }
 
         @Override
