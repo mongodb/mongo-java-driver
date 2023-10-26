@@ -36,7 +36,9 @@ import org.bson.BsonString;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
@@ -73,9 +75,18 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     @Override
     public InternalConnectionInitializationDescription startHandshake(final InternalConnection internalConnection) {
-        notNull("internalConnection", internalConnection);
+        long startTime = System.nanoTime();
 
-        return initializeConnectionDescription(internalConnection);
+        notNull("internalConnection", internalConnection);
+        BsonDocument helloCommandDocument = createHelloCommand(authenticator, internalConnection);
+        BsonDocument helloResult;
+        try {
+            helloResult = executeCommand("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection);
+        } catch (MongoException e) {
+            throw mapHelloException(e);
+        }
+        setSpeculativeAuthenticateResponse(helloResult);
+        return createInitializationDescription(helloResult, internalConnection, startTime);
     }
 
     public InternalConnectionInitializationDescription finishHandshake(final InternalConnection internalConnection,
@@ -91,15 +102,19 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     public void startHandshakeAsync(final InternalConnection internalConnection,
                                     final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
         long startTime = System.nanoTime();
-        executeCommandAsync("admin", createHelloCommand(authenticator, internalConnection), clusterConnectionMode, serverApi,
-                internalConnection, (helloResult, t) -> {
-                    if (t != null) {
-                        callback.onResult(null, t instanceof MongoException ? mapHelloException((MongoException) t) : t);
-                    } else {
-                        setSpeculativeAuthenticateResponse(helloResult);
-                        callback.onResult(createInitializationDescription(helloResult, internalConnection, startTime), null);
-                    }
-                });
+        beginAsync().<InternalConnectionInitializationDescription>thenSupply(c -> {
+            notNull("internalConnection", internalConnection);
+            BsonDocument helloCommandDocument = createHelloCommand(authenticator, internalConnection);
+
+            beginAsync().<BsonDocument>thenSupply(c2 -> {
+                executeCommandAsync("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection, c2);
+            }).onErrorIf(e -> e instanceof MongoException, (t, c2) -> {
+                throw mapHelloException((MongoException) assertNotNull(t));
+            }).thenApply((helloResult, c2) -> {
+                setSpeculativeAuthenticateResponse(assertNotNull(helloResult));
+                callback.complete(createInitializationDescription(helloResult, internalConnection, startTime));
+            });
+        }).finish(callback);
     }
 
     @Override
@@ -119,20 +134,6 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                         }
                     });
         }
-    }
-
-    private InternalConnectionInitializationDescription initializeConnectionDescription(final InternalConnection internalConnection) {
-        BsonDocument helloResult;
-        BsonDocument helloCommandDocument = createHelloCommand(authenticator, internalConnection);
-
-        long start = System.nanoTime();
-        try {
-            helloResult = executeCommand("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection);
-        } catch (MongoException e) {
-            throw mapHelloException(e);
-        }
-        setSpeculativeAuthenticateResponse(helloResult);
-        return createInitializationDescription(helloResult, internalConnection, start);
     }
 
     private MongoException mapHelloException(final MongoException e) {
