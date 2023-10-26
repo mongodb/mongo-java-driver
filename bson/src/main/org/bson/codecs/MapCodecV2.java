@@ -34,8 +34,6 @@ import static org.bson.assertions.Assertions.notNull;
  * {@code HashMap<String, Object>} instances when decoding. If the type argument is {@code NavigableMap<String, Object>}, it constructs
  * {@code TreeMap<String, Object>} instances when decoding.</p>
  *
- * <p>Replaces the now deprecated {@link MapCodec}.</p>
- *
  * @param <M> the actual type of the Map, e.g. {@code NavigableMap<String, Object>}
  */
 @SuppressWarnings("rawtypes")

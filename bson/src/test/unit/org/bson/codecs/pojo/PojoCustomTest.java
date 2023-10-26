@@ -23,7 +23,9 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.LongCodec;
+import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
@@ -104,7 +106,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SuppressWarnings("deprecation")
 public final class PojoCustomTest extends PojoTestCase {
 
     @Test
@@ -464,15 +465,15 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testMapStringObjectModel() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
-        CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()),
-                fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
+        CodecRegistry registry = fromRegistries(fromProviders(new MapCodecProvider(), new IterableCodecProvider(), new ValueCodecProvider(),
+                        getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
     }
 
     @Test
     public void testMapStringObjectModelWithObjectCodec() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
-        CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()), fromCodecs(new ObjectCodec()),
+        CodecRegistry registry = fromRegistries(fromProviders(new MapCodecProvider()), fromCodecs(new ObjectCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         assertThrows(UnsupportedOperationException.class, () ->
                 roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}"));
