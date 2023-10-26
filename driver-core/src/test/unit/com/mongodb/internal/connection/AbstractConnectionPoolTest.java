@@ -421,9 +421,6 @@ public abstract class AbstractConnectionPoolTest {
 
     private Set<Class<?>> getIgnoredEventClasses() {
         Set<Class<?>> ignoredEventClasses = new HashSet<>();
-        ignoredEventClasses.add(com.mongodb.event.ConnectionPoolOpenedEvent.class);
-        ignoredEventClasses.add(com.mongodb.event.ConnectionAddedEvent.class);
-        ignoredEventClasses.add(com.mongodb.event.ConnectionRemovedEvent.class);
         for (BsonValue cur : definition.getArray("ignore", new BsonArray())) {
             String type = cur.asString().getValue();
             Class<?> eventClass = getEventClass(type);

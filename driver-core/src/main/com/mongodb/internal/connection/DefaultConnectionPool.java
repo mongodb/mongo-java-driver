@@ -498,14 +498,13 @@ final class DefaultConnectionPool implements ConnectionPool {
             logMessage("Connection pool created", clusterId, message, entries);
         }
         connectionPoolListener.connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, settings));
-        connectionPoolListener.connectionPoolOpened(new com.mongodb.event.ConnectionPoolOpenedEvent(serverId, settings));
     }
 
     /**
      * Send both current and deprecated events in order to preserve backwards compatibility.
      * Must not throw {@link Exception}s.
      *
-     * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionAdded(com.mongodb.event.ConnectionAddedEvent)},
+     * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)},
      * {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}.
      * This order is required by
      * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
@@ -516,7 +515,6 @@ final class DefaultConnectionPool implements ConnectionPool {
                 "Connection created: address={}:{}, driver-generated ID={}",
                 connectionId.getLocalValue());
 
-        connectionPoolListener.connectionAdded(new com.mongodb.event.ConnectionAddedEvent(connectionId));
         connectionPoolListener.connectionCreated(new ConnectionCreatedEvent(connectionId));
         return TimePoint.now();
     }
@@ -541,7 +539,6 @@ final class DefaultConnectionPool implements ConnectionPool {
                     "Connection closed: address={}:{}, driver-generated ID={}. Reason: {}.[ Error: {}]",
                     entries);
         }
-        connectionPoolListener.connectionRemoved(new com.mongodb.event.ConnectionRemovedEvent(connectionId, getReasonForRemoved(reason)));
         connectionPoolListener.connectionClosed(new ConnectionClosedEvent(connectionId, reason));
     }
 
@@ -575,27 +572,6 @@ final class DefaultConnectionPool implements ConnectionPool {
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
         return TimePoint.now();
-    }
-
-    private com.mongodb.event.ConnectionRemovedEvent.Reason getReasonForRemoved(final ConnectionClosedEvent.Reason reason) {
-        com.mongodb.event.ConnectionRemovedEvent.Reason removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.UNKNOWN;
-        switch (reason) {
-            case STALE:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.STALE;
-                break;
-            case IDLE:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.MAX_IDLE_TIME_EXCEEDED;
-                break;
-            case ERROR:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.ERROR;
-                break;
-            case POOL_CLOSED:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.POOL_CLOSED;
-                break;
-            default:
-                break;
-        }
-        return removedReason;
     }
 
     /**
