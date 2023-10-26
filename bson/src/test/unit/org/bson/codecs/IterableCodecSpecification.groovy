@@ -43,7 +43,7 @@ class IterableCodecSpecification extends Specification {
 
     def 'should have Iterable encoding class'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
 
         expect:
         codec.getEncoderClass() == Iterable
@@ -51,7 +51,7 @@ class IterableCodecSpecification extends Specification {
 
     def 'should encode an Iterable to a BSON array'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
         def writer = new BsonDocumentWriter(new BsonDocument())
 
         when:
@@ -66,7 +66,7 @@ class IterableCodecSpecification extends Specification {
 
     def 'should decode a BSON array to an Iterable'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
         def reader = new BsonDocumentReader(parse('{array : [1, 2, 3, null]}'))
 
         when:
@@ -81,7 +81,7 @@ class IterableCodecSpecification extends Specification {
 
     def 'should decode a BSON array of arrays to an Iterable of Iterables'() {
         given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
         def reader = new BsonDocumentReader(parse('{array : [[1, 2], [3, 4, 5]]}'))
 
         when:
@@ -116,7 +116,7 @@ class IterableCodecSpecification extends Specification {
     def 'should decode binary subtype 3 for UUID'() {
         given:
         def reader = new BsonDocumentReader(parse(document))
-        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null)
                 .withUuidRepresentation(representation)
 
         when:
@@ -142,7 +142,7 @@ class IterableCodecSpecification extends Specification {
     def 'should decode binary subtype 4 for UUID'() {
         given:
         def reader = new BsonDocumentReader(parse(document))
-        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap())
+        def codec = new IterableCodec(fromCodecs(new UuidCodec(representation), new BinaryCodec()), new BsonTypeClassMap(), null)
                 .withUuidRepresentation(representation)
 
         when:
