@@ -17,8 +17,8 @@
 package com.mongodb.connection
 
 import com.mongodb.ConnectionString
-import com.mongodb.event.ServerListenerAdapter
-import com.mongodb.event.ServerMonitorListenerAdapter
+import com.mongodb.event.ServerListener
+import com.mongodb.event.ServerMonitorListener
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -38,12 +38,12 @@ class ServerSettingsSpecification extends Specification {
 
     def 'should apply builder settings'() {
         given:
-        def serverListenerOne = new ServerListenerAdapter() { }
-        def serverListenerTwo = new ServerListenerAdapter() { }
-        def serverListenerThree = new ServerListenerAdapter() { }
-        def serverMonitorListenerOne = new ServerMonitorListenerAdapter() { }
-        def serverMonitorListenerTwo = new ServerMonitorListenerAdapter() { }
-        def serverMonitorListenerThree = new ServerMonitorListenerAdapter() { }
+        def serverListenerOne = new ServerListener() { }
+        def serverListenerTwo = new ServerListener() { }
+        def serverListenerThree = new ServerListener() { }
+        def serverMonitorListenerOne = new ServerMonitorListener() { }
+        def serverMonitorListenerTwo = new ServerMonitorListener() { }
+        def serverMonitorListenerThree = new ServerMonitorListener() { }
 
         when:
         def settings = ServerSettings.builder()
@@ -84,8 +84,8 @@ class ServerSettingsSpecification extends Specification {
 
     def 'should apply settings'() {
         given:
-        def serverListenerOne = new ServerListenerAdapter() { }
-        def serverMonitorListenerOne = new ServerMonitorListenerAdapter() { }
+        def serverListenerOne = new ServerListener() { }
+        def serverMonitorListenerOne = new ServerMonitorListener() { }
         def defaultSettings = ServerSettings.builder().build()
         def customSettings = ServerSettings.builder()
                 .heartbeatFrequency(4, SECONDS)
@@ -104,13 +104,13 @@ class ServerSettingsSpecification extends Specification {
         def settings = ServerSettings.builder().build()
 
         when:
-        settings.serverListeners.add(new ServerListenerAdapter() { })
+        settings.serverListeners.add(new ServerListener() { })
 
         then:
         thrown(UnsupportedOperationException)
 
         when:
-        settings.serverMonitorListeners.add(new ServerMonitorListenerAdapter() { })
+        settings.serverMonitorListeners.add(new ServerMonitorListener() { })
 
         then:
         thrown(UnsupportedOperationException)
@@ -132,8 +132,8 @@ class ServerSettingsSpecification extends Specification {
 
     def 'identical settings should be equal'() {
         given:
-        def serverListenerOne = new ServerListenerAdapter() { }
-        def serverMonitorListenerOne = new ServerMonitorListenerAdapter() { }
+        def serverListenerOne = new ServerListener() { }
+        def serverMonitorListenerOne = new ServerMonitorListener() { }
 
         expect:
         ServerSettings.builder().build() == ServerSettings.builder().build()
@@ -158,8 +158,8 @@ class ServerSettingsSpecification extends Specification {
 
     def 'identical settings should have same hash code'() {
         given:
-        def serverListenerOne = new ServerListenerAdapter() { }
-        def serverMonitorListenerOne = new ServerMonitorListenerAdapter() { }
+        def serverListenerOne = new ServerListener() { }
+        def serverMonitorListenerOne = new ServerMonitorListener() { }
 
         expect:
         ServerSettings.builder().build().hashCode() == ServerSettings.builder().build().hashCode()
