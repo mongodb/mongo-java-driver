@@ -37,7 +37,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @param <M> the actual type of the Map, e.g. {@code NavigableMap<String, Object>}
  */
 @SuppressWarnings("rawtypes")
-final class MapCodecV2<M extends Map<String, Object>> extends AbstractMapCodec<Object, M>
+final class MapCodec<M extends Map<String, Object>> extends AbstractMapCodec<Object, M>
         implements OverridableUuidRepresentationCodec<M> {
 
     private final BsonTypeCodecMap bsonTypeCodecMap;
@@ -56,13 +56,13 @@ final class MapCodecV2<M extends Map<String, Object>> extends AbstractMapCodec<O
      * @param clazz            the Map subclass
      * @since 4.8
      */
-    MapCodecV2(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer,
+    MapCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer,
                       final Class<M> clazz) {
         this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
                 UuidRepresentation.UNSPECIFIED, clazz);
     }
 
-    private MapCodecV2(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
+    private MapCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
                        final UuidRepresentation uuidRepresentation, final Class<M> clazz) {
         super(clazz);
         this.registry = notNull("registry", registry);
@@ -76,7 +76,7 @@ final class MapCodecV2<M extends Map<String, Object>> extends AbstractMapCodec<O
         if (this.uuidRepresentation.equals(uuidRepresentation)) {
             return this;
         }
-        return new MapCodecV2<>(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation, getEncoderClass());
+        return new MapCodec<>(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation, getEncoderClass());
     }
 
     @Override

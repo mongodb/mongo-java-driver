@@ -90,7 +90,7 @@ public class MapCodecProvider implements CodecProvider {
             switch (typeArgumentsSize) {
                 case 0: {
                     @SuppressWarnings({"unchecked", "rawtypes"})
-                    Codec<T> result = new MapCodecV2(registry, bsonTypeClassMap, valueTransformer, clazz);
+                    Codec<T> result = new MapCodec(registry, bsonTypeClassMap, valueTransformer, clazz);
                     return result;
                 }
                 case 2: {
