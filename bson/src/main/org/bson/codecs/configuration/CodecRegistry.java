@@ -64,7 +64,6 @@ public interface CodecRegistry extends CodecProvider {
      * @throws CodecConfigurationException if no codec can be found for the given class and type arguments.
      * @throws AssertionError              by default, if the implementation does not override this method, or if no codec can be found
      *                                     for the given class and type arguments.
-     * @see org.bson.codecs.Parameterizable
      * @since 4.8
      */
     default <T> Codec<T> get(Class<T> clazz, List<Type> typeArguments) {

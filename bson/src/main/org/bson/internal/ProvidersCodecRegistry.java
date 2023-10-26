@@ -89,17 +89,9 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
     }
 
     @Nullable
-    @SuppressWarnings("deprecation")
     public static <T> Codec<T> getFromCodecProvider(final CodecProvider provider,
             final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
-        Codec<T> codec = provider.get(clazz, typeArguments, registry);
-        // `Parameterizable` is deprecated, but we still have to support it until it is removed
-        if (codec instanceof org.bson.codecs.Parameterizable && !typeArguments.isEmpty()) {
-            @SuppressWarnings("unchecked")
-            Codec<T> parameterizedCodec = (Codec<T>) ((org.bson.codecs.Parameterizable) codec).parameterize(registry, typeArguments);
-            codec = parameterizedCodec;
-        }
-        return codec;
+        return provider.get(clazz, typeArguments, registry);
     }
 
     @Override
