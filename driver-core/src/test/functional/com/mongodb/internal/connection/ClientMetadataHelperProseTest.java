@@ -191,9 +191,27 @@ public class ClientMetadataHelperProseTest {
                 });
     }
 
-
     @Test
     void testDockerMetadataIncluded() {
+        try (MockedStatic<Files> pathsMockedStatic = Mockito.mockStatic(Files.class)) {
+            Path path = Paths.get("/.dockerenv");
+            pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
+
+            withWrapper()
+                    .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                    .run(() -> {
+                        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'runtime': 'docker'}}"));
+                        BsonDocument actual = createActualClientMetadataDocument();
+                        assertEquals(expected, actual);
+
+                        performHello();
+                    });
+        }
+    }
+
+    @Test
+    void testDockerAndKubernetesMetadataIncluded() {
         try (MockedStatic<Files> pathsMockedStatic = Mockito.mockStatic(Files.class)) {
             Path path = Paths.get("/.dockerenv");
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
