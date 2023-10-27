@@ -29,6 +29,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -240,7 +241,7 @@ public final class ClientMetadataHelper {
             @Override
             boolean isCurrentRuntimeContainer() {
                 try {
-                    return Files.exists(get("/.dockerenv"));
+                    return Files.exists(get(File.separator + ".dockerenv"));
                 } catch (Exception e) {
                     return false;
                     // NOOP. This could be a SecurityException.

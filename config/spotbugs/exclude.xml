@@ -277,9 +277,4 @@
         <Bug pattern="NP_NONNULL_PARAM_VIOLATION"/>
     </Match>
 
-    <Match>
-        <Class name="com.mongodb.internal.connection.ClientMetadataHelper$ContainerRuntime"/>
-        <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME"/>
-    </Match>
-
 </FindBugsFilter>
