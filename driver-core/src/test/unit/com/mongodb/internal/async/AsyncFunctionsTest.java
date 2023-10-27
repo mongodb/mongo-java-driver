@@ -159,7 +159,7 @@ final class AsyncFunctionsTest {
                         async(1, c);
                     }).thenRun(c -> {
                         plain(2);
-                        c.complete();
+                        c.complete(c);
                     }).finish(callback);
                 });
 
@@ -419,7 +419,7 @@ final class AsyncFunctionsTest {
                 (callback) -> {
                     beginAsync().thenRun(c -> {
                         plain(1);
-                        c.complete();
+                        c.complete(c);
                     }).finish(callback);
                 });
     }
@@ -457,7 +457,7 @@ final class AsyncFunctionsTest {
                         async(1, c);
                     }).onErrorIf(t -> true, (t, c) -> {
                         plain(2);
-                        c.complete();
+                        c.complete(c);
                     }).finish(callback);
                 });
 
@@ -602,7 +602,7 @@ final class AsyncFunctionsTest {
                     final int[] i = new int[1];
                     beginAsync().thenRun(c -> {
                         i[0] = plainTest(0) ? 1 : 2;
-                        c.complete();
+                        c.complete(c);
                     }).thenRun(c -> {
                         beginAsync().<Integer>thenSupply(c2 -> {
                             asyncReturns(i[0] + 10, c2);
@@ -818,7 +818,7 @@ final class AsyncFunctionsTest {
         };
         BiConsumer<Integer, SingleResultCallback<Void>> happyAsync = (i, c) -> {
             happySync.accept(i);
-            c.complete();
+            c.complete(c);
         };
 
         // Standard nested async, no error handling:
@@ -955,12 +955,12 @@ final class AsyncFunctionsTest {
     private void async(final int i, final SingleResultCallback<Void> callback) {
         if (throwExceptionsFromAsync) {
             sync(i);
-            callback.complete();
+            callback.complete(callback);
 
         } else {
             try {
                 sync(i);
-                callback.complete();
+                callback.complete(callback);
             } catch (Throwable t) {
                 callback.onResult(null, t);
             }

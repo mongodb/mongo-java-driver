@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.lang.Nullable;
@@ -49,7 +50,11 @@ public interface SingleResultCallback<T> {
         };
     }
 
-    default void complete() {
+    default void complete(final SingleResultCallback<Void> callback) {
+        // takes a void callback (itself) to help ensure that this method
+        // is not accidentally used when "complete(T)" should have been used
+        // instead, since results are not marked nullable.
+        Assertions.assertTrue(callback == this);
         this.onResult(null, null);
     }
 

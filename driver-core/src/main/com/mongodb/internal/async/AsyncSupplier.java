@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.lang.Nullable;
-
 import java.util.function.Predicate;
 
 
@@ -49,7 +47,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     @Override
-    default void unsafeFinish(@Nullable final Void value, final SingleResultCallback<T> callback) {
+    default void unsafeFinish(final Void value, final SingleResultCallback<T> callback) {
         unsafeFinish(callback);
     }
 

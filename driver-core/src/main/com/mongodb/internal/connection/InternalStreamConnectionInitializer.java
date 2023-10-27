@@ -36,7 +36,6 @@ import org.bson.BsonString;
 
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
@@ -109,9 +108,9 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             beginAsync().<BsonDocument>thenSupply(c2 -> {
                 executeCommandAsync("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection, c2);
             }).onErrorIf(e -> e instanceof MongoException, (t, c2) -> {
-                throw mapHelloException((MongoException) assertNotNull(t));
+                throw mapHelloException((MongoException) t);
             }).thenApply((helloResult, c2) -> {
-                setSpeculativeAuthenticateResponse(assertNotNull(helloResult));
+                setSpeculativeAuthenticateResponse(helloResult);
                 c2.complete(createInitializationDescription(helloResult, internalConnection, startTime));
             });
         }).finish(callback);

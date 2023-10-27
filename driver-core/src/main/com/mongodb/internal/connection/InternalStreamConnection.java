@@ -245,7 +245,7 @@ public class InternalStreamConnection implements InternalConnection {
             if (t instanceof MongoException) {
                 throw (MongoException) t;
             } else {
-                throw new MongoException(assertNotNull(t).toString(), t);
+                throw new MongoException(t.toString(), t);
             }
         }).finish(callback);
     }

@@ -30,7 +30,6 @@ import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.TransactionContext;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
@@ -127,7 +126,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                 c2.complete(source);
             }).finish(c);
         }).<AsyncConnectionSource>thenApply((source, c) -> {
-            c.complete(new SessionBindingAsyncConnectionSource(assertNotNull(source)));
+            c.complete(new SessionBindingAsyncConnectionSource(source));
         }).finish(callback);
     }
 
@@ -204,7 +203,7 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                 beginAsync().<AsyncConnection>thenSupply(c2 -> {
                     wrapped.getConnection(c2);
                 }).<AsyncConnection>thenApply((connection, c2) -> {
-                    transactionContext.pinConnection(assertNotNull(connection), AsyncConnection::markAsPinned);
+                    transactionContext.pinConnection(connection, AsyncConnection::markAsPinned);
                     c2.complete(connection);
                 }).finish(c);
             }).finish(callback);
