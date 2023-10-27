@@ -229,20 +229,18 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
-        beginAsync().thenRun(
-            beginAsync().thenRun(c -> {
-                isTrue("Open already called", stream == null, callback);
-                stream = streamFactory.create(getServerAddressWithResolver());
-                stream.openAsync(c);
-            }).<InternalConnectionInitializationDescription>thenSupply(c -> {
-                connectionInitializer.startHandshakeAsync(this, c);
-            }).<InternalConnectionInitializationDescription>thenApply((initializationDescription, c)  -> {
-                initAfterHandshakeStart(assertNotNull(initializationDescription));
-                connectionInitializer.finishHandshakeAsync(this, initializationDescription, c);
-            }).thenConsume((initializationDescription, c)  -> {
-                initAfterHandshakeFinish(assertNotNull(initializationDescription));
-            })
-        ).onErrorIf(t -> true, (t, c) -> {
+        beginAsync().thenRun(c -> {
+            isTrue("Open already called", stream == null, callback);
+            stream = streamFactory.create(getServerAddressWithResolver());
+            stream.openAsync(c);
+        }).<InternalConnectionInitializationDescription>thenSupply(c -> {
+            connectionInitializer.startHandshakeAsync(this, c);
+        }).<InternalConnectionInitializationDescription>thenApply((initializationDescription, c)  -> {
+            initAfterHandshakeStart(initializationDescription);
+            connectionInitializer.finishHandshakeAsync(this, initializationDescription, c);
+        }).thenConsume((initializationDescription, c)  -> {
+            initAfterHandshakeFinish(initializationDescription);
+        }).onErrorIf(t -> true, (t, c) -> {
             close();
             if (t instanceof MongoException) {
                 throw (MongoException) t;

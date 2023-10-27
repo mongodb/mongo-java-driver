@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -115,6 +116,15 @@ final class AsyncFunctionsTest {
                         async(1, c);
                     }).finish(callback);
                 });
+        /*
+        Code review checklist for async code:
+
+        1. Is everything inside the boilerplate?
+        2. Is "callback" supplied to "finish"?
+        3. In each block and nested block, is that same block's "c" always passed/completed at the end of execution?
+        4. Is any c.complete followed by a return, to end execution?
+        5. Do any sync methods still need to be converted to async?
+        */
     }
 
     @Test
@@ -610,10 +620,11 @@ final class AsyncFunctionsTest {
 
     @Test
     void testTryCatchWithConditionInCatch() {
-        assertBehavesSameVariations(8,
+        assertBehavesSameVariations(12,
                 () -> {
                     try {
                         sync(plainTest(0) ? 1 : 2);
+                        sync(3);
                     } catch (Throwable t) {
                         sync(5);
                         if (t.getMessage().equals("exception-1")) {
@@ -626,6 +637,8 @@ final class AsyncFunctionsTest {
                 (callback) -> {
                     beginAsync().thenRun(c -> {
                         async(plainTest(0) ? 1 : 2, c);
+                    }).thenRun(c -> {
+                        async(3, c);
                     }).onErrorIf(t -> true, (t, c) -> {
                         beginAsync().thenRun(c2 -> {
                             async(5, c2);
@@ -791,6 +804,94 @@ final class AsyncFunctionsTest {
                 throw new IllegalStateException("must not cause second callback invocation");
             });
         });
+    }
+
+    @Test
+    void testDerivation() {
+        // Demonstrates the progression from nested async to the API.
+
+        // Stand-ins for sync-async methods; these "happily" do not throw
+        // exceptions, to avoid complicating this demo async code.
+        Consumer<Integer> happySync = (i) -> {
+            invocationTracker.getNextOption(1);
+            listener.add("affected-success-" + i);
+        };
+        BiConsumer<Integer, SingleResultCallback<Void>> happyAsync = (i, c) -> {
+            happySync.accept(i);
+            c.complete();
+        };
+
+        // Standard nested async, no error handling:
+        assertBehavesSameVariations(1,
+                () -> {
+                    happySync.accept(1);
+                    happySync.accept(2);
+                },
+                (callback) -> {
+                    happyAsync.accept(1, (v, e) -> {
+                        happyAsync.accept(2, callback);
+                    });
+                });
+
+        // When both methods are naively extracted, they are out of order:
+        assertBehavesSameVariations(1,
+                () -> {
+                    happySync.accept(1);
+                    happySync.accept(2);
+                },
+                (callback) -> {
+                    SingleResultCallback<Void> second = (v, e) -> {
+                        happyAsync.accept(2, callback);
+                    };
+                    SingleResultCallback<Void> first = (v, e) -> {
+                        happyAsync.accept(1, second);
+                    };
+                    first.onResult(null, null);
+                });
+
+        // We create an "AsyncRunnable" that takes a callback, which
+        // decouples any async methods from each other, allowing them
+        // to be declared in a sync-like order, and without nesting:
+        assertBehavesSameVariations(1,
+                () -> {
+                    happySync.accept(1);
+                    happySync.accept(2);
+                },
+                (callback) -> {
+                    AsyncRunnable first = (SingleResultCallback<Void> c) -> {
+                        happyAsync.accept(1, c);
+                    };
+                    AsyncRunnable second = (SingleResultCallback<Void> c) -> {
+                        happyAsync.accept(2, c);
+                    };
+                    // This is a simplified variant of the "then" methods;
+                    // it has no error handling. It takes methods A and B,
+                    // and returns C, which is B(A()).
+                    AsyncRunnable combined = (c) -> {
+                        first.unsafeFinish((r, e) -> {
+                            second.unsafeFinish(c);
+                        });
+                    };
+                    combined.unsafeFinish(callback);
+                });
+
+        // This combining method is added as a default method on AsyncRunnable,
+        // and a "finish" method wraps the resulting methods. This also adds
+        // exception handling and monadic short-circuiting of ensuing methods
+        // when an exception arises (comparable to how thrown exceptions "skip"
+        // ensuing code).
+        assertBehavesSameVariations(3,
+                () -> {
+                    sync(1);
+                    sync(2);
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        async(1, c);
+                    }).thenRun(c -> {
+                        async(2, c);
+                    }).finish(callback);
+                });
     }
 
     // invoked methods:

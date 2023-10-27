@@ -112,7 +112,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                 throw mapHelloException((MongoException) assertNotNull(t));
             }).thenApply((helloResult, c2) -> {
                 setSpeculativeAuthenticateResponse(assertNotNull(helloResult));
-                callback.complete(createInitializationDescription(helloResult, internalConnection, startTime));
+                c2.complete(createInitializationDescription(helloResult, internalConnection, startTime));
             });
         }).finish(callback);
     }
