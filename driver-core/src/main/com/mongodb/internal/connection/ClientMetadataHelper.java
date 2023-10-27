@@ -31,7 +31,6 @@ import org.bson.io.BasicOutputBuffer;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +39,7 @@ import java.util.function.Consumer;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
+import static java.nio.file.Paths.get;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -240,7 +240,7 @@ public final class ClientMetadataHelper {
             @Override
             boolean isCurrentRuntimeContainer() {
                 try {
-                    return Files.exists(Paths.get("/.dockerenv"));
+                    return Files.exists(get("/.dockerenv"));
                 } catch (Exception e) {
                     return false;
                     // NOOP. This could be a SecurityException.
@@ -248,7 +248,6 @@ public final class ClientMetadataHelper {
             }
         },
         UNKNOWN(null);
-
         @Nullable
         private final String name;
 
