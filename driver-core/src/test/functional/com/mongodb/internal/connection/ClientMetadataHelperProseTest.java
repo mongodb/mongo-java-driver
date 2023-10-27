@@ -42,6 +42,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst#test-plan">spec</a>
+ *
+ * <p>
+ * NOTE: This class also contains tests which are not specified as Prose ones.
  */
 public class ClientMetadataHelperProseTest {
     private static final String APP_NAME = "app name";
@@ -167,6 +170,21 @@ public class ClientMetadataHelperProseTest {
     }
 
     // Additional tests, not specified as prose tests:
+
+    @Test
+    void testKubernetesMetadataIncluded() {
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "kubernetes.default.svc.cluster.local")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'orchestrator': 'kubernetes'}}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
+
+                    performHello();
+                });
+    }
 
     @Test
     public void testLimitForDriverVersion() {
