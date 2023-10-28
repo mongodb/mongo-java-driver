@@ -249,6 +249,7 @@ public final class ClientMetadataHelper {
             }
         },
         UNKNOWN(null);
+
         @Nullable
         private final String name;
 
