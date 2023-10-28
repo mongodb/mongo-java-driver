@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -194,7 +195,7 @@ public class ClientMetadataHelperProseTest {
     @Test
     void testDockerMetadataIncluded() {
         try (MockedStatic<Files> pathsMockedStatic = Mockito.mockStatic(Files.class)) {
-            Path path = Paths.get("/.dockerenv");
+            Path path = Paths.get(File.separator + ".dockerenv");
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
 
             withWrapper()
@@ -213,7 +214,7 @@ public class ClientMetadataHelperProseTest {
     @Test
     void testDockerAndKubernetesMetadataIncluded() {
         try (MockedStatic<Files> pathsMockedStatic = Mockito.mockStatic(Files.class)) {
-            Path path = Paths.get("/.dockerenv");
+            Path path = Paths.get(File.separator + "/.dockerenv");
             pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
 
             withWrapper()
