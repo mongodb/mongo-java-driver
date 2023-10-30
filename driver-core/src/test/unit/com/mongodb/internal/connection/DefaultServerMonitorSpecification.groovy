@@ -79,7 +79,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { sleep(100) }
+                    open(_) >> { sleep(100) }
                 }
             }
         }
@@ -143,7 +143,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { }
+                    open(_) >> { }
 
                     getBuffer(_) >> { int size ->
                         new ByteBufNIO(ByteBuffer.allocate(size))
@@ -224,7 +224,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { }
+                    open(_) >> { }
 
                     getBuffer(_) >> { int size ->
                         new ByteBufNIO(ByteBuffer.allocate(size))

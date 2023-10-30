@@ -30,6 +30,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import java.lang.reflect.Method
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getPrimary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -44,7 +45,8 @@ class SocketStreamHelperSpecification extends Specification {
                 .build()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), socketSettings, SslSettings.builder().build())
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
+                socketSettings, SslSettings.builder().build())
 
         then:
         socket.getTcpNoDelay()
@@ -68,7 +70,7 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(),
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
                 SocketSettings.builder().build(), SslSettings.builder().build())
 
         then:
@@ -84,7 +86,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(), sslSettings)
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
+                SocketSettings.builder().build(), sslSettings)
 
         then:
         socket.getSSLParameters().endpointIdentificationAlgorithm == (sslSettings.invalidHostNameAllowed ? null : 'HTTPS')
@@ -104,7 +107,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(), sslSettings)
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
+                SocketSettings.builder().build(), sslSettings)
 
         then:
         socket.getSSLParameters().getServerNames() == [new SNIHostName(getPrimary().getHost())]
@@ -122,7 +126,7 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(),
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(),
                 SslSettings.builder().enabled(true).build())
 
         then:

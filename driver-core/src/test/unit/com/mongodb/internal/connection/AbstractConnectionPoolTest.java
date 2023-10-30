@@ -573,13 +573,6 @@ public abstract class AbstractConnectionPoolTest {
         }
 
         @Override
-        public InternalConnection get(final OperationContext operationContext, final long timeout, final TimeUnit timeUnit) {
-            InternalConnection result = pool.get(operationContext, timeout, timeUnit);
-            updateConnectionIdLocalValueAdjustment(result);
-            return result;
-        }
-
-        @Override
         public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
             pool.getAsync(operationContext, (result, problem) -> {
                 try {

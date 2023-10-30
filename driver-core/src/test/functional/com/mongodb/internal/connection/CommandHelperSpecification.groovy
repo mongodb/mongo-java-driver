@@ -35,6 +35,7 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.LEGACY_HELLO
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
@@ -51,7 +52,7 @@ class CommandHelperSpecification extends Specification {
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi(), null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
     }
 
     def cleanup() {

@@ -67,12 +67,12 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
             return generation;
         }
 
-        public void open() {
+        public void open(final OperationContext operationContext) {
             opened = true;
         }
 
         @Override
-        public void openAsync(final SingleResultCallback<Void> callback) {
+        public void openAsync(final OperationContext operationContext, final SingleResultCallback<Void> callback) {
             opened = true;
             callback.onResult(null, null);
         }

@@ -69,11 +69,12 @@ final class SocketStreamHelper {
         SET_OPTION_METHOD = setOptionMethod;
     }
 
-    static void initialize(final Socket socket, final InetSocketAddress inetSocketAddress, final SocketSettings settings,
-                           final SslSettings sslSettings) throws IOException {
+    static void initialize(final OperationContext operationContext, final Socket socket,
+            final InetSocketAddress inetSocketAddress, final SocketSettings settings,
+            final SslSettings sslSettings) throws IOException {
         configureSocket(socket, settings);
         configureSslSocket(socket, sslSettings, inetSocketAddress);
-        socket.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
+        socket.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
     }
 
     static void configureSocket(final Socket socket, final SocketSettings settings) throws SocketException {

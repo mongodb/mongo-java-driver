@@ -383,7 +383,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         def connection = Mock(InternalConnection)
         connection.getDescription() >> new ConnectionDescription(SERVER_ID)
         connection.opened() >> false
-        connection.open() >> { throw new UncheckedIOException('expected failure', new IOException()) }
+        connection.open(OPERATION_CONTEXT) >> { throw new UncheckedIOException('expected failure', new IOException()) }
         connectionFactory.create(SERVER_ID, _) >> connection
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build(),
                 mockSdamProvider())
@@ -507,7 +507,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         def connection = Mock(InternalConnection)
         connection.getDescription() >> new ConnectionDescription(SERVER_ID)
         connection.opened() >> false
-        connection.open() >> { throw new UncheckedIOException('expected failure', new IOException()) }
+        connection.open(OPERATION_CONTEXT) >> { throw new UncheckedIOException('expected failure', new IOException()) }
         connectionFactory.create(SERVER_ID, _) >> connection
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build(),
                 mockSdamProvider())

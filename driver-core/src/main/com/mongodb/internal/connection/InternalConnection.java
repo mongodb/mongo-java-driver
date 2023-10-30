@@ -51,14 +51,15 @@ public interface InternalConnection extends BufferProvider {
     /**
      * Opens the connection so its ready for use
      */
-    void open();
+    void open(OperationContext operationContext);
 
     /**
      * Opens the connection so its ready for use
      *
-     * @param callback the callback to be called once the connection has been opened
+     * @param operationContext
+     * @param callback         the callback to be called once the connection has been opened
      */
-    void openAsync(SingleResultCallback<Void> callback);
+    void openAsync(OperationContext operationContext, SingleResultCallback<Void> callback);
 
     /**
      * Closes the connection.
