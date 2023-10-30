@@ -156,7 +156,8 @@ public class TimeoutContext {
 
     public Timeout startServerSelectionTimeout() {
         long ms = getTimeoutSettings().getServerSelectionTimeoutMS();
-        return StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
+        Timeout serverSelectionTimeout = StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
+        return serverSelectionTimeout.orEarlier(timeout);
     }
 
     public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
