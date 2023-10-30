@@ -29,7 +29,9 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +40,7 @@ import java.util.function.Consumer;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
+import static java.nio.file.Paths.get;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -98,17 +101,26 @@ public final class ClientMetadataHelper {
             putAtPath(d, "driver.name", listToString(fullDriverInfo.getDriverNames()));
             putAtPath(d, "driver.version", listToString(fullDriverInfo.getDriverVersions()));
         });
+
         // optional fields:
-        Environment environment = getEnvironment();
+        FaasEnvironment faasEnvironment =  getFaasEnvironment();
+        ContainerRuntime containerRuntime = ContainerRuntime.determineExecutionContainer();
+        Orchestrator orchestrator = Orchestrator.determineExecutionOrchestrator();
+
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
-        tryWithLimit(client, d -> putAtPath(d, "env.name", environment.getName()));
         tryWithLimit(client, d -> putAtPath(d, "os.name", getOperatingSystemName()));
         tryWithLimit(client, d -> putAtPath(d, "os.architecture", getProperty("os.arch", "unknown")));
         tryWithLimit(client, d -> putAtPath(d, "os.version", getProperty("os.version", "unknown")));
-        tryWithLimit(client, d -> putAtPath(d, "env.timeout_sec", environment.getTimeoutSec()));
-        tryWithLimit(client, d -> putAtPath(d, "env.memory_mb", environment.getMemoryMb()));
-        tryWithLimit(client, d -> putAtPath(d, "env.region", environment.getRegion()));
+
+        tryWithLimit(client, d -> putAtPath(d, "env.name", faasEnvironment.getName()));
+        tryWithLimit(client, d -> putAtPath(d, "env.timeout_sec", faasEnvironment.getTimeoutSec()));
+        tryWithLimit(client, d -> putAtPath(d, "env.memory_mb", faasEnvironment.getMemoryMb()));
+        tryWithLimit(client, d -> putAtPath(d, "env.region", faasEnvironment.getRegion()));
+
+        tryWithLimit(client, d -> putAtPath(d, "env.container.runtime", containerRuntime.getName()));
+        tryWithLimit(client, d -> putAtPath(d, "env.container.orchestrator", orchestrator.getName()));
+
         return client;
     }
 
@@ -168,8 +180,7 @@ public final class ClientMetadataHelper {
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
-
-    private enum Environment {
+    private enum FaasEnvironment {
         AWS_LAMBDA("aws.lambda"),
         AZURE_FUNC("azure.func"),
         GCP_FUNC("gcp.func"),
@@ -179,7 +190,7 @@ public final class ClientMetadataHelper {
         @Nullable
         private final String name;
 
-        Environment(@Nullable final String name) {
+        FaasEnvironment(@Nullable final String name) {
             this.name = name;
         }
 
@@ -225,6 +236,81 @@ public final class ClientMetadataHelper {
         }
     }
 
+    public enum ContainerRuntime {
+        DOCKER("docker") {
+            @Override
+            boolean isCurrentRuntimeContainer() {
+                try {
+                    return Files.exists(get(File.separator + ".dockerenv"));
+                } catch (Exception e) {
+                    return false;
+                    // NOOP. This could be a SecurityException.
+                }
+            }
+        },
+        UNKNOWN(null);
+
+        @Nullable
+        private final String name;
+
+        ContainerRuntime(@Nullable final String name) {
+            this.name = name;
+        }
+
+        @Nullable
+        public String getName() {
+            return name;
+        }
+
+        boolean isCurrentRuntimeContainer() {
+            return false;
+        }
+
+        static ContainerRuntime determineExecutionContainer() {
+            for (ContainerRuntime allegedContainer : ContainerRuntime.values()) {
+                if (allegedContainer.isCurrentRuntimeContainer()) {
+                    return allegedContainer;
+                }
+            }
+            return UNKNOWN;
+        }
+    }
+
+    private enum Orchestrator {
+        K8S("kubernetes") {
+            @Override
+            boolean isCurrentOrchestrator() {
+                return System.getenv("KUBERNETES_SERVICE_HOST") != null;
+            }
+        },
+        UNKNOWN(null);
+
+        @Nullable
+        private final String name;
+
+        Orchestrator(@Nullable final String name) {
+            this.name = name;
+        }
+
+        @Nullable
+        public String getName() {
+            return name;
+        }
+
+        boolean isCurrentOrchestrator() {
+            return false;
+        }
+
+        static Orchestrator determineExecutionOrchestrator() {
+            for (Orchestrator alledgedOrchestrator : Orchestrator.values()) {
+                if (alledgedOrchestrator.isCurrentOrchestrator()) {
+                    return alledgedOrchestrator;
+                }
+            }
+            return UNKNOWN;
+        }
+    }
+
     @Nullable
     private static Integer getEnvInteger(final String name) {
         try {
@@ -235,29 +321,29 @@ public final class ClientMetadataHelper {
         }
     }
 
-    static Environment getEnvironment() {
-        List<Environment> result = new ArrayList<>();
+    static FaasEnvironment getFaasEnvironment() {
+        List<FaasEnvironment> result = new ArrayList<>();
         String awsExecutionEnv = System.getenv("AWS_EXECUTION_ENV");
 
         if (System.getenv("VERCEL") != null) {
-            result.add(Environment.VERCEL);
+            result.add(FaasEnvironment.VERCEL);
         }
         if ((awsExecutionEnv != null && awsExecutionEnv.startsWith("AWS_Lambda_"))
                 || System.getenv("AWS_LAMBDA_RUNTIME_API") != null) {
-            result.add(Environment.AWS_LAMBDA);
+            result.add(FaasEnvironment.AWS_LAMBDA);
         }
         if (System.getenv("FUNCTIONS_WORKER_RUNTIME") != null) {
-            result.add(Environment.AZURE_FUNC);
+            result.add(FaasEnvironment.AZURE_FUNC);
         }
         if (System.getenv("K_SERVICE") != null || System.getenv("FUNCTION_NAME") != null) {
-            result.add(Environment.GCP_FUNC);
+            result.add(FaasEnvironment.GCP_FUNC);
         }
         // vercel takes precedence over aws.lambda
-        if (result.equals(Arrays.asList(Environment.VERCEL, Environment.AWS_LAMBDA))) {
-            return Environment.VERCEL;
+        if (result.equals(Arrays.asList(FaasEnvironment.VERCEL, FaasEnvironment.AWS_LAMBDA))) {
+            return FaasEnvironment.VERCEL;
         }
         if (result.size() != 1) {
-            return Environment.UNKNOWN;
+            return FaasEnvironment.UNKNOWN;
         }
         return result.get(0);
     }
