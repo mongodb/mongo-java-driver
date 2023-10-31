@@ -34,8 +34,8 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class Exceptions {
-    public static final class MongoCommandExceptions {
+public final class ExceptionUtils {
+    public static final class MongoCommandExceptionUtils {
         public static int extractErrorCode(final BsonDocument response) {
             return extractErrorCodeAsBson(response).intValue();
         }
@@ -72,9 +72,9 @@ public final class Exceptions {
 
         @VisibleForTesting(otherwise = PRIVATE)
         public enum SecurityInsensitiveResponseField {
-            CODE("code", MongoCommandExceptions::extractErrorCodeAsBson),
-            CODE_NAME("codeName", MongoCommandExceptions::extractErrorCodeNameAsBson),
-            ERROR_LABELS("errorLabels", MongoCommandExceptions::extractErrorLabelsAsBson);
+            CODE("code", MongoCommandExceptionUtils::extractErrorCodeAsBson),
+            CODE_NAME("codeName", MongoCommandExceptionUtils::extractErrorCodeNameAsBson),
+            ERROR_LABELS("errorLabels", MongoCommandExceptionUtils::extractErrorLabelsAsBson);
 
             private final String fieldName;
             private final Function<BsonDocument, BsonValue> fieldValueExtractor;
@@ -100,10 +100,10 @@ public final class Exceptions {
             }
         }
 
-        private MongoCommandExceptions() {
+        private MongoCommandExceptionUtils() {
         }
     }
 
-    private Exceptions() {
+    private ExceptionUtils() {
     }
 }

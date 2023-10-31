@@ -17,7 +17,7 @@ package com.mongodb.internal;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.Exceptions.MongoCommandExceptions;
+import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -34,9 +34,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-final class ExceptionsTest {
+final class ExceptionUtilsTest {
     @Nested
-    final class MongoCommandExceptionsTest {
+    final class MongoCommandExceptionUtilsTest {
         @Test
         void redacted() {
             MongoCommandException original = new MongoCommandException(
@@ -46,7 +46,7 @@ final class ExceptionsTest {
                             .append("errorLabels", new BsonArray(asList(new BsonString("label"), new BsonString("label2"))))
                             .append("errmsg", new BsonString("err msg")),
                     new ServerAddress());
-            MongoCommandException redacted = MongoCommandExceptions.redacted(original);
+            MongoCommandException redacted = MongoCommandExceptionUtils.redacted(original);
             assertArrayEquals(original.getStackTrace(), redacted.getStackTrace());
             String message = redacted.getMessage();
             assertTrue(message.contains("26"));
@@ -57,7 +57,7 @@ final class ExceptionsTest {
             assertEquals(26, redacted.getErrorCode());
             assertEquals("TimeoutError", redacted.getErrorCodeName());
             assertEquals(new HashSet<>(asList("label", "label2")), redacted.getErrorLabels());
-            assertEquals(MongoCommandExceptions.SecurityInsensitiveResponseField.fieldNames(), redacted.getResponse().keySet());
+            assertEquals(MongoCommandExceptionUtils.SecurityInsensitiveResponseField.fieldNames(), redacted.getResponse().keySet());
         }
     }
 }

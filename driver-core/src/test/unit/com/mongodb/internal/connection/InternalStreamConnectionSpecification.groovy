@@ -40,7 +40,7 @@ import com.mongodb.connection.StreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
-import com.mongodb.internal.Exceptions
+import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils
 import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -894,8 +894,7 @@ class InternalStreamConnectionSpecification extends Specification {
         CommandFailedEvent failedEvent = commandListener.getEvents().get(1)
         failedEvent.throwable.class == MongoCommandException
         MongoCommandException e = failedEvent.throwable
-        Exceptions.MongoCommandExceptions.SecurityInsensitiveResponseField.fieldNames()
-                .containsAll(e.getResponse().keySet())
+        MongoCommandExceptionUtils.SecurityInsensitiveResponseField.fieldNames().containsAll(e.getResponse().keySet())
 
         where:
         securitySensitiveCommand << [

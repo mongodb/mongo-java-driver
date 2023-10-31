@@ -24,9 +24,9 @@ import org.bson.json.JsonWriter;
 
 import java.io.StringWriter;
 
-import static com.mongodb.internal.Exceptions.MongoCommandExceptions.extractErrorCode;
-import static com.mongodb.internal.Exceptions.MongoCommandExceptions.extractErrorCodeName;
-import static com.mongodb.internal.Exceptions.MongoCommandExceptions.extractErrorLabelsAsBson;
+import static com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils.extractErrorCode;
+import static com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils.extractErrorCodeName;
+import static com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils.extractErrorLabelsAsBson;
 import static java.lang.String.format;
 
 /**
