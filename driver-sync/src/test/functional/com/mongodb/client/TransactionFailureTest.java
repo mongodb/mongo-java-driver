@@ -38,12 +38,10 @@ public class TransactionFailureTest extends DatabaseTestCase {
 
     @Test
     public void testTransactionFails() {
-        assertThrows(MongoClientException.class, () -> {
-            try (ClientSession clientSession = client.startSession()) {
-                clientSession.startTransaction();
-                collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}"));
-            }
-        });
+        try (ClientSession clientSession = client.startSession()) {
+            clientSession.startTransaction();
+            assertThrows(MongoClientException.class, () -> collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}")));
+        }
     }
 
     private boolean canRunTests() {

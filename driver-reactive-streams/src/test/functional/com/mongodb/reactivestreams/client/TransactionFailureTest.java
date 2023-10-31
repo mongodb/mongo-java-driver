@@ -41,12 +41,11 @@ public class TransactionFailureTest extends DatabaseTestCase {
 
     @Test
     public void testTransactionFails() {
-        assertThrows(MongoClientException.class, () -> {
-            try (ClientSession clientSession = createSession()) {
-                clientSession.startTransaction();
-                Mono.from(collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}"))).block(TIMEOUT_DURATION);
-            }
-        });
+        try (ClientSession clientSession = createSession()) {
+            clientSession.startTransaction();
+            assertThrows(MongoClientException.class, () ->
+                    Mono.from(collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}"))).block(TIMEOUT_DURATION));
+        }
     }
 
     private ClientSession createSession() {
