@@ -19,25 +19,25 @@ package com.mongodb.client;
 import com.mongodb.MongoException;
 import com.mongodb.client.internal.ClientSessionClock;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests/README.rst#prose-tests
 public class WithTransactionProseTest extends DatabaseTestCase {
     private static final long START_TIME_MS = 1L;
     private static final long ERROR_GENERATING_INTERVAL = 121000L;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() {
         assumeTrue(canRunTests());

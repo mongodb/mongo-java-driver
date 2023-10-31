@@ -27,19 +27,19 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * See https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.rst#prose-tests
@@ -47,7 +47,7 @@ import static org.junit.Assume.assumeTrue;
 public class CrudProseTest extends DatabaseTestCase {
     private BsonDocument failPointDocument;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() {
         super.setUp();
