@@ -54,7 +54,9 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding)
+        def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding) {
+            getOperationContext() >> OPERATION_CONTEXT
+        }
         wrappedBinding.retain() >> wrappedBinding
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
