@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoConnectionPoolClearedException
 import com.mongodb.MongoServerUnavailableException
 import com.mongodb.MongoTimeoutException
@@ -26,7 +27,6 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.event.ConnectionCheckOutFailedEvent
 import com.mongodb.event.ConnectionPoolListener
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.inject.EmptyProvider
 import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.internal.logging.LogMessage
@@ -42,6 +42,8 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.connection.ConnectionPoolSettings.builder
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
@@ -108,17 +110,17 @@ class DefaultConnectionPoolSpecification extends Specification {
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                builder().maxSize(1).maxWaitTime(1, MILLISECONDS).build(), mockSdamProvider())
+                builder().maxSize(1).build(), mockSdamProvider())
         pool.ready()
 
         when:
-        def first = pool.get(OPERATION_CONTEXT)
+        def first = pool.get(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(50)))
 
         then:
         first != null
 
         when:
-        pool.get(OPERATION_CONTEXT)
+        pool.get(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(50)))
 
         then:
         thrown(MongoTimeoutException)
@@ -127,12 +129,14 @@ class DefaultConnectionPoolSpecification extends Specification {
     def 'should throw on timeout'() throws InterruptedException {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                builder().maxSize(1).maxWaitTime(50, MILLISECONDS).build(), mockSdamProvider())
+                builder().maxSize(1).build(), mockSdamProvider())
         pool.ready()
-        pool.get(OPERATION_CONTEXT)
+
+        def timeoutSettings = ClusterFixture.TIMEOUT_SETTINGS.withMaxWaitTimeMS(50)
+        pool.get(createOperationContext(timeoutSettings))
 
         when:
-        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool)
+        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool, timeoutSettings)
         new Thread(connectionGetter).start()
 
         connectionGetter.latch.await()
@@ -319,12 +323,14 @@ class DefaultConnectionPoolSpecification extends Specification {
     def 'should log on checkout timeout fail'() throws InterruptedException {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                builder().maxSize(1).maxWaitTime(50, MILLISECONDS).build(), mockSdamProvider())
+                builder().maxSize(1).build(), mockSdamProvider())
         pool.ready()
-        pool.get(OPERATION_CONTEXT)
+
+        def timeoutSettings = ClusterFixture.TIMEOUT_SETTINGS.withMaxWaitTimeMS(50)
+        pool.get(createOperationContext(timeoutSettings))
 
         when:
-        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool)
+        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool, timeoutSettings)
         new Thread(connectionGetter).start()
         connectionGetter.latch.await()
 
@@ -532,8 +538,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         def connection = Mock(InternalConnection)
         connection.getDescription() >> new ConnectionDescription(SERVER_ID)
         connection.opened() >> false
-        connection.openAsync(_) >> { SingleResultCallback<Void> callback ->
-            callback.onResult(null, new UncheckedIOException('expected failure', new IOException()))
+        connection.openAsync(_, _) >> {
+            it.last().onResult(null, new UncheckedIOException('expected failure', new IOException()))
         }
         connectionFactory.create(SERVER_ID, _) >> connection
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().addConnectionPoolListener(listener).build(),

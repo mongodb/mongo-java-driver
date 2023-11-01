@@ -61,6 +61,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.ClusterFixture.createOperationContext;
 import static java.lang.Long.MAX_VALUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -113,14 +115,14 @@ public class DefaultConnectionPoolTest {
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitTime(50, MILLISECONDS)
                         .build(),
                 mockSdamProvider());
         provider.ready();
-        provider.get(OPERATION_CONTEXT);
+        TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS.withMaxWaitTimeMS(50);
+        provider.get(createOperationContext(timeoutSettings));
 
         // when
-        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider);
+        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
         new Thread(connectionGetter).start();
 
         connectionGetter.getLatch().await();
@@ -134,7 +136,6 @@ public class DefaultConnectionPoolTest {
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitTime(50, MILLISECONDS)
                         .build(),
                 mockSdamProvider());
         provider.close();
@@ -144,7 +145,7 @@ public class DefaultConnectionPoolTest {
         exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get(OPERATION_CONTEXT));
         assertEquals(expectedExceptionMessage, exception.getMessage());
         SupplyingCallback<InternalConnection> supplyingCallback = new SupplyingCallback<>();
-        provider.getAsync(OPERATION_CONTEXT, supplyingCallback);
+        provider.getAsync(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(50)), supplyingCallback);
         exception = assertThrows(MongoServerUnavailableException.class, supplyingCallback::get);
         assertEquals(expectedExceptionMessage, exception.getMessage());
     }
@@ -316,7 +317,6 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                     .minSize(minSize)
                     .maxSize(maxSize)
-                    .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
                     .maintenanceInitialDelay(0, NANOSECONDS)
                     .maintenanceFrequency(100, MILLISECONDS)
                     .maxConnectionLifeTime(limitConnectionLifeIdleTime ? 350 : 0, MILLISECONDS)
@@ -327,7 +327,7 @@ public class DefaultConnectionPoolTest {
         assertUseConcurrently(provider, concurrentUsersCount,
                 checkoutSync, checkoutAsync,
                 invalidateAndReadyProb, invalidateProb, readyProb,
-                cachedExecutor, SECONDS.toNanos(10));
+                cachedExecutor, SECONDS.toNanos(10), TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS));
     }
 
     private static Stream<Arguments> concurrentUsageArguments() {
@@ -355,7 +355,6 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                     .maxSize(DEFAULT_MAX_CONNECTING + maxAvailableConnections)
                     .addConnectionPoolListener(listener)
-                    .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
                     .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                     .build(),
                 mockSdamProvider());
@@ -365,7 +364,7 @@ public class DefaultConnectionPoolTest {
         assertUseConcurrently(provider, 2 * maxAvailableConnections,
                 true, true,
                 0.02f, 0, 0,
-                cachedExecutor, SECONDS.toNanos(10));
+                cachedExecutor, SECONDS.toNanos(10), TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS));
     }
 
     /**
@@ -498,14 +497,15 @@ public class DefaultConnectionPoolTest {
     }
 
     private static void assertUseConcurrently(final DefaultConnectionPool pool, final int concurrentUsersCount,
-                                              final boolean sync, final boolean async,
-                                              final float invalidateAndReadyProb, final float invalidateProb, final float readyProb,
-                                              final ExecutorService executor, final long durationNanos) throws InterruptedException {
+            final boolean sync, final boolean async,
+            final float invalidateAndReadyProb, final float invalidateProb, final float readyProb,
+            final ExecutorService executor, final long durationNanos,
+            final TimeoutSettings timeoutSettings) throws InterruptedException {
         try {
             useConcurrently(pool, concurrentUsersCount,
                     sync, async,
                     invalidateAndReadyProb, invalidateProb, readyProb,
-                    executor, durationNanos);
+                    executor, durationNanos, timeoutSettings);
         } catch (TimeoutException | ExecutionException e) {
             throw new AssertionError(e);
         }
@@ -514,7 +514,8 @@ public class DefaultConnectionPoolTest {
     private static void useConcurrently(final DefaultConnectionPool pool, final int concurrentUsersCount,
                                         final boolean checkoutSync, final boolean checkoutAsync,
                                         final float invalidateAndReadyProb, final float invalidateProb, final float readyProb,
-                                        final ExecutorService executor, final long durationNanos)
+                                        final ExecutorService executor, final long durationNanos,
+                                        final TimeoutSettings timeoutSettings)
             throws ExecutionException, InterruptedException, TimeoutException {
         assertTrue(invalidateAndReadyProb >= 0 && invalidateAndReadyProb <= 1);
         Runnable spontaneouslyInvalidateReady = () -> {

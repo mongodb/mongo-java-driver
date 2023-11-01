@@ -96,7 +96,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def internalConnectionInitializationDescription =
             new InternalConnectionInitializationDescription(connectionDescription, serverDescription)
     def stream = Mock(Stream) {
-        openAsync(_) >> { it[0].completed(null) }
+        openAsync(_, _) >> { it.last().completed(null) }
     }
     def streamFactory = Mock(StreamFactory) {
         create(_) >> { stream }
