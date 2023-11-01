@@ -23,8 +23,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
@@ -38,7 +38,7 @@ public class DatabaseTestCase {
     protected MongoCollection<Document> collection;
     //CHECKSTYLE:ON
 
-    @Before
+    @BeforeEach
     public void setUp() {
         client =  getMongoClient();
         database = client.getDatabase(getDefaultDatabaseName());
@@ -46,7 +46,7 @@ public class DatabaseTestCase {
         collection.drop();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (collection != null) {
             collection.drop();

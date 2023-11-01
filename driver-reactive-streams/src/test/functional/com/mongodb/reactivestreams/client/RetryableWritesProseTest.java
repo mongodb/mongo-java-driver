@@ -22,8 +22,8 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
 import java.util.concurrent.ExecutionException;
@@ -35,9 +35,9 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * See
@@ -46,7 +46,7 @@ import static org.junit.Assume.assumeTrue;
 public class RetryableWritesProseTest extends DatabaseTestCase {
     private CollectionHelper<Document> collectionHelper;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() {
         super.setUp();

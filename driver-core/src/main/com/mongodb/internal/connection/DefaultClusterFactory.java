@@ -58,7 +58,7 @@ import static java.util.Collections.singletonList;
  */
 @SuppressWarnings("deprecation")
 public final class DefaultClusterFactory {
-    private static final Logger LOGGER = Loggers.getLogger("DefaultClusterFactory");
+    private static final Logger LOGGER = Loggers.getLogger("client");
 
     public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,
                                  final ConnectionPoolSettings connectionPoolSettings,

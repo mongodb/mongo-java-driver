@@ -44,7 +44,7 @@ class DefaultClusterFactoryTest {
             "You appear to be connected to a DocumentDB cluster. For more information regarding "
                     + "feature compatibility and support please visit https://www.mongodb.com/supportability/documentdb";
 
-    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger("org.mongodb.driver.DefaultClusterFactory");
+    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger("org.mongodb.driver.client");
     private static final MemoryAppender MEMORY_APPENDER = new MemoryAppender();
 
     @BeforeAll

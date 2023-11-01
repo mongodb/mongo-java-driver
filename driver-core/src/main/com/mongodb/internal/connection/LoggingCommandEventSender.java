@@ -21,6 +21,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.LogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
@@ -123,9 +124,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     public void sendFailedEvent(final Throwable t) {
         Throwable commandEventException = t;
         if (t instanceof MongoCommandException && redactionRequired) {
-            MongoCommandException originalCommandException = (MongoCommandException) t;
-            commandEventException = new MongoCommandException(new BsonDocument(), originalCommandException.getServerAddress());
-            commandEventException.setStackTrace(t.getStackTrace());
+            commandEventException = MongoCommandExceptionUtils.redacted((MongoCommandException) t);
         }
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 

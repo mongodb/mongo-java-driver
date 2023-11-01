@@ -16,7 +16,7 @@
 
 package com.mongodb.client;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;

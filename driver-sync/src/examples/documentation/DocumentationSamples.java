@@ -32,8 +32,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,9 +79,9 @@ import static com.mongodb.client.model.Updates.currentDate;
 import static com.mongodb.client.model.Updates.set;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 // imports required for change streams
 // end required change streams imports
@@ -738,7 +738,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Index Example 2
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         collection.drop();
     }

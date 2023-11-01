@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-archivesBaseName = 'bson'
-description = 'The BSON library'
+package org.bson.codecs.record.samples;
 
-ext {
-    pomName = 'BSON'
-    pomURL = 'https://bsonspec.org'
-}
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.types.ObjectId;
 
-afterEvaluate {
-    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.bson'
-    jar.manifest.attributes['Import-Package'] = 'org.slf4j.*;resolution:=optional'
+public record TestRecordWithNullableField(@BsonId ObjectId id, String name, int age) {
 }

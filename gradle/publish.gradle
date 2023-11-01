@@ -60,7 +60,6 @@ ext {
     configureJarManifestAttributes = { project ->
         { ->
             manifest.attributes['-exportcontents'] =  "*;-noimport:=true"
-            manifest.attributes['Automatic-Module-Name'] =  project.group + '.' + project.archivesBaseName
             manifest.attributes['Build-Version'] =  project.gitVersion
             manifest.attributes['Bundle-Version'] =  project.version
             manifest.attributes['Bundle-Name'] =  project.archivesBaseName

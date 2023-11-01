@@ -18,7 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.client.RetryableWritesProseTest;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;

@@ -29,7 +29,13 @@ import org.bson.codecs.DocumentCodec;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +48,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * See <a href="https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst#test-plan">spec</a>
+ *
+ * <p>
+ * NOTE: This class also contains tests that aren't categorized as Prose tests.
  */
 public class ClientMetadataHelperProseTest {
     private static final String APP_NAME = "app name";
@@ -167,6 +176,61 @@ public class ClientMetadataHelperProseTest {
     }
 
     // Additional tests, not specified as prose tests:
+
+    @Test
+    void testKubernetesMetadataIncluded() {
+        withWrapper()
+                .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "kubernetes.default.svc.cluster.local")
+                .run(() -> {
+                    BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                    expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'orchestrator': 'kubernetes'}}"));
+                    BsonDocument actual = createActualClientMetadataDocument();
+                    assertEquals(expected, actual);
+
+                    performHello();
+                });
+    }
+
+    @Test
+    void testDockerMetadataIncluded() {
+        try (MockedStatic<Files> pathsMockedStatic = Mockito.mockStatic(Files.class)) {
+            Path path = Paths.get(File.separator + ".dockerenv");
+            pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
+
+            withWrapper()
+                    .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                    .run(() -> {
+                        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'runtime': 'docker'}}"));
+                        BsonDocument actual = createActualClientMetadataDocument();
+                        assertEquals(expected, actual);
+
+                        performHello();
+                    });
+        }
+    }
+
+    @Test
+    void testDockerAndKubernetesMetadataIncluded() {
+        try (MockedStatic<Files> pathsMockedStatic = Mockito.mockStatic(Files.class)) {
+            Path path = Paths.get(File.separator + "/.dockerenv");
+            pathsMockedStatic.when(() -> Files.exists(path)).thenReturn(true);
+
+            withWrapper()
+                    .withEnvironmentVariable("AWS_EXECUTION_ENV", "AWS_Lambda_java8")
+                    .withEnvironmentVariable("KUBERNETES_SERVICE_HOST", "kubernetes.default.svc.cluster.local")
+                    .run(() -> {
+                        BsonDocument expected = createExpectedClientMetadataDocument(APP_NAME);
+                        expected.put("env", BsonDocument.parse("{'name': 'aws.lambda', 'container': {'runtime': 'docker', "
+                                + "'orchestrator': 'kubernetes'}}"));
+                        BsonDocument actual = createActualClientMetadataDocument();
+                        assertEquals(expected, actual);
+
+                        performHello();
+                    });
+        }
+    }
 
     @Test
     public void testLimitForDriverVersion() {

@@ -17,8 +17,8 @@
 package com.mongodb.reactivestreams.client;
 
 import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.drop;
@@ -32,7 +32,7 @@ public class DatabaseTestCase {
     protected MongoCollection<Document> collection;
     //CHECKSTYLE:ON
 
-    @Before
+    @BeforeEach
     public void setUp() {
         client =  getMongoClient();
         database = client.getDatabase(getDefaultDatabaseName());
@@ -40,7 +40,7 @@ public class DatabaseTestCase {
         drop(collection.getNamespace());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (collection != null) {
             drop(collection.getNamespace());
