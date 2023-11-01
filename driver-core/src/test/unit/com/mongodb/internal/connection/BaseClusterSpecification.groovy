@@ -171,7 +171,7 @@ class BaseClusterSpecification extends Specification {
                 .serverDescription.address == firstServer
     }
 
-    def 'should timeout with message containing neither the selector nor the topology'() {
+    def 'should timeout with useful message'() {
         given:
         def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
@@ -191,7 +191,11 @@ class BaseClusterSpecification extends Specification {
 
         then:
         def e = thrown(MongoTimeoutException)
-        e.getMessage().equals('Timed out while waiting for a suitable server')
+        e.getMessage().startsWith("Timed out while waiting for a server " +
+                'that matches WritableServerSelector. Client view of cluster state is {type=UNKNOWN')
+        e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
+                'exception={com.mongodb.MongoInternalException: oops}}')
+        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}')
 
         where:
         serverSelectionTimeoutMS << [1, 0]
