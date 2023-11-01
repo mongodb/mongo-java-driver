@@ -26,7 +26,6 @@ import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.ConnectionCreatedEvent;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.inject.EmptyProvider;
@@ -393,19 +392,13 @@ public class DefaultConnectionPoolTest {
                              * the max pool size, and then check that no connections were created nonetheless. */
                             + maxConcurrentlyHandedOver)
                     .addConnectionPoolListener(listener)
-                    .maxWaitTime(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS)
                     .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                     .build(),
                 mockSdamProvider());
         provider.ready();
         List<InternalConnection> connections = new ArrayList<>();
         for (int i = 0; i < openConnectionsCount; i++) {
-            OperationContext operationContextWithZeroMaxWait = new OperationContext(
-                    OPERATION_CONTEXT.getRequestContext(),
-                    OPERATION_CONTEXT.getSessionContext(),
-                    new TimeoutContext(new TimeoutSettings(30_000, 10_000, 0, null, 0)),
-                    OPERATION_CONTEXT.getServerApi());
-            connections.add(provider.get(operationContextWithZeroMaxWait));
+            connections.add(provider.get(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(0))));
         }
         acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener);
         int previousIdx = 0;
@@ -423,7 +416,8 @@ public class DefaultConnectionPoolTest {
                     return connectionId;
                 }));
                 Runnable checkOut = () -> receivedFutures.add(cachedExecutor.submit(() -> {
-                    InternalConnection connection = provider.get(OPERATION_CONTEXT);
+                    InternalConnection connection =
+                            provider.get(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS)));
                     return connection.getDescription().getConnectionId();
                 }));
                 if (ThreadLocalRandom.current().nextBoolean()) {
@@ -539,7 +533,7 @@ public class DefaultConnectionPoolTest {
                         spontaneouslyInvalidateReady.run();
                         InternalConnection conn = null;
                         try {
-                            conn = pool.get(OPERATION_CONTEXT);
+                            conn = pool.get(createOperationContext(timeoutSettings));
                         } catch (MongoConnectionPoolClearedException e) {
                             // expected because we spontaneously invalidate `pool`
                         } finally {
@@ -554,7 +548,7 @@ public class DefaultConnectionPoolTest {
                     while (!(timeout.hasExpired() || Thread.currentThread().isInterrupted())) {
                         spontaneouslyInvalidateReady.run();
                         CompletableFuture<InternalConnection> futureCheckOutCheckIn = new CompletableFuture<>();
-                        pool.getAsync(OPERATION_CONTEXT, (conn, t) -> {
+                        pool.getAsync(createOperationContext(timeoutSettings), (conn, t) -> {
                             if (t != null) {
                                 if (t instanceof MongoConnectionPoolClearedException) {
                                     futureCheckOutCheckIn.complete(null); // expected because we spontaneously invalidate `pool`
@@ -646,15 +640,15 @@ public class DefaultConnectionPoolTest {
             doAnswer(invocation -> {
                 doOpen.run();
                 return null;
-            }).when(connection).open(OPERATION_CONTEXT);
+            }).when(connection).open(any());
             doAnswer(invocation -> {
-                SingleResultCallback<?> callback = invocation.getArgument(0, SingleResultCallback.class);
+                SingleResultCallback<?> callback = invocation.getArgument(1, SingleResultCallback.class);
                 asyncOpenExecutor.execute(() -> {
                     doOpen.run();
                     callback.onResult(null, null);
                 });
                 return null;
-            }).when(connection).openAsync(OPERATION_CONTEXT, any());
+            }).when(connection).openAsync(any(), any());
             return connection;
         };
         return new ControllableConnectionFactory(connectionFactory, openDurationHandle);
