@@ -22,6 +22,8 @@ import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.Tag;
+import com.mongodb.TagSet;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
@@ -90,7 +92,6 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -136,14 +137,32 @@ final class UnifiedCrudHelper {
     }
 
     public static ReadPreference asReadPreference(final BsonDocument readPreferenceDocument) {
-        if (readPreferenceDocument.size() == 1) {
-            return ReadPreference.valueOf(readPreferenceDocument.getString("mode").getValue());
-        } else if (readPreferenceDocument.size() == 2) {
-            return ReadPreference.valueOf(readPreferenceDocument.getString("mode").getValue(),
-                    Collections.emptyList(), readPreferenceDocument.getNumber("maxStalenessSeconds").intValue(), TimeUnit.SECONDS);
-        } else {
-            throw new UnsupportedOperationException("Unsupported read preference properties: " + readPreferenceDocument.toJson());
+        List<String> supportedKeys = asList("mode", "tagSets", "maxStalenessSeconds");
+        List<String> unsupportedKeys = readPreferenceDocument.keySet().stream().filter(key -> !supportedKeys.contains(key)).collect(toList());
+        if (!unsupportedKeys.isEmpty()) {
+            throw new UnsupportedOperationException("Unsupported read preference keys: " + unsupportedKeys + " in " + readPreferenceDocument);
         }
+        String mode = readPreferenceDocument.getString("mode").getValue();
+        if (readPreferenceDocument.size() == 1) {
+            return ReadPreference.valueOf(mode);
+        }
+        List<TagSet> tagSets = tagSets(readPreferenceDocument.getArray("tagSets", new BsonArray()));
+        BsonValue maxStalenessSecondsBson = readPreferenceDocument.get("maxStalenessSeconds");
+        Integer maxStalenessSeconds = maxStalenessSecondsBson == null ? null : maxStalenessSecondsBson.asInt32().intValue();
+        if (maxStalenessSecondsBson == null) {
+            return ReadPreference.valueOf(mode, tagSets);
+        }
+        return ReadPreference.valueOf(mode, tagSets, maxStalenessSeconds, TimeUnit.SECONDS);
+    }
+
+    private static List<TagSet> tagSets(final BsonArray tagSetsBson) {
+        return tagSetsBson.stream()
+                .map(tagSetBson -> new TagSet(tagSetBson.asDocument()
+                        .entrySet()
+                        .stream()
+                        .map(entry -> new Tag(entry.getKey(), entry.getValue().asString().getValue()))
+                        .collect(toList())))
+                .collect(toList());
     }
 
     private OperationResult resultOf(final Supplier<BsonValue> operationResult) {

@@ -115,8 +115,16 @@ abstract class ContextElement {
         return new EventCountContext("Wait For Server Description Changed Events", client, event, count);
     }
 
-    public static ContextElement ofServerDescriptionChangeEventCount(final String client, final BsonDocument event, final int count) {
+    public static ContextElement ofServerDescriptionChangedEventCount(final String client, final BsonDocument event, final int count) {
         return new EventCountContext("Server Description Changed Event Count", client, event, count);
+    }
+
+    public static ContextElement ofWaitForClusterDescriptionChangedEvents(final String client, final BsonDocument event, final int count) {
+        return new EventCountContext("Wait For Cluster Description Changed Events", client, event, count);
+    }
+
+    public static ContextElement ofClusterDescriptionChangedEventCount(final String client, final BsonDocument event, final int count) {
+        return new EventCountContext("Cluster Description Changed Event Count", client, event, count);
     }
 
     private static class EventCountContext extends ContextElement {
