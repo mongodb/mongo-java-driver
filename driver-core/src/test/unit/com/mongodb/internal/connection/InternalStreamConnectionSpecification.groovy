@@ -40,6 +40,7 @@ import com.mongodb.connection.StreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils
 import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -875,7 +876,7 @@ class InternalStreamConnectionSpecification extends Specification {
         ]
     }
 
-    def 'should send failed event with elided exception in failed security-sensitive commands'() {
+    def 'should send failed event with redacted exception in failed security-sensitive commands'() {
         given:
         def connection = getOpenedConnection()
         def commandMessage = new CommandMessage(cmdNamespace, securitySensitiveCommand, fieldNameValidator, primary(), messageSettings,
@@ -893,7 +894,7 @@ class InternalStreamConnectionSpecification extends Specification {
         CommandFailedEvent failedEvent = commandListener.getEvents().get(1)
         failedEvent.throwable.class == MongoCommandException
         MongoCommandException e = failedEvent.throwable
-        e.response == new BsonDocument()
+        MongoCommandExceptionUtils.SecurityInsensitiveResponseField.fieldNames().containsAll(e.getResponse().keySet())
 
         where:
         securitySensitiveCommand << [
