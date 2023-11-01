@@ -187,6 +187,14 @@ public final class ClusterFixture {
             new TimeoutContext(TIMEOUT_SETTINGS),
             getServerApi());
 
+    public static OperationContext createOperationContext(final TimeoutSettings timeoutSettings) {
+        return new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
+                new TimeoutContext(timeoutSettings),
+                getServerApi());
+    }
+
     private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
         List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
 
