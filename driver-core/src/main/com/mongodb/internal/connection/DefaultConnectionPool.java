@@ -412,7 +412,8 @@ final class DefaultConnectionPool implements ConnectionPool {
             if (shouldEnsureMinSize()) {
                 pool.ensureMinSize(settings.getMinSize(), newConnection -> {
                     try {
-                        OperationContext operationContext = OperationContext.nonUserOperationContext(null);
+                        // TODO (CSOT) create OC from ConnectionPoolSettings
+                        OperationContext operationContext = OperationContext.todoOperationContext();
                         openConcurrencyLimiter.openImmediatelyAndTryHandOverOrRelease(operationContext, new PooledConnection(newConnection));
                     } catch (MongoException | MongoOpenConnectionInternalException e) {
                         RuntimeException actualException = e instanceof MongoOpenConnectionInternalException

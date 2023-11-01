@@ -47,7 +47,7 @@ public class OperationContext {
 
     public static OperationContext todoOperationContext() {
         // TODO (CSOT) should be removed; used at locations that require an OC, but which do not yet have one available
-        return nonUserOperationContext(null);
+        return nonUserOperationContext(MongoClientSettings.builder().build());
     }
 
     public static OperationContext nonUserOperationContext(final MongoClientSettings settings) {

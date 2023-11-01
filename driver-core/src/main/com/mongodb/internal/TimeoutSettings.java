@@ -83,7 +83,7 @@ public class TimeoutSettings {
     }
 
     public TimeoutSettings connectionOnly() {
-        return new TimeoutSettings(serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, null, 0);
+        return new TimeoutSettings(serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, null, maxWaitTimeMS);
     }
 
     public TimeoutSettings withTimeoutMS(final long timeoutMS) {
