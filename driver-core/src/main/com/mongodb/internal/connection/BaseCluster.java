@@ -387,7 +387,9 @@ abstract class BaseCluster implements Cluster {
             final OperationContext operationContext,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
-        MongoTimeoutException exception = new MongoTimeoutException("Timed out while waiting for a suitable server");
+        MongoTimeoutException exception = new MongoTimeoutException(format(
+                "Timed out while waiting for a server that matches %s. Client view of cluster state is %s",
+                serverSelector, clusterDescription.getShortDescription()));
         logServerSelectionFailed(operationContext, exception, serverSelector, clusterDescription);
         return exception;
     }
@@ -538,12 +540,18 @@ abstract class BaseCluster implements Cluster {
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
+            String failureDescription = failure instanceof MongoTimeoutException
+                    // This hardcoded message guarantees that the `FAILURE` entry for `MongoTimeoutException` does not include
+                    // any information that is specified via other entries, e.g., `SELECTOR` and `TOPOLOGY_DESCRIPTION`.
+                    // The logging spec requires us to avoid such duplication of information.
+                    ? MongoTimeoutException.class.getName() + ": Timed out while waiting for a suitable server"
+                    : failure.toString();
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection failed", clusterId,
                     asList(
                             new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationContext.getId()),
-                            new Entry(FAILURE, failure.toString()),
+                            new Entry(FAILURE, failureDescription),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Server selection failed for operation[ {}] with ID {}. Failure: {}. Selector: {}, topology description: {}"));
