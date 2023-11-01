@@ -17,19 +17,22 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.internal.TimeoutSettings;
 
 import java.util.concurrent.CountDownLatch;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.createOperationContext;
 
 class TimeoutTrackingConnectionGetter implements Runnable {
     private final ConnectionPool connectionPool;
+    private final TimeoutSettings timeoutSettings;
     private final CountDownLatch latch = new CountDownLatch(1);
 
     private volatile boolean gotTimeout;
 
-    TimeoutTrackingConnectionGetter(final ConnectionPool connectionPool) {
+    TimeoutTrackingConnectionGetter(final ConnectionPool connectionPool, final TimeoutSettings timeoutSettings) {
         this.connectionPool = connectionPool;
+        this.timeoutSettings = timeoutSettings;
     }
 
     boolean isGotTimeout() {
@@ -39,7 +42,7 @@ class TimeoutTrackingConnectionGetter implements Runnable {
     @Override
     public void run() {
         try {
-            InternalConnection connection = connectionPool.get(OPERATION_CONTEXT);
+            InternalConnection connection = connectionPool.get(createOperationContext(timeoutSettings));
             connection.close();
         } catch (MongoTimeoutException e) {
             gotTimeout = true;
