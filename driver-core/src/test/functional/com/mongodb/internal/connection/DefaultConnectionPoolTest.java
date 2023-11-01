@@ -358,12 +358,13 @@ public class DefaultConnectionPoolTest {
                     .build(),
                 mockSdamProvider());
         provider.ready();
+        TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS);
         acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_CALLBACK,
-                controllableConnFactory, listener);
+                controllableConnFactory, listener, timeoutSettings);
         assertUseConcurrently(provider, 2 * maxAvailableConnections,
                 true, true,
                 0.02f, 0, 0,
-                cachedExecutor, SECONDS.toNanos(10), TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS));
+                cachedExecutor, SECONDS.toNanos(10), timeoutSettings);
     }
 
     /**
@@ -400,7 +401,9 @@ public class DefaultConnectionPoolTest {
         for (int i = 0; i < openConnectionsCount; i++) {
             connections.add(provider.get(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(0))));
         }
-        acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener);
+        TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS);
+        acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_OPEN, controllableConnFactory, listener,
+                timeoutSettings);
         int previousIdx = 0;
         // concurrently check in / check out and assert the hand-over mechanism works
         for (int idx = 0; idx < connections.size(); idx += maxConcurrentlyHandedOver) {
@@ -417,7 +420,7 @@ public class DefaultConnectionPoolTest {
                 }));
                 Runnable checkOut = () -> receivedFutures.add(cachedExecutor.submit(() -> {
                     InternalConnection connection =
-                            provider.get(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS)));
+                            provider.get(createOperationContext(timeoutSettings));
                     return connection.getDescription().getConnectionId();
                 }));
                 if (ThreadLocalRandom.current().nextBoolean()) {
@@ -593,23 +596,24 @@ public class DefaultConnectionPoolTest {
      * This results in acquiring permits to open a connection and leaving them acquired.
      */
     private static void acquireOpenPermits(final DefaultConnectionPool pool, final int openPermitsCount,
-                                           final InfiniteCheckoutEmulation infiniteEmulation,
-                                           final ControllableConnectionFactory controllableConnFactory,
-                                           final TestConnectionPoolListener listener) throws TimeoutException, InterruptedException {
+            final InfiniteCheckoutEmulation infiniteEmulation,
+            final ControllableConnectionFactory controllableConnFactory,
+            final TestConnectionPoolListener listener,
+            final TimeoutSettings timeoutSettings) throws TimeoutException, InterruptedException {
         assertTrue(openPermitsCount <= DEFAULT_MAX_CONNECTING);
         int initialCreatedEventCount = listener.countEvents(ConnectionCreatedEvent.class);
         switch (infiniteEmulation) {
             case INFINITE_CALLBACK: {
                 for (int i = 0; i < openPermitsCount; i++) {
                     SingleResultCallback<InternalConnection> infiniteCallback = (result, t) -> sleepMillis(MAX_VALUE);
-                    pool.getAsync(OPERATION_CONTEXT, infiniteCallback);
+                    pool.getAsync(createOperationContext(timeoutSettings), infiniteCallback);
                 }
                 break;
             }
             case INFINITE_OPEN: {
                 controllableConnFactory.openDurationHandle.set(Duration.ofMillis(MAX_VALUE), openPermitsCount);
                 for (int i = 0; i < openPermitsCount; i++) {
-                    pool.getAsync(OPERATION_CONTEXT, (result, t) -> {});
+                    pool.getAsync(createOperationContext(timeoutSettings), (result, t) -> {});
                 }
                 controllableConnFactory.openDurationHandle.await(Duration.ofMillis(TEST_WAIT_TIMEOUT_MILLIS));
                 break;
