@@ -17,15 +17,20 @@
 package com.mongodb.internal.logging;
 
 import com.mongodb.connection.ClusterId;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static java.util.function.Function.identity;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -41,11 +46,36 @@ public final class LogMessage {
     private final String format;
 
     public enum Component {
-        COMMAND,
-        CONNECTION
+        COMMAND("command"),
+        CONNECTION("connection"),
+        SERVER_SELECTION("serverSelection");
+
+        private static final Map<String, Component> INDEX;
+
+        static {
+            INDEX = Stream.of(Component.values()).collect(Collectors.toMap(Component::getValue, identity()));
+        }
+
+        private final String value;
+
+        Component(final String value) {
+            this.value = value;
+        }
+
+        @VisibleForTesting(otherwise = PRIVATE)
+        public String getValue() {
+            return value;
+        }
+
+        @VisibleForTesting(otherwise = PRIVATE)
+        public static Component of(final String value) {
+            Component result = INDEX.get(value);
+            return assertNotNull(result);
+        }
     }
 
     public enum Level {
+        INFO,
         DEBUG
     }
 
@@ -73,6 +103,10 @@ public final class LogMessage {
             COMMAND_NAME("commandName"),
             REQUEST_ID("requestId"),
             OPERATION_ID("operationId"),
+            /**
+             * Not supported.
+             */
+            OPERATION("operation"),
             SERVICE_ID("serviceId"),
             SERVER_CONNECTION_ID("serverConnectionId"),
             DRIVER_CONNECTION_ID("driverConnectionId"),
@@ -82,11 +116,15 @@ public final class LogMessage {
             COMMAND_CONTENT("command"),
             REASON_DESCRIPTION("reason"),
             ERROR_DESCRIPTION("error"),
+            FAILURE("failure"),
             MAX_IDLE_TIME_MS("maxIdleTimeMS"),
             MIN_POOL_SIZE("minPoolSize"),
             MAX_POOL_SIZE("maxPoolSize"),
             MAX_CONNECTING("maxConnecting"),
-            WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS");
+            WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS"),
+            SELECTOR("selector"),
+            TOPOLOGY_DESCRIPTION("topologyDescription"),
+            REMAINING_TIME_MS("remainingTimeMS");
 
             private final String value;
 

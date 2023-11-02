@@ -17,6 +17,7 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.connection.ServerType;
+import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -28,6 +29,7 @@ import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.lang.NonNull;
@@ -35,10 +37,14 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
 
+import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -235,8 +241,8 @@ final class EventMatcher {
         context.push(ContextElement.ofWaitForServerDescriptionChangedEvents(client, expectedEvent, count));
         BsonDocument expectedEventContents = getEventContents(expectedEvent);
         try {
-            serverListener.waitForServerDescriptionChangedEvent(
-                    event -> serverDescriptionChangedEventMatches(expectedEventContents, event), count, 10, TimeUnit.SECONDS);
+            serverListener.waitForServerDescriptionChangedEvents(
+                    event -> serverDescriptionChangedEventMatches(expectedEventContents, event), count, Duration.ofSeconds(10));
             context.pop();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -248,21 +254,51 @@ final class EventMatcher {
     public void assertServerDescriptionChangeEventCount(final String client, final BsonDocument expectedEvent, final int count,
             final List<ServerDescriptionChangedEvent> events) {
         BsonDocument expectedEventContents = getEventContents(expectedEvent);
-        context.push(ContextElement.ofServerDescriptionChangeEventCount(client, expectedEvent, count));
+        context.push(ContextElement.ofServerDescriptionChangedEventCount(client, expectedEvent, count));
         long matchCount = events.stream().filter(event -> serverDescriptionChangedEventMatches(expectedEventContents, event)).count();
         assertEquals(context.getMessage("Expected server description changed event counts to match"), count, matchCount);
         context.pop();
     }
 
+    public void waitForClusterDescriptionChangedEvents(final String client, final BsonDocument expectedEvent, final int count,
+            final TestClusterListener clusterListener) {
+        context.push(ContextElement.ofWaitForClusterDescriptionChangedEvents(client, expectedEvent, count));
+        BsonDocument expectedEventContents = getEventContents(expectedEvent);
+        try {
+            clusterListener.waitForClusterDescriptionChangedEvents(
+                    event -> clusterDescriptionChangedEventMatches(expectedEventContents, event), count, Duration.ofSeconds(10));
+            context.pop();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            fail(context.getMessage("Timed out waiting for cluster description changed events"));
+        }
+    }
+
+    public void assertClusterDescriptionChangeEventCount(final String client, final BsonDocument expectedEvent, final int count,
+            final List<ClusterDescriptionChangedEvent> events) {
+        BsonDocument expectedEventContents = getEventContents(expectedEvent);
+        context.push(ContextElement.ofClusterDescriptionChangedEventCount(client, expectedEvent, count));
+        long matchCount = events.stream().filter(event -> clusterDescriptionChangedEventMatches(expectedEventContents, event)).count();
+        assertEquals(context.getMessage("Expected cluster description changed event counts to match"), count, matchCount);
+        context.pop();
+    }
+
     @NonNull
     private BsonDocument getEventContents(final BsonDocument expectedEvent) {
-        if (!expectedEvent.getFirstKey().equals("serverDescriptionChangedEvent")) {
-            throw new UnsupportedOperationException("Unsupported event type " + expectedEvent.getFirstKey());
+        HashSet<String> supportedEventTypes = new HashSet<>(asList("serverDescriptionChangedEvent", "topologyDescriptionChangedEvent"));
+        String expectedEventType = expectedEvent.getFirstKey();
+        if (!supportedEventTypes.contains(expectedEventType)) {
+            throw new UnsupportedOperationException("Unsupported event type " + expectedEventType);
         }
         @SuppressWarnings("OptionalGetWithoutIsPresent")
         BsonDocument expectedEventContents = expectedEvent.values().stream().findFirst().get().asDocument();
         if (expectedEventContents.isEmpty()) {
             return expectedEventContents;
+        }
+        HashSet<String> emptyEventTypes = new HashSet<>(singleton("topologyDescriptionChangedEvent"));
+        if (emptyEventTypes.contains(expectedEventType)) {
+            throw new UnsupportedOperationException("Contents of " + expectedEventType + " must be empty");
         }
         if (expectedEventContents.size() != 1 || !expectedEventContents.getFirstKey().equals("newDescription")
                 || expectedEventContents.getDocument("newDescription").size() != 1) {
@@ -284,6 +320,15 @@ final class EventMatcher {
             default:
                 throw new UnsupportedOperationException();
         }
+    }
+
+    private static boolean clusterDescriptionChangedEventMatches(final BsonDocument expectedEventContents,
+            final ClusterDescriptionChangedEvent event) {
+        if (!expectedEventContents.isEmpty()) {
+            throw new UnsupportedOperationException(
+                    "Contents of " + ClusterDescriptionChangedEvent.class.getSimpleName() + " must be empty");
+        }
+        return true;
     }
 
     private static String getEventType(final Class<?> eventClass) {

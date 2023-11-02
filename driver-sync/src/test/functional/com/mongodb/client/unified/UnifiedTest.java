@@ -578,6 +578,10 @@ public abstract class UnifiedTest {
                 context.getEventMatcher().waitForServerDescriptionChangedEvents(clientId, event, count,
                         entities.getServerListener(clientId));
                 break;
+            case "topologyDescriptionChangedEvent":
+                context.getEventMatcher().waitForClusterDescriptionChangedEvents(clientId, event, count,
+                        entities.getClusterListener(clientId));
+                break;
             case "poolClearedEvent":
             case "poolReadyEvent":
             case "connectionCreatedEvent":
@@ -602,6 +606,10 @@ public abstract class UnifiedTest {
             case "serverDescriptionChangedEvent":
                 context.getEventMatcher().assertServerDescriptionChangeEventCount(clientId, event, count,
                         entities.getServerListener(clientId).getServerDescriptionChangedEvents());
+                break;
+            case "topologyDescriptionChangedEvent":
+                context.getEventMatcher().assertClusterDescriptionChangeEventCount(clientId, event, count,
+                        entities.getClusterListener(clientId).getClusterDescriptionChangedEvents());
                 break;
             case "poolClearedEvent":
             case "poolReadyEvent":

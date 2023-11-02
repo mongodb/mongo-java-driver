@@ -51,6 +51,11 @@ final class LogMatcher {
 
         for (int i = 0; i < expectedMessages.size(); i++) {
             BsonDocument expectedMessageAsDocument = expectedMessages.get(i).asDocument().clone();
+            // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
+            BsonValue expectedDataDocument = expectedMessageAsDocument.get("data");
+            if (expectedDataDocument != null) {
+                expectedDataDocument.asDocument().remove(LogMessage.Entry.Name.OPERATION.getValue());
+            }
             valueMatcher.assertValuesMatch(expectedMessageAsDocument, asDocument(actualMessages.get(i)));
         }
 
@@ -59,7 +64,7 @@ final class LogMatcher {
 
      static BsonDocument asDocument(final LogMessage message) {
         BsonDocument document = new BsonDocument();
-        document.put("component", new BsonString(message.getComponent().name().toLowerCase()));
+        document.put("component", new BsonString(message.getComponent().getValue()));
         document.put("level", new BsonString(message.getLevel().name().toLowerCase()));
         document.put("hasFailure", BsonBoolean.valueOf(message.getException() != null));
         document.put("failureIsRedacted",
