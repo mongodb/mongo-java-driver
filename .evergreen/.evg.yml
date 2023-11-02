@@ -1764,6 +1764,10 @@ axes:
   - id: jdk
     display_name: JDK
     values:
+      - id: "jdk21"
+        display_name: JDK21
+        variables:
+          JAVA_VERSION: "21"
       - id: "jdk17"
         display_name: JDK17
         variables:
@@ -2012,7 +2016,8 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-jdk-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17" ], version: [ "3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "latest" ],
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17", "jdk21"],
+                 version: [ "3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "latest" ],
                  topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -2027,26 +2032,28 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-require-api-version"
-  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk17"], version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "latest"],
+                 topology: "standalone", os: "linux" }
   display_name: "${version} ${topology} ${api-version} "
   tags: ["tests-variant"]
   tasks:
     - name: "test"
 
 - matrix_name: "tests-load-balancer-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk17"], version: ["5.0", "6.0", "7.0", "latest"], topology: "sharded-cluster", os: "ubuntu" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "latest"], topology: "sharded-cluster",
+                 os: "ubuntu" }
   display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
   tasks:
     - name: "load-balancer-test"
 
 - matrix_name: "tests-serverless"
-  matrix_spec: { jdk: ["jdk17"], os: "ubuntu" }
+  matrix_spec: { jdk: ["jdk21"], os: "ubuntu" }
   display_name: "Serverless"
   tasks:
     - name: "serverless-test"
 
 - matrix_name: "tests-slow"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["7.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk21", version: ["7.0"], topology: "standalone", os: "linux" }
   display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-slow-variant"]
   tasks:
@@ -2088,7 +2095,7 @@ buildvariants:
      - name: "socket-test"
 
 - matrix_name: "test-gssapi"
-  matrix_spec: { jdk: ["jdk8", "jdk17"], os: "linux", gssapi-login-context-name: "*"}
+  matrix_spec: { jdk: ["jdk8", "jdk17", "jdk21"], os: "linux", gssapi-login-context-name: "*"}
   display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} ${gssapi-login-context-name}"
   tags: ["test-gssapi-variant"]
   tasks:
@@ -2120,7 +2127,7 @@ buildvariants:
     - name: "test_atlas_task_group_search_indexes"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",
                  aws-credential-provider: "*" }
   display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu2004-small
@@ -2128,7 +2135,7 @@ buildvariants:
     - name: "aws-auth-test-with-regular-aws-credentials"
 
 - matrix_name: "aws-ec2-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk17"], version: ["7.0"], os: "ubuntu", aws-credential-provider: "*" }
+  matrix_spec: { ssl: "nossl", jdk: ["jdk21"], version: ["7.0"], os: "ubuntu", aws-credential-provider: "*" }
   display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu2004-small
   tasks:
@@ -2139,14 +2146,14 @@ buildvariants:
     - name: "aws-auth-test-with-web-identity-credentials"
 
 - matrix_name: "accept-api-version-2-test"
-  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk21", version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "Accept API Version 2 ${version}"
   run_on: ubuntu2004-small
   tasks:
     - name: "accept-api-version-2-test"
 
 - matrix_name: "ocsp-test"
-  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk17", version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk21", version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu" }
   display_name: "OCSP test ${version} ${os}"
   tasks:
     - name: ".ocsp"
@@ -2176,14 +2183,14 @@ buildvariants:
     - name: "reactive-streams-tck-test"
 
 - matrix_name: "scala-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["7.0"], topology: "replicaset", scala: "*", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk21", version: ["7.0"], topology: "replicaset", scala: "*", os: "ubuntu" }
   display_name: "${scala} ${version} ${topology} ${os}"
   tags: ["test-scala-variant"]
   tasks:
     - name: "scala-tests"
 
 - matrix_name: "kotlin-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["7.0"], topology: "replicaset", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["7.0"], topology: "replicaset", os: "ubuntu" }
   display_name: "Kotlin: ${jdk} ${version} ${topology} ${os}"
   tags: ["test-kotlin-variant"]
   tasks:
