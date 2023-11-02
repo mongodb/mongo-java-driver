@@ -313,10 +313,12 @@ final class EventMatcher {
             return true;
         }
         String newType = expectedEventContents.getDocument("newDescription").getString("type").getValue();
-        //noinspection SwitchStatementWithTooFewBranches
         switch (newType) {
             case "Unknown":
                 return event.getNewDescription().getType() == ServerType.UNKNOWN;
+            case "LoadBalancer": {
+                return event.getNewDescription().getType() == ServerType.LOAD_BALANCER;
+            }
             default:
                 throw new UnsupportedOperationException();
         }

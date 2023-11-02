@@ -16,9 +16,11 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.Function;
 import com.mongodb.MongoCommandException;
 import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils;
 import com.mongodb.internal.logging.LogMessage;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -44,19 +46,20 @@ final class LogMatcher {
         this.context = context;
     }
 
-    void assertLogMessageEquality(final String client, final BsonArray expectedMessages, final List<LogMessage> actualMessages) {
+    void assertLogMessageEquality(final String client, final BsonArray expectedMessages, final List<LogMessage> actualMessages,
+            final Iterable<Tweak> tweaks) {
         context.push(ContextElement.ofLogMessages(client, expectedMessages, actualMessages));
 
         assertEquals(context.getMessage("Number of log messages must be the same"), expectedMessages.size(), actualMessages.size());
 
         for (int i = 0; i < expectedMessages.size(); i++) {
-            BsonDocument expectedMessageAsDocument = expectedMessages.get(i).asDocument().clone();
-            // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
-            BsonValue expectedDataDocument = expectedMessageAsDocument.get("data");
-            if (expectedDataDocument != null) {
-                expectedDataDocument.asDocument().remove(LogMessage.Entry.Name.OPERATION.getValue());
+            BsonDocument expectedMessage = expectedMessages.get(i).asDocument().clone();
+            for (Tweak tweak : tweaks) {
+                expectedMessage = tweak.apply(expectedMessage);
             }
-            valueMatcher.assertValuesMatch(expectedMessageAsDocument, asDocument(actualMessages.get(i)));
+            if (expectedMessage != null) {
+                valueMatcher.assertValuesMatch(expectedMessage, asDocument(actualMessages.get(i)));
+            }
         }
 
         context.pop();
@@ -108,4 +111,27 @@ final class LogMatcher {
         }
     }
 
+    interface Tweak extends Function<BsonDocument, BsonDocument> {
+        /**
+         * @param expectedMessage May be {@code null}, in which case the method simply returns {@code null}.
+         * This method may mutate {@code expectedMessage}.
+         * @return {@code null} iff matching {@code expectedMessage} with the actual message must be skipped.
+         */
+        @Nullable
+        BsonDocument apply(@Nullable BsonDocument expectedMessage);
+
+        static Tweak skip(final LogMessage.Entry.Name name) {
+            return expectedMessage -> {
+                if (expectedMessage == null) {
+                    return null;
+                } else {
+                    BsonDocument expectedData = expectedMessage.getDocument("data", null);
+                    if (expectedData != null) {
+                        expectedData.remove(name.getValue());
+                    }
+                    return expectedMessage;
+                }
+            };
+        }
+    }
 }
