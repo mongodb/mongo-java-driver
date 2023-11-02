@@ -114,7 +114,7 @@ final class LogMatcher {
     interface Tweak extends Function<BsonDocument, BsonDocument> {
         /**
          * @param expectedMessage May be {@code null}, in which case the method simply returns {@code null}.
-         * @return {@code null} iff matching {@code expectedMessage} if the actual message must be skipped.
+         * @return {@code null} iff matching {@code expectedMessage} with the actual message must be skipped.
          */
         @Nullable
         BsonDocument apply(@Nullable BsonDocument expectedMessage);
