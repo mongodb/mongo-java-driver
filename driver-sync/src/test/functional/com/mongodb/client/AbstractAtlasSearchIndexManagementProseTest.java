@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.SearchIndexModel;
 import org.bson.Document;
@@ -87,9 +88,11 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @BeforeEach
     public void setUp() {
         MongoClientSettings mongoClientSettings = getMongoClientSettingsBuilder()
-                /* Specifying the write concern here ensures that we test the use case where the write concern
+                /* Specifying the write and read concerns here ensures that we test the use case where the write concern
                 is not passed down to the server. If a write concern is attached to the command, the server will fail with an error. */
-                .writeConcern(WriteConcern.MAJORITY).build();
+                .writeConcern(WriteConcern.MAJORITY)
+                .readConcern(ReadConcern.MAJORITY)
+                .build();
 
         client = createMongoClient(mongoClientSettings);
         db = client.getDatabase("test");
