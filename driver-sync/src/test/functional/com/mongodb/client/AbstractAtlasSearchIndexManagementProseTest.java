@@ -88,7 +88,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @BeforeEach
     public void setUp() {
         MongoClientSettings mongoClientSettings = getMongoClientSettingsBuilder()
-                /* Specifying the write and read concerns here ensures that we test the use case where the write concern
+                /* Specifying the write and read concerns here ensures that we test the use case where the write or read concern
                 is not passed down to the server. If a write concern is attached to the command, the server will fail with an error. */
                 .writeConcern(WriteConcern.MAJORITY)
                 .readConcern(ReadConcern.MAJORITY)
