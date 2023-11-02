@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.SearchIndexModel;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -75,7 +76,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
 
     protected AbstractAtlasSearchIndexManagementProseTest() {
         Assumptions.assumeTrue(serverVersionAtLeast(6, 0));
-        Assumptions.assumeTrue(hasAtlasSearchIndexHelperEnabled(), "Atlas Search Index tests are disabled"); //TODO enable by flag
+        Assumptions.assumeTrue(hasAtlasSearchIndexHelperEnabled(), "Atlas Search Index tests are disabled");
     }
 
     private static boolean hasAtlasSearchIndexHelperEnabled() {
@@ -84,7 +85,12 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
 
     @BeforeEach
     public void setUp() {
-        client = createMongoClient(getMongoClientSettings());
+        MongoClientSettings mongoClientSettings = MongoClientSettings.builder(getMongoClientSettings())
+                /* Specifying the write concern here ensures that we test the use case where the write concern
+                is not passed down to the server. If a write concern is attached to the command, the server will fail with an error. */
+                .writeConcern(WriteConcern.MAJORITY).build();
+
+        client = createMongoClient(mongoClientSettings);
         db = client.getDatabase("test");
 
         String collectionName = UUID.randomUUID().toString();

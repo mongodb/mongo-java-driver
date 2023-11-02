@@ -651,20 +651,19 @@ final class Operations<TDocument> {
                 .map(this::createSearchIndexRequest)
                 .collect(Collectors.toList());
 
-        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern);
+        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests);
     }
 
     UpdateSearchIndexesOperation updateSearchIndex(final String indexName, final Bson definition) {
         BsonDocument definitionDocument = assertNotNull(toBsonDocument(definition));
         SearchIndexRequest searchIndexRequest = new SearchIndexRequest(definitionDocument, indexName);
 
-        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest,
-                writeConcern);
+        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest);
     }
 
 
     DropSearchIndexOperation dropSearchIndex(final String indexName) {
-        return new DropSearchIndexOperation(assertNotNull(namespace), indexName, writeConcern);
+        return new DropSearchIndexOperation(assertNotNull(namespace), indexName);
     }
 
 

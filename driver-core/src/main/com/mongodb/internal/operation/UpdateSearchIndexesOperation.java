@@ -17,11 +17,8 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-
-import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
  * An operation that updates an Atlas Search index.
@@ -32,19 +29,16 @@ final class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     private static final String COMMAND_NAME = "updateSearchIndex";
     private final SearchIndexRequest request;
 
-    UpdateSearchIndexesOperation(final MongoNamespace namespace, final SearchIndexRequest request,
-                                 final WriteConcern writeConcern) {
-        super(namespace, writeConcern);
+    UpdateSearchIndexesOperation(final MongoNamespace namespace, final SearchIndexRequest request) {
+        super(namespace);
         this.request = request;
     }
 
     @Override
     BsonDocument buildCommand() {
-        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+        return new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
                 .append("name", new BsonString(request.getIndexName()))
                 .append("definition", request.getDefinition());
-        appendWriteConcernToCommand(getWriteConcern(), command);
-        return command;
     }
 }
 
