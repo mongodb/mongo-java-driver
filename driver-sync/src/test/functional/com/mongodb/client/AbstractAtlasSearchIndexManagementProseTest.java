@@ -40,6 +40,7 @@ import java.util.stream.StreamSupport;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 
@@ -85,7 +86,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
 
     @BeforeEach
     public void setUp() {
-        MongoClientSettings mongoClientSettings = MongoClientSettings.builder(getMongoClientSettings())
+        MongoClientSettings mongoClientSettings = getMongoClientSettingsBuilder()
                 /* Specifying the write concern here ensures that we test the use case where the write concern
                 is not passed down to the server. If a write concern is attached to the command, the server will fail with an error. */
                 .writeConcern(WriteConcern.MAJORITY).build();
