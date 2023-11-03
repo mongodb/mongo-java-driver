@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadPreference;
@@ -143,12 +142,8 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public ClientSession startSession(final ClientSessionOptions options) {
-        ClientSession clientSession = delegate.createClientSession(notNull("options", options),
+        return delegate.createClientSession(notNull("options", options),
                 settings.getReadConcern(), settings.getWriteConcern(), settings.getReadPreference());
-        if (clientSession == null) {
-            throw new MongoClientException("Sessions are not supported by the MongoDB cluster to which this client is connected");
-        }
-        return clientSession;
     }
 
     @Override
