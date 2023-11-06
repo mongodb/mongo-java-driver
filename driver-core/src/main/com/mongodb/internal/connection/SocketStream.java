@@ -187,11 +187,6 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public boolean supportsAdditionalTimeout() {
-        return true;
-    }
-
-    @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
         int curTimeout = socket.getSoTimeout();
         if (curTimeout > 0 && additionalTimeout > 0) {

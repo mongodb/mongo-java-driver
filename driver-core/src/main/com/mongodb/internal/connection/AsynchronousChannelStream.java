@@ -144,11 +144,6 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public boolean supportsAdditionalTimeout() {
-        return true;
-    }
-
-    @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, additionalTimeout, handler);

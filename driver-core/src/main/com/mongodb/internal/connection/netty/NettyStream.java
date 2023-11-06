@@ -241,11 +241,6 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public boolean supportsAdditionalTimeout() {
-        return true;
-    }
-
-    @Override
     public ByteBuf read(final int numBytes, final int additionalTimeoutMillis) throws IOException {
         isTrueArgument("additionalTimeoutMillis must not be negative", additionalTimeoutMillis >= 0);
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<>();

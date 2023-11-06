@@ -376,11 +376,6 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public boolean supportsAdditionalTimeout() {
-        return stream.supportsAdditionalTimeout();
-    }
-
-    @Override
     public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext, final int additionalTimeout) {
         isTrue("Response is expected", hasMoreToCome);
         return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), sessionContext, additionalTimeout);
