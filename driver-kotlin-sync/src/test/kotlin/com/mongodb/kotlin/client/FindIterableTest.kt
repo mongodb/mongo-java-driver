@@ -26,12 +26,7 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoMoreInteractions
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 
 class FindIterableTest {
     @Test
@@ -42,7 +37,6 @@ class FindIterableTest {
         assertEquals(jFindIterableFunctions, kFindIterableFunctions)
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JFindIterable<Document> = mock()
@@ -85,7 +79,6 @@ class FindIterableTest {
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.min(bson)
-        iterable.oplogReplay(true)
         iterable.noCursorTimeout(true)
         iterable.partial(true)
         iterable.projection(bson)
@@ -114,7 +107,6 @@ class FindIterableTest {
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).min(bson)
-        verify(wrapped).oplogReplay(true)
         verify(wrapped).noCursorTimeout(true)
         verify(wrapped).partial(true)
         verify(wrapped).projection(bson)

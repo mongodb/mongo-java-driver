@@ -388,20 +388,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     * @since 3.9
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    public DBCursor oplogReplay(final boolean oplogReplay) {
-        findOptions.oplogReplay(oplogReplay);
-        return this;
-    }
-
-    /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
      * to prevent excess memory use. Set this option to prevent that.
      *
@@ -426,7 +412,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return this;
     }
 
-    @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
 
         return new FindOperation<>(collection.getNamespace(), decoder)
@@ -449,7 +434,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .max(collection.wrapAllowNull(findOptions.getMax()))
                                                 .cursorType(findOptions.getCursorType())
                                                 .noCursorTimeout(findOptions.isNoCursorTimeout())
-                                                .oplogReplay(findOptions.isOplogReplay())
                                                 .partial(findOptions.isPartial())
                                                 .returnKey(findOptions.isReturnKey())
                                                 .showRecordId(findOptions.isShowRecordId())

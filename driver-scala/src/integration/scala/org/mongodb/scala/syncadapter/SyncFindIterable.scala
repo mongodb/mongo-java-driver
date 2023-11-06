@@ -69,11 +69,6 @@ case class SyncFindIterable[T](wrapped: FindObservable[T]) extends SyncMongoIter
     this
   }
 
-  override def oplogReplay(oplogReplay: Boolean): FindIterable[T] = {
-    wrapped.oplogReplay(oplogReplay)
-    this
-  }
-
   override def partial(partial: Boolean): FindIterable[T] = {
     wrapped.partial(partial)
     this

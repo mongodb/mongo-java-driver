@@ -44,7 +44,6 @@ class FindOptionsSpecification extends Specification {
         options.getBatchSize() == 0
         options.getCursorType() == CursorType.NonTailable
         !options.isNoCursorTimeout()
-        !options.isOplogReplay()
         !options.isPartial()
         !options.isAllowDiskUse()
     }
@@ -111,14 +110,6 @@ class FindOptionsSpecification extends Specification {
 
         where:
         partial << [true, false]
-    }
-
-    def 'should set oplogReplay'() {
-        expect:
-        new FindOptions().oplogReplay(oplogReplay).isOplogReplay() == oplogReplay
-
-        where:
-        oplogReplay << [true, false]
     }
 
     def 'should set noCursorTimeout'() {

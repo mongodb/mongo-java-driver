@@ -16,14 +16,14 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-import com.mongodb.{ CursorType, ExplainVerbosity }
 import com.mongodb.reactivestreams.client.FindPublisher
+import com.mongodb.{ CursorType, ExplainVerbosity }
 import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Collation
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
@@ -149,17 +149,6 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    */
   def noCursorTimeout(noCursorTimeout: Boolean): FindObservable[TResult] = {
     wrapped.noCursorTimeout(noCursorTimeout)
-    this
-  }
-
-  /**
-   * Users should not set this under normal circumstances.
-   *
-   * @param oplogReplay if oplog replay is enabled
-   * @return this
-   */
-  def oplogReplay(oplogReplay: Boolean): FindObservable[TResult] = {
-    wrapped.oplogReplay(oplogReplay)
     this
   }
 
