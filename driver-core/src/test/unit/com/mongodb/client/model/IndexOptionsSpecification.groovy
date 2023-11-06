@@ -42,7 +42,6 @@ class IndexOptionsSpecification extends Specification {
         options.getBits() == null
         options.getMin() == null
         options.getMax() == null
-        options.getBucketSize() == null
         options.getStorageEngine() == null
         options.getPartialFilterExpression() == null
         options.getCollation() == null
@@ -69,7 +68,6 @@ class IndexOptionsSpecification extends Specification {
                 .bits(1)
                 .min(-180.0)
                 .max(180.0)
-                .bucketSize(200.0)
                 .storageEngine(storageEngine)
                 .partialFilterExpression(partialFilterExpression)
                 .collation(collation)
@@ -91,7 +89,6 @@ class IndexOptionsSpecification extends Specification {
         options.getBits() == 1
         options.getMin() == -180.0
         options.getMax() == 180.0
-        options.getBucketSize() == 200.0
         options.getStorageEngine() == storageEngine
         options.getPartialFilterExpression() == partialFilterExpression
         options.getCollation() == collation

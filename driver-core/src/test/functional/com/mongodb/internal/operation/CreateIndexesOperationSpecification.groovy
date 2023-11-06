@@ -334,24 +334,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(5, 0) })
-    def 'should be able to create a geoHaystack indexes'() {
-        given:
-        def operation = new CreateIndexesOperation(getNamespace(),
-                [new IndexRequest(new BsonDocument('field', new BsonString('geoHaystack')).append('field1', new BsonInt32(1)))
-                         .bucketSize(10.0)])
-
-        when:
-        execute(operation, async)
-
-        then:
-        getUserCreatedIndexes('key') == [[field: 'geoHaystack', field1: 1]]
-        getUserCreatedIndexes('bucketSize') == [10.0]
-
-        where:
-        async << [true, false]
-    }
-
     def 'should be able to create a 2dSphereIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),

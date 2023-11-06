@@ -50,7 +50,6 @@ public class IndexRequest {
     private Integer bits;
     private Double min;
     private Double max;
-    private Double bucketSize;
     private boolean dropDups;
     private BsonDocument storageEngine;
     private BsonDocument partialFilterExpression;
@@ -213,18 +212,6 @@ public class IndexRequest {
 
     public IndexRequest max(@Nullable final Double max) {
         this.max = max;
-        return this;
-    }
-
-    @Deprecated
-    @Nullable
-    public Double getBucketSize() {
-        return bucketSize;
-    }
-
-    @Deprecated
-    public IndexRequest bucketSize(@Nullable final Double bucketSize) {
-        this.bucketSize = bucketSize;
         return this;
     }
 
