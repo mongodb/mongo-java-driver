@@ -609,7 +609,6 @@ final class Operations<TDocument> {
                 assertNotNull(toBsonDocumentList(pipeline)), writeConcern).collation(createViewOptions.getCollation());
     }
 
-    @SuppressWarnings("deprecation")
     CreateIndexesOperation createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
         notNull("indexes", indexes);
         notNull("createIndexOptions", createIndexOptions);
@@ -633,7 +632,6 @@ final class Operations<TDocument> {
                     .bits(model.getOptions().getBits())
                     .min(model.getOptions().getMin())
                     .max(model.getOptions().getMax())
-                    .bucketSize(model.getOptions().getBucketSize())
                     .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
                     .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
                     .collation(model.getOptions().getCollation())

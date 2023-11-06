@@ -2107,9 +2107,6 @@ public class DBCollection {
         if (options.containsField("max")) {
             request.max(convertOptionsToType(options, "max", Double.class));
         }
-        if (options.containsField("bucketSize")) {
-            request.bucketSize(convertOptionsToType(options, "bucketSize", Double.class));
-        }
         if (options.containsField("dropDups")) {
             request.dropDups(convertOptionsToType(options, "dropDups", Boolean.class));
         }
