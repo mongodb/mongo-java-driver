@@ -103,10 +103,6 @@ public interface InternalConnection extends BufferProvider {
     <T> T receive(Decoder<T> decoder, SessionContext sessionContext);
 
 
-    default boolean supportsAdditionalTimeout() {
-        return false;
-    }
-
     default <T> T receive(Decoder<T> decoder, SessionContext sessionContext, int additionalTimeout) {
         throw new UnsupportedOperationException();
     }

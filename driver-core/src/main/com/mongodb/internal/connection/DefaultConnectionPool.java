@@ -43,8 +43,6 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.time.TimePoint;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
@@ -56,6 +54,8 @@ import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.internal.time.TimePoint;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
@@ -775,12 +775,6 @@ final class DefaultConnectionPool implements ConnectionPool {
         public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
             isTrue("open", !isClosed.get());
             return wrapped.receive(decoder, sessionContext);
-        }
-
-        @Override
-        public boolean supportsAdditionalTimeout() {
-            isTrue("open", !isClosed.get());
-            return wrapped.supportsAdditionalTimeout();
         }
 
         @Override
