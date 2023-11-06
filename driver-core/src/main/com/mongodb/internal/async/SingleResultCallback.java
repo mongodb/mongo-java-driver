@@ -37,7 +37,10 @@ public interface SingleResultCallback<T> {
      */
     void onResult(@Nullable T result, @Nullable Throwable t);
 
-    default AsyncCompletionHandler<T> toHandler() {
+    /**
+     * @return this callback as a handler
+     */
+    default AsyncCompletionHandler<T> asHandler() {
         return new AsyncCompletionHandler<T>() {
             @Override
             public void completed(@Nullable final T result) {

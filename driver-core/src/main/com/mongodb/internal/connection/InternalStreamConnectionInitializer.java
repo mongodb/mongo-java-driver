@@ -109,10 +109,10 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                 executeCommandAsync("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection, c2);
             }).onErrorIf(e -> e instanceof MongoException, (t, c2) -> {
                 throw mapHelloException((MongoException) t);
-            }).thenApply((helloResult, c2) -> {
+            }).<InternalConnectionInitializationDescription>thenApply((helloResult, c2) -> {
                 setSpeculativeAuthenticateResponse(helloResult);
                 c2.complete(createInitializationDescription(helloResult, internalConnection, startTime));
-            });
+            }).finish(c);
         }).finish(callback);
     }
 

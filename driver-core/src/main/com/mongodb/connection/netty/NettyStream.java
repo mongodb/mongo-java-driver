@@ -166,7 +166,7 @@ final class NettyStream implements Stream {
     @SuppressWarnings("deprecation")
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
-        AsyncCompletionHandler<Void> handler = callback.toHandler();
+        AsyncCompletionHandler<Void> handler = callback.asHandler();
         Queue<SocketAddress> socketAddressQueue;
 
         try {

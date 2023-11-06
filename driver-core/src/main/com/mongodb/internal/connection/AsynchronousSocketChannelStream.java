@@ -58,7 +58,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     @SuppressWarnings("deprecation")
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
-        AsyncCompletionHandler<Void> handler = callback.toHandler();
+        AsyncCompletionHandler<Void> handler = callback.asHandler();
 
         isTrue("unopened", getChannel() == null);
         Queue<SocketAddress> socketAddressQueue;

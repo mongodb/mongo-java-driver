@@ -40,6 +40,9 @@ public interface AsyncCompletionHandler<T> {
      */
     void failed(Throwable t);
 
+    /**
+     * @return this handler as a callback
+     */
     default SingleResultCallback<T> asCallback() {
         return (r, t) -> {
             if (t != null) {

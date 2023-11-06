@@ -34,7 +34,6 @@ import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.connection.ClusterType.LOAD_BALANCED;
@@ -126,23 +125,21 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements Re
     }
 
     private ConnectionSource getConnectionSource(final Supplier<ConnectionSource> connectionSourceSupplier) {
-        Function<ConnectionSource, ConnectionSource> wrapper = c -> new SessionBindingConnectionSource(c);
-
+        ConnectionSource source;
         if (!session.hasActiveTransaction()) {
-            return wrapper.apply(connectionSourceSupplier.get());
+            source = connectionSourceSupplier.get();
+        } else if (TransactionContext.get(session) != null) {
+            source = wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()));
+        } else {
+            source = connectionSourceSupplier.get();
+            ClusterType clusterType = source.getServerDescription().getClusterType();
+            if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
+                TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
+                session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
+                transactionContext.release();  // The session is responsible for retaining a reference to the context
+            }
         }
-        if (TransactionContext.get(session) != null) {
-            return wrapper.apply(
-                    wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress())));
-        }
-        ConnectionSource source = connectionSourceSupplier.get();
-        ClusterType clusterType = source.getServerDescription().getClusterType();
-        if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
-            TransactionContext<Connection> transactionContext = new TransactionContext<>(clusterType);
-            session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
-            transactionContext.release();  // The session is responsible for retaining a reference to the context
-        }
-        return wrapper.apply(source);
+        return new SessionBindingConnectionSource(source);
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {

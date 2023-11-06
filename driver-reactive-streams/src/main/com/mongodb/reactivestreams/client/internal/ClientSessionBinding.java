@@ -104,27 +104,24 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
 
     private void getConnectionSource(final AsyncSupplier<AsyncConnectionSource> connectionSourceSupplier,
             final SingleResultCallback<AsyncConnectionSource> callback) {
-        // wrapper applied at end
         beginAsync().<AsyncConnectionSource>thenSupply(c -> {
             if (!session.hasActiveTransaction()) {
                 connectionSourceSupplier.getAsync(c);
-                return;
-            }
-            if (TransactionContext.get(session) != null) {
+            } else if (TransactionContext.get(session) != null) {
                 wrapped.getConnectionSource(assertNotNull(session.getPinnedServerAddress()), c);
-                return;
+            } else {
+                beginAsync().<AsyncConnectionSource>thenSupply(c2 -> {
+                    connectionSourceSupplier.getAsync(c2);
+                }).<AsyncConnectionSource>thenApply((source, c2) -> {
+                    ClusterType clusterType = assertNotNull(source).getServerDescription().getClusterType();
+                    if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
+                        TransactionContext<AsyncConnection> transactionContext = new TransactionContext<>(clusterType);
+                        session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
+                        transactionContext.release();  // The session is responsible for retaining a reference to the context
+                    }
+                    c2.complete(source);
+                }).finish(c);
             }
-            beginAsync().<AsyncConnectionSource>thenSupply(c2 -> {
-                connectionSourceSupplier.getAsync(c2);
-            }).<AsyncConnectionSource>thenApply((source, c2) -> {
-                ClusterType clusterType = assertNotNull(source).getServerDescription().getClusterType();
-                if (clusterType == SHARDED || clusterType == LOAD_BALANCED) {
-                    TransactionContext<AsyncConnection> transactionContext = new TransactionContext<>(clusterType);
-                    session.setTransactionContext(source.getServerDescription().getAddress(), transactionContext);
-                    transactionContext.release();  // The session is responsible for retaining a reference to the context
-                } //
-                c2.complete(source);
-            }).finish(c);
         }).<AsyncConnectionSource>thenApply((source, c) -> {
             c.complete(new SessionBindingAsyncConnectionSource(source));
         }).finish(callback);
@@ -194,12 +191,12 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                 if (transactionContext == null || !transactionContext.isConnectionPinningRequired()) {
                     wrapped.getConnection(c);
                     return;
-                } //
+                }
                 AsyncConnection pinnedAsyncConnection = transactionContext.getPinnedConnection();
                 if (pinnedAsyncConnection != null) {
                     c.complete(pinnedAsyncConnection.retain());
                     return;
-                } //
+                }
                 beginAsync().<AsyncConnection>thenSupply(c2 -> {
                     wrapped.getConnection(c2);
                 }).<AsyncConnection>thenApply((connection, c2) -> {

@@ -122,8 +122,8 @@ final class AsyncFunctionsTest {
         1. Is everything inside the boilerplate?
         2. Is "callback" supplied to "finish"?
         3. In each block and nested block, is that same block's "c" always passed/completed at the end of execution?
-        4. Is any c.complete followed by a return, to end execution?
-        5. Do any sync methods still need to be converted to async?
+        4. Is every c.complete followed by a return, to end execution?
+        5. Have all sync method calls been converted to async, where needed?
         */
     }
 
