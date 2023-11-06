@@ -177,7 +177,7 @@ class TestInternalConnection implements InternalConnection {
                 throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
                         description.getServerAddress());
             }
-            return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
+            return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocument();
         }
     }
 
@@ -200,7 +200,7 @@ class TestInternalConnection implements InternalConnection {
                                                            final CommandMessage commandMessage, final Decoder<T> decoder) {
         ReplyMessage<T> replyMessage = new ReplyMessage<>(responseBuffers, decoder, commandMessage.getId());
         responseBuffers.reset();
-        return replyMessage.getDocuments().get(0);
+        return replyMessage.getDocument();
     }
 
     @Override
@@ -222,10 +222,10 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.putInt(header.getRequestId());
         headerByteBuffer.putInt(responseTo);
         headerByteBuffer.putInt(1);
-        headerByteBuffer.putInt(header.getResponseFlags());
-        headerByteBuffer.putLong(header.getCursorId());
-        headerByteBuffer.putInt(header.getStartingFrom());
-        headerByteBuffer.putInt(header.getNumberReturned());
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putLong(0);
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putInt(1);
         ((Buffer) headerByteBuffer).flip();
 
         ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
