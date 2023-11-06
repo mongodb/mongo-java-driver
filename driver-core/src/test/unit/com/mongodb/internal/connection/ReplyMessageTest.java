@@ -17,58 +17,22 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
-import org.bson.ByteBufNIO;
-import org.bson.Document;
-import org.junit.Test;
+import org.bson.codecs.BsonDocumentCodec;
+import org.junit.jupiter.api.Test;
 
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
-import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
+import static com.mongodb.internal.connection.MessageHelper.buildReply;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ReplyMessageTest {
 
-    @Test(expected = MongoInternalException.class)
+    @Test
     public void shouldThrowExceptionIfRequestIdDoesNotMatchResponseTo() {
         int badResponseTo = 34565;
         int expectedResponseTo = 5;
 
-        ByteBuffer headerByteBuffer = ByteBuffer.allocate(36);
-        headerByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        headerByteBuffer.putInt(36);
-        headerByteBuffer.putInt(2456);
-        headerByteBuffer.putInt(badResponseTo);
-        headerByteBuffer.putInt(1);
-        headerByteBuffer.putInt(0);
-        headerByteBuffer.putLong(0);
-        headerByteBuffer.putInt(0);
-        headerByteBuffer.putInt(0);
-        ((Buffer) headerByteBuffer).flip();
+        ResponseBuffers responseBuffers = buildReply(badResponseTo, "{ok: 1}", 0);
 
-        ByteBufNIO byteBuf = new ByteBufNIO(headerByteBuffer);
-        ReplyHeader replyHeader = new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
-        new ReplyMessage<Document>(replyHeader, expectedResponseTo);
-    }
-
-    @Test(expected = MongoInternalException.class)
-    public void shouldThrowExceptionIfOpCodeIsIncorrect() {
-        int badOpCode = 2;
-
-        ByteBuffer headerByteBuffer = ByteBuffer.allocate(36);
-        headerByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        headerByteBuffer.putInt(36);
-        headerByteBuffer.putInt(2456);
-        headerByteBuffer.putInt(5);
-        headerByteBuffer.putInt(badOpCode);
-        headerByteBuffer.putInt(0);
-        headerByteBuffer.putLong(0);
-        headerByteBuffer.putInt(0);
-        headerByteBuffer.putInt(0);
-        ((Buffer) headerByteBuffer).flip();
-
-        ByteBufNIO byteBuf = new ByteBufNIO(headerByteBuffer);
-        ReplyHeader replyHeader = new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
-        new ReplyMessage<Document>(replyHeader, 5);
+        assertThrows(MongoInternalException.class, () ->
+                new ReplyMessage<>(responseBuffers, new BsonDocumentCodec(), expectedResponseTo));
     }
 }

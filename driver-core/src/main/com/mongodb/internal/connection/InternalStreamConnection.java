@@ -546,7 +546,7 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private <T> T getCommandResult(final Decoder<T> decoder, final ResponseBuffers responseBuffers, final int messageId) {
-        T result = new ReplyMessage<>(responseBuffers, decoder, messageId).getDocuments().get(0);
+        T result = new ReplyMessage<>(responseBuffers, decoder, messageId).getDocument();
         MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers, description.getServerAddress());
         if (writeConcernBasedError != null) {
             throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
