@@ -107,18 +107,6 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements com.mongo
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> sharded(final boolean sharded) {
-        wrapped.sharded(sharded);
-        return this;
-    }
-
-    @Override
-    public com.mongodb.client.MapReduceIterable<T> nonAtomic(final boolean nonAtomic) {
-        wrapped.nonAtomic(nonAtomic);
-        return this;
-    }
-
-    @Override
     public com.mongodb.client.MapReduceIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
         super.batchSize(batchSize);

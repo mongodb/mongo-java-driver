@@ -170,37 +170,6 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   }
 
   /**
-   * Sets if the output database is sharded
-   *
-   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce#output-to-a-collection-with-an-action output with an action]]
-   * @param sharded if the output database is sharded
-   * @return this
-   */
-  @deprecated("This option will no longer be supported in MongoDB 4.4.", "4.1.0")
-  def sharded(sharded: Boolean): MapReduceObservable[TResult] = {
-    wrapped.sharded(sharded)
-    this
-  }
-
-  /**
-   * Sets if the post-processing step will prevent MongoDB from locking the database.
-   *
-   * Valid only with the `MapReduceAction.MERGE` or `MapReduceAction.REDUCE` actions.
-   *
-   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce/#output-to-a-collection-with-an-action Output with an action]]
-   * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
-   * @return this
-   */
-  @deprecated(
-    "This option will no longer be supported in MongoDB 4.4 as it will no longer hold a global or database level write lock",
-    "4.1.0"
-  )
-  def nonAtomic(nonAtomic: Boolean): MapReduceObservable[TResult] = {
-    wrapped.nonAtomic(nonAtomic)
-    this
-  }
-
-  /**
    * Sets the bypass document level validation flag.
    *
    * '''Note:''': This only applies when an `\$out` stage is specified.

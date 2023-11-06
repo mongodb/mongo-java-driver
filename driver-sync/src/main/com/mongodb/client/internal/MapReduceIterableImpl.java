@@ -61,8 +61,6 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private long maxTimeMS;
     private com.mongodb.client.model.MapReduceAction action = com.mongodb.client.model.MapReduceAction.REPLACE;
     private String databaseName;
-    private boolean sharded;
-    private boolean nonAtomic;
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
@@ -157,18 +155,6 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<TResult> sharded(final boolean sharded) {
-        this.sharded = sharded;
-        return this;
-    }
-
-    @Override
-    public com.mongodb.client.MapReduceIterable<TResult> nonAtomic(final boolean nonAtomic) {
-        this.nonAtomic = nonAtomic;
-        return this;
-    }
-
-    @Override
     public com.mongodb.client.MapReduceIterable<TResult> batchSize(final int batchSize) {
         super.batchSize(batchSize);
         return this;
@@ -218,7 +204,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     private WriteOperation<MapReduceStatistics> createMapReduceToCollectionOperation() {
         return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
-                limit, maxTimeMS, jsMode, scope, sort, verbose, action, nonAtomic, sharded, bypassDocumentValidation, collation
+                limit, maxTimeMS, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation
         );
     }
 

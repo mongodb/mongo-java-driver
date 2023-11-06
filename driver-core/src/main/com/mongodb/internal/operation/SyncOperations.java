@@ -132,17 +132,15 @@ public final class SyncOperations<TDocument> {
                 comment, variables, aggregationLevel);
     }
 
-    @SuppressWarnings("deprecation")
     public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
                                                                      final String mapFunction, final String reduceFunction,
                                                                      final String finalizeFunction, final Bson filter, final int limit,
                                                                      final long maxTimeMS, final boolean jsMode, final Bson scope,
                                                                      final Bson sort, final boolean verbose,
                                                                      final com.mongodb.client.model.MapReduceAction action,
-                                                                     final boolean nonAtomic, final boolean sharded,
                                                                      final Boolean bypassDocumentValidation, final Collation collation) {
         return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter, limit,
-                maxTimeMS, jsMode, scope, sort, verbose, action, nonAtomic, sharded, bypassDocumentValidation, collation);
+                maxTimeMS, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation);
     }
 
     public <TResult> ReadOperation<MapReduceBatchCursor<TResult>> mapReduce(final String mapFunction, final String reduceFunction,
