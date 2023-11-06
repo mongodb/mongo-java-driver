@@ -59,10 +59,6 @@ class IndexesSpec extends BaseSpec {
     toBson(geo2d("x")) should equal(Document("""{x : "2d"}"""))
   }
 
-  it should "geoHaystack" in {
-    toBson(geoHaystack("x", descending("b"))) should equal(Document("""{x : "geoHaystack", b: -1}"""))
-  }
-
   it should "text" in {
     toBson(text("x")) should equal(Document("""{x : "text"}"""))
   }

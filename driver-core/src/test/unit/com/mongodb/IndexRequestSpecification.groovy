@@ -50,7 +50,6 @@ class IndexRequestSpecification extends Specification {
         request.getBits() == null
         request.getMin() == null
         request.getMax() == null
-        request.getBucketSize() == null
         !request.getDropDups()
         request.getStorageEngine() == null
         request.getPartialFilterExpression() == null
@@ -89,7 +88,6 @@ class IndexRequestSpecification extends Specification {
                 .bits(1)
                 .min(-180.0)
                 .max(180.0)
-                .bucketSize(200.0)
                 .dropDups(true)
                 .storageEngine(storageEngine)
                 .partialFilterExpression(partialFilterExpression)
@@ -113,7 +111,6 @@ class IndexRequestSpecification extends Specification {
         request2.getBits() == 1
         request2.getMin() == -180.0
         request2.getMax() == 180.0
-        request2.getBucketSize() == 200.0
         request2.getDropDups()
         request2.getStorageEngine() == storageEngine
         request2.getPartialFilterExpression() == partialFilterExpression

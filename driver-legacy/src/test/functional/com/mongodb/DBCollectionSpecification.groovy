@@ -155,7 +155,7 @@ class DBCollectionSpecification extends Specification {
                                                       'expireAfterSeconds': 100, 'v': 1, 'weights': new BasicDBObject(['a': 1000]),
                                                       'default_language': 'es', 'language_override': 'language', 'textIndexVersion': 1,
                                                       '2dsphereIndexVersion': 1, 'bits': 1, 'min': new Double(-180.0),
-                                                      'max'          : new Double(180.0), 'bucketSize': new Double(200.0), 'dropDups': true,
+                                                      'max'          : new Double(180.0), 'dropDups': true,
                                                       'storageEngine': BasicDBObject.parse(storageEngine),
                                                       'partialFilterExpression':  BasicDBObject.parse(partialFilterExpression),
                                                       'collation': BasicDBObject.parse(collation.asDocument().toJson())]))
@@ -178,7 +178,6 @@ class DBCollectionSpecification extends Specification {
                 .bits(1)
                 .min(-180.0)
                 .max(180.0)
-                .bucketSize(200.0)
                 .dropDups(true)
                 .storageEngine(BsonDocument.parse(storageEngine))
                 .partialFilterExpression(BsonDocument.parse(partialFilterExpression))
