@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2023-10-10T21:33:20.99">
+<meta name="date" content="2023-11-06T18:17:14.59">
 <link rel="shortcut icon" href="/mongo-java-driver/4.11/img/favicon.png">
 
     <title>Write Operations</title><link rel="stylesheet" href="/mongo-java-driver/4.11/lib/bootstrap.css" type="text/css" />
@@ -485,13 +485,6 @@ collection.insertMany(documents).subscribe(new ObservableSubscriber&lt;Void&gt;(
 <li><p><a href="/mongo-java-driver/4.11/apidocs/mongodb-driver-core/com/mongodb/client/model/Updates.html#currentDate(java.lang.String)
 "><code>Updates.currentDate</code></a> to modify the <code>lastModified</code> field to the current date. If the <code>lastModified</code> field does not exist, the operator adds the field to the document.</p></li>
 </ul>
-
-<div class="admonition tip">
-<h5 class="admonition-title">tip</h5>
-<p>In some cases where you may need to update many fields in a document, it may be more efficient to replace the document.  See <a href="#replace-a-document">Replace a Document</a>.</p>
-
-</div>
-
 
 <h3 id="update-multiple-documents">Update Multiple Documents</h3>
 
