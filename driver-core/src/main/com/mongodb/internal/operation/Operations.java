@@ -269,7 +269,6 @@ final class Operations<TDocument> {
                                                                 final int limit, final long maxTimeMS, final boolean jsMode,
                                                                 final Bson scope, final Bson sort, final boolean verbose,
                                                                 final com.mongodb.client.model.MapReduceAction action,
-                                                                final boolean nonAtomic, final boolean sharded,
                                                                 final Boolean bypassDocumentValidation, final Collation collation) {
         MapReduceToCollectionOperation operation = new MapReduceToCollectionOperation(assertNotNull(namespace),
                 new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction), collectionName, writeConcern)
@@ -281,8 +280,6 @@ final class Operations<TDocument> {
                 .sort(toBsonDocument(sort))
                 .verbose(verbose)
                 .action(action.getValue())
-                .nonAtomic(nonAtomic)
-                .sharded(sharded)
                 .databaseName(databaseName)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation);
