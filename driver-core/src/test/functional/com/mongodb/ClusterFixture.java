@@ -429,6 +429,7 @@ public final class ClusterFixture {
         } else {
             StreamFactoryFactory overriddenStreamFactoryFactory = NettyStreamFactoryFactory.builder()
                     .applySettings((NettyTransportSettings) transportSettings)
+                    .inetAddressResolver(new DefaultInetAddressResolver())
                     .build();
             return assertNotNull(overriddenStreamFactoryFactory).create(getSocketSettings(), getSslSettings());
         }
