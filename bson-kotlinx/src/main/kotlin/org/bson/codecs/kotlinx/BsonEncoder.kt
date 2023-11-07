@@ -218,9 +218,12 @@ internal class DefaultBsonEncoder(
                 else -> {
                     val decimal = BigDecimal(content)
                     when  {
-                        decimal.stripTrailingZeros().scale() > 0 &&
-                                DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE ->
-                            encodeDouble(element.double)
+                        decimal.stripTrailingZeros().scale() > 0 ->
+                            if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
+                                encodeDouble(element.double)
+                            } else {
+                                writer.writeDecimal128(Decimal128(decimal))
+                            }
                         INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE ->
                             encodeInt(element.int)
                         LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE ->
