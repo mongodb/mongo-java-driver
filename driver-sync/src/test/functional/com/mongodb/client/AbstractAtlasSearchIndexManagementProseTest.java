@@ -81,8 +81,8 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     protected AbstractAtlasSearchIndexManagementProseTest() {
-        Assumptions.assumeTrue(serverVersionAtLeast(6, 0));
-        Assumptions.assumeTrue(hasAtlasSearchIndexHelperEnabled(), "Atlas Search Index tests are disabled");
+       Assumptions.assumeTrue(serverVersionAtLeast(6, 0));
+       Assumptions.assumeTrue(hasAtlasSearchIndexHelperEnabled(), "Atlas Search Index tests are disabled");
     }
 
     private static boolean hasAtlasSearchIndexHelperEnabled() {
@@ -97,18 +97,18 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
                 .addCommandListener(new CommandListener() {
                     @Override
                     public void commandStarted(final CommandStartedEvent event) {
-                   /* This tests the use case where the write or read concern
-                    is not passed down to the server for any of Atlas Index Search commands.
-                    If a write concern is attached to the command, the server will fail with an error. */
-                        if (!isCollectionCreationCommand(event)) {
+                   /* This test case examines scenarios where the write or read concern is not forwarded to the server
+                    for any Atlas Index Search commands. If a write or read concern is included in the command,
+                    the server will return an error. */
+                        if (isSearchIndexCommand(event)) {
                             BsonDocument command = event.getCommand();
                             assertFalse(command.containsKey("writeConcern"));
                             assertFalse(command.containsKey("readConcern"));
                         }
                     }
 
-                    private boolean isCollectionCreationCommand(final CommandStartedEvent event) {
-                        return "create".equals(event.getCommandName());
+                    private boolean isSearchIndexCommand(final CommandStartedEvent event) {
+                       return event.getCommand().toJson().contains("SearchIndex");
                     }
                 })
                 .build();
@@ -138,7 +138,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
         SearchIndexModel searchIndexModel = new SearchIndexModel(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
 
         //when
-          String createdSearchIndexName = collection.createSearchIndex(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
+        String createdSearchIndexName = collection.createSearchIndex(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
 
         //then
         Assertions.assertEquals(TEST_SEARCH_INDEX_NAME_1, createdSearchIndexName);
