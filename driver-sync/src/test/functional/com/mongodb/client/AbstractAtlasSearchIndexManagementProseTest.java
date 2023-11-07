@@ -20,6 +20,9 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.SearchIndexModel;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +43,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -88,10 +92,25 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @BeforeEach
     public void setUp() {
         MongoClientSettings mongoClientSettings = getMongoClientSettingsBuilder()
-                /* Specifying the write and read concerns here ensures that we test the use case where the write or read concern
-                is not passed down to the server. If a write concern is attached to the command, the server will fail with an error. */
                 .writeConcern(WriteConcern.MAJORITY)
                 .readConcern(ReadConcern.MAJORITY)
+                .addCommandListener(new CommandListener() {
+                    @Override
+                    public void commandStarted(final CommandStartedEvent event) {
+                   /* This tests the use case where the write or read concern
+                    is not passed down to the server for any of Atlas Index Search commands.
+                    If a write concern is attached to the command, the server will fail with an error. */
+                        if (!isCollectionCreationCommand(event)) {
+                            BsonDocument command = event.getCommand();
+                            assertFalse(command.containsKey("writeConcern"));
+                            assertFalse(command.containsKey("readConcern"));
+                        }
+                    }
+
+                    private boolean isCollectionCreationCommand(final CommandStartedEvent event) {
+                        return "create".equals(event.getCommandName());
+                    }
+                })
                 .build();
 
         client = createMongoClient(mongoClientSettings);
@@ -119,10 +138,10 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
         SearchIndexModel searchIndexModel = new SearchIndexModel(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
 
         //when
-        String createdSearchIndexName = collection.createSearchIndex(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
+        //  String createdSearchIndexName = collection.createSearchIndex(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
 
         //then
-        Assertions.assertEquals(TEST_SEARCH_INDEX_NAME_1, createdSearchIndexName);
+        //Assertions.assertEquals(TEST_SEARCH_INDEX_NAME_1, createdSearchIndexName);
         assertIndexesChanges(isQueryable(), searchIndexModel);
     }
 

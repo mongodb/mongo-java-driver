@@ -77,6 +77,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -167,6 +168,16 @@ public final class MongoOperationPublisher<T> {
 
     <D> MongoOperationPublisher<D> withDocumentClass(final Class<D> documentClass) {
         return withNamespaceAndDocumentClass(getNamespace(), documentClass);
+    }
+
+    <D> MongoOperationPublisher<D> withReadConcernAndDocumentClass(final ReadConcern readConcern, final Class<D> documentClass) {
+        if (getReadConcern().equals(readConcern) && getDocumentClass().equals(documentClass)) {
+            return (MongoOperationPublisher<D>) this;
+        }
+        return new MongoOperationPublisher<>(getNamespace(), assertNotNull(documentClass),
+                getCodecRegistry(), getReadPreference(), assertNotNull(readConcern),
+                getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
+                autoEncryptionSettings, executor);
     }
 
     @SuppressWarnings("unchecked")
