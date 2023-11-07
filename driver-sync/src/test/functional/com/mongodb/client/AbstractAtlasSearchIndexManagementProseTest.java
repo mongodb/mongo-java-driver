@@ -17,7 +17,12 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ReadConcern;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.SearchIndexModel;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterEach;
@@ -38,7 +43,9 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 
@@ -74,8 +81,8 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     protected AbstractAtlasSearchIndexManagementProseTest() {
-        Assumptions.assumeTrue(serverVersionAtLeast(6, 0));
-        Assumptions.assumeTrue(hasAtlasSearchIndexHelperEnabled(), "Atlas Search Index tests are disabled"); //TODO enable by flag
+       Assumptions.assumeTrue(serverVersionAtLeast(6, 0));
+       Assumptions.assumeTrue(hasAtlasSearchIndexHelperEnabled(), "Atlas Search Index tests are disabled");
     }
 
     private static boolean hasAtlasSearchIndexHelperEnabled() {
@@ -84,7 +91,29 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
 
     @BeforeEach
     public void setUp() {
-        client = createMongoClient(getMongoClientSettings());
+        MongoClientSettings mongoClientSettings = getMongoClientSettingsBuilder()
+                .writeConcern(WriteConcern.MAJORITY)
+                .readConcern(ReadConcern.MAJORITY)
+                .addCommandListener(new CommandListener() {
+                    @Override
+                    public void commandStarted(final CommandStartedEvent event) {
+                   /* This test case examines scenarios where the write or read concern is not forwarded to the server
+                    for any Atlas Index Search commands. If a write or read concern is included in the command,
+                    the server will return an error. */
+                        if (isSearchIndexCommand(event)) {
+                            BsonDocument command = event.getCommand();
+                            assertFalse(command.containsKey("writeConcern"));
+                            assertFalse(command.containsKey("readConcern"));
+                        }
+                    }
+
+                    private boolean isSearchIndexCommand(final CommandStartedEvent event) {
+                       return event.getCommand().toJson().contains("SearchIndex");
+                    }
+                })
+                .build();
+
+        client = createMongoClient(mongoClientSettings);
         db = client.getDatabase("test");
 
         String collectionName = UUID.randomUUID().toString();
