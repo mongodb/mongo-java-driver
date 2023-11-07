@@ -27,15 +27,28 @@ import kotlinx.serialization.encoding.AbstractDecoder
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.UNKNOWN_NAME
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.AbstractBsonReader
+import org.bson.BsonBinarySubType
 import org.bson.BsonInvalidOperationException
 import org.bson.BsonReader
 import org.bson.BsonType
 import org.bson.BsonValue
+import org.bson.UuidRepresentation
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.DecoderContext
+import org.bson.internal.UuidHelper
 import org.bson.types.ObjectId
+import java.util.Base64
 
 /**
  * The BsonDecoder interface
@@ -58,7 +71,14 @@ internal open class DefaultBsonDecoder(
     internal val reader: AbstractBsonReader,
     override val serializersModule: SerializersModule,
     internal val configuration: BsonConfiguration
-) : BsonDecoder, AbstractDecoder() {
+) : BsonDecoder, JsonDecoder, AbstractDecoder() {
+
+    override val json = Json {
+        explicitNulls = configuration.explicitNulls
+        encodeDefaults = configuration.encodeDefaults
+        classDiscriminator = configuration.classDiscriminator
+        serializersModule = this@DefaultBsonDecoder.serializersModule
+    }
 
     private data class ElementMetadata(val name: String, val nullable: Boolean, var processed: Boolean = false)
     private var elementsMetadata: Array<ElementMetadata>? = null
@@ -178,7 +198,81 @@ internal open class DefaultBsonDecoder(
 
     override fun decodeObjectId(): ObjectId = readOrThrow({ reader.readObjectId() }, BsonType.OBJECT_ID)
     override fun decodeBsonValue(): BsonValue = bsonValueCodec.decode(reader, DecoderContext.builder().build())
+
+    override fun decodeJsonElement(): JsonElement = reader.run {
+
+        if (state == AbstractBsonReader.State.INITIAL ||
+            state == AbstractBsonReader.State.SCOPE_DOCUMENT ||
+            state == AbstractBsonReader.State.TYPE) {
+            readBsonType()
+        }
+
+        if (state == AbstractBsonReader.State.NAME) {
+            // ignore name
+            skipName()
+        }
+        // @formatter:off
+        return when (currentBsonType) {
+            BsonType.NULL -> { readNull(); JsonNull } // We have to read null
+            BsonType.BOOLEAN -> JsonPrimitive(readBoolean())
+            BsonType.INT32 -> JsonPrimitive(readInt32())
+            BsonType.INT64 -> JsonPrimitive(readInt64())
+            BsonType.DOUBLE -> JsonPrimitive(readDouble())
+            BsonType.DECIMAL128 -> JsonPrimitive(readDecimal128())
+            BsonType.STRING -> JsonPrimitive(readString())
+            BsonType.DOCUMENT -> readJsonObject()
+            BsonType.ARRAY -> readJsonArray()
+            BsonType.OBJECT_ID -> JsonPrimitive(readObjectId().toHexString())
+            BsonType.DATE_TIME -> JsonPrimitive(readDateTime())
+            BsonType.TIMESTAMP -> JsonPrimitive(readTimestamp().value)
+            BsonType.REGULAR_EXPRESSION -> JsonPrimitive(readRegularExpression().pattern)
+            BsonType.BINARY -> {
+                val subtype = peekBinarySubType()
+                val data = readBinaryData().data
+                when (subtype) {
+                    BsonBinarySubType.UUID_LEGACY.value ->
+                        JsonPrimitive(UuidHelper.decodeBinaryToUuid(data, subtype, UuidRepresentation.JAVA_LEGACY).toString())
+                    BsonBinarySubType.UUID_STANDARD.value ->
+                        JsonPrimitive(UuidHelper.decodeBinaryToUuid(data, subtype, UuidRepresentation.STANDARD).toString())
+                    else -> JsonPrimitive(Base64.getEncoder().encodeToString(data))
+                }
+            }
+            else -> error("unsupported json type: $currentBsonType")
+        }
+        // @formatter:on
+    }
+
     override fun reader(): BsonReader = reader
+
+    private fun BsonReader.readJsonObject(): JsonObject {
+
+        readStartDocument()
+        val obj = buildJsonObject {
+            var type = readBsonType()
+            while (type != BsonType.END_OF_DOCUMENT) {
+                put(readName(), decodeJsonElement())
+                type = readBsonType()
+            }
+        }
+
+        readEndDocument()
+        return obj
+    }
+
+    private fun BsonReader.readJsonArray(): JsonArray {
+
+        readStartArray()
+        val array = buildJsonArray {
+            var type = readBsonType()
+            while (type != BsonType.END_OF_DOCUMENT) {
+                add(decodeJsonElement())
+                type = readBsonType()
+            }
+        }
+
+        readEndArray()
+        return array
+    }
 
     private inline fun <T> readOrThrow(action: () -> T, bsonType: BsonType): T {
         return try {
