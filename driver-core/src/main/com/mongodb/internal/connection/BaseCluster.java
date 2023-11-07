@@ -507,7 +507,7 @@ abstract class BaseCluster implements Cluster {
                     asList(
                             new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationId),
-                            new Entry(REMAINING_TIME_MS, timeout.remaining(MILLISECONDS)),
+                            new Entry(REMAINING_TIME_MS, timeout.remainingOrNegativeForInfinite(MILLISECONDS)),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Waiting for server to become available for operation[ {}] with ID {}.[ Remaining time: {} ms.]"
