@@ -20,6 +20,8 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.UnixServerAddress;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
@@ -72,6 +74,7 @@ import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -242,7 +245,14 @@ public abstract class UnifiedTest {
         }
 
         if (definition.containsKey("expectLogMessages")) {
-            compareLogMessages(rootContext, definition);
+            ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
+                    // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
+                    LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
+            if (getMongoClientSettings().getClusterSettings()
+                    .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
+                tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
+            }
+            compareLogMessages(rootContext, definition, tweaks);
         }
     }
 
@@ -266,14 +276,15 @@ public abstract class UnifiedTest {
         }
     }
 
-    private void compareLogMessages(final UnifiedTestContext rootContext, final BsonDocument definition) {
+    private void compareLogMessages(final UnifiedTestContext rootContext, final BsonDocument definition,
+            final Iterable<LogMatcher.Tweak> tweaks) {
         for (BsonValue cur : definition.getArray("expectLogMessages")) {
             BsonDocument curLogMessagesForClient = cur.asDocument();
             String clientId = curLogMessagesForClient.getString("client").getValue();
             TestLoggingInterceptor loggingInterceptor =
                     entities.getClientLoggingInterceptor(clientId);
             rootContext.getLogMatcher().assertLogMessageEquality(clientId, curLogMessagesForClient.getArray("messages"),
-                    loggingInterceptor.getMessages());
+                    loggingInterceptor.getMessages(), tweaks);
         }
     }
 

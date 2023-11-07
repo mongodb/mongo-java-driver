@@ -123,7 +123,7 @@ abstract class BaseCluster implements Cluster {
         ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
         boolean selectionWaitingLogged = false;
         Timeout serverSelectionTimeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
-        logServerSelectionStarted(operationContext, serverSelector, description);
+        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, description);
 
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
@@ -134,15 +134,15 @@ abstract class BaseCluster implements Cluster {
                 throw createAndLogIncompatibleException(operationContext.getId(), serverSelector, currentDescription);
             }
             if (serverTuple != null) {
-                logServerSelectionSucceeded(operationContext.getId(), serverTuple.getServerDescription().getAddress(), serverSelector,
-                        currentDescription);
+                logServerSelectionSucceeded(clusterId, operationContext.getId(), serverTuple.getServerDescription().getAddress(),
+                        serverSelector, currentDescription);
                 return serverTuple;
             }
             if (serverSelectionTimeout.hasExpired()) {
                 throw createAndLogTimeoutException(operationContext.getId(), serverSelector, currentDescription);
             }
             if (!selectionWaitingLogged) {
-                logServerSelectionWaiting(operationContext.getId(), serverSelector, currentDescription, serverSelectionTimeout);
+                logServerSelectionWaiting(clusterId, operationContext.getId(), serverSelectionTimeout, serverSelector, currentDescription);
                 selectionWaitingLogged = true;
             }
             connect();
@@ -163,7 +163,7 @@ abstract class BaseCluster implements Cluster {
         CountDownLatch currentPhase = phase.get();
         ClusterDescription currentDescription = description;
 
-        logServerSelectionStarted(operationContext, serverSelector, currentDescription);
+        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, currentDescription);
         if (!handleServerSelectionRequest(request, currentPhase, currentDescription)) {
             notifyWaitQueueHandler(request);
         }
@@ -254,18 +254,20 @@ abstract class BaseCluster implements Cluster {
 
                 ServerTuple serverTuple = selectServer(request.compositeSelector, description, request.getTimeout());
                 if (serverTuple != null) {
-                    logServerSelectionSucceeded(request.getOperationId(), serverTuple.getServerDescription().getAddress(),
+                    logServerSelectionSucceeded(clusterId, request.getOperationId(), serverTuple.getServerDescription().getAddress(),
                             request.originalSelector, description);
                     request.onResult(serverTuple, null);
                     return true;
                 }
                 if (prevPhase == null) {
-                    logServerSelectionWaiting(request.getOperationId(), request.originalSelector, description, request.getTimeout());
+                    logServerSelectionWaiting(clusterId, request.getOperationId(), request.getTimeout(), request.originalSelector,
+                            description);
                 }
             }
 
             if (request.getTimeout().hasExpired()) {
-                request.onResult(null, createAndLogTimeoutException(request.getOperationId(), request.originalSelector, description));
+                request.onResult(null, createAndLogTimeoutException(request.getOperationId(),
+                        request.originalSelector, description));
                 return true;
             }
 
@@ -340,7 +342,7 @@ abstract class BaseCluster implements Cluster {
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         MongoIncompatibleDriverException exception = createIncompatibleException(clusterDescription);
-        logServerSelectionFailed(operationId, exception, serverSelector, clusterDescription);
+        logServerSelectionFailed(clusterId, operationId, exception, serverSelector, clusterDescription);
         return exception;
     }
 
@@ -370,7 +372,7 @@ abstract class BaseCluster implements Cluster {
         MongoTimeoutException exception = new MongoTimeoutException(format(
                 "Timed out while waiting for a server that matches %s. Client view of cluster state is %s",
                 serverSelector, clusterDescription.getShortDescription()));
-        logServerSelectionFailed(operationId, exception, serverSelector, clusterDescription);
+        logServerSelectionFailed(clusterId, operationId, exception, serverSelector, clusterDescription);
         return exception;
     }
 
@@ -476,8 +478,9 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    private void logServerSelectionStarted(
-            final OperationContext operationContext,
+    static void logServerSelectionStarted(
+            final ClusterId clusterId,
+            final long operationId,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
@@ -485,26 +488,26 @@ abstract class BaseCluster implements Cluster {
                     SERVER_SELECTION, DEBUG, "Server selection started", clusterId,
                     asList(
                             new Entry(OPERATION, null),
-                            new Entry(OPERATION_ID, operationContext.getId()),
+                            new Entry(OPERATION_ID, operationId),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Server selection started for operation[ {}] with ID {}. Selector: {}, topology description: {}"));
         }
     }
 
-    private void logServerSelectionWaiting(
+    private static void logServerSelectionWaiting(
+            final ClusterId clusterId,
             final long operationId,
+            final Timeout timeout,
             final ServerSelector serverSelector,
-            final ClusterDescription clusterDescription,
-            final Timeout serverSelectionTimeout) {
+            final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(INFO, clusterId)) {
             STRUCTURED_LOGGER.log(new LogMessage(
                     SERVER_SELECTION, INFO, "Waiting for suitable server to become available", clusterId,
                     asList(
                             new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationId),
-                            new Entry(REMAINING_TIME_MS, serverSelectionTimeout.isInfinite() ? null
-                                    : serverSelectionTimeout.remaining(MILLISECONDS)),
+                            new Entry(REMAINING_TIME_MS, timeout.remaining(MILLISECONDS)),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Waiting for server to become available for operation[ {}] with ID {}.[ Remaining time: {} ms.]"
@@ -512,7 +515,8 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    private void logServerSelectionFailed(
+    private static void logServerSelectionFailed(
+            final ClusterId clusterId,
             final long operationId,
             final MongoException failure,
             final ServerSelector serverSelector,
@@ -536,7 +540,8 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    private void logServerSelectionSucceeded(
+    static void logServerSelectionSucceeded(
+            final ClusterId clusterId,
             final long operationId,
             final ServerAddress serverAddress,
             final ServerSelector serverSelector,
