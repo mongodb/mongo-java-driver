@@ -51,32 +51,6 @@ public final class ConnectionCheckedOutEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param connectionId the connectionId
-     * @param operationId the operation id
-     * @since 4.10
-     * @deprecated Prefer {@link ConnectionCheckedOutEvent#ConnectionCheckedOutEvent(ConnectionId, long, long)}.
-     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
-     */
-    @Deprecated
-    public ConnectionCheckedOutEvent(final ConnectionId connectionId, final long operationId) {
-        this(connectionId, operationId, 0);
-    }
-
-    /**
-     * Construct an instance
-     *
-     * @param connectionId the connectionId
-     * @deprecated Prefer {@link #ConnectionCheckedOutEvent(ConnectionId, long)}.
-     * If this constructor is used, then {@link #getOperationId()} is -1.
-     */
-    @Deprecated
-    public ConnectionCheckedOutEvent(final ConnectionId connectionId) {
-        this(connectionId, -1);
-    }
-
-    /**
      * Gets the connection id
      *
      * @return the connection id
