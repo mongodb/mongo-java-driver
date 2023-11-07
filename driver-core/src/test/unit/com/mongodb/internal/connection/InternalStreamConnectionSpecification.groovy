@@ -655,7 +655,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'ping',
+                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
@@ -679,7 +679,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'ping',
+                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
@@ -766,7 +766,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events for command failure with exception reading header'() {
@@ -787,7 +787,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events for command failure with exception reading body'() {
@@ -809,7 +809,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events for command failure with exception from failed command'() {
@@ -832,7 +832,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events with elided command and response in successful security-sensitive commands'() {
@@ -853,7 +853,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', securitySensitiveCommandName,
                         new BsonDocument()),
-                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), securitySensitiveCommandName,
+                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'admin', securitySensitiveCommandName,
                         new BsonDocument(), 1)])
 
         where:
@@ -938,7 +938,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'ping',
+                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
@@ -972,7 +972,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'ping',
+                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
@@ -1000,7 +1000,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events for asynchronous command failure with exception reading header'() {
@@ -1029,7 +1029,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events for asynchronous command failure with exception reading body'() {
@@ -1061,7 +1061,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events for asynchronous command failure with exception from failed command'() {
@@ -1094,7 +1094,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping',
                         pingCommandDocument.append('$db', new BsonString('admin'))),
-                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'ping', 0, e)])
+                new CommandFailedEvent(null, 1, 1, connection.getDescription(), 'admin', 'ping', 0, e)])
     }
 
     def 'should send events with elided command and response in successful security-sensitive asynchronous commands'() {
@@ -1125,7 +1125,7 @@ class InternalStreamConnectionSpecification extends Specification {
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(null, 1, 1, connection.getDescription(), 'admin', securitySensitiveCommandName,
                         new BsonDocument()),
-                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), securitySensitiveCommandName,
+                new CommandSucceededEvent(null, 1, 1, connection.getDescription(), 'admin', securitySensitiveCommandName,
                         new BsonDocument(), 1)])
 
         where:

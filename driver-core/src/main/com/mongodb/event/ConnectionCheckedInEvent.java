@@ -45,17 +45,6 @@ public final class ConnectionCheckedInEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param connectionId the connectionId
-     * @deprecated Prefer {@link #ConnectionCheckedInEvent(ConnectionId, long)}
-     */
-    @Deprecated
-    public ConnectionCheckedInEvent(final ConnectionId connectionId) {
-        this(connectionId, -1);
-    }
-
-    /**
      * Gets the connection id
      *
      * @return the connection id
