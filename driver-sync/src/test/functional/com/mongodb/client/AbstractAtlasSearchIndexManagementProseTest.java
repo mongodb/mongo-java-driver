@@ -138,10 +138,10 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
         SearchIndexModel searchIndexModel = new SearchIndexModel(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
 
         //when
-        //  String createdSearchIndexName = collection.createSearchIndex(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
+          String createdSearchIndexName = collection.createSearchIndex(TEST_SEARCH_INDEX_NAME_1, NOT_DYNAMIC_MAPPING_DEFINITION);
 
         //then
-        //Assertions.assertEquals(TEST_SEARCH_INDEX_NAME_1, createdSearchIndexName);
+        Assertions.assertEquals(TEST_SEARCH_INDEX_NAME_1, createdSearchIndexName);
         assertIndexesChanges(isQueryable(), searchIndexModel);
     }
 
