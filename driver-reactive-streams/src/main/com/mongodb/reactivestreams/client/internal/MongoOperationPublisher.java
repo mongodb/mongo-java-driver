@@ -170,16 +170,6 @@ public final class MongoOperationPublisher<T> {
         return withNamespaceAndDocumentClass(getNamespace(), documentClass);
     }
 
-    <D> MongoOperationPublisher<D> withReadConcernAndDocumentClass(final ReadConcern readConcern, final Class<D> documentClass) {
-        if (getReadConcern().equals(readConcern) && getDocumentClass().equals(documentClass)) {
-            return (MongoOperationPublisher<D>) this;
-        }
-        return new MongoOperationPublisher<>(getNamespace(), assertNotNull(documentClass),
-                getCodecRegistry(), getReadPreference(), assertNotNull(readConcern),
-                getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
-                autoEncryptionSettings, executor);
-    }
-
     @SuppressWarnings("unchecked")
     <D> MongoOperationPublisher<D> withNamespaceAndDocumentClass(final MongoNamespace namespace, final Class<D> documentClass) {
         if (getNamespace().equals(namespace) && getDocumentClass().equals(documentClass)) {

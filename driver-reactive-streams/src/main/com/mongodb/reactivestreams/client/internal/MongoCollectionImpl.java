@@ -696,7 +696,8 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
         notNull("resultClass", resultClass);
 
         return new ListSearchIndexesPublisherImpl<>(mongoOperationPublisher
-                .withReadConcernAndDocumentClass(ReadConcern.DEFAULT, resultClass));
+                .withReadConcern(ReadConcern.DEFAULT)
+                .withDocumentClass(resultClass));
     }
 
     @Override
