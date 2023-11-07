@@ -17,13 +17,11 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.connection.Cluster;
 
 /**
  * This interface is not part of the public API and may be removed or changed at any time.
  */
 public interface ClusterAwareReadWriteBinding extends ReadWriteBinding {
-    Cluster getCluster();
 
     /**
      * Returns a connection source to the specified server address.

@@ -22,10 +22,10 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.connection.ServerTuple;
@@ -69,14 +69,6 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         this.serverApi = serverApi;
         this.requestContext = notNull("requestContext", requestContext);
         operationContext = new OperationContext();
-    }
-
-    /**
-     * Return the cluster.
-     * @return the cluster
-     */
-    public Cluster getCluster() {
-        return cluster;
     }
 
     @Override
