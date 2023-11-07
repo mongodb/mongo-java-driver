@@ -46,7 +46,7 @@ class ChangeStreamDocumentSpecification extends Specification {
         def txnNumber = new BsonInt64(1)
         def lsid = BsonDocument.parse('{id: 1, uid: 1}')
         def wallTime = new BsonDateTime(42)
-        def splitEvent = new SplitEvent(1, 2);
+        def splitEvent = new SplitEvent(1, 2)
         def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
         when:
@@ -73,87 +73,23 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getWallTime() == wallTime
         changeStreamDocument.getSplitEvent() == splitEvent
         changeStreamDocument.getExtraElements() == extraElements
-
-        when:
-        //noinspection GrDeprecatedAPIUsage
-        changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken, namespaceDocument,
-                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, txnNumber, lsid)
-
-        then:
-        changeStreamDocument.getResumeToken() == resumeToken
-        changeStreamDocument.getFullDocument() == fullDocument
-        changeStreamDocument.getFullDocumentBeforeChange() == null
-        changeStreamDocument.getDocumentKey() == documentKey
-        changeStreamDocument.getClusterTime() == clusterTime
-        changeStreamDocument.getNamespace() == namespace
-        changeStreamDocument.getNamespaceDocument() == namespaceDocument
-        changeStreamDocument.getDestinationNamespace() == destinationNamespace
-        changeStreamDocument.getDestinationNamespaceDocument() == destinationNamespaceDocument
-        changeStreamDocument.getOperationTypeString() == operationType.value
-        changeStreamDocument.getOperationType() == operationType
-        changeStreamDocument.getUpdateDescription() == updateDesc
-        changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocument.getTxnNumber() == txnNumber
-        changeStreamDocument.getLsid() == lsid
-        changeStreamDocument.getWallTime() == null
-
-        when:
-        //noinspection GrDeprecatedAPIUsage
-        changeStreamDocument = new ChangeStreamDocument<BsonDocument>(operationType, resumeToken, namespaceDocument,
-                destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc, txnNumber, lsid)
-
-        then:
-        changeStreamDocument.getResumeToken() == resumeToken
-        changeStreamDocument.getFullDocument() == fullDocument
-        changeStreamDocument.getDocumentKey() == documentKey
-        changeStreamDocument.getClusterTime() == clusterTime
-        changeStreamDocument.getNamespace() == namespace
-        changeStreamDocument.getNamespaceDocument() == namespaceDocument
-        changeStreamDocument.getDestinationNamespace() == destinationNamespace
-        changeStreamDocument.getDestinationNamespaceDocument() == destinationNamespaceDocument
-        changeStreamDocument.getOperationTypeString() == operationType.value
-        changeStreamDocument.getOperationType() == operationType
-        changeStreamDocument.getUpdateDescription() == updateDesc
-        changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocument.getTxnNumber() == txnNumber
-        changeStreamDocument.getLsid() == lsid
-        changeStreamDocument.getWallTime() == null
-
-        when:
-        //noinspection GrDeprecatedAPIUsage
-        def changeStreamDocumentWithTxnInfo = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
-                namespaceDocument, destinationNamespaceDocument, fullDocument, documentKey, clusterTime, updateDesc,
-                txnNumber, lsid)
-
-        then:
-        changeStreamDocumentWithTxnInfo.getResumeToken() == resumeToken
-        changeStreamDocumentWithTxnInfo.getFullDocument() == fullDocument
-        changeStreamDocumentWithTxnInfo.getDocumentKey() == documentKey
-        changeStreamDocumentWithTxnInfo.getClusterTime() == clusterTime
-        changeStreamDocumentWithTxnInfo.getNamespace() == namespace
-        changeStreamDocumentWithTxnInfo.getNamespaceDocument() == namespaceDocument
-        changeStreamDocumentWithTxnInfo.getDestinationNamespace() == destinationNamespace
-        changeStreamDocumentWithTxnInfo.getDestinationNamespaceDocument() == destinationNamespaceDocument
-        changeStreamDocumentWithTxnInfo.getOperationTypeString() == operationType.value
-        changeStreamDocumentWithTxnInfo.getOperationType() == operationType
-        changeStreamDocumentWithTxnInfo.getUpdateDescription() == updateDesc
-        changeStreamDocumentWithTxnInfo.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocumentWithTxnInfo.getTxnNumber() == txnNumber
-        changeStreamDocumentWithTxnInfo.getLsid() == lsid
-        changeStreamDocument.getWallTime() == null
     }
 
     def 'should handle null namespace correctly'() {
         given:
         def resumeToken = RawBsonDocument.parse('{token: true}')
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
+        def fullDocumentBeforeChange = BsonDocument.parse('{key: "value for fullDocumentBeforeChange"}')
         def documentKey = BsonDocument.parse('{_id : 1}')
         def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.DROP_DATABASE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), emptyList())
-        //noinspection GrDeprecatedAPIUsage
+        def wallTime = new BsonDateTime(42)
+        def splitEvent = new SplitEvent(1, 2)
+        def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
         def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(operationType.value, resumeToken,
-                (BsonDocument) null, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
+                (BsonDocument) null, (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc,
+                null, null, wallTime, splitEvent, extraElements)
 
         expect:
         changeStreamDocumentNullNamespace.getDatabaseName() == null
@@ -169,17 +105,20 @@ class ChangeStreamDocumentSpecification extends Specification {
         def namespaceDocument = BsonDocument.parse('{db: "databaseName"}')
         def namespaceDocumentEmpty = new BsonDocument()
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
+        def fullDocumentBeforeChange = BsonDocument.parse('{key: "value for fullDocumentBeforeChange"}')
         def documentKey = BsonDocument.parse('{_id : 1}')
         def clusterTime = new BsonTimestamp(1234, 2)
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'), singletonList(new TruncatedArray('d', 1)))
+        def wallTime = new BsonDateTime(42)
+        def splitEvent = new SplitEvent(1, 2)
+        def extraElements = new BsonDocument('extra', BsonBoolean.TRUE)
 
-        //noinspection GrDeprecatedAPIUsage
         def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(null, resumeToken, namespaceDocument,
-                (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc, null, null)
-        //noinspection GrDeprecatedAPIUsage
+                (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc, null, null,
+                wallTime, splitEvent, extraElements)
         def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(null, resumeToken,
-                namespaceDocumentEmpty, (BsonDocument) null, fullDocument, documentKey, clusterTime, updateDesc,
-        null, null)
+                namespaceDocumentEmpty, (BsonDocument) null, fullDocument, fullDocumentBeforeChange, documentKey, clusterTime, updateDesc,
+                null, null, wallTime, splitEvent, extraElements)
 
         expect:
         changeStreamDocument.getNamespace() == null

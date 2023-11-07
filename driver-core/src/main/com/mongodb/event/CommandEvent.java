@@ -57,48 +57,6 @@ public abstract class CommandEvent {
     }
 
     /**
-     * Construct an instance.
-     *
-     * @param requestContext        the request context
-     * @param operationId           the operation id
-     * @param requestId             the request id
-     * @param connectionDescription the connection description
-     * @param commandName           the command name
-     * @since 4.10
-     * @deprecated Prefer {@link CommandEvent#CommandEvent(RequestContext, long, int, ConnectionDescription, String, String)}
-     */
-    @Deprecated
-    public CommandEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
-            final ConnectionDescription connectionDescription, final String commandName) {
-        this(requestContext, -1, requestId, connectionDescription, "", commandName);
-    }
-
-    /**
-     * Construct an instance.
-     * @param requestContext the request context
-     * @param requestId the request id
-     * @param connectionDescription the connection description
-     * @param commandName the command name
-     * @since 4.4
-     * @deprecated Prefer {@link CommandEvent#CommandEvent(RequestContext, long, int, ConnectionDescription, String, String)}
-     */
-    @Deprecated
-    public CommandEvent(@Nullable final RequestContext requestContext, final int requestId,
-            final ConnectionDescription connectionDescription, final String commandName) {
-        this(requestContext, -1, requestId, connectionDescription, "", commandName);
-    }
-
-    /**
-     * Construct an instance.
-     * @param requestId the request id
-     * @param connectionDescription the connection description
-     * @param commandName the command name
-     */
-    public CommandEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName) {
-        this(null, requestId, connectionDescription, commandName);
-    }
-
-    /**
      * Gets the operation identifier
      *
      * @return the operation identifier
