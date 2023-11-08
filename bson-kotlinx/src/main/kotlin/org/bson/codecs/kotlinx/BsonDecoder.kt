@@ -199,6 +199,7 @@ internal open class DefaultBsonDecoder(
     override fun decodeObjectId(): ObjectId = readOrThrow({ reader.readObjectId() }, BsonType.OBJECT_ID)
     override fun decodeBsonValue(): BsonValue = bsonValueCodec.decode(reader, DecoderContext.builder().build())
 
+    @Suppress("ComplexMethod")
     override fun decodeJsonElement(): JsonElement = reader.run {
 
         if (state == AbstractBsonReader.State.INITIAL ||
@@ -211,29 +212,37 @@ internal open class DefaultBsonDecoder(
             // ignore name
             skipName()
         }
+
         // @formatter:off
         return when (currentBsonType) {
-            BsonType.NULL -> { readNull(); JsonNull } // We have to read null
-            BsonType.BOOLEAN -> JsonPrimitive(readBoolean())
-            BsonType.INT32 -> JsonPrimitive(readInt32())
-            BsonType.INT64 -> JsonPrimitive(readInt64())
-            BsonType.DOUBLE -> JsonPrimitive(readDouble())
-            BsonType.DECIMAL128 -> JsonPrimitive(readDecimal128())
-            BsonType.STRING -> JsonPrimitive(readString())
             BsonType.DOCUMENT -> readJsonObject()
             BsonType.ARRAY -> readJsonArray()
-            BsonType.OBJECT_ID -> JsonPrimitive(readObjectId().toHexString())
-            BsonType.DATE_TIME -> JsonPrimitive(readDateTime())
-            BsonType.TIMESTAMP -> JsonPrimitive(readTimestamp().value)
-            BsonType.REGULAR_EXPRESSION -> JsonPrimitive(readRegularExpression().pattern)
+            BsonType.NULL -> JsonPrimitive(decodeNull())
+            BsonType.STRING -> JsonPrimitive(decodeString())
+            BsonType.BOOLEAN -> JsonPrimitive(decodeBoolean())
+            BsonType.INT32 -> JsonPrimitive(decodeInt())
+            BsonType.INT64 -> JsonPrimitive(decodeLong())
+            BsonType.DOUBLE -> JsonPrimitive(decodeDouble())
+            BsonType.DECIMAL128 -> JsonPrimitive(reader.readDecimal128())
+            BsonType.OBJECT_ID -> JsonPrimitive(decodeObjectId().toHexString())
+            BsonType.DATE_TIME -> JsonPrimitive(reader.readDateTime())
+            BsonType.TIMESTAMP -> JsonPrimitive(reader.readTimestamp().value)
             BsonType.BINARY -> {
-                val subtype = peekBinarySubType()
-                val data = readBinaryData().data
+                val subtype = reader.peekBinarySubType()
+                val data = reader.readBinaryData().data
                 when (subtype) {
-                    BsonBinarySubType.UUID_LEGACY.value ->
-                        JsonPrimitive(UuidHelper.decodeBinaryToUuid(data, subtype, UuidRepresentation.JAVA_LEGACY).toString())
-                    BsonBinarySubType.UUID_STANDARD.value ->
-                        JsonPrimitive(UuidHelper.decodeBinaryToUuid(data, subtype, UuidRepresentation.STANDARD).toString())
+                    BsonBinarySubType.UUID_LEGACY.value -> JsonPrimitive(
+                        UuidHelper.decodeBinaryToUuid(
+                            data, subtype,
+                            UuidRepresentation.JAVA_LEGACY
+                        ).toString()
+                    )
+                    BsonBinarySubType.UUID_STANDARD.value -> JsonPrimitive(
+                        UuidHelper.decodeBinaryToUuid(
+                            data, subtype,
+                            UuidRepresentation.STANDARD
+                        ).toString()
+                    )
                     else -> JsonPrimitive(Base64.getEncoder().encodeToString(data))
                 }
             }
@@ -244,33 +253,33 @@ internal open class DefaultBsonDecoder(
 
     override fun reader(): BsonReader = reader
 
-    private fun BsonReader.readJsonObject(): JsonObject {
+    private fun readJsonObject(): JsonObject {
 
-        readStartDocument()
+        reader.readStartDocument()
         val obj = buildJsonObject {
-            var type = readBsonType()
+            var type = reader.readBsonType()
             while (type != BsonType.END_OF_DOCUMENT) {
-                put(readName(), decodeJsonElement())
-                type = readBsonType()
+                put(reader.readName(), decodeJsonElement())
+                type = reader.readBsonType()
             }
         }
 
-        readEndDocument()
+        reader.readEndDocument()
         return obj
     }
 
-    private fun BsonReader.readJsonArray(): JsonArray {
+    private fun readJsonArray(): JsonArray {
 
-        readStartArray()
+        reader.readStartArray()
         val array = buildJsonArray {
-            var type = readBsonType()
+            var type = reader.readBsonType()
             while (type != BsonType.END_OF_DOCUMENT) {
                 add(decodeJsonElement())
-                type = readBsonType()
+                type = reader.readBsonType()
             }
         }
 
-        readEndArray()
+        reader.readEndArray()
         return array
     }
 

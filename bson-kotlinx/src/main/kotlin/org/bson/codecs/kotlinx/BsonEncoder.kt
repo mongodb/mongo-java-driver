@@ -209,35 +209,37 @@ internal class DefaultBsonEncoder(
 
     override fun encodeJsonElement(element: JsonElement) = when(element) {
         is JsonNull -> encodeNull()
-        is JsonPrimitive -> {
-            val content = element.content
-            when {
-                element.isString -> encodeString(content)
-                content == "true" || content == "false" ->
-                    encodeBoolean(content.toBooleanStrict())
-                else -> {
-                    val decimal = BigDecimal(content)
-                    when  {
-                        decimal.stripTrailingZeros().scale() > 0 ->
-                            if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
-                                encodeDouble(element.double)
-                            } else {
-                                writer.writeDecimal128(Decimal128(decimal))
-                            }
-                        INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE ->
-                            encodeInt(element.int)
-                        LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE ->
-                            encodeLong(element.long)
-                        else -> writer.writeDecimal128(Decimal128(decimal))
-                    }
-                }
-            }
-        }
+        is JsonPrimitive -> encodeJsonPrimitive(element)
         is JsonObject -> encodeJsonObject(element)
         is JsonArray -> encodeJsonArray(element)
     }
 
     override fun writer(): BsonWriter = writer
+
+    private fun encodeJsonPrimitive(primitive: JsonPrimitive) {
+        val content = primitive.content
+        when {
+            primitive.isString -> encodeString(content)
+            content == "true" || content == "false" ->
+                encodeBoolean(content.toBooleanStrict())
+            else -> {
+                val decimal = BigDecimal(content)
+                when  {
+                    decimal.stripTrailingZeros().scale() > 0 ->
+                        if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
+                            encodeDouble(primitive.double)
+                        } else {
+                            writer.writeDecimal128(Decimal128(decimal))
+                        }
+                    INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE ->
+                        encodeInt(primitive.int)
+                    LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE ->
+                        encodeLong(primitive.long)
+                    else -> writer.writeDecimal128(Decimal128(decimal))
+                }
+            }
+        }
+    }
 
     private fun encodeJsonObject(obj: JsonObject) {
         writer.writeStartDocument()
