@@ -19,6 +19,8 @@ package com.mongodb.client;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.model.ClientWriteModelList;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.event.ClusterListener;
@@ -232,6 +234,8 @@ public interface MongoClient extends Closeable {
      * @mongodb.driver.dochub core/changestreams Change Streams
      */
     <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
+
+    BulkWriteResult bulkWrite(ClientWriteModelList requests);
 
     /**
      * Gets the current cluster description.
