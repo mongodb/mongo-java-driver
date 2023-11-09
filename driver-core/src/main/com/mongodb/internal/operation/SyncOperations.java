@@ -132,6 +132,7 @@ public final class SyncOperations<TDocument> {
                 comment, variables, aggregationLevel);
     }
 
+    @SuppressWarnings("deprecation")
     public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
                                                                      final String mapFunction, final String reduceFunction,
                                                                      final String finalizeFunction, final Bson filter, final int limit,
