@@ -54,6 +54,7 @@ import java.util.function.Function;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -251,7 +252,7 @@ public class TestHelper {
         Mockito.lenient().doAnswer(i -> isClosed.get()).when(getBatchCursor()).isClosed();
         Mockito.lenient().doAnswer(invocation -> {
             isClosed.set(true);
-            invocation.getArgument(0, SingleResultCallback.class).onResult(null, null);
+            invocation.getArgument(0, SingleResultCallback.class).onResult(emptyList(), null);
             return null;
         }).when(getBatchCursor()).next(any(SingleResultCallback.class));
     }

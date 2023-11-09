@@ -21,7 +21,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -42,9 +41,8 @@ import org.bson.codecs.RawBsonDocumentCodec;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnectionSource;
-import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -178,13 +176,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withReadConnectionSource(binding, source -> {
-            AggregateResponseBatchCursor<RawBsonDocument> cursor =
-                    (AggregateResponseBatchCursor<RawBsonDocument>) wrapped.execute(binding);
+        CommandBatchCursor<RawBsonDocument> cursor = (CommandBatchCursor<RawBsonDocument>) wrapped.execute(binding);
             return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                     setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
                             cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
-        });
     }
 
     @Override
@@ -193,25 +188,17 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor =
-                        (AsyncAggregateResponseBatchCursor<RawBsonDocument>) result;
-                withAsyncReadConnectionSource(binding, (source, t1) -> {
-                    if (t1 != null) {
-                        callback.onResult(null, t1);
-                    } else {
-                        callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
-                                setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
-                                        cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
-                    }
-                    source.release(); // TODO: can this be null?
-                });
+                AsyncCommandBatchCursor<RawBsonDocument> cursor = (AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result);
+                callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
+                        setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
+                                cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);
             }
         });
     }
 
     @Nullable
-    private BsonDocument setChangeStreamOptions(@Nullable final BsonDocument postBatchResumeToken, final BsonTimestamp operationTime,
-                                                final int maxWireVersion, final boolean firstBatchEmpty) {
+    private BsonDocument setChangeStreamOptions(@Nullable final BsonDocument postBatchResumeToken,
+            @Nullable final BsonTimestamp operationTime, final int maxWireVersion, final boolean firstBatchEmpty) {
         BsonDocument resumeToken = null;
         if (startAfter != null) {
             resumeToken = startAfter;

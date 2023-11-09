@@ -44,8 +44,6 @@ public class BatchCursor<T> implements AutoCloseable {
                     if (!hasBeenCancelled.get()) {
                         if (t != null) {
                             sink.error(t);
-                        } else if (result == null) {
-                            sink.success();
                         } else {
                             sink.success(result);
                         }

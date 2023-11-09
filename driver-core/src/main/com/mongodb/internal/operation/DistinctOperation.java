@@ -18,13 +18,11 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -34,15 +32,15 @@ import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBatchCursorTransformer;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
-import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
+import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCursorTransformer;
 
 /**
  * Finds the distinct values for a specified field across a single collection.
@@ -105,7 +103,6 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return this;
     }
 
-
     @Override
     public TimeoutSettings getTimeoutSettings() {
         return timeoutSettings;
@@ -113,38 +110,19 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(),
-                                    getCommandCreator(), createCommandDecoder(), transformer(), retryReads);
+        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
+                singleBatchCursorTransformer(VALUES), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         executeRetryableReadAsync(binding, namespace.getDatabaseName(),
-                                  getCommandCreator(), createCommandDecoder(), asyncTransformer(), retryReads,
+                                  getCommandCreator(), createCommandDecoder(), asyncSingleBatchCursorTransformer(VALUES), retryReads,
                                   errorHandlingCallback(callback, LOGGER));
     }
 
     private Codec<BsonDocument> createCommandDecoder() {
         return CommandResultDocumentCodec.create(decoder, VALUES);
-    }
-
-    private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        return new QueryResult<>(namespace, BsonDocumentWrapperHelper.toList(result, VALUES), 0L,
-                description.getServerAddress());
-    }
-
-    private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-            return new QueryBatchCursor<>(queryResult, 0, 0, decoder, comment, source);
-        };
-    }
-
-    private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-            return new AsyncSingleBatchQueryCursor<>(queryResult);
-        };
     }
 
     private CommandCreator getCommandCreator() {

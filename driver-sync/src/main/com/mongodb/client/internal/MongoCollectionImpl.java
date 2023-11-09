@@ -970,7 +970,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private <TResult> ListSearchIndexesIterable<TResult> createListSearchIndexesIterable(final Class<TResult> resultClass) {
-        return new ListSearchIndexesIterableImpl<>(getNamespace(), executor, readConcern, resultClass, codecRegistry, readPreference,
+        return new ListSearchIndexesIterableImpl<>(getNamespace(), executor, resultClass, codecRegistry, readPreference,
                 retryReads, timeoutSettings);
     }
 

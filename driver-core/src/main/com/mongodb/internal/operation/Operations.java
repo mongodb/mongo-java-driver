@@ -645,21 +645,18 @@ final class Operations<TDocument> {
         List<SearchIndexRequest> indexRequests = indexes.stream()
                 .map(this::createSearchIndexRequest)
                 .collect(Collectors.toList());
-
-        return new CreateSearchIndexesOperation(timeoutSettings, assertNotNull(namespace), indexRequests, writeConcern);
+        return new CreateSearchIndexesOperation(timeoutSettings, assertNotNull(namespace), indexRequests);
     }
 
     UpdateSearchIndexesOperation updateSearchIndex(final String indexName, final Bson definition) {
         BsonDocument definitionDocument = assertNotNull(toBsonDocument(definition));
         SearchIndexRequest searchIndexRequest = new SearchIndexRequest(definitionDocument, indexName);
-
-        return new UpdateSearchIndexesOperation(timeoutSettings, assertNotNull(namespace), searchIndexRequest,
-                writeConcern);
+        return new UpdateSearchIndexesOperation(timeoutSettings, assertNotNull(namespace), searchIndexRequest);
     }
 
 
     DropSearchIndexOperation dropSearchIndex(final String indexName) {
-        return new DropSearchIndexOperation(timeoutSettings, assertNotNull(namespace), indexName, writeConcern);
+        return new DropSearchIndexOperation(timeoutSettings, assertNotNull(namespace), indexName);
     }
 
 

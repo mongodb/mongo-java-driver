@@ -19,12 +19,10 @@ package com.mongodb.internal.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -204,12 +202,16 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>> transformer() {
-        return (result, source, connection) -> new MapReduceInlineResultsCursor<>(createQueryResult(result, connection.getDescription()), decoder, source,
-                MapReduceHelper.createStatistics(result));
+         return (result, source, connection) ->
+                new MapReduceInlineResultsCursor<>(
+                        new SingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, "results"), 0,
+                                connection.getDescription().getServerAddress()),
+                        MapReduceHelper.createStatistics(result));
     }
 
     private CommandReadTransformerAsync<BsonDocument, MapReduceAsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> new MapReduceInlineResultsAsyncCursor<>(createQueryResult(result, connection.getDescription()),
+        return (result, source, connection) -> new MapReduceInlineResultsAsyncCursor<>(
+                new AsyncSingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, "results"), 0),
                 MapReduceHelper.createStatistics(result));
     }
 
@@ -235,10 +237,5 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             }
             return commandDocument;
         };
-    }
-
-    private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        return new QueryResult<>(namespace, BsonDocumentWrapperHelper.toList(result, "results"), 0,
-                description.getServerAddress());
     }
 }
