@@ -21,6 +21,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MongoWriteExceptionTest {
@@ -28,7 +30,7 @@ public class MongoWriteExceptionTest {
     @Test
     public void testExceptionProperties() {
         WriteError writeError = new WriteError(11000, "Duplicate key", new BsonDocument("x", new BsonInt32(1)));
-        MongoWriteException e = new MongoWriteException(writeError, new ServerAddress("host1"));
+        MongoWriteException e = new MongoWriteException(writeError, new ServerAddress("host1"), Collections.emptySet());
 
         assertEquals("Write operation error on server host1:27017. Write error: WriteError{code=11000, message='Duplicate key', "
                 + "details={\"x\": 1}}.",

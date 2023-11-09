@@ -25,6 +25,8 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
+import java.util.stream.Collectors;
+
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandWriteTransformerAsync;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandWriteTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
@@ -43,12 +45,10 @@ final class FindAndModifyHelper {
     @Nullable
     private static <T> T transformDocument(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
-            MongoWriteConcernException writeConcernException = new MongoWriteConcernException(
+            throw new MongoWriteConcernException(
                     createWriteConcernError(result.getDocument("writeConcernError")),
-                    createWriteConcernResult(result.getDocument("lastErrorObject", new BsonDocument())), serverAddress);
-            result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue())
-                    .forEach(writeConcernException::addLabel);
-            throw writeConcernException;
+                    createWriteConcernResult(result.getDocument("lastErrorObject", new BsonDocument())), serverAddress,
+                    result.getArray("errorLabels", new BsonArray()).stream().map(i -> i.asString().getValue()).collect(Collectors.toSet()));
         }
 
         if (!result.isDocument("value")) {
