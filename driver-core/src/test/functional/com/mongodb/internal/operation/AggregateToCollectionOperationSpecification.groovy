@@ -43,6 +43,7 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
@@ -170,7 +171,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should throw execution timeout exception from execute'() {
         given:
-        AggregateToCollectionOperation operation = createOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, getNamespace(),
+        AggregateToCollectionOperation operation = createOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, getNamespace(),
                 [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                  new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                 ACKNOWLEDGED)

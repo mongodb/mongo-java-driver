@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
@@ -40,7 +41,6 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     private final SyncOperations<BsonDocument> operations;
     private final String databaseName;
     private final Class<TResult> resultClass;
-
     private Bson filter;
     private final boolean collectionNamesOnly;
     private long maxTimeMS;
@@ -76,6 +76,12 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    public ListCollectionsIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
     public ListCollectionsIterable<TResult> comment(@Nullable final String comment) {
         this.comment = comment != null ? new BsonString(comment) : null;
         return this;
@@ -89,6 +95,7 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS, comment);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS, comment,
+                getTimeoutMode());
     }
 }

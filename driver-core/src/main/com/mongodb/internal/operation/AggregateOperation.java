@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
@@ -133,6 +134,11 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     @Override
     public TimeoutSettings getTimeoutSettings() {
         return wrapped.getTimeoutSettings();
+    }
+
+    public AggregateOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
+        return this;
     }
 
     @Override

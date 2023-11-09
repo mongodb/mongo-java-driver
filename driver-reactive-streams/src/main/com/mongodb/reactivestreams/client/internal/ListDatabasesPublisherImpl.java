@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
@@ -79,6 +80,12 @@ final class ListDatabasesPublisherImpl<T> extends BatchCursorPublisher<T> implem
     @Override
     public ListDatabasesPublisher<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
+        return this;
+    }
+
+    @Override
+    public ListDatabasesPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
         return this;
     }
 

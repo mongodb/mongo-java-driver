@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.ListIndexesIterable as JListIndexesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
@@ -29,7 +30,8 @@ import org.mockito.kotlin.verifyNoMoreInteractions
 class ListIndexesIterableTest {
     @Test
     fun shouldHaveTheSameMethods() {
-        val jListIndexesIterableFunctions = JListIndexesIterable::class.declaredFunctions.map { it.name }.toSet()
+        val jListIndexesIterableFunctions =
+            JListIndexesIterable::class.declaredFunctions.map { it.name }.toSet() + "timeoutMode"
         val kListIndexesIterableFunctions = ListIndexesIterable::class.declaredFunctions.map { it.name }.toSet()
 
         assertEquals(jListIndexesIterableFunctions, kListIndexesIterableFunctions)
@@ -49,12 +51,14 @@ class ListIndexesIterableTest {
         iterable.comment(comment)
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
+        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

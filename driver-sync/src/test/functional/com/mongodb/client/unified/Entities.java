@@ -23,10 +23,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.internal.connection.TestClusterListener;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
-import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
@@ -56,11 +53,14 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
+import com.mongodb.logging.TestLoggingInterceptor;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -250,6 +250,21 @@ public final class Entities {
 
     public MongoCollection<BsonDocument> getCollection(final String id) {
         return getEntity(id, collections, "collection");
+    }
+
+    public MongoClient getClientWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
+        if (timeoutMS != null) {
+            throw new UnsupportedOperationException("Client doesn't have a withTimeout helper");
+        }
+        return getClient(id);
+    }
+
+    public MongoDatabase getDatabaseWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
+        return timeoutMS != null ? getDatabase(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getDatabase(id);
+    }
+
+    public MongoCollection<BsonDocument> getCollectionWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
+        return timeoutMS != null ? getCollection(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getCollection(id);
     }
 
     public ClientSession getSession(final String id) {
@@ -450,10 +465,16 @@ public final class Entities {
                         break;
                     case "w":
                         if (value.isString()) {
-                            clientSettingsBuilder.writeConcern(new WriteConcern(value.asString().getValue()));
+                            clientSettingsBuilder.writeConcern(clientSettingsBuilder.build()
+                                    .getWriteConcern().withW(value.asString().getValue()));
                         } else {
-                            clientSettingsBuilder.writeConcern(new WriteConcern(value.asInt32().intValue()));
+                            clientSettingsBuilder.writeConcern(clientSettingsBuilder.build()
+                                    .getWriteConcern().withW(value.asInt32().intValue()));
                         }
+                        break;
+                    case "wTimeoutMS":
+                        clientSettingsBuilder.writeConcern(clientSettingsBuilder.build().getWriteConcern()
+                                .withWTimeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
                         break;
                     case "maxPoolSize":
                         clientSettingsBuilder.applyToConnectionPoolSettings(builder -> builder.maxSize(value.asNumber().intValue()));
@@ -497,6 +518,9 @@ public final class Entities {
                     case "appname":
                     case "appName":
                         clientSettingsBuilder.applicationName(value.asString().getValue());
+                        break;
+                    case "timeoutMS":
+                        clientSettingsBuilder.timeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS);
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported uri option: " + key);
@@ -564,6 +588,9 @@ public final class Entities {
                     case "writeConcern":
                         database = database.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
                         break;
+                    case "timeoutMS":
+                        database = database.withTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported database option: " + entry.getKey());
                 }
@@ -587,6 +614,9 @@ public final class Entities {
                         break;
                     case "writeConcern":
                         collection = collection.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
+                        break;
+                    case "timeoutMS":
+                        collection = collection.withTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported collection option: " + entry.getKey());
@@ -669,6 +699,9 @@ public final class Entities {
                     break;
                 case "writeConcern":
                     transactionOptionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                case "maxCommitTimeMS":
+                    transactionOptionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());

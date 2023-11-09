@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.ListDatabasesIterable as JListDatabasesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.conversions.Bson
@@ -28,6 +29,27 @@ import org.bson.conversions.Bson
  */
 public class ListDatabasesIterable<T : Any>(private val wrapped: JListDatabasesIterable<T>) :
     MongoIterable<T>(wrapped) {
+
+    public override fun batchSize(batchSize: Int): ListDatabasesIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): ListDatabasesIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
+
     /**
      * Sets the maximum execution time on the server for this operation.
      *
@@ -39,15 +61,6 @@ public class ListDatabasesIterable<T : Any>(private val wrapped: JListDatabasesI
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListDatabasesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public override fun batchSize(batchSize: Int): ListDatabasesIterable<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the query filter to apply to the returned database names.

@@ -344,6 +344,27 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   }
 
   /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   * to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 4.x
+   */
+  def timeoutMode(timeoutMode: TimeoutMode): FindObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
+
+  /**
    * Explain the execution plan for this operation with the server's default verbosity level
    *
    * @tparam ExplainResult The type of the result

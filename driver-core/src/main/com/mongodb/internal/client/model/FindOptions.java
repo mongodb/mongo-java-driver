@@ -17,6 +17,7 @@
 package com.mongodb.internal.client.model;
 
 import com.mongodb.CursorType;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonString;
@@ -55,6 +56,7 @@ public final class FindOptions {
     private boolean returnKey;
     private boolean showRecordId;
     private Boolean allowDiskUse;
+    private TimeoutMode timeoutMode;
 
     /**
      * Construct a new instance.
@@ -67,7 +69,8 @@ public final class FindOptions {
             final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
             final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial,
             final Collation collation, final BsonValue comment, final Bson hint, final String hintString, final Bson variables,
-            final Bson max, final Bson min, final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse) {
+            final Bson max, final Bson min, final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse,
+            final TimeoutMode timeoutMode) {
         this.batchSize = batchSize;
         this.limit = limit;
         this.projection = projection;
@@ -89,12 +92,14 @@ public final class FindOptions {
         this.returnKey = returnKey;
         this.showRecordId = showRecordId;
         this.allowDiskUse = allowDiskUse;
+        this.timeoutMode = timeoutMode;
     }
     //CHECKSTYLE:ON
 
     public FindOptions withBatchSize(final int batchSize) {
         return new FindOptions(batchSize, limit, projection, maxTimeMS, maxAwaitTimeMS, skip, sort, cursorType, noCursorTimeout,
-                oplogReplay, partial, collation, comment, hint, hintString, variables, max, min, returnKey, showRecordId, allowDiskUse);
+                oplogReplay, partial, collation, comment, hint, hintString, variables, max, min, returnKey, showRecordId, allowDiskUse,
+                timeoutMode);
     }
 
     /**
@@ -224,6 +229,39 @@ public final class FindOptions {
     public FindOptions batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
+    }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@code MongoDatabase} or via {@code MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    public FindOptions timeoutMode(final TimeoutMode timeoutMode) {
+        this.timeoutMode = timeoutMode;
+        return this;
+    }
+
+    /**
+     * @see #timeoutMode(TimeoutMode)
+     * @return timeout mode
+     */
+    @Nullable
+    public TimeoutMode getTimeoutMode() {
+        return timeoutMode;
     }
 
     /**

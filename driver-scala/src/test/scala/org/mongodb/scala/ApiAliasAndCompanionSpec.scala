@@ -104,7 +104,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "package",
       "ReadConcernLevel",
       "SingleObservable",
-      "Subscription"
+      "Subscription",
+      "TimeoutMode"
     )
 
     val classFilter = (f: Class[_ <: Object]) => {

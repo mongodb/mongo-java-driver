@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
@@ -71,6 +72,12 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     @Override
     public AggregatePublisher<T> batchSize(final int batchSize) {
         super.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public AggregatePublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
         return this;
     }
 
@@ -187,13 +194,13 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
     private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
-                .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS,
+                .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS, getTimeoutMode(),
                            initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
     }
 
     private AsyncReadOperation<Void> getAggregateToCollectionOperation() {
-        return getOperations().aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString, comment,
-                                                     variables, aggregationLevel);
+        return getOperations().aggregateToCollection(pipeline, maxTimeMS, getTimeoutMode(), allowDiskUse, bypassDocumentValidation,
+                collation, hint, hintString, comment, variables, aggregationLevel);
     }
 
     @Nullable

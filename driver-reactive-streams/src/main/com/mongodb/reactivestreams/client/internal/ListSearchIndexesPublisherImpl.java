@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncExplainableReadOperation;
@@ -82,6 +83,12 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
     @Override
     public ListSearchIndexesPublisher<T> comment(@Nullable final String comment) {
         this.comment = comment != null ? new BsonString(comment) : null;
+        return this;
+    }
+
+    @Override
+    public ListSearchIndexesPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
         return this;
     }
 

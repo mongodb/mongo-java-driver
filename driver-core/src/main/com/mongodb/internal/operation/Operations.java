@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.Collation;
@@ -213,7 +214,8 @@ final class Operations<TDocument> {
                 .max(toBsonDocument(options.getMax()))
                 .returnKey(options.isReturnKey())
                 .showRecordId(options.isShowRecordId())
-                .allowDiskUse(options.isAllowDiskUse());
+                .allowDiskUse(options.isAllowDiskUse())
+                .timeoutMode(options.getTimeoutMode());
 
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
@@ -234,11 +236,9 @@ final class Operations<TDocument> {
     }
 
     <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-            final long maxTimeMS, final long maxAwaitTimeMS, @Nullable final Integer batchSize,
+            final long maxTimeMS, final long maxAwaitTimeMS, @Nullable final TimeoutMode timeoutMode, @Nullable final Integer batchSize,
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString,
-            final BsonValue comment,
-            final Bson variables, final Boolean allowDiskUse,
-            final AggregationLevel aggregationLevel) {
+            final BsonValue comment, final Bson variables, final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
         return new AggregateOperation<>(timeoutSettings.withMaxTimeAndMaxAwaitTimeMS(maxTimeMS, maxAwaitTimeMS), assertNotNull(namespace),
                 assertNotNull(toBsonDocumentList(pipeline)), codecRegistry.get(resultClass), aggregationLevel)
                 .retryReads(retryReads)
@@ -247,11 +247,12 @@ final class Operations<TDocument> {
                 .collation(collation)
                 .hint(hint != null ? toBsonDocument(hint) : (hintString != null ? new BsonString(hintString) : null))
                 .comment(comment)
-                .let(toBsonDocument(variables));
+                .let(toBsonDocument(variables))
+                .timeoutMode(timeoutMode);
     }
 
     AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
-            final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
+            @Nullable final TimeoutMode timeoutMode, final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
         return new AggregateToCollectionOperation(timeoutSettings.withMaxTimeMS(maxTimeMS), assertNotNull(namespace),
@@ -261,7 +262,8 @@ final class Operations<TDocument> {
                 .collation(collation)
                 .hint(hint != null ? toBsonDocument(hint) : (hintString != null ? new BsonString(hintString) : null))
                 .comment(comment)
-                .let(toBsonDocument(variables));
+                .let(toBsonDocument(variables))
+                .timeoutMode(timeoutMode);
     }
 
     @SuppressWarnings("deprecation")
@@ -678,15 +680,15 @@ final class Operations<TDocument> {
     }
 
     <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
-                                                                final Bson filter, final boolean collectionNamesOnly,
-                                                                @Nullable final Integer batchSize, final long maxTimeMS,
-                                                                final BsonValue comment) {
+            final Bson filter, final boolean collectionNamesOnly, @Nullable final Integer batchSize, final long maxTimeMS,
+            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
         return new ListCollectionsOperation<>(timeoutSettings.withMaxTimeMS(maxTimeMS), databaseName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(collectionNamesOnly)
                 .batchSize(batchSize == null ? 0 : batchSize)
-                .comment(comment);
+                .comment(comment)
+                .timeoutMode(timeoutMode);
     }
 
     <TResult> ListDatabasesOperation<TResult> listDatabases(final Class<TResult> resultClass, final Bson filter,
@@ -701,12 +703,13 @@ final class Operations<TDocument> {
     }
 
     <TResult> ListIndexesOperation<TResult> listIndexes(final Class<TResult> resultClass, @Nullable final Integer batchSize,
-                                                               final long maxTimeMS, final BsonValue comment) {
+            final long maxTimeMS, final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
         return new ListIndexesOperation<>(timeoutSettings.withMaxTimeMS(maxTimeMS), assertNotNull(namespace),
                 codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .batchSize(batchSize == null ? 0 : batchSize)
-                .comment(comment);
+                .comment(comment)
+                .timeoutMode(timeoutMode);
     }
 
     <TResult> ChangeStreamOperation<TResult> changeStream(final FullDocument fullDocument,

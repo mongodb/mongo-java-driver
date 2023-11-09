@@ -54,7 +54,7 @@ final class TimeoutContextTest {
                     assertAll(
                             () -> assertTrue(timeoutContext.hasTimeoutMS()),
                             () -> assertTrue(timeoutContext.getMaxTimeMS() > 0),
-                            () -> assertTrue(timeoutContext.getMaxAwaitTimeMS() > 0),
+                            () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
                             () -> assertTrue(timeoutContext.getMaxCommitTimeMS() > 0)
                     );
                 }),
