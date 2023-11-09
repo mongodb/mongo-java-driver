@@ -129,13 +129,6 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
-    @Deprecated
-    public FindIterable<TResult> oplogReplay(final boolean oplogReplay) {
-        findOptions.oplogReplay(oplogReplay);
-        return this;
-    }
-
-    @Override
     public FindIterable<TResult> partial(final boolean partial) {
         findOptions.partial(partial);
         return this;
