@@ -90,13 +90,6 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     }
 
     @Override
-    @Deprecated
-    public FindIterable<T> oplogReplay(final boolean oplogReplay) {
-        wrapped.oplogReplay(oplogReplay);
-        return this;
-    }
-
-    @Override
     public FindIterable<T> partial(final boolean partial) {
         wrapped.partial(partial);
         return this;
