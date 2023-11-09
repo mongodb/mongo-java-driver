@@ -197,7 +197,6 @@ final class Operations<TDocument> {
                 .sort(toBsonDocument(options.getSort()))
                 .cursorType(options.getCursorType())
                 .noCursorTimeout(options.isNoCursorTimeout())
-                .oplogReplay(options.isOplogReplay())
                 .partial(options.isPartial())
                 .collation(options.getCollation())
                 .comment(options.getComment())

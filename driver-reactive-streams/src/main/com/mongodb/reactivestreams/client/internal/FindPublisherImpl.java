@@ -111,13 +111,6 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
     }
 
     @Override
-    @Deprecated
-    public FindPublisher<T> oplogReplay(final boolean oplogReplay) {
-        findOptions.oplogReplay(oplogReplay);
-        return this;
-    }
-
-    @Override
     public FindPublisher<T> partial(final boolean partial) {
         findOptions.partial(partial);
         return this;

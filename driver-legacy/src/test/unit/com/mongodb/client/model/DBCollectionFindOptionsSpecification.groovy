@@ -32,7 +32,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
 
         then:
         !options.isNoCursorTimeout()
-        !options.isOplogReplay()
         !options.isPartial()
         options.getBatchSize() == 0
         options.getCollation() == null
@@ -77,7 +76,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
-                .oplogReplay(true)
                 .partial(true)
                 .projection(projection)
                 .readConcern(readConcern)
@@ -105,7 +103,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getSkip() == 1
         options.getSort() == sort
         options.isNoCursorTimeout()
-        options.isOplogReplay()
         options.isPartial()
         options.getComment() == comment
         options.getHint() == hint
@@ -139,7 +136,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
-                .oplogReplay(true)
                 .partial(true)
                 .projection(projection)
                 .readConcern(readConcern)
@@ -171,7 +167,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getSkip() == 1
         options.getSort() == sort
         options.isNoCursorTimeout()
-        options.isOplogReplay()
         options.isPartial()
         options.getComment() == comment
         options.getHint() == hint
