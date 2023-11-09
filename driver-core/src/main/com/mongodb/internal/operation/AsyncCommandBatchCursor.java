@@ -32,6 +32,7 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableConnectionWithCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -305,9 +306,10 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
+            OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
             localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
-                    assertNotNull(getConnectionSource()).getOperationContext(), (r, t) -> callback.onResult(null, null));
+                    operationContext, (r, t) -> callback.onResult(null, null));
         }
     }
 }
