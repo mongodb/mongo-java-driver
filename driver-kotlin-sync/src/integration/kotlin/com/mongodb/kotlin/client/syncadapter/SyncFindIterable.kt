@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client.syncadapter
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.FindIterable as JFindIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.FindIterable
 import java.util.concurrent.TimeUnit
@@ -29,6 +30,7 @@ import org.bson.conversions.Bson
 internal class SyncFindIterable<T : Any>(val wrapped: FindIterable<T>) :
     JFindIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncFindIterable<T> = apply { wrapped.batchSize(batchSize) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncFindIterable<T> = apply { wrapped.timeoutMode(timeoutMode) }
     override fun filter(filter: Bson?): SyncFindIterable<T> = apply { wrapped.filter(filter) }
 
     override fun limit(limit: Int): SyncFindIterable<T> = apply { wrapped.limit(limit) }

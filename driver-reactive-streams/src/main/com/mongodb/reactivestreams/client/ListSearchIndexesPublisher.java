@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.annotations.Evolving;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -97,6 +98,19 @@ public interface ListSearchIndexesPublisher<TResult> extends Publisher<TResult> 
      * @return this
      */
     ListSearchIndexesPublisher<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    ListSearchIndexesPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Helper to return a publisher limited to the first result.

@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.FindOptions;
@@ -186,6 +187,13 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
     @Override
     public FindPublisher<T> allowDiskUse(@Nullable final Boolean allowDiskUse) {
         findOptions.allowDiskUse(allowDiskUse);
+        return this;
+    }
+
+    @Override
+    public FindPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        findOptions.timeoutMode(timeoutMode);
         return this;
     }
 

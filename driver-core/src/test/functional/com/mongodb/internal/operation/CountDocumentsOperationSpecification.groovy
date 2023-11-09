@@ -48,7 +48,6 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
@@ -84,7 +83,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
         operation.getSkip() == 0
     }
 
-    def 'should set optional values correctly'(){
+    def 'should set optional values correctly'() {
         given:
         def filter = new BsonDocument('filter', new BsonInt32(1))
         def hint = new BsonString('hint')
@@ -136,7 +135,7 @@ class CountDocumentsOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should throw execution timeout exception from execute'() {
         given:
-        def operation = new CountDocumentsOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, getNamespace())
+        def operation = new CountDocumentsOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, getNamespace())
         enableMaxTimeFailPoint()
 
         when:

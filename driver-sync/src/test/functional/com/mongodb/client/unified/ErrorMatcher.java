@@ -20,6 +20,7 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoWriteException;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
             asList("isError", "expectError", "isClientError", "errorCode", "errorCodeName", "errorContains", "errorResponse",
-                    "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
+                    "isClientError", "isTimeoutError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
 
     private final AssertionContext context;
     private final ValueMatcher valueMatcher;
@@ -63,6 +64,12 @@ final class ErrorMatcher {
                     e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
                             || e instanceof MongoSocketException);
         }
+        if (expectedError.containsKey("isTimeoutError")) {
+            assertEquals(context.getMessage("Exception must be of type MongoExecutionTimeoutException"),
+                    expectedError.getBoolean("isTimeoutError").getValue(),
+                    e instanceof MongoExecutionTimeoutException);
+        }
+
         if (expectedError.containsKey("errorContains")) {
             String errorContains = expectedError.getString("errorContains").getValue();
             assertTrue(context.getMessage("Error message does not contain expected string: " + errorContains),

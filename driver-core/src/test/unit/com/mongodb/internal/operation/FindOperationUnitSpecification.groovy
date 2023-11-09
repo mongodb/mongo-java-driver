@@ -28,7 +28,6 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.CursorType.TailableAwait
 
 class FindOperationUnitSpecification extends OperationUnitSpecification {
@@ -42,7 +41,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         testOperation(operation, [3, 2, 0], expectedCommand, async, commandResult)
         // Overrides
         when:
-        operation = new FindOperation<BsonDocument>(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace, new BsonDocumentCodec())
+        operation = new FindOperation<BsonDocument>(TIMEOUT_SETTINGS, namespace, new BsonDocumentCodec())
                 .filter(new BsonDocument('a', BsonBoolean.TRUE))
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .skip(2)
@@ -72,7 +71,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .append('allowPartialResults', BsonBoolean.TRUE)
                 .append('noCursorTimeout', BsonBoolean.TRUE)
                 .append('oplogReplay', BsonBoolean.TRUE)
-                .append('maxTimeMS', new BsonInt64(100))
                 .append('comment', operation.getComment())
                 .append('hint', operation.getHint())
                 .append('min', operation.getMin())

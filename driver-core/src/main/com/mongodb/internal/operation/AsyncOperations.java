@@ -22,6 +22,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
@@ -143,23 +144,24 @@ public final class AsyncOperations<TDocument> {
     public <TResult> AsyncExplainableReadOperation<AsyncBatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
             final Class<TResult> resultClass,
             final long maxTimeMS, final long maxAwaitTimeMS,
-            final Integer batchSize,
+            @Nullable final TimeoutMode timeoutMode,
+            @Nullable final Integer batchSize,
             final Collation collation, final Bson hint,
             final String hintString,
             final BsonValue comment,
             final Bson variables,
             final Boolean allowDiskUse,
             final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, hintString, comment,
-                variables, allowDiskUse, aggregationLevel);
+        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, timeoutMode, batchSize, collation, hint, hintString,
+                comment, variables, allowDiskUse, aggregationLevel);
     }
 
     public AsyncReadOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
-            final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
+            @Nullable final TimeoutMode timeoutMode, final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, final Bson hint, final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
-                comment, variables, aggregationLevel);
+        return operations.aggregateToCollection(pipeline, maxTimeMS, timeoutMode, allowDiskUse, bypassDocumentValidation, collation, hint,
+                hintString, comment, variables, aggregationLevel);
     }
 
     @SuppressWarnings("deprecation")
@@ -313,21 +315,20 @@ public final class AsyncOperations<TDocument> {
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listCollections(final String databaseName, final Class<TResult> resultClass,
-            final Bson filter, final boolean collectionNamesOnly,
-            final Integer batchSize, final long maxTimeMS,
-            final BsonValue comment) {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS, comment);
+            final Bson filter, final boolean collectionNamesOnly, @Nullable final Integer batchSize, final long maxTimeMS,
+            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS, comment,
+                timeoutMode);
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
-            final Boolean nameOnly, final long maxTimeMS,
-            final Boolean authorizedDatabases, final BsonValue comment) {
+            final Boolean nameOnly, final long maxTimeMS, final Boolean authorizedDatabases, final BsonValue comment) {
         return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabases, comment);
     }
 
-    public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
-            final long maxTimeMS, final BsonValue comment) {
-        return operations.listIndexes(resultClass, batchSize, maxTimeMS, comment);
+    public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listIndexes(final Class<TResult> resultClass,
+            @Nullable final Integer batchSize, final long maxTimeMS, final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
+        return operations.listIndexes(resultClass, batchSize, maxTimeMS, comment, timeoutMode);
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> changeStream(final FullDocument fullDocument,

@@ -42,6 +42,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
+import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandWriteTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
@@ -310,7 +311,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
             putIfNotNull(commandDocument, "scope", getScope());
             putIfTrue(commandDocument, "verbose", isVerbose());
             putIfNotZero(commandDocument, "limit", getLimit());
-            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
             putIfTrue(commandDocument, "jsMode", isJsMode());
             if (bypassDocumentValidation != null) {
                 commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));

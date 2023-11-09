@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.Projections;
 import com.mongodb.lang.Nullable;
@@ -278,6 +279,26 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 4.4
      */
     FindPublisher<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    FindPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Explain the execution plan for this operation with the server's default verbosity level

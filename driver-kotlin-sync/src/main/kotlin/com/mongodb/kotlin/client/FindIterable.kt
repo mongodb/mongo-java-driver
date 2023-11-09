@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.FindIterable as JFindIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -31,14 +32,31 @@ import org.bson.conversions.Bson
  * @see [Collection filter](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/)
  */
 public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : MongoIterable<T>(wrapped) {
+
+    public override fun batchSize(batchSize: Int): FindIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
     /**
-     * Sets the number of documents to return per batch.
+     * Sets the timeoutMode for the cursor.
      *
-     * @param batchSize the batch size
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * If the `timeout` is set then:
+     * * For non-tailable cursors, the default value of timeoutMode is [TimeoutMode.CURSOR_LIFETIME]
+     * * For tailable cursors, the default value of timeoutMode is [TimeoutMode.ITERATION] and its an error to configure
+     *   it as: [TimeoutMode.CURSOR_LIFETIME]
+     *
+     * @param timeoutMode the timeout mode
      * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     * @since 4.x
      */
-    public override fun batchSize(batchSize: Int): FindIterable<T> = apply { wrapped.batchSize(batchSize) }
+    public fun timeoutMode(timeoutMode: TimeoutMode): FindIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
 
     /**
      * Sets the query filter to apply to the query.

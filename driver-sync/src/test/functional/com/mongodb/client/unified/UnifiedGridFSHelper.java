@@ -50,7 +50,7 @@ final class UnifiedGridFSHelper {
         BsonValue id = arguments.get("id");
 
         if (arguments.size() > 1) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+            throw new UnsupportedOperationException("Unexpected arguments " + arguments);
         }
 
         requireNonNull(id);
@@ -70,7 +70,7 @@ final class UnifiedGridFSHelper {
         BsonValue id = arguments.get("id");
 
         if (arguments.size() > 1) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
         }
 
         requireNonNull(id);

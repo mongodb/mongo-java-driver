@@ -16,8 +16,11 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.client.MapReduceIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.MapReducePublisher;
 import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
 
@@ -27,10 +30,10 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 
 @SuppressWarnings("deprecation")
-class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements com.mongodb.client.MapReduceIterable<T> {
-    private final com.mongodb.reactivestreams.client.MapReducePublisher<T> wrapped;
+class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduceIterable<T> {
+    private final MapReducePublisher<T> wrapped;
 
-    SyncMapReduceIterable(final com.mongodb.reactivestreams.client.MapReducePublisher<T> wrapped) {
+    SyncMapReduceIterable(final MapReducePublisher<T> wrapped) {
         super(wrapped);
         this.wrapped = wrapped;
     }
@@ -41,99 +44,105 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements com.mongo
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> collectionName(final String collectionName) {
+    public MapReduceIterable<T> collectionName(final String collectionName) {
         wrapped.collectionName(collectionName);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> finalizeFunction(@Nullable final String finalizeFunction) {
+    public MapReduceIterable<T> finalizeFunction(@Nullable final String finalizeFunction) {
         wrapped.finalizeFunction(finalizeFunction);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> scope(@Nullable final Bson scope) {
+    public MapReduceIterable<T> scope(@Nullable final Bson scope) {
         wrapped.scope(scope);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> sort(@Nullable final Bson sort) {
+    public MapReduceIterable<T> sort(@Nullable final Bson sort) {
         wrapped.sort(sort);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> filter(@Nullable final Bson filter) {
+    public MapReduceIterable<T> filter(@Nullable final Bson filter) {
         wrapped.filter(filter);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> limit(final int limit) {
+    public MapReduceIterable<T> limit(final int limit) {
         wrapped.limit(limit);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> jsMode(final boolean jsMode) {
+    public MapReduceIterable<T> jsMode(final boolean jsMode) {
         wrapped.jsMode(jsMode);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> verbose(final boolean verbose) {
+    public MapReduceIterable<T> verbose(final boolean verbose) {
         wrapped.verbose(verbose);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public MapReduceIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> action(final com.mongodb.client.model.MapReduceAction action) {
+    public MapReduceIterable<T> action(final com.mongodb.client.model.MapReduceAction action) {
         wrapped.action(action);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> databaseName(@Nullable final String databaseName) {
+    public MapReduceIterable<T> databaseName(@Nullable final String databaseName) {
         wrapped.databaseName(databaseName);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> sharded(final boolean sharded) {
+    public MapReduceIterable<T> sharded(final boolean sharded) {
         wrapped.sharded(sharded);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> nonAtomic(final boolean nonAtomic) {
+    public MapReduceIterable<T> nonAtomic(final boolean nonAtomic) {
         wrapped.nonAtomic(nonAtomic);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> batchSize(final int batchSize) {
+    public MapReduceIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
         super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
+    public MapReduceIterable<T> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         wrapped.bypassDocumentValidation(bypassDocumentValidation);
         return this;
     }
 
     @Override
-    public com.mongodb.client.MapReduceIterable<T> collation(@Nullable final Collation collation) {
+    public MapReduceIterable<T> collation(@Nullable final Collation collation) {
         wrapped.collation(collation);
+        return this;
+    }
+
+    @Override
+    public MapReduceIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 }

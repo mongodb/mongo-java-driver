@@ -99,6 +99,8 @@ import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMon
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assume.assumeThat;
@@ -518,13 +520,21 @@ public final class ClusterFixture {
         return SslSettings.builder().applyConnectionString(connectionString).build();
     }
 
-    public static ServerAddress getPrimary() {
+    public static ServerDescription getPrimaryServerDescription() {
         List<ServerDescription> serverDescriptions = getPrimaries(getClusterDescription(getCluster()));
         while (serverDescriptions.isEmpty()) {
             sleep(100);
             serverDescriptions = getPrimaries(getClusterDescription(getCluster()));
         }
-        return serverDescriptions.get(0).getAddress();
+        return serverDescriptions.get(0);
+    }
+
+    public static ServerAddress getPrimary() {
+        return getPrimaryServerDescription().getAddress();
+    }
+
+    public static long getPrimaryRTT() {
+        return MILLISECONDS.convert(getPrimaryServerDescription().getRoundTripTimeNanos(), NANOSECONDS);
     }
 
     public static ServerAddress getSecondary() {

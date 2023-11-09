@@ -15,6 +15,7 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import java.util.concurrent.TimeUnit
@@ -40,6 +41,18 @@ public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : 
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
     public fun batchSize(batchSize: Int): DistinctFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): DistinctFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Sets the query filter to apply to the query.

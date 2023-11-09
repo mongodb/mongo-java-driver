@@ -17,10 +17,9 @@
 package org.mongodb.scala.gridfs
 
 import java.util.concurrent.TimeUnit
-
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.{ Observable, Observer, SingleObservable }
+import org.mongodb.scala.{ Observable, Observer, SingleObservable, TimeoutMode }
 
 import scala.concurrent.duration.Duration
 
@@ -119,6 +118,27 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    */
   def batchSize(batchSize: Int): GridFSFindObservable = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the `MongoClientSettings`,
+   * via `MongoDatabase` or via `MongoCollection`
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   * to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 4.x
+   */
+  def timeoutMode(timeoutMode: TimeoutMode): GridFSFindObservable = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

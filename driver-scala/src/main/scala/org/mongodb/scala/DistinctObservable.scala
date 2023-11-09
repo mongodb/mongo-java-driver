@@ -110,6 +110,21 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
   }
 
   /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 4.x
+   */
+  def timeoutMode(timeoutMode: TimeoutMode): DistinctObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
+
+  /**
    * Helper to return a single observable limited to the first result.
    *
    * @return a single observable which will the first result.

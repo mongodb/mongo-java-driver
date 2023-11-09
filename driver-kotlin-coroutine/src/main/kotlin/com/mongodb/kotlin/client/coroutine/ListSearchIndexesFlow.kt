@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher
 import java.util.concurrent.TimeUnit
@@ -37,6 +38,29 @@ public class ListSearchIndexesFlow<T : Any>(private val wrapped: ListSearchIndex
     Flow<T> by wrapped.asFlow() {
 
     /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     */
+    public fun batchSize(batchSize: Int): ListSearchIndexesFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesFlow<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
+
+    /**
      * Sets an Atlas Search index name for this operation.
      *
      * @param indexName Atlas Search index name.
@@ -54,15 +78,6 @@ public class ListSearchIndexesFlow<T : Any>(private val wrapped: ListSearchIndex
     public fun allowDiskUse(allowDiskUse: Boolean?): ListSearchIndexesFlow<T> = apply {
         wrapped.allowDiskUse(allowDiskUse)
     }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size.
-     * @return this.
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public fun batchSize(batchSize: Int): ListSearchIndexesFlow<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the maximum execution time on the server for this operation.
