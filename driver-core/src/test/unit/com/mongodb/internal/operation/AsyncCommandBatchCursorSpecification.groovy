@@ -186,7 +186,7 @@ class AsyncCommandBatchCursorSpecification extends Specification {
 
         where:
         serverVersion                | response              | response2
-        new ServerVersion([3, 6, 0]) | documentResponse([])  | documentResponse(SECOND_BATCH, 0)
+        new ServerVersion([3, 6, 0]) | getMoreResponse([])  | getMoreResponse(SECOND_BATCH, 0)
     }
 
     def 'should close cursor after getMore finishes if cursor was closed while getMore was in progress and getMore returns a response'() {
