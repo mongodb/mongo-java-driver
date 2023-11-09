@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
@@ -49,11 +48,11 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -1084,18 +1083,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         try {
             return executor.execute(writeOperation, readConcern, clientSession);
         } catch (MongoBulkWriteException e) {
-            MongoException exception;
             if (e.getWriteErrors().isEmpty()) {
-                exception = new MongoWriteConcernException(e.getWriteConcernError(),
+                throw new MongoWriteConcernException(e.getWriteConcernError(),
                         translateBulkWriteResult(type, e.getWriteResult()),
-                        e.getServerAddress());
+                        e.getServerAddress(), e.getErrorLabels());
             } else {
-                exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+                throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress(), e.getErrorLabels());
             }
-            for (final String errorLabel : e.getErrorLabels()) {
-                exception.addLabel(errorLabel);
-            }
-            throw exception;
+
         }
     }
 
