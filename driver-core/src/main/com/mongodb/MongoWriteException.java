@@ -16,6 +16,9 @@
 
 package com.mongodb;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * An exception indicating the failure of a write operation.
  *
@@ -32,10 +35,24 @@ public class MongoWriteException extends MongoServerException {
      * Construct an instance
      * @param error the error
      * @param serverAddress the server address
+     * @deprecated Prefer {@link MongoWriteException(WriteError, ServerAddress, Set)}
      */
+    @Deprecated
     public MongoWriteException(final WriteError error, final ServerAddress serverAddress) {
+        this(error, serverAddress, Collections.emptySet());
+    }
+
+    /**
+     * Construct an instance
+     * @param error the error
+     * @param serverAddress the server address
+     * @param errorLabels the server errorLabels
+     * @since 5.0
+     */
+    public MongoWriteException(final WriteError error, final ServerAddress serverAddress, final Set<String> errorLabels) {
         super(error.getCode(), "Write operation error on server " + serverAddress + ". Write error: " + error + ".", serverAddress);
         this.error = error;
+        addLabels(errorLabels);
     }
 
     /**

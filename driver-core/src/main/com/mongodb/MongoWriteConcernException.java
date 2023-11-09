@@ -19,6 +19,9 @@ package com.mongodb;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.lang.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -40,9 +43,11 @@ public class MongoWriteConcernException extends MongoServerException {
      *
      * @param writeConcernError the non-null write concern error
      * @param serverAddress the non-null server address
+     * @deprecated Prefer {@link MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, Set)}
      */
+    @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
-        this(writeConcernError, null, serverAddress);
+        this(writeConcernError, null, serverAddress, Collections.emptySet());
     }
 
     /**
@@ -52,24 +57,31 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param writeConcernResult the write result
      * @param serverAddress     the non-null server address
      * @since 3.2
+     * @deprecated Prefer {@link MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, Set)}
      */
-    @SuppressWarnings("deprecation")
+    @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
                                       final ServerAddress serverAddress) {
+        this(writeConcernError, writeConcernResult, serverAddress, Collections.emptySet());
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param writeConcernError the non-null write concern error
+     * @param writeConcernResult the write result
+     * @param serverAddress     the non-null server address
+     * @param errorLabels       the server errorLabels
+     * @since 5.0
+     */
+    public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
+            final ServerAddress serverAddress, final Set<String> errorLabels) {
         super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
         this.writeConcernResult = writeConcernResult;
         this.writeConcernError = notNull("writeConcernError", writeConcernError);
-        for (final String errorLabel : writeConcernError.getErrorLabels()) {
-            super.addLabel(errorLabel);
-        }
+        addLabels(errorLabels);
     }
 
-    @Override
-    @SuppressWarnings("deprecation")
-    public void addLabel(final String errorLabel) {
-        writeConcernError.addLabel(errorLabel);
-        super.addLabel(errorLabel);
-    }
 
     /**
      * Gets the write concern error.
