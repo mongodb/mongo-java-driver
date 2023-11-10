@@ -21,6 +21,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 /**
  * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>
@@ -224,6 +225,19 @@ public final class Assertions {
      */
     public static AssertionError fail(final String msg) throws AssertionError {
         throw new AssertionError(assertNotNull(msg));
+    }
+
+    /**
+     * @param supplier the supplier to check
+     * @return {@code supplier.get()}
+     * @throws AssertionError If {@code supplier.get()} throws an exception
+     */
+    public static <T> T doesNotThrow(final Supplier<T> supplier) throws AssertionError {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            throw new AssertionError(e.getMessage(), e);
+        }
     }
 
     private Assertions() {

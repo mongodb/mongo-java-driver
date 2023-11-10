@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -25,8 +26,10 @@ import org.bson.BsonTimestamp;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface AsyncAggregateResponseBatchCursor<T> extends AsyncBatchCursor<T> {
+    @Nullable
     BsonDocument getPostBatchResumeToken();
 
+    @Nullable
     BsonTimestamp getOperationTime();
 
     boolean isFirstBatchEmpty();

@@ -409,7 +409,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def explainPlan = execute(operation, async)
 
         then:
-        assertEquals(index, QueryOperationHelper.getKeyPattern(explainPlan))
+        assertEquals(index, TestOperationHelper.getKeyPattern(explainPlan))
 
         where:
         [async, hint] << [[true, false], [new BsonDocument('a', new BsonInt32(1)),
