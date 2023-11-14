@@ -127,10 +127,9 @@ public final class MongoClients {
         }
         StreamFactory streamFactory = getStreamFactory(streamFactoryFactory, settings, false);
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
-        AutoCloseable externalResourceCloser = streamFactoryFactory instanceof AutoCloseable ? (AutoCloseable) streamFactoryFactory : null;
         MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
         Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory);
-        return new MongoClientImpl(settings, wrappedMongoDriverInformation, cluster, externalResourceCloser);
+        return new MongoClientImpl(settings, wrappedMongoDriverInformation, cluster, streamFactoryFactory);
     }
 
     /**
