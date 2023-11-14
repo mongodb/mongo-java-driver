@@ -25,9 +25,13 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.RepresentationConfigurable;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.record.annotations.BsonId;
-import org.bson.codecs.record.annotations.BsonProperty;
-import org.bson.codecs.record.annotations.BsonRepresentation;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonExtraElements;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
+import org.bson.codecs.pojo.annotations.BsonProperty;
+import org.bson.codecs.pojo.annotations.BsonRepresentation;
 import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
@@ -84,7 +88,6 @@ final class RecordCodec<T extends Record> implements Codec<T> {
             return component.getAccessor().invoke(record);
         }
 
-        @SuppressWarnings("deprecation")
         private static Codec<?> computeCodec(final List<Type> typeParameters, final RecordComponent component,
                 final CodecRegistry codecRegistry) {
             var rawType = toWrapper(resolveComponentType(typeParameters, component));
@@ -94,11 +97,9 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                     : codecRegistry.get(rawType);
             BsonType bsonRepresentationType = null;
 
-            if (component.isAnnotationPresent(BsonRepresentation.class)) {
-                bsonRepresentationType = component.getAnnotation(BsonRepresentation.class).value();
-            } else if (isAnnotationPresentOnField(component, org.bson.codecs.pojo.annotations.BsonRepresentation.class)) {
+            if (isAnnotationPresentOnField(component, BsonRepresentation.class)) {
                 bsonRepresentationType = getAnnotationOnField(component,
-                        org.bson.codecs.pojo.annotations.BsonRepresentation.class).value();
+                        BsonRepresentation.class).value();
             }
             if (bsonRepresentationType != null) {
                 if (codec instanceof RepresentationConfigurable<?> representationConfigurable) {
@@ -142,16 +143,11 @@ final class RecordCodec<T extends Record> implements Codec<T> {
                     recordClass.getName(), typeParameterName));
         }
 
-        @SuppressWarnings("deprecation")
         private static String computeFieldName(final RecordComponent component) {
-            if (component.isAnnotationPresent(BsonId.class)) {
+            if (isAnnotationPresentOnField(component, BsonId.class)) {
                 return "_id";
-            } else if (isAnnotationPresentOnField(component, org.bson.codecs.pojo.annotations.BsonId.class)) {
-                return "_id";
-            } else if (component.isAnnotationPresent(BsonProperty.class)) {
-                return component.getAnnotation(BsonProperty.class).value();
-            } else if (isAnnotationPresentOnField(component, org.bson.codecs.pojo.annotations.BsonProperty.class)) {
-                return getAnnotationOnField(component, org.bson.codecs.pojo.annotations.BsonProperty.class).value();
+            } else if (isAnnotationPresentOnField(component, BsonProperty.class)) {
+                return getAnnotationOnField(component, BsonProperty.class).value();
             }
             return component.getName();
         }
@@ -179,14 +175,14 @@ final class RecordCodec<T extends Record> implements Codec<T> {
         }
 
         private static void validateAnnotations(final RecordComponent component, final int index) {
-            validateAnnotationNotPresentOnType(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonDiscriminator.class);
-            validateAnnotationNotPresentOnConstructor(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonCreator.class);
-            validateAnnotationNotPresentOnMethod(component.getDeclaringRecord(), org.bson.codecs.pojo.annotations.BsonCreator.class);
-            validateAnnotationNotPresentOnFieldOrAccessor(component, org.bson.codecs.pojo.annotations.BsonIgnore.class);
-            validateAnnotationNotPresentOnFieldOrAccessor(component, org.bson.codecs.pojo.annotations.BsonExtraElements.class);
-            validateAnnotationOnlyOnField(component, index, org.bson.codecs.pojo.annotations.BsonId.class);
-            validateAnnotationOnlyOnField(component, index, org.bson.codecs.pojo.annotations.BsonProperty.class);
-            validateAnnotationOnlyOnField(component, index, org.bson.codecs.pojo.annotations.BsonRepresentation.class);
+            validateAnnotationNotPresentOnType(component.getDeclaringRecord(), BsonDiscriminator.class);
+            validateAnnotationNotPresentOnConstructor(component.getDeclaringRecord(), BsonCreator.class);
+            validateAnnotationNotPresentOnMethod(component.getDeclaringRecord(), BsonCreator.class);
+            validateAnnotationNotPresentOnFieldOrAccessor(component, BsonIgnore.class);
+            validateAnnotationNotPresentOnFieldOrAccessor(component, BsonExtraElements.class);
+            validateAnnotationOnlyOnField(component, index, BsonId.class);
+            validateAnnotationOnlyOnField(component, index, BsonProperty.class);
+            validateAnnotationOnlyOnField(component, index, BsonRepresentation.class);
         }
 
         private static <T extends Annotation> void validateAnnotationNotPresentOnType(final Class<?> clazz,
