@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.lang.Nullable;
-
 import java.util.function.Predicate;
 
 
@@ -38,6 +36,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     void unsafeFinish(SingleResultCallback<T> callback);
 
     /**
+     * This is the async variant of a supplier's get method.
      * This method must only be used when this AsyncSupplier corresponds
      * to a {@link java.util.function.Supplier} (and is therefore being
      * used within an async chain method lambda).
@@ -48,7 +47,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     @Override
-    default void unsafeFinish(@Nullable final Void value, final SingleResultCallback<T> callback) {
+    default void unsafeFinish(final Void value, final SingleResultCallback<T> callback) {
         unsafeFinish(callback);
     }
 
@@ -108,13 +107,13 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
 
     /**
      * @param errorCheck A check, comparable to a catch-if/otherwise-rethrow
-     * @param supplier   The branch to execute if the error matches
+     * @param errorFunction   The branch to execute if the error matches
      * @return The composition of this, and the conditional branch
      */
     default AsyncSupplier<T> onErrorIf(
             final Predicate<Throwable> errorCheck,
-            final AsyncSupplier<T> supplier) {
-        return (callback) -> this.unsafeFinish((r, e) -> {
+            final AsyncFunction<Throwable, T> errorFunction) {
+        return (callback) -> this.finish((r, e) -> {
             if (e == null) {
                 callback.onResult(r, null);
                 return;
@@ -128,7 +127,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
                 return;
             }
             if (errorMatched) {
-                supplier.unsafeFinish(callback);
+                errorFunction.unsafeFinish(e, callback);
             } else {
                 callback.onResult(null, e);
             }
