@@ -22,7 +22,6 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.internal.CodecCache.CodecCacheKey;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,7 +66,7 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
     @Override
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
         for (CodecProvider provider : codecProviders) {
-            Codec<T> codec = getFromCodecProvider(provider, clazz, typeArguments, registry);
+            Codec<T> codec = provider.get(clazz, typeArguments, registry);
             if (codec != null) {
                 return codec;
             }
@@ -79,19 +78,13 @@ public final class ProvidersCodecRegistry implements CycleDetectingCodecRegistry
         CodecCacheKey codecCacheKey = new CodecCacheKey(context.getCodecClass(), context.getTypes().orElse(null));
         return codecCache.<T>get(codecCacheKey).orElseGet(() -> {
             for (CodecProvider provider : codecProviders) {
-                Codec<T> codec = getFromCodecProvider(provider, context.getCodecClass(), context.getTypes().orElse(emptyList()), context);
+                Codec<T> codec = provider.get(context.getCodecClass(), context.getTypes().orElse(emptyList()), context);
                 if (codec != null) {
                     return codecCache.putIfAbsent(codecCacheKey, codec);
                 }
             }
             throw new CodecConfigurationException(format("Can't find a codec for %s.", codecCacheKey));
         });
-    }
-
-    @Nullable
-    public static <T> Codec<T> getFromCodecProvider(final CodecProvider provider,
-            final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
-        return provider.get(clazz, typeArguments, registry);
     }
 
     @Override
