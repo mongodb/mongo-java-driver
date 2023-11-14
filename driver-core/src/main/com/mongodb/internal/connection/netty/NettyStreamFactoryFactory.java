@@ -47,6 +47,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     private final EventLoopGroup eventLoopGroup;
+    private final boolean ownsEventLoopGroup;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
@@ -203,6 +204,15 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
     }
 
     @Override
+    public void close() {
+         if (ownsEventLoopGroup) {
+             // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
+             // to the pool
+             eventLoopGroup.shutdownGracefully();
+         }
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -225,6 +235,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         allocator = builder.allocator == null ? ByteBufAllocator.DEFAULT : builder.allocator;
         socketChannelClass = builder.socketChannelClass == null ? NioSocketChannel.class : builder.socketChannelClass;
         eventLoopGroup = builder.eventLoopGroup == null ? new NioEventLoopGroup() : builder.eventLoopGroup;
+        ownsEventLoopGroup = builder.eventLoopGroup == null;
         sslContext = builder.sslContext;
         inetAddressResolver = builder.inetAddressResolver;
     }
