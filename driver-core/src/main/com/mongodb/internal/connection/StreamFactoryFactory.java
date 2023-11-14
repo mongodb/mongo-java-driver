@@ -22,7 +22,7 @@ import com.mongodb.connection.SslSettings;
 /**
  * A factory of {@code StreamFactory} instances.
  */
-public interface StreamFactoryFactory {
+public interface StreamFactoryFactory extends AutoCloseable {
 
     /**
      * Create a {@code StreamFactory} with the given settings.
@@ -32,4 +32,7 @@ public interface StreamFactoryFactory {
      * @return a stream factory that will apply the given settins
      */
     StreamFactory create(SocketSettings socketSettings, SslSettings sslSettings);
+
+    @Override
+    void close();
 }
