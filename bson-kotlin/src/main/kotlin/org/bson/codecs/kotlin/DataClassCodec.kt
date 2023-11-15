@@ -99,7 +99,7 @@ internal data class DataClassCodec<T : Any>(
         reader.readEndDocument()
 
         try {
-            return primaryConstructor.callBy(args)
+            return primaryConstructor.callBy(args.filterNot { !it.key.type.isMarkedNullable && it.value == null })
         } catch (e: Exception) {
             throw CodecConfigurationException(
                 "Unable to invoke primary constructor of ${kClass.simpleName} data class", e)
