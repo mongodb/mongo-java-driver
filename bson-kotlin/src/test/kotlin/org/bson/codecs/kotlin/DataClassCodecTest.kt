@@ -123,6 +123,28 @@ class DataClassCodecTest {
     }
 
     @Test
+    fun testEncodesDataClassWhenDefaultsAreNotPresent() {
+        val documentWithoutDefaultProperty =
+            """{
+            | "boolean": true,
+            | "string": "Defined"
+            |}"""
+                .trimMargin()
+
+        val documentWithoutNullDefaultProperty =
+            """{
+            | "boolean": true,
+            | "string": "Defined"
+              "listSimple": null
+            |}"""
+                .trimMargin()
+
+        val expectedDataClass = DataClassWithDefaults(boolean = true, string = "Defined")
+        assertEncodesTo(documentWithoutDefaultProperty, expectedDataClass)
+        assertEncodesTo(documentWithoutNullDefaultProperty, expectedDataClass)
+    }
+
+    @Test
     fun testDataClassWithNulls() {
         val dataClass = DataClassWithNulls(null, null, null)
         assertRoundTrips(emptyDocument, dataClass)
