@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static org.bson.internal.ProvidersCodecRegistry.getFromCodecProvider;
 
 
 /**
@@ -66,7 +65,7 @@ public class Jep395RecordCodecProvider implements CodecProvider {
     @Override
     @Nullable
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
-        return RECORD_CODEC_PROVIDER != null ? getFromCodecProvider(RECORD_CODEC_PROVIDER, clazz, typeArguments, registry) : null;
+        return RECORD_CODEC_PROVIDER != null ? RECORD_CODEC_PROVIDER.get(clazz, typeArguments, registry) : null;
     }
 
     /**
