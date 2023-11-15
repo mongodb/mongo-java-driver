@@ -19,8 +19,8 @@ package com.mongodb;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.lang.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -43,7 +43,7 @@ public class MongoWriteConcernException extends MongoServerException {
      *
      * @param writeConcernError the non-null write concern error
      * @param serverAddress the non-null server address
-     * @deprecated Prefer {@link MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, Set)}
+     * @deprecated Prefer {@link MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, Collection)}
      */
     @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
@@ -57,7 +57,7 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param writeConcernResult the write result
      * @param serverAddress     the non-null server address
      * @since 3.2
-     * @deprecated Prefer {@link MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, Set)}
+     * @deprecated Prefer {@link MongoWriteConcernException(WriteConcernError, WriteConcernResult, ServerAddress, Collection)}
      */
     @Deprecated
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
@@ -75,7 +75,7 @@ public class MongoWriteConcernException extends MongoServerException {
      * @since 5.0
      */
     public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
-            final ServerAddress serverAddress, final Set<String> errorLabels) {
+            final ServerAddress serverAddress, final Collection<String> errorLabels) {
         super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
         this.writeConcernResult = writeConcernResult;
         this.writeConcernError = notNull("writeConcernError", writeConcernError);
