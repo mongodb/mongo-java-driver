@@ -339,7 +339,8 @@ public final class ClusterSettings {
                 }
             } else if (directConnection != null) {
                 mode(directConnection ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE);
-                hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
+                List<String> hosts = directConnection ? singletonList(connectionString.getHosts().get(0)) : connectionString.getHosts();
+                hosts(hosts.stream().map(ServerAddressHelper::createServerAddress).collect(Collectors.toList()));
             } else {
                 mode = null;
                 List<ServerAddress> seedList = connectionString.getHosts().stream()

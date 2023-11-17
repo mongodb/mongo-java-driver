@@ -271,6 +271,19 @@ class ClusterSettingsSpecification extends Specification {
 
         when:
         settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://example.com:27017,example.com:27018/?directConnection=false'))
+                .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.hosts == [new ServerAddress('example.com:27017'), new ServerAddress('example.com:27018')]
+        settings.requiredClusterType == ClusterType.UNKNOWN
+        settings.requiredReplicaSetName == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
+
+        when:
+        settings = ClusterSettings.builder()
                 .applyConnectionString(new ConnectionString('mongodb://example.com:27018/?directConnection=true'))
                 .build()
 
