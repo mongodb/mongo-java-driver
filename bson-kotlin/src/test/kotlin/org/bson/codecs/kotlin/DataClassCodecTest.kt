@@ -131,7 +131,7 @@ class DataClassCodecTest {
             |}"""
                 .trimMargin()
 
-        val documentWithoutNullDefaultProperty =
+        val documentWithNullDefaultProperty =
             """{
             | "boolean": true,
             | "string": "Defined"
@@ -141,7 +141,7 @@ class DataClassCodecTest {
 
         val expectedDataClass = DataClassWithDefaults(boolean = true, string = "Defined")
         assertEncodesTo(documentWithoutDefaultProperty, expectedDataClass)
-        assertEncodesTo(documentWithoutNullDefaultProperty, expectedDataClass)
+        assertEncodesTo(documentWithNullDefaultProperty, expectedDataClass)
     }
 
     @Test
