@@ -22,56 +22,41 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
-class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
-    private final CountDownLatch latch = new CountDownLatch(1);
-    private volatile T result;
-    private volatile Throwable error;
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
+    private final CompletableFuture<T> completableFuture = new CompletableFuture<>();
 
     @Override
-    public void completed(@Nullable final T result) {
-        this.result = result;
-        latch.countDown();
+    public void completed(@Nullable final T t) {
+        completableFuture.complete(t);
     }
 
     @Override
     public void failed(final Throwable t) {
-        this.error = t;
-        latch.countDown();
+        completableFuture.completeExceptionally(t);
     }
 
-    public void getOpen() throws IOException {
-        get("Opening");
-    }
-
-    public void getWrite() throws IOException {
-        get("Writing to");
-    }
-
-    public T getRead() throws IOException {
-        return get("Reading from");
-    }
-
-    private T get(final String prefix) throws IOException {
+    public T get() throws IOException {
         try {
-            latch.await();
+            return completableFuture.get();
         } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
-
-        }
-        if (error != null) {
-            if (error instanceof IOException) {
-                throw (IOException) error;
-            } else if (error instanceof MongoException) {
-                throw (MongoException) error;
+            throw interruptAndCreateMongoInterruptedException("Interrupted", e);
+        } catch (ExecutionException executionException) {
+            Throwable t = executionException.getCause();
+            if (t instanceof IOException) {
+                throw (IOException) t;
+            } else if (t instanceof MongoException) {
+                throw (MongoException) t;
             } else {
-                throw new MongoInternalException(prefix + " the AsynchronousSocketChannelStream failed", error);
+                throw new MongoInternalException("Exception thrown from Stream", t);
             }
         }
-        return result;
     }
-
 }
