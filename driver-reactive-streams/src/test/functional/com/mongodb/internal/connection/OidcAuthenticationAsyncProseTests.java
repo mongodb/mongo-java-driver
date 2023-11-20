@@ -44,7 +44,7 @@ public class OidcAuthenticationAsyncProseTests extends OidcAuthenticationProseTe
         int simulatedDelayMs = 100;
         TestCallback requestCallback = createCallback().setDelayMs(simulatedDelayMs);
 
-        MongoClientSettings clientSettings = createSettings(OIDC_URL, requestCallback);
+        MongoClientSettings clientSettings = createSettings(getOidcUri(), requestCallback);
 
         try (com.mongodb.reactivestreams.client.MongoClient client = MongoClients.create(clientSettings)) {
             executeAll(2, () -> {
