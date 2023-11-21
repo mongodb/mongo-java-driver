@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> {
 
     static AsyncRunnable beginAsync() {
-        return (c) -> c.onResult(null, null);
+        return (c) -> c.complete(c);
     }
 
     /**
@@ -43,16 +43,16 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     default void thenRunAndFinish(final Runnable runnable, final SingleResultCallback<Void> callback) {
         this.finish((r, e) -> {
             if (e != null) {
-                callback.onResult(null, e);
+                callback.completeExceptionally(e);
                 return;
             }
             try {
                 runnable.run();
             } catch (Throwable t) {
-                callback.onResult(null, t);
+                callback.completeExceptionally(t);
                 return;
             }
-            callback.onResult(null, null);
+            callback.complete(callback);
         });
     }
 
@@ -70,10 +70,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                 if (e != null) {
                     t.addSuppressed(e);
                 }
-                callback.onResult(null, t);
+                callback.completeExceptionally(t);
                 return;
             }
-            callback.onResult(null, e);
+            callback.completeExceptionally(e);
         });
     }
 
@@ -87,7 +87,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                 if (e == null) {
                     runnable.unsafeFinish(c);
                 } else {
-                    c.onResult(null, e);
+                    c.completeExceptionally(e);
                 }
             });
         };
@@ -103,20 +103,20 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         return (callback) -> {
             this.unsafeFinish((r, e) -> {
                 if (e != null) {
-                    callback.onResult(null, e);
+                    callback.completeExceptionally(e);
                     return;
                 }
                 boolean matched;
                 try {
                     matched = condition.get();
                 } catch (Throwable t) {
-                    callback.onResult(null, t);
+                    callback.completeExceptionally(t);
                     return;
                 }
                 if (matched) {
                     runnable.unsafeFinish(callback);
                 } else {
-                    callback.onResult(null, null);
+                    callback.complete(callback);
                 }
             });
         };
@@ -133,7 +133,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                 if (e == null) {
                     supplier.unsafeFinish(c);
                 } else {
-                    c.onResult(null, e);
+                    c.completeExceptionally(e);
                 }
             });
         };

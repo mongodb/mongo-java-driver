@@ -66,7 +66,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
             if (callbackInvoked[0]) {
                 throw t;
             } else {
-                callback.onResult(null, t);
+                callback.completeExceptionally(t);
             }
         }
     }
@@ -82,7 +82,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
                 if (e == null) {
                     function.unsafeFinish(v, c);
                 } else {
-                    c.onResult(null, e);
+                    c.completeExceptionally(e);
                 }
             });
         };
@@ -99,7 +99,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
                 if (e == null) {
                     consumer.unsafeFinish(v, c);
                 } else {
-                    c.onResult(null, e);
+                    c.completeExceptionally(e);
                 }
             });
         };
@@ -115,7 +115,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
             final AsyncFunction<Throwable, T> errorFunction) {
         return (callback) -> this.finish((r, e) -> {
             if (e == null) {
-                callback.onResult(r, null);
+                callback.complete(r);
                 return;
             }
             boolean errorMatched;
@@ -123,13 +123,13 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
                 errorMatched = errorCheck.test(e);
             } catch (Throwable t) {
                 t.addSuppressed(e);
-                callback.onResult(null, t);
+                callback.completeExceptionally(t);
                 return;
             }
             if (errorMatched) {
                 errorFunction.unsafeFinish(e, callback);
             } else {
-                callback.onResult(null, e);
+                callback.completeExceptionally(e);
             }
         });
     }
