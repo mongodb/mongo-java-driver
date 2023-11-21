@@ -17,8 +17,6 @@
 package com.mongodb.internal.connection.netty;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -27,6 +25,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.internal.connection.FutureAsyncCompletionHandler;
 import com.mongodb.internal.connection.Stream;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -60,7 +59,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Lock;
@@ -72,7 +70,6 @@ import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
-import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -455,45 +452,6 @@ final class NettyStream implements Stream {
             this.numBytes = numBytes;
             this.handler = handler;
             this.timeout = timeout;
-        }
-    }
-
-    private static final class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
-        private final CountDownLatch latch = new CountDownLatch(1);
-        private volatile T t;
-        private volatile Throwable throwable;
-
-        FutureAsyncCompletionHandler() {
-        }
-
-        @Override
-        public void completed(@Nullable final T t) {
-            this.t = t;
-            latch.countDown();
-        }
-
-        @Override
-        public void failed(final Throwable t) {
-            this.throwable = t;
-            latch.countDown();
-        }
-
-        public T get() throws IOException {
-            try {
-                latch.await();
-                if (throwable != null) {
-                    if (throwable instanceof IOException) {
-                        throw (IOException) throwable;
-                    } else if (throwable instanceof MongoException) {
-                        throw (MongoException) throwable;
-                    } else {
-                        throw new MongoInternalException("Exception thrown from Netty Stream", throwable);
-                    }
-                }
-                return t;
-            } catch (InterruptedException e) {
-                throw interruptAndCreateMongoInterruptedException("Interrupted", e);
-            }
         }
     }
 

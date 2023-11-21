@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
@@ -32,11 +30,9 @@ import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -126,28 +122,28 @@ public abstract class AsynchronousChannelStream implements Stream {
     public void open() throws IOException {
         FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
         openAsync(handler);
-        handler.getOpen();
+        handler.get();
     }
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
         writeAsync(buffers, handler);
-        handler.getWrite();
+        handler.get();
     }
 
     @Override
     public ByteBuf read(final int numBytes) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, handler);
-        return handler.getRead();
+        return handler.get();
     }
 
     @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, additionalTimeout, handler);
-        return handler.getRead();
+        return handler.get();
     }
 
     @Override
@@ -276,55 +272,5 @@ public abstract class AsynchronousChannelStream implements Stream {
         AsyncCompletionHandler<T> getHandlerAndClear() {
             return handlerReference.getAndSet(null);
         }
-    }
-
-    static class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
-        private final CountDownLatch latch = new CountDownLatch(1);
-        private volatile T result;
-        private volatile Throwable error;
-
-        @Override
-        public void completed(@Nullable final T result) {
-            this.result = result;
-            latch.countDown();
-        }
-
-        @Override
-        public void failed(final Throwable t) {
-            this.error = t;
-            latch.countDown();
-        }
-
-        void getOpen() throws IOException {
-            get("Opening");
-        }
-
-        void getWrite() throws IOException {
-            get("Writing to");
-        }
-
-        T getRead() throws IOException {
-            return get("Reading from");
-        }
-
-        private T get(final String prefix) throws IOException {
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                throw interruptAndCreateMongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
-
-            }
-            if (error != null) {
-                if (error instanceof IOException) {
-                    throw (IOException) error;
-                } else if (error instanceof MongoException) {
-                    throw (MongoException) error;
-                } else {
-                    throw new MongoInternalException(prefix + " the TlsChannelStream failed", error);
-                }
-            }
-            return result;
-        }
-
     }
 }
