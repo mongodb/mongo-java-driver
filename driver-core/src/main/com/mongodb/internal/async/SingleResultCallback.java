@@ -44,7 +44,11 @@ public interface SingleResultCallback<T> {
         return new AsyncCompletionHandler<T>() {
             @Override
             public void completed(@Nullable final T result) {
-                complete(result);
+                if (result != null) {
+                    complete(result);
+                } else {
+                    complete((SingleResultCallback<Void>) SingleResultCallback.this);
+                }
             }
             @Override
             public void failed(final Throwable t) {
