@@ -114,10 +114,6 @@ public class TestHelper {
         assertEquals(expectedMap, actualMap);
     }
 
-    public static void assertPublisherIsTheSameAs(final Publisher<?> expectedPublisher, final Publisher<?> actualPublisher) {
-        assertPublisherIsTheSameAs(expectedPublisher, actualPublisher, null);
-    }
-
     public static void assertPublisherIsTheSameAs(final Publisher<?> expectedPublisher, final Publisher<?> actualPublisher,
             @Nullable final String message) {
         Map<String, Optional<Object>> expectedMap = getClassPrivateFieldValues(getRootSource(expectedPublisher));
