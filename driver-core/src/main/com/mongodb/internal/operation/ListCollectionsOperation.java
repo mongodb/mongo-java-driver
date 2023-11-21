@@ -52,6 +52,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceE
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
+import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
@@ -231,10 +232,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         }
         if (nameOnly) {
             command.append("nameOnly", BsonBoolean.TRUE);
-            if (authorizedCollections) {
-                command.append("authorizedCollections", BsonBoolean.TRUE);
-            }
         }
+        putIfTrue(command, "authorizedCollections", authorizedCollections);
         if (maxTimeMS > 0) {
             command.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }

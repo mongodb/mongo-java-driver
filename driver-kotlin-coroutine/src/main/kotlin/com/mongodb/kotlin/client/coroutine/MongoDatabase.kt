@@ -20,13 +20,13 @@ import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
+import com.mongodb.reactivestreams.client.MongoDatabase as JMongoDatabase
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import java.util.concurrent.TimeUnit
-import com.mongodb.reactivestreams.client.MongoDatabase as JMongoDatabase
 
 /** The MongoDatabase representation. */
 public class MongoDatabase(private val wrapped: JMongoDatabase) {
