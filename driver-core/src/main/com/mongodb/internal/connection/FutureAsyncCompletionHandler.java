@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.lang.Nullable;
 
@@ -30,7 +31,8 @@ import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMon
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
+@ThreadSafe
+public final class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
     private final CompletableFuture<T> completableFuture = new CompletableFuture<>();
 
     @Override
