@@ -20,7 +20,7 @@ import java.util.function.Predicate;
 
 
 /**
- * See tests for usage (AsyncFunctionsTest).
+ * See {@link AsyncRunnable}
  * <p>
  * This class is not part of the public API and may be removed or changed at any time
  */

@@ -41,70 +41,7 @@ final class AsyncFunctionsTest {
     private boolean isTestingAbruptCompletion = false;
 
     @Test
-    void testBasicVariations1() {
-        /*
-        Some of our methods have "Async" counterparts. These "Async" methods
-        must implement the same behaviour asynchronously. In these "Async"
-        methods, a SingleResultCallback is provided as a parameter, and the
-        method calls at least one other "Async" method (or it invokes a
-        non-driver async API).
-
-        The API tested here facilitates the writing of such methods using
-        standardized, tested, and non-nested boilerplate. For example, given
-        the following "sync" method:
-
-            public T myMethod()
-                sync(1);
-            }
-
-        The async counterpart would be:
-
-            public void myMethodAsync(SingleResultCallback<T> callback)
-                beginAsync().thenRun(c -> { // 1, 2
-                    async(1, c);            // 3, 4
-                }).finish(callback);        // 5
-            }
-
-        Usage:
-        1. Start an async chain using the "beginAsync" static method.
-        2. Use an appropriate chaining method (then...), which will provide "c"
-        3. copy all sync code into that method; convert sync methods to async
-        4. at any async method, pass in "c", and end that "block"
-        5. provide the original "callback" at the end of the chain via "finish"
-
-        (The above example is tested at the end of this method, and other tests
-        will provide additional examples.)
-
-        Requirements and conventions:
-
-        Each async lambda MUST invoke its async method with "c", and MUST return
-        immediately after invoking that method. It MUST NOT, for example, have
-        a catch or finally (including close on try-with-resources) after the
-        invocation of the async method.
-
-        In cases where the async method has "mixed" returns (some of which are
-        plain sync, some async), the "c" callback MUST be completed on the
-        plain sync path, `c.complete()`, followed by a return or end of method.
-
-        Chains starting with "beginAsync" correspond roughly to code blocks.
-        This includes the method body, blocks used in if/try/catch/while/etc.
-        statements, and places where anonymous code blocks might be used. For
-        clarity, such nested/indented chains might be omitted (where possible,
-        as demonstrated in the tests/examples below).
-
-        Plain sync code MAY throw exceptions, and SHOULD NOT attempt to handle
-        them asynchronously. The exceptions will be caught and handled by the
-        code blocks that contain this sync code.
-
-        All code, including "plain" code (parameter checks) SHOULD be placed
-        within the "boilerplate". This ensures that exceptions are handled,
-        and facilitates comparison/review. This excludes code that must be
-        "shared", such as lambda and variable declarations.
-
-        A curly-braced lambda body (with no linebreak before "."), as shown
-        below, SHOULD be used (for consistency, and ease of comparison/review).
-        */
-
+    void test1Method() {
         // the number of expected variations is often: 1 + N methods invoked
         // 1 variation with no exceptions, and N per an exception in each method
         assertBehavesSameVariations(2,
@@ -118,21 +55,11 @@ final class AsyncFunctionsTest {
                         async(1, c);
                     }).finish(callback);
                 });
-        /*
-        Code review checklist for async code:
-
-        1. Is everything inside the boilerplate?
-        2. Is "callback" supplied to "finish"?
-        3. In each block and nested block, is that same block's "c" always passed/completed at the end of execution?
-        4. Is every c.complete followed by a return, to end execution?
-        5. Have all sync method calls been converted to async, where needed?
-        */
     }
 
     @Test
-    void testBasicVariations2() {
-        // tests pairs
-        // converting: plain-sync, sync-plain, sync-sync
+    void test2Methods() {
+        // tests pairs, converting: plain-sync, sync-plain, sync-sync
         // (plain-plain does not need an async chain)
 
         assertBehavesSameVariations(3,
@@ -182,8 +109,9 @@ final class AsyncFunctionsTest {
     }
 
     @Test
-    void testBasicVariations4() {
-        // tests the sync-sync pair with preceding and ensuing plain methods:
+    void test4Methods() {
+        // tests the sync-sync pair with preceding and ensuing plain methods.
+
         assertBehavesSameVariations(5,
                 () -> {
                     plain(11);
@@ -239,7 +167,7 @@ final class AsyncFunctionsTest {
     }
 
     @Test
-    void testSupplyMixed() {
+    void testSupplyWithMixedReturns() {
         assertBehavesSameVariations(5,
                 () -> {
                     if (plainTest(1)) {
@@ -261,7 +189,6 @@ final class AsyncFunctionsTest {
                 });
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Test
     void testFullChain() {
         // tests a chain with: runnable, producer, function, function, consumer
@@ -307,7 +234,7 @@ final class AsyncFunctionsTest {
     }
 
     @Test
-    void testConditionalVariations() {
+    void testConditionals() {
         assertBehavesSameVariations(5,
                 () -> {
                     if (plainTest(1)) {
@@ -413,7 +340,7 @@ final class AsyncFunctionsTest {
 
     @Test
     void testPlain() {
-        // for completeness; should not be used, since there is no async
+        // For completeness. This should not be used, since there is no async.
         assertBehavesSameVariations(2,
                 () -> {
                     plain(1);
@@ -463,9 +390,11 @@ final class AsyncFunctionsTest {
                     }).finish(callback);
                 });
 
-        // chain of 2 in try
-        // "onErrorIf" will consider everything in
-        // the preceding chain to be part of the try
+        // chain of 2 in try.
+        // WARNING: "onErrorIf" will consider everything in
+        // the preceding chain to be part of the try.
+        // Use nested async chains to define the beginning
+        // of the "try".
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -701,7 +630,7 @@ final class AsyncFunctionsTest {
     }
 
     @Test
-    void testLoop() {
+    void testRetryLoop() {
         assertBehavesSameVariations(InvocationTracker.DEPTH_LIMIT * 2 + 1,
                 () -> {
                     while (true) {
