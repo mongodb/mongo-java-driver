@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * See {@link AsyncRunnable}
  * <p>
@@ -26,6 +28,9 @@ public interface AsyncFunction<T, R> {
     /**
      * This should not be called externally, but should be implemented as a
      * lambda. To "finish" an async chain, use one of the "finish" methods.
+     *
+     * @param value A {@code @}{@link Nullable} argument of the asynchronous function.
+     * @param callback the callback
      */
     void unsafeFinish(T value, SingleResultCallback<R> callback);
 }

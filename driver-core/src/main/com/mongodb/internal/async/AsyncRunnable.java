@@ -90,7 +90,7 @@ import java.util.function.Supplier;
  * them asynchronously. The exceptions will be caught and handled by the API.
  *
  * <p>All code, including "plain" code (parameter checks) SHOULD be placed
- * within the "boilerplate". This ensures that exceptions are handled,
+ * within the API's async lambdas. This ensures that exceptions are handled,
  * and facilitates comparison/review. This excludes code that must be
  * "shared", such as lambda and variable declarations.
  *
@@ -101,7 +101,7 @@ import java.util.function.Supplier;
  * <p>Code review checklist, for common mistakes:
  *
  * <ol>
- *   <li>Is everything inside the boilerplate?</li>
+ *   <li>Is everything (that can be) inside the async lambdas?</li>
  *   <li>Is "callback" supplied to "finish"?</li>
  *   <li>In each block and nested block, is that same block's "c" always
  *   passed/completed at the end of execution?</li>
@@ -236,7 +236,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
             new RetryingAsyncCallbackSupplier<Void>(
                     new RetryState(),
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
-                    cb -> runnable.finish(cb) // finish is required here, to handle exceptions
+                    // `finish` is required here instead of `unsafeFinish`
+                    // because only `finish` meets the contract of
+                    // `AsyncCallbackSupplier.get`, which we implement here
+                    cb -> runnable.finish(cb)
             ).get(callback);
         });
     }

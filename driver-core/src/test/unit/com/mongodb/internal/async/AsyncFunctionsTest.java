@@ -943,7 +943,7 @@ final class AsyncFunctionsTest {
             final Consumer<SingleResultCallback<T>> async) {
         // run the variation-trying code twice, with direct/indirect exceptions
         for (int i = 0; i < 2; i++) {
-            isTestingAbruptCompletion = i == 0;
+            isTestingAbruptCompletion = i != 0;
 
             // the variation-trying code:
             invocationTracker.reset();

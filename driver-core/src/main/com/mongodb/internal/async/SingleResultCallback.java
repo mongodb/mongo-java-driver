@@ -21,6 +21,8 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.lang.Nullable;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
+
 /**
  * An interface to describe the completion of an asynchronous function, which may be represented as {@link AsyncCallbackFunction}.
  *

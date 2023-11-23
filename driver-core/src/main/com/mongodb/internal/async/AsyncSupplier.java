@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.function.Predicate;
 
 
@@ -43,7 +45,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
      * @param callback the callback
      */
     default void getAsync(final SingleResultCallback<T> callback) {
-        unsafeFinish(callback);
+        finish(callback);
     }
 
     @Override
@@ -113,6 +115,8 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     default AsyncSupplier<T> onErrorIf(
             final Predicate<Throwable> errorCheck,
             final AsyncFunction<Throwable, T> errorFunction) {
+        // finish is used here instead of unsafeFinish to ensure that
+        // exceptions thrown from the callback are properly handled
         return (callback) -> this.finish((r, e) -> {
             if (e == null) {
                 callback.complete(r);
