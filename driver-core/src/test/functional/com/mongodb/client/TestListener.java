@@ -34,7 +34,9 @@ public final class TestListener {
     }
 
     public List<String> getEventStrings() {
-        return new ArrayList<>(events);
+        synchronized (events) {
+            return new ArrayList<>(events);
+        }
     }
 
     public void clear() {

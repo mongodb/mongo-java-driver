@@ -61,11 +61,11 @@ public interface SingleResultCallback<T> {
         this.onResult(null, null);
     }
 
-    default void complete(final T result) {
+    default void complete(@Nullable final T result) {
         this.onResult(result, null);
     }
 
     default void completeExceptionally(final Throwable t) {
-        this.onResult(null, t);
+        this.onResult(null, assertNotNull(t));
     }
 }

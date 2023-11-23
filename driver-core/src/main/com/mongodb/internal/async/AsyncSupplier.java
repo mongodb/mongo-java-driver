@@ -47,7 +47,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     @Override
-    default void unsafeFinish(final Void value, final SingleResultCallback<T> callback) {
+    default void unsafeFinish(@Nullable final Void value, final SingleResultCallback<T> callback) {
         unsafeFinish(callback);
     }
 
