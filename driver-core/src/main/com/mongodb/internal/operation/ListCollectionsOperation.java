@@ -105,9 +105,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return this;
     }
 
-    /**
-     * Ignored unless {@link #nameOnly(boolean)} is {@code true}.
-     */
     public ListCollectionsOperation<T> authorizedCollections(final boolean authorizedCollections) {
         this.authorizedCollections = authorizedCollections;
         return this;

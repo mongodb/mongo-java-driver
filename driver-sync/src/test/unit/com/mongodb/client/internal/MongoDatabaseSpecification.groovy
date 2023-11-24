@@ -250,8 +250,8 @@ class MongoDatabaseSpecification extends Specification {
         def listCollectionNamesIterable = execute(listCollectionNamesMethod, session)
 
         then:
-        // listCollectionNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
-        expect listCollectionNamesIterable.getMapped(), isTheSameAs(new ListCollectionsIterableImpl<>(session, name,
+        // `listCollectionNamesIterable` is an instance of a `ListCollectionNamesIterableImpl`, so have to get wrapped iterable
+        expect listCollectionNamesIterable.getWrapped(), isTheSameAs(new ListCollectionsIterableImpl<>(session, name,
                 true, BsonDocument, codecRegistry, primary(), executor, false))
 
         where:

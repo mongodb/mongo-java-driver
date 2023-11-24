@@ -22,12 +22,12 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -158,8 +158,10 @@ public class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public ListCollectionsIterable<String> listCollectionNames() {
-        return listCollectionsInternal(BsonDocument.class).map(result -> result.getString("name").getValue());
+    public ListCollectionNamesIterable listCollectionNames() {
+// VAKOTODO
+//        return listCollectionsInternal(BsonDocument.class).map(result -> result.getString("name").getValue());
+        return null;
     }
 
     @Override
@@ -177,9 +179,10 @@ public class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public ListCollectionsIterable<String> listCollectionNames(final ClientSession clientSession) {
-        return listCollectionsInternal(clientSession, BsonDocument.class).map(result -> result.getString("name").getValue());
-
+    public ListCollectionNamesIterable listCollectionNames(final ClientSession clientSession) {
+// VAKOTODO
+//        return listCollectionsInternal(clientSession, BsonDocument.class).map(result -> result.getString("name").getValue());
+        return null;
     }
 
     @Override

@@ -228,8 +228,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * @return an iterable containing all the names of all the collections in this database
      * @see [listCollections](https://www.mongodb.com/docs/manual/reference/command/listCollections)
      */
-    public fun listCollectionNames(): ListCollectionsIterable<String> =
-        ListCollectionsIterable(wrapped.listCollectionNames())
+    public fun listCollectionNames(): ListCollectionNamesIterable =
+        ListCollectionNamesIterable(wrapped.listCollectionNames())
 
     /**
      * Gets the names of all the collections in this database.
@@ -238,8 +238,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * @return an iterable containing all the names of all the collections in this database
      * @see [listCollections](https://www.mongodb.com/docs/manual/reference/command/listCollections)
      */
-    public fun listCollectionNames(clientSession: ClientSession): ListCollectionsIterable<String> =
-        ListCollectionsIterable(wrapped.listCollectionNames(clientSession.wrapped))
+    public fun listCollectionNames(clientSession: ClientSession): ListCollectionNamesIterable =
+        ListCollectionNamesIterable(wrapped.listCollectionNames(clientSession.wrapped))
 
     /**
      * Gets all the collections in this database.

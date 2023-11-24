@@ -16,9 +16,7 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
-import com.mongodb.Function;
 import com.mongodb.client.ListCollectionsIterable;
-import com.mongodb.client.internal.ListCollectionsIterableImpl;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.BsonValue;
@@ -37,12 +35,6 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     @Override
     public ListCollectionsIterable<T> filter(@Nullable final Bson filter) {
         wrapped.filter(filter);
-        return this;
-    }
-
-    @Override
-    public ListCollectionsIterable<T> authorizedCollections(final boolean authorizedCollections) {
-        wrapped.authorizedCollections(authorizedCollections);
         return this;
     }
 
@@ -69,10 +61,5 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     public ListCollectionsIterable<T> comment(final BsonValue comment) {
         wrapped.comment(comment);
         return this;
-    }
-
-    @Override
-    public <U> ListCollectionsIterable<U> map(final Function<T, U> mapper) {
-        return new ListCollectionsIterableImpl.Mapping<>(this, mapper);
     }
 }

@@ -25,6 +25,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -211,19 +212,18 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public ListCollectionsIterable<String> listCollectionNames() {
+    public ListCollectionNamesIterable listCollectionNames() {
         return createListCollectionNamesIterable(null);
     }
 
     @Override
-    public ListCollectionsIterable<String> listCollectionNames(final ClientSession clientSession) {
+    public ListCollectionNamesIterable listCollectionNames(final ClientSession clientSession) {
         notNull("clientSession", clientSession);
         return createListCollectionNamesIterable(clientSession);
     }
 
-    private ListCollectionsIterable<String> createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
-        return createListCollectionsIterable(clientSession, BsonDocument.class, true)
-                .map(result -> result.getString("name").getValue());
+    private ListCollectionNamesIterable createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
+        return new ListCollectionNamesIterableImpl(createListCollectionsIterable(clientSession, BsonDocument.class, true));
     }
 
     @Override

@@ -15,39 +15,41 @@
  */
 package com.mongodb.kotlin.client
 
-import com.mongodb.client.ListCollectionsIterable as JListCollectionsIterable
+import com.mongodb.client.ListCollectionNamesIterable as JListCollectionNamesIterable
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.BsonString
-import org.bson.Document
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 
-class ListCollectionsIterableTest {
+class ListCollectionNamesIterableTest {
     @Test
     fun shouldHaveTheSameMethods() {
-        val jListCollectionsIterableFunctions =
-            JListCollectionsIterable::class.declaredFunctions.map { it.name }.toSet()
-        val kListCollectionsIterableFunctions = ListCollectionsIterable::class.declaredFunctions.map { it.name }.toSet()
+        val jListCollectionNamesIterableFunctions =
+            JListCollectionNamesIterable::class.declaredFunctions.map { it.name }.toSet()
+        val kListCollectionNamesIterableFunctions =
+            ListCollectionNamesIterable::class.declaredFunctions.map { it.name }.toSet()
 
-        assertEquals(jListCollectionsIterableFunctions, kListCollectionsIterableFunctions)
+        assertEquals(jListCollectionNamesIterableFunctions, kListCollectionNamesIterableFunctions)
     }
 
     @Test
     fun shouldCallTheUnderlyingMethods() {
-        val wrapped: JListCollectionsIterable<Document> = mock()
-        val iterable = ListCollectionsIterable(wrapped)
+        val wrapped: JListCollectionNamesIterable = mock()
+        val iterable = ListCollectionNamesIterable(wrapped)
 
         val batchSize = 10
+        val authorizedCollections = true
         val bsonComment = BsonString("a comment")
         val comment = "comment"
         val filter = BsonDocument()
 
         iterable.batchSize(batchSize)
+        iterable.authorizedCollections(authorizedCollections)
         iterable.comment(bsonComment)
         iterable.comment(comment)
         iterable.filter(filter)
@@ -55,6 +57,7 @@ class ListCollectionsIterableTest {
         iterable.maxTime(1, TimeUnit.SECONDS)
 
         verify(wrapped).batchSize(batchSize)
+        verify(wrapped).authorizedCollections(authorizedCollections)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).filter(filter)

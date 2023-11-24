@@ -16,13 +16,11 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.Function;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.SyncOperations;
@@ -33,14 +31,12 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
+final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
     private final SyncOperations<BsonDocument> operations;
     private final String databaseName;
     private final Class<TResult> resultClass;
@@ -64,12 +60,6 @@ public final class ListCollectionsIterableImpl<TResult> extends MongoIterableImp
     @Override
     public ListCollectionsIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
-        return this;
-    }
-
-    @Override
-    public ListCollectionsIterableImpl<TResult> authorizedCollections(final boolean authorizedCollections) {
-        this.authorizedCollections = authorizedCollections;
         return this;
     }
 
@@ -98,97 +88,17 @@ public final class ListCollectionsIterableImpl<TResult> extends MongoIterableImp
         return this;
     }
 
+    /**
+     * @see ListCollectionNamesIterable#authorizedCollections(boolean)
+     */
+    ListCollectionsIterableImpl<TResult> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
                 getBatchSize(), maxTimeMS, comment);
-    }
-
-    @Override
-    public <U> ListCollectionsIterable<U> map(final Function<TResult, U> mapper) {
-        return new Mapping<>(this, mapper);
-    }
-
-    public static final class Mapping<T, U> implements ListCollectionsIterable<U> {
-        private final ListCollectionsIterable<T> mapped;
-        private final Function<T, U> mapper;
-
-        public Mapping(final ListCollectionsIterable<T> iterable, final Function<T, U> mapper) {
-            this.mapped = iterable;
-            this.mapper = mapper;
-        }
-
-        @Override
-        public Mapping<T, U> filter(@Nullable final Bson filter) {
-            mapped.filter(filter);
-            return this;
-        }
-
-        @Override
-        public Mapping<T, U> authorizedCollections(final boolean authorizedCollections) {
-            mapped.authorizedCollections(authorizedCollections);
-            return this;
-        }
-
-        @Override
-        public Mapping<T, U> maxTime(final long maxTime, final TimeUnit timeUnit) {
-            mapped.maxTime(maxTime, timeUnit);
-            return this;
-        }
-
-        @Override
-        public Mapping<T, U> batchSize(final int batchSize) {
-            mapped.batchSize(batchSize);
-            return this;
-        }
-
-        @Override
-        public Mapping<T, U> comment(@Nullable final String comment) {
-            mapped.comment(comment);
-            return this;
-        }
-
-        @Override
-        public Mapping<T, U> comment(@Nullable final BsonValue comment) {
-            mapped.comment(comment);
-            return this;
-        }
-
-        @Override
-        public MongoCursor<U> iterator() {
-            return new MongoMappingCursor<>(mapped.iterator(), mapper);
-        }
-
-        @Override
-        public MongoCursor<U> cursor() {
-            return iterator();
-        }
-
-        @Nullable
-        @Override
-        public U first() {
-            T first = mapped.first();
-            return first == null ? null : mapper.apply(first);
-        }
-
-        @Override
-        public <W> Mapping<U, W> map(final Function<U, W> mapper) {
-            return new Mapping<>(this, mapper);
-        }
-
-        @Override
-        public <A extends Collection<? super U>> A into(final A target) {
-            forEach(target::add);
-            return target;
-        }
-
-        /**
-         * This method is used in Groovy tests. See
-         * {@code com.mongodb.client.internal.MongoDatabaseSpecification}.
-         */
-        @VisibleForTesting(otherwise = PRIVATE)
-        ListCollectionsIterable<T> getMapped() {
-            return mapped;
-        }
     }
 }

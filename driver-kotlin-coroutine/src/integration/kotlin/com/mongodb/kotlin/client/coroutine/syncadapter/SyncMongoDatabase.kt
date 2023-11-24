@@ -97,11 +97,11 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
 
     override fun drop(clientSession: ClientSession) = runBlocking { wrapped.drop(clientSession.unwrapped()) }
 
-    override fun listCollectionNames(): ListCollectionsIterable<String> =
-        SyncListCollectionsIterable(wrapped.listCollectionNames())
+    override fun listCollectionNames(): ListCollectionNamesIterable =
+        SyncListCollectionNamesIterable(wrapped.listCollectionNames())
 
-    override fun listCollectionNames(clientSession: ClientSession): ListCollectionsIterable<String> =
-        SyncListCollectionsIterable(wrapped.listCollectionNames(clientSession.unwrapped()))
+    override fun listCollectionNames(clientSession: ClientSession): ListCollectionNamesIterable =
+        SyncListCollectionNamesIterable(wrapped.listCollectionNames(clientSession.unwrapped()))
 
     override fun listCollections(): ListCollectionsIterable<Document> =
         SyncListCollectionsIterable(wrapped.listCollections())

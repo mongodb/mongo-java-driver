@@ -15,19 +15,18 @@
  */
 package com.mongodb.kotlin.client
 
-import com.mongodb.client.ListCollectionsIterable as JListCollectionsIterable
+import com.mongodb.client.ListCollectionNamesIterable as JListCollectionNamesIterable
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.conversions.Bson
 
 /**
- * Iterable like implementation for list collection operations.
+ * Iterable like implementation for list collection names operations.
  *
- * @param T The type of the result.
  * @see [List collections](https://www.mongodb.com/docs/manual/reference/command/listCollections/)
  */
-public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollectionsIterable<T>) :
-    MongoIterable<T>(wrapped) {
+public class ListCollectionNamesIterable(private val wrapped: JListCollectionNamesIterable) :
+    MongoIterable<String>(wrapped) {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
@@ -36,7 +35,7 @@ public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollecti
      * @return this
      * @see [Max Time](https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/)
      */
-    public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListCollectionsIterable<T> = apply {
+    public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListCollectionNamesIterable = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
 
@@ -47,7 +46,7 @@ public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollecti
      * @return this
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
-    public override fun batchSize(batchSize: Int): ListCollectionsIterable<T> = apply { wrapped.batchSize(batchSize) }
+    public override fun batchSize(batchSize: Int): ListCollectionNamesIterable = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the query filter to apply to the returned database names.
@@ -55,7 +54,7 @@ public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollecti
      * @param filter the filter, which may be null.
      * @return this
      */
-    public fun filter(filter: Bson?): ListCollectionsIterable<T> = apply { wrapped.filter(filter) }
+    public fun filter(filter: Bson?): ListCollectionNamesIterable = apply { wrapped.filter(filter) }
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
@@ -63,7 +62,7 @@ public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollecti
      * @param comment the comment
      * @return this
      */
-    public fun comment(comment: String?): ListCollectionsIterable<T> = apply { wrapped.comment(comment) }
+    public fun comment(comment: String?): ListCollectionNamesIterable = apply { wrapped.comment(comment) }
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
@@ -71,5 +70,19 @@ public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollecti
      * @param comment the comment
      * @return this
      */
-    public fun comment(comment: BsonValue?): ListCollectionsIterable<T> = apply { wrapped.comment(comment) }
+    public fun comment(comment: BsonValue?): ListCollectionNamesIterable = apply { wrapped.comment(comment) }
+
+    /**
+     * Sets the `authorizedCollections` field of the `listCollections` command.
+     *
+     * @param authorizedCollections If `true`, allows executing the `listCollections` command, which has the `nameOnly`
+     *   field set to `true`, without having the
+     *   [`listCollections` privilege](https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections)
+     *   on the database resource.
+     * @return `this`.
+     * @since 5.0
+     */
+    public fun authorizedCollections(authorizedCollections: Boolean): ListCollectionNamesIterable = apply {
+        wrapped.authorizedCollections(authorizedCollections)
+    }
 }

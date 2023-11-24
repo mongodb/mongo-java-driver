@@ -54,9 +54,6 @@ class ListCollectionsIterableSpecification extends Specification {
                 .maxTime(1000, MILLISECONDS)
         def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
                 readPreference, executor, true)
-        def listAuthorizedCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document,
-                codecRegistry, readPreference, executor, true)
-                .authorizedCollections(true)
 
         when: 'default input should be as expected'
         listCollectionIterable.iterator()
@@ -67,7 +64,8 @@ class ListCollectionsIterableSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100).maxTime(1000, MILLISECONDS)
-                .retryReads(true))
+                .retryReads(true)
+                .authorizedCollections(false))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -89,14 +87,14 @@ class ListCollectionsIterableSpecification extends Specification {
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true)
                 .retryReads(true))
 
-        when: 'requesting authorized collection names only'
-        listAuthorizedCollectionNamesIterable.iterator()
+        when: 'requesting `authorizedCollections`'
+        listCollectionNamesIterable.authorizedCollections(true).iterator()
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
-        then: 'should create operation with `nameOnly` and `authorizedCollections`'
+        then: 'should create operation with `authorizedCollections`'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
-                .nameOnly(true)
                 .authorizedCollections(true)
+                .nameOnly(true)
                 .retryReads(true))
     }
 
