@@ -25,6 +25,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -129,20 +130,23 @@ public class MongoDatabaseImplTest extends TestHelper {
                                   () -> assertThrows(IllegalArgumentException.class, () -> database.listCollectionNames(null))
                   ),
                   () -> {
-                      ListCollectionsPublisher<Document> expected =
-                              new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true);
+                      ListCollectionNamesPublisher expected =
+                              new ListCollectionNamesPublisherImpl(
+                                      new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true));
                       assertPublisherIsTheSameAs(expected, database.listCollectionNames(), "Default");
                   },
                   () -> {
-                      ListCollectionsPublisher<Document> expected =
-                              new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true)
+                      ListCollectionNamesPublisher expected =
+                              new ListCollectionNamesPublisherImpl(
+                                      new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true))
                                       .authorizedCollections(true);
                       assertPublisherIsTheSameAs(expected, database.listCollectionNames().authorizedCollections(true),
                               "nameOnly & authorizedCollections");
                   },
                   () -> {
-                      ListCollectionsPublisher<Document> expected =
-                              new ListCollectionsPublisherImpl<>(clientSession, mongoOperationPublisher, true);
+                      ListCollectionNamesPublisher expected =
+                              new ListCollectionNamesPublisherImpl(
+                                      new ListCollectionsPublisherImpl<>(clientSession, mongoOperationPublisher, true));
                       assertPublisherIsTheSameAs(expected, database.listCollectionNames(clientSession), "With client session");
                   }
         );

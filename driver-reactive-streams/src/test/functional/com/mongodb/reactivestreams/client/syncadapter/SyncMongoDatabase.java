@@ -159,9 +159,7 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public ListCollectionNamesIterable listCollectionNames() {
-// VAKOTODO
-//        return listCollectionsInternal(BsonDocument.class).map(result -> result.getString("name").getValue());
-        return null;
+        return new SyncListCollectionNamesIterable(wrapped.listCollectionNames());
     }
 
     @Override
@@ -171,18 +169,12 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
-        return listCollectionsInternal(resultClass);
-    }
-
-    private <TResult> SyncListCollectionsIterable<TResult> listCollectionsInternal(final Class<TResult> resultClass) {
         return new SyncListCollectionsIterable<>(wrapped.listCollections(resultClass));
     }
 
     @Override
     public ListCollectionNamesIterable listCollectionNames(final ClientSession clientSession) {
-// VAKOTODO
-//        return listCollectionsInternal(clientSession, BsonDocument.class).map(result -> result.getString("name").getValue());
-        return null;
+        return new SyncListCollectionNamesIterable(wrapped.listCollectionNames(unwrap(clientSession)));
     }
 
     @Override
@@ -192,11 +184,6 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return listCollectionsInternal(clientSession, resultClass);
-    }
-
-    private <TResult> SyncListCollectionsIterable<TResult> listCollectionsInternal(
-            final ClientSession clientSession, final Class<TResult> resultClass) {
         return new SyncListCollectionsIterable<>(wrapped.listCollections(unwrap(clientSession), resultClass));
     }
 

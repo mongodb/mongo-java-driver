@@ -15,40 +15,42 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
-import com.mongodb.reactivestreams.client.ListCollectionsPublisher
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.full.declaredFunctions
+import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.BsonString
-import org.bson.Document
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
-import java.util.concurrent.TimeUnit
-import kotlin.reflect.full.declaredFunctions
-import kotlin.test.assertEquals
 
-class ListCollectionsFlowTest {
+class ListCollectionNamesFlowTest {
     @Test
     fun shouldHaveTheSameMethods() {
-        val jListCollectionsPublisherFunctions =
-            ListCollectionsPublisher::class.declaredFunctions.map { it.name }.toSet() - "first"
-        val kListCollectionsFlowFunctions =
+        val jListCollectionNamesPublisherFunctions =
+            ListCollectionNamesPublisher::class.declaredFunctions.map { it.name }.toSet() - "first"
+        val kListCollectionNamesFlowFunctions =
             ListCollectionsFlow::class.declaredFunctions.map { it.name }.toSet() - "collect"
 
-        assertEquals(jListCollectionsPublisherFunctions, kListCollectionsFlowFunctions)
+        assertEquals(jListCollectionNamesPublisherFunctions, kListCollectionNamesFlowFunctions)
     }
 
     @Test
     fun shouldCallTheUnderlyingMethods() {
-        val wrapped: ListCollectionsPublisher<Document> = mock()
-        val flow = ListCollectionsFlow(wrapped)
+        val wrapped: ListCollectionNamesPublisher = mock()
+        // VAKOTODO create ListCollectionNamesFlow
+        val flow = ListCollectionNamesFlow(wrapped)
 
         val batchSize = 10
         val bsonComment = BsonString("a comment")
+        val authorizedCollections = true
         val comment = "comment"
         val filter = BsonDocument()
 
         flow.batchSize(batchSize)
+        flow.authorizedCollections(authorizedCollections)
         flow.comment(bsonComment)
         flow.comment(comment)
         flow.filter(filter)
@@ -56,6 +58,7 @@ class ListCollectionsFlowTest {
         flow.maxTime(1, TimeUnit.SECONDS)
 
         verify(wrapped).batchSize(batchSize)
+        verify(wrapped).authorizedCollections(authorizedCollections)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).filter(filter)

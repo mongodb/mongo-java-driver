@@ -245,7 +245,7 @@ public interface MongoDatabase {
      * @return a publisher with all the names of all the collections in this database
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    ListCollectionsPublisher<String> listCollectionNames();
+    ListCollectionNamesPublisher listCollectionNames();
 
     /**
      * Gets the names of all the collections in this database.
@@ -256,7 +256,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    ListCollectionsPublisher<String> listCollectionNames(ClientSession clientSession);
+    ListCollectionNamesPublisher listCollectionNames(ClientSession clientSession);
 
     /**
      * Finds all the collections in this database.

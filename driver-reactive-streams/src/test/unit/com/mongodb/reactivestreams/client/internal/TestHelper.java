@@ -204,7 +204,7 @@ public class TestHelper {
                         .orElse(publisher);
             }
         }
-        sourcePublisher = getMapped(sourcePublisher).orElse(sourcePublisher);
+        sourcePublisher = getWrapped(sourcePublisher).orElse(sourcePublisher);
         return sourcePublisher;
     }
 
@@ -217,9 +217,9 @@ public class TestHelper {
         }
     }
 
-    private static Optional<Publisher<?>> getMapped(final Publisher<?> maybeMappingPublisher) {
+    private static Optional<Publisher<?>> getWrapped(final Publisher<?> maybeMappingPublisher) {
         return Stream.of(maybeMappingPublisher.getClass().getDeclaredMethods())
-                .filter(m -> m.getName().equals("getMapped"))
+                .filter(m -> m.getName().equals("getWrapped"))
                 .findFirst()
                 .map(m -> {
                     try {

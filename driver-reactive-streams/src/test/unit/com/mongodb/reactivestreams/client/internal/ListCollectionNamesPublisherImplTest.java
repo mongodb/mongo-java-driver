@@ -18,7 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.operation.ListCollectionsOperation;
-import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
@@ -31,7 +31,7 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ListCollectionsPublisherImplTest extends TestHelper {
+public class ListCollectionNamesPublisherImplTest extends TestHelper {
 
     private static final String DATABASE_NAME = NAMESPACE.getDatabaseName();
 
@@ -39,13 +39,17 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
     @Test
     void shouldBuildTheExpectedOperation() {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
-        ListCollectionsPublisher<String> publisher = new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)
-                .withDocumentClass(String.class), true);
+        ListCollectionNamesPublisher publisher = new ListCollectionNamesPublisherImpl(
+                new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)
+                        .withDocumentClass(Document.class), true))
+                .authorizedCollections(true);
 
-        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
-                                                                                            getDefaultCodecRegistry().get(String.class))
+        ListCollectionsOperation<Document> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
+                                                                                            getDefaultCodecRegistry().get(Document.class))
                 .batchSize(Integer.MAX_VALUE)
-                .nameOnly(true).retryReads(true);
+                .nameOnly(true)
+                .authorizedCollections(true)
+                .retryReads(true);
 
         // default input should be as expected
         Flux.from(publisher).blockFirst();

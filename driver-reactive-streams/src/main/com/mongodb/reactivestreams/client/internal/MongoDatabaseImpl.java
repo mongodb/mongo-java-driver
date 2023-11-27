@@ -27,6 +27,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
@@ -168,15 +169,14 @@ public final class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public ListCollectionsPublisher<String> listCollectionNames() {
-        return new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true)
-                .map(d -> d.getString("name"));
+    public ListCollectionNamesPublisher listCollectionNames() {
+        return new ListCollectionNamesPublisherImpl(new ListCollectionsPublisherImpl<>(null, mongoOperationPublisher, true));
     }
 
     @Override
-    public ListCollectionsPublisher<String> listCollectionNames(final ClientSession clientSession) {
-        return new ListCollectionsPublisherImpl<>(notNull("clientSession", clientSession), mongoOperationPublisher, true)
-                .map(d -> d.getString("name"));
+    public ListCollectionNamesPublisher listCollectionNames(final ClientSession clientSession) {
+        return new ListCollectionNamesPublisherImpl(
+                new ListCollectionsPublisherImpl<>(notNull("clientSession", clientSession), mongoOperationPublisher, true));
     }
 
     @Override
