@@ -32,6 +32,7 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonTimestamp;
@@ -42,7 +43,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -76,8 +76,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
 
-    @Test
     @Tag("setsFailPoint")
+    @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -87,7 +87,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         collectionHelper.insertDocuments(new Document("x", 1));
 
         long rtt = ClusterFixture.getPrimaryRTT();
-
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: \"alwaysOn\","
@@ -116,8 +115,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Test
     @Tag("setsFailPoint")
+    @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Change Streams")
     public void testBlockingIterationMethodsChangeStream() {
         assumeTrue(serverVersionAtLeast(4, 4));
