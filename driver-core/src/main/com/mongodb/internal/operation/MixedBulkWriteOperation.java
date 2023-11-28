@@ -277,7 +277,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             connection.getDescription().getServerAddress(), "errMsg");
                     if (writeConcernBasedError != null) {
                         if (currentBulkWriteTracker.lastAttempt()) {
-                            //NOTE if last attempt we dont throw an exception?
                             addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);
                             addErrorLabelsToWriteConcern(result.getDocument("writeConcernError"), writeConcernBasedError.getErrorLabels());
                         } else if (CommandOperationHelper.shouldAttemptToRetryWrite(retryState, writeConcernBasedError)) {

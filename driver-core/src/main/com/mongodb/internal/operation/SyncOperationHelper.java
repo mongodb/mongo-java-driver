@@ -252,7 +252,6 @@ final class SyncOperationHelper {
                 int maxWireVersion = connection.getDescription().getMaxWireVersion();
                 try {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(connection.getDescription(), sessionContext));
-
                     BsonDocument command = retryState.attachment(AttachmentKeys.command())
                             .map(previousAttemptCommand -> {
                                 assertFalse(firstAttempt);
@@ -261,7 +260,6 @@ final class SyncOperationHelper {
                                     connection.getDescription()));
 
                     // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
-
                     retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
                             .attach(AttachmentKeys.retryableCommandFlag(), CommandOperationHelper.isRetryWritesEnabled(command), true)
                             .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false)
@@ -271,8 +269,6 @@ final class SyncOperationHelper {
                     return transformer.apply(assertNotNull(connection.command(database, command, fieldNameValidator, readPreference,
                                     commandResultDecoder, binding.getOperationContext())),
                             connection);
-
-
                 } catch (MongoException e) {
                     if (!firstAttempt) {
                         CommandOperationHelper.addRetryableWriteErrorLabel(e, maxWireVersion);
@@ -302,10 +298,8 @@ final class SyncOperationHelper {
                 connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
 
-        D result = connection.command(database, command, new NoOpFieldNameValidator(),
-                source.getReadPreference(), decoder, operationContext);
-
-        return transformer.apply(assertNotNull(result), source, connection);
+        return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
+                source.getReadPreference(), decoder, operationContext)), source, connection);
     }
 
 
