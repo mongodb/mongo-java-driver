@@ -258,14 +258,11 @@ final class SyncOperationHelper {
                                 return retryCommandModifier.apply(previousAttemptCommand);
                             }).orElseGet(() -> commandCreator.create(binding.getOperationContext(), source.getServerDescription(),
                                     connection.getDescription()));
-
                     // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
                     retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
                             .attach(AttachmentKeys.retryableCommandFlag(), CommandOperationHelper.isRetryWritesEnabled(command), true)
                             .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false)
                             .attach(AttachmentKeys.command(), command, false);
-
-
                     return transformer.apply(assertNotNull(connection.command(database, command, fieldNameValidator, readPreference,
                                     commandResultDecoder, binding.getOperationContext())),
                             connection);
@@ -314,13 +311,11 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
-
-        Supplier<R> operation = () -> {
+        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
+                CommandOperationHelper::shouldAttemptToRetryRead, () -> {
             logRetryExecute(retryState, operationContext);
             return readFunction.get();
-        };
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
-                CommandOperationHelper::shouldAttemptToRetryRead, operation);
+        });
     }
 
 
