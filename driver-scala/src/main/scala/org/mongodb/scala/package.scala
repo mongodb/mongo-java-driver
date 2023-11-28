@@ -334,6 +334,17 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoTimeoutException = com.mongodb.MongoTimeoutException
 
   /**
+   * Exception thrown to indicate that a MongoDB operation has exceeded the specified timeout for
+   * the full execution of operation.
+   *
+   * <p> The [[MongoOperationTimeoutException]] might provide information about the underlying
+   * cause of the timeout, if available. For example, if retries are attempted due to transient failures,
+   * and a timeout occurs in any of the attempts, the exception from one of the retries may be appended
+   * as the cause to this [[MongoOperationTimeoutException]].
+   */
+  type MongoOperationTimeoutException = com.mongodb.MongoOperationTimeoutException
+
+  /**
    * An exception indicating a failure to apply the write concern to the requested write operation
    *
    * @see [[WriteConcern]]

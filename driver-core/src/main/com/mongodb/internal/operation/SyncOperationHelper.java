@@ -188,7 +188,8 @@ final class SyncOperationHelper {
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
             final boolean retryReads) {
-        RetryState retryState = CommandOperationHelper.initialRetryState(retryReads);
+        RetryState retryState = CommandOperationHelper.initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
+
         Supplier<T> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
                 withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
@@ -240,7 +241,7 @@ final class SyncOperationHelper {
             final CommandCreator commandCreator,
             final CommandWriteTransformer<T, R> transformer,
             final com.mongodb.Function<BsonDocument, BsonDocument> retryCommandModifier) {
-        RetryState retryState = CommandOperationHelper.initialRetryState(true);
+        RetryState retryState = CommandOperationHelper.initialRetryState(true, binding.getOperationContext().getTimeoutContext());
         Supplier<R> retryingWrite = decorateWriteWithRetries(retryState, binding.getOperationContext(), () -> {
             boolean firstAttempt = retryState.isFirstAttempt();
             SessionContext sessionContext = binding.getOperationContext().getSessionContext();
@@ -251,20 +252,27 @@ final class SyncOperationHelper {
                 int maxWireVersion = connection.getDescription().getMaxWireVersion();
                 try {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryWrite(connection.getDescription(), sessionContext));
+
                     BsonDocument command = retryState.attachment(AttachmentKeys.command())
                             .map(previousAttemptCommand -> {
                                 assertFalse(firstAttempt);
                                 return retryCommandModifier.apply(previousAttemptCommand);
                             }).orElseGet(() -> commandCreator.create(binding.getOperationContext(), source.getServerDescription(),
                                     connection.getDescription()));
+
                     // attach `maxWireVersion`, `retryableCommandFlag` ASAP because they are used to check whether we should retry
+
                     retryState.attach(AttachmentKeys.maxWireVersion(), maxWireVersion, true)
                             .attach(AttachmentKeys.retryableCommandFlag(), CommandOperationHelper.isRetryWritesEnabled(command), true)
                             .attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false)
                             .attach(AttachmentKeys.command(), command, false);
+
+
                     return transformer.apply(assertNotNull(connection.command(database, command, fieldNameValidator, readPreference,
                                     commandResultDecoder, binding.getOperationContext())),
                             connection);
+
+
                 } catch (MongoException e) {
                     if (!firstAttempt) {
                         CommandOperationHelper.addRetryableWriteErrorLabel(e, maxWireVersion);
@@ -293,8 +301,11 @@ final class SyncOperationHelper {
         BsonDocument command = commandCreator.create(operationContext, source.getServerDescription(),
                 connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
-        return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
-                source.getReadPreference(), decoder, operationContext)), source, connection);
+
+        D result = connection.command(database, command, new NoOpFieldNameValidator(),
+                source.getReadPreference(), decoder, operationContext);
+
+        return transformer.apply(assertNotNull(result), source, connection);
     }
 
 
@@ -309,11 +320,13 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
-                CommandOperationHelper::shouldAttemptToRetryRead, () -> {
+
+        Supplier<R> operation = () -> {
             logRetryExecute(retryState, operationContext);
             return readFunction.get();
-        });
+        };
+        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
+                CommandOperationHelper::shouldAttemptToRetryRead, operation);
     }
 
 

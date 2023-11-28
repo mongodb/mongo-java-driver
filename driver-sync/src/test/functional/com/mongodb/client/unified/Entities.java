@@ -479,6 +479,9 @@ public final class Entities {
                         clientSettingsBuilder.applyToClusterSettings(builder ->
                                 builder.serverSelectionTimeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS));
                         break;
+                    case "timeoutMS":
+                        clientSettingsBuilder.timeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
                     case "loadBalanced":
                         if (value.asBoolean().getValue()) {
                             clientSettingsBuilder.applyToClusterSettings(builder -> builder.mode(ClusterConnectionMode.LOAD_BALANCED));

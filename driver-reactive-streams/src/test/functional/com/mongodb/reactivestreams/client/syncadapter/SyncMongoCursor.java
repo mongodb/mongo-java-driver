@@ -84,6 +84,16 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
                 throw new MongoTimeoutException("Timeout waiting for subscription");
             }
             sleep(getSleepAfterCursorOpen());
+
+            /* It is used to check if there have been any exceptions during async creation of a cursor such as
+                MongoOperationTimeoutException, for example.  */
+            if (!results.isEmpty()) {
+                Object next = results.peekFirst();
+                if (next instanceof Throwable) {
+                    error = translateError((Throwable) next);
+                    throw error;
+                }
+            }
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
         }

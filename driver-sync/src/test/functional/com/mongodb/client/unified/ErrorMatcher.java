@@ -20,6 +20,7 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoWriteException;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
             asList("isError", "expectError", "isClientError", "errorCode", "errorCodeName", "errorContains", "errorResponse",
-                    "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
+                    "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult", "isTimeoutError"));
 
     private final AssertionContext context;
     private final ValueMatcher valueMatcher;
@@ -112,6 +113,10 @@ final class ErrorMatcher {
             // that can currently be done
             assertTrue(context.getMessage("Exception must be of type MongoBulkWriteException when checking for results"),
                     e instanceof MongoBulkWriteException);
+        }
+        if (expectedError.containsKey("isTimeoutError")) {
+            assertTrue(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
+                    e instanceof MongoOperationTimeoutException);
         }
         context.pop();
     }
