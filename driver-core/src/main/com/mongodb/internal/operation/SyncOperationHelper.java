@@ -294,7 +294,6 @@ final class SyncOperationHelper {
         BsonDocument command = commandCreator.create(operationContext, source.getServerDescription(),
                 connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
-
         return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
                 source.getReadPreference(), decoder, operationContext)), source, connection);
     }
