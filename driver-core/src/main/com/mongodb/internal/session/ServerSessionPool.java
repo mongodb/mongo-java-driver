@@ -19,6 +19,7 @@ package com.mongodb.internal.session;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
@@ -30,6 +31,7 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
+import com.mongodb.selector.ServerSelector;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -120,22 +122,38 @@ public class ServerSessionPool {
             return;
         }
 
-        List<ServerDescription> primaryPreferred = new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())
+        ReadPreference primaryPreferred = ReadPreference.primaryPreferred();
+        List<ServerDescription> primaryPreferredServers = new ReadPreferenceServerSelector(primaryPreferred)
                 .select(cluster.getCurrentDescription());
-        if (primaryPreferred.isEmpty()) {
+        if (primaryPreferredServers.isEmpty()) {
+            // Skip doing server selection if we anticipate that no server is readily selectable.
+            // This approach is racy, and it is still possible to become blocked selecting a server
+            // even if `primaryPreferredServers` is not empty.
             return;
         }
 
         Connection connection = null;
         try {
-            connection = cluster.selectServer(clusterDescription -> {
-                for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-                    if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
-                        return Collections.singletonList(cur);
-                    }
-                }
-                return Collections.emptyList();
-            }, operationContext).getServer().getConnection(operationContext);
+            connection = cluster.selectServer(
+                    new ServerSelector() {
+                        @Override
+                        public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                            for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                                if (cur.getAddress().equals(primaryPreferredServers.get(0).getAddress())) {
+                                    return Collections.singletonList(cur);
+                                }
+                            }
+                            return Collections.emptyList();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "ReadPreferenceServerSelector{"
+                                    + "readPreference=" + primaryPreferred
+                                    + '}';
+                        }
+                    },
+                    operationContext).getServer().getConnection(operationContext);
 
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),

@@ -17,14 +17,12 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
-import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
  * An operation that drops an Alas Search index.
@@ -35,9 +33,8 @@ final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "dropSearchIndex";
     private final String indexName;
 
-    DropSearchIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace, final String indexName,
-                             final WriteConcern writeConcern) {
-        super(timeoutSettings, namespace, writeConcern);
+    DropSearchIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace, final String indexName) {
+        super(timeoutSettings, namespace);
         this.indexName = indexName;
     }
 
@@ -50,9 +47,7 @@ final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
 
     @Override
     BsonDocument buildCommand() {
-        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+        return new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
                 .append("name", new BsonString(indexName));
-        appendWriteConcernToCommand(getWriteConcern(), command);
-        return command;
     }
 }

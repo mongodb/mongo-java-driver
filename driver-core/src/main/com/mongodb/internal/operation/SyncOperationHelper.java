@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -32,7 +31,6 @@ import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -57,7 +55,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExec
 import static com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.canRetryWrite;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 final class SyncOperationHelper {
@@ -327,14 +324,15 @@ final class SyncOperationHelper {
         };
     }
 
-    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-            final BsonValue comment, final ConnectionSource source, final Connection connection, final int batchSize) {
-        return new QueryBatchCursor<>(cursorDocumentToQueryResult(cursorDocument, source.getServerDescription().getAddress()),
-                0, batchSize, 0, decoder, comment, source, connection);
+    static <T> CommandReadTransformer<BsonDocument, BatchCursor<T>> singleBatchCursorTransformer(final String fieldName) {
+        return (result, source, connection) ->
+                new SingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, fieldName), 0,
+                        connection.getDescription().getServerAddress());
     }
 
-    static <T> QueryResult<T> getMoreCursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
-        return cursorDocumentToQueryResult(cursorDocument, serverAddress, "nextBatch");
+    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
+            final BsonValue comment, final ConnectionSource source, final Connection connection, final int batchSize) {
+        return new CommandBatchCursor<>(cursorDocument, batchSize, 0, decoder, comment, source, connection);
     }
 
     private SyncOperationHelper() {

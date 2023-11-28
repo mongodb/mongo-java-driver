@@ -706,7 +706,10 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public <TResult> ListSearchIndexesPublisher<TResult> listSearchIndexes(final Class<TResult> resultClass) {
         notNull("resultClass", resultClass);
-        return new ListSearchIndexesPublisherImpl<>(mongoOperationPublisher.withDocumentClass(resultClass));
+
+        return new ListSearchIndexesPublisherImpl<>(mongoOperationPublisher
+                .withReadConcern(ReadConcern.DEFAULT)
+                .withDocumentClass(resultClass));
     }
 
     @Override

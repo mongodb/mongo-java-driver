@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutSettings;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 
 /**
  * An operation that creates one or more Atlas Search indexes.
@@ -39,8 +37,8 @@ final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     private final List<SearchIndexRequest> indexRequests;
 
     CreateSearchIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final List<SearchIndexRequest> indexRequests, final WriteConcern writeConcern) {
-        super(timeoutSettings, namespace, writeConcern);
+            final List<SearchIndexRequest> indexRequests) {
+        super(timeoutSettings, namespace);
         this.indexRequests = assertNotNull(indexRequests);
     }
 
@@ -62,9 +60,7 @@ final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
 
     @Override
     BsonDocument buildCommand() {
-        BsonDocument command = new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
+        return new BsonDocument(COMMAND_NAME, new BsonString(getNamespace().getCollectionName()))
                 .append("indexes", convert(indexRequests));
-        appendWriteConcernToCommand(getWriteConcern(), command);
-        return command;
     }
 }

@@ -54,11 +54,9 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     private final CodecRegistry codecRegistry;
 
     ListSearchIndexesIterableImpl(final MongoNamespace namespace, final OperationExecutor executor,
-                                         final ReadConcern readConcern, final Class<TResult> resultClass,
-                                         final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                         final boolean retryReads, final TimeoutSettings timeoutSettings) {
-        super(null, executor, readConcern, readPreference, retryReads, timeoutSettings);
-
+                                  final Class<TResult> resultClass, final CodecRegistry codecRegistry,
+                                  final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
+        super(null, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings);
         this.resultClass = resultClass;
         this.operations = new SyncOperations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.codecRegistry = codecRegistry;
@@ -68,7 +66,6 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         return asAggregateOperation();
     }
-
 
     @Override
     public ListSearchIndexesIterable<TResult> allowDiskUse(@Nullable final Boolean allowDiskUse) {

@@ -45,6 +45,7 @@ import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonTimestamp
+import org.bson.BsonValue
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
@@ -387,27 +388,26 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-//    TODO (CSOT) JAVA-5172
-//    @IgnoreIf({ serverVersionLessThan(3, 2) })
-//    def 'should apply $hint'() {
-//        given:
-//        def index = new BsonDocument('a', new BsonInt32(1))
-//        collectionHelper.createIndex(index)
-//
-//        def operation = new FindOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
-//                .hint((BsonValue) hint)
-//                .asExplainableOperation(null, new BsonDocumentCodec())
-//
-//        when:
-//        def explainPlan = execute(operation, async)
-//
-//        then:
-//        assertEquals(index, QueryOperationHelper.getKeyPattern(explainPlan))
-//
-//        where:
-//        [async, hint] << [[true, false], [new BsonDocument('a', new BsonInt32(1)),
-//                                          new BsonString('a_1')]].combinations()
-//    }
+    @IgnoreIf({ serverVersionLessThan(3, 2) })
+    def 'should apply $hint'() {
+        given:
+        def index = new BsonDocument('a', new BsonInt32(1))
+        collectionHelper.createIndex(index)
+
+        def operation = new FindOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec())
+                .hint((BsonValue) hint)
+                .asExplainableOperation(null, new BsonDocumentCodec())
+
+        when:
+        def explainPlan = execute(operation, async)
+
+        then:
+        assertEquals(index, TestOperationHelper.getKeyPattern(explainPlan))
+
+        where:
+        [async, hint] << [[true, false], [new BsonDocument('a', new BsonInt32(1)),
+                                          new BsonString('a_1')]].combinations()
+    }
 
     @IgnoreIf({ isSharded() })
     def 'should apply comment'() {

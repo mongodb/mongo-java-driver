@@ -19,19 +19,26 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.connection.QueryResult;
 
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static java.util.Collections.emptyList;
 
-class AsyncSingleBatchQueryCursor<T> implements AsyncBatchCursor<T> {
-    private volatile QueryResult<T> firstBatch;
-    private volatile boolean closed;
+class AsyncSingleBatchCursor<T> implements AsyncBatchCursor<T> {
 
-    AsyncSingleBatchQueryCursor(final QueryResult<T> firstBatch) {
-        this.firstBatch = firstBatch;
-        isTrue("Empty Cursor", firstBatch.getCursor() == null);
+    static <R> AsyncSingleBatchCursor<R> createEmptyAsyncSingleBatchCursor(final int batchSize) {
+        return new AsyncSingleBatchCursor<>(emptyList(), batchSize);
+    }
+
+    private final List<T> batch;
+    private final int batchSize;
+
+    private volatile boolean hasNext = true;
+    private volatile boolean closed = false;
+
+    AsyncSingleBatchCursor(final List<T> batch, final int batchSize) {
+        this.batch = batch;
+        this.batchSize = batchSize;
     }
 
     @Override
@@ -43,13 +50,12 @@ class AsyncSingleBatchQueryCursor<T> implements AsyncBatchCursor<T> {
     public void next(final SingleResultCallback<List<T>> callback) {
         if (closed) {
             callback.onResult(null, new MongoException("next() called after the cursor was closed."));
-        } else if (firstBatch != null && !firstBatch.getResults().isEmpty()) {
-            List<T> results = firstBatch.getResults();
-            firstBatch = null;
-            callback.onResult(results, null);
+        } else if (hasNext && !batch.isEmpty()) {
+            hasNext = false;
+            callback.onResult(batch, null);
         } else {
             closed = true;
-            callback.onResult(null, null);
+            callback.onResult(emptyList(), null);
         }
     }
 
@@ -60,7 +66,7 @@ class AsyncSingleBatchQueryCursor<T> implements AsyncBatchCursor<T> {
 
     @Override
     public int getBatchSize() {
-        return 0;
+        return batchSize;
     }
 
     @Override

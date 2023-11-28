@@ -59,6 +59,8 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.connection.BaseCluster.logServerSelectionStarted;
+import static com.mongodb.internal.connection.BaseCluster.logServerSelectionSucceeded;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -204,7 +206,12 @@ final class LoadBalancedCluster implements Cluster {
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
-        return new ServerTuple(assertNotNull(server), description.getServerDescriptions().get(0));
+        ClusterDescription curDescription = description;
+        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, curDescription);
+        ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
+        logServerSelectionSucceeded(clusterId, operationContext.getId(), serverTuple.getServerDescription().getAddress(),
+                serverSelector, curDescription);
+        return serverTuple;
     }
 
     private void waitForSrv(final Timeout serverSelectionTimeout) {
@@ -232,7 +239,8 @@ final class LoadBalancedCluster implements Cluster {
             return;
         }
         Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
-        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(timeout, callback);
+        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(operationContext.getId(), serverSelector, timeout,
+                callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
         } else {
@@ -282,7 +290,13 @@ final class LoadBalancedCluster implements Cluster {
         if (srvRecordResolvedToMultipleHosts) {
             serverSelectionRequest.onError(createResolvedToMultipleHostsException());
         } else {
-            serverSelectionRequest.onSuccess(new ServerTuple(assertNotNull(server), description.getServerDescriptions().get(0)));
+            ClusterDescription curDescription = description;
+            logServerSelectionStarted(
+                    clusterId, serverSelectionRequest.operationId, serverSelectionRequest.serverSelector, curDescription);
+            ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
+            logServerSelectionSucceeded(clusterId, serverSelectionRequest.operationId,
+                    serverTuple.getServerDescription().getAddress(), serverSelectionRequest.serverSelector, curDescription);
+            serverSelectionRequest.onSuccess(serverTuple);
         }
     }
 
@@ -376,10 +390,15 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     private static final class ServerSelectionRequest {
+        private final long operationId;
+        private final ServerSelector serverSelector;
         private final SingleResultCallback<ServerTuple> callback;
         private final Timeout timeout;
 
-        private ServerSelectionRequest(final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
+        private ServerSelectionRequest(final long operationId, final ServerSelector serverSelector, final Timeout timeout,
+                final SingleResultCallback<ServerTuple> callback) {
+            this.operationId = operationId;
+            this.serverSelector = serverSelector;
             this.timeout = timeout;
             this.callback = callback;
         }

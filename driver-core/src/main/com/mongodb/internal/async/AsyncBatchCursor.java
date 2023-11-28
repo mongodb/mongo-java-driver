@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.internal.operation.BatchCursor;
+
 import java.io.Closeable;
 import java.util.List;
 
@@ -28,9 +30,9 @@ import java.util.List;
  */
 public interface AsyncBatchCursor<T> extends Closeable {
     /**
-     * Returns the next batch of results.  A tailable cursor will block until another batch exists.  After the last batch, the next call
-     * to this method will execute the callback with a null result to indicate that there are no more batches available and the cursor
-     * has been closed.
+     * Returns the next batch of results. A tailable cursor will block until another batch exists.
+     * Unlike the {@link BatchCursor} this method will automatically mark the cursor as closed when there are no more expected results.
+     * Care should be taken to check {@link #isClosed()} between calls.
      *
      * @param callback callback to receive the next batch of results
      * @throws java.util.NoSuchElementException if no next batch exists

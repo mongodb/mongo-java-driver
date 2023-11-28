@@ -27,10 +27,14 @@ import com.mongodb.client.MongoClients;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,12 +45,46 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class ClientSideOperationsTimeoutProseTests {
 
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
+    /**
+     * Supplier of the MongoClient used by the async tests also.
+     * @param mongoClientSettings the settings
+     * @return the MongoClient
+     */
+    MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
+        return MongoClients.create(mongoClientSettings);
     }
 
-    private long msElapsedSince(final long t1) {
-        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
+    @DisplayName("8. Server Selection")
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("test8ServerSelectionArguments")
+    public void test8ServerSelection(final String connectionString) {
+        int timeoutBuffer = 100; // 5 in spec, Java is slower
+        // 1. Create a MongoClient
+        try (MongoClient mongoClient = createMongoClient(createMongoClientSettings(connectionString))) {
+            long start = System.nanoTime();
+            // 2. Using client, execute:
+            Throwable throwable = assertThrows(MongoTimeoutException.class, () -> {
+                mongoClient.getDatabase("admin").runCommand(new BsonDocument("ping", new BsonInt32(1)));
+            });
+            // Expect this to fail with a server selection timeout error after no more than 15ms [this is increased]
+            long elapsed = msElapsedSince(start);
+            assertTrue(throwable.getMessage().contains("while waiting for a server"));
+            assertTrue(elapsed < 10 + timeoutBuffer, "Took too long to time out, elapsedMS: " + elapsed);
+        }
+    }
+
+    static Stream<Arguments> test8ServerSelectionArguments() {
+        return Stream.of(
+                Arguments.of(Named.of("serverSelectionTimeoutMS honored if timeoutMS is not set",
+                        "mongodb://invalid/?serverSelectionTimeoutMS=10")),
+                Arguments.of(Named.of("timeoutMS honored for server selection if it's lower than serverSelectionTimeoutMS",
+                        "mongodb://invalid/?timeoutMS=200&serverSelectionTimeoutMS=10")),
+                Arguments.of(Named.of("serverSelectionTimeoutMS honored for server selection if it's lower than timeoutMS",
+                        "mongodb://invalid/?timeoutMS=10&serverSelectionTimeoutMS=200")),
+                Arguments.of(Named.of("serverSelectionTimeoutMS honored for server selection if timeoutMS=0",
+                        "mongodb://invalid/?timeoutMS=0&serverSelectionTimeoutMS=10"))
+
+        );
     }
 
     @NotNull
@@ -63,26 +101,7 @@ public class ClientSideOperationsTimeoutProseTests {
         return builder.build();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "mongodb://invalid/?serverSelectionTimeoutMS=10",
-            "mongodb://invalid/?timeoutMS=10&serverSelectionTimeoutMS=200",
-            "mongodb://invalid/?timeoutMS=200&serverSelectionTimeoutMS=10",
-            "mongodb://invalid/?timeoutMS=0&serverSelectionTimeoutMS=10",
-    })
-    public void test8ServerSelectionPart1(final String connectionString) {
-        int timeoutBuffer = 100; // 5 in spec, Java is slower
-        // 1. Create a MongoClient
-        try (MongoClient mongoClient = createMongoClient(createMongoClientSettings(connectionString))) {
-            long start = System.nanoTime();
-            // 2. Using client, execute:
-            Throwable throwable = assertThrows(MongoTimeoutException.class, () -> {
-                mongoClient.getDatabase("admin").runCommand(new BsonDocument("ping", new BsonInt32(1)));
-            });
-            // Expect this to fail with a server selection timeout error after no more than 15ms [this is increased]
-            long elapsed = msElapsedSince(start);
-            assertTrue(throwable.getMessage().contains("while waiting for a server"));
-            assertTrue(elapsed < 10 + timeoutBuffer, "Took too long to time out, elapsedMS: " + elapsed);
-        }
+   private long msElapsedSince(final long t1) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t1);
     }
 }

@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -27,8 +28,10 @@ import org.bson.BsonTimestamp;
  */
 @NotThreadSafe
 public interface AggregateResponseBatchCursor<T> extends BatchCursor<T> {
+    @Nullable
     BsonDocument getPostBatchResumeToken();
 
+    @Nullable
     BsonTimestamp getOperationTime();
 
     boolean isFirstBatchEmpty();
