@@ -236,7 +236,7 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * @return an iterable containing all the names of all the collections in this database
      * @see [listCollections](https://www.mongodb.com/docs/manual/reference/command/listCollections)
      */
-    public fun listCollectionNames(): ListCollectionsFlow<String> = ListCollectionsFlow(wrapped.listCollectionNames())
+    public fun listCollectionNames(): ListCollectionNamesFlow = ListCollectionNamesFlow(wrapped.listCollectionNames())
 
     /**
      * Gets the names of all the collections in this database.
@@ -245,8 +245,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * @return an iterable containing all the names of all the collections in this database
      * @see [listCollections](https://www.mongodb.com/docs/manual/reference/command/listCollections)
      */
-    public fun listCollectionNames(clientSession: ClientSession): ListCollectionsFlow<String> =
-        ListCollectionsFlow(wrapped.listCollectionNames(clientSession.wrapped))
+    public fun listCollectionNames(clientSession: ClientSession): ListCollectionNamesFlow =
+        ListCollectionNamesFlow(wrapped.listCollectionNames(clientSession.wrapped))
 
     /**
      * Gets all the collections in this database.

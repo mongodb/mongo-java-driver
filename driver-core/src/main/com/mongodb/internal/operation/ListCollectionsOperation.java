@@ -105,20 +105,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return this;
     }
 
-    public ListCollectionsOperation<T> authorizedCollections(final boolean authorizedCollections) {
-        this.authorizedCollections = authorizedCollections;
-        return this;
-    }
-
-    /**
-     * This method is used by tests via the reflection API. See
-     * {@code com.mongodb.reactivestreams.client.internal.TestHelper.assertOperationIsTheSameAs}.
-     */
-    @VisibleForTesting(otherwise = PRIVATE)
-    public boolean isAuthorizedCollections() {
-        return authorizedCollections;
-    }
-
     public Integer getBatchSize() {
         return batchSize;
     }
@@ -156,6 +142,20 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     public ListCollectionsOperation<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
+    }
+
+    public ListCollectionsOperation<T> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
+    /**
+     * This method is used by tests via the reflection API. See
+     * {@code com.mongodb.reactivestreams.client.internal.TestHelper.assertOperationIsTheSameAs}.
+     */
+    @VisibleForTesting(otherwise = PRIVATE)
+    public boolean isAuthorizedCollections() {
+        return authorizedCollections;
     }
 
     @Override

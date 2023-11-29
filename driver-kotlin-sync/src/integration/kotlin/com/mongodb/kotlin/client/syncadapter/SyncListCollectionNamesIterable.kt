@@ -32,10 +32,10 @@ internal class SyncListCollectionNamesIterable(val wrapped: ListCollectionNamesI
 
     override fun filter(filter: Bson?): SyncListCollectionNamesIterable = apply { wrapped.filter(filter) }
 
+    override fun comment(comment: String?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
+    override fun comment(comment: BsonValue?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
+
     override fun authorizedCollections(authorizedCollections: Boolean): SyncListCollectionNamesIterable = apply {
         wrapped.authorizedCollections(authorizedCollections)
     }
-
-    override fun comment(comment: String?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
-    override fun comment(comment: BsonValue?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
 }

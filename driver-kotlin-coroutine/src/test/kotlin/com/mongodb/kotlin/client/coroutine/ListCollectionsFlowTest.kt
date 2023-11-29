@@ -16,6 +16,9 @@
 package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
+import java.util.concurrent.TimeUnit
+import kotlin.reflect.full.declaredFunctions
+import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
@@ -23,9 +26,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
-import java.util.concurrent.TimeUnit
-import kotlin.reflect.full.declaredFunctions
-import kotlin.test.assertEquals
 
 class ListCollectionsFlowTest {
     @Test

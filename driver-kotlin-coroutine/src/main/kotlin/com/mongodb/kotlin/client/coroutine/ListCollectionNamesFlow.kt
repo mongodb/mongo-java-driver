@@ -15,7 +15,7 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
-import com.mongodb.reactivestreams.client.ListCollectionsPublisher
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -24,13 +24,12 @@ import org.bson.BsonValue
 import org.bson.conversions.Bson
 
 /**
- * Flow implementation for list collection operations.
+ * Flow implementation for list collection names operations.
  *
- * @param T The type of the result.
  * @see [List collections](https://www.mongodb.com/docs/manual/reference/command/listCollections/)
  */
-public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPublisher<T>) :
-    Flow<T> by wrapped.asFlow() {
+public class ListCollectionNamesFlow(private val wrapped: ListCollectionNamesPublisher) :
+    Flow<String> by wrapped.asFlow() {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
@@ -39,7 +38,7 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      * @return this
      * @see [Max Time](https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/)
      */
-    public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListCollectionsFlow<T> = apply {
+    public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListCollectionNamesFlow = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
 
@@ -50,7 +49,7 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      * @return this
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
-    public fun batchSize(batchSize: Int): ListCollectionsFlow<T> = apply { wrapped.batchSize(batchSize) }
+    public fun batchSize(batchSize: Int): ListCollectionNamesFlow = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the query filter to apply to the returned database names.
@@ -58,7 +57,7 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      * @param filter the filter, which may be null.
      * @return this
      */
-    public fun filter(filter: Bson?): ListCollectionsFlow<T> = apply { wrapped.filter(filter) }
+    public fun filter(filter: Bson?): ListCollectionNamesFlow = apply { wrapped.filter(filter) }
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
@@ -66,7 +65,7 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      * @param comment the comment
      * @return this
      */
-    public fun comment(comment: String?): ListCollectionsFlow<T> = apply { wrapped.comment(comment) }
+    public fun comment(comment: String?): ListCollectionNamesFlow = apply { wrapped.comment(comment) }
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
@@ -74,7 +73,21 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      * @param comment the comment
      * @return this
      */
-    public fun comment(comment: BsonValue?): ListCollectionsFlow<T> = apply { wrapped.comment(comment) }
+    public fun comment(comment: BsonValue?): ListCollectionNamesFlow = apply { wrapped.comment(comment) }
 
-    public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
+    /**
+     * Sets the `authorizedCollections` field of the `listCollections` command.
+     *
+     * @param authorizedCollections If `true`, allows executing the `listCollections` command, which has the `nameOnly`
+     *   field set to `true`, without having the
+     *   [`listCollections` privilege](https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections)
+     *   on the database resource.
+     * @return `this`.
+     * @since 5.0
+     */
+    public fun authorizedCollections(authorizedCollections: Boolean): ListCollectionNamesFlow = apply {
+        wrapped.authorizedCollections(authorizedCollections)
+    }
+
+    public override suspend fun collect(collector: FlowCollector<String>): Unit = wrapped.asFlow().collect(collector)
 }

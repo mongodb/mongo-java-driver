@@ -40,7 +40,6 @@ class ListCollectionNamesFlowTest {
     @Test
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: ListCollectionNamesPublisher = mock()
-        // VAKOTODO create ListCollectionNamesFlow
         val flow = ListCollectionNamesFlow(wrapped)
 
         val batchSize = 10

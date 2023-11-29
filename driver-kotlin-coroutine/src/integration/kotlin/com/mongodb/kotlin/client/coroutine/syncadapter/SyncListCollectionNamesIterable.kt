@@ -16,12 +16,12 @@
 package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.client.ListCollectionNamesIterable as JListCollectionNamesIterable
-import com.mongodb.kotlin.client.coroutine.ListCollectionsFlow
+import com.mongodb.kotlin.client.coroutine.ListCollectionNamesFlow
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.conversions.Bson
 
-data class SyncListCollectionNamesIterable(val wrapped: ListCollectionsFlow<String>) :
+data class SyncListCollectionNamesIterable(val wrapped: ListCollectionNamesFlow) :
     JListCollectionNamesIterable, SyncMongoIterable<String>(wrapped) {
 
     override fun batchSize(batchSize: Int): SyncListCollectionNamesIterable = apply { wrapped.batchSize(batchSize) }
@@ -32,10 +32,11 @@ data class SyncListCollectionNamesIterable(val wrapped: ListCollectionsFlow<Stri
 
     override fun filter(filter: Bson?): SyncListCollectionNamesIterable = apply { wrapped.filter(filter) }
 
+    override fun comment(comment: String?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
+
+    override fun comment(comment: BsonValue?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
+
     override fun authorizedCollections(authorizedCollections: Boolean): SyncListCollectionNamesIterable = apply {
         wrapped.authorizedCollections(authorizedCollections)
     }
-
-    override fun comment(comment: String?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
-    override fun comment(comment: BsonValue?): SyncListCollectionNamesIterable = apply { wrapped.comment(comment) }
 }

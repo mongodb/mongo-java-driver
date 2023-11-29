@@ -36,7 +36,7 @@ final class ListCollectionNamesPublisherImpl implements ListCollectionNamesPubli
     private final ListCollectionsPublisherImpl<Document> wrapped;
     private final Flux<String> wrappedWithMapping;
 
-    ListCollectionNamesPublisherImpl(ListCollectionsPublisherImpl<Document> wrapped) {
+    ListCollectionNamesPublisherImpl(final ListCollectionsPublisherImpl<Document> wrapped) {
         this.wrapped = wrapped;
         wrappedWithMapping = Flux.from(wrapped).map(ListCollectionNamesPublisherImpl::name);
     }
@@ -96,7 +96,7 @@ final class ListCollectionNamesPublisherImpl implements ListCollectionNamesPubli
         return wrapped;
     }
 
-    private static String name(Document collectionDoc) {
+    private static String name(final Document collectionDoc) {
         return collectionDoc.getString("name");
     }
 }
