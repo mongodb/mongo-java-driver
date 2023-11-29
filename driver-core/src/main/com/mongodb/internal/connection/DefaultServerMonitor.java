@@ -82,7 +82,7 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ServerMonitorRunnable monitor;
     private final Thread monitorThread;
     private final RoundTripTimeRunnable roundTripTimeMonitor;
-    private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
+    private final RTTSampler rttSampler = new RTTSampler();
     private final Thread roundTripTimeMonitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
@@ -197,7 +197,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     // TODO (CSOT) create OC from ServerSettings / SocketTimeout
                     newConnection.open(OperationContext.todoOperationContext());
                     connection = newConnection;
-                    averageRoundTripTime.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+                    rttSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
                     return connection.getInitialServerDescription();
                 }
 
@@ -235,7 +235,8 @@ class DefaultServerMonitor implements ServerMonitor {
                             new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
                                     elapsedTimeNanos, currentServerDescription.getTopologyVersion() != null));
 
-                    return createServerDescription(serverId.getAddress(), helloResult, averageRoundTripTime.getAverage());
+                    return createServerDescription(serverId.getAddress(), helloResult, rttSampler.getAverage(),
+                            rttSampler.getMin());
                 } catch (Exception e) {
                     serverMonitorListener.serverHeartbeatFailed(
                             new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
@@ -243,7 +244,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     throw e;
                 }
             } catch (Throwable t) {
-                averageRoundTripTime.reset();
+                rttSampler.reset();
                 InternalConnection localConnection = withLock(lock, () -> {
                     InternalConnection result = connection;
                     connection = null;
@@ -429,7 +430,7 @@ class DefaultServerMonitor implements ServerMonitor {
             connection = internalConnectionFactory.create(serverId);
             // TODO (CSOT) create OC from ServerSettings / SocketTimeout
             connection.open(OperationContext.todoOperationContext());
-            averageRoundTripTime.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+            rttSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
         }
 
         private void pingServer(final InternalConnection connection) {
@@ -438,7 +439,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
                     clusterClock, clusterConnectionMode, serverApi, connection);
             long elapsedTimeNanos = System.nanoTime() - start;
-            averageRoundTripTime.addSample(elapsedTimeNanos);
+            rttSampler.addSample(elapsedTimeNanos);
         }
     }
 

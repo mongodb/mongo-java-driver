@@ -43,7 +43,7 @@ public class ServerSelectionRttTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        ExponentiallyWeightedMovingAverage subject = new ExponentiallyWeightedMovingAverage(0.2);
+        RTTSampler subject = new RTTSampler();
 
         BsonValue current = definition.get("avg_rtt_ms");
         if (current.isNumber()) {

@@ -75,7 +75,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         if (helloResult.isEmpty()) {
             serverDescription = ServerDescription.builder().type(ServerType.UNKNOWN).state(CONNECTING).address(serverAddress).build();
         } else {
-            serverDescription = createServerDescription(serverAddress, helloResult, 5000000);
+            serverDescription = createServerDescription(serverAddress, helloResult, 5000000, 0);
         }
         factory.sendNotification(serverAddress, serverDescription);
     }
