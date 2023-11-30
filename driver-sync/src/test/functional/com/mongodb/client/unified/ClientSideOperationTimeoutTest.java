@@ -51,7 +51,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         assumeFalse("operation is retried multiple times for non-zero timeoutMS - replaceOne on collection".equals(testDescription));
         assumeFalse("operation is retried multiple times for non-zero timeoutMS - updateOne on collection".equals(testDescription));
         assumeFalse("operation is retried multiple times for non-zero timeoutMS - bulkWrite on collection".equals(testDescription));
-
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

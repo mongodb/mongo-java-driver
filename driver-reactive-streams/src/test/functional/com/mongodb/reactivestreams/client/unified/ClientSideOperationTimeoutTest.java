@@ -48,12 +48,9 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         assumeFalse(testDescription.endsWith("count on collection"));
 
         // Time sensitive - cannot just create a cursor with publishers
-        assumeFalse("operation is retried multiple times for non-zero timeoutMS - createChangeStream on database".equals(testDescription));
-        assumeFalse("operation is retried multiple times if timeoutMS is zero - createChangeStream on database".equals(testDescription));
-        assumeFalse("operation is retried multiple times for non-zero timeoutMS - createChangeStream on collection".equals(testDescription));
-        assumeFalse("operation is retried multiple times if timeoutMS is zero - createChangeStream on collection".equals(testDescription));
-        assumeFalse("operation succeeds after one socket timeout - createChangeStream on database".equals(testDescription));
-        assumeFalse("operation succeeds after one socket timeout - createChangeStream on collection".equals(testDescription));
+        assumeFalse(testDescription.endsWith("createChangeStream on client"));
+        assumeFalse(testDescription.endsWith("createChangeStream on database"));
+        assumeFalse(testDescription.endsWith("createChangeStream on collection"));
 
         // TODO JAVA-5232 maxTimeMs is expected to be present in command definition
         assumeFalse("operation is retried multiple times for non-zero timeoutMS - insertOne on collection".equals(testDescription));
