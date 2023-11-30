@@ -33,6 +33,7 @@ import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.selector.ServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time, and a
@@ -136,6 +137,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
             this.server = server;
             this.serverDescription = serverDescription;
             this.appliedReadPreference = appliedReadPreference;
+            operationContext.getTimeoutContext().minRoundTripTimeMS(NANOSECONDS.toMillis(serverDescription.getMinRoundTripTimeNanos()));
             AsyncClusterBinding.this.retain();
         }
 

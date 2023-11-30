@@ -15,12 +15,15 @@
  */
 package com.mongodb.internal;
 
+import com.mongodb.MongoTimeoutException;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_COMMIT;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
@@ -31,6 +34,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
@@ -49,13 +53,21 @@ final class TimeoutContextTest {
                     );
                 }),
                 dynamicTest("Uses timeoutMS if set", () -> {
-                    TimeoutContext timeoutContext =
-                            new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT.withMaxAwaitTimeMS(9));
+                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT.withMaxAwaitTimeMS(9));
                     assertAll(
                             () -> assertTrue(timeoutContext.hasTimeoutMS()),
                             () -> assertTrue(timeoutContext.getMaxTimeMS() > 0),
                             () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
                             () -> assertTrue(timeoutContext.getMaxCommitTimeMS() > 0)
+                    );
+                }),
+                dynamicTest("test infinite timeoutMS", () -> {
+                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT);
+                    assertAll(
+                            () -> assertTrue(timeoutContext.hasTimeoutMS()),
+                            () -> assertEquals(0, timeoutContext.getMaxTimeMS()),
+                            () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
+                            () -> assertEquals(0, timeoutContext.getMaxCommitTimeMS())
                     );
                 }),
                 dynamicTest("MaxTimeMS set", () -> {
@@ -157,6 +169,15 @@ final class TimeoutContextTest {
                             () -> assertFalse(noTimeout.hasExpired()),
                             () -> assertFalse(longTimeout.hasExpired()),
                             () -> assertTrue(smallTimeout.hasExpired())
+                    );
+                }),
+                dynamicTest("validates minRoundTripTime for maxTimeMS", () -> {
+                    Supplier<TimeoutContext> supplier = () -> new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100));
+                    assertAll(
+                            () -> assertTrue(supplier.get().getMaxTimeMS() <= 100),
+                            () -> assertTrue(supplier.get().minRoundTripTimeMS(10).getMaxTimeMS() <= 90),
+                            () -> assertThrows(MongoTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(101).getMaxTimeMS()),
+                            () -> assertThrows(MongoTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(100).getMaxTimeMS())
                     );
                 })
         );
