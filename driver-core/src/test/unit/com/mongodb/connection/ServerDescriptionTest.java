@@ -80,6 +80,7 @@ public class ServerDescriptionTest {
         assertFalse(serverDescription.isSecondary());
 
         assertEquals(0F, serverDescription.getRoundTripTimeNanos(), 0L);
+        assertEquals(0F, serverDescription.getMinRoundTripTimeNanos(), 0L);
 
         assertEquals(0x1000000, serverDescription.getMaxDocumentSize());
 
@@ -112,6 +113,7 @@ public class ServerDescriptionTest {
                                               .setName("test")
                                               .maxDocumentSize(100)
                                               .roundTripTime(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
+                                              .minRoundTripTime(10000, java.util.concurrent.TimeUnit.NANOSECONDS)
                                               .primary("localhost:27017")
                                               .canonicalAddress("localhost:27018")
                                               .hosts(new HashSet<>(asList("localhost:27017",
@@ -147,6 +149,7 @@ public class ServerDescriptionTest {
         assertFalse(serverDescription.isSecondary());
 
         assertEquals(50000, serverDescription.getRoundTripTimeNanos(), 0L);
+        assertEquals(10000, serverDescription.getMinRoundTripTimeNanos(), 0L);
 
         assertEquals(100, serverDescription.getMaxDocumentSize());
 
@@ -516,28 +519,4 @@ public class ServerDescriptionTest {
         assertFalse(serverDescription.isIncompatiblyNewerThanDriver());
         assertTrue(serverDescription.isIncompatiblyOlderThanDriver());
     }
-
-    private static final ServerDescription SERVER_DESCRIPTION = builder()
-            .address(new ServerAddress())
-            .type(ServerType.SHARD_ROUTER)
-            .tagSet(new TagSet(singletonList(new Tag("dc", "ny"))))
-            .setName("test")
-            .maxDocumentSize(100)
-            .roundTripTime(50000, TimeUnit.NANOSECONDS)
-            .primary("localhost:27017")
-            .canonicalAddress("localhost:27017")
-            .hosts(new HashSet<>(asList("localhost:27017", "localhost:27018")))
-            .passives(new HashSet<>(singletonList("localhost:27019")))
-            .arbiters(new HashSet<>(singletonList("localhost:27020")))
-            .ok(true)
-            .state(CONNECTED)
-            .minWireVersion(1)
-            .lastWriteDate(new Date())
-            .maxWireVersion(2)
-            .electionId(new ObjectId("abcdabcdabcdabcdabcdabcd"))
-            .setVersion(2)
-            .lastUpdateTimeNanos(1)
-            .lastWriteDate(new Date(42))
-            .logicalSessionTimeoutMinutes(25)
-            .roundTripTime(56, TimeUnit.MILLISECONDS).build();
 }

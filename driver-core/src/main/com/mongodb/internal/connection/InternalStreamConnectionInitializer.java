@@ -152,7 +152,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                 helloResult);
         ServerDescription serverDescription =
                 createServerDescription(internalConnection.getDescription().getServerAddress(), helloResult,
-                        System.nanoTime() - startTime);
+                        System.nanoTime() - startTime, 0);
         return new InternalConnectionInitializationDescription(connectionDescription, serverDescription);
     }
 
