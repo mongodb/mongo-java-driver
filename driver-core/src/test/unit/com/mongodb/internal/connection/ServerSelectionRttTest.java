@@ -43,7 +43,7 @@ public class ServerSelectionRttTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        RTTSampler subject = new RTTSampler();
+        RoundTripTimeSampler subject = new RoundTripTimeSampler();
 
         BsonValue current = definition.get("avg_rtt_ms");
         if (current.isNumber()) {

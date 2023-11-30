@@ -16,16 +16,12 @@
 
 package com.mongodb.internal.connection;
 
+import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
-class RTTSampler {
+final class RoundTripTimeSampler {
     private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
     private final RecentSamples recentSamples = new RecentSamples();
-
-    RTTSampler() {
-    }
-
     void reset() {
         averageRoundTripTime.reset();
         recentSamples.reset();
@@ -44,13 +40,13 @@ class RTTSampler {
         return recentSamples.min();
     }
 
-    static class RecentSamples {
+    private static final class RecentSamples {
 
         private static final int MAX_SIZE = 10;
         private final Deque<Long> samples;
 
         RecentSamples() {
-            samples = new ConcurrentLinkedDeque<>();
+            samples = new ArrayDeque<>();
         }
 
         void add(final long sample) {
@@ -65,6 +61,7 @@ class RTTSampler {
         }
 
         long min() {
+            // Clients MUST report the minimum RTT as 0 until at least 2 samples have been gathered
             return samples.size() < 2 ? 0 : samples.stream().min(Long::compareTo).orElse(0L);
         }
     }

@@ -29,20 +29,20 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
-public class RTTSamplerTest {
+public class RoundTripTimeSamplerTest {
 
     @ParameterizedTest(name = "{index}: samples: {0}. Expected: average: {1} min: {2}")
-    @DisplayName("RTTSampler should calculate the expected average and min round trip times")
+    @DisplayName("RoundTripTimeSampler should calculate the expected average and min round trip times")
     @MethodSource
-    public void testRTTSampler(final List<Integer> samples, final int expectedAverageRTT, final int expectedMinRTT) {
-        RTTSampler sampler = new RTTSampler();
+    public void testRoundTripTimeSampler(final List<Integer> samples, final int expectedAverageRTT, final int expectedMinRTT) {
+        RoundTripTimeSampler sampler = new RoundTripTimeSampler();
         samples.forEach(sampler::addSample);
 
         assertEquals(expectedMinRTT, sampler.getMin());
         assertEquals(expectedAverageRTT, sampler.getAverage());
     }
 
-    private static Stream<Arguments> testRTTSampler() {
+    private static Stream<Arguments> testRoundTripTimeSampler() {
         return Stream.of(
                 Arguments.of(emptyList(), 0, 0),
                 Arguments.of(singletonList(10), 10, 0),
