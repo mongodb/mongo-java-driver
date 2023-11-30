@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal;
 
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -22,6 +23,7 @@ import com.mongodb.lang.Nullable;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -35,6 +37,7 @@ public class TimeoutContext {
 
     @Nullable
     private Timeout timeout;
+    private long minRoundTripTimeMS = 0;
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
@@ -61,6 +64,17 @@ public class TimeoutContext {
      */
     public boolean hasExpired() {
         return timeout != null && timeout.hasExpired();
+    }
+
+    /**
+     * Sets the recent min round trip time
+     * @param minRoundTripTimeMS the min round trip time
+     * @return this
+     */
+    public TimeoutContext minRoundTripTimeMS(final long minRoundTripTimeMS) {
+        isTrue("'minRoundTripTimeMS' must be a positive number", minRoundTripTimeMS >= 0);
+        this.minRoundTripTimeMS = minRoundTripTimeMS;
+        return this;
     }
 
     /**
@@ -108,7 +122,14 @@ public class TimeoutContext {
     }
 
     public long getMaxTimeMS() {
-        return timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
+        long maxTimeMS = timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
+        if (timeout == null || timeout.isInfinite()) {
+            return maxTimeMS;
+        }
+        if (minRoundTripTimeMS >= maxTimeMS) {
+            throw new MongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
+        }
+        return maxTimeMS - minRoundTripTimeMS;
     }
 
     public long getMaxCommitTimeMS() {
@@ -131,6 +152,7 @@ public class TimeoutContext {
     public String toString() {
         return "timeoutContext{"
                 + "timeoutContext=" + timeoutSettings
+                + ", minRoundTripTimeMS=" + minRoundTripTimeMS
                 + ", timeout=" + timeout
                 + '}';
     }
@@ -144,12 +166,14 @@ public class TimeoutContext {
             return false;
         }
         final TimeoutContext that = (TimeoutContext) o;
-        return Objects.equals(timeoutSettings, that.timeoutSettings) && Objects.equals(timeout, that.timeout);
+        return minRoundTripTimeMS == that.minRoundTripTimeMS
+                && Objects.equals(timeoutSettings, that.timeoutSettings)
+                && Objects.equals(timeout, that.timeout);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeoutSettings, timeout);
+        return Objects.hash(timeoutSettings, timeout, minRoundTripTimeMS);
     }
 
     @Nullable
