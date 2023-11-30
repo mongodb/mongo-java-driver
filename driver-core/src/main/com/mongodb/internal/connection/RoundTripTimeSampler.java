@@ -22,6 +22,7 @@ import java.util.Deque;
 final class RoundTripTimeSampler {
     private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
     private final RecentSamples recentSamples = new RecentSamples();
+
     void reset() {
         averageRoundTripTime.reset();
         recentSamples.reset();
