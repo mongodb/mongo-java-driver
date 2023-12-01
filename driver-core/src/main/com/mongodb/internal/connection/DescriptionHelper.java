@@ -87,7 +87,7 @@ public final class DescriptionHelper {
     }
 
     public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument helloResult,
-                                                            final long roundTripTime) {
+                                                            final long roundTripTime, final long minRoundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
                                 .address(serverAddress)
@@ -107,6 +107,7 @@ public final class DescriptionHelper {
                                 .topologyVersion(getTopologyVersion(helloResult))
                                 .lastWriteDate(getLastWriteDate(helloResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
+                                .minRoundTripTime(minRoundTripTime, NANOSECONDS)
                                 .logicalSessionTimeoutMinutes(getLogicalSessionTimeoutMinutes(helloResult))
                                 .helloOk(helloResult.getBoolean("helloOk", BsonBoolean.FALSE).getValue())
                                 .ok(CommandHelper.isCommandOk(helloResult)).build();

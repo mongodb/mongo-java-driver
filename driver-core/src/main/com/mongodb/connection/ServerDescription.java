@@ -79,6 +79,7 @@ public class ServerDescription {
     private final TagSet tagSet;
     private final String setName;
     private final long roundTripTimeNanos;
+    private final long minRoundTripTimeNanos;
     private final boolean ok;
     private final ServerConnectionState state;
 
@@ -168,6 +169,7 @@ public class ServerDescription {
         private TagSet tagSet = new TagSet();
         private String setName;
         private long roundTripTimeNanos;
+        private long minRoundTripTimeNanos;
         private boolean ok;
         private ServerConnectionState state;
         private int minWireVersion = 0;
@@ -315,7 +317,7 @@ public class ServerDescription {
         }
 
         /**
-         * Set the time it took to make the round trip for requesting this information from the server
+         * Set the weighted average time it took to make the round trip for requesting this information from the server
          *
          * @param roundTripTime the time taken
          * @param timeUnit      the units of the time taken
@@ -323,6 +325,20 @@ public class ServerDescription {
          */
         public Builder roundTripTime(final long roundTripTime, final TimeUnit timeUnit) {
             this.roundTripTimeNanos = timeUnit.toNanos(roundTripTime);
+            return this;
+        }
+
+
+        /**
+         * Set the recent min time it took to make the round trip for requesting this information from the server
+         *
+         * @param minRoundTripTime the minimum time taken
+         * @param timeUnit         the units of the time taken
+         * @return this
+         * @since 4.x
+         */
+        public Builder minRoundTripTime(final long minRoundTripTime, final TimeUnit timeUnit) {
+            this.minRoundTripTimeNanos = timeUnit.toNanos(minRoundTripTime);
             return this;
         }
 
@@ -824,12 +840,22 @@ public class ServerDescription {
     }
 
     /**
-     * Get the time it took to make the round trip for requesting this information from the server in nanoseconds.
+     * Get the weighted average time it took to make the round trip for requesting this information from the server in nanoseconds.
      *
      * @return the time taken to request the information, in nano seconds
      */
     public long getRoundTripTimeNanos() {
         return roundTripTimeNanos;
+    }
+
+    /**
+     * Get the recent min time it took to make the round trip for requesting this information from the server in nanoseconds.
+     *
+     * @return the recent min time taken to request the information, in nano seconds
+     * @since 4.x
+     */
+    public long getMinRoundTripTimeNanos() {
+        return minRoundTripTimeNanos;
     }
 
     /**
@@ -986,6 +1012,7 @@ public class ServerDescription {
                   + ", maxDocumentSize=" + maxDocumentSize
                   + ", logicalSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
                   + ", roundTripTimeNanos=" + roundTripTimeNanos
+                  + ", minRoundTripTimeNanos=" + minRoundTripTimeNanos
                   : "")
                + (isReplicaSetMember()
                   ?
@@ -1057,6 +1084,7 @@ public class ServerDescription {
         tagSet = builder.tagSet;
         setName = builder.setName;
         roundTripTimeNanos = builder.roundTripTimeNanos;
+        minRoundTripTimeNanos = builder.minRoundTripTimeNanos;
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
