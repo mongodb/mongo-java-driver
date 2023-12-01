@@ -43,7 +43,6 @@ import reactor.core.Scannable;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -52,7 +51,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.stream.Collectors.toList;
@@ -204,8 +202,7 @@ public class TestHelper {
                         .orElse(publisher);
             }
         }
-        sourcePublisher = getWrapped(sourcePublisher).orElse(sourcePublisher);
-        return sourcePublisher;
+        return unwrap(sourcePublisher);
     }
 
     private static Optional<Publisher<?>> getSource(final Scannable scannable) {
@@ -217,17 +214,12 @@ public class TestHelper {
         }
     }
 
-    private static Optional<Publisher<?>> getWrapped(final Publisher<?> maybeMappingPublisher) {
-        return Stream.of(maybeMappingPublisher.getClass().getDeclaredMethods())
-                .filter(m -> m.getName().equals("getWrapped"))
-                .findFirst()
-                .map(m -> {
-                    try {
-                        return (Publisher<?>) m.invoke(maybeMappingPublisher);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+    private static Publisher<?> unwrap(final Publisher<?> maybeWrappingPublisher) {
+        if (maybeWrappingPublisher instanceof ListCollectionNamesPublisherImpl) {
+            return ((ListCollectionNamesPublisherImpl) maybeWrappingPublisher).getWrapped();
+        } else {
+            return maybeWrappingPublisher;
+        }
     }
 
     private static Optional<Publisher<?>> getScannableSource(final Scannable scannable) {

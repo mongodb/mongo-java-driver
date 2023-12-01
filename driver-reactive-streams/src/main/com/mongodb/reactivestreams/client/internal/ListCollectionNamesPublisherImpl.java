@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
-final class ListCollectionNamesPublisherImpl implements ListCollectionNamesPublisher {
+public final class ListCollectionNamesPublisherImpl implements ListCollectionNamesPublisher {
     private final ListCollectionsPublisherImpl<Document> wrapped;
     private final Flux<String> wrappedWithMapping;
 
@@ -88,11 +88,8 @@ final class ListCollectionNamesPublisherImpl implements ListCollectionNamesPubli
         wrappedWithMapping.subscribe(subscriber);
     }
 
-    /**
-     * This method is used via the reflection API by {@code com.mongodb.reactivestreams.client.internal.TestHelper.getWrapped}.
-     */
     @VisibleForTesting(otherwise = PRIVATE)
-    ListCollectionsPublisherImpl<Document> getWrapped() {
+    public BatchCursorPublisher<Document> getWrapped() {
         return wrapped;
     }
 

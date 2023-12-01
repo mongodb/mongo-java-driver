@@ -86,7 +86,6 @@ public class ReactiveContextProviderTest {
                     getDatabase().listCollections().first();
                     assertContextPassedThrough();
                 }),
-                // VAKOTODO this one fails for now
                 dynamicTest("List Collection Names Publisher", () -> {
                     getDatabase().listCollectionNames().first();
                     assertContextPassedThrough();
