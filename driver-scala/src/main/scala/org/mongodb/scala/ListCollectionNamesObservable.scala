@@ -16,21 +16,20 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-import com.mongodb.reactivestreams.client.ListCollectionsPublisher
+import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher
 import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.conversions.Bson
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 
 /**
- * Observable interface for listing collections.
+ * Observable interface for listing collection names.
  *
- * @param wrapped the underlying java ListCollectionsPublisher
- * @tparam TResult The type of the result.
- * @since 1.0
+ * @param wrapped the underlying java ListCollectionNamesPublisher
+ * @since 5.0
  */
-case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[TResult]) extends Observable[TResult] {
+case class ListCollectionNamesObservable(wrapped: ListCollectionNamesPublisher) extends Observable[String] {
 
   /**
    * Sets the query filter to apply to the query.
@@ -39,7 +38,7 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    * @param filter the filter, which may be null.
    * @return this
    */
-  def filter(filter: Bson): ListCollectionsObservable[TResult] = {
+  def filter(filter: Bson): ListCollectionNamesObservable = {
     wrapped.filter(filter)
     this
   }
@@ -51,7 +50,7 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    * @param duration the duration
    * @return this
    */
-  def maxTime(duration: Duration): ListCollectionsObservable[TResult] = {
+  def maxTime(duration: Duration): ListCollectionNamesObservable = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this
   }
@@ -61,9 +60,8 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    *
    * @param batchSize the batch size
    * @return this
-   * @since 2.7
    */
-  def batchSize(batchSize: Int): ListCollectionsObservable[TResult] = {
+  def batchSize(batchSize: Int): ListCollectionNamesObservable = {
     wrapped.batchSize(batchSize)
     this
   }
@@ -73,10 +71,9 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    *
    * @param comment the comment
    * @return this
-   * @since 4.6
    * @note Requires MongoDB 4.4 or greater
    */
-  def comment(comment: String): ListCollectionsObservable[TResult] = {
+  def comment(comment: String): ListCollectionNamesObservable = {
     wrapped.comment(comment)
     this
   }
@@ -86,11 +83,25 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    *
    * @param comment the comment
    * @return this
-   * @since 4.6
    * @note Requires MongoDB 4.4 or greater
    */
-  def comment(comment: BsonValue): ListCollectionsObservable[TResult] = {
+  def comment(comment: BsonValue): ListCollectionNamesObservable = {
     wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the `authorizedCollections` field of the `istCollections` command.
+   *
+   * @param authorizedCollections If `true`, allows executing the `listCollections` command,
+   * which has the `nameOnly` field set to `true`, without having the
+   * <a href="https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections">
+   * `listCollections` privilege</a> on the database resource.
+   * @return `this`.
+   * @note Requires MongoDB 4.0 or greater
+   */
+  def authorizedCollections(authorizedCollections: Boolean): ListCollectionNamesObservable = {
+    wrapped.authorizedCollections(authorizedCollections)
     this
   }
 
@@ -98,9 +109,8 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    * Helper to return a single observable limited to the first result.
    *
    * @return a single observable which will the first result.
-   * @since 4.0
    */
-  def first(): SingleObservable[TResult] = wrapped.first()
+  def first(): SingleObservable[String] = wrapped.first()
 
-  override def subscribe(observer: Observer[_ >: TResult]): Unit = wrapped.subscribe(observer)
+  override def subscribe(observer: Observer[_ >: String]): Unit = wrapped.subscribe(observer)
 }
