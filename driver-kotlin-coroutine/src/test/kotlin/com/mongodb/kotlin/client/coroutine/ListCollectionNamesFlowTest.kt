@@ -32,7 +32,7 @@ class ListCollectionNamesFlowTest {
         val jListCollectionNamesPublisherFunctions =
             ListCollectionNamesPublisher::class.declaredFunctions.map { it.name }.toSet() - "first"
         val kListCollectionNamesFlowFunctions =
-            ListCollectionsFlow::class.declaredFunctions.map { it.name }.toSet() - "collect"
+            ListCollectionNamesFlow::class.declaredFunctions.map { it.name }.toSet() - "collect"
 
         assertEquals(jListCollectionNamesPublisherFunctions, kListCollectionNamesFlowFunctions)
     }
