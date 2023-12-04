@@ -20,12 +20,14 @@ import com.mongodb.LoggerSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -39,6 +41,7 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.ResourceUtil;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -390,13 +393,7 @@ public class InternalStreamConnection implements InternalConnection {
 
         Compressor localSendCompressor = sendCompressor;
         if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
-            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
-            try {
-                sendMessage(byteBuffers, message.getId());
-            } finally {
-                ResourceUtil.release(byteBuffers);
-                bsonOutput.close();
-            }
+            trySendMessage(message, bsonOutput, operationContext);
         } else {
             ByteBufferBsonOutput compressedBsonOutput;
             List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
@@ -409,19 +406,27 @@ public class InternalStreamConnection implements InternalConnection {
                 ResourceUtil.release(byteBuffers);
                 bsonOutput.close();
             }
-            List<ByteBuf> compressedByteBuffers = compressedBsonOutput.getByteBuffers();
-            try {
-                sendMessage(compressedByteBuffers, message.getId());
-            } finally {
-                ResourceUtil.release(compressedByteBuffers);
-                compressedBsonOutput.close();
-            }
+            trySendMessage(message, compressedBsonOutput, operationContext);
         }
         responseTo = message.getId();
     }
 
+    private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
+            final OperationContext operationContext) {
+        validateHasTimedOut(operationContext).ifPresent(e -> { throw e; });
+        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+        try {
+            sendMessage(byteBuffers, message.getId());
+        } finally {
+            ResourceUtil.release(byteBuffers);
+            bsonOutput.close();
+        }
+    }
+
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext, final int additionalTimeout) {
+        validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> { throw e; });
+
         boolean commandSuccessful = false;
         try (ResponseBuffers responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout)) {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
@@ -447,7 +452,7 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender.sendFailedEvent(e);
             }
             throw e;
-    }
+        }
     }
 
     @Override
@@ -498,13 +503,20 @@ public class InternalStreamConnection implements InternalConnection {
         sendMessageAsync(byteBuffers, messageId, (result, t) -> {
             ResourceUtil.release(byteBuffers);
             bsonOutput.close();
-            if (t != null) {
-                commandEventSender.sendFailedEvent(t);
-                callback.onResult(null, t);
+            Throwable error = validateHasTimedOut(operationContext).map(e -> (Throwable) e).orElse(t);
+            if (error != null) {
+                commandEventSender.sendFailedEvent(error);
+                callback.onResult(null, error);
             } else if (!responseExpected) {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
             } else {
+                Optional<MongoExecutionTimeoutException> e = validateHasTimedOutAndClose(commandEventSender, operationContext);
+                if (e.isPresent()) {
+                    callback.onResult(null, e.get());
+                    return;
+                }
+
                 readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback((responseBuffers, t1) -> {
                     if (t1 != null) {
                         commandEventSender.sendFailedEvent(t1);
@@ -535,6 +547,23 @@ public class InternalStreamConnection implements InternalConnection {
                     }
                 }));
             }
+        });
+    }
+
+
+    private Optional<MongoExecutionTimeoutException> validateHasTimedOut(final OperationContext operationContext) {
+        if (operationContext.getTimeoutContext().hasTimedOutForCommandExecution()) {
+            return Optional.of(TimeoutContext.createMongoTimeoutException());
+        }
+        return Optional.empty();
+    }
+
+    private Optional<MongoExecutionTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
+            final OperationContext operationContext) {
+        return validateHasTimedOut(operationContext).map(e -> {
+            close();
+            commandEventSender.sendFailedEvent(e);
+            return e;
         });
     }
 
