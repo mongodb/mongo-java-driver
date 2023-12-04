@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal;
 
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
@@ -38,6 +39,10 @@ public class TimeoutContext {
     @Nullable
     private Timeout timeout;
     private long minRoundTripTimeMS = 0;
+
+    public static MongoExecutionTimeoutException createMongoTimeoutException() {
+        return new MongoExecutionTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
+    }
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
@@ -75,6 +80,14 @@ public class TimeoutContext {
         isTrue("'minRoundTripTimeMS' must be a positive number", minRoundTripTimeMS >= 0);
         this.minRoundTripTimeMS = minRoundTripTimeMS;
         return this;
+    }
+
+    public boolean hasTimedOutForCommandExecution() {
+        if (timeout == null || timeout.isInfinite()) {
+            return false;
+        }
+        long remaining = timeout.remaining(MILLISECONDS);
+        return remaining <= 0 || minRoundTripTimeMS > remaining;
     }
 
     /**
@@ -127,7 +140,7 @@ public class TimeoutContext {
             return maxTimeMS;
         }
         if (minRoundTripTimeMS >= maxTimeMS) {
-            throw new MongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
+            throw createMongoTimeoutException();
         }
         return maxTimeMS - minRoundTripTimeMS;
     }
