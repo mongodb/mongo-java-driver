@@ -34,7 +34,7 @@ public class TimeoutContext {
     private final TimeoutSettings timeoutSettings;
 
     @Nullable
-    private final Timeout timeout;
+    private Timeout timeout;
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
@@ -104,7 +104,7 @@ public class TimeoutContext {
     }
 
     public long getMaxAwaitTimeMS() {
-        return timeoutSettings.getMaxAwaitTimeMS();
+        return hasTimeoutMS() ? 0 : timeoutSettings.getMaxAwaitTimeMS();
     }
 
     public long getMaxTimeMS() {
@@ -113,6 +113,12 @@ public class TimeoutContext {
 
     public long getMaxCommitTimeMS() {
         return timeoutOrAlternative(timeoutSettings.getMaxCommitTimeMS());
+    }
+
+
+    public void resetTimeout() {
+        assertNotNull(timeout);
+        timeout = calculateTimeout(timeoutSettings.getTimeoutMS());
     }
 
     private long timeoutRemainingMS() {

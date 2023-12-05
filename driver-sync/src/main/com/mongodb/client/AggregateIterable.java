@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -61,6 +62,30 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     AggregateIterable<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     * <p>
+     *     Will error if the timeoutMode is set to {@link TimeoutMode#ITERATION} and the pipeline contains either
+     *     an {@code $out} or a {@code $merge} stage.
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    AggregateIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Sets the maximum execution time on the server for this operation.

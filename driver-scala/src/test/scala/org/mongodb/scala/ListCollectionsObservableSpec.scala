@@ -16,13 +16,13 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.reactivestreams.Publisher
 import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 
 class ListCollectionsObservableSpec extends BaseSpec with MockitoSugar {
@@ -49,10 +49,13 @@ class ListCollectionsObservableSpec extends BaseSpec with MockitoSugar {
     observable.filter(filter)
     observable.maxTime(duration)
     observable.batchSize(batchSize)
+    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).filter(filter)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).batchSize(batchSize)
+    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
+
     verifyNoMoreInteractions(wrapper)
   }
 }

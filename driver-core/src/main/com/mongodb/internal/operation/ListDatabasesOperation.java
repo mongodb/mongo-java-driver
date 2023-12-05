@@ -33,8 +33,8 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBat
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
+import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCursorTransformer;
 
@@ -124,13 +124,13 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument command = new BsonDocument("listDatabases", new BsonInt32(1));
-            putIfNotNull(command, "filter", filter);
-            putIfNotNull(command, "nameOnly", nameOnly);
-            putIfNotNull(command, "authorizedDatabases", authorizedDatabasesOnly);
-            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
-            putIfNotNull(command, "comment", comment);
-            return command;
+            BsonDocument commandDocument = new BsonDocument("listDatabases", new BsonInt32(1));
+            putIfNotNull(commandDocument, "filter", filter);
+            putIfNotNull(commandDocument, "nameOnly", nameOnly);
+            putIfNotNull(commandDocument, "authorizedDatabases", authorizedDatabasesOnly);
+            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
+            putIfNotNull(commandDocument, "comment", comment);
+            return commandDocument;
         };
     }
 }

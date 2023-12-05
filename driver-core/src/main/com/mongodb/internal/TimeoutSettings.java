@@ -69,7 +69,13 @@ public class TimeoutSettings {
             @Nullable final Long timeoutMS, @Nullable final Long defaultTimeoutMS, final long serverSelectionTimeoutMS,
             final long connectTimeoutMS, final long readTimeoutMS, final long maxAwaitTimeMS, final long maxTimeMS,
             final long maxCommitTimeMS, @Nullable final Long wTimeoutMS, final long maxWaitTimeMS) {
+
         isTrueArgument("timeoutMS must be >= 0", timeoutMS == null || timeoutMS >= 0);
+        isTrueArgument("maxAwaitTimeMS must be >= 0", maxAwaitTimeMS >= 0);
+        isTrueArgument("maxTimeMS must be >= 0", maxTimeMS >= 0);
+        isTrueArgument("timeoutMS must be greater than maxAwaitTimeMS", timeoutMS == null || timeoutMS == 0
+                || timeoutMS > maxAwaitTimeMS);
+
         this.serverSelectionTimeoutMS = serverSelectionTimeoutMS;
         this.connectTimeoutMS = connectTimeoutMS;
         this.timeoutMS = timeoutMS;

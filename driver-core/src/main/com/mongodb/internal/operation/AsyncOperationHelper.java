@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.assertions.Assertions;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -337,9 +338,10 @@ final class AsyncOperationHelper {
                 new AsyncSingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, fieldName), 0);
     }
 
-    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-            final BsonValue comment, final AsyncConnectionSource source, final AsyncConnection connection, final int batchSize) {
-        return new AsyncCommandBatchCursor<>(cursorDocument, batchSize, 0, decoder, comment, source, connection);
+    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final TimeoutMode timeoutMode, final BsonDocument cursorDocument,
+            final int batchSize, final Decoder<T> decoder, final BsonValue comment, final AsyncConnectionSource source,
+            final AsyncConnection connection) {
+        return new AsyncCommandBatchCursor<>(timeoutMode, cursorDocument, batchSize, 0, decoder, comment, source, connection);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnection connection) {

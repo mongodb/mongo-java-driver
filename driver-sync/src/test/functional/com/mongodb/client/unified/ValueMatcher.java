@@ -124,6 +124,10 @@ final class ValueMatcher {
                                 actualValue = BsonDocument.parse(actualValue.asString().getValue());
                                 value = value.asDocument().getDocument("$$matchAsDocument");
                                 break;
+                            case "$$lte":
+                                value = value.asDocument().getNumber("$$lte");
+                                assertTrue(actualValue.asNumber().longValue() <= value.asNumber().longValue());
+                                return;
                             default:
                                 throw new UnsupportedOperationException("Unsupported special operator: " + value.asDocument().getFirstKey());
                         }

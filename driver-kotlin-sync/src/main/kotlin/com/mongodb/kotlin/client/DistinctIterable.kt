@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.DistinctIterable as JDistinctIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -28,14 +29,26 @@ import org.bson.conversions.Bson
  * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
  */
 public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>) : MongoIterable<T>(wrapped) {
+
+    public override fun batchSize(batchSize: Int): DistinctIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
     /**
-     * Sets the number of documents to return per batch.
+     * Sets the timeoutMode for the cursor.
      *
-     * @param batchSize the batch size
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
      * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     * @since 4.x
      */
-    public override fun batchSize(batchSize: Int): DistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
+    public fun timeoutMode(timeoutMode: TimeoutMode): DistinctIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
 
     /**
      * Sets the query filter to apply to the query.

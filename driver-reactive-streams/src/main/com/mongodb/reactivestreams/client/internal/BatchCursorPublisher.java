@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncOperations;
@@ -39,6 +40,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     private final ClientSession clientSession;
     private final MongoOperationPublisher<T> mongoOperationPublisher;
     private Integer batchSize;
+    private TimeoutMode timeoutMode;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
         this(clientSession, mongoOperationPublisher, null);
@@ -99,6 +101,16 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     public Publisher<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
+    }
+
+    public Publisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        this.timeoutMode = timeoutMode;
+        return this;
+    }
+
+    @Nullable
+    public TimeoutMode getTimeoutMode() {
+        return timeoutMode;
     }
 
     public Publisher<T> first() {

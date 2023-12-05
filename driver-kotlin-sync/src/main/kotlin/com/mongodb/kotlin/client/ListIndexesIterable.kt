@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.ListIndexesIterable as JListIndexesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 
@@ -26,6 +27,27 @@ import org.bson.BsonValue
  * @see [List indexes](https://www.mongodb.com/docs/manual/reference/command/listIndexes/)
  */
 public class ListIndexesIterable<T : Any>(private val wrapped: JListIndexesIterable<T>) : MongoIterable<T>(wrapped) {
+
+    public override fun batchSize(batchSize: Int): ListIndexesIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): ListIndexesIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
+
     /**
      * Sets the maximum execution time on the server for this operation.
      *
@@ -37,15 +59,6 @@ public class ListIndexesIterable<T : Any>(private val wrapped: JListIndexesItera
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListIndexesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public override fun batchSize(batchSize: Int): ListIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.

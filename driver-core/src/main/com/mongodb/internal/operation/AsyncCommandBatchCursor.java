@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.VisibleForTesting;
@@ -72,6 +73,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
     private volatile CommandCursorResult<T> commandCursorResult;
 
     AsyncCommandBatchCursor(
+            final TimeoutMode timeoutMode,
             final BsonDocument commandCursorDocument,
             final int batchSize, final long maxTimeMS,
             final Decoder<T> decoder,
@@ -90,12 +92,14 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
-        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
+                commandCursorResult.getServerCursor());
     }
 
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
         resourceManager.execute(funcCallback -> {
+            resourceManager.checkTimeoutModeAndResetTimeoutContextIfIteration();
             ServerCursor localServerCursor = resourceManager.getServerCursor();
             boolean serverCursorIsNull = localServerCursor == null;
             List<T> batchResults = emptyList();
@@ -212,11 +216,13 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
     private static final class ResourceManager extends CursorResourceManager<AsyncConnectionSource, AsyncConnection> {
 
         ResourceManager(
+                final TimeoutMode timeoutMode,
                 final MongoNamespace namespace,
                 final AsyncConnectionSource connectionSource,
                 @Nullable final AsyncConnection connectionToPin,
                 @Nullable final ServerCursor serverCursor) {
-            super(namespace, connectionSource, connectionToPin, serverCursor);
+            super(connectionSource.getOperationContext().getTimeoutContext(), timeoutMode, namespace, connectionSource, connectionToPin,
+                    serverCursor);
         }
 
         /**
@@ -251,6 +257,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 unsetServerCursor();
             }
 
+            resetTimeout();
             if (getServerCursor() != null) {
                 getConnection((connection, t) -> {
                     if (connection != null) {

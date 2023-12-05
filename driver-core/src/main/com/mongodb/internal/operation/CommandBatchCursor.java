@@ -24,6 +24,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.VisibleForTesting;
@@ -72,6 +73,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private List<T> nextBatch;
 
     CommandBatchCursor(
+            final TimeoutMode timeoutMode,
             final BsonDocument commandCursorDocument,
             final int batchSize, final long maxTimeMS,
             final Decoder<T> decoder,
@@ -88,8 +90,10 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
+
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
-        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
+                commandCursorResult.getServerCursor());
     }
 
     @Override
@@ -102,6 +106,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return true;
         }
 
+        resourceManager.checkTimeoutModeAndResetTimeoutContextIfIteration();
         while (resourceManager.getServerCursor() != null) {
             getMore();
             if (!resourceManager.operable()) {
@@ -257,11 +262,13 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private static final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
 
         ResourceManager(
+                final TimeoutMode timeoutMode,
                 final MongoNamespace namespace,
                 final ConnectionSource connectionSource,
                 @Nullable final Connection connectionToPin,
                 @Nullable final ServerCursor serverCursor) {
-            super(namespace, connectionSource, connectionToPin, serverCursor);
+            super(connectionSource.getOperationContext().getTimeoutContext(), timeoutMode, namespace, connectionSource, connectionToPin,
+                    serverCursor);
         }
 
         /**
@@ -292,6 +299,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             if (isSkipReleasingServerResourcesOnClose()) {
                 unsetServerCursor();
             }
+            resetTimeout();
             try {
                 if (getServerCursor() != null) {
                     Connection connection = getConnection();

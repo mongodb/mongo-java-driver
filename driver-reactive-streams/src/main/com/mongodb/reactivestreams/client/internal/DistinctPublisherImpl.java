@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncReadOperation;
@@ -81,6 +82,12 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     @Override
     public DistinctPublisher<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
+        return this;
+    }
+
+    @Override
+    public DistinctPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
         return this;
     }
 

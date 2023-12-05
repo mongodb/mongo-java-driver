@@ -16,11 +16,11 @@
 
 package com.mongodb.internal.operation;
 
-
 import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.internal.binding.ConnectionSource;
@@ -104,7 +104,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("server cursor should not be null")
     void theServerCursorShouldNotBeNull() {
         BsonDocument commandResult = executeFindCommand(2);
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertNotNull(cursor.getServerCursor());
@@ -114,7 +114,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("test server address should not be null")
     void theServerAddressShouldNotNull() {
         BsonDocument commandResult = executeFindCommand();
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertNotNull(cursor.getServerAddress());
@@ -124,7 +124,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("should get Exceptions for operations on the cursor after closing")
     void shouldGetExceptionsForOperationsOnTheCursorAfterClosing() {
         BsonDocument commandResult = executeFindCommand();
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         cursor.close();
@@ -139,7 +139,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("should throw an Exception when going off the end")
     void shouldThrowAnExceptionWhenGoingOffTheEnd() {
         BsonDocument commandResult = executeFindCommand(1);
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         cursor.next();
@@ -151,7 +151,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("test cursor remove")
     void testCursorRemove() {
         BsonDocument commandResult = executeFindCommand();
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertThrows(UnsupportedOperationException.class, () -> cursor.remove());
@@ -161,7 +161,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("test normal exhaustion")
     void testNormalExhaustion() {
         BsonDocument commandResult = executeFindCommand();
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertEquals(10, cursorFlatten().size());
@@ -172,7 +172,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("test limit exhaustion")
     void testLimitExhaustion(final int limit, final int batchSize, final int expectedTotal) {
         BsonDocument commandResult = executeFindCommand(limit, batchSize);
-        cursor = new CommandBatchCursor<>(commandResult, batchSize, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, batchSize, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertEquals(expectedTotal, cursorFlatten().size());
@@ -191,7 +191,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
 
         BsonDocument commandResult = executeFindCommand(new BsonDocument("ts",
                 new BsonDocument("$gte", new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
-        cursor = new CommandBatchCursor<>(commandResult, 2, maxTimeMS, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, maxTimeMS, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertTrue(cursor.hasNext());
@@ -214,9 +214,8 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
 
         BsonDocument commandResult = executeFindCommand(new BsonDocument("ts",
                 new BsonDocument("$gte", new BsonTimestamp(5, 0))), 0, 2, true, true);
-        cursor = new CommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
-
 
         List<Document> nextBatch = cursor.tryNext();
         assertNotNull(nextBatch);
@@ -241,7 +240,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
 
         BsonDocument commandResult = executeFindCommand(new BsonDocument("ts",
                 new BsonDocument("$gte", new BsonTimestamp(5, 0))), 0, 2, true, true);
-        cursor = new CommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertTrue(cursor.hasNext());
@@ -268,9 +267,8 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
         long maxTimeMS = 500;
         BsonDocument commandResult = executeFindCommand(new BsonDocument("ts",
                 new BsonDocument("$gte", new BsonTimestamp(5, 0))), 0, 2, true, true);
-        cursor = new CommandBatchCursor<>(commandResult, 2, maxTimeMS, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, maxTimeMS, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
-
 
         List<Document> nextBatch = cursor.tryNext();
         assertNotNull(nextBatch);
@@ -293,7 +291,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
 
         BsonDocument commandResult = executeFindCommand(new BsonDocument("ts",
                 new BsonDocument("$gte", new BsonTimestamp(5, 0))), 0, 2, true, true);
-        cursor = new CommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -326,7 +324,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     void shouldKillCursorIfLimitIsReachedOnInitialQuery() {
         assumeFalse(isSharded());
         BsonDocument commandResult = executeFindCommand(5, 10);
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertNotNull(cursor.next());
@@ -339,7 +337,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     void shouldKillCursorIfLimitIsReachedOnGetMore() {
         assumeFalse(isSharded());
         BsonDocument commandResult = executeFindCommand(5, 3);
-        cursor = new CommandBatchCursor<>(commandResult, 3, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         ServerCursor serverCursor = cursor.getServerCursor();
@@ -358,7 +356,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     void shouldReleaseConnectionSourceIfLimitIsReachedOnInitialQuery() {
         assumeFalse(isSharded());
         BsonDocument commandResult = executeFindCommand(5, 10);
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertNull(cursor.getServerCursor());
@@ -371,7 +369,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     void shouldReleaseConnectionSourceIfLimitIsReachedOnGetMore() {
         assumeFalse(isSharded());
         BsonDocument commandResult = executeFindCommand(5, 3);
-        cursor = new CommandBatchCursor<>(commandResult, 3, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertNotNull(cursor.next());
@@ -384,7 +382,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("test limit with get more")
     void testLimitWithGetMore() {
         BsonDocument commandResult = executeFindCommand(5, 2);
-        cursor = new CommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertNotNull(cursor.next());
@@ -405,7 +403,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
         );
 
         BsonDocument commandResult = executeFindCommand(300, 0);
-        cursor = new CommandBatchCursor<>(commandResult, 0, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 0, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertEquals(300, cursorFlatten().size());
@@ -415,7 +413,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("should respect batch size")
     void shouldRespectBatchSize() {
         BsonDocument commandResult = executeFindCommand(2);
-        cursor = new CommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertEquals(2, cursor.getBatchSize());
@@ -432,7 +430,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("should throw cursor not found exception")
     void shouldThrowCursorNotFoundException() {
         BsonDocument commandResult = executeFindCommand(2);
-        cursor = new CommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         ServerCursor serverCursor = cursor.getServerCursor();
@@ -455,7 +453,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
     @DisplayName("should report available documents")
     void shouldReportAvailableDocuments() {
         BsonDocument commandResult = executeFindCommand(3);
-        cursor = new CommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 2, 0, DOCUMENT_DECODER,
                                           null, connectionSource, connection);
 
         assertEquals(3, cursor.available());

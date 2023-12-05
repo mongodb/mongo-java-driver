@@ -109,6 +109,16 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type TagSet = com.mongodb.TagSet
 
   /**
+   * The timeout mode for a cursor
+   *
+   * For operations that create cursors, `timeoutMS` can either cap the lifetime of the cursor or be applied separately to the
+   * original operation and all next calls.
+   *
+   * @since 4.x
+   */
+  type TimeoutMode = com.mongodb.client.cursor.TimeoutMode
+
+  /**
    * Controls the acknowledgment of write operations with various options.
    */
   type WriteConcern = com.mongodb.WriteConcern

@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -330,9 +331,10 @@ final class SyncOperationHelper {
                         connection.getDescription().getServerAddress());
     }
 
-    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-            final BsonValue comment, final ConnectionSource source, final Connection connection, final int batchSize) {
-        return new CommandBatchCursor<>(cursorDocument, batchSize, 0, decoder, comment, source, connection);
+    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final TimeoutMode timeoutMode, final BsonDocument cursorDocument,
+            final int batchSize, final Decoder<T> decoder, final BsonValue comment, final ConnectionSource source,
+            final Connection connection) {
+        return new CommandBatchCursor<>(timeoutMode, cursorDocument, batchSize, 0, decoder, comment, source, connection);
     }
 
     private SyncOperationHelper() {

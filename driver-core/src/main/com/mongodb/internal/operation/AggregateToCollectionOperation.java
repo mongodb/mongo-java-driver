@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -31,7 +32,6 @@ import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
@@ -41,6 +41,7 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
+import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -150,6 +151,11 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
         return this;
     }
 
+    public AggregateToCollectionOperation timeoutMode(@Nullable final TimeoutMode timeoutMode) {
+        isTrueArgument("timeoutMode cannot be ITERATION.", timeoutMode == null || timeoutMode.equals(TimeoutMode.CURSOR_LIFETIME));
+        return this;
+    }
+
     @Override
     public TimeoutSettings getTimeoutSettings() {
         return timeoutSettings;
@@ -189,10 +195,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
             BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
             commandDocument.put("pipeline", new BsonArray(pipeline));
-            long maxTimeMS = operationContext.getTimeoutContext().getMaxTimeMS();
-            if (maxTimeMS > 0) {
-                commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
-            }
+            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
             if (allowDiskUse != null) {
                 commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
             }

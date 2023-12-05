@@ -23,6 +23,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.FindOptions;
@@ -97,6 +98,13 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     public FindIterable<TResult> batchSize(final int batchSize) {
         super.batchSize(batchSize);
         findOptions.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        findOptions.timeoutMode(timeoutMode);
         return this;
     }
 

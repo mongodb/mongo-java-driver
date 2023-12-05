@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -34,6 +35,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
@@ -48,8 +50,8 @@ import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceE
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
+import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
@@ -70,8 +72,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     private final Decoder<T> decoder;
     private boolean retryReads;
     private int batchSize;
-
     private BsonValue comment;
+    private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
     public ListIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace, final Decoder<T> decoder) {
         this.timeoutSettings = timeoutSettings;
@@ -104,6 +106,18 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     public ListIndexesOperation<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
+        return this;
+    }
+
+    public TimeoutMode getTimeoutMode() {
+        return timeoutMode;
+    }
+
+    public ListIndexesOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
+        isTrueArgument("timeoutMode requires timeoutMS.", timeoutMode == null || timeoutSettings.getTimeoutMS() != null);
+        if (timeoutMode != null) {
+            this.timeoutMode = timeoutMode;
+        }
         return this;
     }
 
@@ -161,21 +175,22 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument command = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
+            BsonDocument commandDocument = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
-
-            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
-            putIfNotNull(command, "comment", comment);
-            return command;
+            addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
+            putIfNotNull(commandDocument, "comment", comment);
+            return commandDocument;
         };
     }
 
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return (result, source, connection) -> cursorDocumentToBatchCursor(result, decoder, comment, source, connection, batchSize);
+        return (result, source, connection) ->
+                cursorDocumentToBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> cursorDocumentToAsyncBatchCursor(result, decoder, comment, source, connection, batchSize);
+        return (result, source, connection) ->
+                cursorDocumentToAsyncBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection);
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

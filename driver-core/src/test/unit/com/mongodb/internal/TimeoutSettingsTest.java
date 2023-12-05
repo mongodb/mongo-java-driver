@@ -16,6 +16,7 @@
 package com.mongodb.internal;
 
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.Collection;
@@ -25,6 +26,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 final class TimeoutSettingsTest {
@@ -51,7 +53,7 @@ final class TimeoutSettingsTest {
                             .withTimeoutMS(100)
                             .withDefaultTimeoutMS(1000)
                             .withMaxTimeMS(111)
-                            .withMaxAwaitTimeMS(1111)
+                            .withMaxAwaitTimeMS(11)
                             .withMaxCommitMS(999L)
                             .withWTimeoutMS(222L);
                     assertAll(
@@ -61,12 +63,20 @@ final class TimeoutSettingsTest {
                             () -> assertEquals(100, timeoutSettings.getTimeoutMS()),
                             () -> assertEquals(1000, timeoutSettings.getDefaultTimeoutMS()),
                             () -> assertEquals(111, timeoutSettings.getMaxTimeMS()),
-                            () -> assertEquals(1111, timeoutSettings.getMaxAwaitTimeMS()),
+                            () -> assertEquals(11, timeoutSettings.getMaxAwaitTimeMS()),
                             () -> assertEquals(999, timeoutSettings.getMaxCommitTimeMS()),
                             () -> assertEquals(222, timeoutSettings.getWTimeoutMS())
                     );
                 })
         );
+    }
+
+    @Test
+    public void testTimeoutSettingsValidation() {
+        assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withTimeoutMS(-1));
+        assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withMaxAwaitTimeMS(-1));
+        assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withMaxTimeMS(-1));
+        assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withTimeoutMS(10).withMaxAwaitTimeMS(11));
     }
 
     private TimeoutSettingsTest() {

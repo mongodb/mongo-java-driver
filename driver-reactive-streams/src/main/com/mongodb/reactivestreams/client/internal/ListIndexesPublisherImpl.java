@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
@@ -62,7 +63,14 @@ final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implemen
         return this;
     }
 
+    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
+    @Override
+    public ListIndexesPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
-        return getOperations().listIndexes(getDocumentClass(), initialBatchSize, maxTimeMS, comment);
+        return getOperations().listIndexes(getDocumentClass(), initialBatchSize, maxTimeMS, comment, getTimeoutMode());
     }
 }

@@ -84,4 +84,5 @@ class SyncMongoIterable<T> implements MongoIterable<T> {
         this.batchSize = batchSize;
         return this;
     }
+
 }

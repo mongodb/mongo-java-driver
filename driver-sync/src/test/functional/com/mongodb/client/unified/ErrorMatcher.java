@@ -64,6 +64,18 @@ final class ErrorMatcher {
                     e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
                             || e instanceof MongoSocketException);
         }
+        if (expectedError.containsKey("isTimeoutError")) {
+            assertEquals(context.getMessage("Exception must be of type MongoExecutionTimeoutException"),
+                    expectedError.getBoolean("isTimeoutError").getValue(),
+                    e instanceof MongoExecutionTimeoutException);
+        }
+
+        if (expectedError.containsKey("isTimeoutError")) {
+            assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
+                    expectedError.getBoolean("isTimeoutError").getValue(),
+                    e instanceof MongoOperationTimeoutException);
+        }
+
         if (expectedError.containsKey("errorContains")) {
             String errorContains = expectedError.getString("errorContains").getValue();
             assertTrue(context.getMessage("Error message does not contain expected string: " + errorContains),
@@ -113,10 +125,6 @@ final class ErrorMatcher {
             // that can currently be done
             assertTrue(context.getMessage("Exception must be of type MongoBulkWriteException when checking for results"),
                     e instanceof MongoBulkWriteException);
-        }
-        if (expectedError.containsKey("isTimeoutError")) {
-            assertTrue(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
-                    e instanceof MongoOperationTimeoutException);
         }
         context.pop();
     }

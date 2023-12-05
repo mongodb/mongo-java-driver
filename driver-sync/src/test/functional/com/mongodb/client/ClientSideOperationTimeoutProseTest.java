@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal;
+package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
-public class ClientSideOperationsTimeoutAsyncProseTests extends ClientSideOperationsTimeoutProseTests {
+
+/**
+ * See https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.rst#prose-tests
+ */
+public final class ClientSideOperationTimeoutProseTest extends AbstractClientSideOperationsTimeoutProseTest {
 
     @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+    protected MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
+        return MongoClients.create(mongoClientSettings);
     }
 }

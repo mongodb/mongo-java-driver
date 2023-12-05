@@ -253,6 +253,21 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   def toCollection(): SingleObservable[Void] = wrapped.toCollection()
 
   /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 4.x
+   */
+  def timeoutMode(timeoutMode: TimeoutMode): MapReduceObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
+
+  /**
    * Helper to return a single observable limited to the first result.
    *
    * @return a single observable which will the first result.

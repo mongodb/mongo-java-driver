@@ -21,9 +21,9 @@ import com.mongodb.client.model.Collation
 import com.mongodb.{ CursorType, ExplainVerbosity }
 import org.bson.Document
 import org.bson.conversions.Bson
-import org.mongodb.scala.FindObservable
 import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.{ FindObservable, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
 import scala.reflect.ClassTag
@@ -86,6 +86,11 @@ case class SyncFindIterable[T](wrapped: FindObservable[T]) extends SyncMongoIter
 
   override def batchSize(batchSize: Int): FindIterable[T] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  override def timeoutMode(timeoutMode: TimeoutMode): FindIterable[T] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

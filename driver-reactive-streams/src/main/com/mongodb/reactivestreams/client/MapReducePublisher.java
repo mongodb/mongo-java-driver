@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client;
 
 
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -203,6 +204,26 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     MapReducePublisher<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 4.x
+     */
+    MapReducePublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Helper to return a publisher limited to the first result.
