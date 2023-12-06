@@ -44,7 +44,6 @@ public final class DBCollectionFindOptions {
     private DBObject sort;
     private CursorType cursorType = CursorType.NonTailable;
     private boolean noCursorTimeout;
-    private boolean oplogReplay;
     private boolean partial;
     private ReadPreference readPreference;
     private ReadConcern readConcern;
@@ -79,7 +78,6 @@ public final class DBCollectionFindOptions {
         copiedOptions.sort(sort);
         copiedOptions.cursorType(cursorType);
         copiedOptions.noCursorTimeout(noCursorTimeout);
-        copiedOptions.oplogReplay(oplogReplay);
         copiedOptions.partial(partial);
         copiedOptions.readPreference(readPreference);
         copiedOptions.readConcern(readConcern);
@@ -291,30 +289,6 @@ public final class DBCollectionFindOptions {
      */
     public DBCollectionFindOptions noCursorTimeout(final boolean noCursorTimeout) {
         this.noCursorTimeout = noCursorTimeout;
-        return this;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @return if oplog replay is enabled
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    public boolean isOplogReplay() {
-        return oplogReplay;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    public DBCollectionFindOptions oplogReplay(final boolean oplogReplay) {
-        this.oplogReplay = oplogReplay;
         return this;
     }
 

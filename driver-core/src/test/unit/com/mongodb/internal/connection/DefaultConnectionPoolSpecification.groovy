@@ -20,7 +20,6 @@ import com.mongodb.MongoConnectionPoolClearedException
 import com.mongodb.MongoServerUnavailableException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
-import com.mongodb.logging.TestLoggingInterceptor
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
@@ -31,6 +30,7 @@ import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.inject.EmptyProvider
 import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.internal.logging.LogMessage
+import com.mongodb.logging.TestLoggingInterceptor
 import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Subject
@@ -191,7 +191,6 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         1 * listener.connectionPoolCreated { it.serverId == SERVER_ID && it.settings == settings }
-        1 * listener.connectionPoolOpened { it.serverId == SERVER_ID && it.settings == settings }
     }
 
     def 'should invoke connection pool closed event'() {
@@ -218,7 +217,6 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         1 * listener.connectionCreated { it.connectionId.serverId == SERVER_ID }
-        1 * listener.connectionAdded { it.connectionId.serverId == SERVER_ID }
         1 * listener.connectionReady { it.connectionId.serverId == SERVER_ID }
     }
 
@@ -418,7 +416,6 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         1 * listener.connectionCreated { it.connectionId.serverId == SERVER_ID }
-        1 * listener.connectionAdded { it.connectionId.serverId == SERVER_ID }
         1 * listener.connectionReady { it.connectionId.serverId == SERVER_ID }
     }
 
@@ -436,7 +433,6 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         1 * listener.connectionClosed { it.connectionId.serverId == SERVER_ID }
-        1 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID }
     }
 
     def 'should fire asynchronous connection removed from pool event'() {
@@ -453,7 +449,6 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         1 * listener.connectionClosed { it.connectionId.serverId == SERVER_ID }
-        1 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID }
     }
 
     def 'should fire connection pool events on check out and check in'() {

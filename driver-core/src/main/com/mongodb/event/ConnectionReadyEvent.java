@@ -48,18 +48,6 @@ public final class ConnectionReadyEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param connectionId the connection id
-     * @deprecated Prefer {@link ConnectionReadyEvent#ConnectionReadyEvent(ConnectionId, long)}.
-     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
-     */
-    @Deprecated
-    public ConnectionReadyEvent(final ConnectionId connectionId) {
-        this(connectionId, 0);
-    }
-
-    /**
      * Gets the connection id
      *
      * @return the connection id

@@ -29,7 +29,6 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
@@ -186,8 +185,8 @@ public abstract class AbstractConnectionPoolTest {
                                 Collections.emptyList(),
                                 LoggerSettings.builder().build(),
                                 new TestCommandListener(),
-                                ClusterFixture.getServerApi(),
-                                null),
+                                ClusterFixture.getServerApi()
+                        ),
                         settings, internalSettings, sdamProvider));
                 sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockedCluster(), serverId, mock(ServerListener.class),
                         mock(ServerMonitor.class), pool, connectionMode));
@@ -422,9 +421,6 @@ public abstract class AbstractConnectionPoolTest {
 
     private Set<Class<?>> getIgnoredEventClasses() {
         Set<Class<?>> ignoredEventClasses = new HashSet<>();
-        ignoredEventClasses.add(com.mongodb.event.ConnectionPoolOpenedEvent.class);
-        ignoredEventClasses.add(com.mongodb.event.ConnectionAddedEvent.class);
-        ignoredEventClasses.add(com.mongodb.event.ConnectionRemovedEvent.class);
         for (BsonValue cur : definition.getArray("ignore", new BsonArray())) {
             String type = cur.asString().getValue();
             Class<?> eventClass = getEventClass(type);

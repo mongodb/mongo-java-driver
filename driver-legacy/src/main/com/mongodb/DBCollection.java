@@ -1918,38 +1918,6 @@ public class DBCollection {
     }
 
     /**
-     * The collStats command returns a variety of storage statistics for a given collection
-     *
-     * @return a CommandResult containing the statistics about this collection
-     * @mongodb.driver.manual reference/command/collStats/ collStats Command
-     * @mongodb.driver.manual reference/operator/aggregation/collStats/ $collStats
-     * @deprecated If you are using server release 3.4 or newer, use the {@code $collStats} aggregation pipeline stage via
-     * {@link #aggregate(List, AggregationOptions)} instead.
-     * This method uses the {@code collStats} command, which is deprecated since server release 6.2.
-     */
-    @Deprecated
-    public CommandResult getStats() {
-        return getDB().executeCommand(new BsonDocument("collStats", new BsonString(getName())), getReadPreference());
-    }
-
-    /**
-     * Checks whether this collection is capped
-     *
-     * @return true if this is a capped collection
-     * @mongodb.driver.manual core/capped-collections/#check-if-a-collection-is-capped Capped Collections
-     * @mongodb.driver.manual reference/operator/aggregation/collStats/ $collStats
-     * @deprecated If you are using server release 3.4 or newer, use the {@code $collStats} aggregation pipeline stage via
-     * {@link #aggregate(List, AggregationOptions)} instead, and inspect the {@code storageStats.capped} field.
-     * This method uses the {@code collStats} command, which is deprecated since server release 6.2.
-     */
-    @Deprecated
-    public boolean isCapped() {
-        CommandResult commandResult = getStats();
-        Object cappedField = commandResult.get("capped");
-        return cappedField != null && (cappedField.equals(1) || cappedField.equals(true));
-    }
-
-    /**
      * Gets the default class for objects in the collection
      *
      * @return the class
@@ -2138,9 +2106,6 @@ public class DBCollection {
         }
         if (options.containsField("max")) {
             request.max(convertOptionsToType(options, "max", Double.class));
-        }
-        if (options.containsField("bucketSize")) {
-            request.bucketSize(convertOptionsToType(options, "bucketSize", Double.class));
         }
         if (options.containsField("dropDups")) {
             request.dropDups(convertOptionsToType(options, "dropDups", Boolean.class));

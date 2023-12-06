@@ -57,8 +57,6 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private long maxTimeMS;
     private com.mongodb.client.model.MapReduceAction action = com.mongodb.client.model.MapReduceAction.REPLACE;
     private String databaseName;
-    private boolean sharded;
-    private boolean nonAtomic;
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
@@ -140,20 +138,6 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         return this;
     }
 
-    @Deprecated
-    @Override
-    public com.mongodb.reactivestreams.client.MapReducePublisher<T> sharded(final boolean sharded) {
-        this.sharded = sharded;
-        return this;
-    }
-
-    @Deprecated
-    @Override
-    public com.mongodb.reactivestreams.client.MapReducePublisher<T> nonAtomic(final boolean nonAtomic) {
-        this.nonAtomic = nonAtomic;
-        return this;
-    }
-
     @Override
     public com.mongodb.reactivestreams.client.MapReducePublisher<T> batchSize(final int batchSize) {
         super.batchSize(batchSize);
@@ -211,8 +195,7 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         return new WrappedMapReduceWriteOperation(getOperations().mapReduceToCollection(databaseName, collectionName, mapFunction,
                                                                                         reduceFunction, finalizeFunction, filter, limit,
                                                                                         maxTimeMS, jsMode, scope, sort, verbose, action,
-                                                                                        nonAtomic, sharded,
-                                                                                        bypassDocumentValidation, collation));
+                bypassDocumentValidation, collation));
     }
 
     private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(final int initialBatchSize) {

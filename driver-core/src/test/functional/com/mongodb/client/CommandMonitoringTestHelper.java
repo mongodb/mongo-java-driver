@@ -100,10 +100,9 @@ public final class CommandMonitoringTestHelper {
                         commandDocument);
             } else if (eventType.equals("command_succeeded_event")) {
                 BsonDocument replyDocument = eventDescriptionDocument.get("reply").asDocument();
-                commandEvent = new CommandSucceededEvent(null, 1, 1, null, commandName, replyDocument, 1);
-
+                commandEvent = new CommandSucceededEvent(null, 1, 1, null, null, commandName, replyDocument, 1);
             } else if (eventType.equals("command_failed_event")) {
-                commandEvent = new CommandFailedEvent(null, 1, 1, null, commandName, 1, null);
+                commandEvent = new CommandFailedEvent(null, 1, 1, null, null, commandName, 1, null);
             } else {
                 throw new UnsupportedOperationException("Unsupported command event type: " + eventType);
             }
@@ -218,7 +217,8 @@ public final class CommandMonitoringTestHelper {
             }
         }
         return new CommandSucceededEvent(actual.getRequestContext(), actual.getOperationId(), actual.getRequestId(),
-                actual.getConnectionDescription(), actual.getCommandName(), response, actual.getElapsedTime(TimeUnit.NANOSECONDS));
+                actual.getConnectionDescription(), actual.getDatabaseName(), actual.getCommandName(), response,
+                actual.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
     private static CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent event,

@@ -42,17 +42,6 @@ public final class ConnectionCheckOutStartedEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param serverId the server id
-     * @deprecated Prefer {@link ConnectionCheckOutStartedEvent#ConnectionCheckOutStartedEvent(ServerId, long)}
-     */
-    @Deprecated
-    public ConnectionCheckOutStartedEvent(final ServerId serverId) {
-        this(serverId, -1);
-    }
-
-    /**
      * Gets the server id
      *
      * @return the server id

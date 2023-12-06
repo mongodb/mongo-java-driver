@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.annotations.ThreadSafe;
 import org.bson.ByteBuf;
 
 /**
  * A provider of instances of ByteBuf.
- *
- * @since 3.0
- * @deprecated There is no replacement for this interface.
  */
-@Deprecated
 @ThreadSafe
 public interface BufferProvider {
     /**

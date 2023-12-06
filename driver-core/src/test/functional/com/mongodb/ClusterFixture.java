@@ -17,22 +17,18 @@
 package com.mongodb;
 
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.connection.TlsChannelStreamFactoryFactory;
-import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -49,10 +45,17 @@ import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.SessionBinding;
 import com.mongodb.internal.binding.SingleConnectionBinding;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.connection.DefaultInetAddressResolver;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 import com.mongodb.internal.connection.MongoCredentialWithCache;
+import com.mongodb.internal.connection.SocketStreamFactory;
+import com.mongodb.internal.connection.StreamFactory;
+import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.BatchCursor;
@@ -103,7 +106,6 @@ import static org.junit.Assume.assumeTrue;
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
  * super-classes to share functionality whilst minimising duplication.
  */
-@SuppressWarnings("deprecation")
 public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
@@ -128,7 +130,7 @@ public final class ClusterFixture {
     private static ServerVersion serverVersion;
     private static BsonDocument serverParameters;
 
-    private static NettyStreamFactoryFactory nettyStreamFactoryFactory;
+    private static NettyTransportSettings nettyTransportSettings;
 
     static {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -256,7 +258,7 @@ public final class ClusterFixture {
 
         // Figure out what the connection string should be
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
-                new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
+                new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
             BsonDocument helloResult = new CommandReadOperation<>("admin",
                     new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
@@ -366,7 +368,7 @@ public final class ClusterFixture {
 
     public static synchronized Cluster getCluster() {
         if (cluster == null) {
-            cluster = createCluster(new SocketStreamFactory(getSocketSettings(), getSslSettings()));
+            cluster = createCluster(new SocketStreamFactory(new DefaultInetAddressResolver(), getSocketSettings(), getSslSettings()));
         }
         return cluster;
     }
@@ -396,7 +398,7 @@ public final class ClusterFixture {
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                 streamFactory, streamFactory, credential, LoggerSettings.builder().build(), null, null, null,
-                Collections.emptyList(), getServerApi(), null, null);
+                Collections.emptyList(), getServerApi(), null);
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
@@ -405,35 +407,40 @@ public final class ClusterFixture {
                 ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
                 InternalConnectionPoolSettings.builder().build(),
                 streamFactory,
-                new SocketStreamFactory(SocketSettings.builder().readTimeout(5, SECONDS).build(), getSslSettings(connectionString)),
+                new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().readTimeout(5, SECONDS).build(),
+                        getSslSettings(connectionString)),
                 connectionString.getCredential(),
                 LoggerSettings.builder().build(), null, null, null,
-                connectionString.getCompressorList(), getServerApi(), null, null);
+                connectionString.getCompressorList(), getServerApi(), null);
     }
 
     public static StreamFactory getStreamFactory() {
-        return new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
+        return new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), getSslSettings());
     }
 
     public static StreamFactory getAsyncStreamFactory() {
-        StreamFactoryFactory overriddenStreamFactoryFactory = getOverriddenStreamFactoryFactory();
-        if (overriddenStreamFactoryFactory == null) { // use NIO2
+        TransportSettings transportSettings = getOverriddenTransportSettings();
+        if (transportSettings == null) { // use NIO2
             if (getSslSettings().isEnabled()) {
-                return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
+                return new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver()).create(getSocketSettings(), getSslSettings());
             } else {
-                return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
+                return new AsynchronousSocketChannelStreamFactory(new DefaultInetAddressResolver(), getSocketSettings(), getSslSettings());
             }
         } else {
+            StreamFactoryFactory overriddenStreamFactoryFactory = NettyStreamFactoryFactory.builder()
+                    .applySettings((NettyTransportSettings) transportSettings)
+                    .inetAddressResolver(new DefaultInetAddressResolver())
+                    .build();
             return assertNotNull(overriddenStreamFactoryFactory).create(getSocketSettings(), getSslSettings());
         }
     }
 
     @Nullable
-    public static StreamFactoryFactory getOverriddenStreamFactoryFactory() {
+    public static TransportSettings getOverriddenTransportSettings() {
         String streamType = System.getProperty("org.mongodb.test.async.type", "nio2");
 
-        if (nettyStreamFactoryFactory == null && streamType.equals("netty")) {
-            NettyStreamFactoryFactory.Builder builder = NettyStreamFactoryFactory.builder();
+        if (nettyTransportSettings == null && streamType.equals("netty")) {
+            NettyTransportSettings.Builder builder = TransportSettings.nettyBuilder();
             String sslProvider = System.getProperty("org.mongodb.test.netty.ssl.provider");
             if (sslProvider != null) {
                 SslContext sslContext;
@@ -446,9 +453,9 @@ public final class ClusterFixture {
                 }
                 builder.sslContext(sslContext);
             }
-            nettyStreamFactoryFactory = builder.build();
+            nettyTransportSettings = builder.build();
         }
-        return nettyStreamFactoryFactory;
+        return nettyTransportSettings;
     }
 
     private static SocketSettings getSocketSettings() {

@@ -16,13 +16,14 @@
 
 package org.bson.codecs.pojo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class TypeParameterMapTest {
 
@@ -49,8 +50,9 @@ public final class TypeParameterMapTest {
         assertEquals(expected, typeParameterMap.getPropertyToClassParamIndexMap());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testFieldCannotBeGenericAndContainTypeParameters() {
-        TypeParameterMap.builder().addIndex(1).addIndex(2, 2).build();
+        assertThrows(IllegalStateException.class, () ->
+                TypeParameterMap.builder().addIndex(1).addIndex(2, 2).build());
     }
 }

@@ -19,7 +19,9 @@ package org.bson.codecs;
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
 import org.bson.types.Decimal128;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class DoubleCodecTest extends CodecTestCase {
 
@@ -37,24 +39,24 @@ public final class DoubleCodecTest extends CodecTestCase {
         roundTrip(new Document("a", Decimal128.parse("10")), expected);
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingLossyLongValues() {
-        roundTrip(new Document("a", Long.MAX_VALUE - 1));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", Long.MAX_VALUE - 1)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingLossyLongValues2() {
-        roundTrip(new Document("a", Long.MIN_VALUE + 1));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", Long.MIN_VALUE + 1)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingLossyDecimal128Values() {
-        roundTrip(new Document("a", Decimal128.parse("10.0")));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", Decimal128.parse("10.0"))));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingNonExpressibleDecimal128Values() {
-        roundTrip(new Document("a", Decimal128.parse("NaN")));
+        assertThrows(BsonInvalidOperationException.class, () -> roundTrip(new Document("a", Decimal128.parse("NaN"))));
     }
 
     @Override

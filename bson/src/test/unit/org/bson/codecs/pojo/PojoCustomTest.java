@@ -23,7 +23,9 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.LongCodec;
+import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.SimpleEnum;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
@@ -79,7 +81,7 @@ import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNullModel;
 import org.bson.types.ObjectId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -99,11 +101,11 @@ import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SuppressWarnings("deprecation")
 public final class PojoCustomTest extends PojoTestCase {
 
     @Test
@@ -283,68 +285,68 @@ public final class PojoCustomTest extends PojoTestCase {
                         + "'name': 'B'}]}");
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionInvalidTypeForCollection() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterMutableModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        decodingShouldFail(getCodec(builder, CollectionsGetterMutableModel.class), "{listField: ['1', '2']}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(builder, CollectionsGetterMutableModel.class), "{listField: ['1', '2']}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionInvalidTypeForMap() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterMutableModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        decodingShouldFail(getCodec(builder, MapGetterMutableModel.class), "{mapField: {a: '1'}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(builder, MapGetterMutableModel.class), "{mapField: {a: '1'}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionImmutableCollection() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterImmutableModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        roundTrip(builder, new CollectionsGetterImmutableModel(asList(1, 2)), "{listField: [1, 2]}");
+        assertThrows(CodecConfigurationException.class, () ->
+                roundTrip(builder, new CollectionsGetterImmutableModel(asList(1, 2)), "{listField: [1, 2]}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionImmutableMap() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterImmutableModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        roundTrip(builder, new MapGetterImmutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                roundTrip(builder, new MapGetterImmutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionNullCollection() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterNullModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        roundTrip(builder, new CollectionsGetterNullModel(asList(1, 2)), "{listField: [1, 2]}");
+        assertThrows(CodecConfigurationException.class, () ->
+                roundTrip(builder, new CollectionsGetterNullModel(asList(1, 2)), "{listField: [1, 2]}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionNullMap() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterNullModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        roundTrip(builder, new MapGetterNullModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                roundTrip(builder, new MapGetterNullModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionNotEmptyCollection() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterNonEmptyModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        roundTrip(builder, new CollectionsGetterNonEmptyModel(asList(1, 2)), "{listField: [1, 2]}");
+        assertThrows(CodecConfigurationException.class, () ->
+                roundTrip(builder, new CollectionsGetterNonEmptyModel(asList(1, 2)), "{listField: [1, 2]}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testUseGettersForSettersConventionNotEmptyMap() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterNonEmptyModel.class)
                 .conventions(getDefaultAndUseGettersConvention());
-
-        roundTrip(builder, new MapGetterNonEmptyModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                roundTrip(builder, new MapGetterNonEmptyModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}"));
     }
 
     @Test
@@ -463,43 +465,39 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testMapStringObjectModel() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
-        CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()),
-                fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
+        CodecRegistry registry = fromRegistries(fromProviders(new MapCodecProvider(), new IterableCodecProvider(), new ValueCodecProvider(),
+                        getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
         roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testMapStringObjectModelWithObjectCodec() {
         MapStringObjectModel model = new MapStringObjectModel(new HashMap<>(Document.parse("{a : 1, b: 'b', c: [1, 2, 3]}")));
-        CodecRegistry registry = fromRegistries(fromCodecs(new org.bson.codecs.MapCodec()), fromCodecs(new ObjectCodec()),
+        CodecRegistry registry = fromRegistries(fromProviders(new MapCodecProvider()), fromCodecs(new ObjectCodec()),
                 fromProviders(getPojoCodecProviderBuilder(MapStringObjectModel.class).build()));
-        roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}");
+        assertThrows(UnsupportedOperationException.class, () ->
+                roundTrip(registry, model, "{ map: {a : 1, b: 'b', c: [1, 2, 3]}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testEncodingInvalidMapModel() {
-        encodesTo(getPojoCodecProviderBuilder(InvalidMapModel.class), getInvalidMapModel(), "{'invalidMap': {'1': 1, '2': 2}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                encodesTo(getPojoCodecProviderBuilder(InvalidMapModel.class), getInvalidMapModel(), "{'invalidMap': {'1': 1, '2': 2}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testDecodingInvalidMapModel() {
-        try {
-            decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}");
-        } catch (CodecConfigurationException e) {
-            assertTrue(e.getMessage().startsWith("Failed to decode 'InvalidMapModel'. Decoding 'invalidMap' errored with:"));
-            throw e;
-        }
+        CodecConfigurationException e = assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}"));
+        assertTrue(e.getMessage().startsWith("Failed to decode 'InvalidMapModel'. Decoding 'invalidMap' errored with:"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testEncodingInvalidCollectionModel() {
-        try {
-            encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
-                "{collectionField: [1, 2, 3]}");
-        } catch (CodecConfigurationException e) {
-            assertTrue(e.getMessage().startsWith("Failed to encode 'InvalidCollectionModel'. Encoding 'collectionField' errored with:"));
-            throw e;
-        }
+        CodecConfigurationException e = assertThrows(CodecConfigurationException.class, () ->
+                encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
+                        "{collectionField: [1, 2, 3]}"));
+        assertTrue(e.getMessage().startsWith("Failed to encode 'InvalidCollectionModel'. Encoding 'collectionField' errored with:"));
     }
 
     @Test
@@ -508,108 +506,122 @@ public final class PojoCustomTest extends PojoTestCase {
                 "{'invalidMap': {'1': 1, '2': 2}}");
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testConstructorNotPublicModel() {
-        decodingShouldFail(getCodec(ConstructorNotPublicModel.class), "{'integerField': 99}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(ConstructorNotPublicModel.class), "{'integerField': 99}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testDataUnknownClass() {
         ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).enableDiscriminator(true).build();
-        try {
-            decodingShouldFail(getCodec(PojoCodecProvider.builder().register(classModel), SimpleModel.class), "{'_t': 'FakeModel'}");
-        } catch (CodecConfigurationException e) {
-            assertTrue(e.getMessage().startsWith("Failed to decode 'SimpleModel'. Decoding errored with:"));
-            throw e;
-        }
+        CodecConfigurationException e = assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(PojoCodecProvider.builder().register(classModel), SimpleModel.class), "{'_t': 'FakeModel'}"));
+        assertTrue(e.getMessage().startsWith("Failed to decode 'SimpleModel'. Decoding errored with:"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidTypeForField() {
-        decodingShouldFail(getCodec(SimpleModel.class), "{'_t': 'SimpleModel', 'stringField': 123}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(SimpleModel.class), "{'_t': 'SimpleModel', 'stringField': 123}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidTypeForPrimitiveField() {
-        decodingShouldFail(getCodec(PrimitivesModel.class), "{ '_t': 'PrimitivesModel', 'myBoolean': null}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(PrimitivesModel.class), "{ '_t': 'PrimitivesModel', 'myBoolean': null}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidTypeForModelField() {
-        decodingShouldFail(getCodec(SimpleNestedPojoModel.class), "{ '_t': 'SimpleNestedPojoModel', 'simple': 123}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(SimpleNestedPojoModel.class), "{ '_t': 'SimpleNestedPojoModel', 'simple': 123}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidDiscriminatorInNestedModel() {
-        decodingShouldFail(getCodec(SimpleNestedPojoModel.class), "{ '_t': 'SimpleNestedPojoModel',"
-                + "'simple': {'_t': 'FakeModel', 'integerField': 42, 'stringField': 'myString'}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(SimpleNestedPojoModel.class), "{ '_t': 'SimpleNestedPojoModel',"
+                        + "'simple': {'_t': 'FakeModel', 'integerField': 42, 'stringField': 'myString'}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCannotEncodeUnspecializedClasses() {
         CodecRegistry registry = fromProviders(getPojoCodecProviderBuilder(GenericTreeModel.class).build());
-        encode(registry.get(GenericTreeModel.class), getGenericTreeModel(), false);
+        assertThrows(CodecConfigurationException.class, () ->
+                encode(registry.get(GenericTreeModel.class), getGenericTreeModel(), false));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCannotDecodeUnspecializedClasses() {
-        decodingShouldFail(getCodec(GenericTreeModel.class),
-                "{'field1': 'top', 'field2': 1, "
-                        + "'left': {'field1': 'left', 'field2': 2, 'left': {'field1': 'left', 'field2': 3}}, "
-                        + "'right': {'field1': 'right', 'field2': 4, 'left': {'field1': 'left', 'field2': 5}}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(GenericTreeModel.class),
+                        "{'field1': 'top', 'field2': 1, "
+                                + "'left': {'field1': 'left', 'field2': 2, 'left': {'field1': 'left', 'field2': 3}}, "
+                                + "'right': {'field1': 'right', 'field2': 4, 'left': {'field1': 'left', 'field2': 5}}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testBsonCreatorPrimitivesAndNullValues() {
-        decodingShouldFail(getCodec(CreatorConstructorPrimitivesModel.class), "{intField: 100,  stringField: 'test'}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(CreatorConstructorPrimitivesModel.class), "{intField: 100,  stringField: 'test'}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorMethodThrowsExceptionModel() {
-        decodingShouldFail(getCodec(CreatorMethodThrowsExceptionModel.class),
-                "{'integerField': 10, 'stringField': 'eleven', 'longField': {$numberLong: '12'}}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(CreatorMethodThrowsExceptionModel.class),
+                        "{'integerField': 10, 'stringField': 'eleven', 'longField': {$numberLong: '12'}}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testCreatorConstructorThrowsExceptionModel() {
-        decodingShouldFail(getCodec(CreatorConstructorThrowsExceptionModel.class), "{}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(CreatorConstructorThrowsExceptionModel.class), "{}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidSetterModel() {
-        decodingShouldFail(getCodec(InvalidSetterArgsModel.class), "{'integerField': 42, 'stringField': 'myString'}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(InvalidSetterArgsModel.class), "{'integerField': 42, 'stringField': 'myString'}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidGetterAndSetterModelEncoding() {
         InvalidGetterAndSetterModel model = new InvalidGetterAndSetterModel(42, "myString");
-        roundTrip(getPojoCodecProviderBuilder(InvalidGetterAndSetterModel.class), model, "{'integerField': 42, 'stringField': 'myString'}");
+        assertThrows(CodecConfigurationException.class, () ->
+                roundTrip(getPojoCodecProviderBuilder(InvalidGetterAndSetterModel.class), model, "{'integerField': 42, 'stringField': 'myString'}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidGetterAndSetterModelDecoding() {
-        decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidBsonRepresentationStringDecoding() {
-        decodingShouldFail(getCodec(BsonRepresentationUnsupportedString.class), "{'id': 'hello', s: 3}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(BsonRepresentationUnsupportedString.class), "{'id': 'hello', s: 3}"));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidBsonRepresentationStringEncoding() {
-        encodesTo(getPojoCodecProviderBuilder(BsonRepresentationUnsupportedString.class),
-                new BsonRepresentationUnsupportedString("1"), "");
+        assertThrows(CodecConfigurationException.class, () ->
+                encodesTo(getPojoCodecProviderBuilder(BsonRepresentationUnsupportedString.class),
+                        new BsonRepresentationUnsupportedString("1"), ""));
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testInvalidBsonRepresentationIntDecoding() {
-        decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', age: '3'}");
+        assertThrows(CodecConfigurationException.class, () ->
+                decodingShouldFail(getCodec(BsonRepresentationUnsupportedInt.class), "{'id': 'hello', age: '3'}"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testStringIdIsNotObjectId() {
-        encodesTo(getCodec(BsonRepresentationModel.class), new BsonRepresentationModel("notanobjectid", 1), null);
+        assertThrows(IllegalArgumentException.class, () ->
+                encodesTo(getCodec(BsonRepresentationModel.class), new BsonRepresentationModel("notanobjectid", 1), null));
     }
 
     @Test
@@ -638,9 +650,10 @@ public final class PojoCustomTest extends PojoTestCase {
         roundTrip(actualRegistry, model, json);
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test
     public void testBsonExtraElementsInvalidModel() {
-        getPojoCodecProviderBuilder(BsonExtraElementsInvalidModel.class).build();
+        assertThrows(CodecConfigurationException.class, () ->
+                getPojoCodecProviderBuilder(BsonExtraElementsInvalidModel.class).build());
     }
 
     private List<Convention> getDefaultAndUseGettersConvention() {

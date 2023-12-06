@@ -31,37 +31,16 @@ import static org.bson.codecs.ContainerCodecHelper.readValue;
 
 /**
  * Encodes and decodes {@code Iterable} objects.
- *
- * @since 3.3
- * @deprecated Prefer {@link CollectionCodecProvider}
  */
-@Deprecated
 @SuppressWarnings("rawtypes")
-public class IterableCodec implements Codec<Iterable>, OverridableUuidRepresentationCodec<Iterable> {
+class IterableCodec implements Codec<Iterable>, OverridableUuidRepresentationCodec<Iterable> {
 
     private final CodecRegistry registry;
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final Transformer valueTransformer;
     private final UuidRepresentation uuidRepresentation;
 
-    /**
-     * Construct a new instance with the given {@code CodecRegistry} and {@code BsonTypeClassMap}.
-     *
-     * @param registry the non-null codec registry
-     * @param bsonTypeClassMap the non-null BsonTypeClassMap
-     */
-    public IterableCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
-        this(registry, bsonTypeClassMap, null);
-    }
-
-    /**
-     * Construct a new instance with the given {@code CodecRegistry} and {@code BsonTypeClassMap}.
-     *
-     * @param registry the non-null codec registry
-     * @param bsonTypeClassMap the non-null BsonTypeClassMap
-     * @param valueTransformer the value Transformer
-     */
-    public IterableCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
+    IterableCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
         this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
                 UuidRepresentation.UNSPECIFIED);
     }

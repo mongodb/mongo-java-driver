@@ -18,17 +18,18 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.IntegerCodec;
 import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.bson.codecs.pojo.PojoBuilderHelper.createPropertyModelBuilder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class PropertyModelBuilderTest {
 
@@ -67,12 +68,13 @@ public final class PropertyModelBuilderTest {
         assertFalse(propertyModelBuilder.isDiscriminatorEnabled());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testMustBeReadableOrWritable() {
-        createPropertyModelBuilder(PROPERTY_METADATA)
+        assertThrows(IllegalStateException.class, () ->
+                createPropertyModelBuilder(PROPERTY_METADATA)
                 .readName(null)
                 .writeName(null)
-                .build();
+                .build());
     }
 
     private static final List<Annotation> ANNOTATIONS = Collections.singletonList(

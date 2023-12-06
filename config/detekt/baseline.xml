@@ -4,8 +4,8 @@
   <CurrentIssues>
     <ID>IteratorNotThrowingNoSuchElementException:MongoCursor.kt$MongoCursor&lt;T : Any> : IteratorCloseable</ID>
     <ID>LargeClass:MongoCollectionTest.kt$MongoCollectionTest</ID>
-    <ID>LongMethod:FindFlowTest.kt$FindFlowTest$@Suppress("DEPRECATION") @Test fun shouldCallTheUnderlyingMethods()</ID>
-    <ID>LongMethod:FindIterableTest.kt$FindIterableTest$@Suppress("DEPRECATION") @Test fun shouldCallTheUnderlyingMethods()</ID>
+    <ID>LongMethod:FindFlowTest.kt$FindFlowTest$@Test fun shouldCallTheUnderlyingMethods()</ID>
+    <ID>LongMethod:FindIterableTest.kt$FindIterableTest$@Test fun shouldCallTheUnderlyingMethods()</ID>
     <ID>LongMethod:KotlinSerializerCodecTest.kt$KotlinSerializerCodecTest$@Test fun testDataClassOptionalBsonValues()</ID>
     <ID>MaxLineLength:MapReduceFlow.kt$MapReduceFlow$*</ID>
     <ID>MaxLineLength:MapReduceIterable.kt$MapReduceIterable$*</ID>

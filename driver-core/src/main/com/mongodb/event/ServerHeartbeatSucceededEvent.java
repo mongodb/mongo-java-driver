@@ -41,19 +41,6 @@ public final class ServerHeartbeatSucceededEvent {
      * @param connectionId the non-null connectionId
      * @param reply the non-null reply to an hello command
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
-     * @deprecated Prefer {@link #ServerHeartbeatSucceededEvent(ConnectionId, BsonDocument, long, boolean)}
-     */
-    @Deprecated
-    public ServerHeartbeatSucceededEvent(final ConnectionId connectionId, final BsonDocument reply, final long elapsedTimeNanos) {
-        this(connectionId, reply, elapsedTimeNanos, false);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param connectionId the non-null connectionId
-     * @param reply the non-null reply to an hello command
-     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      * @param awaited true if the response was awaited
      * @since 4.1
      */
