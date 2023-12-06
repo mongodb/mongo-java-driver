@@ -50,7 +50,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .cursorType(TailableAwait)
                 .noCursorTimeout(true)
                 .partial(true)
-                .maxTime(10, MILLISECONDS)
 
                 .comment(new BsonString('my comment'))
                 .hint(BsonDocument.parse('{ hint : 1}'))
@@ -70,7 +69,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .append('awaitData', BsonBoolean.TRUE)
                 .append('allowPartialResults', BsonBoolean.TRUE)
                 .append('noCursorTimeout', BsonBoolean.TRUE)
-                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
                 .append('comment', operation.getComment())
                 .append('hint', operation.getHint())
                 .append('min', operation.getMin())
