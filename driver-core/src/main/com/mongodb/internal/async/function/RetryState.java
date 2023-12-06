@@ -54,18 +54,6 @@ public final class RetryState {
     private Throwable previouslyChosenException;
 
     /**
-     * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
-     * @see #attempts()
-     */
-    private RetryState(final int retries, @Nullable final TimeoutContext timeoutContext) {
-        assertTrue(retries >= 0);
-        loopState = new LoopState();
-        attempts = retries == INFINITE_ATTEMPTS ? INFINITE_ATTEMPTS : retries + 1;
-        this.timeoutContext = timeoutContext;
-    }
-
-    /**
      * Creates a {@code RetryState} with a positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
      * If {@link TimeoutContext#hasTimeoutMS()} is true, the number of attempts is unbounded until {@link TimeoutContext#hasExpired()} is true.
      * Otherwise,the retry attempts count will be used to determine the maximum number of attempts.
@@ -100,6 +88,18 @@ public final class RetryState {
      */
     public RetryState(final TimeoutContext timeoutContext) {
         this(INFINITE_ATTEMPTS, timeoutContext);
+    }
+
+    /**
+     * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
+     * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
+     * @see #attempts()
+     */
+    private RetryState(final int retries, @Nullable final TimeoutContext timeoutContext) {
+        assertTrue(retries >= 0);
+        loopState = new LoopState();
+        attempts = retries == INFINITE_ATTEMPTS ? INFINITE_ATTEMPTS : retries + 1;
+        this.timeoutContext = timeoutContext;
     }
 
     /**
