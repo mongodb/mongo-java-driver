@@ -148,7 +148,9 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} SKIP_LEGACY_SHELL=${SKIP_LEGACY_SHELL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
+          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
+          AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
+          INSTALL_LEGACY_SHELL=${INSTALL_LEGACY_SHELL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     # run-orchestration generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
@@ -950,6 +952,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with regular aws credentials"
 
@@ -960,6 +963,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with assume role credentials"
 
@@ -970,6 +974,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with aws credentials as environment variables"
 
@@ -980,6 +985,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with aws credentials and session token as environment variables"
 
@@ -990,6 +996,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with aws EC2 credentials"
 
@@ -1000,6 +1007,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with web identity credentials"
 
@@ -1010,6 +1018,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws ECS auth test"
 
@@ -1473,7 +1482,6 @@ tasks:
             TOPOLOGY: "server"
             SSL: "nossl"
             AUTH: "noauth"
-            SKIP_LEGACY_SHELL: "true"
         - func: "run perf tests"
         - func: "send dashboard data"
 
