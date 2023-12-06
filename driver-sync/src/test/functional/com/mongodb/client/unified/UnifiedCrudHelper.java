@@ -419,6 +419,12 @@ final class UnifiedCrudHelper {
                 case "showRecordId":
                     iterable.showRecordId(cur.getValue().asBoolean().getValue());
                     break;
+                case "cursorType":
+                    setCursorType(iterable, cur);
+                    break;
+                case "timeoutMode":
+                    setTimeoutMode(iterable, cur);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
