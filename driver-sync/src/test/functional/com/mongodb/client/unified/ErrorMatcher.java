@@ -64,11 +64,6 @@ final class ErrorMatcher {
                     e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
                             || e instanceof MongoSocketException);
         }
-        if (expectedError.containsKey("isTimeoutError")) {
-            assertEquals(context.getMessage("Exception must be of type MongoExecutionTimeoutException"),
-                    expectedError.getBoolean("isTimeoutError").getValue(),
-                    e instanceof MongoExecutionTimeoutException);
-        }
 
         if (expectedError.containsKey("isTimeoutError")) {
             assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
