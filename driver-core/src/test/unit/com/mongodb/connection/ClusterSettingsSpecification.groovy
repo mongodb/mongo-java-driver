@@ -136,6 +136,17 @@ class ClusterSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'when srvHost is specified and mode is SINGLE, should throw'() {
+        when:
+        ClusterSettings.builder()
+                .srvHost('foo.bar.com')
+                .mode(ClusterConnectionMode.SINGLE)
+                .build()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'when srvHost is specified, should set mode to MULTIPLE if mode is not configured'() {
         when:
         def builder = ClusterSettings.builder()
@@ -181,14 +192,30 @@ class ClusterSettingsSpecification extends Specification {
 
     def 'when connection string is applied to builder, all properties should be set'() {
         when:
-        def settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018'))
-                                      .build()
+        def settings = ClusterSettings.builder()
+                .requiredReplicaSetName("test")
+                .applyConnectionString(new ConnectionString('mongodb://example.com:27018'))
+                .build()
 
         then:
         settings.mode == ClusterConnectionMode.SINGLE
         settings.hosts == [new ServerAddress('example.com:27018')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
+
+        when:
+        settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://example.com:27018'))
+                .requiredReplicaSetName("test")
+                .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.hosts == [new ServerAddress('example.com:27018')]
+        settings.requiredClusterType == ClusterType.REPLICA_SET
+        settings.requiredReplicaSetName == 'test'
         settings.srvMaxHosts == null
         settings.srvServiceName == 'mongodb'
 
@@ -216,8 +243,10 @@ class ClusterSettingsSpecification extends Specification {
         settings.srvServiceName == 'customname'
 
         when:
-        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?replicaSet=test'))
-                                  .build()
+        settings = ClusterSettings.builder()
+                .mode(ClusterConnectionMode.SINGLE)
+                .applyConnectionString(new ConnectionString('mongodb://example.com:27018/?replicaSet=test'))
+                .build()
 
         then:
         settings.mode == ClusterConnectionMode.MULTIPLE
@@ -235,6 +264,19 @@ class ClusterSettingsSpecification extends Specification {
         then:
         settings.mode == ClusterConnectionMode.MULTIPLE
         settings.hosts == [new ServerAddress('example.com:27018')]
+        settings.requiredClusterType == ClusterType.UNKNOWN
+        settings.requiredReplicaSetName == null
+        settings.srvMaxHosts == null
+        settings.srvServiceName == 'mongodb'
+
+        when:
+        settings = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString('mongodb://example.com:27017,example.com:27018/?directConnection=false'))
+                .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.hosts == [new ServerAddress('example.com:27017'), new ServerAddress('example.com:27018')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
         settings.srvMaxHosts == null
@@ -288,15 +330,16 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018')]
     }
 
-    def 'when cluster type is unknown and replica set name is specified, should set cluster type to ReplicaSet'() {
+    def 'when cluster type is UNKNOWN and replica set name is set, should set cluster type to REPLICA_SET and mode to MULTIPLE'() {
         when:
         def settings = ClusterSettings.builder().hosts([new ServerAddress()]).requiredReplicaSetName('yeah').build()
 
         then:
         ClusterType.REPLICA_SET == settings.requiredClusterType
+        ClusterConnectionMode.MULTIPLE == settings.mode
     }
 
-    def 'connection mode should default to single if one host or multiple if more'() {
+    def 'connection mode should default to SINGLE if replica set name is not set and one host, or MULTIPLE if more'() {
         when:
         def settings = ClusterSettings.builder().hosts([new ServerAddress()]).build()
 
@@ -310,9 +353,26 @@ class ClusterSettingsSpecification extends Specification {
         settings.mode == ClusterConnectionMode.MULTIPLE
     }
 
+    def 'when a valid mode is specified, should use it'() {
+        when:
+        def mode = ClusterConnectionMode.LOAD_BALANCED
+        def settings = ClusterSettings.builder().mode(mode).build()
+
+        then:
+        settings.mode == mode
+    }
+
     def 'when mode is Single and hosts size is greater than one, should throw'() {
         when:
         ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).mode(ClusterConnectionMode.SINGLE).build()
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString("mongodb://host1,host2/"))
+                .mode(ClusterConnectionMode.SINGLE)
+                .build()
         then:
         thrown(IllegalArgumentException)
     }
