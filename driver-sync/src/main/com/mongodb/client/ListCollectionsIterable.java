@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @since 3.0
  * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
-public interface ListCollectionsIterable<TResult> extends CommonListCollectionsIterable<TResult> {
+public interface ListCollectionsIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets the query filter to apply to the query.

@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0
  * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
-public interface ListCollectionsPublisher<TResult> extends CommonListCollectionsPublisher<TResult> {
+public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
 
     /**
      * Sets the query filter to apply to the query.
