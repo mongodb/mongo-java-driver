@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.record.annotations;
+package com.mongodb.internal.connection;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.mongodb.spi.dns.InetAddressResolver;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 
 /**
- * An annotation that configures the record component as the _id field of the document
- *
- * @since 4.6
- * @deprecated Prefer {@link org.bson.codecs.pojo.annotations.BsonId}
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@Deprecated
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.RECORD_COMPONENT})
-public @interface BsonId {
+public class DefaultInetAddressResolver implements InetAddressResolver {
+
+    @Override
+    public List<InetAddress> lookupByName(final String host) throws UnknownHostException {
+        return asList(InetAddress.getAllByName(host));
+    }
 }

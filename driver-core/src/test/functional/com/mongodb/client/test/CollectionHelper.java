@@ -392,13 +392,6 @@ public final class CollectionHelper<T> {
                                    singletonList(new IndexRequest(key.toBsonDocument(Document.class, registry))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
-    @SuppressWarnings("deprecation")
-    public void createIndex(final Bson key, final Double bucketSize) {
-        new CreateIndexesOperation(TIMEOUT_SETTINGS, namespace,
-                                   singletonList(new IndexRequest(key.toBsonDocument(Document.class, registry)).bucketSize(bucketSize)),
-                                   WriteConcern.ACKNOWLEDGED).execute(getBinding());
-    }
-
     public List<BsonDocument> listIndexes(){
         List<BsonDocument> indexes = new ArrayList<>();
         BatchCursor<BsonDocument> cursor = new ListIndexesOperation<>(TIMEOUT_SETTINGS, namespace, new BsonDocumentCodec())

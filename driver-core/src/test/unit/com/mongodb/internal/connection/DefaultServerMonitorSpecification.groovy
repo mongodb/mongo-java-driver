@@ -157,8 +157,6 @@ class DefaultServerMonitorSpecification extends Specification {
                         initialServerDescription
                     }
 
-                    supportsAdditionalTimeout() >> true
-
                     send(_, _, _) >> { }
 
                     receive(_, _) >> {
@@ -237,8 +235,6 @@ class DefaultServerMonitorSpecification extends Specification {
                     getInitialServerDescription() >> {
                         initialServerDescription
                     }
-
-                    supportsAdditionalTimeout() >> true
 
                     send(_, _, _) >> { }
 

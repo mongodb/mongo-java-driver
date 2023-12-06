@@ -23,9 +23,6 @@ import org.bson.codecs.DecoderContext;
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static java.lang.String.format;
 
 /**
@@ -35,50 +32,24 @@ import static java.lang.String.format;
  */
 public class ReplyMessage<T> {
 
-    private final ReplyHeader replyHeader;
-    private final List<T> documents;
+    private final T document;
 
     public ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
-        this(responseBuffers.getReplyHeader(), requestId);
-
-        if (replyHeader.getNumberReturned() > 0) {
-            try (BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer().duplicate())) {
-                while (documents.size() < replyHeader.getNumberReturned()) {
-                    try (BsonBinaryReader reader = new BsonBinaryReader(bsonInput)) {
-                        documents.add(decoder.decode(reader, DecoderContext.builder().build()));
-                    }
-                }
-            } finally {
-                responseBuffers.reset();
-            }
-        }
-    }
-
-    ReplyMessage(final ReplyHeader replyHeader, final long requestId) {
-        if (requestId != replyHeader.getResponseTo()) {
+        if (requestId != responseBuffers.getReplyHeader().getResponseTo()) {
             throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
-                                                    + "request", replyHeader.getResponseTo(), requestId));
+                    + "request", responseBuffers.getReplyHeader().getResponseTo(), requestId));
         }
-        this.replyHeader = replyHeader;
 
-        documents = new ArrayList<>(replyHeader.getNumberReturned());
+        try (BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer().duplicate())) {
+            try (BsonBinaryReader reader = new BsonBinaryReader(bsonInput)) {
+                document = decoder.decode(reader, DecoderContext.builder().build());
+            }
+        } finally {
+            responseBuffers.reset();
+        }
     }
 
-    /**
-     * Gets the reply header.
-     *
-     * @return the reply header
-     */
-    public ReplyHeader getReplyHeader() {
-        return replyHeader;
-    }
-
-    /**
-     * Gets the documents.
-     *
-     * @return the documents
-     */
-    public List<T> getDocuments() {
-        return documents;
+    public T getDocument() {
+        return document;
     }
 }

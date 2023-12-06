@@ -26,7 +26,7 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonTimestamp
@@ -50,7 +50,7 @@ class CommandHelperSpecification extends Specification {
     def setup() {
         connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi(), null)
+                getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open(OPERATION_CONTEXT)
     }

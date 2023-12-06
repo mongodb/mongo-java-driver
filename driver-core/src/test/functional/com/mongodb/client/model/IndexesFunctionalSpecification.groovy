@@ -17,15 +17,12 @@
 package com.mongodb.client.model
 
 import com.mongodb.OperationFunctionalSpecification
-import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Indexes.ascending
 import static com.mongodb.client.model.Indexes.compoundIndex
 import static com.mongodb.client.model.Indexes.descending
 import static com.mongodb.client.model.Indexes.geo2d
 import static com.mongodb.client.model.Indexes.geo2dsphere
-import static com.mongodb.client.model.Indexes.geoHaystack
 import static com.mongodb.client.model.Indexes.hashed
 import static com.mongodb.client.model.Indexes.text
 import static org.bson.BsonDocument.parse
@@ -98,15 +95,6 @@ class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
 
         then:
         getCollectionHelper().listIndexes()*.get('key').contains(parse('{x : "2d"}'))
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(5, 0) })
-    def 'geoHaystack'() {
-        when:
-        getCollectionHelper().createIndex(geoHaystack('x', descending('b')), 2.0)
-
-        then:
-        getCollectionHelper().listIndexes()*.get('key').contains(parse('{x : "geoHaystack", b: -1}'))
     }
 
     def 'text helper'() {

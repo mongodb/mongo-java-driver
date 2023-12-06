@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -33,7 +32,6 @@ import com.mongodb.internal.operation.MapReduceAsyncBatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
-import com.mongodb.reactivestreams.client.MapReducePublisher;
 import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -44,7 +42,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
-final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements MapReducePublisher<T> {
+final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements com.mongodb.reactivestreams.client.MapReducePublisher<T> {
 
     private final String mapFunction;
     private final String reduceFunction;
@@ -59,10 +57,8 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private boolean jsMode;
     private boolean verbose = true;
     private long maxTimeMS;
-    private MapReduceAction action = MapReduceAction.REPLACE;
+    private com.mongodb.client.model.MapReduceAction action = com.mongodb.client.model.MapReduceAction.REPLACE;
     private String databaseName;
-    private boolean sharded;
-    private boolean nonAtomic;
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
@@ -77,102 +73,88 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
-    public MapReducePublisher<T> collectionName(final String collectionName) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> collectionName(final String collectionName) {
         this.collectionName = notNull("collectionName", collectionName);
         this.inline = false;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> finalizeFunction(@Nullable final String finalizeFunction) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> finalizeFunction(@Nullable final String finalizeFunction) {
         this.finalizeFunction = finalizeFunction;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> scope(@Nullable final Bson scope) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> scope(@Nullable final Bson scope) {
         this.scope = scope;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> sort(@Nullable final Bson sort) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> filter(@Nullable final Bson filter) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> limit(final int limit) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> limit(final int limit) {
         this.limit = limit;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> jsMode(final boolean jsMode) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> jsMode(final boolean jsMode) {
         this.jsMode = jsMode;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> verbose(final boolean verbose) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> verbose(final boolean verbose) {
         this.verbose = verbose;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> action(final com.mongodb.client.model.MapReduceAction action) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> action(final com.mongodb.client.model.MapReduceAction action) {
         this.action = action;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> databaseName(@Nullable final String databaseName) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> databaseName(@Nullable final String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
 
-    @Deprecated
     @Override
-    public MapReducePublisher<T> sharded(final boolean sharded) {
-        this.sharded = sharded;
-        return this;
-    }
-
-    @Deprecated
-    @Override
-    public MapReducePublisher<T> nonAtomic(final boolean nonAtomic) {
-        this.nonAtomic = nonAtomic;
-        return this;
-    }
-
-    @Override
-    public MapReducePublisher<T> batchSize(final int batchSize) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> batchSize(final int batchSize) {
         super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> bypassDocumentValidation(
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> bypassDocumentValidation(
             @Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public MapReducePublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
         super.timeoutMode(timeoutMode);
         return this;
     }
@@ -186,7 +168,7 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
-    public MapReducePublisher<T> collation(@Nullable final Collation collation) {
+    public com.mongodb.reactivestreams.client.MapReducePublisher<T> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -221,8 +203,7 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         return new WrappedMapReduceWriteOperation(getOperations().mapReduceToCollection(databaseName, collectionName, mapFunction,
                                                                                         reduceFunction, finalizeFunction, filter, limit,
                                                                                         maxTimeMS, jsMode, scope, sort, verbose, action,
-                                                                                        nonAtomic, sharded,
-                                                                                        bypassDocumentValidation, collation));
+                bypassDocumentValidation, collation));
     }
 
     private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(final int initialBatchSize) {

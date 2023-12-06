@@ -43,7 +43,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandWriteTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -75,8 +74,6 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     private boolean verbose;
     private String action = "replace";
     private String databaseName;
-    private boolean sharded;
-    private boolean nonAtomic;
     private Boolean bypassDocumentValidation;
     private Collation collation;
     private static final List<String> VALID_ACTIONS = asList("replace", "merge", "reduce");
@@ -196,24 +193,6 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         return this;
     }
 
-    public boolean isSharded() {
-        return sharded;
-    }
-
-    public MapReduceToCollectionOperation sharded(final boolean sharded) {
-        this.sharded = sharded;
-        return this;
-    }
-
-    public boolean isNonAtomic() {
-        return nonAtomic;
-    }
-
-    public MapReduceToCollectionOperation nonAtomic(final boolean nonAtomic) {
-        this.nonAtomic = nonAtomic;
-        return this;
-    }
-
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -290,13 +269,10 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         };
     }
 
+
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
-            if (!serverIsAtLeastVersionFourDotFour(connectionDescription)) {
-                putIfTrue(outputDocument, "sharded", isSharded());
-                putIfTrue(outputDocument, "nonAtomic", isNonAtomic());
-            }
             if (getDatabaseName() != null) {
                 outputDocument.put("db", new BsonString(getDatabaseName()));
             }

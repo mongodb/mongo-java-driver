@@ -39,19 +39,6 @@ public final class ServerHeartbeatFailedEvent {
      *
      * @param connectionId the non-null connectionId
      * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
-     * @param throwable the non-null exception that caused the failure
-     * @deprecated Prefer {@link #ServerHeartbeatFailedEvent(ConnectionId, long, boolean, Throwable)}
-     */
-    @Deprecated
-    public ServerHeartbeatFailedEvent(final ConnectionId connectionId, final long elapsedTimeNanos, final Throwable throwable) {
-        this(connectionId, elapsedTimeNanos, false, throwable);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param connectionId the non-null connectionId
-     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      * @param awaited true if the response was awaited
      * @param throwable the non-null exception that caused the failure
      * @since 4.1

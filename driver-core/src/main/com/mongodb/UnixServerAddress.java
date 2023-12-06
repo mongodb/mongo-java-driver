@@ -17,10 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
-import jnr.unixsocket.UnixSocketAddress;
-
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -42,22 +38,6 @@ public final class UnixServerAddress extends ServerAddress {
     public UnixServerAddress(final String path) {
         super(notNull("The path cannot be null", path));
         isTrueArgument("The path must end in .sock", path.endsWith(".sock"));
-    }
-
-    @SuppressWarnings("deprecation")
-    @Deprecated
-    @Override
-    public InetSocketAddress getSocketAddress() {
-        throw new UnsupportedOperationException("Cannot return a InetSocketAddress from a UnixServerAddress");
-    }
-
-    /**
-     * @return the SocketAddress for the MongoD unix domain socket.
-     * @deprecated Prefer {@link UnixSocketAddress#UnixSocketAddress(String)}
-     */
-    @Deprecated
-    public SocketAddress getUnixSocketAddress() {
-        return new UnixSocketAddress(getHost());
     }
 
     @Override

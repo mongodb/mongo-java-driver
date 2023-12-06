@@ -44,7 +44,6 @@ public final class FindOptions {
     private Bson sort;
     private CursorType cursorType = CursorType.NonTailable;
     private boolean noCursorTimeout;
-    private boolean oplogReplay;
     private boolean partial;
     private Collation collation;
     private BsonValue comment;
@@ -67,7 +66,7 @@ public final class FindOptions {
     //CHECKSTYLE:OFF
     FindOptions(
             final int batchSize, final int limit, final Bson projection, final long maxTimeMS, final long maxAwaitTimeMS, final int skip,
-            final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean oplogReplay, final boolean partial,
+            final Bson sort, final CursorType cursorType, final boolean noCursorTimeout, final boolean partial,
             final Collation collation, final BsonValue comment, final Bson hint, final String hintString, final Bson variables,
             final Bson max, final Bson min, final boolean returnKey, final boolean showRecordId, final Boolean allowDiskUse,
             final TimeoutMode timeoutMode) {
@@ -80,7 +79,6 @@ public final class FindOptions {
         this.sort = sort;
         this.cursorType = cursorType;
         this.noCursorTimeout = noCursorTimeout;
-        this.oplogReplay = oplogReplay;
         this.partial = partial;
         this.collation = collation;
         this.comment = comment;
@@ -98,8 +96,7 @@ public final class FindOptions {
 
     public FindOptions withBatchSize(final int batchSize) {
         return new FindOptions(batchSize, limit, projection, maxTimeMS, maxAwaitTimeMS, skip, sort, cursorType, noCursorTimeout,
-                oplogReplay, partial, collation, comment, hint, hintString, variables, max, min, returnKey, showRecordId, allowDiskUse,
-                timeoutMode);
+                partial, collation, comment, hint, hintString, variables, max, min, returnKey, showRecordId, allowDiskUse, timeoutMode);
     }
 
     /**
@@ -330,26 +327,6 @@ public final class FindOptions {
      */
     public FindOptions noCursorTimeout(final boolean noCursorTimeout) {
         this.noCursorTimeout = noCursorTimeout;
-        return this;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @return if oplog replay is enabled
-     */
-    public boolean isOplogReplay() {
-        return oplogReplay;
-    }
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     */
-    public FindOptions oplogReplay(final boolean oplogReplay) {
-        this.oplogReplay = oplogReplay;
         return this;
     }
 

@@ -180,28 +180,6 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
     public fun databaseName(databaseName: String?): MapReduceFlow<T> = apply { wrapped.databaseName(databaseName) }
 
     /**
-     * Sets if the output database is sharded
-     *
-     * @param sharded if the output database is sharded
-     * @return this
-     * @see
-     *   [output with an action](https://www.mongodb.com/docs/manual/reference/command/mapReduce/#output-to-a-collection-with-an-action)
-     */
-    public fun sharded(sharded: Boolean): MapReduceFlow<T> = apply { wrapped.sharded(sharded) }
-
-    /**
-     * Sets if the post-processing step will prevent MongoDB from locking the database.
-     *
-     * Valid only with the `MapReduceAction.MERGE` or `MapReduceAction.REDUCE` actions.
-     *
-     * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
-     * @return this
-     * @see
-     *   [output with an action](https://www.mongodb.com/docs/manual/reference/command/mapReduce/#output-to-a-collection-with-an-action)
-     */
-    public fun nonAtomic(nonAtomic: Boolean): MapReduceFlow<T> = apply { wrapped.nonAtomic(nonAtomic) }
-
-    /**
      * Sets the bypass document level validation flag.
      *
      * Note: This only applies when an $out or $merge stage is specified.

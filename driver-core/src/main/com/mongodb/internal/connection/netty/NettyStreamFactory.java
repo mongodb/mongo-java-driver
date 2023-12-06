@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty;
+package com.mongodb.internal.connection.netty;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.Stream;
-import com.mongodb.connection.StreamFactory;
+import com.mongodb.internal.connection.DefaultInetAddressResolver;
+import com.mongodb.internal.connection.Stream;
+import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
@@ -33,14 +35,10 @@ import io.netty.handler.ssl.SslContext;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * A StreamFactory for Streams based on <a href='http://netty.io/'>Netty</a> 4.x.
- *
- * @since 3.0
- * @deprecated there is no replacement for this class
+ * A StreamFactory for Streams based on <a href="http://netty.io/">Netty</a> 4.x.
  */
-@SuppressWarnings("deprecation")
-@Deprecated
 public class NettyStreamFactory implements StreamFactory {
+    private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
     private final SslSettings sslSettings;
     private final EventLoopGroup eventLoopGroup;
@@ -59,13 +57,11 @@ public class NettyStreamFactory implements StreamFactory {
      * @param allocator the allocator to use for ByteBuf instances
      * @param sslContext the Netty {@link SslContext}
      *                   as specified by {@link NettyStreamFactoryFactory.Builder#sslContext(SslContext)}.
-     *
-     * @since 4.3
      */
-    public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
-                              final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> socketChannelClass,
-                              final ByteBufAllocator allocator,
-                              @Nullable final SslContext sslContext) {
+    public NettyStreamFactory(final InetAddressResolver inetAddressResolver,  final SocketSettings settings,
+            final SslSettings sslSettings, final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> socketChannelClass,
+            final ByteBufAllocator allocator, @Nullable final SslContext sslContext) {
+        this.inetAddressResolver = inetAddressResolver;
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.eventLoopGroup = notNull("eventLoopGroup", eventLoopGroup);
@@ -82,13 +78,11 @@ public class NettyStreamFactory implements StreamFactory {
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
      * @param socketChannelClass the socket channel class
      * @param allocator the allocator to use for ByteBuf instances
-     *
-     * @since 3.3
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
                               final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> socketChannelClass,
                               final ByteBufAllocator allocator) {
-        this(settings, sslSettings, eventLoopGroup, socketChannelClass, allocator, null);
+        this(new DefaultInetAddressResolver(), settings, sslSettings, eventLoopGroup, socketChannelClass, allocator, null);
     }
 
     /**
@@ -110,8 +104,6 @@ public class NettyStreamFactory implements StreamFactory {
      * @param settings the socket settings
      * @param sslSettings the SSL settings
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
-     *
-     * @since 3.4
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup eventLoopGroup) {
         this(settings, sslSettings, eventLoopGroup, PooledByteBufAllocator.DEFAULT);
@@ -129,7 +121,8 @@ public class NettyStreamFactory implements StreamFactory {
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, socketChannelClass, allocator, sslContext);
+        return new NettyStream(serverAddress, inetAddressResolver, settings, sslSettings, eventLoopGroup, socketChannelClass, allocator,
+                sslContext);
     }
 
 }

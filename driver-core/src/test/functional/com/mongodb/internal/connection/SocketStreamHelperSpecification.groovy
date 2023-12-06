@@ -32,6 +32,7 @@ import java.lang.reflect.Method
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -45,7 +46,7 @@ class SocketStreamHelperSpecification extends Specification {
                 .build()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
                 socketSettings, SslSettings.builder().build())
 
         then:
@@ -70,7 +71,7 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), SslSettings.builder().build())
 
         then:
@@ -86,7 +87,7 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), sslSettings)
 
         then:
@@ -107,7 +108,7 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(),
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), sslSettings)
 
         then:
@@ -126,8 +127,8 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getPrimary().getSocketAddress(), SocketSettings.builder().build(),
-                SslSettings.builder().enabled(true).build())
+        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+                SocketSettings.builder().build(), SslSettings.builder().enabled(true).build())
 
         then:
         thrown(MongoInternalException)

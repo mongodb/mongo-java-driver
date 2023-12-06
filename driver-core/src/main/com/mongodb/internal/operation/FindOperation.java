@@ -82,7 +82,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private int skip;
     private BsonDocument sort;
     private CursorType cursorType = CursorType.NonTailable;
-    private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean partial;
     private Collation collation;
@@ -179,15 +178,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (timeoutMode != null) {
             this.timeoutMode = timeoutMode;
         }
-        return this;
-    }
-
-    public boolean isOplogReplay() {
-        return oplogReplay;
-    }
-
-    public FindOperation<T> oplogReplay(final boolean oplogReplay) {
-        this.oplogReplay = oplogReplay;
         return this;
     }
 
@@ -420,9 +410,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         }
         if (isAwaitData()) {
             commandDocument.put("awaitData", BsonBoolean.TRUE);
-        }
-        if (oplogReplay) {
-            commandDocument.put("oplogReplay", BsonBoolean.TRUE);
         }
         if (noCursorTimeout) {
             commandDocument.put("noCursorTimeout", BsonBoolean.TRUE);

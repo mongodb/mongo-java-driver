@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
@@ -28,11 +28,12 @@ import static org.bson.types.Decimal128.POSITIVE_INFINITY;
 import static org.bson.types.Decimal128.POSITIVE_ZERO;
 import static org.bson.types.Decimal128.fromIEEE754BIDEncoding;
 import static org.bson.types.Decimal128.parse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class Decimal128Test {
 
@@ -221,10 +222,11 @@ public class Decimal128Test {
         assertEquals(NEGATIVE_NaN, parse("-nAn"));
     }
 
-    @Test(expected = ArithmeticException.class)
+    @Test
     public void shouldNotConvertNaNToBigDecimal() {
-        // when
-        NaN.bigDecimalValue();
+        assertThrows(ArithmeticException.class, () ->
+                // when
+                NaN.bigDecimalValue());
     }
 
     @Test
@@ -316,14 +318,14 @@ public class Decimal128Test {
         assertEquals(809500703, fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000001L).hashCode());
     }
 
-    @Test(expected = ArithmeticException.class)
+    @Test
     public void shouldNotConvertPositiveInfinityToBigDecimal() {
-        POSITIVE_INFINITY.bigDecimalValue();
+        assertThrows(ArithmeticException.class, () -> POSITIVE_INFINITY.bigDecimalValue());
     }
 
-    @Test(expected = ArithmeticException.class)
+    @Test
     public void shouldNotConvertNegativeInfinityToBigDecimal() {
-        NEGATIVE_INFINITY.bigDecimalValue();
+        assertThrows(ArithmeticException.class, () ->NEGATIVE_INFINITY.bigDecimalValue());
     }
 
     @Test
@@ -506,9 +508,9 @@ public class Decimal128Test {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldThrowIllegalArgumentExceptionIfBigDecimalIsTooLarge() {
-        new Decimal128(new BigDecimal("12345678901234567890123456789012345"));
+        assertThrows(IllegalArgumentException.class, () -> new Decimal128(new BigDecimal("12345678901234567890123456789012345")));
     }
 
     @Test

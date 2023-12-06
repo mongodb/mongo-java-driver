@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package com.mongodb.event;
+package com.mongodb.internal.connection;
+
+import com.mongodb.ServerAddress;
 
 /**
- * An adapter for cluster listener implementations, for clients that want to listen for a subset of cluster events.  Extend this class to
- * listen for cluster events and override the methods of interest.
- *
- * @since 3.3
+ * A factory for streams.
  */
-@Deprecated
-public class ClusterListenerAdapter implements ClusterListener {
+public interface StreamFactory {
+    /**
+     * Create a Stream to the given address
+     *
+     * @param serverAddress the address
+     * @return the stream
+     */
+    Stream create(ServerAddress serverAddress);
 }
