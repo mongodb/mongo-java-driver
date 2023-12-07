@@ -81,24 +81,21 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
         assumeTrue(serverVersionAtLeast(4, 4));
-        assumeTrue(false, "TODO (CSOT) JAVA-5232");
         collectionHelper.create(namespace.getCollectionName(),
                 new CreateCollectionOptions().capped(true).sizeInBytes(10 * 1024 * 1024));
         collectionHelper.insertDocuments(new Document("x", 1));
-
-        long rtt = ClusterFixture.getPrimaryRTT();
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: \"alwaysOn\","
                 + "  data: {"
                 + "    failCommands: [\"getMore\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + rtt + 15
+                + "    blockTimeMS: " + 150
                 + "  }"
                 + "}");
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 20, TimeUnit.MILLISECONDS))) {
+                .timeout(200, TimeUnit.MILLISECONDS))) {
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
@@ -110,8 +107,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
             List<CommandEvent> events = commandListener.getCommandStartedEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
-            // TODO (CSOT) JAVA-5211 - shouldn't be more than 2
-            // assertTrue(events.stream().filter(e -> e.getCommandName().equals("getMore")).count() <= 2);
+            assertTrue(events.stream().filter(e -> e.getCommandName().equals("getMore")).count() <= 2);
         }
     }
 

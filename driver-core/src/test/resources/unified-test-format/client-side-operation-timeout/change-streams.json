@@ -1,5 +1,6 @@
 {
   "description": "timeoutMS behaves correctly for change streams",
+  "comment": "Manually updated some of the timeoutMS and blockTimeMS to remove race conditions",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -242,7 +243,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 150
               }
             }
           }
@@ -252,7 +253,7 @@
           "object": "collection",
           "arguments": {
             "pipeline": [],
-            "timeoutMS": 20,
+            "timeoutMS": 200,
             "batchSize": 2,
             "maxAwaitTimeMS": 1
           },

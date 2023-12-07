@@ -20,6 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
@@ -90,11 +91,11 @@ public abstract class AsynchronousChannelStream implements Stream {
             final AsyncCompletionHandler<Void> handler) {
         AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
         Iterator<ByteBuf> iter = buffers.iterator();
-        pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
+        pipeOneBuffer(byteChannel, iter.next(), operationContext, new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(@Nullable final Void t) {
                 if (iter.hasNext()) {
-                    pipeOneBuffer(byteChannel, iter.next(), this);
+                    pipeOneBuffer(byteChannel, iter.next(), operationContext, this);
                 } else {
                     handler.completed(null);
                 }
@@ -116,12 +117,11 @@ public abstract class AsynchronousChannelStream implements Stream {
             final AsyncCompletionHandler<ByteBuf> handler) {
         ByteBuf buffer = bufferProvider.getBuffer(numBytes);
 
-        int timeout = settings.getReadTimeout(MILLISECONDS);
+        long timeout = operationContext.getTimeoutContext().getReadTimeoutMS();
         if (timeout > 0 && additionalTimeout > 0) {
             timeout += additionalTimeout;
         }
-
-        getChannel().read(buffer.asNIO(), timeout, MILLISECONDS, null, new BasicCompletionHandler(buffer, handler));
+        getChannel().read(buffer.asNIO(), timeout, MILLISECONDS, null, new BasicCompletionHandler(buffer, operationContext, handler));
     }
 
     @Override
@@ -184,12 +184,12 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     private void pipeOneBuffer(final AsyncWritableByteChannelAdapter byteChannel, final ByteBuf byteBuffer,
-                               final AsyncCompletionHandler<Void> outerHandler) {
-        byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler<Void>() {
+            final OperationContext operationContext, final AsyncCompletionHandler<Void> outerHandler) {
+        byteChannel.write(byteBuffer.asNIO(), operationContext, new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(@Nullable final Void t) {
                 if (byteBuffer.hasRemaining()) {
-                    byteChannel.write(byteBuffer.asNIO(), this);
+                    byteChannel.write(byteBuffer.asNIO(), operationContext, this);
                 } else {
                     outerHandler.completed(null);
                 }
@@ -203,8 +203,9 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     private class AsyncWritableByteChannelAdapter {
-        void write(final ByteBuffer src, final AsyncCompletionHandler<Void> handler) {
-            getChannel().write(src, null, new AsyncWritableByteChannelAdapter.WriteCompletionHandler(handler));
+        void write(final ByteBuffer src, final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
+            getChannel().write(src, operationContext.getTimeoutContext().getWriteTimeoutMS(), MILLISECONDS, null,
+                    new AsyncWritableByteChannelAdapter.WriteCompletionHandler(handler));
         }
 
         private class WriteCompletionHandler extends BaseCompletionHandler<Void, Integer, Object> {
@@ -220,19 +221,26 @@ public abstract class AsynchronousChannelStream implements Stream {
             }
 
             @Override
-            public void failed(final Throwable exc, final Object attachment) {
+            public void failed(final Throwable t, final Object attachment) {
                 AsyncCompletionHandler<Void> localHandler = getHandlerAndClear();
-                localHandler.failed(exc);
+                if (t instanceof InterruptedByTimeoutException) {
+                    localHandler.failed(new MongoSocketWriteTimeoutException("Timeout while writing message", serverAddress, t));
+                } else {
+                    localHandler.failed(t);
+                }
             }
         }
     }
 
     private final class BasicCompletionHandler extends BaseCompletionHandler<ByteBuf, Integer, Void> {
         private final AtomicReference<ByteBuf> byteBufReference;
+        private final OperationContext operationContext;
 
-        private BasicCompletionHandler(final ByteBuf dst, final AsyncCompletionHandler<ByteBuf> handler) {
+        private BasicCompletionHandler(final ByteBuf dst, final OperationContext operationContext,
+                final AsyncCompletionHandler<ByteBuf> handler) {
             super(handler);
             this.byteBufReference = new AtomicReference<>(dst);
+            this.operationContext = operationContext;
         }
 
         @Override
@@ -246,8 +254,8 @@ public abstract class AsynchronousChannelStream implements Stream {
                 localByteBuf.flip();
                 localHandler.completed(localByteBuf);
             } else {
-                getChannel().read(localByteBuf.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
-                        new BasicCompletionHandler(localByteBuf, localHandler));
+                getChannel().read(localByteBuf.asNIO(), operationContext.getTimeoutContext().getReadTimeoutMS(), MILLISECONDS, null,
+                        new BasicCompletionHandler(localByteBuf, operationContext, localHandler));
             }
         }
 

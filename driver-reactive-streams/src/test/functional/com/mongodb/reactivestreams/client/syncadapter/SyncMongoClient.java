@@ -38,7 +38,7 @@ import static java.util.Objects.requireNonNull;
 public class SyncMongoClient implements MongoClient {
 
     private static long sleepAfterCursorOpenMS;
-
+    private static long sleepAfterCursorErrorMS;
     private static long sleepAfterCursorCloseMS;
     private static long sleepAfterSessionCloseMS;
 
@@ -55,6 +55,22 @@ public class SyncMongoClient implements MongoClient {
             throw new IllegalArgumentException("sleepMS must be a positive value");
         }
         sleepAfterCursorOpenMS = sleepMS;
+    }
+
+    /**
+     * Unfortunately this is the only way to wait for error logic to complete, since it's asynchronous.
+     * This is inherently racy but there are not any other good options. Tests which require cursor error handling to complete before
+     * execution of the next operation can set this to a positive value.  A value of 256 ms has been shown to work well. The default
+     * value is 0.
+     */
+    public static void enableSleepAfterCursorError(final long sleepMS) {
+        if (sleepAfterCursorErrorMS != 0) {
+            throw new IllegalStateException("Already enabled");
+        }
+        if (sleepMS <= 0) {
+            throw new IllegalArgumentException("sleepMS must be a positive value");
+        }
+        sleepAfterCursorErrorMS = sleepMS;
     }
 
     /**
@@ -90,12 +106,17 @@ public class SyncMongoClient implements MongoClient {
 
     public static void disableSleep() {
         sleepAfterCursorOpenMS = 0;
+        sleepAfterCursorErrorMS = 0;
         sleepAfterCursorCloseMS = 0;
         sleepAfterSessionCloseMS = 0;
     }
 
     public static long getSleepAfterCursorOpen() {
         return sleepAfterCursorOpenMS;
+    }
+
+    public static long getSleepAfterCursorError() {
+        return sleepAfterCursorErrorMS;
     }
 
     public static long getSleepAfterCursorClose() {

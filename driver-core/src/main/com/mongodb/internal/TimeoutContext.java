@@ -39,8 +39,22 @@ public class TimeoutContext {
     private Timeout timeout;
     private long minRoundTripTimeMS = 0;
 
+    // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
     public static MongoExecutionTimeoutException createMongoTimeoutException() {
-        return new MongoExecutionTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
+        return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
+    }
+
+    // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
+    public static MongoExecutionTimeoutException createMongoTimeoutException(final String message) {
+        return new MongoExecutionTimeoutException(message);
+    }
+
+    // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
+    public static MongoExecutionTimeoutException createMongoTimeoutException(final Throwable cause) {
+        if (cause instanceof MongoExecutionTimeoutException) {
+            return (MongoExecutionTimeoutException) cause;
+        }
+        return new MongoExecutionTimeoutException("Operation timed out: " + cause.getMessage());
     }
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
@@ -67,7 +81,8 @@ public class TimeoutContext {
      * @return true if the timeout has been set and it has expired
      */
     public boolean hasExpired() {
-        return timeout != null && timeout.hasExpired();
+        // Use timeout.remaining instead of timeout.hasExpired that measures in nanoseconds.
+        return timeout != null && !timeout.isInfinite() && timeout.remaining(MILLISECONDS) <= 0;
     }
 
     /**
@@ -146,6 +161,14 @@ public class TimeoutContext {
 
     public long getMaxCommitTimeMS() {
         return timeoutOrAlternative(timeoutSettings.getMaxCommitTimeMS());
+    }
+
+    public long getReadTimeoutMS() {
+        return timeoutOrAlternative(timeoutSettings.getReadTimeoutMS());
+    }
+
+    public long getWriteTimeoutMS() {
+        return timeoutOrAlternative(0);
     }
 
 

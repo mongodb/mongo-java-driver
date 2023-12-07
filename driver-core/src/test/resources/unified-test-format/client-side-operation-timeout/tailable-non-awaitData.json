@@ -154,7 +154,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 150
               }
             }
           }
@@ -165,7 +165,7 @@
           "arguments": {
             "filter": {},
             "cursorType": "tailable",
-            "timeoutMS": 20,
+            "timeoutMS": 200,
             "batchSize": 1
           },
           "saveResultAsEntity": "tailableCursor"

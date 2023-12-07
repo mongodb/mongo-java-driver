@@ -27,6 +27,7 @@ import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
+import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -506,10 +507,9 @@ public class InternalStreamConnection implements InternalConnection {
         sendMessageAsync(byteBuffers, messageId, operationContext, (result, t) -> {
             ResourceUtil.release(byteBuffers);
             bsonOutput.close();
-            Throwable error = validateHasTimedOut(operationContext).map(e -> (Throwable) e).orElse(t);
-            if (error != null) {
-                commandEventSender.sendFailedEvent(error);
-                callback.onResult(null, error);
+            if (t != null) {
+                commandEventSender.sendFailedEvent(t);
+                callback.onResult(null, t);
             } else if (!responseExpected) {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
@@ -591,7 +591,7 @@ public class InternalStreamConnection implements InternalConnection {
             stream.write(byteBuffers, operationContext);
         } catch (Exception e) {
             close();
-            throw translateWriteException(e);
+            throw translateWriteException(e, operationContext);
         }
     }
 
@@ -610,7 +610,7 @@ public class InternalStreamConnection implements InternalConnection {
             return receiveResponseBuffers(additionalTimeout, operationContext);
         } catch (Throwable t) {
             close();
-            throw translateReadException(t);
+            throw translateReadException(t, operationContext);
         }
     }
 
@@ -638,7 +638,7 @@ public class InternalStreamConnection implements InternalConnection {
                 @Override
                 public void failed(final Throwable t) {
                     close();
-                    callback.onResult(null, translateWriteException(t));
+                    callback.onResult(null, translateWriteException(t, operationContext));
                 }
             });
         } catch (Throwable t) {
@@ -683,12 +683,12 @@ public class InternalStreamConnection implements InternalConnection {
                 @Override
                 public void failed(final Throwable t) {
                     close();
-                    callback.onResult(null, translateReadException(t));
+                    callback.onResult(null, translateReadException(t, operationContext));
                 }
             });
         } catch (Exception e) {
             close();
-            callback.onResult(null, translateReadException(e));
+            callback.onResult(null, translateReadException(e, operationContext));
         }
     }
 
@@ -712,7 +712,11 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private MongoException translateWriteException(final Throwable e) {
+    private MongoException translateWriteException(final Throwable e, final OperationContext operationContext) {
+        if (e instanceof MongoSocketWriteTimeoutException && operationContext.getTimeoutContext().hasExpired()) {
+            return TimeoutContext.createMongoTimeoutException(e);
+        }
+
         if (e instanceof MongoException) {
             return (MongoException) e;
         }
@@ -726,7 +730,12 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private MongoException translateReadException(final Throwable e) {
+    private MongoException translateReadException(final Throwable e, final OperationContext operationContext) {
+        if (operationContext.getTimeoutContext().hasTimeoutMS()
+                && (e instanceof SocketTimeoutException || e instanceof MongoSocketReadTimeoutException)) {
+            return TimeoutContext.createMongoTimeoutException(e);
+        }
+
         if (e instanceof MongoException) {
             return (MongoException) e;
         }

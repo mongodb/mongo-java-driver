@@ -1,5 +1,6 @@
 {
   "description": "timeoutMS behaves correctly for non-tailable cursors",
+  "comment": "Manually updated some of the timeoutMS and blockTimeMS to remove race conditions",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -84,7 +85,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 150
               }
             }
           }
@@ -94,6 +95,7 @@
           "object": "collection",
           "arguments": {
             "filter": {},
+            "timeoutMS": 100,
             "timeoutMode": "cursorLifetime"
           },
           "expectError": {
@@ -143,7 +145,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 150
               }
             }
           }
@@ -153,7 +155,7 @@
           "object": "collection",
           "arguments": {
             "filter": {},
-            "timeoutMS": 20,
+            "timeoutMS": 200,
             "batchSize": 2
           },
           "expectError": {
@@ -221,7 +223,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 150
               }
             }
           }
@@ -232,7 +234,7 @@
           "arguments": {
             "filter": {},
             "timeoutMode": "cursorLifetime",
-            "timeoutMS": 20,
+            "timeoutMS": 200,
             "batchSize": 2
           },
           "expectError": {
@@ -427,7 +429,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 101
               }
             }
           }
@@ -438,6 +440,7 @@
           "arguments": {
             "filter": {},
             "timeoutMode": "iteration",
+            "timeoutMS": 100,
             "batchSize": 2
           },
           "expectError": {

@@ -16,9 +16,16 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
+import com.mongodb.ClusterFixture;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.junit.After;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -27,25 +34,48 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.mongodb.client.ClientSideOperationTimeoutTest.checkSkipCSOTTest;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorError;
 import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 @RunWith(Parameterized.class)
 public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
+    private final String testDescription;
+
     public ClientSideOperationTimeoutTest(final String fileDescription, final String testDescription,
             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        this.testDescription = testDescription;
 
         // Time sensitive - cannot just create a cursor with publishers
         assumeFalse(testDescription.endsWith("createChangeStream on client"));
         assumeFalse(testDescription.endsWith("createChangeStream on database"));
         assumeFalse(testDescription.endsWith("createChangeStream on collection"));
         checkSkipCSOTTest(fileDescription, testDescription);
+
+        if (testDescription.equals("timeoutMS is refreshed for close")) {
+            enableSleepAfterCursorError(256);
+        }
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/client-side-operation-timeout");
+    }
+
+    @Override
+    protected MongoClient createMongoClient(final MongoClientSettings settings) {
+        TransportSettings overriddenTransportSettings = ClusterFixture.getOverriddenTransportSettings();
+        MongoClientSettings clientSettings = overriddenTransportSettings == null ? settings
+                : MongoClientSettings.builder(settings).transportSettings(overriddenTransportSettings).build();
+        return new SyncMongoClient(MongoClients.create(clientSettings));
+    }
+
+    @After
+    public void cleanUp() {
+        super.cleanUp();
+        disableSleep();
     }
 }
