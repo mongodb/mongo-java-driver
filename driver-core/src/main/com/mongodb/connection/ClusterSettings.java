@@ -337,16 +337,16 @@ public final class ClusterSettings {
                 if (srvServiceName != null) {
                     srvServiceName(srvServiceName);
                 }
-            } else if ((directConnection != null && directConnection)
-                    || (directConnection == null && connectionString.getHosts().size() == 1
-                        && connectionString.getRequiredReplicaSetName() == null)) {
-                mode(ClusterConnectionMode.SINGLE)
-                        .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
+            } else if (directConnection != null) {
+                mode(directConnection ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE);
+                List<String> hosts = directConnection ? singletonList(connectionString.getHosts().get(0)) : connectionString.getHosts();
+                hosts(hosts.stream().map(ServerAddressHelper::createServerAddress).collect(Collectors.toList()));
             } else {
+                mode = null;
                 List<ServerAddress> seedList = connectionString.getHosts().stream()
                         .map(ServerAddressHelper::createServerAddress)
                         .collect(Collectors.toList());
-                mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
+                hosts(seedList);
             }
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
 
@@ -612,26 +612,39 @@ public final class ClusterSettings {
             }
         }
 
-        if (builder.mode == ClusterConnectionMode.LOAD_BALANCED && builder.srvHost == null && builder.hosts.size() != 1) {
-            throw new IllegalArgumentException("Multiple hosts cannot be specified when in load balancing mode");
-        }
-
         srvHost = builder.srvHost;
         srvMaxHosts = builder.srvMaxHosts;
         srvServiceName = builder.srvServiceName;
         hosts = builder.hosts;
-        if (srvHost != null) {
-            if (builder.mode == ClusterConnectionMode.SINGLE) {
-                throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
-            }
-            mode = builder.mode != null ? builder.mode : ClusterConnectionMode.MULTIPLE;
-        } else {
-            if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
-                throw new IllegalArgumentException("Can not directly connect to more than one server");
-            }
-            mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
-        }
         requiredReplicaSetName = builder.requiredReplicaSetName;
+        if (builder.mode != null) {
+            switch (builder.mode) {
+                case SINGLE: {
+                    if (srvHost != null) {
+                        throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
+                    } else if (builder.hosts.size() > 1) {
+                        throw new IllegalArgumentException("Can not directly connect to more than one server");
+                    }
+                    break;
+                }
+                case LOAD_BALANCED: {
+                    if (builder.srvHost == null && builder.hosts.size() != 1) {
+                        throw new IllegalArgumentException("Multiple hosts cannot be specified when in load balancing mode");
+                    }
+                    break;
+                }
+                default:
+            }
+            mode = builder.mode;
+        } else {
+            if (srvHost != null) {
+                mode = ClusterConnectionMode.MULTIPLE;
+            } else {
+                mode = hosts.size() == 1 && requiredReplicaSetName == null
+                        ? ClusterConnectionMode.SINGLE
+                        : ClusterConnectionMode.MULTIPLE;
+            }
+        }
         requiredClusterType = builder.requiredClusterType;
         localThresholdMS = builder.localThresholdMS;
         serverSelector = builder.serverSelector;
