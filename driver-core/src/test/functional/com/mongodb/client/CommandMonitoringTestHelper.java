@@ -37,8 +37,6 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.json.JsonMode;
-import org.bson.json.JsonWriterSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -144,10 +142,7 @@ public final class CommandMonitoringTestHelper {
                         lsidMap, expectedCommandStartedEvent);
 
                 assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
-                JsonWriterSettings settings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build();
-                assertEquals("Expected: " + expectedCommandStartedEvent.getCommand().toJson(settings)
-                                + "Actual: " + actualCommandStartedEvent.getCommand().toJson(settings),
-                        expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
+                assertEquals(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
                 if (((CommandStartedEvent) expected).getCommand().containsKey("recoveryToken")) {
                     if (((CommandStartedEvent) expected).getCommand().get("recoveryToken").isNull()) {
                         assertFalse(((CommandStartedEvent) actual).getCommand().containsKey("recoveryToken"));
