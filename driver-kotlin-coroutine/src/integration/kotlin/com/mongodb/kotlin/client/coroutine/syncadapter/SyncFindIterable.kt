@@ -27,7 +27,6 @@ import org.bson.BsonValue
 import org.bson.Document
 import org.bson.conversions.Bson
 
-@Suppress("DEPRECATION")
 data class SyncFindIterable<T : Any>(val wrapped: FindFlow<T>) : JFindIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncFindIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun filter(filter: Bson?): SyncFindIterable<T> = apply { wrapped.filter(filter) }
@@ -55,9 +54,6 @@ data class SyncFindIterable<T : Any>(val wrapped: FindFlow<T>) : JFindIterable<T
     override fun noCursorTimeout(noCursorTimeout: Boolean): SyncFindIterable<T> = apply {
         wrapped.noCursorTimeout(noCursorTimeout)
     }
-
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun oplogReplay(oplogReplay: Boolean): SyncFindIterable<T> = apply { wrapped.oplogReplay(oplogReplay) }
 
     override fun partial(partial: Boolean): SyncFindIterable<T> = apply { wrapped.partial(partial) }
 

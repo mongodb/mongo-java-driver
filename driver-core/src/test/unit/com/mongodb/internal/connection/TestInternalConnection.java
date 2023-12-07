@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
@@ -45,7 +44,6 @@ import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureEx
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
-@SuppressWarnings("deprecation")
 class TestInternalConnection implements InternalConnection {
 
     private static class Interaction {
@@ -176,7 +174,7 @@ class TestInternalConnection implements InternalConnection {
                 throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
                         description.getServerAddress());
             }
-            return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
+            return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocument();
         }
     }
 
@@ -199,7 +197,7 @@ class TestInternalConnection implements InternalConnection {
                                                            final CommandMessage commandMessage, final Decoder<T> decoder) {
         ReplyMessage<T> replyMessage = new ReplyMessage<>(responseBuffers, decoder, commandMessage.getId());
         responseBuffers.reset();
-        return replyMessage.getDocuments().get(0);
+        return replyMessage.getDocument();
     }
 
     @Override
@@ -220,10 +218,10 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.putInt(header.getRequestId());
         headerByteBuffer.putInt(responseTo);
         headerByteBuffer.putInt(1);
-        headerByteBuffer.putInt(header.getResponseFlags());
-        headerByteBuffer.putLong(header.getCursorId());
-        headerByteBuffer.putInt(header.getStartingFrom());
-        headerByteBuffer.putInt(header.getNumberReturned());
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putLong(0);
+        headerByteBuffer.putInt(0);
+        headerByteBuffer.putInt(1);
         ((Buffer) headerByteBuffer).flip();
 
         ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);

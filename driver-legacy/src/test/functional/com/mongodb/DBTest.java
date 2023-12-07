@@ -38,7 +38,6 @@ import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
@@ -352,23 +351,14 @@ public class DBTest extends DatabaseTestCase {
     }
 
     private boolean isCapped(final DBCollection collection) {
-        if (serverVersionLessThan(6, 2)) {
-            return collection.isCapped();
-        } else {
-            Object capped = storageStats(collection).get("capped");
-            return Boolean.TRUE.equals(capped) || Integer.valueOf(1).equals(capped);
-        }
+        return Boolean.TRUE.equals(storageStats(collection).get("capped"));
     }
 
     private DBObject storageStats(final DBCollection collection) {
-        if (serverVersionLessThan(6, 2)) {
-            return collection.getStats();
-        } else {
-            try (Cursor cursor = collection.aggregate(singletonList(
-                    new BasicDBObject("$collStats", new BasicDBObject("storageStats", new BasicDBObject()))),
-                    AggregationOptions.builder().build())) {
-                return (DBObject) cursor.next().get("storageStats");
-            }
+        try (Cursor cursor = collection.aggregate(singletonList(
+                        new BasicDBObject("$collStats", new BasicDBObject("storageStats", new BasicDBObject()))),
+                AggregationOptions.builder().build())) {
+            return (DBObject) cursor.next().get("storageStats");
         }
     }
 }

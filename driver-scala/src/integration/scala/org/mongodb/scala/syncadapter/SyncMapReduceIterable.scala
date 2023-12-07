@@ -83,16 +83,6 @@ case class SyncMapReduceIterable[T](wrapped: MapReduceObservable[T])
     this
   }
 
-  override def sharded(sharded: Boolean): MapReduceIterable[T] = {
-    wrapped.sharded(sharded)
-    this
-  }
-
-  override def nonAtomic(nonAtomic: Boolean): MapReduceIterable[T] = {
-    wrapped.nonAtomic(nonAtomic)
-    this
-  }
-
   override def batchSize(batchSize: Int): MapReduceIterable[T] = {
     wrapped.batchSize(batchSize)
     this

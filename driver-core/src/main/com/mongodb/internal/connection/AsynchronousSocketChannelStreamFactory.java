@@ -14,28 +14,23 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.connection.AsynchronousSocketChannelStream;
-import com.mongodb.internal.connection.PowerOfTwoBufferPool;
-import com.mongodb.lang.Nullable;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
+import com.mongodb.spi.dns.InetAddressResolver;
 
-import java.nio.channels.AsynchronousChannelGroup;
-
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Factory to create a Stream that's an AsynchronousSocketChannelStream. Throws an exception if SSL is enabled.
- *
- * @since 3.0
- * @deprecated There is no replacement for this class.
  */
-@Deprecated
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final PowerOfTwoBufferPool bufferProvider = PowerOfTwoBufferPool.DEFAULT;
     private final SocketSettings settings;
-    private final AsynchronousChannelGroup group;
+    private final InetAddressResolver inetAddressResolver;
 
     /**
      * Create a new factory with the default {@code BufferProvider} and {@code AsynchronousChannelGroup}.
@@ -43,33 +38,16 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
      * @param settings    the settings for the connection to a MongoDB server
      * @param sslSettings the settings for connecting via SSL
      */
-    public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
-        this(settings, sslSettings, null);
-    }
-
-    /**
-     * Create a new factory.
-     *
-     * @param settings the socket settings
-     * @param sslSettings the SSL settings
-     * @param group the {@code AsynchronousChannelGroup} to use or null for the default group
-     *
-     * @since 3.6
-     */
-    public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
-                                                  @Nullable final AsynchronousChannelGroup group) {
-        if (sslSettings.isEnabled()) {
-            throw new UnsupportedOperationException("No SSL support in java.nio.channels.AsynchronousSocketChannel. For SSL support use "
-                    + "com.mongodb.connection.TlsChannelStreamFactoryFactory");
-        }
-
+    public AsynchronousSocketChannelStreamFactory(final InetAddressResolver inetAddressResolver, final SocketSettings settings,
+            final SslSettings sslSettings) {
+        assertFalse(sslSettings.isEnabled());
+        this.inetAddressResolver = inetAddressResolver;
         this.settings = notNull("settings", settings);
-        this.group = group;
     }
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new AsynchronousSocketChannelStream(serverAddress, settings, bufferProvider, group);
+        return new AsynchronousSocketChannelStream(serverAddress, inetAddressResolver, settings, bufferProvider);
     }
 
 }

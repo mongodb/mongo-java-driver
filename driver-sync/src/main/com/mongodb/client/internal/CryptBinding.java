@@ -22,9 +22,9 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadWriteBinding;
-import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
+
 
 class CryptBinding implements ClusterAwareReadWriteBinding {
     private final ClusterAwareReadWriteBinding wrapped;
@@ -79,11 +79,6 @@ class CryptBinding implements ClusterAwareReadWriteBinding {
     @Override
     public int release() {
         return wrapped.release();
-    }
-
-    @Override
-    public Cluster getCluster() {
-        return wrapped.getCluster();
     }
 
     private class CryptConnectionSource implements ConnectionSource {

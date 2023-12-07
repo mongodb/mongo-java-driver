@@ -205,7 +205,6 @@ final class Operations<TDocument> {
                 .sort(toBsonDocument(options.getSort()))
                 .cursorType(options.getCursorType())
                 .noCursorTimeout(options.isNoCursorTimeout())
-                .oplogReplay(options.isOplogReplay())
                 .partial(options.isPartial())
                 .collation(options.getCollation())
                 .comment(options.getComment())
@@ -273,7 +272,6 @@ final class Operations<TDocument> {
                                                                 final int limit, final long maxTimeMS, final boolean jsMode,
                                                                 final Bson scope, final Bson sort, final boolean verbose,
                                                                 final com.mongodb.client.model.MapReduceAction action,
-                                                                final boolean nonAtomic, final boolean sharded,
                                                                 final Boolean bypassDocumentValidation, final Collation collation) {
         MapReduceToCollectionOperation operation = new MapReduceToCollectionOperation(
                 timeoutSettings.withMaxTimeMS(maxTimeMS), assertNotNull(namespace), new BsonJavaScript(mapFunction),
@@ -285,8 +283,6 @@ final class Operations<TDocument> {
                 .sort(toBsonDocument(sort))
                 .verbose(verbose)
                 .action(action.getValue())
-                .nonAtomic(nonAtomic)
-                .sharded(sharded)
                 .databaseName(databaseName)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation);
@@ -606,7 +602,6 @@ final class Operations<TDocument> {
                 viewOn, assertNotNull(toBsonDocumentList(pipeline)), writeConcern).collation(createViewOptions.getCollation());
     }
 
-    @SuppressWarnings("deprecation")
     CreateIndexesOperation createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
         notNull("indexes", indexes);
         notNull("createIndexOptions", createIndexOptions);
@@ -630,7 +625,6 @@ final class Operations<TDocument> {
                     .bits(model.getOptions().getBits())
                     .min(model.getOptions().getMin())
                     .max(model.getOptions().getMax())
-                    .bucketSize(model.getOptions().getBucketSize())
                     .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
                     .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
                     .collation(model.getOptions().getCollation())

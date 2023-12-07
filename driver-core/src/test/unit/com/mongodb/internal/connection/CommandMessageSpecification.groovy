@@ -28,7 +28,6 @@ import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinary
-import org.bson.BsonBinaryReader
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonMaximumSizeExceededException
@@ -37,10 +36,7 @@ import org.bson.BsonTimestamp
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.codecs.DecoderContext
 import org.bson.io.BasicOutputBuffer
-import org.bson.io.BsonInput
-import org.bson.io.ByteBufferBsonInput
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -63,7 +59,7 @@ class CommandMessageSpecification extends Specification {
                         .serverType(serverType as ServerType)
                         .sessionSupported(true)
                         .build(),
-                responseExpected, exhaustAllowed, null, null, clusterConnectionMode, null)
+                responseExpected, null, null, clusterConnectionMode, null)
         def output = new BasicOutputBuffer()
 
         when:
@@ -76,8 +72,7 @@ class CommandMessageSpecification extends Specification {
         messageHeader.opCode == OpCode.OP_MSG.value
         replyHeader.requestId < RequestMessage.currentGlobalId
         replyHeader.responseTo == 0
-        ((replyHeader.opMsgFlagBits & (1 << 16)) != 0) == exhaustAllowed
-        ((replyHeader.opMsgFlagBits & (1 << 1)) == 0) == responseExpected
+        replyHeader.hasMoreToCome() != responseExpected
 
         def expectedCommandDocument = command.clone()
                 .append('$db', new BsonString(namespace.databaseName))
@@ -97,7 +92,7 @@ class CommandMessageSpecification extends Specification {
         getCommandDocument(byteBuf, replyHeader) == expectedCommandDocument
 
         where:
-        [readPreference, serverType, clusterConnectionMode, sessionContext, responseExpected, exhaustAllowed] << [
+        [readPreference, serverType, clusterConnectionMode, sessionContext, responseExpected] << [
                 [ReadPreference.primary(), ReadPreference.secondary()],
                 [ServerType.REPLICA_SET_PRIMARY, ServerType.SHARD_ROUTER],
                 [ClusterConnectionMode.SINGLE, ClusterConnectionMode.MULTIPLE],
@@ -126,7 +121,6 @@ class CommandMessageSpecification extends Specification {
                             getReadConcern() >> ReadConcern.DEFAULT
                             }
                 ],
-                [true, false],
                 [true, false]
         ].combinations()
     }
@@ -372,12 +366,6 @@ class CommandMessageSpecification extends Specification {
     }
 
     private static BsonDocument getCommandDocument(ByteBufNIO byteBuf, ReplyHeader replyHeader) {
-        new ReplyMessage<BsonDocument>(new ResponseBuffers(replyHeader, byteBuf), new BsonDocumentCodec(), 0).documents.get(0)
-    }
-
-    private static BsonDocument getCommandDocument(ByteBufNIO byteBuf) {
-        BsonInput bsonInput = new ByteBufferBsonInput(byteBuf)
-        BsonBinaryReader reader = new BsonBinaryReader(bsonInput)
-        new BsonDocumentCodec().decode(reader, DecoderContext.builder().build())
+        new ReplyMessage<BsonDocument>(new ResponseBuffers(replyHeader, byteBuf), new BsonDocumentCodec(), 0).document
     }
 }

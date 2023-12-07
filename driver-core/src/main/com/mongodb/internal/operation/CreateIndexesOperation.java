@@ -173,9 +173,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         if (request.getMax() != null) {
             index.append("max", new BsonDouble(assertNotNull(request.getMax())));
         }
-        if (request.getBucketSize() != null) {
-            index.append("bucketSize", new BsonDouble(assertNotNull(request.getBucketSize())));
-        }
         if (request.getDropDups()) {
             index.append("dropDups", BsonBoolean.TRUE);
         }

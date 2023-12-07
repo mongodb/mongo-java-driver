@@ -26,8 +26,6 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
-import static org.bson.internal.ProvidersCodecRegistry.getFromCodecProvider;
-
 /**
  * A CodecProvider for Kotlin data classes.
  * Delegates to {@code org.bson.codecs.kotlinx.KotlinSerializerCodecProvider}
@@ -76,11 +74,11 @@ public class KotlinCodecProvider implements CodecProvider {
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
         Codec<T> codec = null;
         if (KOTLIN_SERIALIZABLE_CODEC_PROVIDER != null) {
-            codec = getFromCodecProvider(KOTLIN_SERIALIZABLE_CODEC_PROVIDER, clazz, typeArguments, registry);
+            codec = KOTLIN_SERIALIZABLE_CODEC_PROVIDER.get(clazz, typeArguments, registry);
         }
 
         if (codec == null && DATA_CLASS_CODEC_PROVIDER != null) {
-            codec = getFromCodecProvider(DATA_CLASS_CODEC_PROVIDER, clazz, typeArguments, registry);
+            codec = DATA_CLASS_CODEC_PROVIDER.get(clazz, typeArguments, registry);
         }
         return codec;
     }

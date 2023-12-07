@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty
+package com.mongodb.internal.connection.netty
 
 import com.mongodb.ClusterFixture
 import com.mongodb.connection.SocketSettings

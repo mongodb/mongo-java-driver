@@ -79,34 +79,6 @@ public final class ConnectionCheckOutFailedEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param serverId the server id
-     * @param operationId the operation id
-     * @param reason the reason the connection check out failed
-     * @since 4.10
-     * @deprecated Prefer {@link ConnectionCheckOutFailedEvent#ConnectionCheckOutFailedEvent(ServerId, long, Reason, long)}.
-     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
-     */
-    @Deprecated
-    public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason) {
-        this(serverId, operationId, reason, 0);
-    }
-
-    /**
-     * Construct an instance
-     *
-     * @param serverId the server id
-     * @param reason the reason the connection check out failed
-     * @deprecated Prefer {@link #ConnectionCheckOutFailedEvent(ServerId, long, Reason)}
-     * If this constructor is used, then {@link #getOperationId()} is -1.
-     */
-    @Deprecated
-    public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
-        this(serverId, -1, reason);
-    }
-
-    /**
      * Gets the server id
      *
      * @return the server id

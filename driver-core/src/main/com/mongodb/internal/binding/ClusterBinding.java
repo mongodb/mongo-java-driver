@@ -60,14 +60,6 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         this.operationContext = notNull("operationContext", operationContext);
     }
 
-    /**
-     * Return the cluster.
-     * @return the cluster
-     */
-    public Cluster getCluster() {
-        return cluster;
-    }
-
     @Override
     public ReadWriteBinding retain() {
         super.retain();

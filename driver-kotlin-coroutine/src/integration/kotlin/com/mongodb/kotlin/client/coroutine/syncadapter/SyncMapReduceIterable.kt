@@ -52,10 +52,6 @@ data class SyncMapReduceIterable<T : Any>(val wrapped: MapReduceFlow<T>) :
     override fun databaseName(databaseName: String?): SyncMapReduceIterable<T> = apply {
         wrapped.databaseName(databaseName)
     }
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun sharded(sharded: Boolean): SyncMapReduceIterable<T> = apply { wrapped.sharded(sharded) }
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun nonAtomic(nonAtomic: Boolean): SyncMapReduceIterable<T> = apply { wrapped.nonAtomic(nonAtomic) }
 
     override fun bypassDocumentValidation(bypassDocumentValidation: Boolean?): SyncMapReduceIterable<T> = apply {
         wrapped.bypassDocumentValidation(bypassDocumentValidation)

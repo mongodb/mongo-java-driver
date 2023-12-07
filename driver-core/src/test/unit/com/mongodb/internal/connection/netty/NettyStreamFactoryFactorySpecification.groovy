@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty
+package com.mongodb.internal.connection.netty
 
 import com.mongodb.ServerAddress
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import com.mongodb.connection.TransportSettings
+import com.mongodb.internal.connection.DefaultInetAddressResolver
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.UnpooledByteBufAllocator
 import io.netty.channel.nio.NioEventLoopGroup
@@ -43,6 +44,7 @@ class NettyStreamFactoryFactorySpecification extends Specification {
 
         when:
         def factoryFactory = NettyStreamFactoryFactory.builder()
+                .inetAddressResolver(new DefaultInetAddressResolver())
                 .applySettings(nettySettings)
                 .build()
 
@@ -78,10 +80,13 @@ class NettyStreamFactoryFactorySpecification extends Specification {
     SocketSettings socketSettings = SocketSettings.builder().build()
     SslSettings sslSettings = SslSettings.builder().build()
     ServerAddress serverAddress = new ServerAddress()
-    static final DEFAULT_FACTORY = NettyStreamFactoryFactory.builder().build()
+    static final DEFAULT_FACTORY = NettyStreamFactoryFactory.builder()
+            .inetAddressResolver(new DefaultInetAddressResolver())
+            .build()
     static final CUSTOM_FACTORY = NettyStreamFactoryFactory.builder()
             .allocator(UnpooledByteBufAllocator.DEFAULT)
             .socketChannelClass(OioSocketChannel)
             .eventLoopGroup(new OioEventLoopGroup())
+            .inetAddressResolver(new DefaultInetAddressResolver())
             .build()
 }

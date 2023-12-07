@@ -14,7 +14,25 @@
  * limitations under the License.
  */
 
+package com.mongodb.internal.connection;
+
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
+
 /**
- * This package contains annotations for encoding and decoding Java records.
+ * A factory of {@code StreamFactory} instances.
  */
-package org.bson.codecs.record.annotations;
+public interface StreamFactoryFactory extends AutoCloseable {
+
+    /**
+     * Create a {@code StreamFactory} with the given settings.
+     *
+     * @param socketSettings the socket settings
+     * @param sslSettings the SSL settings
+     * @return a stream factory that will apply the given settins
+     */
+    StreamFactory create(SocketSettings socketSettings, SslSettings sslSettings);
+
+    @Override
+    void close();
+}

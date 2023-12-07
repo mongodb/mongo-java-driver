@@ -17,11 +17,8 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
@@ -34,7 +31,6 @@ import java.util.concurrent.Callable;
 // https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
 // specification tests
 @RunWith(Parameterized.class)
-@SuppressWarnings("deprecation")
 public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
     private static final Logger LOGGER = Loggers.getLogger(ConnectionPoolAsyncTest.class.getSimpleName());
 
@@ -84,9 +80,9 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
     @Override
     protected StreamFactory createStreamFactory(final SocketSettings socketSettings, final SslSettings sslSettings) {
         if (sslSettings.isEnabled()) {
-            return new TlsChannelStreamFactoryFactory().create(socketSettings, sslSettings);
+            return new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver()).create(socketSettings, sslSettings);
         } else {
-            return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+            return new AsynchronousSocketChannelStreamFactory(new DefaultInetAddressResolver(), socketSettings, sslSettings);
         }
 
     }

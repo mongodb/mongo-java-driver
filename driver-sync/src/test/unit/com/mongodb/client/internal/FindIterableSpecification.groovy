@@ -38,8 +38,8 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -66,7 +66,6 @@ class FindIterableSpecification extends Specification {
                 .limit(100)
                 .skip(10)
                 .cursorType(CursorType.NonTailable)
-                .oplogReplay(false)
                 .noCursorTimeout(false)
                 .partial(false)
                 .collation(null)
@@ -114,7 +113,6 @@ class FindIterableSpecification extends Specification {
                 .limit(99)
                 .skip(9)
                 .cursorType(CursorType.Tailable)
-                .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)
                 .collation(collation)
@@ -139,7 +137,6 @@ class FindIterableSpecification extends Specification {
                         .limit(99)
                         .skip(9)
                         .cursorType(CursorType.Tailable)
-                        .oplogReplay(true)
                         .noCursorTimeout(true)
                         .partial(true)
                         .collation(collation)

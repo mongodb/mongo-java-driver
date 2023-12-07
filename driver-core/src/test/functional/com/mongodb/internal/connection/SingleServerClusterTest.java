@@ -25,7 +25,6 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
@@ -50,13 +49,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("deprecation")
 public class SingleServerClusterTest {
     private SingleServerCluster cluster;
 
 
     private void setUpCluster(final ServerAddress serverAddress) {
-        SocketStreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(),
+        SocketStreamFactory streamFactory = new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(),
                 getSslSettings());
         ClusterId clusterId = new ClusterId();
         ClusterSettings clusterSettings = ClusterSettings.builder()
@@ -70,7 +68,7 @@ public class SingleServerClusterTest {
                         streamFactory, streamFactory, getCredential(),
 
                         LoggerSettings.builder().build(), null, null, null,
-                        Collections.emptyList(), getServerApi(), null));
+                        Collections.emptyList(), getServerApi()));
     }
 
     @After

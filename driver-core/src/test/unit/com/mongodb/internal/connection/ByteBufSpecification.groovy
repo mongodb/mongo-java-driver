@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.connection.BufferProvider
+
 import com.mongodb.internal.connection.netty.NettyByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.PooledByteBufAllocator

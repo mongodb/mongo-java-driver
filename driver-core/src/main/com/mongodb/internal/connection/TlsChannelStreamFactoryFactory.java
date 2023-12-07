@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.connection.AsynchronousChannelStream;
-import com.mongodb.internal.connection.ExtendedAsynchronousByteChannel;
-import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
 import com.mongodb.internal.connection.tlschannel.ClientTlsChannel;
 import com.mongodb.internal.connection.tlschannel.TlsChannel;
@@ -31,6 +30,7 @@ import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannelGr
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -49,64 +49,46 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static java.util.Optional.ofNullable;
 
 /**
  * A {@code StreamFactoryFactory} that supports TLS/SSL.  The implementation supports asynchronous usage.
- *
- * @since 3.10
- * @deprecated There is no replacement for this class.
  */
-@Deprecated
-public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Closeable {
+public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
 
     private static final Logger LOGGER = Loggers.getLogger("connection.tls");
 
     private final SelectorMonitor selectorMonitor;
     private final AsynchronousTlsChannelGroup group;
-    private final boolean ownsGroup;
     private final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
+    private final InetAddressResolver inetAddressResolver;
 
     /**
      * Construct a new instance
      */
-    public TlsChannelStreamFactoryFactory() {
-        this(new AsynchronousTlsChannelGroup(), true);
-    }
-
-    /**
-     * Construct a new instance with the given {@code AsynchronousTlsChannelGroup}.  Callers are required to close the provided group
-     * in order to free up resources.
-     *
-     * @param group the group
-     * @deprecated Prefer {@link #TlsChannelStreamFactoryFactory()}
-     */
-    @Deprecated
-    public TlsChannelStreamFactoryFactory(final AsynchronousTlsChannelGroup group) {
-        this(group, false);
-    }
-
-    private TlsChannelStreamFactoryFactory(final AsynchronousTlsChannelGroup group, final boolean ownsGroup) {
-        this.group = group;
-        this.ownsGroup = ownsGroup;
+    public TlsChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
+        this.inetAddressResolver = inetAddressResolver;
+        this.group = new AsynchronousTlsChannelGroup();
         selectorMonitor = new SelectorMonitor();
         selectorMonitor.start();
     }
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return serverAddress -> new TlsChannelStream(serverAddress, socketSettings, sslSettings, bufferPool, group, selectorMonitor);
+        assertTrue(sslSettings.isEnabled());
+        return serverAddress -> new TlsChannelStream(serverAddress, inetAddressResolver, socketSettings, sslSettings, bufferPool, group,
+                selectorMonitor);
     }
 
     @Override
     public void close() {
         selectorMonitor.close();
-        if (ownsGroup) {
-            group.shutdown();
-        }
+        group.shutdown();
     }
 
     private static class SelectorMonitor implements Closeable {
@@ -184,23 +166,19 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
 
         private final AsynchronousTlsChannelGroup group;
         private final SelectorMonitor selectorMonitor;
+        private final InetAddressResolver inetAddressResolver;
         private final SslSettings sslSettings;
 
-        TlsChannelStream(final ServerAddress serverAddress, final SocketSettings settings, final SslSettings sslSettings,
-                         final PowerOfTwoBufferPool bufferProvider, final AsynchronousTlsChannelGroup group,
-                         final SelectorMonitor selectorMonitor) {
+        TlsChannelStream(final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
+                final SocketSettings settings, final SslSettings sslSettings, final PowerOfTwoBufferPool bufferProvider,
+                final AsynchronousTlsChannelGroup group, final SelectorMonitor selectorMonitor) {
             super(serverAddress, settings, bufferProvider);
+            this.inetAddressResolver = inetAddressResolver;
             this.sslSettings = sslSettings;
             this.group = group;
             this.selectorMonitor = selectorMonitor;
         }
 
-        @Override
-        public boolean supportsAdditionalTimeout() {
-            return true;
-        }
-
-        @SuppressWarnings("deprecation")
         @Override
         public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);
@@ -217,7 +195,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
                     socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, getSettings().getSendBufferSize());
                 }
 
-                socketChannel.connect(getServerAddress().getSocketAddress());
+                socketChannel.connect(getSocketAddresses(getServerAddress(), inetAddressResolver).get(0));
 
                 selectorMonitor.register(socketChannel, () -> {
                     try {

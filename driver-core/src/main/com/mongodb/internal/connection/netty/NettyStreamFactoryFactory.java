@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty;
+package com.mongodb.internal.connection.netty;
 
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.connection.StreamFactory;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.lang.Nullable;
+import com.mongodb.spi.dns.InetAddressResolver;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -42,25 +42,21 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
- * A {@code StreamFactoryFactory} implementation for <a href='http://netty.io/'>Netty</a>-based streams.
- *
- * @since 3.1
- * @deprecated Prefer {@link NettyTransportSettings}, creatable via {@link TransportSettings#nettyBuilder()} and applied via
- * {@link com.mongodb.MongoClientSettings.Builder#transportSettings(TransportSettings)}
+ * A {@code StreamFactoryFactory} implementation for <a href="http://netty.io/">Netty</a>-based streams.
  */
-@Deprecated
 public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     private final EventLoopGroup eventLoopGroup;
+    private final boolean ownsEventLoopGroup;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
     private final SslContext sslContext;
+    private final InetAddressResolver inetAddressResolver;
 
     /**
      * Gets a builder for an instance of {@code NettyStreamFactoryFactory}.
      * @return the builder
-     * @since 3.3
      */
     public static Builder builder() {
         return new Builder();
@@ -89,8 +85,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     /**
      * A builder for an instance of {@code NettyStreamFactoryFactory}.
-     *
-     * @since 3.3
      */
     public static final class Builder {
         private ByteBufAllocator allocator;
@@ -98,6 +92,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         private EventLoopGroup eventLoopGroup;
         @Nullable
         private SslContext sslContext;
+        private InetAddressResolver inetAddressResolver;
 
         private Builder() {
         }
@@ -178,8 +173,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
          *
          * @param sslContext The Netty {@link SslContext}, which must be created via {@linkplain SslContextBuilder#forClient()}.
          * @return {@code this}.
-         *
-         * @since 4.3
          */
         public Builder sslContext(final SslContext sslContext) {
             this.sslContext = notNull("sslContext", sslContext);
@@ -187,6 +180,11 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
             isTrueArgument("sslContext must use either SslProvider.JDK or SslProvider.OPENSSL TLS/SSL protocol provider",
                     !(sslContext instanceof ReferenceCountedOpenSslClientContext));
 
+            return this;
+        }
+
+        public Builder inetAddressResolver(final InetAddressResolver inetAddressResolver) {
+            this.inetAddressResolver = inetAddressResolver;
             return this;
         }
 
@@ -201,7 +199,17 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
-        return new NettyStreamFactory(socketSettings, sslSettings, eventLoopGroup, socketChannelClass, allocator, sslContext);
+        return new NettyStreamFactory(inetAddressResolver, socketSettings, sslSettings, eventLoopGroup, socketChannelClass, allocator,
+                sslContext);
+    }
+
+    @Override
+    public void close() {
+         if (ownsEventLoopGroup) {
+             // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
+             // to the pool
+             eventLoopGroup.shutdownGracefully();
+         }
     }
 
     @Override
@@ -214,28 +222,21 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         }
         NettyStreamFactoryFactory that = (NettyStreamFactoryFactory) o;
         return Objects.equals(eventLoopGroup, that.eventLoopGroup) && Objects.equals(socketChannelClass, that.socketChannelClass)
-                && Objects.equals(allocator, that.allocator) && Objects.equals(sslContext, that.sslContext);
+                && Objects.equals(allocator, that.allocator) && Objects.equals(sslContext, that.sslContext)
+                && Objects.equals(inetAddressResolver, that.inetAddressResolver);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(eventLoopGroup, socketChannelClass, allocator, sslContext);
-    }
-
-    @Override
-    public String toString() {
-        return "NettyStreamFactoryFactory{"
-                + "eventLoopGroup=" + eventLoopGroup
-                + ", socketChannelClass=" + socketChannelClass
-                + ", allocator=" + allocator
-                + ", sslContext=" + sslContext
-                + '}';
+        return Objects.hash(eventLoopGroup, socketChannelClass, allocator, sslContext, inetAddressResolver);
     }
 
     private NettyStreamFactoryFactory(final Builder builder) {
         allocator = builder.allocator == null ? ByteBufAllocator.DEFAULT : builder.allocator;
         socketChannelClass = builder.socketChannelClass == null ? NioSocketChannel.class : builder.socketChannelClass;
         eventLoopGroup = builder.eventLoopGroup == null ? new NioEventLoopGroup() : builder.eventLoopGroup;
+        ownsEventLoopGroup = builder.eventLoopGroup == null;
         sslContext = builder.sslContext;
+        inetAddressResolver = builder.inetAddressResolver;
     }
 }

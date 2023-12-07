@@ -2,9 +2,9 @@ package com.mongodb.internal.connection
 
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
-import com.mongodb.connection.BufferProvider
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.spi.dns.InetAddressResolver
 import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -41,7 +41,7 @@ class StreamSocketAddressSpecification extends Specification {
         def socket2 = SocketFactory.default.createSocket()
         socketFactory.createSocket() >>> [socket0, socket1, socket2]
 
-        def socketStream = new SocketStream(serverAddress, socketSettings, sslSettings, socketFactory, bufferProvider)
+        def socketStream = new SocketStream(serverAddress, null, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
         socketStream.open(OPERATION_CONTEXT)
@@ -59,18 +59,11 @@ class StreamSocketAddressSpecification extends Specification {
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw exception when attempting to connect with incorrect ip address group'() {
         given:
-        def port = 27017
         def socketSettings = SocketSettings.builder().connectTimeout(100, TimeUnit.MILLISECONDS).build()
         def sslSettings = SslSettings.builder().build()
         def bufferProvider = Stub(BufferProvider)
-        def inetAddresses = new InetSocketAddress[3]
 
-        inetAddresses[0] = new InetSocketAddress(InetAddress.getByName('1.2.3.4'), port)
-        inetAddresses[1] = new InetSocketAddress(InetAddress.getByName('2.3.4.5'), port)
-        inetAddresses[2] = new InetSocketAddress(InetAddress.getByName('1.2.3.5'), port)
-
-        def serverAddress = Stub(ServerAddress)
-        serverAddress.getSocketAddresses() >> inetAddresses
+        def serverAddress = new ServerAddress()
 
         def socketFactory = Stub(SocketFactory)
         def socket0 = SocketFactory.default.createSocket()
@@ -78,7 +71,16 @@ class StreamSocketAddressSpecification extends Specification {
         def socket2 = SocketFactory.default.createSocket()
         socketFactory.createSocket() >>> [socket0, socket1, socket2]
 
-        def socketStream = new SocketStream(serverAddress, socketSettings, sslSettings, socketFactory, bufferProvider)
+        def inetAddressResolver = new InetAddressResolver() {
+            @Override
+            List<InetAddress> lookupByName(String host) {
+                [InetAddress.getByName('1.2.3.4'),
+                 InetAddress.getByName('2.3.4.5'),
+                 InetAddress.getByName('1.2.3.5')]
+            }
+        }
+
+        def socketStream = new SocketStream(serverAddress, inetAddressResolver, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
         socketStream.open(OPERATION_CONTEXT)

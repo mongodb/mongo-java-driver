@@ -96,8 +96,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getCollation() == null
         !operation.isJsMode()
         !operation.isVerbose()
-        !operation.isSharded()
-        !operation.isNonAtomic()
     }
 
     def 'should set optional values correctly'(){

@@ -17,66 +17,33 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
-import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.HashMap;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
-import static org.bson.codecs.ContainerCodecHelper.readValue;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
- * A Codec for Map instances.
+ * A codec for {@code Map<String, Object>}.
  *
- * <p>This class has been deprecated because it's not possible to extend it to support {@code Map}s that are not type-compatible with
- * {@code HashMap}.
- * </p>
+ * <p>Supports {@link Map}, {@link java.util.NavigableMap}, {@link java.util.AbstractMap} or any concrete class that implements {@code
+ * Map} and has a public no-args constructor. If the type argument is {@code Map<String, Object>}, it constructs
+ * {@code HashMap<String, Object>} instances when decoding. If the type argument is {@code NavigableMap<String, Object>}, it constructs
+ * {@code TreeMap<String, Object>} instances when decoding.</p>
  *
- * @since 3.5
- * @deprecated Prefer {@link MapCodecProvider}
+ * @param <M> the actual type of the Map, e.g. {@code NavigableMap<String, Object>}
  */
-@Deprecated
-public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepresentationCodec<Map<String, Object>> {
+@SuppressWarnings("rawtypes")
+final class MapCodec<M extends Map<String, Object>> extends AbstractMapCodec<Object, M>
+        implements OverridableUuidRepresentationCodec<M> {
 
-    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(),
-            new DocumentCodecProvider(), new IterableCodecProvider(), new MapCodecProvider()));
-    private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final CodecRegistry registry;
     private final Transformer valueTransformer;
     private final UuidRepresentation uuidRepresentation;
-
-    /**
-     * Construct a new instance with a default {@code CodecRegistry}
-     */
-    public MapCodec() {
-        this(DEFAULT_REGISTRY);
-    }
-
-    /**
-     Construct a new instance with the given registry
-     *
-     * @param registry the registry
-     */
-    public MapCodec(final CodecRegistry registry) {
-        this(registry, DEFAULT_BSON_TYPE_CLASS_MAP);
-    }
-
-    /**
-     * Construct a new instance with the given registry and BSON type class map.
-     *
-     * @param registry         the registry
-     * @param bsonTypeClassMap the BSON type class map
-     */
-    public MapCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
-        this(registry, bsonTypeClassMap, null);
-    }
 
     /**
      * Construct a new instance with the given registry and BSON type class map. The transformer is applied as a last step when decoding
@@ -86,65 +53,41 @@ public class MapCodec implements Codec<Map<String, Object>>, OverridableUuidRepr
      * @param registry         the registry
      * @param bsonTypeClassMap the BSON type class map
      * @param valueTransformer the value transformer to use as a final step when decoding the value of any field in the map
+     * @param clazz            the Map subclass
+     * @since 4.8
      */
-    public MapCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
+    MapCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer,
+                      final Class<M> clazz) {
         this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry), valueTransformer,
-                UuidRepresentation.UNSPECIFIED);
+                UuidRepresentation.UNSPECIFIED, clazz);
     }
 
     private MapCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final Transformer valueTransformer,
-                     final UuidRepresentation uuidRepresentation) {
+                       final UuidRepresentation uuidRepresentation, final Class<M> clazz) {
+        super(clazz);
         this.registry = notNull("registry", registry);
         this.bsonTypeCodecMap = bsonTypeCodecMap;
-        this.valueTransformer = valueTransformer != null ? valueTransformer : value -> value;
+        this.valueTransformer = valueTransformer != null ? valueTransformer : (value) -> value;
         this.uuidRepresentation = uuidRepresentation;
     }
 
     @Override
-    public Codec<Map<String, Object>> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+    public Codec<M> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
         if (this.uuidRepresentation.equals(uuidRepresentation)) {
             return this;
         }
-        return new MapCodec(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation);
+        return new MapCodec<>(registry, bsonTypeCodecMap, valueTransformer, uuidRepresentation, getEncoderClass());
     }
 
     @Override
-    public void encode(final BsonWriter writer, final Map<String, Object> map, final EncoderContext encoderContext) {
-        writer.writeStartDocument();
-        for (final Map.Entry<String, Object> entry : map.entrySet()) {
-            writer.writeName(entry.getKey());
-            writeValue(writer, encoderContext, entry.getValue());
-        }
-        writer.writeEndDocument();
+    Object readValue(final BsonReader reader, final DecoderContext decoderContext) {
+        return ContainerCodecHelper.readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public Map<String, Object> decode(final BsonReader reader, final DecoderContext decoderContext) {
-        Map<String, Object> map = new HashMap<>();
-
-        reader.readStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            String fieldName = reader.readName();
-            map.put(fieldName, readValue(reader, decoderContext, bsonTypeCodecMap, uuidRepresentation, registry, valueTransformer));
-        }
-
-        reader.readEndDocument();
-        return map;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @Override
-    public Class<Map<String, Object>> getEncoderClass() {
-        return (Class<Map<String, Object>>) ((Class) Map.class);
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value) {
-        if (value == null) {
-            writer.writeNull();
-        } else {
-            Codec codec = registry.get(value.getClass());
-            encoderContext.encodeWithChildContext(codec, writer, value);
-        }
+    void writeValue(final BsonWriter writer, final Object value, final EncoderContext encoderContext) {
+        Codec codec = registry.get(value.getClass());
+        encoderContext.encodeWithChildContext(codec, writer, value);
     }
 }

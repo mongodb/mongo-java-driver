@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.bson.assertions.Assertions.notNull;
-import static org.bson.internal.ProvidersCodecRegistry.getFromCodecProvider;
 
 final class OverridableUuidRepresentationCodecProvider implements CodecProvider {
 
@@ -44,7 +43,7 @@ final class OverridableUuidRepresentationCodecProvider implements CodecProvider 
 
     @Override
     public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
-        Codec<T> codec = getFromCodecProvider(wrapped, clazz, typeArguments, registry);
+        Codec<T> codec = wrapped.get(clazz, typeArguments, registry);
         if (codec instanceof OverridableUuidRepresentationCodec) {
             @SuppressWarnings("unchecked")
             Codec<T> codecWithUuidRepresentation = ((OverridableUuidRepresentationCodec<T>) codec).withUuidRepresentation(uuidRepresentation);

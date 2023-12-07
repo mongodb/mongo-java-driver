@@ -16,8 +16,10 @@
 
 package com.mongodb.internal.connection;
 
-import java.util.ArrayDeque;
+import com.mongodb.annotations.ThreadSafe;
+
 import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 final class RoundTripTimeSampler {
     private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
@@ -41,13 +43,14 @@ final class RoundTripTimeSampler {
         return recentSamples.min();
     }
 
+    @ThreadSafe
     private static final class RecentSamples {
 
         private static final int MAX_SIZE = 10;
         private final Deque<Long> samples;
 
         RecentSamples() {
-            samples = new ArrayDeque<>();
+            samples = new ConcurrentLinkedDeque<>();
         }
 
         void add(final long sample) {
