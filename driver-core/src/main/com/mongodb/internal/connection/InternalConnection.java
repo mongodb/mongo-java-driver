@@ -48,13 +48,15 @@ public interface InternalConnection extends BufferProvider {
 
     /**
      * Opens the connection so its ready for use
+     *
+     * @param operationContext the operation context
      */
     void open(OperationContext operationContext);
 
     /**
      * Opens the connection so its ready for use
      *
-     * @param operationContext
+     * @param operationContext the operation context
      * @param callback         the callback to be called once the connection has been opened
      */
     void openAsync(OperationContext operationContext, SingleResultCallback<Void> callback);
@@ -121,33 +123,38 @@ public interface InternalConnection extends BufferProvider {
      *
      * @param byteBuffers   the list of byte buffers to send.
      * @param lastRequestId the request id of the last message in byteBuffers
+     * @param operationContext the operation context
      */
-    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId);
+    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId, OperationContext operationContext);
 
     /**
      * Receive a response to a sent message from the server.
      *
      * @param responseTo the request id that this message is a response to
+     * @param operationContext the operation context
      * @return the response
      */
-    ResponseBuffers receiveMessage(int responseTo);
+    ResponseBuffers receiveMessage(int responseTo, OperationContext operationContext);
 
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers   the list of byte buffers to send
      * @param lastRequestId the request id of the last message in byteBuffers
+     * @param operationContext the operation context
      * @param callback      the callback to invoke on completion
      */
-    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, SingleResultCallback<Void> callback);
+    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, OperationContext operationContext,
+            SingleResultCallback<Void> callback);
 
     /**
      * Asynchronously receive a response to a sent message from the server.
      *
      * @param responseTo the request id that this message is a response to
+     * @param operationContext the operation context
      * @param callback the callback to invoke on completion
      */
-    void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
+    void receiveMessageAsync(int responseTo, OperationContext operationContext, SingleResultCallback<ResponseBuffers> callback);
 
     default void markAsPinned(Connection.PinningMode pinningMode) {
     }

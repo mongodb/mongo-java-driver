@@ -111,7 +111,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
-        connection.sendMessage(Arrays.asList(), 1)
+        connection.sendMessage([], 1, OPERATION_CONTEXT)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -127,7 +127,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.sendMessageAsync(Arrays.asList(), 1, futureResultCallback)
+        connection.sendMessageAsync([], 1, OPERATION_CONTEXT, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -141,7 +141,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         connection.open(OPERATION_CONTEXT)
         def openedLastUsedAt = connection.lastUsedAt
         when:
-        connection.receiveMessage(1)
+        connection.receiveMessage(1, OPERATION_CONTEXT)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -156,7 +156,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.receiveMessageAsync(1, futureResultCallback)
+        connection.receiveMessageAsync(1, OPERATION_CONTEXT, futureResultCallback)
         futureResultCallback.get()
 
         then:

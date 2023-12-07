@@ -16,7 +16,6 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoExecutionTimeoutException;
-import com.mongodb.MongoTimeoutException;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;

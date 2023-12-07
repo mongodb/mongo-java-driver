@@ -81,7 +81,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * A Stream implementation based on Netty 4.0.
  * Just like it is for the {@link java.nio.channels.AsynchronousSocketChannel},
  * concurrent pending<sup>1</sup> readers
- * (whether {@linkplain #read(int, int) synchronous} or {@linkplain #readAsync(int, AsyncCompletionHandler) asynchronous})
+ * (whether {@linkplain #read(int, int, OperationContext) synchronous} or
+ * {@linkplain #readAsync(int, OperationContext, AsyncCompletionHandler) asynchronous})
  * are not supported by {@link NettyStream}.
  * However, this class does not have a fail-fast mechanism checking for such situations.
  * <hr>
@@ -106,7 +107,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * int1 -> inv2 -> ret2
  *      \--------> ret1
  * }</pre>
- * As shown on the diagram, the method {@link #readAsync(int, AsyncCompletionHandler)} runs concurrently with
+ * As shown on the diagram, the method {@link #readAsync(int, OperationContext, AsyncCompletionHandler)} runs concurrently with
  * itself in the example above. However, there are no concurrent pending readers because the second operation
  * is invoked after the first operation has completed reading despite the method has not returned yet.
  */
@@ -230,19 +231,19 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public void write(final List<ByteBuf> buffers) throws IOException {
+    public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<>();
-        writeAsync(buffers, future);
+        writeAsync(buffers, operationContext, future);
         future.get();
     }
 
     @Override
-    public ByteBuf read(final int numBytes) throws IOException {
-        return read(numBytes, 0);
+    public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
+        return read(numBytes, 0, operationContext);
     }
 
     @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeoutMillis) throws IOException {
+    public ByteBuf read(final int numBytes, final int additionalTimeoutMillis, final OperationContext operationContext) throws IOException {
         isTrueArgument("additionalTimeoutMillis must not be negative", additionalTimeoutMillis >= 0);
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, future, combinedTimeout(readTimeoutMillis, additionalTimeoutMillis));
@@ -250,7 +251,8 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
+    public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
+            final AsyncCompletionHandler<Void> handler) {
         CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
         for (ByteBuf cur : buffers) {
             // The Netty framework releases `CompositeByteBuf` after writing
@@ -271,7 +273,7 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+    public void readAsync(final int numBytes, final OperationContext operationContext, final AsyncCompletionHandler<ByteBuf> handler) {
         readAsync(numBytes, handler, readTimeoutMillis);
     }
 

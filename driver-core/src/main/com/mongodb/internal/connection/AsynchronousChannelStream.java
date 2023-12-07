@@ -86,7 +86,8 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
+    public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
+            final AsyncCompletionHandler<Void> handler) {
         AsyncWritableByteChannelAdapter byteChannel = new AsyncWritableByteChannelAdapter();
         Iterator<ByteBuf> iter = buffers.iterator();
         pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
@@ -107,11 +108,12 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        readAsync(numBytes, 0, handler);
+    public void readAsync(final int numBytes, final OperationContext operationContext, final AsyncCompletionHandler<ByteBuf> handler) {
+        readAsync(numBytes, 0, operationContext, handler);
     }
 
-    private void readAsync(final int numBytes, final int additionalTimeout, final AsyncCompletionHandler<ByteBuf> handler) {
+    private void readAsync(final int numBytes, final int additionalTimeout, final OperationContext operationContext,
+            final AsyncCompletionHandler<ByteBuf> handler) {
         ByteBuf buffer = bufferProvider.getBuffer(numBytes);
 
         int timeout = settings.getReadTimeout(MILLISECONDS);
@@ -130,23 +132,23 @@ public abstract class AsynchronousChannelStream implements Stream {
     }
 
     @Override
-    public void write(final List<ByteBuf> buffers) throws IOException {
+    public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
-        writeAsync(buffers, handler);
+        writeAsync(buffers, operationContext, handler);
         handler.getWrite();
     }
 
     @Override
-    public ByteBuf read(final int numBytes) throws IOException {
+    public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
-        readAsync(numBytes, handler);
+        readAsync(numBytes, operationContext, handler);
         return handler.getRead();
     }
 
     @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
+    public ByteBuf read(final int numBytes, final int additionalTimeout, final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
-        readAsync(numBytes, additionalTimeout, handler);
+        readAsync(numBytes, additionalTimeout, operationContext, handler);
         return handler.getRead();
     }
 

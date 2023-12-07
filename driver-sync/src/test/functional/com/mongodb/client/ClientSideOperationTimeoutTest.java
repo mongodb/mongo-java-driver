@@ -30,7 +30,6 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 @RunWith(Parameterized.class)

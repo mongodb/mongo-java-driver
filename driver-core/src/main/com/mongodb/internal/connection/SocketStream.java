@@ -159,14 +159,14 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public void write(final List<ByteBuf> buffers) throws IOException {
+    public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
         }
     }
 
     @Override
-    public ByteBuf read(final int numBytes) throws IOException {
+    public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
         ByteBuf buffer = bufferProvider.getBuffer(numBytes);
         try {
             int totalBytesRead = 0;
@@ -186,13 +186,13 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
+    public ByteBuf read(final int numBytes, final int additionalTimeout, final OperationContext operationContext) throws IOException {
         int curTimeout = socket.getSoTimeout();
         if (curTimeout > 0 && additionalTimeout > 0) {
             socket.setSoTimeout(curTimeout + additionalTimeout);
         }
         try {
-            return read(numBytes);
+            return read(numBytes, operationContext);
         } finally {
             if (!socket.isClosed()) {
                 // `socket` may be closed if the current thread is virtual, and it is interrupted while reading
@@ -207,12 +207,14 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
+    public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
+            final AsyncCompletionHandler<Void> handler) {
         throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override
-    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+    public void readAsync(final int numBytes, final OperationContext operationContext,
+            final AsyncCompletionHandler<ByteBuf> handler) {
         throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 

@@ -15,7 +15,7 @@
  */
 package com.mongodb.internal;
 
-import com.mongodb.MongoTimeoutException;
+import com.mongodb.MongoExecutionTimeoutException;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -176,8 +176,8 @@ final class TimeoutContextTest {
                     assertAll(
                             () -> assertTrue(supplier.get().getMaxTimeMS() <= 100),
                             () -> assertTrue(supplier.get().minRoundTripTimeMS(10).getMaxTimeMS() <= 90),
-                            () -> assertThrows(MongoTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(101).getMaxTimeMS()),
-                            () -> assertThrows(MongoTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(100).getMaxTimeMS())
+                            () -> assertThrows(MongoExecutionTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(101).getMaxTimeMS()),
+                            () -> assertThrows(MongoExecutionTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(100).getMaxTimeMS())
                     );
                 })
         );

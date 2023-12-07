@@ -27,7 +27,6 @@ import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
-import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -413,10 +412,12 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        validateHasTimedOut(operationContext).ifPresent(e -> { throw e; });
+        validateHasTimedOut(operationContext).ifPresent(e -> {
+            throw e;
+        });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
-            sendMessage(byteBuffers, message.getId());
+            sendMessage(byteBuffers, message.getId(), operationContext);
         } finally {
             ResourceUtil.release(byteBuffers);
             bsonOutput.close();
@@ -425,10 +426,12 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext, final int additionalTimeout) {
-        validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> { throw e; });
+        validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> {
+            throw e;
+        });
 
         boolean commandSuccessful = false;
-        try (ResponseBuffers responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout)) {
+        try (ResponseBuffers responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout, operationContext)) {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
             if (!isCommandOk(responseBuffers)) {
                 throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
@@ -500,7 +503,7 @@ public class InternalStreamConnection implements InternalConnection {
                                              final SingleResultCallback<T> callback, final ByteBufferBsonOutput bsonOutput,
                                              final CommandEventSender commandEventSender, final boolean responseExpected) {
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
-        sendMessageAsync(byteBuffers, messageId, (result, t) -> {
+        sendMessageAsync(byteBuffers, messageId, operationContext, (result, t) -> {
             ResourceUtil.release(byteBuffers);
             bsonOutput.close();
             Throwable error = validateHasTimedOut(operationContext).map(e -> (Throwable) e).orElse(t);
@@ -517,7 +520,7 @@ public class InternalStreamConnection implements InternalConnection {
                     return;
                 }
 
-                readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback((responseBuffers, t1) -> {
+                readAsync(MESSAGE_HEADER_LENGTH, operationContext, new MessageHeaderCallback(operationContext, (responseBuffers, t1) -> {
                     if (t1 != null) {
                         commandEventSender.sendFailedEvent(t1);
                         callback.onResult(null, t1);
@@ -577,7 +580,7 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
         notNull("stream is open", stream);
 
         if (isClosed()) {
@@ -585,7 +588,7 @@ public class InternalStreamConnection implements InternalConnection {
         }
 
         try {
-            stream.write(byteBuffers);
+            stream.write(byteBuffers, operationContext);
         } catch (Exception e) {
             close();
             throw translateWriteException(e);
@@ -593,18 +596,18 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
+    public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
         notNull("stream is open", stream);
         if (isClosed()) {
             throw new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress());
         }
 
-        return receiveMessageWithAdditionalTimeout(0);
+        return receiveMessageWithAdditionalTimeout(0, operationContext);
     }
 
-    private ResponseBuffers receiveMessageWithAdditionalTimeout(final int additionalTimeout) {
+    private ResponseBuffers receiveMessageWithAdditionalTimeout(final int additionalTimeout, final OperationContext operationContext) {
         try {
-            return receiveResponseBuffers(additionalTimeout);
+            return receiveResponseBuffers(additionalTimeout, operationContext);
         } catch (Throwable t) {
             close();
             throw translateReadException(t);
@@ -612,7 +615,8 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
+            final SingleResultCallback<Void> callback) {
         notNull("stream is open", stream, callback);
 
         if (isClosed()) {
@@ -620,12 +624,12 @@ public class InternalStreamConnection implements InternalConnection {
             return;
         }
 
-        writeAsync(byteBuffers, errorHandlingCallback(callback, LOGGER));
+        writeAsync(operationContext, byteBuffers, errorHandlingCallback(callback, LOGGER));
     }
 
-    private void writeAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+    private void writeAsync(final OperationContext operationContext, final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
         try {
-            stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
+            stream.writeAsync(byteBuffers, operationContext, new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(@Nullable final Void v) {
                     callback.onResult(null, null);
@@ -644,7 +648,8 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+            final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("stream is open", stream != null, callback);
 
         if (isClosed()) {
@@ -652,7 +657,7 @@ public class InternalStreamConnection implements InternalConnection {
             return;
         }
 
-        readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback((result, t) -> {
+        readAsync(MESSAGE_HEADER_LENGTH, operationContext, new MessageHeaderCallback(operationContext, (result, t) -> {
             if (t != null) {
                 close();
                 callback.onResult(null, t);
@@ -662,14 +667,14 @@ public class InternalStreamConnection implements InternalConnection {
         }));
     }
 
-    private void readAsync(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
+    private void readAsync(final int numBytes, final OperationContext operationContext, final SingleResultCallback<ByteBuf> callback) {
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress()));
             return;
         }
 
         try {
-            stream.readAsync(numBytes, new AsyncCompletionHandler<ByteBuf>() {
+            stream.readAsync(numBytes, operationContext, new AsyncCompletionHandler<ByteBuf>() {
                 @Override
                 public void completed(@Nullable final ByteBuf buffer) {
                     callback.onResult(buffer, null);
@@ -739,8 +744,8 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private ResponseBuffers receiveResponseBuffers(final int additionalTimeout) throws IOException {
-        ByteBuf messageHeaderBuffer = stream.read(MESSAGE_HEADER_LENGTH, additionalTimeout);
+    private ResponseBuffers receiveResponseBuffers(final int additionalTimeout, final OperationContext operationContext) throws IOException {
+        ByteBuf messageHeaderBuffer = stream.read(MESSAGE_HEADER_LENGTH, additionalTimeout, operationContext);
         MessageHeader messageHeader;
         try {
             messageHeader = new MessageHeader(messageHeaderBuffer, description.getMaxMessageSize());
@@ -748,7 +753,7 @@ public class InternalStreamConnection implements InternalConnection {
             messageHeaderBuffer.release();
         }
 
-        ByteBuf messageBuffer = stream.read(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, additionalTimeout);
+        ByteBuf messageBuffer = stream.read(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, additionalTimeout, operationContext);
         boolean releaseMessageBuffer = true;
         try {
             if (messageHeader.getOpCode() == OP_COMPRESSED.getValue()) {
@@ -788,9 +793,11 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private class MessageHeaderCallback implements SingleResultCallback<ByteBuf> {
+        private final OperationContext operationContext;
         private final SingleResultCallback<ResponseBuffers> callback;
 
-        MessageHeaderCallback(final SingleResultCallback<ResponseBuffers> callback) {
+        MessageHeaderCallback(final OperationContext operationContext, final SingleResultCallback<ResponseBuffers> callback) {
+            this.operationContext = operationContext;
             this.callback = callback;
         }
 
@@ -803,7 +810,8 @@ public class InternalStreamConnection implements InternalConnection {
             try {
                 assertNotNull(result);
                 MessageHeader messageHeader = new MessageHeader(result, description.getMaxMessageSize());
-                readAsync(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, new MessageCallback(messageHeader));
+                readAsync(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, operationContext,
+                        new MessageCallback(messageHeader));
             } catch (Throwable localThrowable) {
                 callback.onResult(null, localThrowable);
             } finally {
