@@ -98,7 +98,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
         }
 
         @Override
@@ -127,17 +127,19 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final int responseTo) {
+        public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
             return null;
         }
 
         @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
+                final SingleResultCallback<Void> callback) {
             callback.onResult(null, null);
         }
 
         @Override
-        public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+                final SingleResultCallback<ResponseBuffers> callback) {
             callback.onResult(null, null);
         }
 

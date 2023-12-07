@@ -135,7 +135,7 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
         // repackage all byte buffers into a single byte buffer...
         int totalSize = 0;
         for (ByteBuf buf : byteBuffers) {
@@ -165,9 +165,9 @@ class TestInternalConnection implements InternalConnection {
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext.getSessionContext());
-            sendMessage(bsonOutput.getByteBuffers(), message.getId());
+            sendMessage(bsonOutput.getByteBuffers(), message.getId(), operationContext);
         }
-        try (ResponseBuffers responseBuffers = receiveMessage(message.getId())) {
+        try (ResponseBuffers responseBuffers = receiveMessage(message.getId(), operationContext)) {
             boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
             responseBuffers.reset();
             if (!commandOk) {
@@ -229,7 +229,7 @@ class TestInternalConnection implements InternalConnection {
         return new ReplyHeader(buffer, messageHeader);    }
 
     @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
+    public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
         if (this.replies.isEmpty()) {
             throw new MongoException("Test was not setup properly as too many calls to receiveMessage occured.");
         }
@@ -243,9 +243,10 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
+            final SingleResultCallback<Void> callback) {
         try {
-            sendMessage(byteBuffers, lastRequestId);
+            sendMessage(byteBuffers, lastRequestId, operationContext);
             callback.onResult(null, null);
         } catch (Exception e) {
             callback.onResult(null, e);
@@ -253,9 +254,10 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+            final SingleResultCallback<ResponseBuffers> callback) {
         try {
-            ResponseBuffers buffers = receiveMessage(responseTo);
+            ResponseBuffers buffers = receiveMessage(responseTo, operationContext);
             callback.onResult(buffers, null);
         } catch (MongoException ex) {
             callback.onResult(null, ex);

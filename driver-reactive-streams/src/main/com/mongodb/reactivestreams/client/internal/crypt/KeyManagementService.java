@@ -93,7 +93,8 @@ class KeyManagementService implements Closeable {
 
     private void streamWrite(final Stream stream, final MongoKeyDecryptor keyDecryptor, final MonoSink<Void> sink) {
         List<ByteBuf> byteBufs = singletonList(new ByteBufNIO(keyDecryptor.getMessage()));
-        stream.writeAsync(byteBufs, new AsyncCompletionHandler<Void>() {
+        // TODO (CSOT) - JAVA-4055
+        stream.writeAsync(byteBufs, OperationContext.todoOperationContext(), new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(@Nullable final Void aVoid) {
                 streamRead(stream, keyDecryptor, sink);

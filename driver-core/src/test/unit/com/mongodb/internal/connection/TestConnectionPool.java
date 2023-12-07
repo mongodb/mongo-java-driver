@@ -45,7 +45,7 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+            public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
@@ -76,18 +76,19 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public ResponseBuffers receiveMessage(final int responseTo) {
+            public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId,
+            public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
                                          final SingleResultCallback<Void> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+            public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+                    final SingleResultCallback<ResponseBuffers> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 

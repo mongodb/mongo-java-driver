@@ -723,9 +723,9 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
             isTrue("open", !isClosed.get());
-            wrapped.sendMessage(byteBuffers, lastRequestId);
+            wrapped.sendMessage(byteBuffers, lastRequestId, operationContext);
         }
 
         @Override
@@ -772,21 +772,23 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final int responseTo) {
+        public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
             isTrue("open", !isClosed.get());
-            return wrapped.receiveMessage(responseTo);
+            return wrapped.receiveMessage(responseTo, operationContext);
         }
 
         @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
+        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
+                final SingleResultCallback<Void> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendMessageAsync(byteBuffers, lastRequestId, (result, t) -> callback.onResult(null, t));
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, operationContext, (result, t) -> callback.onResult(null, t));
         }
 
         @Override
-        public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
+                final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.receiveMessageAsync(responseTo, callback);
+            wrapped.receiveMessageAsync(responseTo, operationContext, callback);
         }
 
         @Override
