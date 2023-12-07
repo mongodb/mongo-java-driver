@@ -334,6 +334,11 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoSocketReadTimeoutException = com.mongodb.MongoSocketReadTimeoutException
 
   /**
+   * This exception is thrown when there is a timeout writing to a socket.
+   */
+  type MongoSocketWriteTimeoutException = com.mongodb.MongoSocketWriteTimeoutException
+
+  /**
    * This exception is thrown when there is an exception writing a response to a Socket.
    */
   type MongoSocketWriteException = com.mongodb.MongoSocketWriteException

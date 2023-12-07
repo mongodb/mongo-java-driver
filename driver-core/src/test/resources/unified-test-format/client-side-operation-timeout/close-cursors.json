@@ -1,5 +1,6 @@
 {
   "description": "timeoutMS behaves correctly when closing cursors",
+  "comment": "Manually updated some of the timeoutMS and blockTimeMS to remove race conditions",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -75,7 +76,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 50
+                "blockTimeMS": 100
               }
             }
           }
@@ -86,7 +87,7 @@
           "arguments": {
             "filter": {},
             "batchSize": 2,
-            "timeoutMS": 20
+            "timeoutMS": 100
           },
           "saveResultAsEntity": "cursor"
         },

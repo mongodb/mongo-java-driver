@@ -24,6 +24,7 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 
@@ -162,41 +163,44 @@ public class SocketStream implements Stream {
     public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
+            if (operationContext.getTimeoutContext().hasExpired()) {
+                throw TimeoutContext.createMongoTimeoutException("Timeout occurred during socket write.");
+            }
         }
     }
 
     @Override
     public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
-        ByteBuf buffer = bufferProvider.getBuffer(numBytes);
-        try {
-            int totalBytesRead = 0;
-            byte[] bytes = buffer.array();
-            while (totalBytesRead < buffer.limit()) {
-                int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
-                if (bytesRead == -1) {
-                    throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
-                }
-                totalBytesRead += bytesRead;
-            }
-            return buffer;
-        } catch (Exception e) {
-            buffer.release();
-            throw e;
-        }
+        return read(numBytes, 0, operationContext);
     }
 
     @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout, final OperationContext operationContext) throws IOException {
-        int curTimeout = socket.getSoTimeout();
+        int curTimeout = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
         if (curTimeout > 0 && additionalTimeout > 0) {
             socket.setSoTimeout(curTimeout + additionalTimeout);
         }
         try {
-            return read(numBytes, operationContext);
+            ByteBuf buffer = bufferProvider.getBuffer(numBytes);
+            try {
+                int totalBytesRead = 0;
+                byte[] bytes = buffer.array();
+                while (totalBytesRead < buffer.limit()) {
+                    int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
+                    if (bytesRead == -1) {
+                        throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
+                    }
+                    totalBytesRead += bytesRead;
+                }
+                return buffer;
+            } catch (Exception e) {
+                buffer.release();
+                throw e;
+            }
         } finally {
             if (!socket.isClosed()) {
                 // `socket` may be closed if the current thread is virtual, and it is interrupted while reading
-                socket.setSoTimeout(curTimeout);
+                socket.setSoTimeout(0);
             }
         }
     }

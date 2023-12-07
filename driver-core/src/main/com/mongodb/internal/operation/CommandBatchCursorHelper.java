@@ -33,6 +33,7 @@ import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static java.lang.String.format;
@@ -75,9 +76,11 @@ final class CommandBatchCursorHelper {
         return commandCursorResult;
     }
 
-    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor) {
-        return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor, final long maxTimeMS) {
+        BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                 .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
+        putIfNotZero(command, "maxTimeMS", maxTimeMS);
+        return command;
     }
 
 

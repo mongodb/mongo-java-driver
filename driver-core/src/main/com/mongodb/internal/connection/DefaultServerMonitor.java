@@ -224,6 +224,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
                     BsonDocument helloResult;
                     if (shouldStreamResponses(currentServerDescription)) {
+                        // TODO (CSOT) - JAVA-4063 remove additionalTimeout - just use operationContext
                         helloResult = connection.receive(new BsonDocumentCodec(), operationContext,
                                 Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                     } else {

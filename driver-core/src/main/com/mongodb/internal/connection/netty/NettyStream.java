@@ -49,6 +49,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
@@ -60,6 +61,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -139,7 +141,6 @@ final class NettyStream implements Stream {
      * these fields can be plain.*/
     @Nullable
     private ReadTimeoutTask readTimeoutTask;
-    private long readTimeoutMillis = NO_SCHEDULE_TIME;
 
     NettyStream(final ServerAddress address, final InetAddressResolver inetAddressResolver, final SocketSettings settings,
             final SslSettings sslSettings, final EventLoopGroup workerGroup,
@@ -212,17 +213,12 @@ final class NettyStream implements Stream {
                         addSslHandler(ch);
                     }
 
-                    int readTimeout = settings.getReadTimeout(MILLISECONDS);
-                    if (readTimeout > NO_SCHEDULE_TIME) {
-                        readTimeoutMillis = readTimeout;
-                        /* We need at least one handler before (in the inbound evaluation order) the InboundBufferHandler,
-                         * so that we can fire exception events (they are inbound events) using its context and the InboundBufferHandler
-                         * receives them. SslHandler is not always present, so adding a NOOP handler.*/
-                        pipeline.addLast(new ChannelInboundHandlerAdapter());
-                        readTimeoutTask = new ReadTimeoutTask(pipeline.lastContext());
-                    }
-
-                    pipeline.addLast(new InboundBufferHandler());
+                    /* We need at least one handler before (in the inbound evaluation order) the InboundBufferHandler,
+                     * so that we can fire exception events (they are inbound events) using its context and the InboundBufferHandler
+                     * receives them. SslHandler is not always present, so adding a NOOP handler.*/
+                    pipeline.addLast("ChannelInboundHandlerAdapter",  new ChannelInboundHandlerAdapter());
+                    readTimeoutTask = new ReadTimeoutTask(pipeline.lastContext());
+                    pipeline.addLast("InboundBufferHandler", new InboundBufferHandler());
                 }
             });
             ChannelFuture channelFuture = bootstrap.connect(nextAddress);
@@ -246,7 +242,7 @@ final class NettyStream implements Stream {
     public ByteBuf read(final int numBytes, final int additionalTimeoutMillis, final OperationContext operationContext) throws IOException {
         isTrueArgument("additionalTimeoutMillis must not be negative", additionalTimeoutMillis >= 0);
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<>();
-        readAsync(numBytes, future, combinedTimeout(readTimeoutMillis, additionalTimeoutMillis));
+        readAsync(numBytes, future, combinedTimeout(operationContext.getTimeoutContext().getReadTimeoutMS(), additionalTimeoutMillis));
         return future.get();
     }
 
@@ -263,7 +259,13 @@ final class NettyStream implements Stream {
             composite.addComponent(true, ((NettyByteBuf) cur).asByteBuf().retain());
         }
 
+        long writeTimeoutMS = operationContext.getTimeoutContext().getWriteTimeoutMS();
+        Optional<WriteTimeoutHandler> writeTimeoutHandler = writeTimeoutMS != NO_SCHEDULE_TIME
+                ? Optional.of(new WriteTimeoutHandler(writeTimeoutMS, MILLISECONDS)) : Optional.empty();
+        writeTimeoutHandler.map(w -> channel.pipeline().addBefore("ChannelInboundHandlerAdapter", "WriteTimeoutHandler", w));
+
         channel.writeAndFlush(composite).addListener((ChannelFutureListener) future -> {
+            writeTimeoutHandler.map(w -> channel.pipeline().remove(w));
             if (!future.isSuccess()) {
                 handler.failed(future.cause());
             } else {
@@ -274,7 +276,7 @@ final class NettyStream implements Stream {
 
     @Override
     public void readAsync(final int numBytes, final OperationContext operationContext, final AsyncCompletionHandler<ByteBuf> handler) {
-        readAsync(numBytes, handler, readTimeoutMillis);
+        readAsync(numBytes, handler, operationContext.getTimeoutContext().getReadTimeoutMS());
     }
 
     /**
@@ -582,9 +584,9 @@ final class NettyStream implements Stream {
             }
         }
 
+        @Nullable
         private ScheduledFuture<?> schedule(final long timeoutMillis) {
-            //assert timeoutMillis > 0 : timeoutMillis;
-            return ctx.executor().schedule(this, timeoutMillis, MILLISECONDS);
+            return timeoutMillis > 0 ? ctx.executor().schedule(this, timeoutMillis, MILLISECONDS) : null;
         }
     }
 }

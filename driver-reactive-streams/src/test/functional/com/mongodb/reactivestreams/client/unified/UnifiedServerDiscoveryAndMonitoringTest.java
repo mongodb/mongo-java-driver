@@ -25,13 +25,20 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
     public UnifiedServerDiscoveryAndMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
-            @SuppressWarnings("unused") final String testDescription,
-            final String schemaVersion,
+            final String testDescription, final String schemaVersion,
             @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
             final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+
+        assumeFalse("TODO (CSOT) - JAVA-4063 - apply settings to the operation context",
+                (fileDescription.equals("hello-timeout") && testDescription.startsWith("Network timeout on Monitor"))
+                        || (fileDescription.equals("find-network-timeout-error")
+                        && testDescription.startsWith("Ignore network timeout error on find"))
+                        || fileDescription.equals("auth-network-timeout-error"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

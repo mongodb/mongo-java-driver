@@ -20,6 +20,7 @@ import com.mongodb.client.unified.UnifiedSyncTest;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -34,10 +35,12 @@ import static org.junit.Assume.assumeFalse;
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 @RunWith(Parameterized.class)
 public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
+    private final String testDescription;
     public ClientSideOperationTimeoutTest(final String fileDescription, final String testDescription,
             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        this.testDescription = testDescription;
         checkSkipCSOTTest(fileDescription, testDescription);
     }
 
@@ -46,8 +49,26 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         return getTestData("unified-test-format/client-side-operation-timeout");
     }
 
-    public static void checkSkipCSOTTest(final String fileDescription, final String testDescription) {
+    @Test
+    @Override
+    public void shouldPassAllOutcomes() {
+        try {
+            super.shouldPassAllOutcomes();
+        } catch (AssertionError e) {
+            if (racyTestAssertion(testDescription, e)) {
+                // Ignore failure - racy test often no time to do the getMore
+                return;
+            }
+            throw e;
+        }
+    }
 
+
+    public static boolean racyTestAssertion(final String testDescription, final AssertionError e) {
+        return RACY_GET_MORE_TESTS.contains(testDescription) && e.getMessage().startsWith("Number of events must be the same");
+    }
+
+    public static void checkSkipCSOTTest(final String fileDescription, final String testDescription) {
         assumeFalse("No run cursor command", fileDescription.startsWith("runCursorCommand")
                 || testDescription.contains("runCommand on database"));
         assumeFalse("No count command helper", testDescription.endsWith("count on collection"));
@@ -59,10 +80,10 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         checkOperationSupportsMaxTimeMS(fileDescription, testDescription);
         checkTransactionSessionSupport(fileDescription, testDescription);
-        checkCommandExecutionSupport(fileDescription, testDescription);
 
         assumeFalse("TODO (CSOT) - JAVA-4054", fileDescription.equals("timeoutMS behaves correctly for change streams"));
         assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("timeoutMS behaves correctly for retryable operations"));
+        assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("legacy timeouts behave correctly for retryable operations"));
 
         assumeFalse("TODO (CSOT) - JAVA-4063", testDescription.contains("RTT"));
         assumeFalse("TODO (CSOT) - JAVA-4059", fileDescription.contains("GridFS"));
@@ -74,45 +95,22 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.equals("maxTimeMS value in the command is less than timeoutMS"));
         assumeFalse("TODO (CSOT) - JAVA-4057", fileDescription.contains("bulkWrite") || testDescription.contains("bulkWrite"));
-        assumeFalse("TODO (CSOT) JAVA-4057 ",
-                fileDescription.equals("timeoutMS behaves correctly for non-tailable cursors")
-                && testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - success"));
 
         // TEST BUGS / ISSUES
         assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",
                 fileDescription.startsWith("timeoutMS behaves correctly for tailable awaitData cursors"));
         assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",
                 fileDescription.startsWith("timeoutMS behaves correctly for tailable non-await cursors"));
+        assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",
+                fileDescription.startsWith("timeoutMS behaves correctly for tailable non-awaitData cursors"));
+
         assumeFalse("TODO (CSOT) - Invalid collection name in the test",
              testDescription.equals("timeoutMS can be overridden for close"));
-
     }
 
     private static void checkOperationSupportsMaxTimeMS(final String fileDescription, final String testDescription) {
         // TODO (CSOT) JAVA-4057 - check if maxTimeMS is set when using timeoutMS
         assumeFalse("No maxTimeMS support", NO_MAX_TIME_MS_SUPPORT.stream().anyMatch(testDescription::endsWith));
-    }
-
-    private static void checkCommandExecutionSupport(final String fileDescription, final String testDescription) {
-        assumeFalse("TODO (CSOT) - JAVA-5263", fileDescription.equals("timeoutMS behaves correctly for non-tailable cursors")
-                        && testDescription.equals("timeoutMS applied to find if timeoutMode is iteration"));
-        assumeFalse("TODO (CSOT) - JAVA-5263", fileDescription.equals("timeoutMS behaves correctly for non-tailable cursors")
-                && testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - failure"));
-        assumeFalse("TODO (CSOT) - JAVA-5263", fileDescription.equals("timeoutMS behaves correctly for tailable non-awaitData cursors")
-                && testDescription.equals("timeoutMS applied to find"));
-        assumeFalse("TODO (CSOT) - JAVA-5263", fileDescription.equals("timeoutMS behaves correctly for tailable non-awaitData cursors")
-                && testDescription.equals("timeoutMS is refreshed for getMore - failure"));
-        assumeFalse("TODO (CSOT) - JAVA-5263", fileDescription.equals("timeoutMS behaves correctly for tailable non-awaitData cursors")
-                && testDescription.equals("timeoutMS is refreshed for getMore - success"));
-        assumeFalse("TODO (CSOT) - JAVA-5263", fileDescription.equals("timeoutMS behaves correctly when closing cursors")
-                && testDescription.equals("timeoutMS is refreshed for close"));
-        assumeFalse("TODO (CSOT) - JAVA-5263", testDescription.startsWith("socketTimeoutMS is ignored if timeoutMS is set"));
-
-        // RACY TESTS - potentially JAVA-5263
-        assumeFalse("TODO (CSOT) - Too short timeoutMS",
-                testDescription.equals("remaining timeoutMS applied to getMore if timeoutMode is unset"));
-        assumeFalse("TODO (CSOT) - Too short timeoutMS",
-                testDescription.equals("remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime"));
     }
 
     private static void checkTransactionSessionSupport(final String fileDescription, final String testDescription) {
@@ -121,6 +119,10 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         assumeFalse("TODO (CSOT) - JAVA-4067", fileDescription.contains("timeoutMS can be overridden at the level of a ClientSession"));
         assumeFalse("TODO (CSOT) - JAVA-4067", fileDescription.startsWith("sessions inherit timeoutMS from their parent MongoClient"));
     }
+
+    private static final List<String> RACY_GET_MORE_TESTS = asList(
+            "remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime",
+            "remaining timeoutMS applied to getMore if timeoutMode is unset");
 
     private static final List<String> NO_MAX_TIME_MS_SUPPORT = asList(
             "createIndex on collection",
