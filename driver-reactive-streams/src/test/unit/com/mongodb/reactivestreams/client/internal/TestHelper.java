@@ -184,21 +184,22 @@ public class TestHelper {
     }
 
     private static Publisher<?> getRootSource(final Publisher<?> publisher) {
-        Optional<Publisher<?>> sourcePublisher = Optional.of(publisher);
+        Publisher<?> sourcePublisher = publisher;
         // Uses reflection to find the root / source publisher
         if (publisher instanceof Scannable) {
             Scannable scannable = (Scannable) publisher;
             List<? extends Scannable> parents = scannable.parents().collect(toList());
             if (parents.isEmpty()) {
-                sourcePublisher = getSource(scannable);
+                sourcePublisher = getSource(scannable).orElse(publisher);
             } else {
                 sourcePublisher = parents.stream().map(TestHelper::getSource)
                         .filter(Optional::isPresent)
                         .reduce((first, second) -> second)
-                        .orElse(Optional.empty());
+                        .flatMap(Function.identity())
+                        .orElse(publisher);
             }
         }
-        return sourcePublisher.orElse(publisher);
+        return unwrap(sourcePublisher);
     }
 
     private static Optional<Publisher<?>> getSource(final Scannable scannable) {
@@ -207,6 +208,14 @@ public class TestHelper {
             return optionalSource;
         } else {
             return getScannableArray(scannable);
+        }
+    }
+
+    private static Publisher<?> unwrap(final Publisher<?> maybeWrappingPublisher) {
+        if (maybeWrappingPublisher instanceof ListCollectionNamesPublisherImpl) {
+            return ((ListCollectionNamesPublisherImpl) maybeWrappingPublisher).getWrapped();
+        } else {
+            return maybeWrappingPublisher;
         }
     }
 
