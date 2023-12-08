@@ -45,6 +45,7 @@ import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -88,6 +89,17 @@ final class ListCollectionsOperationTest {
                         .append("comment", comment),
                 executeOperationAndCaptureCommand()
         );
+    }
+
+    @Test
+    void authorizedCollectionsIsAbsentIfFalse() {
+        operation.authorizedCollections(false);
+        assertFalse(executeOperationAndCaptureCommand().containsKey("authorizedCollections"));
+    }
+
+    @Test
+    void authorizedCollectionsIsFalseByDefault() {
+        assertFalse(executeOperationAndCaptureCommand().containsKey("authorizedCollections"));
     }
 
     private BsonDocument executeOperationAndCaptureCommand() {
