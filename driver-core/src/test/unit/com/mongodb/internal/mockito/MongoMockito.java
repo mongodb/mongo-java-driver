@@ -51,7 +51,7 @@ public final class MongoMockito {
      * <p>
      * Mockito has {@link ThrowsException},
      * and at first glance it may seem like using it may help detecting insufficient stubbing.
-     * It can point us to a line where the insufficiently stabbed methods was called at, but it cannot tell us the name of that method
+     * It can point us to a line where the insufficiently stubbed method was called at, but it cannot tell us the name of that method
      * (see {@link InsufficientStubbingDetectorDemoTest#mockObjectWithThrowsException()}).
      * Moreover, a mock object created with {@link ThrowsException} as its default answer cannot be stubbed:
      * stubbing requires calling methods of the mock object, but they all complete abruptly
