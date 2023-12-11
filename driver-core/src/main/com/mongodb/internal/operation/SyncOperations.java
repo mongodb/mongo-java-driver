@@ -283,9 +283,11 @@ public final class SyncOperations<TDocument> {
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                          final Bson filter, final boolean collectionNamesOnly,
+                                                                         final boolean authorizedCollections,
                                                                          @Nullable final Integer batchSize, final long maxTimeMS,
                                                                          final BsonValue comment) {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS, comment);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
+                batchSize, maxTimeMS, comment);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
