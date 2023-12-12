@@ -56,9 +56,11 @@ public final class RetryState {
     private Throwable previouslyChosenException;
 
     /**
-     * Creates a {@code RetryState} with a positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
-     * If {@link TimeoutContext#hasTimeoutMS()} is true, the number of attempts is unbounded until {@link TimeoutContext#hasExpired()} is true.
-     * Otherwise,the retry attempts count will be used to determine the maximum number of attempts.
+     * Creates a {@code RetryState} with a positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as
+     * being unlimited.
+     * <p>
+     * If a timeout is not specified in the {@link TimeoutContext#hasTimeoutMS()}, the specified {@code retries} param acts as a fallback
+     * bound. Otherwise, retries are unbounded until the timeout is reached.
      * <p>
      * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)} method,
      * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
@@ -184,11 +186,10 @@ public final class RetryState {
             assertTrue(isRuntime(attemptException));
         }
         assertTrue(!isFirstAttempt() || previouslyChosenException == null);
-
         Throwable newlyChosenException = transformException(previouslyChosenException, attemptException, onlyRuntimeExceptions, exceptionTransformer);
 
-        previouslyChosenException = newlyChosenException;
         if (isLastAttempt()) {
+        previouslyChosenException = newlyChosenException;
             /*
              * Ensure that loopState.isLastIteration() is not true. It returns true when markAsLastIteration() has been called, which
              * might occur in the following cases:
@@ -201,7 +202,7 @@ public final class RetryState {
              * In each case, these situations should not be treated as timeout exceptions but rather as exceptions on the server.
              */
             if (hasTimeoutMs() && !loopState.isLastIteration()) {
-                throw new MongoOperationTimeoutException("MongoDB operation timed out during a retry attempt", previouslyChosenException);
+                previouslyChosenException = new MongoOperationTimeoutException("MongoDB operation timed out during a retry attempt", previouslyChosenException);
             }
             throw previouslyChosenException;
         } else {
@@ -354,11 +355,11 @@ public final class RetryState {
 
     /**
      * Returns {@code true} iff the current attempt is known to be the last one, i.e., it is known that no more retries will be made.
-     * An attempt is known to be the last one because:
+     * An attempt is known to be the last one iff any of the following applies:
      * <ul>
-     *   <li>The number of {@linkplain #attempts() attempts} is limited, and the current attempt is the last one.</li>
      *   <li>{@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} / {@link #markAsLastAttempt()} was called.</li>
-     *   <li>{@link TimeoutContext#hasExpired()} returns {@code true} provided that {@link TimeoutContext#hasTimeoutMS()} is also {@code true}.</li>
+     *   <li>A timeout is set and has been reached.</li>
+     *   <li>No timeout is set, and the number of {@linkplain #attempts() attempts} is limited, and the current attempt is the last one.</li>
      * </ul>
      *
      * @see #attempts()

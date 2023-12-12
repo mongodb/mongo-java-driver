@@ -363,6 +363,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             .flatMap(BulkWriteTracker::batch).orElseThrow(Assertions::fail).getResult();
                 } catch (Throwable loopResultT) {
                     if (loopResultT instanceof MongoException) {
+                        /* if we get here, some of the batches failed on the server side,
+                         * so we need to mark the last attempt to avoid retrying. */
                         retryState.markAsLastAttempt();
                     }
                     callback.onResult(null, loopResultT);

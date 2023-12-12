@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
             asList("isError", "expectError", "isClientError", "errorCode", "errorCodeName", "errorContains", "errorResponse",
-                    "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult", "isTimeoutError"));
+                    "isClientError", "isTimeoutError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
 
     private final AssertionContext context;
     private final ValueMatcher valueMatcher;
