@@ -205,7 +205,7 @@ public final class RetryState {
             }
             throw previouslyChosenException;
         } else {
-            // note that we must not update the state, e.g, `exception`, `loopState`, before calling `retryPredicate`
+            // note that we must not update the state, e.g, `previouslyChosenException`, `loopState`, before calling `retryPredicate`
             boolean retry = shouldRetry(this, attemptException, newlyChosenException, onlyRuntimeExceptions, retryPredicate);
             if (retry) {
                 assertTrue(loopState.advance());
