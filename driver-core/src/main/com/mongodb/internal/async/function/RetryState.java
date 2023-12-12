@@ -50,7 +50,9 @@ public final class RetryState {
 
     private final LoopState loopState;
     private final int attempts;
+    @Nullable
     private final TimeoutContext timeoutContext;
+    @Nullable
     private Throwable previouslyChosenException;
 
     /**

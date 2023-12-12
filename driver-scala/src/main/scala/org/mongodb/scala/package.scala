@@ -351,6 +351,8 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * cause of the timeout, if available. For example, if retries are attempted due to transient failures,
    * and a timeout occurs in any of the attempts, the exception from one of the retries may be appended
    * as the cause to this [[MongoOperationTimeoutException]].
+   
+   @since 5.0
    */
   type MongoOperationTimeoutException = com.mongodb.MongoOperationTimeoutException
 

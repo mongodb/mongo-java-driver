@@ -28,16 +28,13 @@ import java.util.concurrent.TimeUnit;
  *
  * @see MongoClientSettings.Builder#timeout(long, TimeUnit)
  * @see MongoClientSettings#getTimeout(TimeUnit)
- * @since 5.0.0
+ * @since 5.0
  */
-public class MongoOperationTimeoutException extends MongoException {
+public final class MongoOperationTimeoutException extends MongoException {
     private static final long serialVersionUID = 1L;
 
-    public MongoOperationTimeoutException(final Throwable t) {
-        super("MongoDB operation timed out", t);
-    }
 
-    public MongoOperationTimeoutException(final String message, final Throwable t) {
+    public MongoOperationTimeoutException(@Nullable final String message, @Nullable final Throwable t) {
         super(message, t);
     }
 }
