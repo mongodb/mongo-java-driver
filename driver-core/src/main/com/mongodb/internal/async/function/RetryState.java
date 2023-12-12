@@ -189,7 +189,7 @@ public final class RetryState {
         Throwable newlyChosenException = transformException(previouslyChosenException, attemptException, onlyRuntimeExceptions, exceptionTransformer);
 
         if (isLastAttempt()) {
-        previouslyChosenException = newlyChosenException;
+            previouslyChosenException = newlyChosenException;
             /*
              * Ensure that loopState.isLastIteration() is not true. It returns true when markAsLastIteration() has been called, which
              * might occur in the following cases:
@@ -208,6 +208,7 @@ public final class RetryState {
         } else {
             // note that we must not update the state, e.g, `previouslyChosenException`, `loopState`, before calling `retryPredicate`
             boolean retry = shouldRetry(this, attemptException, newlyChosenException, onlyRuntimeExceptions, retryPredicate);
+            previouslyChosenException = newlyChosenException;
             if (retry) {
                 assertTrue(loopState.advance());
             } else {
