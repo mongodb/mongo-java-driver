@@ -15,6 +15,8 @@
  */
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,6 +27,11 @@ import java.util.concurrent.TimeUnit;
  * cause of the timeout, if available. For example, if retries are attempted due to transient failures,
  * and a timeout occurs in any of the attempts, the exception from one of the retries may be appended
  * as the cause to this {@code MongoOperationTimeoutException}.
+ *
+ * <p>The key difference between {@code MongoOperationTimeoutException} and {@code MongoExecutionTimeoutException}
+ * lies in the nature of these exceptions. {@code MongoExecutionTimeoutException} indicates a server-side timeout
+ * capped by a user-specified number. These server errors are transformed into the new {@code MongoOperationTimeoutException}.
+ * On the other hand, {@code MongoOperationExecutionException} denotes a timeout during the execution of the entire operation.
  *
  * @see MongoClientSettings.Builder#timeout(long, TimeUnit)
  * @see MongoClientSettings#getTimeout(TimeUnit)
