@@ -81,7 +81,7 @@ public final class RetryState {
 
     /**
      * Creates a {@link RetryState} that does not limit the number of retries.
-     * However, if {@link TimeoutContext#hasTimeoutMS()} is true, the number of attempts is unbounded until {@link TimeoutContext#hasExpired()} is true.
+     * The number of attempts is limited iff {@link TimeoutContext#hasTimeoutMS()} is true and timeout has expired.
      * <p>
      * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)} method,
      * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
