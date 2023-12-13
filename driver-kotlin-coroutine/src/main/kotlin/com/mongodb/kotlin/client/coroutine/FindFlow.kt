@@ -95,7 +95,6 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
      *
      * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
      * configuration options available at the following levels:
-     *
      * - [com.mongodb.MongoClientSettings.Builder.timeout]
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout]
@@ -108,8 +107,7 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
      * @param timeUnit the time unit, which defaults to Milliseconds
      * @return this
      */
-    @Deprecated("Prefer using the operation execution timeout configuration option",
-            level = DeprecationLevel.WARNING)
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): FindFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

@@ -83,7 +83,6 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
      *
      * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
      * configuration options available at the following levels:
-     *
      * - [com.mongodb.MongoClientSettings.Builder.timeout]
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout]
@@ -97,8 +96,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
      * @return this
      * @see [Max Time](https://www.mongodb.com/docs/manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS)
      */
-    @Deprecated("Prefer using the operation execution timeout configuration option",
-            level = DeprecationLevel.WARNING)
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): AggregateFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

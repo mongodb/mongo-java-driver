@@ -64,7 +64,6 @@ public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>
      *
      * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
      * configuration options available at the following levels:
-     *
      * - [com.mongodb.MongoClientSettings.Builder.timeout]
      * - [MongoDatabase.withTimeout]
      * - [MongoCollection.withTimeout]
@@ -77,8 +76,7 @@ public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>
      * @param timeUnit the time unit, which defaults to Milliseconds
      * @return this
      */
-    @Deprecated("Prefer using the operation execution timeout configuration option",
-            level = DeprecationLevel.WARNING)
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): DistinctIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
