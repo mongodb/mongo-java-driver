@@ -366,16 +366,11 @@ public final class RetryState {
      * @see #attempts()
      */
     public boolean isLastAttempt() {
-        /*
-         * isLastIteration() should be checked first. In scenarios where all operations in a bulk write complete
-         * without transient retryable errors, but some are not acknowledged by the server, we explicitly call markAsLastIteration().
-         * We should not proceed with retires in this case even if timeout is not expired yet.
-         */
         if (loopState.isLastIteration()){
             return true;
         }
         if (hasTimeoutMs()) {
-           return timeoutContext.hasExpired();
+           return assertNotNull(timeoutContext).hasExpired();
         }
         return attempt() == attempts - 1;
     }
