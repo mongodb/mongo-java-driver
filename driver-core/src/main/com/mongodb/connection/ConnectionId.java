@@ -38,8 +38,9 @@ public final class ConnectionId {
     private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
 
     private final ServerId serverId;
-    private final int localValue;
-    private final Integer serverValue;
+    private final long localValue;
+    @Nullable
+    private final Long serverValue;
     private final String stringValue;
 
     /**
@@ -56,16 +57,16 @@ public final class ConnectionId {
      * Construct an instance with the given serverId, localValue, and serverValue.
      *
      * <p>
-     *     Useful for testing, but generally prefer {@link #withServerValue(int)}
+     *     Useful for testing, but generally prefer {@link #withServerValue(long)}
      * </p>
      *
      * @param serverId the server id
      * @param localValue the local value
      * @param serverValue the server value, which may be null
-     * @see #withServerValue(int)
+     * @see #withServerValue(long)
      * @since 3.11
      */
-    public ConnectionId(final ServerId serverId, final int localValue, @Nullable final Integer serverValue) {
+    public ConnectionId(final ServerId serverId, final long localValue, @Nullable final Long serverValue) {
         this.serverId = notNull("serverId", serverId);
         this.localValue = localValue;
         this.serverValue = serverValue;
@@ -83,7 +84,7 @@ public final class ConnectionId {
      * @return the new connection id
      * @since 3.8
      */
-    public ConnectionId withServerValue(final int serverValue) {
+    public ConnectionId withServerValue(final long serverValue) {
         isTrue("server value is null", this.serverValue == null);
         return new ConnectionId(serverId, localValue, serverValue);
     }
@@ -102,7 +103,7 @@ public final class ConnectionId {
      *
      * @return the locally created id value for the connection
      */
-    public int getLocalValue() {
+    public long getLocalValue() {
         return localValue;
     }
 
@@ -112,7 +113,7 @@ public final class ConnectionId {
      * @return the server generated id value for the connection or null if not set.
      */
     @Nullable
-    public Integer getServerValue() {
+    public Long getServerValue() {
         return serverValue;
     }
 
@@ -142,10 +143,7 @@ public final class ConnectionId {
 
     @Override
     public int hashCode() {
-        int result = serverId.hashCode();
-        result = 31 * result + localValue;
-        result = 31 * result + (serverValue != null ? serverValue.hashCode() : 0);
-        return result;
+        return Objects.hash(serverId, localValue, serverValue);
     }
 
     @Override
