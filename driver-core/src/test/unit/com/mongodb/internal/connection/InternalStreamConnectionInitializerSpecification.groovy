@@ -435,7 +435,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         async << [true, false]
     }
 
-    private ConnectionDescription getExpectedConnectionDescription(final Integer localValue, final Integer serverValue) {
+    private ConnectionDescription getExpectedConnectionDescription(final Long localValue, final Long serverValue) {
         new ConnectionDescription(new ConnectionId(serverId, localValue, serverValue),
                 3, ServerType.STANDALONE, 512, 16777216, 33554432, [])
     }
