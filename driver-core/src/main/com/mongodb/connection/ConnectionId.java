@@ -20,7 +20,7 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -35,7 +35,7 @@ import static java.lang.String.format;
  */
 @Immutable
 public final class ConnectionId {
-    private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
+    private static final AtomicLong INCREMENTING_ID = new AtomicLong();
 
     private final ServerId serverId;
     private final long localValue;
