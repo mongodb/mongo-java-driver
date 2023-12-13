@@ -108,6 +108,7 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
      * @return this
      */
     @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): FindFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

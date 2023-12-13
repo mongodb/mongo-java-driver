@@ -126,7 +126,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.timeoutSettings = timeoutSettings;
-        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        this.operations = new SyncOperations<>(namespace,
+                documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 retryWrites, retryReads, timeoutSettings);
     }
 

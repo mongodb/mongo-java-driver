@@ -97,6 +97,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
      * @see [Max Time](https://www.mongodb.com/docs/manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS)
      */
     @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): AggregateFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

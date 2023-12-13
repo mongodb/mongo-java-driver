@@ -66,6 +66,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public DistinctIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);

@@ -81,6 +81,7 @@ public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : 
      * @return this
      */
     @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): DistinctFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

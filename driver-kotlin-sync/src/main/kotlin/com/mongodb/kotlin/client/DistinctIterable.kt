@@ -77,6 +77,7 @@ public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>
      * @return this
      */
     @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): DistinctIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

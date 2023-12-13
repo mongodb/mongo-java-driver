@@ -16,13 +16,13 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
-import com.mongodb.client.AggregateIterable as JAggregateIterable
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
-import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.Document
 import org.bson.conversions.Bson
+import java.util.concurrent.TimeUnit
+import com.mongodb.client.AggregateIterable as JAggregateIterable
 
 /**
  * Iterable like implementation for aggregate operations.
@@ -94,6 +94,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
      * @see [Max Time](https://www.mongodb.com/docs/manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS)
      */
     @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): AggregateIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

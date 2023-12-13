@@ -103,6 +103,7 @@ public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : Mong
      * @return this
      */
     @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): FindIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
