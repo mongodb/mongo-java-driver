@@ -1451,8 +1451,8 @@ public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
-public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply {
-    @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
+public fun CountOptions.maxTime(maxTime: Long): CountOptions =
+    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
  *
@@ -1484,7 +1484,7 @@ public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptio
  * @return the options
  */
 public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOptions =
-    this.apply {@Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
+    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
  *

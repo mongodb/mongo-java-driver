@@ -16,13 +16,13 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.client.AggregateIterable as JAggregateIterable
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
+import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.Document
 import org.bson.conversions.Bson
-import java.util.concurrent.TimeUnit
-import com.mongodb.client.AggregateIterable as JAggregateIterable
 
 /**
  * Iterable like implementation for aggregate operations.
