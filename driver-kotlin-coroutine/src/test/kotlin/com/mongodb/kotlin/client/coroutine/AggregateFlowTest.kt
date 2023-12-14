@@ -70,8 +70,8 @@ class AggregateFlowTest {
         flow.let(bson)
         flow.maxAwaitTime(1)
         flow.maxAwaitTime(1, TimeUnit.SECONDS)
-        flow.maxTime(1)
-        flow.maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") flow.maxTime(1)
+        @Suppress("DEPRECATION") flow.maxTime(1, TimeUnit.SECONDS)
         flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).allowDiskUse(true)
@@ -84,8 +84,8 @@ class AggregateFlowTest {
         verify(wrapped).hintString(hintString)
         verify(wrapped).maxAwaitTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxAwaitTime(1, TimeUnit.SECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).let(bson)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
