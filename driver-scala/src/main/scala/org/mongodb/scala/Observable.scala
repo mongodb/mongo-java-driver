@@ -49,6 +49,12 @@ object Observable {
  *
  * Extends the `Publisher` interface and adds helpers to make Observables composable and simple to Subscribe to.
  *
+ * Special parameterizations:
+ *
+ *   - `Observable[Unit]` must emit exactly one item by signalling [[Observer.onNext]]
+ *   if it terminates successfully by signalling [[Observer.onComplete]].
+ *   - `Observable[Void]` cannot emit an item. It is not exposed by the driver API because it is not convenient to work with in Scala.
+ *
  * @define forComprehensionExamples
  *         Example:
  *
@@ -464,5 +470,9 @@ trait Observable[T] extends Publisher[T] {
    * @return a single observable which emits Unit before completion.
    * @since 4.4
    */
+  @deprecated(
+    "Is no longer needed because of the `ToSingleObservableUnit` implicit class. Scheduled for removal in a major release",
+    "5.0"
+  )
   def completeWithUnit(): SingleObservable[Unit] = UnitObservable(this)
 }
