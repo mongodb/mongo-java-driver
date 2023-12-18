@@ -77,7 +77,7 @@ public abstract class BsonValue {
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonNumber asNumber() {
-        if (getBsonType() != BsonType.INT32 && getBsonType() != BsonType.INT64 && getBsonType() != BsonType.DOUBLE) {
+        if (!(this instanceof BsonNumber)) {
             throw new BsonInvalidOperationException(format("Value expected to be of a numerical BSON type is of unexpected type %s",
                                                            getBsonType()));
         }
@@ -282,7 +282,7 @@ public abstract class BsonValue {
      * @return true if this is a BsonNumber, false otherwise
      */
     public boolean isNumber() {
-        return isInt32() || isInt64() || isDouble();
+        return this instanceof BsonNumber;
     }
 
     /**
