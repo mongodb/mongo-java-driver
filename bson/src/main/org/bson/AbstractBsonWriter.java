@@ -321,7 +321,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeStartArray() {
-        checkPreconditions("writeStartArray", State.VALUE);
+        checkPreconditions("writeStartArray", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT, State.DONE);
 
         if (context != null && context.name != null) {
             fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
