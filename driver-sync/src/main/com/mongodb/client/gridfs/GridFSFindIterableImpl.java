@@ -74,12 +74,6 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
     }
 
     @Override
-    public GridFSFindIterable timeoutMode(final TimeoutMode timeoutMode) {
-        underlying.timeoutMode(timeoutMode);
-        return this;
-    }
-
-    @Override
     public GridFSFindIterable collation(@Nullable final Collation collation) {
         underlying.collation(collation);
         return this;

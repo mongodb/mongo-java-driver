@@ -42,6 +42,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
@@ -80,6 +81,11 @@ public class SyncGridFSBucket implements GridFSBucket {
     }
 
     @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
         return new SyncGridFSBucket(wrapped.withChunkSizeBytes(chunkSizeBytes));
     }
@@ -97,6 +103,11 @@ public class SyncGridFSBucket implements GridFSBucket {
     @Override
     public GridFSBucket withReadConcern(final ReadConcern readConcern) {
         return new SyncGridFSBucket(wrapped.withReadConcern(readConcern));
+    }
+
+    @Override
+    public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return null;
     }
 
     @Override

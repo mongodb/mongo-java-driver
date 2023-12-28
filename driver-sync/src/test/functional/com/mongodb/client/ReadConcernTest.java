@@ -64,7 +64,7 @@ public class ReadConcernTest {
         mongoClient.getDatabase(getDefaultDatabaseName()).getCollection("test")
                 .withReadConcern(ReadConcern.LOCAL).find().into(new ArrayList<>());
 
-        List<CommandEvent> events = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
 
         BsonDocument commandDocument = new BsonDocument("find", new BsonString("test"))
                 .append("readConcern", ReadConcern.LOCAL.asDocument())
