@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ReadConcern;
-import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
@@ -65,7 +64,7 @@ public class ReadConcernTest {
                 .find())
                 .block(TIMEOUT_DURATION);
 
-        List<CommandEvent> events = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
 
         BsonDocument commandDocument = new BsonDocument("find", new BsonString("test"))
                 .append("readConcern", ReadConcern.LOCAL.asDocument())

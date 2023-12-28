@@ -22,6 +22,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -152,7 +153,7 @@ public abstract class AbstractCrudTest {
         }
         if (definition.containsKey("expectations")) {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
-            List<CommandEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
 
 
             assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()));

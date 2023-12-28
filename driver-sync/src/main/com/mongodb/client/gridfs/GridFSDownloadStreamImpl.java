@@ -16,12 +16,15 @@
 
 package com.mongodb.client.gridfs;
 
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -33,12 +36,17 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
+    private static final String TIMEOUT_MESSAGE = "The GridFS download stream has timed out";
     private final ClientSession clientSession;
     private final GridFSFile fileInfo;
     private final MongoCollection<Document> chunksCollection;
     private final BsonValue fileId;
+    /**
+     * The length, in bytes of the file to download.
+     */
     private final long length;
     private final int chunkSizeInBytes;
     private final int numberOfChunks;
@@ -46,16 +54,20 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private int batchSize;
     private int chunkIndex;
     private int bufferOffset;
+    /**
+     * Current byte position in the file.
+     */
     private long currentPosition;
     private byte[] buffer = null;
     private long markPosition;
-
+    @Nullable
+    private final Timeout timeout;
     private final ReentrantLock closeLock = new ReentrantLock();
     private final ReentrantLock cursorLock = new ReentrantLock();
     private boolean closed = false;
 
     GridFSDownloadStreamImpl(@Nullable final ClientSession clientSession, final GridFSFile fileInfo,
-                             final MongoCollection<Document> chunksCollection) {
+                             final MongoCollection<Document> chunksCollection, @Nullable final Timeout timeout) {
         this.clientSession = clientSession;
         this.fileInfo = notNull("file information", fileInfo);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
@@ -64,6 +76,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         length = fileInfo.getLength();
         chunkSizeInBytes = fileInfo.getChunkSize();
         numberOfChunks = (int) Math.ceil((double) length / chunkSizeInBytes);
+        this.timeout = timeout;
     }
 
     @Override
@@ -97,6 +110,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public int read(final byte[] b, final int off, final int len) {
         checkClosed();
+        checkTimeout();
 
         if (currentPosition == length) {
             return -1;
@@ -118,6 +132,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public long skip(final long bytesToSkip) {
         checkClosed();
+        checkTimeout();
         if (bytesToSkip <= 0) {
             return 0;
         }
@@ -146,6 +161,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public int available() {
         checkClosed();
+        checkTimeout();
         if (buffer == null) {
             return 0;
         } else {
@@ -166,6 +182,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public void reset() {
         checkClosed();
+        checkTimeout();
         if (currentPosition == markPosition) {
             return;
         }
@@ -195,6 +212,12 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         });
     }
 
+    private void checkTimeout() {
+        if (timeout != null && timeout.hasExpired()) {
+            // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
+            throw new MongoExecutionTimeoutException("The GridFS download stream has timed out");
+        }
+    }
     private void checkClosed() {
         withInterruptibleLock(closeLock, () -> {
             if (closed) {
@@ -236,11 +259,15 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         FindIterable<Document> findIterable;
         Document filter = new Document("files_id", fileId).append("n", new Document("$gte", startChunkIndex));
         if (clientSession != null) {
-            findIterable = chunksCollection.find(clientSession, filter);
+            findIterable = withNullableTimeout(chunksCollection, timeout).find(clientSession, filter);
         } else {
-            findIterable = chunksCollection.find(filter);
+            findIterable =  withNullableTimeout(chunksCollection, timeout).find(filter);
         }
-        return findIterable.batchSize(batchSize).sort(new Document("n", 1)).iterator();
+        if (timeout != null){
+             findIterable.timeoutMode(TimeoutMode.CURSOR_LIFETIME);
+        }
+        return findIterable.batchSize(batchSize)
+                .sort(new Document("n", 1)).iterator();
     }
 
     private byte[] getBufferFromChunk(@Nullable final Document chunk, final int expectedChunkIndex) {
@@ -278,5 +305,10 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     private byte[] getBuffer(final int chunkIndexToFetch) {
         return getBufferFromChunk(getChunk(chunkIndexToFetch), chunkIndexToFetch);
+    }
+
+    private <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
+                                                       @Nullable final Timeout timeout) {
+        return TimeoutUtils.withNullableTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
     }
 }

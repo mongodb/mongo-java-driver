@@ -26,10 +26,13 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSDownloadStream;
+import com.mongodb.client.gridfs.GridFSUploadStream;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.test.FlakyTest;
@@ -38,8 +41,10 @@ import org.bson.BsonInt32;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Tag;
@@ -51,6 +56,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -70,11 +76,120 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
+    private static final String GRID_FS_BUCKET_NAME = "db.fs";
+    private static final String GRID_FS_COLLECTION_NAME_CHUNKS = GRID_FS_BUCKET_NAME + ".chunks";
+    private static final String GRID_FS_COLLECTION_NAME_FILE = GRID_FS_BUCKET_NAME + ".files";
     private final MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), this.getClass().getSimpleName());
     private TestCommandListener commandListener;
     private CollectionHelper<BsonDocument> collectionHelper;
-
+    private CollectionHelper<BsonDocument> filesCollectionHelper;
+    private CollectionHelper<BsonDocument> chunksCollectionHelper;
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
+    protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
+
+    @Tag("setsFailPoint")
+    @FlakyTest(maxAttempts = 3)
+    @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
+    @Disabled("TODO (CSOT) - JAVA-4057")
+    public void testGridFSUploadViaOpenUploadStreamTimeout() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"insert\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 50
+                + "  }"
+                + "}");
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
+                .timeout(45, TimeUnit.MILLISECONDS))) {
+            MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
+            GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME);
+
+            try (GridFSUploadStream uploadStream = gridFsBucket.openUploadStream("filename")){
+                uploadStream.write(0x12);
+                assertThrows(MongoExecutionTimeoutException.class, uploadStream::close);
+            }
+        }
+    }
+
+    @Tag("setsFailPoint")
+    @FlakyTest(maxAttempts = 3)
+    @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
+    public void testAbortingGridFsUploadStreamTimeout() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"delete\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 50
+                + "  }"
+                + "}");
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
+                .timeout(45, TimeUnit.MILLISECONDS))) {
+            MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
+            GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
+
+            try (GridFSUploadStream uploadStream = gridFsBucket.openUploadStream("filename")){
+                uploadStream.write(new byte[]{0x01, 0x02, 0x03, 0x04});
+                assertThrows(MongoExecutionTimeoutException.class, uploadStream::abort);
+            }
+        }
+    }
+
+    @Tag("setsFailPoint")
+    @FlakyTest(maxAttempts = 3)
+    @DisplayName("6. GridFS Download")
+    public void testGridFsDownloadStreamTimeout() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
+                .timeout(20, TimeUnit.MILLISECONDS))) {
+            MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
+            GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
+            database.getCollection(GRID_FS_COLLECTION_NAME_FILE)
+                    .insertOne(Document.parse(
+                            "{"
+                                    + "   _id: {"
+                                    + "     $oid: \"000000000000000000000005\""
+                                    + "   },"
+                                    + "   length: 10,"
+                                    + "   chunkSize: 4,"
+                                    + "   uploadDate: {"
+                                    + "     $date: \"1970-01-01T00:00:00.000Z\""
+                                    + "   },"
+                                    + "   md5: \"57d83cd477bfb1ccd975ab33d827a92b\","
+                                    + "   filename: \"length-10\","
+                                    + "   contentType: \"application/octet-stream\","
+                                    + "   aliases: [],"
+                                    + "   metadata: {}"
+                                    + "}"
+                    ));
+
+            try (GridFSDownloadStream downloadStream = gridFsBucket.openDownloadStream(new ObjectId("000000000000000000000005"))){
+                collectionHelper.runAdminCommand("{"
+                        + "  configureFailPoint: \"failCommand\","
+                        + "  mode: { times: 1 },"
+                        + "  data: {"
+                        + "    failCommands: [\"find\"],"
+                        + "    blockConnection: true,"
+                        + "    blockTimeMS: " + 25
+                        + "  }"
+                        + "}");
+                assertThrows(MongoExecutionTimeoutException.class, downloadStream::read);
+
+                List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
+                List<CommandStartedEvent> findCommands = events.stream().filter(e -> e.getCommandName().equals("find")).collect(Collectors.toList());
+
+                assertEquals(2, findCommands.size());
+                assertEquals(GRID_FS_COLLECTION_NAME_FILE, findCommands.get(0).getCommand().getString("find").getValue());
+                assertEquals(GRID_FS_COLLECTION_NAME_CHUNKS, findCommands.get(1).getCommand().getString("find").getValue());
+            }
+        }
+    }
 
     @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
@@ -105,7 +220,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertThrows(MongoExecutionTimeoutException.class, cursor::next);
             }
 
-            List<CommandEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
             assertTrue(events.stream().filter(e -> e.getCommandName().equals("getMore")).count() <= 2);
         }
@@ -149,7 +264,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertEquals(1, document.getFullDocument().get("x"));
                 assertThrows(MongoExecutionTimeoutException.class, cursor::next);
             }
-            List<CommandEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
         }
@@ -203,7 +318,13 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @BeforeEach
     public void setUp() {
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
+        filesCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(),
+                new MongoNamespace(getDefaultDatabaseName(), GRID_FS_COLLECTION_NAME_FILE));
+        chunksCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(),
+                new MongoNamespace(getDefaultDatabaseName(), GRID_FS_COLLECTION_NAME_CHUNKS));
         collectionHelper.drop();
+        filesCollectionHelper.drop();
+        chunksCollectionHelper.drop();
         commandListener = new TestCommandListener();
     }
 
@@ -214,6 +335,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
 
         collectionHelper.drop();
+        filesCollectionHelper.drop();
+        chunksCollectionHelper.drop();
         try {
             ServerHelper.checkPool(getPrimary());
         } catch (InterruptedException e) {
