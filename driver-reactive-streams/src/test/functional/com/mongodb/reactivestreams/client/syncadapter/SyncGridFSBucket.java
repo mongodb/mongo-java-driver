@@ -107,7 +107,7 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     @Override
