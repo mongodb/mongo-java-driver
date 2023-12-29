@@ -201,7 +201,7 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private GridFSUploadStream createGridFSUploadStream(@Nullable final ClientSession clientSession, final BsonValue id,
                                                         final String filename, final GridFSUploadOptions options) {
-        Timeout operationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout operationTimeout = startTimeout();
         notNull("options", options);
         Integer chunkSizeBytes = options.getChunkSizeBytes();
         int chunkSize = chunkSizeBytes == null ? this.chunkSizeBytes : chunkSizeBytes;
@@ -284,7 +284,7 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public GridFSDownloadStream openDownloadStream(final BsonValue id) {
-        Timeout oprationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout oprationTimeout = startTimeout();
 
         GridFSFile fileInfo = getFileInfoById(null, id, oprationTimeout);
         return createGridFSDownloadStream(null, fileInfo, oprationTimeout);
@@ -297,7 +297,7 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public GridFSDownloadStream openDownloadStream(final String filename, final GridFSDownloadOptions options) {
-        Timeout operationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout operationTimeout = startTimeout();
         GridFSFile file = getFileByName(null, filename, options, operationTimeout);
         return createGridFSDownloadStream(null, file, operationTimeout);
     }
@@ -310,7 +310,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public GridFSDownloadStream openDownloadStream(final ClientSession clientSession, final BsonValue id) {
         notNull("clientSession", clientSession);
-        Timeout operationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout operationTimeout = startTimeout();
         GridFSFile fileInfoById = getFileInfoById(clientSession, id, operationTimeout);
         return createGridFSDownloadStream(clientSession, fileInfoById, operationTimeout);
     }
@@ -324,7 +324,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     public GridFSDownloadStream openDownloadStream(final ClientSession clientSession, final String filename,
                                                    final GridFSDownloadOptions options) {
         notNull("clientSession", clientSession);
-        Timeout operationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout operationTimeout = startTimeout();
         GridFSFile file = getFileByName(clientSession, filename, options, operationTimeout);
         return createGridFSDownloadStream(clientSession, file, operationTimeout);
     }
@@ -402,7 +402,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     private GridFSFindIterable createGridFSFindIterable(@Nullable final ClientSession clientSession, @Nullable final Bson filter) {
-        return new GridFSFindIterableImpl(createFindIterable(clientSession, filter, TimeoutContext.calculateTimeout(timeoutMs)));
+        return new GridFSFindIterableImpl(createFindIterable(clientSession, filter, startTimeout()));
     }
 
     private GridFSFindIterable createGridFSFindIterable(@Nullable final ClientSession clientSession, @Nullable final Bson filter,
@@ -432,7 +432,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     private void executeDelete(@Nullable final ClientSession clientSession, final BsonValue id) {
-        Timeout operationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout operationTimeout = startTimeout();
         DeleteResult result;
         if (clientSession != null) {
             result = withNullableTimeout(filesCollection, operationTimeout)
@@ -473,7 +473,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     private void executeRename(@Nullable final ClientSession clientSession, final BsonValue id, final String newFilename) {
-        Timeout operationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout operationTimeout = startTimeout();
         UpdateResult updateResult;
         if (clientSession != null) {
             updateResult = withNullableTimeout(filesCollection, operationTimeout).updateOne(clientSession, new BsonDocument("_id", id),
@@ -490,14 +490,14 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public void drop() {
-        Timeout oeprationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout oeprationTimeout = startTimeout();
         withNullableTimeout(filesCollection, oeprationTimeout).drop();
         withNullableTimeout(chunksCollection, oeprationTimeout).drop();
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        Timeout oeprationTimeout = TimeoutContext.calculateTimeout(timeoutMs);
+        Timeout oeprationTimeout = startTimeout();
         notNull("clientSession", clientSession);
         withNullableTimeout(filesCollection, oeprationTimeout).drop(clientSession);
         withNullableTimeout(chunksCollection, oeprationTimeout).drop(clientSession);
@@ -653,8 +653,13 @@ final class GridFSBucketImpl implements GridFSBucket {
         }
     }
 
-    private <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
+    private static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
                                                        @Nullable final Timeout timeout) {
        return TimeoutUtils.withNullableTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
+    }
+
+    @Nullable
+    private Timeout startTimeout() {
+        return TimeoutContext.calculateTimeout(timeoutMs);
     }
 }
