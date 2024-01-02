@@ -19,6 +19,9 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
+import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
 
@@ -26,9 +29,16 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
  * See https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.rst#prose-tests
  */
 public final class ClientSideOperationTimeoutProseTest extends AbstractClientSideOperationsTimeoutProseTest {
+    private com.mongodb.reactivestreams.client.MongoClient wrapped;
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
-        return new SyncMongoClient(MongoClients.create(mongoClientSettings));
+        wrapped = MongoClients.create(mongoClientSettings);
+        return new SyncMongoClient(wrapped);
+    }
+
+    @Override
+    protected GridFSBucket createGridFsBucket(final com.mongodb.client.MongoDatabase mongoDatabase, final String bucketName) {
+        return new SyncGridFSBucket(GridFSBuckets.create(wrapped.getDatabase(mongoDatabase.getName()), bucketName));
     }
 }

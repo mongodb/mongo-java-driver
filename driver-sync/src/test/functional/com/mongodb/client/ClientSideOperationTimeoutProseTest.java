@@ -17,6 +17,9 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
+import org.junit.jupiter.api.Disabled;
 
 
 /**
@@ -27,5 +30,25 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
         return MongoClients.create(mongoClientSettings);
+    }
+
+    @Override
+    protected GridFSBucket createGridFsBucket(final MongoDatabase mongoDatabase, final String bucketName) {
+        return GridFSBuckets.create(mongoDatabase, bucketName);
+    }
+
+    @Override
+    @Disabled
+    public void testGridFSUploadViaOpenUploadStreamTimeout() {
+    }
+
+    @Override
+    @Disabled
+    public void testAbortingGridFsUploadStreamTimeout() {
+    }
+
+    @Override
+    @Disabled
+    public void testGridFsDownloadStreamTimeout() {
     }
 }

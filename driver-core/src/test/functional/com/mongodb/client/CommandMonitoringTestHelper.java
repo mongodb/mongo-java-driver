@@ -120,11 +120,11 @@ public final class CommandMonitoringTestHelper {
         return asList("insert", "update", "delete").contains(commandName);
     }
 
-    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events) {
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<? extends CommandEvent> events) {
         assertEventsEquality(expectedEvents, events, null);
     }
 
-    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events,
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<? extends CommandEvent> events,
                                             @Nullable final Map<String, BsonDocument> lsidMap) {
         assertEquals(expectedEvents.size(), events.size());
 

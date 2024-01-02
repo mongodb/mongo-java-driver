@@ -46,6 +46,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -104,6 +105,11 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        throw new UnsupportedOperationException(); //TODO JAVA-5277
+    }
+
+    @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection);
     }
@@ -124,6 +130,11 @@ final class GridFSBucketImpl implements GridFSBucket {
     public GridFSBucket withReadConcern(final ReadConcern readConcern) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadConcern(readConcern),
                 chunksCollection.withReadConcern(readConcern));
+    }
+
+    @Override
+    public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
+        throw new UnsupportedOperationException(); //TODO JAVA-5277
     }
 
     @Override

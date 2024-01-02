@@ -105,6 +105,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.mongodb.client.unified.UnifiedTestUtils.getAndRemoveTimeoutMS;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -1735,16 +1736,6 @@ final class UnifiedCrudHelper {
             collection = collection.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
         }
         return collection;
-    }
-
-    @Nullable
-    private Long getAndRemoveTimeoutMS(final BsonDocument arguments) {
-        Long timeoutMS = null;
-        if (arguments.containsKey("timeoutMS")) {
-            timeoutMS = arguments.getNumber("timeoutMS").longValue();
-            arguments.remove("timeoutMS");
-        }
-        return timeoutMS;
     }
 
     private static void setCursorType(final FindIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {
