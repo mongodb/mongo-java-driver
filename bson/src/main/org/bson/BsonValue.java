@@ -77,7 +77,7 @@ public abstract class BsonValue {
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonNumber asNumber() {
-        if (!(this instanceof BsonNumber)) {
+        if (!isNumber()) {
             throw new BsonInvalidOperationException(format("Value expected to be of a numerical BSON type is of unexpected type %s",
                                                            getBsonType()));
         }
