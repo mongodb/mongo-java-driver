@@ -21,7 +21,9 @@ import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
-
+/**
+ * New unit tests for {@link SocketSettings} are to be added to {@link SocketSettingsTest}.
+ */
 class SocketSettingsSpecification extends Specification {
 
     def 'should have correct defaults'() {

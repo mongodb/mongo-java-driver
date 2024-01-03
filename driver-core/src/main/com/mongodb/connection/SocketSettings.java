@@ -101,7 +101,7 @@ public final class SocketSettings {
          * @return this
          */
         public Builder connectTimeout(final long connectTimeout, final TimeUnit timeUnit) {
-            this.connectTimeoutMS = toIntExact(MILLISECONDS.convert(connectTimeout, timeUnit));
+            this.connectTimeoutMS = timeoutArgumentToMillis(connectTimeout, timeUnit);
             return this;
         }
 
@@ -115,7 +115,7 @@ public final class SocketSettings {
          * @see #getReadTimeout(TimeUnit)
          */
         public Builder readTimeout(final long readTimeout, final TimeUnit timeUnit) {
-            this.readTimeoutMS = toIntExact(MILLISECONDS.convert(readTimeout, timeUnit));
+            this.readTimeoutMS = timeoutArgumentToMillis(readTimeout, timeUnit);
             return this;
         }
 
@@ -283,5 +283,14 @@ public final class SocketSettings {
         receiveBufferSize = builder.receiveBufferSize;
         sendBufferSize = builder.sendBufferSize;
         proxySettings = builder.proxySettingsBuilder.build();
+    }
+
+    private static int timeoutArgumentToMillis(final long timeout, final TimeUnit timeUnit) throws IllegalArgumentException {
+        try {
+            return toIntExact(MILLISECONDS.convert(timeout, timeUnit));
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException(
+                    "The timeout converted to milliseconds must not be greater than `Integer.MAX_VALUE`", e);
+        }
     }
 }
