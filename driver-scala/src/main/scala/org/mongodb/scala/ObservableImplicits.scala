@@ -16,8 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.reactivestreams.client.gridfs.GridFSUploadPublisher
-import org.bson.BsonValue
 import org.mongodb.scala.bson.ObjectId
 import org.mongodb.scala.gridfs.GridFSFile
 import org.mongodb.scala.internal.{ MapObservable, UnitObservable }
@@ -116,25 +114,6 @@ trait ObservableImplicits {
       extends SingleObservable[GridFSFile] {
     val publisher = pub
     override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = Mono.from(publisher).subscribe(observer)
-  }
-
-  /**
-   * A `GridFSUploadPublisher`` that emits
-   *
-   *   - exactly one item, if the wrapped `Publisher` does not signal an error, even if the represented stream is empty;
-   *   - no items if the wrapped `Publisher` signals an error.
-   *
-   * @param pub A `Publisher` representing a finite stream.
-   */
-  implicit class ToGridFSUploadPublisherUnit(pub: => GridFSUploadPublisher[Void]) extends GridFSUploadPublisher[Unit] {
-    val publisher = pub
-
-    override def subscribe(observer: Subscriber[_ >: Unit]): Unit =
-      Flux.from(publisher).reduce((), (_: Unit, _: Void) => ()).subscribe(observer)
-
-    override def getObjectId: ObjectId = publisher.getObjectId
-
-    override def getId: BsonValue = publisher.getId
   }
 
   /**

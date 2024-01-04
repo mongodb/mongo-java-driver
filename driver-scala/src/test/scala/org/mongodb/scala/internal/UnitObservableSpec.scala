@@ -17,6 +17,8 @@ package org.mongodb.scala.internal
 
 import org.mongodb.scala.{ BaseSpec, Observer, Subscription }
 
+import scala.collection.mutable.ArrayBuffer
+
 class UnitObservableSpec extends BaseSpec {
   it should "emit exactly one element" in {
     var onNextCounter = 0
@@ -63,5 +65,21 @@ class UnitObservableSpec extends BaseSpec {
     onNextCounter shouldBe 1
     errorActual shouldBe None
     completed shouldBe true
+  }
+
+  it should "work with for comprehensions" in {
+    val observable = for {
+      _ <- UnitObservable(TestObservable(1 to 2))
+      _ <- UnitObservable(TestObservable(20 to 30))
+    } yield List(1, 2, 3)
+    val items = ArrayBuffer[Int]()
+    var completed = false
+    observable.subscribe(
+      (item: List[Int]) => items.addAll(item),
+      (error: Throwable) => error,
+      () => completed = true
+    )
+    items should equal(List(1, 2, 3))
+    completed should equal(true)
   }
 }

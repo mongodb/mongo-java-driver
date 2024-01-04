@@ -73,7 +73,7 @@ class ObservableImplicitsToGridFSUploadPublisherUnitSpec extends BaseSpec {
   }
 
   def toGridFSUploadPublisherUnit(error: Option[Exception] = Option.empty): Observable[Unit] = {
-    ToGridFSUploadPublisherUnit(VoidGridFSUploadPublisher(error)).toObservable()
+    gridfs.ToGridFSUploadPublisherUnit(VoidGridFSUploadPublisher(error)).toObservable()
   }
 
   /**
