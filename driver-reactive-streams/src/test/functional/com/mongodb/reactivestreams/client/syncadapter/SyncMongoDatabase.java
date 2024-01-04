@@ -22,13 +22,12 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -170,8 +169,8 @@ public class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames() {
-        return listCollections(BsonDocument.class).map(result -> result.getString("name").getValue());
+    public ListCollectionNamesIterable listCollectionNames() {
+        return new SyncListCollectionNamesIterable(wrapped.listCollectionNames());
     }
 
     @Override
@@ -185,9 +184,8 @@ public class SyncMongoDatabase implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames(final ClientSession clientSession) {
-        return listCollections(clientSession, BsonDocument.class).map(result -> result.getString("name").getValue());
-
+    public ListCollectionNamesIterable listCollectionNames(final ClientSession clientSession) {
+        return new SyncListCollectionNamesIterable(wrapped.listCollectionNames(unwrap(clientSession)));
     }
 
     @Override

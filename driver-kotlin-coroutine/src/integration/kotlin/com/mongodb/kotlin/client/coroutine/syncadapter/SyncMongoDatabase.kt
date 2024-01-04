@@ -18,13 +18,8 @@ package com.mongodb.kotlin.client.coroutine.syncadapter
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.client.AggregateIterable
-import com.mongodb.client.ChangeStreamIterable
-import com.mongodb.client.ClientSession
-import com.mongodb.client.ListCollectionsIterable
-import com.mongodb.client.MongoCollection
+import com.mongodb.client.*
 import com.mongodb.client.MongoDatabase as JMongoDatabase
-import com.mongodb.client.MongoIterable
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
@@ -108,10 +103,11 @@ data class SyncMongoDatabase(val wrapped: MongoDatabase) : JMongoDatabase {
 
     override fun drop(clientSession: ClientSession) = runBlocking { wrapped.drop(clientSession.unwrapped()) }
 
-    override fun listCollectionNames(): MongoIterable<String> = SyncMongoIterable(wrapped.listCollectionNames())
+    override fun listCollectionNames(): ListCollectionNamesIterable =
+        SyncListCollectionNamesIterable(wrapped.listCollectionNames())
 
-    override fun listCollectionNames(clientSession: ClientSession): MongoIterable<String> =
-        SyncMongoIterable(wrapped.listCollectionNames(clientSession.unwrapped()))
+    override fun listCollectionNames(clientSession: ClientSession): ListCollectionNamesIterable =
+        SyncListCollectionNamesIterable(wrapped.listCollectionNames(clientSession.unwrapped()))
 
     override fun listCollections(): ListCollectionsIterable<Document> =
         SyncListCollectionsIterable(wrapped.listCollections())

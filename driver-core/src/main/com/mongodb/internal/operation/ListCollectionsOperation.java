@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -37,6 +38,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
@@ -65,6 +67,8 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
  * ensures that the value of the {@code name} field of each returned document is the simple name of the collection rather than the full
  * namespace.
+ * <p>
+ * See <a href="https://docs.mongodb.com/manual/reference/command/listCollections/">{@code listCollections}</a></p>.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
@@ -76,6 +80,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private BsonDocument filter;
     private int batchSize;
     private boolean nameOnly;
+    private boolean authorizedCollections;
     private BsonValue comment;
     private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
@@ -130,6 +135,20 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     public ListCollectionsOperation<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
+    }
+
+    public ListCollectionsOperation<T> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
+    /**
+     * This method is used by tests via the reflection API. See
+     * {@code com.mongodb.reactivestreams.client.internal.TestHelper.assertOperationIsTheSameAs}.
+     */
+    @VisibleForTesting(otherwise = PRIVATE)
+    public boolean isAuthorizedCollections() {
+        return authorizedCollections;
     }
 
     @Override
@@ -194,10 +213,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 
-    private MongoNamespace createNamespace() {
-        return new MongoNamespace(databaseName, "$cmd.listCollections");
-    }
-
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
         return (result, source, connection) ->
                 cursorDocumentToBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection);
@@ -208,12 +223,14 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                 cursorDocumentToAsyncBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection);
     }
 
+
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument commandDocument = new BsonDocument("listCollections", new BsonInt32(1))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             putIfNotNull(commandDocument, "filter", filter);
             putIfTrue(commandDocument, "nameOnly", nameOnly);
+            putIfTrue(commandDocument, "authorizedCollections", authorizedCollections);
             addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
             putIfNotNull(commandDocument, "comment", comment);
             return commandDocument;

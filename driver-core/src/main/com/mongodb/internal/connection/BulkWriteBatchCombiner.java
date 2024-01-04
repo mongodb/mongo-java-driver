@@ -179,10 +179,8 @@ public class BulkWriteBatchCombiner {
         if (writeConcernError != null) {
             if (writeConcernErrors.isEmpty()) {
                 writeConcernErrors.add(writeConcernError);
-                errorLabels.addAll(writeConcernError.getErrorLabels());
             } else if (!writeConcernError.equals(writeConcernErrors.get(writeConcernErrors.size() - 1))) {
                 writeConcernErrors.add(writeConcernError);
-                errorLabels.addAll(writeConcernError.getErrorLabels());
             }
         }
     }

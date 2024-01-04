@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
-package com.mongodb.reactivestreams.client;
+package com.mongodb.client;
 
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
-import org.reactivestreams.Publisher;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * Publisher interface for ListCollections.
+ * Iterable for listing collection names.
  *
- * @param <TResult> The type of the result.
- * @since 1.0
+ * @since 5.0
  * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
-public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
-
+public interface ListCollectionNamesIterable extends MongoIterable<String> {
     /**
      * Sets the query filter to apply to the query.
      *
@@ -40,7 +36,7 @@ public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    ListCollectionsPublisher<TResult> filter(@Nullable Bson filter);
+    ListCollectionNamesIterable filter(@Nullable Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -50,59 +46,45 @@ public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
      */
-    ListCollectionsPublisher<TResult> maxTime(long maxTime, TimeUnit timeUnit);
+    ListCollectionNamesIterable maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets the number of documents to return per batch.
      *
-     * <p>Overrides the {@link org.reactivestreams.Subscription#request(long)} value for setting the batch size, allowing for fine-grained
-     * control over the underlying cursor.</p>
-     *
      * @param batchSize the batch size
      * @return this
-     * @since 1.8
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    ListCollectionsPublisher<TResult> batchSize(int batchSize);
+    @Override
+    ListCollectionNamesIterable batchSize(int batchSize);
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment
      * @return this
-     * @since 4.6
      * @mongodb.server.release 4.4
      */
-    ListCollectionsPublisher<TResult> comment(@Nullable String comment);
+    ListCollectionNamesIterable comment(@Nullable String comment);
 
     /**
      * Sets the comment for this operation. A null value means no comment is set.
      *
      * @param comment the comment
      * @return this
-     * @since 4.6
      * @mongodb.server.release 4.4
      */
-    ListCollectionsPublisher<TResult> comment(@Nullable BsonValue comment);
+    ListCollectionNamesIterable comment(@Nullable BsonValue comment);
 
     /**
-     * Sets the timeoutMode for the cursor.
+     * Sets the {@code authorizedCollections} field of the {@code listCollections} command.
      *
-     * <p>
-     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
-     *     via {@link MongoDatabase} or via {@link MongoCollection}
-     * </p>
-     * @param timeoutMode the timeout mode
-     * @return this
-     * @since 4.x
+     * @param authorizedCollections If {@code true}, allows executing the {@code listCollections} command,
+     * which has the {@code nameOnly} field set to {@code true}, without having the
+     * <a href="https://docs.mongodb.com/manual/reference/privilege-actions/#mongodb-authaction-listCollections">
+     * {@code listCollections} privilege</a> on the database resource.
+     * @return {@code this}.
+     * @mongodb.server.release 4.0
      */
-    ListCollectionsPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
-
-    /**
-     * Helper to return a publisher limited to the first result.
-     *
-     * @return a Publisher which will contain a single item.
-     * @since 1.8
-     */
-    Publisher<TResult> first();
+    ListCollectionNamesIterable authorizedCollections(boolean authorizedCollections);
 }

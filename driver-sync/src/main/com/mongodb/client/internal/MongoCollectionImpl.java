@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
@@ -1109,18 +1108,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         try {
             return executor.execute(writeOperation, readConcern, clientSession);
         } catch (MongoBulkWriteException e) {
-            MongoException exception;
             if (e.getWriteErrors().isEmpty()) {
-                exception = new MongoWriteConcernException(e.getWriteConcernError(),
+                throw new MongoWriteConcernException(e.getWriteConcernError(),
                         translateBulkWriteResult(type, e.getWriteResult()),
-                        e.getServerAddress());
+                        e.getServerAddress(), e.getErrorLabels());
             } else {
-                exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+                throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress(), e.getErrorLabels());
             }
-            for (final String errorLabel : e.getErrorLabels()) {
-                exception.addLabel(errorLabel);
-            }
-            throw exception;
+
         }
     }
 
