@@ -16,8 +16,9 @@
 
 package com.mongodb.client.gridfs
 
-import com.mongodb.*
-import com.mongodb.client.*
+import com.mongodb.MongoGridFSException
+import com.mongodb.MongoNamespace
+import com.mongodb.client.ClientSession
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.internal.MongoDatabaseImpl
@@ -314,7 +315,8 @@ class GridFSBucketSpecification extends Specification {
         1 * findIterable.first() >> fileInfo
 
         then:
-        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(clientSession, fileInfo, chunksCollection,null), ['closeLock', 'cursorLock'])
+        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(clientSession, fileInfo, chunksCollection,
+                null), ['closeLock', 'cursorLock'])
 
 
         where:
