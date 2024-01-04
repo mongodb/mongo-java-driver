@@ -75,7 +75,7 @@ class UnitObservableSpec extends BaseSpec {
     val items = ArrayBuffer[Int]()
     var completed = false
     observable.subscribe(
-      (item: List[Int]) => items.addAll(item),
+      (item: List[Int]) => item.foreach(i => items += i),
       (error: Throwable) => error,
       () => completed = true
     )
