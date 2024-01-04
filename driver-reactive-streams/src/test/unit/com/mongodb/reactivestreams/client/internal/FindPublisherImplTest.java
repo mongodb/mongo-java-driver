@@ -45,6 +45,7 @@ public class FindPublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected FindOperation")
     @Test
+    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperation() {
         configureBatchCursor();
 

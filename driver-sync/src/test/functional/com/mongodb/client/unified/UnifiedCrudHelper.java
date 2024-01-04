@@ -360,6 +360,7 @@ final class UnifiedCrudHelper {
     }
 
     @NonNull
+    @SuppressWarnings("deprecation") //maxTimeMS
     private FindIterable<BsonDocument> createFindIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments");
@@ -607,6 +608,7 @@ final class UnifiedCrudHelper {
                 collection.findOneAndDelete(filter, options));
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeAggregate(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
 
@@ -1631,6 +1633,7 @@ final class UnifiedCrudHelper {
         });
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     public OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());

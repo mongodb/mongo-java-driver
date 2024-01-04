@@ -149,7 +149,9 @@ public final class FindOptions {
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @deprecated This option is deprecated in favor of global operation timeout.
      */
+    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
@@ -162,7 +164,9 @@ public final class FindOptions {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @deprecated This option is deprecated in favor of global operation timeout.
      */
+    @Deprecated
     public FindOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxTime > = 0", maxTime >= 0);

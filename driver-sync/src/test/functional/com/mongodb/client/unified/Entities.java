@@ -690,6 +690,7 @@ public final class Entities {
         putEntity(id, clientEncryptionSupplier.apply(Assertions.notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
     }
 
+    @SuppressWarnings("deprecation") //maxCommitTimeMS
     private TransactionOptions getTransactionOptions(final BsonDocument options) {
         TransactionOptions.Builder transactionOptionsBuilder = TransactionOptions.builder();
         for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
