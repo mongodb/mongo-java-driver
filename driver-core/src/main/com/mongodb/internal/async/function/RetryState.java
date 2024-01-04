@@ -191,15 +191,8 @@ public final class RetryState {
         if (isLastAttempt()) {
             previouslyChosenException = newlyChosenException;
             /*
-             * Ensure that loopState.isLastIteration() is not true. It returns true when markAsLastIteration() has been called, which
-             * might occur in the following cases:
-             * - All operations in a bulk write successfully complete without transient retryable errors, but some are not acknowledged by
-             *   the server.
-             * - In asynchronous code, breakAndCompleteIf() is used to check if the bulk is ordered, and the operation fails with a
-             *   non-retryable error.
-             * - breakAndCompleteIfRetryAnd() is used to check if the operation is executed in a transaction, and a retry attempt is made.
-             *
-             * In each case, these situations should not be treated as timeout exceptions but rather as exceptions on the server.
+             * The function of isLastIteration() is to indicate if retrying has been explicitly halted. Such a stop is not interpreted as
+             * a timeout exception but as a deliberate cessation of retry attempts.
              */
             if (hasTimeoutMs() && !loopState.isLastIteration()) {
                 previouslyChosenException = new MongoOperationTimeoutException("MongoDB operation timed out during a retry attempt", previouslyChosenException);
