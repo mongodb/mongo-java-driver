@@ -50,7 +50,7 @@ public class EstimatedDocumentCountOptions {
      * </ul>
      *
      * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
     @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
@@ -75,7 +75,7 @@ public class EstimatedDocumentCountOptions {
      * </ul>
      *
      * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
     @Deprecated
     public EstimatedDocumentCountOptions maxTime(final long maxTime, final TimeUnit timeUnit) {

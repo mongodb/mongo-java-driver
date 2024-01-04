@@ -60,7 +60,7 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * </ul>
      *
      * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
     @Deprecated
     DistinctPublisher<TResult> maxTime(long maxTime, TimeUnit timeUnit);

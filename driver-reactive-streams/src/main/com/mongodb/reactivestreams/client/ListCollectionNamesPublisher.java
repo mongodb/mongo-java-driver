@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
@@ -46,7 +47,20 @@ public interface ListCollectionNamesPublisher extends Publisher<String> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link ClientSession}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
+    @Deprecated
     ListCollectionNamesPublisher maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
