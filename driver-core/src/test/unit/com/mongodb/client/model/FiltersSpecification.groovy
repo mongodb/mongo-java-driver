@@ -42,7 +42,6 @@ import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
 import static com.mongodb.client.model.Filters.empty
 import static com.mongodb.client.model.Filters.eq
-import static com.mongodb.client.model.Filters.eqFull
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Filters.geoIntersects
 import static com.mongodb.client.model.Filters.geoWithin
@@ -76,12 +75,6 @@ class FiltersSpecification extends Specification {
         toBson(eq('x', 1)) == parse('{x : 1}')
         toBson(eq('x', null)) == parse('{x : null}')
         toBson(eq(1)) == parse('{_id : 1}')
-    }
-
-    def 'should render eqFull'() {
-        expect:
-        toBson(eqFull('x', 1)) == parse('{x : {$eq: 1}}')
-        toBson(eqFull('x', null)) == parse('{x : {$eq: null}}')
     }
 
     def 'should render $ne'() {
