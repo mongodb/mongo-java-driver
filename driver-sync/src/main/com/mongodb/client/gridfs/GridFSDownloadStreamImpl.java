@@ -36,7 +36,6 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private static final String TIMEOUT_MESSAGE = "The GridFS download stream has timed out";

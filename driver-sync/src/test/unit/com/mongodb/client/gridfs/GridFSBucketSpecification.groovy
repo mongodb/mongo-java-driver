@@ -16,9 +16,16 @@
 
 package com.mongodb.client.gridfs
 
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoGridFSException
 import com.mongodb.MongoNamespace
+import com.mongodb.ReadConcern
+import com.mongodb.WriteConcern
 import com.mongodb.client.ClientSession
+import com.mongodb.client.FindIterable
+import com.mongodb.client.ListIndexesIterable
+import com.mongodb.client.MongoCollection
+import com.mongodb.client.MongoCursor
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.internal.MongoDatabaseImpl
