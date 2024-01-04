@@ -31,7 +31,7 @@ final class TimeoutUtils {
     public static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> collection,
                                                                   final String message,
                                                                   @Nullable final Timeout timeout) {
-        if (timeout != null) {
+        if (timeout != null && !timeout.isInfinite()) {
             long remainingMs = timeout.remaining(MILLISECONDS);
             if (remainingMs <= 0) {
                 // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException

@@ -72,7 +72,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
              getChunksCollection(database, bucketName));
     }
 
-    GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<GridFSFile> filesCollection,
+    private GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<GridFSFile> filesCollection,
                      final MongoCollection<Document> chunksCollection) {
         this.bucketName = notNull("bucketName", bucketName);
         this.chunkSizeBytes = chunkSizeBytes;

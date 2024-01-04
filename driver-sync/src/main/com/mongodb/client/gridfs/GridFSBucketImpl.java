@@ -36,6 +36,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.TimeoutContext;
 
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -68,8 +69,6 @@ final class GridFSBucketImpl implements GridFSBucket {
     private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
     private volatile boolean checkedIndexes;
-    @Nullable
-    private final Long timeoutMs;
 
     GridFSBucketImpl(final MongoDatabase database) {
         this(database, "fs");
@@ -78,16 +77,16 @@ final class GridFSBucketImpl implements GridFSBucket {
     GridFSBucketImpl(final MongoDatabase database, final String bucketName) {
         this(notNull("bucketName", bucketName), DEFAULT_CHUNKSIZE_BYTES,
                 getFilesCollection(notNull("database", database), bucketName),
-                getChunksCollection(database, bucketName), database.getTimeout(TimeUnit.MILLISECONDS));
+                getChunksCollection(database, bucketName));
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<GridFSFile> filesCollection,
-                     final MongoCollection<Document> chunksCollection, @Nullable final Long timeoutMs) {
+                     final MongoCollection<Document> chunksCollection) {
         this.bucketName = notNull("bucketName", bucketName);
         this.chunkSizeBytes = chunkSizeBytes;
         this.filesCollection = notNull("filesCollection", filesCollection);
         this.chunksCollection = notNull("chunksCollection", chunksCollection);
-        this.timeoutMs = timeoutMs;
     }
 
     @Override
@@ -117,38 +116,38 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public Long getTimeout(final TimeUnit timeUnit) {
-        return timeoutMs == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMs, MILLISECONDS);
+        return filesCollection.getTimeout(timeUnit);
     }
 
     @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
-        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection, timeoutMs);
+        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection);
     }
 
     @Override
     public GridFSBucket withReadPreference(final ReadPreference readPreference) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadPreference(readPreference),
-                chunksCollection.withReadPreference(readPreference), timeoutMs);
+                chunksCollection.withReadPreference(readPreference));
     }
 
     @Override
     public GridFSBucket withWriteConcern(final WriteConcern writeConcern) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withWriteConcern(writeConcern),
-                chunksCollection.withWriteConcern(writeConcern), timeoutMs);
+                chunksCollection.withWriteConcern(writeConcern));
     }
 
     @Override
     public GridFSBucket withReadConcern(final ReadConcern readConcern) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadConcern(readConcern),
-                chunksCollection.withReadConcern(readConcern), timeoutMs);
+                chunksCollection.withReadConcern(readConcern));
     }
 
     @Override
     public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
         isTrueArgument("timeout >= 0", timeout >= 0);
         notNull("timeUnit", timeUnit);
-        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection,
-                chunksCollection, MILLISECONDS.convert(timeout, timeUnit));
+        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withTimeout(timeout, timeUnit),
+                chunksCollection.withTimeout(timeout, timeUnit));
     }
 
     @Override
@@ -437,12 +436,12 @@ final class GridFSBucketImpl implements GridFSBucket {
         if (clientSession != null) {
             result = withNullableTimeout(filesCollection, operationTimeout)
                     .deleteOne(clientSession, new BsonDocument("_id", id));
-            withNullableTimeout(filesCollection, operationTimeout)
+            withNullableTimeout(chunksCollection, operationTimeout)
                     .deleteMany(clientSession, new BsonDocument("files_id", id));
         } else {
             result = withNullableTimeout(filesCollection, operationTimeout)
                     .deleteOne(new BsonDocument("_id", id));
-            withNullableTimeout(filesCollection, operationTimeout)
+            withNullableTimeout(chunksCollection, operationTimeout)
                     .deleteMany(new BsonDocument("files_id", id));
         }
 
@@ -621,7 +620,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         if (filter != null) {
             findIterable = findIterable.filter(filter);
         }
-        if (timeoutMs != null) {
+        if (filesCollection.getTimeout(MILLISECONDS) != null) {
             findIterable.timeoutMode(TimeoutMode.CURSOR_LIFETIME);
         }
         return findIterable;
@@ -660,6 +659,6 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Nullable
     private Timeout startTimeout() {
-        return TimeoutContext.calculateTimeout(timeoutMs);
+        return TimeoutContext.calculateTimeout(filesCollection.getTimeout(MILLISECONDS));
     }
 }
