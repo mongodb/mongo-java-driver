@@ -148,7 +148,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeTrue(serverVersionAtLeast(4, 4));
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(20, TimeUnit.MILLISECONDS))) {
+                .timeout(30, TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
             database.getCollection(GRID_FS_COLLECTION_NAME_FILE)
@@ -177,7 +177,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         + "  data: {"
                         + "    failCommands: [\"find\"],"
                         + "    blockConnection: true,"
-                        + "    blockTimeMS: " + 25
+                        + "    blockTimeMS: " + 35
                         + "  }"
                         + "}");
                 assertThrows(MongoExecutionTimeoutException.class, downloadStream::read);
