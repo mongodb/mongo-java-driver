@@ -196,7 +196,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should only get collection names when nameOnly and authorizedCollections are requested'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(TIMEOUT_SETTINGS, databaseName, new DocumentCodec())
                 .nameOnly(true)
                 .authorizedCollections(true)
         getCollectionHelper().create('collection6', new CreateCollectionOptions())
@@ -227,7 +227,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     @IgnoreIf({ serverVersionLessThan(4, 0) })
     def 'should get all fields when authorizedCollections is requested and nameOnly is not requested'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(TIMEOUT_SETTINGS, databaseName, new DocumentCodec())
                 .nameOnly(false)
                 .authorizedCollections(true)
         getCollectionHelper().create('collection8', new CreateCollectionOptions())
