@@ -143,7 +143,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * - `> 0` The time limit to use for the full execution of an operation.
    *
    * @param timeout the timeout, which must be greater than or equal to 0
-   * @return a new MongoCollection instance with the set time limit for operations
+   * @return a new MongoDatabase instance with the set time limit for operations
    * @since 4.x
    */
   def withTimeout(timeout: Duration): MongoDatabase =

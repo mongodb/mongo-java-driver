@@ -828,7 +828,7 @@ public abstract class UnifiedTest {
                 operation.getDocument("arguments").getString("client").getValue());
         List<CommandEvent> events = lastTwoCommandEvents(listener);
         String eventsJson = listener.getCommandStartedEvents().stream()
-                .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                .map(e -> e.getCommand().toJson())
                 .collect(Collectors.joining(", "));
         BsonDocument expected = ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid");
         BsonDocument actual = ((CommandStartedEvent) events.get(1)).getCommand().getDocument("lsid");

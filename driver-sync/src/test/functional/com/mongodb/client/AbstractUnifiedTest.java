@@ -570,7 +570,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("assertDifferentLsidOnLastTwoCommands")) {
                         List<CommandEvent> events = lastTwoCommandEvents();
                         String eventsJson = commandListener.getCommandStartedEvents().stream()
-                                .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                                .map(e -> e.getCommand().toJson())
                                 .collect(Collectors.joining(", "));
 
                         assertNotEquals(eventsJson, ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid"),
@@ -578,7 +578,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("assertSameLsidOnLastTwoCommands")) {
                         List<CommandEvent> events = lastTwoCommandEvents();
                         String eventsJson = commandListener.getCommandStartedEvents().stream()
-                                        .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                                        .map(e -> e.getCommand().toJson())
                                         .collect(Collectors.joining(", "));
                         assertEquals(eventsJson, ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid"),
                                 ((CommandStartedEvent) events.get(1)).getCommand().getDocument("lsid"));
