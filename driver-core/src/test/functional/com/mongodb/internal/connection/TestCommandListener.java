@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveCommands;
@@ -144,22 +145,17 @@ public class TestCommandListener implements CommandListener {
     }
 
     public List<CommandEvent> getCommandStartedEvents() {
-        return getCommandStartedEvents(Integer.MAX_VALUE);
+        return getEvents(CommandStartedEvent.class, Integer.MAX_VALUE);
     }
 
-    private List<CommandEvent> getCommandStartedEvents(final int maxEvents) {
+    public List<CommandEvent> getCommandSucceededEvents() {
+        return getEvents(CommandSucceededEvent.class, Integer.MAX_VALUE);
+    }
+
+    private List<CommandEvent> getEvents(final Class<? extends CommandEvent> type, final int maxEvents) {
         lock.lock();
         try {
-            List<CommandEvent> commandStartedEvents = new ArrayList<>();
-            for (CommandEvent cur : getEvents()) {
-                if (cur instanceof CommandStartedEvent) {
-                    commandStartedEvents.add(cur);
-                }
-                if (commandStartedEvents.size() == maxEvents) {
-                    break;
-                }
-            }
-            return commandStartedEvents;
+            return getEvents().stream().filter(e -> e.getClass() == type).limit(maxEvents).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
@@ -177,7 +173,7 @@ public class TestCommandListener implements CommandListener {
                     throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
                 }
             }
-            return getCommandStartedEvents(numEvents);
+            return getEvents(CommandStartedEvent.class, numEvents);
         } finally {
             lock.unlock();
         }
