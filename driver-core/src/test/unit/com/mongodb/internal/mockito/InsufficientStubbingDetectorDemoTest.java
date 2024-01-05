@@ -17,7 +17,6 @@ package com.mongodb.internal.mockito;
 
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.operation.ListCollectionsOperation;

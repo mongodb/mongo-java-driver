@@ -42,6 +42,7 @@ public final class ListCollectionNamesPublisherImpl implements ListCollectionNam
     }
 
     @Override
+    @Deprecated
     public ListCollectionNamesPublisher maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         wrapped.maxTime(maxTime, timeUnit);

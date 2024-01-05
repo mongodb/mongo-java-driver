@@ -26,6 +26,8 @@ internal class SyncListCollectionNamesIterable(val wrapped: ListCollectionNamesI
 
     override fun batchSize(batchSize: Int): SyncListCollectionNamesIterable = apply { wrapped.batchSize(batchSize) }
 
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListCollectionNamesIterable = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
