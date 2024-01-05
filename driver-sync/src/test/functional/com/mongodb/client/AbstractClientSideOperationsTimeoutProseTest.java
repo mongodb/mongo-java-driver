@@ -58,8 +58,10 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -141,11 +143,16 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
-            try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch()
-                    .startAtOperationTime(startTime).fullDocument(FullDocument.UPDATE_LOOKUP).cursor()) {
+            try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch(
+                    singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
+                    .startAtOperationTime(startTime)
+                    .fullDocument(FullDocument.UPDATE_LOOKUP)
+                    .cursor()) {
                 ChangeStreamDocument<Document> document = assertDoesNotThrow(cursor::next);
 
-                assertEquals(1, document.getFullDocument().get("x"));
+                Document fullDocument = document.getFullDocument();
+                assertNotNull(fullDocument);
+                assertEquals(1, fullDocument.get("x"));
                 assertThrows(MongoExecutionTimeoutException.class, cursor::next);
             }
             List<CommandEvent> events = commandListener.getCommandSucceededEvents();
