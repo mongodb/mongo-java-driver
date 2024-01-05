@@ -1587,7 +1587,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
     }
-    private void logEventMessage(final String messageId, final String format, final int driverConnectionId) {
+    private void logEventMessage(final String messageId, final String format, final long driverConnectionId) {
         ClusterId clusterId = serverId.getClusterId();
         if (requiresLogging(clusterId)) {
             List<LogMessage.Entry> entries = createBasicEntries();
