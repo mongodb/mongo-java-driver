@@ -151,8 +151,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 .timeout(30, TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
-            database.getCollection(GRID_FS_COLLECTION_NAME_FILE)
-                    .insertOne(Document.parse(
+            filesCollectionHelper.insertDocuments(Document.parse(
                             "{"
                                     + "   _id: {"
                                     + "     $oid: \"000000000000000000000005\""
