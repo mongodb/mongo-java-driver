@@ -18,18 +18,13 @@ package com.mongodb.internal.connection
 
 import com.mongodb.LoggerSettings
 import com.mongodb.MongoCommandException
-import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerType
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.BsonTimestamp
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -40,7 +35,6 @@ import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync
 
 class CommandHelperSpecification extends Specification {
@@ -57,24 +51,6 @@ class CommandHelperSpecification extends Specification {
     def cleanup() {
         connection?.close()
     }
-
-    def 'should gossip cluster time'() {
-        given:
-        def connection = Mock(InternalStreamConnection) {
-            getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                    6, ServerType.REPLICA_SET_PRIMARY, 1000, 1000, 1000, [])
-        }
-        def clusterClock = new ClusterClock()
-        clusterClock.advance(new BsonDocument('clusterTime', new BsonTimestamp(42L)))
-
-        when:
-        executeCommand('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), clusterClock, getClusterConnectionMode(),
-                getServerApi(), connection)
-
-        then:
-        1 * connection.sendAndReceive(_, _, _ as ClusterClockAdvancingSessionContext, _, _) >> new BsonDocument()
-    }
-
 
     def 'should execute command asynchronously'() {
         when:

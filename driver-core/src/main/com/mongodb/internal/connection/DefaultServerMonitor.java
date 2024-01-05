@@ -71,7 +71,6 @@ class DefaultServerMonitor implements ServerMonitor {
 
     private final ServerId serverId;
     private final ServerMonitorListener serverMonitorListener;
-    private final ClusterClock clusterClock;
     private final Provider<SdamServerDescriptionManager> sdamProvider;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -88,15 +87,13 @@ class DefaultServerMonitor implements ServerMonitor {
     private volatile boolean isClosed;
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
-                         final ClusterClock clusterClock,
-                         final InternalConnectionFactory internalConnectionFactory,
+            final InternalConnectionFactory internalConnectionFactory,
                          final ClusterConnectionMode clusterConnectionMode,
                          @Nullable final ServerApi serverApi,
                          final Provider<SdamServerDescriptionManager> sdamProvider) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
         this.serverMonitorListener = singleServerMonitorListener(serverSettings);
-        this.clusterClock = notNull("clusterClock", clusterClock);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
@@ -206,7 +203,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
                 long start = System.nanoTime();
                 try {
-                    SessionContext sessionContext = new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
+                    SessionContext sessionContext = NoOpSessionContext.INSTANCE;
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
@@ -432,7 +429,7 @@ class DefaultServerMonitor implements ServerMonitor {
             long start = System.nanoTime();
             executeCommand("admin",
                     new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
-                    clusterClock, clusterConnectionMode, serverApi, connection);
+                    clusterConnectionMode, serverApi, connection);
             long elapsedTimeNanos = System.nanoTime() - start;
             averageRoundTripTime.addSample(elapsedTimeNanos);
         }

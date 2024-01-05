@@ -221,7 +221,6 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
             }
         }
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
-                new ClusterClock(),
                 new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(SocketSettings.builder()
                         .connectTimeout(500, TimeUnit.MILLISECONDS)
                         .build(),
