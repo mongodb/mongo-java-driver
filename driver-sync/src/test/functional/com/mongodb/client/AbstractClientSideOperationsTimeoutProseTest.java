@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
@@ -78,6 +79,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     private CollectionHelper<BsonDocument> collectionHelper;
 
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
+
+    protected abstract boolean isAsync();
 
     @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
@@ -120,7 +123,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("5. Blocking Iteration Methods - Change Streams")
     public void testBlockingIterationMethodsChangeStream() {
         assumeTrue(serverVersionAtLeast(4, 4));
-        assumeFalse(isStandalone());
+        assumeTrue(isDiscoverableReplicaSet());
+        assumeFalse(isAsync()); // Async change stream cursor is deterministic for cursor::next
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());

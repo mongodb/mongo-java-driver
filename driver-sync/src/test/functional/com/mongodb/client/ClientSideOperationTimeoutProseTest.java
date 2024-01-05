@@ -28,4 +28,9 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     protected MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
         return MongoClients.create(mongoClientSettings);
     }
+
+    @Override
+    protected boolean isAsync() {
+        return false;
+    }
 }
