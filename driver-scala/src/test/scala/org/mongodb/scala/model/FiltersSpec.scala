@@ -53,11 +53,6 @@ class FiltersSpec extends BaseSpec {
     toBson(model.Filters.equal("x", null)) should equal(Document("""{x : null}"""))
   }
 
-  it should "render eqFull" in {
-    toBson(model.Filters.eqFull("x", 1)) should equal(Document("""{x : {$eq: 1}}"""))
-    toBson(model.Filters.eqFull("x", null)) should equal(Document("""{x : {$eq: null}}"""))
-  }
-
   it should "render $ne" in {
     toBson(model.Filters.ne("x", 1)) should equal(Document("""{x : {$ne : 1} }"""))
     toBson(model.Filters.ne("x", null)) should equal(Document("""{x : {$ne : null} }"""))

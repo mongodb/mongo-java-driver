@@ -1364,44 +1364,44 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   /**
    * Drops this collection from the Database.
    *
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
    */
-  def drop(): SingleObservable[Void] = wrapped.drop()
+  def drop(): SingleObservable[Unit] = wrapped.drop()
 
   /**
    * Drops this collection from the Database.
    *
    * @param clientSession the client session with which to associate this operation
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def drop(clientSession: ClientSession): SingleObservable[Void] = wrapped.drop(clientSession)
+  def drop(clientSession: ClientSession): SingleObservable[Unit] = wrapped.drop(clientSession)
 
   /**
    * Drops this collection from the Database.
    *
    * @param dropCollectionOptions various options for dropping the collection
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
    * @since 4.7
    * @note Requires MongoDB 6.0 or greater
    */
-  def drop(dropCollectionOptions: DropCollectionOptions): SingleObservable[Void] = wrapped.drop(dropCollectionOptions)
+  def drop(dropCollectionOptions: DropCollectionOptions): SingleObservable[Unit] = wrapped.drop(dropCollectionOptions)
 
   /**
    * Drops this collection from the Database.
    *
    * @param clientSession the client session with which to associate this operation
    * @param dropCollectionOptions various options for dropping the collection
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    *         [[https://www.mongodb.com/docs/manual/reference/command/drop/ Drop Collection]]
    * @since 4.7
    * @note Requires MongoDB 6.0 or greater
    */
-  def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): SingleObservable[Void] =
+  def drop(clientSession: ClientSession, dropCollectionOptions: DropCollectionOptions): SingleObservable[Unit] =
     wrapped.drop(clientSession, dropCollectionOptions)
 
   /**
@@ -1449,24 +1449,24 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param indexName  the name of the search index to update.
    * @param definition the search index mapping definition.
-   * @return an empty Observable that indicates when the operation has completed.
+   * @return an Observable that indicates when the operation has completed.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/updateSearchIndex/ Update Search Index]]
    */
-  def updateSearchIndex(indexName: String, definition: Bson): SingleObservable[Void] =
+  def updateSearchIndex(indexName: String, definition: Bson): SingleObservable[Unit] =
     wrapped.updateSearchIndex(indexName, definition)
 
   /**
    * Drop an Atlas Search index given its name.
    *
    * @param indexName the name of the search index to drop.
-   * @return an empty Observable that indicates when the operation has completed.
+   * @return an Observable that indicates when the operation has completed.
    * @since 4.11
    * @note Requires MongoDB 7.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/dropSearchIndex/ Drop Search Index]]
    */
-  def dropSearchIndex(indexName: String): SingleObservable[Void] = wrapped.dropSearchIndex(indexName)
+  def dropSearchIndex(indexName: String): SingleObservable[Unit] = wrapped.dropSearchIndex(indexName)
 
   /**
    *  Get all Atlas Search indexes in this collection.
@@ -1605,9 +1605,9 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param indexName the name of the index to remove
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def dropIndex(indexName: String): SingleObservable[Void] = wrapped.dropIndex(indexName)
+  def dropIndex(indexName: String): SingleObservable[Unit] = wrapped.dropIndex(indexName)
 
   /**
    * Drops the given index.
@@ -1615,29 +1615,29 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param indexName the name of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    */
-  def dropIndex(indexName: String, dropIndexOptions: DropIndexOptions): SingleObservable[Void] =
+  def dropIndex(indexName: String, dropIndexOptions: DropIndexOptions): SingleObservable[Unit] =
     wrapped.dropIndex(indexName, dropIndexOptions)
 
   /**
    * Drops the index given the keys used to create it.
    *
    * @param keys the keys of the index to remove
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def dropIndex(keys: Bson): SingleObservable[Void] = wrapped.dropIndex(keys)
+  def dropIndex(keys: Bson): SingleObservable[Unit] = wrapped.dropIndex(keys)
 
   /**
    * Drops the index given the keys used to create it.
    *
    * @param keys the keys of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    */
-  def dropIndex(keys: Bson, dropIndexOptions: DropIndexOptions): SingleObservable[Void] =
+  def dropIndex(keys: Bson, dropIndexOptions: DropIndexOptions): SingleObservable[Unit] =
     wrapped.dropIndex(keys, dropIndexOptions)
 
   /**
@@ -1646,11 +1646,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @param indexName the name of the index to remove
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def dropIndex(clientSession: ClientSession, indexName: String): SingleObservable[Void] =
+  def dropIndex(clientSession: ClientSession, indexName: String): SingleObservable[Unit] =
     wrapped.dropIndex(clientSession, indexName)
 
   /**
@@ -1660,7 +1660,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param indexName the name of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1668,7 +1668,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
       clientSession: ClientSession,
       indexName: String,
       dropIndexOptions: DropIndexOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.dropIndex(clientSession, indexName, dropIndexOptions)
 
   /**
@@ -1676,11 +1676,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param clientSession the client session with which to associate this operation
    * @param keys the keys of the index to remove
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def dropIndex(clientSession: ClientSession, keys: Bson): SingleObservable[Void] =
+  def dropIndex(clientSession: ClientSession, keys: Bson): SingleObservable[Unit] =
     wrapped.dropIndex(clientSession, keys)
 
   /**
@@ -1689,7 +1689,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param keys the keys of the index to remove
    * @param dropIndexOptions options to use when dropping indexes
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1697,26 +1697,26 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
       clientSession: ClientSession,
       keys: Bson,
       dropIndexOptions: DropIndexOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.dropIndex(clientSession, keys, dropIndexOptions)
 
   /**
    * Drop all the indexes on this collection, except for the default on _id.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def dropIndexes(): SingleObservable[Void] = wrapped.dropIndexes()
+  def dropIndexes(): SingleObservable[Unit] = wrapped.dropIndexes()
 
   /**
    * Drop all the indexes on this collection, except for the default on _id.
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param dropIndexOptions options to use when dropping indexes
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    */
-  def dropIndexes(dropIndexOptions: DropIndexOptions): SingleObservable[Void] =
+  def dropIndexes(dropIndexOptions: DropIndexOptions): SingleObservable[Unit] =
     wrapped.dropIndexes(dropIndexOptions)
 
   /**
@@ -1724,11 +1724,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def dropIndexes(clientSession: ClientSession): SingleObservable[Void] =
+  def dropIndexes(clientSession: ClientSession): SingleObservable[Unit] =
     wrapped.dropIndexes(clientSession)
 
   /**
@@ -1737,11 +1737,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[https://www.mongodb.com/docs/manual/reference/command/dropIndexes/ Drop Indexes]]
    * @param clientSession the client session with which to associate this operation
    * @param dropIndexOptions options to use when dropping indexes
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def dropIndexes(clientSession: ClientSession, dropIndexOptions: DropIndexOptions): SingleObservable[Void] =
+  def dropIndexes(clientSession: ClientSession, dropIndexOptions: DropIndexOptions): SingleObservable[Unit] =
     wrapped.dropIndexes(clientSession, dropIndexOptions)
 
   /**
@@ -1749,9 +1749,9 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * [[https://www.mongodb.com/docs/manual/reference/commands/renameCollection Rename collection]]
    * @param newCollectionNamespace the name the collection will be renamed to
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def renameCollection(newCollectionNamespace: MongoNamespace): SingleObservable[Void] =
+  def renameCollection(newCollectionNamespace: MongoNamespace): SingleObservable[Unit] =
     wrapped.renameCollection(newCollectionNamespace)
 
   /**
@@ -1760,12 +1760,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[https://www.mongodb.com/docs/manual/reference/commands/renameCollection Rename collection]]
    * @param newCollectionNamespace the name the collection will be renamed to
    * @param options                the options for renaming a collection
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
   def renameCollection(
       newCollectionNamespace: MongoNamespace,
       options: RenameCollectionOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.renameCollection(newCollectionNamespace, options)
 
   /**
@@ -1774,14 +1774,14 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * [[https://www.mongodb.com/docs/manual/reference/commands/renameCollection Rename collection]]
    * @param clientSession the client session with which to associate this operation
    * @param newCollectionNamespace the name the collection will be renamed to
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
   def renameCollection(
       clientSession: ClientSession,
       newCollectionNamespace: MongoNamespace
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.renameCollection(clientSession, newCollectionNamespace)
 
   /**
@@ -1791,7 +1791,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param clientSession the client session with which to associate this operation
    * @param newCollectionNamespace the name the collection will be renamed to
    * @param options                the options for renaming a collection
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
@@ -1799,7 +1799,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
       clientSession: ClientSession,
       newCollectionNamespace: MongoNamespace,
       options: RenameCollectionOptions
-  ): SingleObservable[Void] =
+  ): SingleObservable[Unit] =
     wrapped.renameCollection(clientSession, newCollectionNamespace, options)
 
   /**

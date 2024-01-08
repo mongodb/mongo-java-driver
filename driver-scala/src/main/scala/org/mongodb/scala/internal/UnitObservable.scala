@@ -18,6 +18,14 @@ package org.mongodb.scala.internal
 
 import org.mongodb.scala.{ Observable, Observer, SingleObservable }
 
+/**
+ * An [[Observable]] that emits
+ *
+ *   - exactly one item, if the wrapped [[Observable]] does not signal an error, even if the represented stream is empty;
+ *   - no items if the wrapped [[Observable]] signals an error.
+ *
+ * @param pub An [[Observable]] representing a finite stream.
+ */
 private[scala] case class UnitObservable[T](observable: Observable[T]) extends SingleObservable[Unit] {
   override def subscribe(observer: Observer[_ >: Unit]): Unit =
     observable.foldLeft(0)((_, _) => 0).map(_ => ()).subscribe(observer)

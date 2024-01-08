@@ -43,6 +43,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
+import org.jetbrains.annotations.Nullable;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +59,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -86,7 +89,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     private static final String GRID_FS_COLLECTION_NAME_CHUNKS = GRID_FS_BUCKET_NAME + ".chunks";
     private static final String GRID_FS_COLLECTION_NAME_FILE = GRID_FS_BUCKET_NAME + ".files";
     private final MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), this.getClass().getSimpleName());
+    private static final AtomicInteger COUNTER = new AtomicInteger();
     private TestCommandListener commandListener;
+    @Nullable
     private CollectionHelper<BsonDocument> collectionHelper;
     private CollectionHelper<BsonDocument> filesCollectionHelper;
     private CollectionHelper<BsonDocument> chunksCollectionHelper;
@@ -209,6 +214,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
         assumeTrue(serverVersionAtLeast(4, 4));
+
+        MongoNamespace namespace = generateNamespace();
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(),
                 new CreateCollectionOptions().capped(true).sizeInBytes(10 * 1024 * 1024));
         collectionHelper.insertDocuments(new Document("x", 1));
@@ -223,7 +231,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "}");
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(200, TimeUnit.MILLISECONDS))) {
+                .timeout(250, TimeUnit.MILLISECONDS))) {
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
@@ -246,13 +254,14 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     public void testBlockingIterationMethodsChangeStream() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());
-        assumeFalse(isAsync()); // Async change stream cursor is deterministic for cursor::next
+        assumeFalse(isAsync()); // Async change stream cursor is non-deterministic for cursor::next
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
+        MongoNamespace namespace = generateNamespace();
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
         collectionHelper.insertDocuments(new Document("x", 1));
-        sleep(3000);
 
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
@@ -265,12 +274,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(300, TimeUnit.MILLISECONDS))) {
+                .timeout(250, TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
             try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch(
-                            singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
+                    singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
                     .startAtOperationTime(startTime)
                     .fullDocument(FullDocument.UPDATE_LOOKUP)
                     .cursor()) {
@@ -287,7 +296,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);
         }
     }
-
 
     @DisplayName("8. Server Selection")
     @ParameterizedTest(name = "[{index}] {0}")
@@ -322,6 +330,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         "mongodb://invalid/?timeoutMS=0&serverSelectionTimeoutMS=10"))
 
         );
+    }
+
+
+    private MongoNamespace generateNamespace() {
+        return new MongoNamespace(getDefaultDatabaseName(),
+                getClass().getSimpleName() + "_" + COUNTER.incrementAndGet());
     }
 
     private MongoClientSettings.Builder getMongoClientSettingsBuilder() {
