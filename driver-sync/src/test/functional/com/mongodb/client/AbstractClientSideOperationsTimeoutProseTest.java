@@ -33,8 +33,8 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.test.FlakyTest;
@@ -233,7 +233,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertThrows(MongoExecutionTimeoutException.class, cursor::next);
             }
 
-            List<CommandEvent> events = commandListener.getCommandSucceededEvents();
+            List<CommandSucceededEvent> events = commandListener.getCommandSucceededEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
             long getMoreCount = events.stream().filter(e -> e.getCommandName().equals("getMore")).count();
             assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);
@@ -281,7 +281,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertEquals(1, fullDocument.get("x"));
                 assertThrows(MongoExecutionTimeoutException.class, cursor::next);
             }
-            List<CommandEvent> events = commandListener.getCommandSucceededEvents();
+            List<CommandSucceededEvent> events = commandListener.getCommandSucceededEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("aggregate")).count());
             long getMoreCount = events.stream().filter(e -> e.getCommandName().equals("getMore")).count();
             assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);

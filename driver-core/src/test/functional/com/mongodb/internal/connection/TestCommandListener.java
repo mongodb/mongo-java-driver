@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveCommands;
@@ -147,14 +148,17 @@ public class TestCommandListener implements CommandListener {
         return getEvents(CommandStartedEvent.class, Integer.MAX_VALUE);
     }
 
-    public List<CommandEvent> getCommandSucceededEvents() {
+    public List<CommandSucceededEvent> getCommandSucceededEvents() {
         return getEvents(CommandSucceededEvent.class, Integer.MAX_VALUE);
     }
 
-    private List<CommandEvent> getEvents(final Class<? extends CommandEvent> type, final int maxEvents) {
+    private <T extends CommandEvent> List<T> getEvents(final Class<T> type, final int maxEvents) {
         lock.lock();
         try {
-            return getEvents().stream().filter(e -> e.getClass() == type).limit(maxEvents).collect(Collectors.toList());
+            return getEvents().stream()
+                    .filter(e -> e.getClass() == type)
+                    .map(type::cast)
+                    .limit(maxEvents).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
