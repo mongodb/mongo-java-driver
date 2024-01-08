@@ -38,6 +38,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -74,9 +75,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
-    private final static AtomicInteger COUNTER = new AtomicInteger();
-    private final MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), this.getClass().getSimpleName());
+    private static final AtomicInteger COUNTER = new AtomicInteger();
     private TestCommandListener commandListener;
+    @Nullable
     private CollectionHelper<BsonDocument> collectionHelper;
 
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
@@ -88,6 +89,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
         assumeTrue(serverVersionAtLeast(4, 4));
+
+        MongoNamespace namespace = generateNamespace();
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(),
                 new CreateCollectionOptions().capped(true).sizeInBytes(10 * 1024 * 1024));
         collectionHelper.insertDocuments(new Document("x", 1));
@@ -128,11 +132,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeFalse(isAsync()); // Async change stream cursor is non-deterministic for cursor::next
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
-        MongoNamespace testNamespace = new MongoNamespace(namespace.getDatabaseName(),
-                namespace.getCollectionName() + "_cs" + COUNTER.incrementAndGet());
-        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), testNamespace);
-
-        collectionHelper.create(testNamespace.getCollectionName(), new CreateCollectionOptions());
+        MongoNamespace namespace = generateNamespace();
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
+        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
         collectionHelper.insertDocuments(new Document("x", 1));
 
@@ -149,8 +151,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
                 .timeout(250, TimeUnit.MILLISECONDS))) {
 
-            MongoCollection<Document> collection = mongoClient.getDatabase(testNamespace.getDatabaseName())
-                    .getCollection(testNamespace.getCollectionName()).withReadPreference(ReadPreference.primary());
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
             try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch(
                     singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
                     .startAtOperationTime(startTime)
@@ -169,7 +171,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);
         }
     }
-
 
     @DisplayName("8. Server Selection")
     @ParameterizedTest(name = "[{index}] {0}")
@@ -206,6 +207,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         );
     }
 
+
+    private MongoNamespace generateNamespace() {
+        return new MongoNamespace(getDefaultDatabaseName(),
+                getClass().getSimpleName() + "_" + COUNTER.incrementAndGet());
+    }
+
     private MongoClientSettings.Builder getMongoClientSettingsBuilder() {
         commandListener.reset();
         return Fixture.getMongoClientSettingsBuilder()
@@ -217,18 +224,18 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @BeforeEach
     public void setUp() {
-        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
-        collectionHelper.drop();
         commandListener = new TestCommandListener();
     }
 
     @AfterEach
     public void tearDown(final TestInfo info) {
-        if (info.getTags().contains("usesFailPoint")) {
-            collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
+        if (collectionHelper != null) {
+            if (info.getTags().contains("usesFailPoint")) {
+                collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
+            }
+            CollectionHelper.dropDatabase(getDefaultDatabaseName());
         }
 
-        collectionHelper.drop();
         try {
             ServerHelper.checkPool(getPrimary());
         } catch (InterruptedException e) {
