@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.ReadConcern;
-import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
