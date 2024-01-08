@@ -16,7 +16,6 @@
 
 package com.mongodb.client.model;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.client.model.geojson.Geometry;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.search.SearchCollector;
@@ -85,28 +84,9 @@ public final class Filters {
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
-     * @see #eqFull(String, Object)
      */
     public static <TItem> Bson eq(final String fieldName, @Nullable final TItem value) {
         return new SimpleEncodingFilter<>(fieldName, value);
-    }
-
-    /**
-     * Creates a filter that matches all documents where the value of the field name equals the specified value.
-     * Unlike {@link #eq(String, Object)}, this method creates a full form of {@code $eq}.
-     * This method exists temporarily until Atlas starts supporting the short form of {@code $eq}.
-     * It will likely be removed in the next driver release.
-     *
-     * @param fieldName the field name
-     * @param value     the value, which may be null
-     * @param <TItem>   the value type
-     * @return the filter
-     * @mongodb.driver.manual reference/operator/query/eq $eq
-     * @since 4.11
-     */
-    @Beta(Beta.Reason.SERVER)
-    public static <TItem> Bson eqFull(final String fieldName, @Nullable final TItem value) {
-        return new OperatorFilter<>("$eq", fieldName, value);
     }
 
     /**

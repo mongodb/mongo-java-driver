@@ -18,7 +18,7 @@ package org.mongodb.scala
 
 import org.mongodb.scala.bson.ObjectId
 import org.mongodb.scala.gridfs.GridFSFile
-import org.mongodb.scala.internal.MapObservable
+import org.mongodb.scala.internal.{ MapObservable, UnitObservable }
 import org.reactivestreams.{ Publisher, Subscriber, Subscription => JSubscription }
 import reactor.core.publisher.{ Flux, Mono }
 
@@ -116,17 +116,22 @@ trait ObservableImplicits {
     override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = Mono.from(publisher).subscribe(observer)
   }
 
-  implicit class ToSingleObservableVoid(pub: => Publisher[Void]) extends SingleObservable[Void] {
+  /**
+   * An [[Observable]] that emits
+   *
+   *   - exactly one item, if the wrapped `Publisher` does not signal an error, even if the represented stream is empty;
+   *   - no items if the wrapped `Publisher` signals an error.
+   *
+   * @param pub A `Publisher` representing a finite stream.
+   */
+  implicit class ToSingleObservableUnit(pub: => Publisher[Void]) extends SingleObservable[Unit] {
     val publisher = pub
-    override def subscribe(observer: Observer[_ >: Void]): Unit =
-      Mono
-        .from(pub)
-        .subscribe(
-          (_: Void) => {},
-          (e: Throwable) => observer.onError(e),
-          () => observer.onComplete(),
-          (s: JSubscription) => observer.onSubscribe(s)
-        )
+
+    override def subscribe(observer: Observer[_ >: Unit]): Unit = {
+      // We must call `toObservable` in order to avoid infinite recursion
+      // caused by the implicit conversion of `Publisher[Void]` to `SingleObservable[Unit]`.
+      UnitObservable(publisher.toObservable()).subscribe(observer)
+    }
   }
 
   implicit class ObservableFuture[T](obs: => Observable[T]) {

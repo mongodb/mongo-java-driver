@@ -853,7 +853,7 @@ public final class Entities {
 
         private BsonDocument createEventDocument(final String name, final ConnectionId connectionId) {
             return createEventDocument(name, connectionId.getServerId())
-                    .append("connectionId", new BsonString(Integer.toString(connectionId.getLocalValue())));
+                    .append("connectionId", new BsonString(Long.toString(connectionId.getLocalValue())));
         }
 
         private BsonDocument createEventDocument(final String name, final ServerId serverId) {

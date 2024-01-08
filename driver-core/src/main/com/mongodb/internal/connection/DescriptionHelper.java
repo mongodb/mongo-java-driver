@@ -71,7 +71,7 @@ public final class DescriptionHelper {
                 helloResult.getArray("saslSupportedMechs", null), getLogicalSessionTimeoutMinutes(helloResult));
         if (helloResult.containsKey("connectionId")) {
             ConnectionId newConnectionId =
-                    connectionDescription.getConnectionId().withServerValue(helloResult.getNumber("connectionId").intValue());
+                    connectionDescription.getConnectionId().withServerValue(helloResult.getNumber("connectionId").longValue());
             connectionDescription = connectionDescription.withConnectionId(newConnectionId);
         }
         if (clusterConnectionMode == ClusterConnectionMode.LOAD_BALANCED) {

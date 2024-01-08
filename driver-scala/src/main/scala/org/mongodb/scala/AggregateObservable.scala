@@ -205,9 +205,9 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * Aggregates documents according to the specified aggregation pipeline, which must end with a `\$out` stage.
    *
    * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed.
    */
-  def toCollection(): SingleObservable[Void] = wrapped.toCollection()
+  def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
 
   /**
    * Sets the timeoutMode for the cursor.

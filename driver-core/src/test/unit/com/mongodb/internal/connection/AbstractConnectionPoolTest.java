@@ -77,7 +77,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.assertions.Assertions.assertFalse;
@@ -392,8 +392,8 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     private void assertConnectionIdMatch(final BsonDocument expectedEvent, final ConnectionId actualConnectionId) {
-        int actualConnectionIdLocalValue = actualConnectionId.getLocalValue();
-        int adjustedConnectionIdLocalValue = adjustedConnectionIdLocalValue(actualConnectionIdLocalValue);
+        long actualConnectionIdLocalValue = actualConnectionId.getLocalValue();
+        long adjustedConnectionIdLocalValue = adjustedConnectionIdLocalValue(actualConnectionIdLocalValue);
         String connectionIdKey = "connectionId";
         if (expectedEvent.containsKey(connectionIdKey)) {
             int expectedConnectionId = expectedEvent.getInt32(connectionIdKey).intValue();
@@ -406,7 +406,7 @@ public abstract class AbstractConnectionPoolTest {
         }
     }
 
-    private int adjustedConnectionIdLocalValue(final int connectionIdLocalValue) {
+    private long adjustedConnectionIdLocalValue(final long connectionIdLocalValue) {
         if (pool instanceof ConnectionIdAdjustingConnectionPool) {
             return ((ConnectionIdAdjustingConnectionPool) pool).adjustedConnectionIdLocalValue(connectionIdLocalValue);
         } else {
@@ -548,21 +548,21 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     private static final class ConnectionIdAdjustingConnectionPool implements ConnectionPool {
-        private static final int UNINITIALIZED = Integer.MAX_VALUE;
+        private static final long UNINITIALIZED = Long.MAX_VALUE;
 
         private final DefaultConnectionPool pool;
-        private final AtomicInteger connectionIdLocalValueAdjustment;
+        private final AtomicLong connectionIdLocalValueAdjustment;
 
         private ConnectionIdAdjustingConnectionPool(final DefaultConnectionPool pool) {
             this.pool = pool;
-            connectionIdLocalValueAdjustment = new AtomicInteger(UNINITIALIZED);
+            connectionIdLocalValueAdjustment = new AtomicLong(UNINITIALIZED);
         }
 
         private void updateConnectionIdLocalValueAdjustment(final InternalConnection conn) {
             connectionIdLocalValueAdjustment.accumulateAndGet(conn.getDescription().getConnectionId().getLocalValue() - 1, Math::min);
         }
 
-        int adjustedConnectionIdLocalValue(final int connectionIdLocalValue) {
+        long adjustedConnectionIdLocalValue(final long connectionIdLocalValue) {
             return connectionIdLocalValue - connectionIdLocalValueAdjustment.get();
         }
 

@@ -499,19 +499,20 @@ final class DefaultConnectionPool implements ConnectionPool {
      * Send both current and deprecated events in order to preserve backwards compatibility.
      * Must not throw {@link Exception}s.
      *
-     * @return A {@link StartTime} after executing {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)},
-     * {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}.
-     * This order is required by
+     * @return A {@link StartTime} before executing {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}
+     * and logging the event. This order is required by
+
      * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
      * and {@link ConnectionReadyEvent#getElapsedTime(TimeUnit)}.
      */
     private StartTime connectionCreated(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId) {
+        StartTime openStart = StartTime.now();
         logEventMessage("Connection created",
                 "Connection created: address={}:{}, driver-generated ID={}",
                 connectionId.getLocalValue());
 
         connectionPoolListener.connectionCreated(new ConnectionCreatedEvent(connectionId));
-        return StartTime.now();
+        return openStart;
     }
 
     /**
@@ -557,16 +558,19 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     /**
-     * @return A {@link StartTime} after executing {@link ConnectionPoolListener#connectionCheckOutStarted(ConnectionCheckOutStartedEvent)}.
+     * @return A {@link StartTime} before executing
+     * {@link ConnectionPoolListener#connectionCheckOutStarted(ConnectionCheckOutStartedEvent)} and logging the event.
      * This order is required by
      * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
      * and {@link ConnectionCheckedOutEvent#getElapsedTime(TimeUnit)}, {@link ConnectionCheckOutFailedEvent#getElapsedTime(TimeUnit)}.
      */
     private StartTime connectionCheckoutStarted(final OperationContext operationContext) {
+        StartTime checkoutStart = StartTime.now();
         logEventMessage("Connection checkout started", "Checkout started for connection to {}:{}");
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
-        return StartTime.now();
+        return checkoutStart;
+
     }
 
     /**
@@ -1588,7 +1592,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
     }
-    private void logEventMessage(final String messageId, final String format, final int driverConnectionId) {
+    private void logEventMessage(final String messageId, final String format, final long driverConnectionId) {
         ClusterId clusterId = serverId.getClusterId();
         if (requiresLogging(clusterId)) {
             List<LogMessage.Entry> entries = createBasicEntries();

@@ -16,8 +16,6 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Beta
-
 import java.lang
 
 import scala.collection.JavaConverters._
@@ -50,22 +48,6 @@ object Filters {
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/eq \$eq]]
    */
   def eq[TItem](fieldName: String, value: TItem): Bson = JFilters.eq(fieldName, value)
-
-  /**
-   * Creates a filter that matches all documents where the value of the field name equals the specified value.
-   * Unlike `Filters.eq`, this method creates a full form of `\$eq`.
-   * This method exists temporarily until Atlas starts supporting the short form of `\$eq`.
-   * It will likely be removed in the next driver release.
-   *
-   * @param fieldName the field name
-   * @param value     the value
-   * @tparam TItem the value type
-   * @return the filter
-   * @see [[https://www.mongodb.com/docs/manual/reference/operator/query/eq \$eq]]
-   * @since 4.11
-   */
-  @Beta(Array(Beta.Reason.SERVER))
-  def eqFull[TItem](fieldName: String, value: TItem): Bson = JFilters.eqFull(fieldName, value)
 
   /**
    * Allows the use of aggregation expressions within the query language.
