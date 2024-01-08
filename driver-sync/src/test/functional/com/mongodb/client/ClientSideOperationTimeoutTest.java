@@ -92,7 +92,8 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("TODO (CSOT) - JAVA-4062", testDescription.contains("wTimeoutMS is ignored"));
 
-        if (fileDescription.contains("GridFS")) {
+
+        if (fileDescription.contains("GridFS")) { //TODO (CSOT) - JAVA-4057
             assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("chunk insertion"));
             assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("creation of files document"));
             assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("delete against the files collection"));
