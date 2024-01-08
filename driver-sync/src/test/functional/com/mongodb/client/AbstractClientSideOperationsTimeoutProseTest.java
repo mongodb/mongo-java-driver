@@ -51,6 +51,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -73,6 +74,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
+    private final static AtomicInteger COUNTER = new AtomicInteger();
     private final MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), this.getClass().getSimpleName());
     private TestCommandListener commandListener;
     private CollectionHelper<BsonDocument> collectionHelper;
@@ -100,7 +102,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "}");
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(200, TimeUnit.MILLISECONDS))) {
+                .timeout(250, TimeUnit.MILLISECONDS))) {
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
@@ -123,13 +125,16 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     public void testBlockingIterationMethodsChangeStream() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());
-        assumeFalse(isAsync()); // Async change stream cursor is deterministic for cursor::next
+        assumeFalse(isAsync()); // Async change stream cursor is non-deterministic for cursor::next
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
-        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
+        MongoNamespace testNamespace = new MongoNamespace(namespace.getDatabaseName(),
+                namespace.getCollectionName() + "_cs" + COUNTER.incrementAndGet());
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), testNamespace);
+
+        collectionHelper.create(testNamespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
         collectionHelper.insertDocuments(new Document("x", 1));
-        sleep(3000);
 
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
@@ -142,10 +147,10 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(300, TimeUnit.MILLISECONDS))) {
+                .timeout(250, TimeUnit.MILLISECONDS))) {
 
-            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
-                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
+            MongoCollection<Document> collection = mongoClient.getDatabase(testNamespace.getDatabaseName())
+                    .getCollection(testNamespace.getCollectionName()).withReadPreference(ReadPreference.primary());
             try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch(
                     singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
                     .startAtOperationTime(startTime)
