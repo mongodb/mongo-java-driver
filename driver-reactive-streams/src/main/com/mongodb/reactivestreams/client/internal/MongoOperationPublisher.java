@@ -490,17 +490,16 @@ public final class MongoOperationPublisher<T> {
                                                   e.getWriteResult().getUpserts().isEmpty()
                                                           ? null : e.getWriteResult().getUpserts().get(0).getId());
                         }
-                        exception = new MongoWriteConcernException(writeConcernError, writeConcernResult, e.getServerAddress());
+                        exception = new MongoWriteConcernException(writeConcernError, writeConcernResult, e.getServerAddress(),
+                                e.getErrorLabels());
                     } else if (!e.getWriteErrors().isEmpty()) {
-                        exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+                        exception = new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress(),
+                                e.getErrorLabels());
                     } else {
                         exception = new MongoWriteException(new WriteError(-1, "Unknown write error", new BsonDocument()),
-                                                            e.getServerAddress());
+                                                            e.getServerAddress(), e.getErrorLabels());
                     }
 
-                    for (final String errorLabel : e.getErrorLabels()) {
-                        exception.addLabel(errorLabel);
-                    }
                     return exception;
                 });
     }

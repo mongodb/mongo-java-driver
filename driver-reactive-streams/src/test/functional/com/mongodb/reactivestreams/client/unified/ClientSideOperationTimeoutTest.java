@@ -28,10 +28,12 @@ import org.bson.BsonDocument;
 import org.junit.After;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import reactor.core.publisher.Hooks;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.client.ClientSideOperationTimeoutTest.checkSkipCSOTTest;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
@@ -42,6 +44,7 @@ import static org.junit.Assume.assumeFalse;
 @RunWith(Parameterized.class)
 public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     private final String testDescription;
+    private final AtomicReference<Throwable> atomicReferenceThrowable = new AtomicReference<>();
 
     public ClientSideOperationTimeoutTest(final String fileDescription, final String testDescription,
             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
@@ -59,11 +62,23 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         if (testDescription.equals("timeoutMS is refreshed for close")) {
             enableSleepAfterCursorError(256);
         }
+
+        Hooks.onOperatorDebug();
+        Hooks.onErrorDropped(atomicReferenceThrowable::set);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/client-side-operation-timeout");
+    }
+
+    @Override
+    public void shouldPassAllOutcomes() {
+        super.shouldPassAllOutcomes();
+        Throwable droppedError = atomicReferenceThrowable.get();
+        if (droppedError != null) {
+            throw new AssertionError("Test passed but there was a dropped error; `onError` called with no handler.", droppedError);
+        }
     }
 
     @Override
@@ -78,5 +93,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     public void cleanUp() {
         super.cleanUp();
         disableSleep();
+        Hooks.resetOnOperatorDebug();
+        Hooks.resetOnErrorDropped();
     }
 }

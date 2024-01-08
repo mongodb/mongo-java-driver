@@ -54,8 +54,8 @@ class DistinctFlowTest {
         flow.comment(bsonComment)
         flow.comment(comment)
         flow.filter(filter)
-        flow.maxTime(1)
-        flow.maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") flow.maxTime(1)
+        @Suppress("DEPRECATION") flow.maxTime(1, TimeUnit.SECONDS)
         flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
@@ -63,8 +63,8 @@ class DistinctFlowTest {
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).filter(filter)
-        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)

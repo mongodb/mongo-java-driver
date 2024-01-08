@@ -58,4 +58,9 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     public void testGridFsDownloadStreamTimeout() {
     }
+
+    @Override
+    protected boolean isAsync() {
+        return true;
+    }
 }

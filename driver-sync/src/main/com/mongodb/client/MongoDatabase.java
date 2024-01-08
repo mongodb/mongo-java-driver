@@ -310,8 +310,9 @@ public interface MongoDatabase {
      * Gets the names of all the collections in this database.
      *
      * @return an iterable containing all the names of all the collections in this database
+     * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    MongoIterable<String> listCollectionNames();
+    ListCollectionNamesIterable listCollectionNames();
 
     /**
      * Finds all the collections in this database.
@@ -338,8 +339,9 @@ public interface MongoDatabase {
      * @return an iterable containing all the names of all the collections in this database
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    MongoIterable<String> listCollectionNames(ClientSession clientSession);
+    ListCollectionNamesIterable listCollectionNames(ClientSession clientSession);
 
     /**
      * Finds all the collections in this database.

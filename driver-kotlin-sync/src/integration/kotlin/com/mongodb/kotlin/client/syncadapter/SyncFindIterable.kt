@@ -41,7 +41,7 @@ internal class SyncFindIterable<T : Any>(val wrapped: FindIterable<T>) :
     }
 
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncFindIterable<T> = apply {
-        wrapped.maxTime(maxTime, timeUnit)
+        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
     }
 
     override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): SyncFindIterable<T> = apply {

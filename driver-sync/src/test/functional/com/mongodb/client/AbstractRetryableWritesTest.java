@@ -71,7 +71,10 @@ public abstract class AbstractRetryableWritesTest {
     private JsonPoweredCrudTestHelper helper;
 
     public AbstractRetryableWritesTest(final String filename, final String description, final String databaseName, final BsonArray data,
-                                       final BsonDocument definition, final boolean skipTest) {
+            final BsonDocument definition, final boolean skipTest) {
+        assumeFalse("MongoDB releases prior to 4.4 incorrectly add errorLabels as a field within the writeConcernError document "
+                        + "instead of as a top-level field.  Rather than handle that in code, we skip the test on older server versions.",
+                description.equals("InsertOne fails after multiple retryable writeConcernErrors") && serverVersionLessThan(4, 4));
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
@@ -166,7 +169,7 @@ public abstract class AbstractRetryableWritesTest {
                 MongoException mongoException = (MongoException) e;
                 for (String curErrorLabel : getErrorLabelsContainField(expectedResult)) {
                     assertTrue(String.format("Expected error label '%s but found labels '%s' for operation %s",
-                            curErrorLabel, mongoException.getErrorLabels(), operationName),
+                                    curErrorLabel, mongoException.getErrorLabels(), operationName),
                             mongoException.hasErrorLabel(curErrorLabel));
                 }
             }
@@ -176,7 +179,7 @@ public abstract class AbstractRetryableWritesTest {
                 MongoException mongoException = (MongoException) e;
                 for (String curErrorLabel : getErrorLabelsOmitField(expectedResult)) {
                     assertFalse(String.format("Expected error label '%s omitted but found labels '%s' for operation %s",
-                            curErrorLabel, mongoException.getErrorLabels(), operationName),
+                                    curErrorLabel, mongoException.getErrorLabels(), operationName),
                             mongoException.hasErrorLabel(curErrorLabel));
                 }
             }

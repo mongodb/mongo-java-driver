@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
@@ -43,12 +44,13 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     private final Class<TResult> resultClass;
     private Bson filter;
     private final boolean collectionNamesOnly;
+    private boolean authorizedCollections;
     private long maxTimeMS;
     private BsonValue comment;
 
     ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
-            final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-            final OperationExecutor executor, final boolean retryReads, final TimeoutSettings timeoutSettings) {
+                                final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                final OperationExecutor executor, final boolean retryReads,  final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings); // TODO: read concern?
         this.collectionNamesOnly = collectionNamesOnly;
         this.operations = new SyncOperations<>(BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
@@ -93,9 +95,17 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
         return this;
     }
 
+    /**
+     * @see ListCollectionNamesIterable#authorizedCollections(boolean)
+     */
+    ListCollectionsIterableImpl<TResult> authorizedCollections(final boolean authorizedCollections) {
+        this.authorizedCollections = authorizedCollections;
+        return this;
+    }
+
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS, comment,
-                getTimeoutMode());
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
+                getBatchSize(), maxTimeMS, comment, getTimeoutMode());
     }
 }

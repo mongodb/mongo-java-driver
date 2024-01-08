@@ -144,22 +144,17 @@ public class TestCommandListener implements CommandListener {
     }
 
     public List<CommandStartedEvent> getCommandStartedEvents() {
-        return getCommandStartedEvents(Integer.MAX_VALUE);
+        return getEvents(CommandStartedEvent.class, Integer.MAX_VALUE);
     }
 
-    private List<CommandStartedEvent> getCommandStartedEvents(final int maxEvents) {
+    public List<CommandEvent> getCommandSucceededEvents() {
+        return getEvents(CommandSucceededEvent.class, Integer.MAX_VALUE);
+    }
+
+    private List<CommandEvent> getEvents(final Class<? extends CommandEvent> type, final int maxEvents) {
         lock.lock();
         try {
-            List<CommandStartedEvent> commandStartedEvents = new ArrayList<>();
-            for (CommandEvent cur : getEvents()) {
-                if (cur instanceof CommandStartedEvent) {
-                    commandStartedEvents.add((CommandStartedEvent) cur);
-                }
-                if (commandStartedEvents.size() == maxEvents) {
-                    break;
-                }
-            }
-            return commandStartedEvents;
+            return getEvents().stream().filter(e -> e.getClass() == type).limit(maxEvents).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
@@ -177,7 +172,7 @@ public class TestCommandListener implements CommandListener {
                     throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
                 }
             }
-            return getCommandStartedEvents(numEvents);
+            return getEvents(CommandStartedEvent.class, numEvents);
         } finally {
             lock.unlock();
         }

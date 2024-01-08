@@ -25,10 +25,10 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.internal.TimeoutSettings;
@@ -236,19 +236,18 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames() {
+    public ListCollectionNamesIterable listCollectionNames() {
         return createListCollectionNamesIterable(null);
     }
 
     @Override
-    public MongoIterable<String> listCollectionNames(final ClientSession clientSession) {
+    public ListCollectionNamesIterable listCollectionNames(final ClientSession clientSession) {
         notNull("clientSession", clientSession);
         return createListCollectionNamesIterable(clientSession);
     }
 
-    private MongoIterable<String> createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
-        return createListCollectionsIterable(clientSession, BsonDocument.class, true)
-                .map(result -> result.getString("name").getValue());
+    private ListCollectionNamesIterable createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
+        return new ListCollectionNamesIterableImpl(createListCollectionsIterable(clientSession, BsonDocument.class, true));
     }
 
     @Override
@@ -272,7 +271,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         return createListCollectionsIterable(clientSession, resultClass, false);
     }
 
-    private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(@Nullable final ClientSession clientSession,
+    private <TResult> ListCollectionsIterableImpl<TResult> createListCollectionsIterable(@Nullable final ClientSession clientSession,
                                                                                      final Class<TResult> resultClass,
                                                                                      final boolean collectionNamesOnly) {
         return new ListCollectionsIterableImpl<>(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,

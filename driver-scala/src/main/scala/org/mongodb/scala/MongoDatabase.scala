@@ -241,9 +241,11 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Gets the names of all the collections in this database.
    *
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @return a Observable with all the names of all the collections in this database
    */
-  def listCollectionNames(): Observable[String] = wrapped.listCollectionNames()
+  def listCollectionNames(): ListCollectionNamesObservable =
+    ListCollectionNamesObservable(wrapped.listCollectionNames())
 
   /**
    * Finds all the collections in this database.
@@ -261,12 +263,14 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Gets the names of all the collections in this database.
    *
+   * [[https://www.mongodb.com/docs/manual/reference/command/listCollections listCollections]]
    * @param clientSession the client session with which to associate this operation
    * @return a Observable with all the names of all the collections in this database
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def listCollectionNames(clientSession: ClientSession): Observable[String] = wrapped.listCollectionNames(clientSession)
+  def listCollectionNames(clientSession: ClientSession): ListCollectionNamesObservable =
+    ListCollectionNamesObservable(wrapped.listCollectionNames(clientSession))
 
   /**
    * Finds all the collections in this database.

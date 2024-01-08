@@ -313,11 +313,11 @@ public final class AsyncOperations<TDocument> {
         return operations.dropIndex(keys, options);
     }
 
-    public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listCollections(final String databaseName, final Class<TResult> resultClass,
-            final Bson filter, final boolean collectionNamesOnly, @Nullable final Integer batchSize, final long maxTimeMS,
-            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
-        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, batchSize, maxTimeMS, comment,
-                timeoutMode);
+    public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listCollections(final String databaseName,
+            final Class<TResult> resultClass, final Bson filter, final boolean collectionNamesOnly, final boolean authorizedCollections,
+            @Nullable final Integer batchSize, final long maxTimeMS, final BsonValue comment,  @Nullable final TimeoutMode timeoutMode) {
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
+                batchSize, maxTimeMS, comment, timeoutMode);
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
