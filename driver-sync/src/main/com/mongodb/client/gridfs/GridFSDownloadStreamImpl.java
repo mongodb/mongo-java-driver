@@ -308,6 +308,6 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     private <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
                                                        @Nullable final Timeout timeout) {
-        return TimeoutUtils.withNullableTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
+        return CollectionTimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
     }
 }

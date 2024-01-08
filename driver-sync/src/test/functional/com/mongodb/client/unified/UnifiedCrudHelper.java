@@ -104,12 +104,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.mongodb.client.unified.UnifiedTestUtils.getAndRemoveTimeoutMS;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
-final class UnifiedCrudHelper {
+final class UnifiedCrudHelper extends UnifiedHelper {
     private final Entities entities;
     private final String testDescription;
     private final AtomicInteger uniqueIdGenerator = new AtomicInteger();

@@ -18,10 +18,7 @@ package com.mongodb.client.unified;
 
 import org.bson.BsonDocument;
 
-public abstract class UnifiedTestUtils {
-    private UnifiedTestUtils() {
-        //NOP
-    }
+abstract class UnifiedHelper {
 
     static Long getAndRemoveTimeoutMS(final BsonDocument arguments) {
         Long timeoutMS = null;

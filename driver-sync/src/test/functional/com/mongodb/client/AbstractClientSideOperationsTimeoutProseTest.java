@@ -43,14 +43,15 @@ import org.bson.BsonInt32;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
-import org.jetbrains.annotations.Nullable;
 import org.bson.types.ObjectId;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -99,9 +99,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
 
     @Tag("setsFailPoint")
-    @FlakyTest(maxAttempts = 3)
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
     @Disabled("TODO (CSOT) - JAVA-4057")
+    @Test
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -128,9 +128,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @Tag("setsFailPoint")
-    @FlakyTest(maxAttempts = 3)
     @Disabled("TODO (CSOT) - JAVA-4057")
     @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
+    @Test
     public void testAbortingGridFsUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -157,8 +157,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @Tag("setsFailPoint")
-    @FlakyTest(maxAttempts = 3)
     @DisplayName("6. GridFS Download")
+    @Test
     public void testGridFsDownloadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();

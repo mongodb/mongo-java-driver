@@ -206,6 +206,6 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     private static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> collection,
                                                              @Nullable final Timeout timeout) {
-        return TimeoutUtils.withNullableTimeout(collection, TIMEOUT_MESSAGE, timeout);
+        return CollectionTimeoutHelper.collectionWithTimeout(collection, TIMEOUT_MESSAGE, timeout);
     }
 }

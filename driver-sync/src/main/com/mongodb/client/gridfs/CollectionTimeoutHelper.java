@@ -23,17 +23,17 @@ import com.mongodb.lang.Nullable;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class TimeoutUtils {
-    private TimeoutUtils(){
+final class CollectionTimeoutHelper {
+    private CollectionTimeoutHelper(){
         //NOP
     }
 
-    public static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> collection,
-                                                                  final String message,
-                                                                  @Nullable final Timeout timeout) {
+    public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
+                                                               final String message,
+                                                               @Nullable final Timeout timeout) {
         if (timeout != null && !timeout.isInfinite()) {
             long remainingMs = timeout.remaining(MILLISECONDS);
-            if (remainingMs <= 0) {
+            if (timeout.hasExpired()) {
                 // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
                 throw new MongoExecutionTimeoutException(message);
             }

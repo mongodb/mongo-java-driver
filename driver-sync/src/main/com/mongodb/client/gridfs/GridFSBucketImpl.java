@@ -283,10 +283,10 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public GridFSDownloadStream openDownloadStream(final BsonValue id) {
-        Timeout oprationTimeout = startTimeout();
+        Timeout operationTimeout = startTimeout();
 
-        GridFSFile fileInfo = getFileInfoById(null, id, oprationTimeout);
-        return createGridFSDownloadStream(null, fileInfo, oprationTimeout);
+        GridFSFile fileInfo = getFileInfoById(null, id, operationTimeout);
+        return createGridFSDownloadStream(null, fileInfo, operationTimeout);
     }
 
     @Override
@@ -489,17 +489,17 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public void drop() {
-        Timeout oeprationTimeout = startTimeout();
-        withNullableTimeout(filesCollection, oeprationTimeout).drop();
-        withNullableTimeout(chunksCollection, oeprationTimeout).drop();
+        Timeout operationTimeout = startTimeout();
+        withNullableTimeout(filesCollection, operationTimeout).drop();
+        withNullableTimeout(chunksCollection, operationTimeout).drop();
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        Timeout oeprationTimeout = startTimeout();
+        Timeout operationTimeout = startTimeout();
         notNull("clientSession", clientSession);
-        withNullableTimeout(filesCollection, oeprationTimeout).drop(clientSession);
-        withNullableTimeout(chunksCollection, oeprationTimeout).drop(clientSession);
+        withNullableTimeout(filesCollection, operationTimeout).drop(clientSession);
+        withNullableTimeout(chunksCollection, operationTimeout).drop(clientSession);
     }
 
     private static MongoCollection<GridFSFile> getFilesCollection(final MongoDatabase database, final String bucketName) {
@@ -654,7 +654,7 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
                                                        @Nullable final Timeout timeout) {
-       return TimeoutUtils.withNullableTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
+       return CollectionTimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
     }
 
     @Nullable

@@ -37,10 +37,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.unified.UnifiedTestUtils.getAndRemoveTimeoutMS;
 import static java.util.Objects.requireNonNull;
 
-final class UnifiedGridFSHelper {
+final class UnifiedGridFSHelper extends UnifiedHelper{
     private final Entities entities;
 
     UnifiedGridFSHelper(final Entities entities) {
