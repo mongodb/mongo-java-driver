@@ -333,7 +333,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @AfterEach
     public void tearDown(final TestInfo info) {
-        if (info.getTags().contains("setsFailPoint")) {
+        if (info.getTags().contains("setsFailPoint") && serverVersionAtLeast(4, 4)) {
             collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
         }
 
