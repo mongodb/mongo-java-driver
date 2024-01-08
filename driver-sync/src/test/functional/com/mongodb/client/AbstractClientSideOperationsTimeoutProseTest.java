@@ -64,6 +64,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -101,7 +102,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + rtt + 100
+                + "    blockTimeMS: " + (rtt + 100)
                 + "  }"
                 + "}");
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
@@ -130,7 +131,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"delete\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + rtt + 100
+                + "    blockTimeMS: " + (rtt + 100)
                 + "  }"
                 + "}");
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
@@ -156,7 +157,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 .timeout(rtt + 100, TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
-            filesCollectionHelper.insertDocuments(Document.parse(
+            filesCollectionHelper.insertDocuments(asList(BsonDocument.parse(
                             "{"
                                     + "   _id: {"
                                     + "     $oid: \"000000000000000000000005\""
@@ -172,7 +173,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                                     + "   aliases: [],"
                                     + "   metadata: {}"
                                     + "}"
-                    ));
+                    )), WriteConcern.MAJORITY);
 
             try (GridFSDownloadStream downloadStream = gridFsBucket.openDownloadStream(new ObjectId("000000000000000000000005"))){
                 collectionHelper.runAdminCommand("{"
@@ -181,7 +182,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         + "  data: {"
                         + "    failCommands: [\"find\"],"
                         + "    blockConnection: true,"
-                        + "    blockTimeMS: " + rtt + 95
+                        + "    blockTimeMS: " + (rtt + 95)
                         + "  }"
                         + "}");
                 assertThrows(MongoExecutionTimeoutException.class, downloadStream::read);
@@ -332,7 +333,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @AfterEach
     public void tearDown(final TestInfo info) {
-        if (info.getTags().contains("usesFailPoint")) {
+        if (info.getTags().contains("setsFailPoint")) {
             collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
         }
 
