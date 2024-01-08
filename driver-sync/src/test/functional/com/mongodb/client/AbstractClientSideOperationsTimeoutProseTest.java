@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.CursorType;
 import com.mongodb.MongoClientSettings;
@@ -33,7 +34,6 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandStartedEvent;
-import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.test.FlakyTest;
@@ -42,7 +42,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
-import org.jetbrains.annotations.Nullable;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +49,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -59,6 +59,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -85,8 +86,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     private static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final String GRID_FS_COLLECTION_NAME_CHUNKS = GRID_FS_BUCKET_NAME + ".chunks";
     private static final String GRID_FS_COLLECTION_NAME_FILE = GRID_FS_BUCKET_NAME + ".files";
+    private MongoNamespace namespace;
     private TestCommandListener commandListener;
-    @Nullable
     private CollectionHelper<BsonDocument> collectionHelper;
     private CollectionHelper<BsonDocument> filesCollectionHelper;
     private CollectionHelper<BsonDocument> chunksCollectionHelper;
@@ -152,13 +153,13 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @Tag("setsFailPoint")
-    @FlakyTest(maxAttempts = 3)
     @DisplayName("6. GridFS Download")
+    @Test
     public void testGridFsDownloadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
 
-        filesCollectionHelper.insertDocuments(asList(BsonDocument.parse(
+        filesCollectionHelper.insertDocuments(singletonList(BsonDocument.parse(
                 "{"
                         + "   _id: {"
                         + "     $oid: \"000000000000000000000005\""
@@ -254,7 +255,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
         MongoNamespace namespace = generateNamespace();
-        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
         collectionHelper.insertDocuments(new Document("x", 1));
@@ -345,6 +345,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @BeforeEach
     public void setUp() {
+        namespace = generateNamespace();
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         filesCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(),
                 new MongoNamespace(getDefaultDatabaseName(), GRID_FS_COLLECTION_NAME_FILE));
@@ -364,13 +365,14 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             }
             CollectionHelper.dropDatabase(getDefaultDatabaseName());
 
-        collectionHelper.drop();
-        filesCollectionHelper.drop();
-        chunksCollectionHelper.drop();
-        try {
-            ServerHelper.checkPool(getPrimary());
-        } catch (InterruptedException e) {
-            // ignore
+            collectionHelper.drop();
+            filesCollectionHelper.drop();
+            chunksCollectionHelper.drop();
+            try {
+                ServerHelper.checkPool(getPrimary());
+            } catch (InterruptedException e) {
+                // ignore
+            }
         }
     }
 

@@ -176,7 +176,7 @@ public class TestCommandListener implements CommandListener {
                     throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
                 }
             }
-            return getCommandStartedEvents(numEvents);
+            return getEvents(CommandStartedEvent.class, numEvents);
         } finally {
             lock.unlock();
         }
