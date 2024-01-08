@@ -81,6 +81,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public FindIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         findOptions.maxTime(maxTime, timeUnit);

@@ -218,14 +218,14 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param id       the custom id value of the file
    * @param filename the filename for the stream
    * @param source   the Publisher providing the file data
-   * @return an Observable with a single element, representing when the successful upload of the source.
+   * @return an Observable representing when the successful upload of the source.
    * @since 2.8
    */
   def uploadFromObservable(
       id: BsonValue,
       filename: String,
       source: Observable[ByteBuffer]
-  ): GridFSUploadObservable[Void] =
+  ): GridFSUploadObservable[Unit] =
     GridFSUploadObservable(wrapped.uploadFromPublisher(id, filename, source))
 
   /**
@@ -239,7 +239,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param filename the filename for the stream
    * @param source   the Publisher providing the file data
    * @param options  the GridFSUploadOptions
-   * @return an Observable with a single element, representing when the successful upload of the source.
+   * @return an Observable representing when the successful upload of the source.
    * @since 2.8
    */
   def uploadFromObservable(
@@ -247,7 +247,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
       filename: String,
       source: Observable[ByteBuffer],
       options: GridFSUploadOptions
-  ): GridFSUploadObservable[Void] =
+  ): GridFSUploadObservable[Unit] =
     GridFSUploadObservable(wrapped.uploadFromPublisher(id, filename, source, options))
 
   /**
@@ -304,7 +304,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param id            the custom id value of the file
    * @param filename      the filename for the stream
    * @param source        the Publisher providing the file data
-   * @return an Observable with a single element, representing when the successful upload of the source.
+   * @return an Observable representing when the successful upload of the source.
    * @note Requires MongoDB 3.6 or greater
    * @since 2.8
    */
@@ -313,7 +313,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
       id: BsonValue,
       filename: String,
       source: Observable[ByteBuffer]
-  ): GridFSUploadObservable[Void] =
+  ): GridFSUploadObservable[Unit] =
     GridFSUploadObservable(wrapped.uploadFromPublisher(clientSession, id, filename, source))
 
   /**
@@ -327,7 +327,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param filename      the filename for the stream
    * @param source        the Publisher providing the file data
    * @param options       the GridFSUploadOptions
-   * @return an Observable with a single element, representing when the successful upload of the source.
+   * @return an Observable representing when the successful upload of the source.
    * @note Requires MongoDB 3.6 or greater
    * @since 2.8
    */
@@ -337,7 +337,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
       filename: String,
       source: Observable[ByteBuffer],
       options: GridFSUploadOptions
-  ): GridFSUploadObservable[Void] =
+  ): GridFSUploadObservable[Unit] =
     GridFSUploadObservable(wrapped.uploadFromPublisher(clientSession, id, filename, source, options))
 
   /**
@@ -493,28 +493,28 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * Given a `id`, delete this stored file's files collection document and associated chunks from a GridFS bucket.
    *
    * @param id       the ObjectId of the file to be deleted
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def delete(id: ObjectId): SingleObservable[Void] = wrapped.delete(id)
+  def delete(id: ObjectId): SingleObservable[Unit] = wrapped.delete(id)
 
   /**
    * Given a `id`, delete this stored file's files collection document and associated chunks from a GridFS bucket.
    *
    * @param id       the ObjectId of the file to be deleted
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def delete(id: BsonValue): SingleObservable[Void] = wrapped.delete(id)
+  def delete(id: BsonValue): SingleObservable[Unit] = wrapped.delete(id)
 
   /**
    * Given a `id`, delete this stored file's files collection document and associated chunks from a GridFS bucket.
    *
    * @param clientSession the client session with which to associate this operation
    * @param id       the ObjectId of the file to be deleted
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def delete(clientSession: ClientSession, id: ObjectId): SingleObservable[Void] =
+  def delete(clientSession: ClientSession, id: ObjectId): SingleObservable[Unit] =
     wrapped.delete(clientSession, id)
 
   /**
@@ -522,11 +522,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * @param clientSession the client session with which to associate this operation
    * @param id       the ObjectId of the file to be deleted
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def delete(clientSession: ClientSession, id: BsonValue): SingleObservable[Void] =
+  def delete(clientSession: ClientSession, id: BsonValue): SingleObservable[Unit] =
     wrapped.delete(clientSession, id)
 
   /**
@@ -534,9 +534,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * @param id          the id of the file in the files collection to rename
    * @param newFilename the new filename for the file
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def rename(id: ObjectId, newFilename: String): SingleObservable[Void] =
+  def rename(id: ObjectId, newFilename: String): SingleObservable[Unit] =
     wrapped.rename(id, newFilename)
 
   /**
@@ -544,9 +544,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * @param id          the id of the file in the files collection to rename
    * @param newFilename the new filename for the file
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def rename(id: BsonValue, newFilename: String): SingleObservable[Void] =
+  def rename(id: BsonValue, newFilename: String): SingleObservable[Unit] =
     wrapped.rename(id, newFilename)
 
   /**
@@ -555,11 +555,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param clientSession the client session with which to associate this operation
    * @param id          the id of the file in the files collection to rename
    * @param newFilename the new filename for the file
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def rename(clientSession: ClientSession, id: ObjectId, newFilename: String): SingleObservable[Void] =
+  def rename(clientSession: ClientSession, id: ObjectId, newFilename: String): SingleObservable[Unit] =
     wrapped.rename(clientSession, id, newFilename)
 
   /**
@@ -568,28 +568,28 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param clientSession the client session with which to associate this operation
    * @param id          the id of the file in the files collection to rename
    * @param newFilename the new filename for the file
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def rename(clientSession: ClientSession, id: BsonValue, newFilename: String): SingleObservable[Void] =
+  def rename(clientSession: ClientSession, id: BsonValue, newFilename: String): SingleObservable[Unit] =
     wrapped.rename(clientSession, id, newFilename)
 
   /**
    * Drops the data associated with this bucket from the database.
    *
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    */
-  def drop(): SingleObservable[Void] = wrapped.drop()
+  def drop(): SingleObservable[Unit] = wrapped.drop()
 
   /**
    * Drops the data associated with this bucket from the database.
    *
    * @param clientSession the client session with which to associate this operation
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def drop(clientSession: ClientSession): SingleObservable[Void] = wrapped.drop(clientSession)
+  def drop(clientSession: ClientSession): SingleObservable[Unit] = wrapped.drop(clientSession)
 }
 // scalastyle:on number.of.methods

@@ -33,6 +33,11 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     }
 
     @Override
+    protected boolean isAsync() {
+        return false;
+    }
+
+    @Override
     protected GridFSBucket createGridFsBucket(final MongoDatabase mongoDatabase, final String bucketName) {
         return GridFSBuckets.create(mongoDatabase, bucketName);
     }

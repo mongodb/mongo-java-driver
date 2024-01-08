@@ -39,7 +39,7 @@ internal class SyncAggregateIterable<T : Any>(val wrapped: AggregateIterable<T>)
     }
 
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncAggregateIterable<T> = apply {
-        wrapped.maxTime(maxTime, timeUnit)
+        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
     }
 
     override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): SyncAggregateIterable<T> = apply {

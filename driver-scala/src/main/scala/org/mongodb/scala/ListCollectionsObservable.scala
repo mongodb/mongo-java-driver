@@ -26,7 +26,7 @@ import scala.concurrent.duration.Duration
 /**
  * Observable interface for ListCollections
  *
- * @param wrapped the underlying java ListCollectionsObservable
+ * @param wrapped the underlying java ListCollectionsPublisher
  * @tparam TResult The type of the result.
  * @since 1.0
  */

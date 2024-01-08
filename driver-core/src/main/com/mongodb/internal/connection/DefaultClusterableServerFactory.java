@@ -82,7 +82,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
         ServerId serverId = new ServerId(cluster.getClusterId(), serverAddress);
         ClusterConnectionMode clusterMode = cluster.getSettings().getMode();
         SameObjectProvider<SdamServerDescriptionManager> sdamProvider = SameObjectProvider.uninitialized();
-        ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings, cluster.getClock(),
+        ServerMonitor serverMonitor = new DefaultServerMonitor(serverId, serverSettings,
                 // no credentials, compressor list, or command listener for the server monitor factory
                 new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, applicationName,
                         mongoDriverInformation, emptyList(), loggerSettings, null, serverApi),

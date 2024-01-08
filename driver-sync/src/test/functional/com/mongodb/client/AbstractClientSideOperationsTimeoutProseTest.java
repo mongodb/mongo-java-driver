@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.CursorType;
 import com.mongodb.MongoClientSettings;
@@ -31,7 +30,9 @@ import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.GridFSUploadStream;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
@@ -41,6 +42,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
+import org.jetbrains.annotations.Nullable;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +58,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -64,11 +66,13 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -77,11 +81,12 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
+    private static final AtomicInteger COUNTER = new AtomicInteger();
     private static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final String GRID_FS_COLLECTION_NAME_CHUNKS = GRID_FS_BUCKET_NAME + ".chunks";
     private static final String GRID_FS_COLLECTION_NAME_FILE = GRID_FS_BUCKET_NAME + ".files";
-    private final MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), this.getClass().getSimpleName());
     private TestCommandListener commandListener;
+    @Nullable
     private CollectionHelper<BsonDocument> collectionHelper;
     private CollectionHelper<BsonDocument> filesCollectionHelper;
     private CollectionHelper<BsonDocument> chunksCollectionHelper;
@@ -198,11 +203,16 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
+    protected abstract boolean isAsync();
+
     @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
         assumeTrue(serverVersionAtLeast(4, 4));
+
+        MongoNamespace namespace = generateNamespace();
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(),
                 new CreateCollectionOptions().capped(true).sizeInBytes(10 * 1024 * 1024));
         collectionHelper.insertDocuments(new Document("x", 1));
@@ -217,7 +227,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "}");
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(200, TimeUnit.MILLISECONDS))) {
+                .timeout(250, TimeUnit.MILLISECONDS))) {
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
@@ -229,7 +239,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
             List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
-            assertTrue(events.stream().filter(e -> e.getCommandName().equals("getMore")).count() <= 2);
+            long getMoreCount = events.stream().filter(e -> e.getCommandName().equals("getMore")).count();
+            assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);
         }
     }
 
@@ -239,44 +250,48 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     public void testBlockingIterationMethodsChangeStream() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());
-        assumeTrue(false, "// TODO (CSOT) JAVA-4054 - shouldn't loop forever."
-                + "The server-side execution time is enforced via socket timeouts.");
+        assumeFalse(isAsync()); // Async change stream cursor is non-deterministic for cursor::next
 
-        sleep(1000);
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
-
-        long rtt = ClusterFixture.getPrimaryRTT();
+        MongoNamespace namespace = generateNamespace();
+        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
+        sleep(2000);
         collectionHelper.insertDocuments(new Document("x", 1));
+
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: \"alwaysOn\","
                 + "  data: {"
                 + "    failCommands: [\"getMore\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + rtt + 15
+                + "    blockTimeMS: " + 150
                 + "  }"
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 20, TimeUnit.MILLISECONDS))) {
+                .timeout(250, TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
-            commandListener.reset();
-            try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch()
-                    .startAtOperationTime(startTime).cursor()) {
+            try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch(
+                    singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
+                    .startAtOperationTime(startTime)
+                    .fullDocument(FullDocument.UPDATE_LOOKUP)
+                    .cursor()) {
                 ChangeStreamDocument<Document> document = assertDoesNotThrow(cursor::next);
 
-                assertEquals(1, document.getFullDocument().get("x"));
+                Document fullDocument = document.getFullDocument();
+                assertNotNull(fullDocument);
+                assertEquals(1, fullDocument.get("x"));
                 assertThrows(MongoExecutionTimeoutException.class, cursor::next);
             }
             List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
-            assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
-            assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
+            assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("aggregate")).count());
+            long getMoreCount = events.stream().filter(e -> e.getCommandName().equals("getMore")).count();
+            assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);
         }
     }
-
 
     @DisplayName("8. Server Selection")
     @ParameterizedTest(name = "[{index}] {0}")
@@ -313,6 +328,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         );
     }
 
+
+    private MongoNamespace generateNamespace() {
+        return new MongoNamespace(getDefaultDatabaseName(),
+                getClass().getSimpleName() + "_" + COUNTER.incrementAndGet());
+    }
+
     private MongoClientSettings.Builder getMongoClientSettingsBuilder() {
         commandListener.reset();
         return Fixture.getMongoClientSettingsBuilder()
@@ -337,9 +358,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @AfterEach
     public void tearDown(final TestInfo info) {
-        if (info.getTags().contains("usesFailPoint") && serverVersionAtLeast(4, 4)) {
-            collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
-        }
+        if (collectionHelper != null) {
+            if (info.getTags().contains("setsFailPoint") && serverVersionAtLeast(4, 4)) {
+                collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
+            }
+            CollectionHelper.dropDatabase(getDefaultDatabaseName());
 
         collectionHelper.drop();
         filesCollectionHelper.drop();

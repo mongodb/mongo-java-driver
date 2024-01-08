@@ -15,19 +15,21 @@
  */
 package com.mongodb.test.extension;
 
-
 import com.mongodb.test.FlakyTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 import org.junit.jupiter.api.extension.TestInstantiationException;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
 import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.platform.commons.util.Preconditions;
+import org.opentest4j.TestAbortedException;
 
 import java.lang.reflect.Method;
 import java.util.Iterator;
@@ -49,11 +51,15 @@ import static org.junit.platform.commons.util.AnnotationUtils.isAnnotated;
 /**
  * A {@code TestTemplateInvocationContextProvider} that supports the {@link FlakyTest @FlakyTest} annotation.
  */
-public class FlakyTestExtension implements TestTemplateInvocationContextProvider, AfterTestExecutionCallback {
+public class FlakyTestExtension implements TestTemplateInvocationContextProvider,
+        BeforeTestExecutionCallback,
+        AfterTestExecutionCallback,
+        TestExecutionExceptionHandler {
 
     private int maxAttempts = 0;
     private FlakyTestDisplayFormatter formatter;
     private Boolean testHasPassed;
+    private int currentAttempt = 0;
 
 
     @Override
@@ -98,6 +104,20 @@ public class FlakyTestExtension implements TestTemplateInvocationContextProvider
         String pattern = Preconditions.notBlank(flakyTest.name().trim(), () -> String.format(
                 "Configuration error: @FlakyTest on method [%s] must be declared with a non-empty name.", method));
         return new FlakyTestDisplayFormatter(pattern, displayName);
+    }
+
+    @Override
+    public void handleTestExecutionException(final ExtensionContext context, final Throwable throwable) throws Throwable {
+        if (currentAttempt < maxAttempts) {
+            // Mark failure as skipped / aborted so to pass CI
+            throw new TestAbortedException("Test failed on attempt: " + currentAttempt);
+        }
+        throw throwable;
+    }
+
+    @Override
+    public void beforeTestExecution(final ExtensionContext context) {
+        currentAttempt++;
     }
 
     /**

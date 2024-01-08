@@ -54,9 +54,20 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * Sets the maximum execution time on the server for this operation.
    *
    * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   *
    * @param duration the duration
    * @return this
+   * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+   *
+   *             - [[org.mongodb.scala.MongoClientSettings.Builder timeout(long, TimeUnit)]]
+   *             - [[org.mongodb.scala.MongoDatabase.withTimeout withTimeout(long, TimeUnit)]]
+   *             - [[org.mongodb.scala.MongoCollection.withTimeout withTimeout(long, TimeUnit)]]
+   *             - [[org.mongodb.scala.ClientSession]]
+   *
+   * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
+   *             execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
    */
+  @deprecated
   def maxTime(duration: Duration): AggregateObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this
@@ -194,9 +205,9 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * Aggregates documents according to the specified aggregation pipeline, which must end with a `\$out` stage.
    *
    * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed.
    */
-  def toCollection(): SingleObservable[Void] = wrapped.toCollection()
+  def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
 
   /**
    * Sets the timeoutMode for the cursor.

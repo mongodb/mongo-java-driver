@@ -22,12 +22,12 @@ import org.mongodb.scala.BaseSpec
 import org.scalatestplus.mockito.MockitoSugar
 
 class GridFSUploadPublisherSpec extends BaseSpec with MockitoSugar {
-  val wrapper = mock[GridFSUploadPublisher[Void]]
+  val wrapper = mock[GridFSUploadPublisher[Unit]]
   val gridFSUploadObservable = GridFSUploadObservable(wrapper)
 
   "GridFSBucket" should "have the same methods as the wrapped GridFSUploadStream" in {
-    val wrapped = classOf[GridFSUploadPublisher[Void]].getMethods.map(_.getName).toSet
-    val local = classOf[GridFSUploadObservable[Void]].getMethods.map(_.getName).toSet
+    val wrapped = classOf[GridFSUploadPublisher[Unit]].getMethods.map(_.getName).toSet
+    val local = classOf[GridFSUploadObservable[Unit]].getMethods.map(_.getName).toSet
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")

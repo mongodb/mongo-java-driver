@@ -153,6 +153,7 @@ final class Operations<TDocument> {
     }
 
     CountDocumentsOperation countDocuments(final Bson filter, final CountOptions options) {
+        @SuppressWarnings("deprecation")
         CountDocumentsOperation operation = new CountDocumentsOperation(
                 timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS)), assertNotNull(namespace))
                 .retryReads(retryReads)
@@ -169,6 +170,7 @@ final class Operations<TDocument> {
         return operation;
     }
 
+    @SuppressWarnings("deprecation")
     EstimatedDocumentCountOperation estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
         return new EstimatedDocumentCountOperation(timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS)),
                 assertNotNull(namespace))
@@ -193,6 +195,7 @@ final class Operations<TDocument> {
 
     private <TResult> FindOperation<TResult> createFindOperation(final MongoNamespace findNamespace, @Nullable final Bson filter,
                                                                  final Class<TResult> resultClass, final FindOptions options) {
+        @SuppressWarnings("deprecation")
         FindOperation<TResult> operation = new FindOperation<>(
                 timeoutSettings.withMaxTimeAndMaxAwaitTimeMS(options.getMaxTime(MILLISECONDS), options.getMaxAwaitTime(MILLISECONDS)),
                 findNamespace, codecRegistry.get(resultClass))
@@ -297,6 +300,7 @@ final class Operations<TDocument> {
             @Nullable final String finalizeFunction, final Class<TResult> resultClass, final Bson filter, final int limit,
             final long maxTimeMS, final boolean jsMode, final Bson scope, final Bson sort, final boolean verbose,
             final Collation collation) {
+        @SuppressWarnings("deprecation")
         MapReduceWithInlineResultsOperation<TResult> operation =
                 new MapReduceWithInlineResultsOperation<>(timeoutSettings.withMaxTimeMS(maxTimeMS),
                         assertNotNull(namespace), new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction),
@@ -314,6 +318,7 @@ final class Operations<TDocument> {
         return operation;
     }
 
+    @SuppressWarnings("deprecation")
     FindAndDeleteOperation<TDocument> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
         return new FindAndDeleteOperation<>(timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS)),
                 assertNotNull(namespace), writeConcern, retryWrites, getCodec())
@@ -327,6 +332,7 @@ final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
+    @SuppressWarnings("deprecation")
     FindAndReplaceOperation<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement,
                                                                 final FindOneAndReplaceOptions options) {
         return new FindAndReplaceOperation<>(timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS)),
@@ -344,6 +350,7 @@ final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
+    @SuppressWarnings("deprecation")
     FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS)),
                 assertNotNull(namespace), writeConcern, retryWrites, getCodec(), assertNotNull(toBsonDocument(update)))
@@ -361,6 +368,7 @@ final class Operations<TDocument> {
                 .let(toBsonDocument(options.getLet()));
     }
 
+    @SuppressWarnings("deprecation")
     FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
                                                        final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS)),
@@ -674,12 +682,15 @@ final class Operations<TDocument> {
     }
 
     <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
-            final Bson filter, final boolean collectionNamesOnly, @Nullable final Integer batchSize, final long maxTimeMS,
-            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
+                                                                final Bson filter, final boolean collectionNamesOnly,
+                                                                final boolean authorizedCollections,
+                                                                @Nullable final Integer batchSize, final long maxTimeMS,
+                                                                final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
         return new ListCollectionsOperation<>(timeoutSettings.withMaxTimeMS(maxTimeMS), databaseName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(collectionNamesOnly)
+                .authorizedCollections(authorizedCollections)
                 .batchSize(batchSize == null ? 0 : batchSize)
                 .comment(comment)
                 .timeoutMode(timeoutMode);

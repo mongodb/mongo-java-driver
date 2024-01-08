@@ -527,6 +527,7 @@ public class MongoCollectionImplTest extends TestHelper {
 
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testEstimatedDocumentCount() {
         EstimatedDocumentCountOptions options = new EstimatedDocumentCountOptions().maxTime(1, TimeUnit.MILLISECONDS);
         assertAll("estimatedDocumentCount",

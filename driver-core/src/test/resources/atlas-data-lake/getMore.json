@@ -4,6 +4,7 @@
   "tests": [
     {
       "description": "A successful find event with getMore",
+      "comment": "UPDATED final batchSize to 3 as batchSize is no longer calculated see: DRIVERS-1448 ",
       "operations": [
         {
           "object": "collection",
@@ -45,7 +46,7 @@
         {
           "command_started_event": {
             "command": {
-              "batchSize": 1
+              "batchSize": 3
             },
             "command_name": "getMore",
             "database_name": "cursors"

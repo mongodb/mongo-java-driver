@@ -99,7 +99,7 @@ final class EventMatcher {
 
             if (expected.containsKey("hasServerConnectionId")) {
                 boolean hasServerConnectionId = expected.getBoolean("hasServerConnectionId").getValue();
-                Integer serverConnectionId = actual.getConnectionDescription().getConnectionId().getServerValue();
+                Long serverConnectionId = actual.getConnectionDescription().getConnectionId().getServerValue();
                 if (hasServerConnectionId) {
                     assertNotNull(context.getMessage("Expected serverConnectionId"), serverConnectionId);
                 } else {
