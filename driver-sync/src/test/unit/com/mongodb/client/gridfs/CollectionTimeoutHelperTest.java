@@ -1,3 +1,19 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoExecutionTimeoutException;
@@ -20,7 +36,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-class TimeoutUtilsTest {
+class CollectionTimeoutHelperTest {
 
     private static final String TIMEOUT_ERROR_MESSAGE = "message";
 
@@ -51,9 +67,10 @@ class TimeoutUtilsTest {
     @Test
     void shouldSetRemainingTimeoutWhenTimeout() {
         //given
-        MongoCollection<Document> collection = mock(MongoCollection.class);
         MongoCollection<Document> collectionWithTimeout = mock(MongoCollection.class);
-        when(collection.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(collectionWithTimeout);
+        MongoCollection<Document> collection = mock(MongoCollection.class, mongoCollection -> {
+            when(mongoCollection.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(mongoCollection);
+        });
         Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS);
 
         //when
@@ -71,9 +88,11 @@ class TimeoutUtilsTest {
         Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS);
 
         //when
-        assertThrows(MongoExecutionTimeoutException.class, () -> collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, timeout));
+        MongoExecutionTimeoutException mongoExecutionTimeoutException =
+                assertThrows(MongoExecutionTimeoutException.class, () -> collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, timeout));
 
         //then
+        assertEquals(TIMEOUT_ERROR_MESSAGE, mongoExecutionTimeoutException.getMessage());
         verifyNoInteractions(collection);
     }
 
