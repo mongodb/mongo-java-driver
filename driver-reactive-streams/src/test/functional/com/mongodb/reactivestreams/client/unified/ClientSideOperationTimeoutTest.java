@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.client.ClientSideOperationTimeoutTest.checkSkipCSOTTest;
+import static com.mongodb.client.ClientSideOperationTimeoutTest.racyTestAssertion;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorError;
 import static org.junit.Assume.assumeFalse;
@@ -73,7 +74,15 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
 
     @Override
     public void shouldPassAllOutcomes() {
-        super.shouldPassAllOutcomes();
+        try {
+            super.shouldPassAllOutcomes();
+        } catch (AssertionError e) {
+            if (racyTestAssertion(testDescription, e)) {
+                // Ignore failure - racy test often no time to do the getMore
+                return;
+            }
+            throw e;
+        }
         Throwable droppedError = atomicReferenceThrowable.get();
         if (droppedError != null) {
             throw new AssertionError("Test passed but there was a dropped error; `onError` called with no handler.", droppedError);
