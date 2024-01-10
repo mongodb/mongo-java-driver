@@ -49,7 +49,7 @@ class ZlibCompressor extends Compressor {
 
     @Override
     OutputStream getOutputStream(final OutputStream source) {
-        return new DeflaterOutputStream(source, new Deflater(level)){
+        return new DeflaterOutputStream(source, new Deflater(level)) {
             @Override
             public void close() throws IOException {
                 try {
