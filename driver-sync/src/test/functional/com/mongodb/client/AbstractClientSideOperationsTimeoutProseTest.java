@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
@@ -214,12 +215,13 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
         assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isServerlessTest());
 
         MongoNamespace namespace = generateNamespace();
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(),
                 new CreateCollectionOptions().capped(true).sizeInBytes(10 * 1024 * 1024));
-        collectionHelper.insertDocuments(new Document("x", 1));
+        collectionHelper.insertDocuments(singletonList(BsonDocument.parse("{x: 1}")), WriteConcern.MAJORITY);
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: \"alwaysOn\","
@@ -254,6 +256,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     public void testBlockingIterationMethodsChangeStream() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());
+        assumeFalse(isServerlessTest());
         assumeFalse(isAsync()); // Async change stream cursor is non-deterministic for cursor::next
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
@@ -261,7 +264,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
-        collectionHelper.insertDocuments(new Document("x", 1));
+        collectionHelper.insertDocuments(singletonList(BsonDocument.parse("{x: 1}")), WriteConcern.MAJORITY);
 
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
@@ -301,6 +304,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("test8ServerSelectionArguments")
     public void test8ServerSelection(final String connectionString) {
+        assumeFalse(isServerlessTest());
         int timeoutBuffer = 100; // 5 in spec, Java is slower
         // 1. Create a MongoClient
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
