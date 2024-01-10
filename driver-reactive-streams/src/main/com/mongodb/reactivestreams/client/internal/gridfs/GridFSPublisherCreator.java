@@ -41,9 +41,9 @@ import java.nio.ByteBuffer;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.gridfs.TimeoutUtils.withNullableTimeout;
-import static com.mongodb.reactivestreams.client.internal.gridfs.TimeoutUtils.withNullableTimeoutMono;
-import static com.mongodb.reactivestreams.client.internal.gridfs.TimeoutUtils.withNullableTimeoutMonoDeferred;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeout;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeoutMono;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeoutMonoDeferred;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 

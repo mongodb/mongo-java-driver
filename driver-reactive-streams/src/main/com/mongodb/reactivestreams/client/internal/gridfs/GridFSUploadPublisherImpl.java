@@ -45,8 +45,8 @@ import java.util.function.Function;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.gridfs.TimeoutUtils.withNullableTimeout;
-import static com.mongodb.reactivestreams.client.internal.gridfs.TimeoutUtils.withNullableTimeoutMonoDeferred;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeout;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeoutMonoDeferred;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
@@ -112,7 +112,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                     .onErrorResume(originalError ->
                             createCancellationMono(terminated, timeout)
                                     .onErrorMap(cancellationError -> {
-                                        // Another timeout exception might occur during cancellation. It gets suppressed.
+                                        // Timeout exception might occur during cancellation. It gets suppressed.
                                         originalError.addSuppressed(cancellationError);
                                         return originalError;
                                     })
@@ -148,19 +148,15 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     private Mono<Void> createCheckAndCreateIndexesMono(@Nullable final Timeout timeout) {
         AtomicBoolean collectionExists = new AtomicBoolean(false);
         return Mono.create(sink -> findAllInCollection(filesCollection, timeout).subscribe(
-                        d -> {
-                            collectionExists.set(true);
-                            },
+                        d -> collectionExists.set(true),
                         sink::error,
                         () -> {
                             if (collectionExists.get()) {
                                 sink.success();
                             } else {
                                 checkAndCreateIndex(filesCollection.withReadPreference(primary()), FILES_INDEX, timeout)
-                                        .doOnSuccess(i -> {
-                                            checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX, timeout)
-                                                    .subscribe(unused -> {}, sink::error, sink::success);
-                                        })
+                                        .doOnSuccess(i -> checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX, timeout)
+                                                .subscribe(unused -> {}, sink::error, sink::success))
                                         .subscribe(unused -> {}, sink::error);
                             }
                         })
@@ -173,9 +169,13 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                 .withReadPreference(primary()), timeout)
                 .flatMap(wrappedCollection -> {
                     if (clientSession != null) {
-                        return Mono.from(wrappedCollection.find(clientSession).projection(PROJECTION).first());
+                        return Mono.from(wrappedCollection.find(clientSession)
+                                .projection(PROJECTION)
+                                .first());
                     } else {
-                        return Mono.from(wrappedCollection.find().projection(PROJECTION).first());
+                        return Mono.from(wrappedCollection.find()
+                                .projection(PROJECTION)
+                                .first());
                     }
                 });
     }

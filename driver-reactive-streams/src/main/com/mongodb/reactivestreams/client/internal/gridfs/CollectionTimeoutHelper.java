@@ -24,8 +24,8 @@ import reactor.core.publisher.Mono;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class TimeoutUtils {
-    private TimeoutUtils(){
+final class CollectionTimeoutHelper {
+    private CollectionTimeoutHelper(){
         //NOP
     }
     private static <T> MongoCollection<T> applyTimeout(final MongoCollection<T> collection,

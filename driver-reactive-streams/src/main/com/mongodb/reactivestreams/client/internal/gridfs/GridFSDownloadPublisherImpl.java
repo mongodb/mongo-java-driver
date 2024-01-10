@@ -38,7 +38,7 @@ import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.calculateTimeout;
-import static com.mongodb.reactivestreams.client.internal.gridfs.TimeoutUtils.withNullableTimeout;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeout;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -85,7 +85,6 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
             Timeout operationTimeout = calculateTimeout(timeoutMs);
            return Mono.from(gridFSFileMono.apply(operationTimeout))
                     .doOnSuccess(gridFSFile -> {
-                        //TODO check if it works
                         if (gridFSFile == null) {
                             throw new MongoGridFSException("File not found");
                         }
@@ -95,7 +94,6 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
     }
 
     private Flux<ByteBuffer> getChunkPublisher(final GridFSFile gridFSFile, @Nullable final Timeout timeout) {
-        //TODO check if async timeout works correctly here with no delays
         Document filter = new Document("files_id", gridFSFile.getId());
         FindPublisher<Document> chunkPublisher;
         if (clientSession != null) {
