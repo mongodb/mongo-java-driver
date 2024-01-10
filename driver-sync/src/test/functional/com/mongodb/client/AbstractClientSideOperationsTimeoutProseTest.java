@@ -81,17 +81,19 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * See
  * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.rst">Prose Tests</a>.
  */
+@SuppressWarnings("checkstyle:VisibilityModifier")
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     private static final AtomicInteger COUNTER = new AtomicInteger();
-    private static final String GRID_FS_BUCKET_NAME = "db.fs";
-    private static final String GRID_FS_COLLECTION_NAME_CHUNKS = GRID_FS_BUCKET_NAME + ".chunks";
-    private static final String GRID_FS_COLLECTION_NAME_FILE = GRID_FS_BUCKET_NAME + ".files";
+    protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private MongoNamespace namespace;
-    private TestCommandListener commandListener;
-    private CollectionHelper<BsonDocument> collectionHelper;
-    private CollectionHelper<BsonDocument> filesCollectionHelper;
-    private CollectionHelper<BsonDocument> chunksCollectionHelper;
+    protected MongoNamespace gridFsFileNamespace;
+    protected MongoNamespace gridFsChunksNamespace;
+
+    protected TestCommandListener commandListener;
+    protected CollectionHelper<BsonDocument> collectionHelper;
+    protected CollectionHelper<BsonDocument> filesCollectionHelper;
+    protected CollectionHelper<BsonDocument> chunksCollectionHelper;
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
     protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
 
@@ -128,7 +130,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @FlakyTest(maxAttempts = 3)
     @Disabled("TODO (CSOT) - JAVA-4057")
     @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
-    public void testAbortingGridFsUploadStreamTimeout() {
+    public void testAbortingGridFsUploadStreamTimeout() throws Throwable {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
 
@@ -199,8 +201,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 List<CommandStartedEvent> findCommands = events.stream().filter(e -> e.getCommandName().equals("find")).collect(Collectors.toList());
 
                 assertEquals(2, findCommands.size());
-                assertEquals(GRID_FS_COLLECTION_NAME_FILE, findCommands.get(0).getCommand().getString("find").getValue());
-                assertEquals(GRID_FS_COLLECTION_NAME_CHUNKS, findCommands.get(1).getCommand().getString("find").getValue());
+                assertEquals(gridFsFileNamespace.getCollectionName(), findCommands.get(0).getCommand().getString("find").getValue());
+                assertEquals(gridFsChunksNamespace.getCollectionName(), findCommands.get(1).getCommand().getString("find").getValue());
             }
         }
     }
@@ -214,8 +216,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isServerlessTest());
 
-        MongoNamespace namespace = generateNamespace();
-        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.create(namespace.getCollectionName(),
                 new CreateCollectionOptions().capped(true).sizeInBytes(10 * 1024 * 1024));
         collectionHelper.insertDocuments(singletonList(BsonDocument.parse("{x: 1}")), WriteConcern.MAJORITY);
@@ -338,7 +338,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 getClass().getSimpleName() + "_" + COUNTER.incrementAndGet());
     }
 
-    private MongoClientSettings.Builder getMongoClientSettingsBuilder() {
+    protected MongoClientSettings.Builder getMongoClientSettingsBuilder() {
         commandListener.reset();
         return Fixture.getMongoClientSettingsBuilder()
                 .readConcern(ReadConcern.MAJORITY)
@@ -350,14 +350,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @BeforeEach
     public void setUp() {
         namespace = generateNamespace();
+        gridFsFileNamespace = new MongoNamespace(getDefaultDatabaseName(), GRID_FS_BUCKET_NAME + ".files");
+        gridFsChunksNamespace = new MongoNamespace(getDefaultDatabaseName(), GRID_FS_BUCKET_NAME + ".chunks");
+
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
-        filesCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(),
-                new MongoNamespace(getDefaultDatabaseName(), GRID_FS_COLLECTION_NAME_FILE));
-        chunksCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(),
-                new MongoNamespace(getDefaultDatabaseName(), GRID_FS_COLLECTION_NAME_CHUNKS));
-        collectionHelper.drop();
-        filesCollectionHelper.drop();
-        chunksCollectionHelper.drop();
+        filesCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), gridFsFileNamespace);
+        chunksCollectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), gridFsChunksNamespace);
         commandListener = new TestCommandListener();
     }
 
