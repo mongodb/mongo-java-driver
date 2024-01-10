@@ -257,7 +257,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeFalse(isAsync()); // Async change stream cursor is non-deterministic for cursor::next
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
-        MongoNamespace namespace = generateNamespace();
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
         sleep(2000);
         collectionHelper.insertDocuments(singletonList(BsonDocument.parse("{x: 1}")), WriteConcern.MAJORITY);
