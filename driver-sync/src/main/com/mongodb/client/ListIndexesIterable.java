@@ -79,7 +79,7 @@ public interface ListIndexesIterable<TResult> extends MongoIterable<TResult> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     ListIndexesIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 }

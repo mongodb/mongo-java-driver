@@ -45,7 +45,7 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesIterable<T> {
         wrapped.timeoutMode(timeoutMode)

@@ -30,7 +30,7 @@ public class MongoExecutionTimeoutException extends MongoException {
      * Construct a new instance.
      *
      * @param message the error message
-     * @since 4.x
+     * @since CSOT
      */
     public MongoExecutionTimeoutException(final String message) {
         super(message);

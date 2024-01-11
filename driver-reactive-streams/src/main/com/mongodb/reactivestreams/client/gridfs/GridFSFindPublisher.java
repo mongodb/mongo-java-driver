@@ -137,7 +137,7 @@ public interface GridFSFindPublisher extends Publisher<GridFSFile> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     GridFSFindPublisher timeoutMode(TimeoutMode timeoutMode);
 }

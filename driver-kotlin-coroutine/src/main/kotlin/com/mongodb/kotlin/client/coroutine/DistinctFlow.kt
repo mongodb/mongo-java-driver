@@ -50,7 +50,7 @@ public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : 
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): DistinctFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 

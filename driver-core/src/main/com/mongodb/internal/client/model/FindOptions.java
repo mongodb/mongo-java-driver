@@ -249,7 +249,7 @@ public final class FindOptions {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public FindOptions timeoutMode(final TimeoutMode timeoutMode) {
         this.timeoutMode = timeoutMode;

@@ -574,7 +574,7 @@ public class MongoClientOptions {
      * </ul>
      *
      * @return the timeout in milliseconds
-     * @since 4.x
+     * @since CSOT
      */
     @Nullable
     public Long getTimeout() {
@@ -1369,7 +1369,7 @@ public class MongoClientOptions {
          *
          * @param timeoutMS the timeout in milliseconds
          * @return this
-         * @since 4.x
+         * @since CSOT
          * @see #getTimeout
          */
         public Builder timeout(final long timeoutMS) {

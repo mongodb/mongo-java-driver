@@ -89,7 +89,7 @@ case class ListIndexesObservable[TResult](wrapped: ListIndexesPublisher[TResult]
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since 4.x
+   * @since CSOT
    */
   def timeoutMode(timeoutMode: TimeoutMode): ListIndexesObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)

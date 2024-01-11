@@ -1557,7 +1557,7 @@ public class ConnectionString {
      * </ul>
      *
      * @return the time limit for the full execution of an operation in milliseconds or null.
-     * @since 4.x
+     * @since CSOT
      */
     @Nullable
     public Long getTimeout() {
