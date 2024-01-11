@@ -128,6 +128,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("connection");
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
+    private final Supplier<OperationContext> connectionOperationContextSupplier;
     private final BackgroundMaintenanceManager backgroundMaintenance;
     private final AsyncWorkManager asyncWorkManager;
     private final ConnectionPoolListener connectionPoolListener;
@@ -141,8 +142,10 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     @VisibleForTesting(otherwise = PRIVATE)
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
-            final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
-        this(serverId, internalConnectionFactory, settings, InternalConnectionPoolSettings.builder().build(), sdamProvider);
+            final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider,
+            final Supplier<OperationContext> connectionOperationContextSupplier) {
+        this(serverId, internalConnectionFactory, settings, InternalConnectionPoolSettings.builder().build(), sdamProvider,
+                connectionOperationContextSupplier);
     }
 
     /**
@@ -156,13 +159,15 @@ final class DefaultConnectionPool implements ConnectionPool {
      */
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
             final ConnectionPoolSettings settings, final InternalConnectionPoolSettings internalSettings,
-            final OptionalProvider<SdamServerDescriptionManager> sdamProvider) {
+            final OptionalProvider<SdamServerDescriptionManager> sdamProvider,
+            final Supplier<OperationContext> connectionOperationContextSupplier) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
         pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory, format("The server at %s is no longer available",
                 serverId.getAddress()));
+        this.connectionOperationContextSupplier = assertNotNull(connectionOperationContextSupplier);
         this.sdamProvider = assertNotNull(sdamProvider);
         this.connectionPoolListener = getConnectionPoolListener(settings);
         backgroundMaintenance = new BackgroundMaintenanceManager();
@@ -411,8 +416,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             if (shouldEnsureMinSize()) {
                 pool.ensureMinSize(settings.getMinSize(), newConnection -> {
                     try {
-                        // TODO (CSOT) create OC from ConnectionPoolSettings
-                        OperationContext operationContext = OperationContext.todoOperationContext();
+                        OperationContext operationContext = connectionOperationContextSupplier.get();
                         openConcurrencyLimiter.openImmediatelyAndTryHandOverOrRelease(operationContext, new PooledConnection(newConnection));
                     } catch (MongoException | MongoOpenConnectionInternalException e) {
                         RuntimeException actualException = e instanceof MongoOpenConnectionInternalException
@@ -748,18 +752,6 @@ final class DefaultConnectionPool implements ConnectionPool {
         public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
             isTrue("open", !isClosed.get());
             return wrapped.receive(decoder, operationContext);
-        }
-
-        @Override
-        public boolean supportsAdditionalTimeout() {
-            isTrue("open", !isClosed.get());
-            return wrapped.supportsAdditionalTimeout();
-        }
-
-        @Override
-        public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext, final int additionalTimeout) {
-            isTrue("open", !isClosed.get());
-            return wrapped.receive(decoder, operationContext, additionalTimeout);
         }
 
         @Override

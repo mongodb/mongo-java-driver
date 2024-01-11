@@ -100,14 +100,6 @@ public interface InternalConnection extends BufferProvider {
 
     <T> T receive(Decoder<T> decoder, OperationContext operationContext);
 
-    default boolean supportsAdditionalTimeout() {
-        return false;
-    }
-
-    default <T> T receive(Decoder<T> decoder, OperationContext operationContext, int additionalTimeout) {
-        throw new UnsupportedOperationException();
-    }
-
     boolean hasMoreToCome();
 
     /**

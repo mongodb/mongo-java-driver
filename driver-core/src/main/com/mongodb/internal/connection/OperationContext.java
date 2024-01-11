@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoClientSettings;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.IgnorableRequestContext;
@@ -44,17 +43,13 @@ public class OperationContext {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverApi);
     }
 
-
     public static OperationContext todoOperationContext() {
-        // TODO (CSOT) should be removed; used at locations that require an OC, but which do not yet have one available
-        return nonUserOperationContext(MongoClientSettings.builder().build());
+        // TODO (CSOT) - JAVA-4055 : should be removed during crypt work
+        return nonUserOperationContext(TimeoutSettings.DEFAULT, null);
     }
 
-    public static OperationContext nonUserOperationContext(final MongoClientSettings settings) {
-        // TODO (CSOT) below is placeholder, validate correctness (serverApi/timeoutSettings might
-        // TODO (CSOT) need to be passed in instead)
-        TimeoutSettings timeoutSettings = TimeoutSettings.create(settings);
-        ServerApi serverApi = settings.getServerApi();
+    public static OperationContext nonUserOperationContext(
+            final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
         return new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
@@ -63,6 +58,10 @@ public class OperationContext {
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverApi);
+    }
+
+    public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverApi);
     }
 

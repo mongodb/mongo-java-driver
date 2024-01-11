@@ -353,7 +353,7 @@ public class InternalStreamConnection implements InternalConnection {
         }
 
         if (message.isResponseExpected()) {
-            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext, 0);
+            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext);
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
             return null;
@@ -374,13 +374,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
         isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext, 0);
-    }
-
-    @Override
-    public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext, final int additionalTimeout) {
-        isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext, additionalTimeout);
+        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext);
     }
 
     @Override
@@ -426,13 +420,13 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
-            final OperationContext operationContext, final int additionalTimeout) {
+            final OperationContext operationContext) {
         validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> {
             throw e;
         });
 
         boolean commandSuccessful = false;
-        try (ResponseBuffers responseBuffers = receiveMessageWithAdditionalTimeout(additionalTimeout, operationContext)) {
+        try (ResponseBuffers responseBuffers = receiveResponseBuffers(operationContext)) {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
             if (!isCommandOk(responseBuffers)) {
                 throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
@@ -602,16 +596,7 @@ public class InternalStreamConnection implements InternalConnection {
             throw new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress());
         }
 
-        return receiveMessageWithAdditionalTimeout(0, operationContext);
-    }
-
-    private ResponseBuffers receiveMessageWithAdditionalTimeout(final int additionalTimeout, final OperationContext operationContext) {
-        try {
-            return receiveResponseBuffers(additionalTimeout, operationContext);
-        } catch (Throwable t) {
-            close();
-            throw translateReadException(t, operationContext);
-        }
+        return receiveResponseBuffers(operationContext);
     }
 
     @Override
@@ -753,37 +738,42 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private ResponseBuffers receiveResponseBuffers(final int additionalTimeout, final OperationContext operationContext) throws IOException {
-        ByteBuf messageHeaderBuffer = stream.read(MESSAGE_HEADER_LENGTH, additionalTimeout, operationContext);
-        MessageHeader messageHeader;
+    private ResponseBuffers receiveResponseBuffers(final OperationContext operationContext) {
         try {
-            messageHeader = new MessageHeader(messageHeaderBuffer, description.getMaxMessageSize());
-        } finally {
-            messageHeaderBuffer.release();
-        }
-
-        ByteBuf messageBuffer = stream.read(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, additionalTimeout, operationContext);
-        boolean releaseMessageBuffer = true;
-        try {
-            if (messageHeader.getOpCode() == OP_COMPRESSED.getValue()) {
-                CompressedHeader compressedHeader = new CompressedHeader(messageBuffer, messageHeader);
-
-                Compressor compressor = getCompressor(compressedHeader);
-
-                ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
-                compressor.uncompress(messageBuffer, buffer);
-
-                buffer.flip();
-                return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
-            } else {
-                ResponseBuffers responseBuffers = new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader), messageBuffer);
-                releaseMessageBuffer = false;
-                return responseBuffers;
+            ByteBuf messageHeaderBuffer = stream.read(MESSAGE_HEADER_LENGTH, operationContext);
+            MessageHeader messageHeader;
+            try {
+                messageHeader = new MessageHeader(messageHeaderBuffer, description.getMaxMessageSize());
+            } finally {
+                messageHeaderBuffer.release();
             }
-        } finally {
-            if (releaseMessageBuffer) {
-                messageBuffer.release();
+
+            ByteBuf messageBuffer = stream.read(messageHeader.getMessageLength() - MESSAGE_HEADER_LENGTH, operationContext);
+            boolean releaseMessageBuffer = true;
+            try {
+                if (messageHeader.getOpCode() == OP_COMPRESSED.getValue()) {
+                    CompressedHeader compressedHeader = new CompressedHeader(messageBuffer, messageHeader);
+
+                    Compressor compressor = getCompressor(compressedHeader);
+
+                    ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
+                    compressor.uncompress(messageBuffer, buffer);
+
+                    buffer.flip();
+                    return new ResponseBuffers(new ReplyHeader(buffer, compressedHeader), buffer);
+                } else {
+                    ResponseBuffers responseBuffers = new ResponseBuffers(new ReplyHeader(messageBuffer, messageHeader), messageBuffer);
+                    releaseMessageBuffer = false;
+                    return responseBuffers;
+                }
+            } finally {
+                if (releaseMessageBuffer) {
+                    messageBuffer.release();
+                }
             }
+        } catch (Throwable t) {
+            close();
+            throw translateReadException(t, operationContext);
         }
     }
 

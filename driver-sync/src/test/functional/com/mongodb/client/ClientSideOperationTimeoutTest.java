@@ -84,8 +84,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("timeoutMS behaves correctly for retryable operations"));
         assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("legacy timeouts behave correctly for retryable operations"));
 
-        assumeFalse("TODO (CSOT) - JAVA-4063", testDescription.contains("RTT"));
-
         assumeFalse("TODO (CSOT) - JAVA-5248",
                 fileDescription.equals("MaxTimeMSExpired server errors are transformed into a custom timeout error"));
 
