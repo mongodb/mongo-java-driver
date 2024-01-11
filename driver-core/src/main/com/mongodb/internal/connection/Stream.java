@@ -65,18 +65,6 @@ public interface Stream extends BufferProvider {
     ByteBuf read(int numBytes, OperationContext operationContext) throws IOException;
 
     /**
-     * Read from the stream, blocking until the requested number of bytes have been read.  If supported by the implementation,
-     * adds the given additional timeout to the configured timeout for the stream.
-     *
-     * @param numBytes The number of bytes to read into the returned byte buffer
-     * @param additionalTimeout additional timeout in milliseconds to add to the configured timeout
-     * @param operationContext the operation context
-     * @return a byte buffer filled with number of bytes requested
-     * @throws IOException if there are problems reading from the stream
-     */
-    ByteBuf read(int numBytes, int additionalTimeout, OperationContext operationContext) throws IOException;
-
-    /**
      * Write each buffer in the list to the stream in order, asynchronously.  This method should return immediately, and invoke the given
      * callback on completion.
      *

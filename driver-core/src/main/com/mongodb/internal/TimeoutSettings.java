@@ -132,6 +132,11 @@ public class TimeoutSettings {
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
+    public TimeoutSettings withReadTimeoutMS(final long readTimeoutMS) {
+        return new TimeoutSettings(timeoutMS, defaultTimeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+                maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
+    }
+
     public TimeoutSettings withMaxWaitTimeMS(final long maxWaitTimeMS) {
         return new TimeoutSettings(timeoutMS, defaultTimeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);

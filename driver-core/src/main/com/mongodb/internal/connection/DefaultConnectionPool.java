@@ -755,18 +755,6 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public boolean supportsAdditionalTimeout() {
-            isTrue("open", !isClosed.get());
-            return wrapped.supportsAdditionalTimeout();
-        }
-
-        @Override
-        public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext, final int additionalTimeout) {
-            isTrue("open", !isClosed.get());
-            return wrapped.receive(decoder, operationContext, additionalTimeout);
-        }
-
-        @Override
         public boolean hasMoreToCome() {
             isTrue("open", !isClosed.get());
             return wrapped.hasMoreToCome();

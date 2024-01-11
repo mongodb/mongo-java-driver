@@ -257,7 +257,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should close the stream when reading the message header throws an exception'() {
         given:
-        stream.read(16, 0, _) >> { throw new IOException('Something went wrong') }
+        stream.read(16, _) >> { throw new IOException('Something went wrong') }
 
         def connection = getOpenedConnection()
         def (buffers1, messageId1) = helper.hello()
@@ -281,7 +281,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInternalException when reply header message length > max message length'() {
         given:
-        stream.read(36, 0, _) >> { helper.headerWithMessageSizeGreaterThanMax(1) }
+        stream.read(36, _) >> { helper.headerWithMessageSizeGreaterThanMax(1) }
 
         def connection = getOpenedConnection()
 
@@ -385,7 +385,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInterruptedException and leave the interrupt status set when Stream.read throws InterruptedIOException'() {
         given:
-        stream.read(_, _, _) >> { throw new InterruptedIOException() }
+        stream.read(_, _) >> { throw new InterruptedIOException() }
         def connection = getOpenedConnection()
         Thread.currentThread().interrupt()
 
@@ -400,7 +400,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInterruptedException and leave the interrupt status unset when Stream.read throws InterruptedIOException'() {
         given:
-        stream.read(_, _, _) >> { throw new InterruptedIOException() }
+        stream.read(_, _) >> { throw new InterruptedIOException() }
         def connection = getOpenedConnection()
 
         when:
@@ -414,7 +414,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInterruptedException and leave the interrupt status set when Stream.read throws ClosedByInterruptException'() {
         given:
-        stream.read(_, _, _) >> { throw new ClosedByInterruptException() }
+        stream.read(_, _) >> { throw new ClosedByInterruptException() }
         def connection = getOpenedConnection()
         Thread.currentThread().interrupt()
 
@@ -429,7 +429,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoInterruptedException when Stream.read throws SocketException and the thread is interrupted'() {
         given:
-        stream.read(_, _, _) >> { throw new SocketException() }
+        stream.read(_, _) >> { throw new SocketException() }
         def connection = getOpenedConnection()
         Thread.currentThread().interrupt()
 
@@ -444,7 +444,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should throw MongoSocketReadException when Stream.read throws SocketException and the thread is not interrupted'() {
         given:
-        stream.read(_, _, _) >> { throw new SocketException() }
+        stream.read(_, _) >> { throw new SocketException() }
         def connection = getOpenedConnection()
 
         when:
@@ -497,8 +497,8 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should close the stream when reading the message body throws an exception'() {
         given:
-        stream.read(16, 0, _) >> helper.defaultMessageHeader(1)
-        stream.read(90, 0, _) >> { throw new IOException('Something went wrong') }
+        stream.read(16, _) >> helper.defaultMessageHeader(1)
+        stream.read(90, _) >> { throw new IOException('Something went wrong') }
 
         def connection = getOpenedConnection()
 
@@ -560,8 +560,8 @@ class InternalStreamConnectionSpecification extends Specification {
                 null)
         def response = '{ok : 0, errmsg : "failed"}'
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.messageHeader(commandMessage.getId(), response)
-        stream.read(_, 0, _) >> helper.reply(response)
+        stream.read(16, _) >> helper.messageHeader(commandMessage.getId(), response)
+        stream.read(_, _) >> helper.reply(response)
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
@@ -641,8 +641,8 @@ class InternalStreamConnectionSpecification extends Specification {
         def commandMessage = new CommandMessage(cmdNamespace, pingCommandDocument, fieldNameValidator, primary(), messageSettings, MULTIPLE,
                 null)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.defaultMessageHeader(commandMessage.getId())
-        stream.read(90, 0, _) >> helper.defaultReply()
+        stream.read(16, _) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(90, _) >> helper.defaultReply()
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
@@ -662,8 +662,8 @@ class InternalStreamConnectionSpecification extends Specification {
         def commandMessage = new CommandMessage(cmdNamespace, pingCommandDocument, fieldNameValidator, primary(), messageSettings, MULTIPLE,
                 null)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.defaultMessageHeader(commandMessage.getId())
-        stream.read(90, 0, _) >> helper.defaultReply()
+        stream.read(16, _) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(90, _) >> helper.defaultReply()
 
         when:
         connection.sendAndReceive(commandMessage, {
@@ -691,8 +691,8 @@ class InternalStreamConnectionSpecification extends Specification {
                             $clusterTime :  { clusterTime : { $timestamp : { "t" : 42, "i" : 21 } } }
                           }'''
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.defaultMessageHeader(commandMessage.getId())
-        stream.read(_, 0, _) >> helper.reply(response)
+        stream.read(16, _) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(_, _) >> helper.reply(response)
         def sessionContext = Mock(SessionContext) {
             1 * advanceOperationTime(BsonDocument.parse(response).getTimestamp('operationTime'))
             1 * advanceClusterTime(BsonDocument.parse(response).getDocument('$clusterTime'))
@@ -771,7 +771,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def commandMessage = new CommandMessage(cmdNamespace, pingCommandDocument, fieldNameValidator, primary(), messageSettings, MULTIPLE,
                 null)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
+        stream.read(16, _) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
@@ -791,8 +791,8 @@ class InternalStreamConnectionSpecification extends Specification {
         def commandMessage = new CommandMessage(cmdNamespace, pingCommandDocument, fieldNameValidator, primary(), messageSettings, MULTIPLE,
                 null)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.defaultMessageHeader(commandMessage.getId())
-        stream.read(90, 0, _) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
+        stream.read(16, _) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(90, _) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
@@ -813,8 +813,8 @@ class InternalStreamConnectionSpecification extends Specification {
                 null)
         def response = '{ok : 0, errmsg : "failed"}'
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.messageHeader(commandMessage.getId(), response)
-        stream.read(_, 0, _) >> helper.reply(response)
+        stream.read(16, _) >> helper.messageHeader(commandMessage.getId(), response)
+        stream.read(_, _) >> helper.reply(response)
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
@@ -834,8 +834,8 @@ class InternalStreamConnectionSpecification extends Specification {
         def commandMessage = new CommandMessage(cmdNamespace, securitySensitiveCommand, fieldNameValidator, primary(), messageSettings,
                 MULTIPLE, null)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.defaultMessageHeader(commandMessage.getId())
-        stream.read(90, 0, _) >> helper.defaultReply()
+        stream.read(16, _) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(90, _) >> helper.defaultReply()
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)
@@ -870,8 +870,8 @@ class InternalStreamConnectionSpecification extends Specification {
         def commandMessage = new CommandMessage(cmdNamespace, securitySensitiveCommand, fieldNameValidator, primary(), messageSettings,
                 MULTIPLE, null)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
-        stream.read(16, 0, _) >> helper.defaultMessageHeader(commandMessage.getId())
-        stream.read(_, 0, _) >> helper.reply('{ok : 0, errmsg : "failed"}')
+        stream.read(16, _) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(_, _) >> helper.reply('{ok : 0, errmsg : "failed"}')
 
         when:
         connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), OPERATION_CONTEXT)

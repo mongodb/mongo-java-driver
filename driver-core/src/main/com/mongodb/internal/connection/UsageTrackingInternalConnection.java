@@ -127,13 +127,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext, final int additionalTimeout) {
-        T result = wrapped.receive(decoder, operationContext, additionalTimeout);
-        lastUsedAt = System.currentTimeMillis();
-        return result;
-    }
-
-    @Override
     public boolean hasMoreToCome() {
         return wrapped.hasMoreToCome();
     }

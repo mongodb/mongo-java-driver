@@ -29,6 +29,7 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.inject.Provider;
@@ -222,9 +223,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
                     BsonDocument helloResult;
                     if (shouldStreamResponses(currentServerDescription)) {
-                        // TODO (CSOT) - JAVA-4063 remove additionalTimeout - just use operationContext
-                        helloResult = connection.receive(new BsonDocumentCodec(), operationContext,
-                                Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+                        helloResult = connection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
                     } else {
                         helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
                     }
@@ -254,6 +253,17 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
                 return unknownConnectingServerDescription(serverId, t);
             }
+        }
+
+        private OperationContext operationContextWithAdditionalTimeout(final OperationContext originalOperationContext) {
+            TimeoutContext timeoutContext = originalOperationContext.getTimeoutContext();
+            if (timeoutContext.getReadTimeoutMS() == 0) {
+                return originalOperationContext;
+            }
+
+            TimeoutContext newTimeoutContext =
+                    timeoutContext.withAdditionalReadTimeout(Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+            return originalOperationContext.withTimeoutContext(newTimeoutContext);
         }
 
         private boolean shouldStreamResponses(final ServerDescription currentServerDescription) {

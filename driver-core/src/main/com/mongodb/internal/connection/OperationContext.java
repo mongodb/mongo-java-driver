@@ -61,6 +61,10 @@ public class OperationContext {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverApi);
     }
 
+    public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverApi);
+    }
+
     public long getId() {
         return id;
     }

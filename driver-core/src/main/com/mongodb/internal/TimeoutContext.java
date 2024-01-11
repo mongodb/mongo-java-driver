@@ -174,11 +174,23 @@ public class TimeoutContext {
         timeout = calculateTimeout(timeoutSettings.getTimeoutMS());
     }
 
+    public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {
+        long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
+        newReadTimeout = newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE;
+        if (timeout != null) {
+            if (timeout.isInfinite()) {
+                return this;
+            }
+            return new TimeoutContext(timeoutSettings.withTimeoutMS(newReadTimeout));
+        } else {
+            return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout));
+        }
+    }
+
     private long timeoutRemainingMS() {
         assertNotNull(timeout);
         return timeout.isInfinite() ? 0 : timeout.remaining(MILLISECONDS);
     }
-
 
     @Override
     public String toString() {
