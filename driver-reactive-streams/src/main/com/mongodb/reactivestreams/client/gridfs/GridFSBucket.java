@@ -24,11 +24,13 @@ import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
 
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
@@ -208,6 +210,10 @@ public interface GridFSBucket {
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
      *
+     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
+     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link Publisher}
+     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
+     *
      * @param id       the custom id value of the file
      * @param filename the filename
      * @param source   the Publisher providing the file data
@@ -225,6 +231,10 @@ public interface GridFSBucket {
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
      *
+     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
+     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link Publisher}
+     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param filename the filename
      * @param source   the Publisher providing the file data
@@ -240,6 +250,10 @@ public interface GridFSBucket {
      * Reads the contents of the user file from the {@code source} and uploads it as chunks in the chunks collection. After all the
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
+     *
+     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
+     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link Publisher}
+     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param filename the filename
@@ -259,6 +273,10 @@ public interface GridFSBucket {
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
      *
+     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
+     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link Publisher}
+     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param id the custom id value of the file
      * @param filename the filename
@@ -276,6 +294,10 @@ public interface GridFSBucket {
      * Reads the contents of the user file from the {@code source} and uploads it as chunks in the chunks collection. After all the
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
+     *
+     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
+     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link Publisher}
+     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param id       the custom id value of the file
