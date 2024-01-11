@@ -19,8 +19,8 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.CursorType;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -115,7 +115,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             try (MongoCursor<Document> cursor = collection.find().cursorType(CursorType.Tailable).cursor()) {
                 Document document = assertDoesNotThrow(cursor::next);
                 assertEquals(1, document.get("x"));
-                assertThrows(MongoExecutionTimeoutException.class, cursor::next);
+                assertThrows(MongoOperationTimeoutException.class, cursor::next);
             }
 
             List<CommandEvent> events = commandListener.getCommandSucceededEvents();
@@ -166,7 +166,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 Document fullDocument = document.getFullDocument();
                 assertNotNull(fullDocument);
                 assertEquals(1, fullDocument.get("x"));
-                assertThrows(MongoExecutionTimeoutException.class, cursor::next);
+                assertThrows(MongoOperationTimeoutException.class, cursor::next);
             }
             List<CommandEvent> events = commandListener.getCommandSucceededEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("aggregate")).count());

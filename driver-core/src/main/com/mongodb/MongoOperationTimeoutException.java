@@ -15,8 +15,6 @@
  */
 package com.mongodb;
 
-import com.mongodb.lang.Nullable;
-
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,13 +33,16 @@ import java.util.concurrent.TimeUnit;
  *
  * @see MongoClientSettings.Builder#timeout(long, TimeUnit)
  * @see MongoClientSettings#getTimeout(TimeUnit)
- * @since 5.0
+ * @since 4.x
  */
-public final class MongoOperationTimeoutException extends MongoException {
+public final class MongoOperationTimeoutException extends MongoTimeoutException {
     private static final long serialVersionUID = 1L;
 
+    public MongoOperationTimeoutException(final String message) {
+        super(message);
+    }
 
-    public MongoOperationTimeoutException(@Nullable final String message, @Nullable final Throwable t) {
+    public MongoOperationTimeoutException(final String message, final Throwable t) {
         super(message, t);
     }
 }
