@@ -32,6 +32,7 @@ import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.mongodb.internal.event.EventListenerHelper.singleServerListener;
 import static java.util.Collections.emptyList;
@@ -43,6 +44,7 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final InternalConnectionPoolSettings internalConnectionPoolSettings;
+    private final Supplier<OperationContext> connectionOperationContextSupplier;
     private final StreamFactory streamFactory;
     private final MongoCredentialWithCache credential;
     private final StreamFactory heartbeatStreamFactory;
@@ -62,10 +64,12 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
             final LoggerSettings loggerSettings,
             @Nullable final CommandListener commandListener,
             @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
-            final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi) {
+            final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
+            final Supplier<OperationContext> connectionOperationContextSupplier) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
+        this.connectionOperationContextSupplier = connectionOperationContextSupplier;
         this.streamFactory = streamFactory;
         this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
@@ -86,11 +90,11 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                 // no credentials, compressor list, or command listener for the server monitor factory
                 new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, applicationName,
                         mongoDriverInformation, emptyList(), loggerSettings, null, serverApi),
-                clusterMode, serverApi, sdamProvider);
+                clusterMode, serverApi, sdamProvider, connectionOperationContextSupplier);
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
                 new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
-                connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
+                connectionPoolSettings, internalConnectionPoolSettings, sdamProvider, connectionOperationContextSupplier);
         ServerListener serverListener = singleServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,
                 connectionPool, clusterMode);

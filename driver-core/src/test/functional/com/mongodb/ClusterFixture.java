@@ -88,6 +88,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
@@ -191,6 +192,8 @@ public final class ClusterFixture {
             new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
             new TimeoutContext(TIMEOUT_SETTINGS),
             getServerApi());
+
+    public static final Supplier<OperationContext> OPERATION_CONTEXT_SUPPLIER = () -> OPERATION_CONTEXT;
 
     public static OperationContext createOperationContext(final TimeoutSettings timeoutSettings) {
         return new OperationContext(
@@ -455,15 +458,16 @@ public final class ClusterFixture {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
-                streamFactory, streamFactory, credential, LoggerSettings.builder().build(), null, null, null,
-                Collections.emptyList(), getServerApi(), null);
+                TIMEOUT_SETTINGS.connectionOnly(), streamFactory, streamFactory, credential, LoggerSettings.builder().build(),
+                null, null, null, Collections.emptyList(), getServerApi(), null);
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
-        return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
-                ServerSettings.builder().build(),
-                ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
-                InternalConnectionPoolSettings.builder().build(),
+        MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString).build();
+
+        return new DefaultClusterFactory().createCluster(mongoClientSettings.getClusterSettings(),
+                mongoClientSettings.getServerSettings(), mongoClientSettings.getConnectionPoolSettings(),
+                InternalConnectionPoolSettings.builder().build(), TimeoutSettings.create(mongoClientSettings).connectionOnly(),
                 streamFactory,
                 new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().readTimeout(5, SECONDS).build(),
                         getSslSettings(connectionString)),

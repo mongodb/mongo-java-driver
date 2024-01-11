@@ -45,6 +45,7 @@ import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
@@ -55,7 +56,6 @@ import static com.mongodb.internal.Locks.checkedWithLock;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
-import static com.mongodb.internal.connection.CommandHelper.createOperationContext;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
@@ -77,6 +77,7 @@ class DefaultServerMonitor implements ServerMonitor {
     @Nullable
     private final ServerApi serverApi;
     private final ServerSettings serverSettings;
+    private final Supplier<OperationContext> connectionOperationContextSupplier;
     private final ServerMonitorRunnable monitor;
     private final Thread monitorThread;
     private final RoundTripTimeRunnable roundTripTimeMonitor;
@@ -88,16 +89,18 @@ class DefaultServerMonitor implements ServerMonitor {
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
             final InternalConnectionFactory internalConnectionFactory,
-                         final ClusterConnectionMode clusterConnectionMode,
-                         @Nullable final ServerApi serverApi,
-                         final Provider<SdamServerDescriptionManager> sdamProvider) {
-        this.serverSettings = notNull("serverSettings", serverSettings);
+            final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final ServerApi serverApi,
+            final Provider<SdamServerDescriptionManager> sdamProvider,
+            final Supplier<OperationContext> connectionOperationContextSupplier) {
         this.serverId = notNull("serverId", serverId);
+        this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverMonitorListener = singleServerMonitorListener(serverSettings);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
-        this.sdamProvider = sdamProvider;
+        this.sdamProvider = assertNotNull(sdamProvider);
+        this.connectionOperationContextSupplier = assertNotNull(connectionOperationContextSupplier);
         monitor = new ServerMonitorRunnable();
         monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
         monitorThread.setDaemon(true);
@@ -190,8 +193,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (connection == null || connection.isClosed()) {
                     currentCheckCancelled = false;
                     InternalConnection newConnection = internalConnectionFactory.create(serverId);
-                    // TODO (CSOT) create OC from ServerSettings / SocketTimeout
-                    newConnection.open(OperationContext.todoOperationContext());
+                    newConnection.open(connectionOperationContextSupplier.get());
                     connection = newConnection;
                     roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
                     return connection.getInitialServerDescription();
@@ -205,7 +207,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 long start = System.nanoTime();
                 try {
 
-                    OperationContext operationContext = createOperationContext(NoOpSessionContext.INSTANCE, serverApi);
+                    OperationContext operationContext = connectionOperationContextSupplier.get();
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
@@ -357,7 +359,7 @@ class DefaultServerMonitor implements ServerMonitor {
         }
         ObjectId previousElectionId = previous.getElectionId();
         if (previousElectionId != null
-                    ? !previousElectionId.equals(current.getElectionId()) : current.getElectionId() != null) {
+                ? !previousElectionId.equals(current.getElectionId()) : current.getElectionId() != null) {
             return true;
         }
         Integer setVersion = previous.getSetVersion();
@@ -425,8 +427,7 @@ class DefaultServerMonitor implements ServerMonitor {
         private void initialize() {
             connection = null;
             connection = internalConnectionFactory.create(serverId);
-            // TODO (CSOT) create OC from ServerSettings / SocketTimeout
-            connection.open(OperationContext.todoOperationContext());
+            connection.open(connectionOperationContextSupplier.get());
             roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
         }
 

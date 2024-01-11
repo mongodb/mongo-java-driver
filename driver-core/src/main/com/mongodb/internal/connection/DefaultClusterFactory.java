@@ -31,6 +31,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -38,8 +39,10 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.mongodb.internal.connection.DefaultClusterFactory.ClusterEnvironment.detectCluster;
+import static com.mongodb.internal.connection.OperationContext.nonUserOperationContext;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_MONITOR_LISTENER;
@@ -60,6 +63,7 @@ public final class DefaultClusterFactory {
     public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,
                                  final ConnectionPoolSettings connectionPoolSettings,
                                  final InternalConnectionPoolSettings internalConnectionPoolSettings,
+                                 final TimeoutSettings connectionTimeoutSettings,
                                  final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                  @Nullable final MongoCredential credential,
                                  final LoggerSettings loggerSettings,
@@ -99,18 +103,21 @@ public final class DefaultClusterFactory {
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings, dnsClient);
 
+        Supplier<OperationContext> connectionOperationContextSupplier =
+                () -> nonUserOperationContext(connectionTimeoutSettings, serverApi);
+
         if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
                     applicationName, mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(),
-                    compressorList, serverApi);
+                    compressorList, serverApi, connectionOperationContextSupplier);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings,
                     streamFactory, heartbeatStreamFactory, credential, loggerSettings, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
-                    serverApi);
+                    serverApi, connectionOperationContextSupplier);
 
             if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
                 return new SingleServerCluster(clusterId, clusterSettings, serverFactory);

@@ -21,6 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.TransportSettings;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
@@ -148,11 +149,10 @@ public final class MongoClients {
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
         notNull("settings", settings);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(),
-                InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
-                streamFactory, heartbeatStreamFactory, settings.getCredential(), settings.getLoggerSettings(),
-                getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
-                settings.getCompressorList(), settings.getServerApi(), settings.getDnsClient());
+                settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
+                TimeoutSettings.create(settings).connectionOnly(), streamFactory, heartbeatStreamFactory, settings.getCredential(),
+                settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
+                mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(), settings.getDnsClient());
     }
 
     private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {

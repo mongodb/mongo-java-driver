@@ -223,7 +223,7 @@ public final class MongoClientImpl implements MongoClient {
         notNull("settings", settings);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
-                getStreamFactory(settings, false), getStreamFactory(settings, true),
+                TimeoutSettings.create(settings).connectionOnly(), getStreamFactory(settings, false), getStreamFactory(settings, true),
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
                 settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
                 settings.getDnsClient());

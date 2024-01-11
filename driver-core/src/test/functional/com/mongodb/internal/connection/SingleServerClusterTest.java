@@ -37,6 +37,7 @@ import org.junit.Test;
 import java.util.Collections;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_SUPPLIER;
 import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
@@ -66,9 +67,8 @@ public class SingleServerClusterTest {
                 new DefaultClusterableServerFactory(ServerSettings.builder().build(),
                         ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                         streamFactory, streamFactory, getCredential(),
-
                         LoggerSettings.builder().build(), null, null, null,
-                        Collections.emptyList(), getServerApi()));
+                        Collections.emptyList(), getServerApi(), OPERATION_CONTEXT_SUPPLIER));
     }
 
     @After
