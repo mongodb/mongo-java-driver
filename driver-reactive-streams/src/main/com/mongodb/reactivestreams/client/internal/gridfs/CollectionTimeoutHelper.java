@@ -25,10 +25,11 @@ import reactor.core.publisher.Mono;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class CollectionTimeoutHelper {
-    private CollectionTimeoutHelper(){
+    private CollectionTimeoutHelper() {
         //NOP
     }
-    private static <T> MongoCollection<T> applyTimeout(final MongoCollection<T> collection,
+
+    public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                @Nullable final Timeout timeout) {
         if (timeout != null && !timeout.isInfinite()) {
             long remainingMs = timeout.remaining(MILLISECONDS);
@@ -40,29 +41,17 @@ final class CollectionTimeoutHelper {
         return collection;
     }
 
-
-    public static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> collection,
-                                                                  @Nullable final Timeout timeout) {
-        return applyTimeout(collection, timeout);
-    }
-
-    public static <T> Mono<MongoCollection<T>> withNullableTimeoutMono(final MongoCollection<T> collection,
-                                                                       @Nullable final Timeout timeout) {
+    public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
+                                                                         @Nullable final Timeout timeout) {
         try {
-            return Mono.just(applyTimeout(collection, timeout));
+            return Mono.just(collectionWithTimeout(collection, timeout));
         } catch (MongoExecutionTimeoutException e) {
             return Mono.error(e);
         }
     }
 
-    public static <T> Mono<MongoCollection<T>> withNullableTimeoutMonoDeferred(final MongoCollection<T> collection,
-                                                                               @Nullable final Timeout timeout) {
-        return Mono.defer(() -> {
-            try {
-                return Mono.just(applyTimeout(collection, timeout));
-            } catch (MongoExecutionTimeoutException e) {
-                return Mono.error(e);
-            }
-        });
+    public static <T> Mono<MongoCollection<T>> collectionWithTimeoutDeferred(final MongoCollection<T> collection,
+                                                                             @Nullable final Timeout timeout) {
+        return Mono.defer(() -> collectionWithTimeoutMono(collection, timeout));
     }
 }

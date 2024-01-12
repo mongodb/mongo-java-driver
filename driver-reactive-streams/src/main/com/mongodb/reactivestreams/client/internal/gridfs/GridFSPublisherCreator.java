@@ -41,9 +41,9 @@ import java.nio.ByteBuffer;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeout;
-import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeoutMono;
-import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeoutMonoDeferred;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.collectionWithTimeout;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.collectionWithTimeoutMono;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.collectionWithTimeoutDeferred;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -131,9 +131,9 @@ public final class GridFSPublisherCreator {
         notNull("filesCollection", filesCollection);
         FindPublisher<GridFSFile> publisher;
         if (clientSession == null) {
-            publisher = withNullableTimeout(filesCollection, operationTimeout).find();
+            publisher = collectionWithTimeout(filesCollection, operationTimeout).find();
         } else {
-            publisher = withNullableTimeout(filesCollection, operationTimeout).find(clientSession);
+            publisher = collectionWithTimeout(filesCollection, operationTimeout).find(clientSession);
         }
 
         if (filter != null) {
@@ -176,7 +176,7 @@ public final class GridFSPublisherCreator {
 
         return Mono.defer(()-> {
             Timeout operationTimeout = startTimeout(filesCollection.getTimeout(MILLISECONDS));
-            return withNullableTimeoutMono(filesCollection, operationTimeout)
+            return collectionWithTimeoutMono(filesCollection, operationTimeout)
                     .flatMap(wrappedCollection -> {
                     if (clientSession == null) {
                         return Mono.from(wrappedCollection.deleteOne(filter));
@@ -187,7 +187,7 @@ public final class GridFSPublisherCreator {
                     if (deleteResult.wasAcknowledged() && deleteResult.getDeletedCount() == 0) {
                         return Mono.error(new MongoGridFSException(format("No file found with the ObjectId: %s", id)));
                     }
-                    return withNullableTimeoutMono(chunksCollection, operationTimeout);
+                    return collectionWithTimeoutMono(chunksCollection, operationTimeout);
                 }).flatMap(wrappedCollection -> {
                     if (clientSession == null) {
                         return Mono.from(wrappedCollection.deleteMany(new BsonDocument("files_id", id)));
@@ -229,14 +229,14 @@ public final class GridFSPublisherCreator {
 
         return Mono.defer(() -> {
             Timeout operationTimeout = startTimeout(filesCollection.getTimeout(MILLISECONDS));
-            return withNullableTimeoutMono(filesCollection, operationTimeout)
+            return collectionWithTimeoutMono(filesCollection, operationTimeout)
                     .flatMap(wrappedCollection -> {
                         if (clientSession == null) {
                             return Mono.from(wrappedCollection.drop());
                         } else {
                             return Mono.from(wrappedCollection.drop(clientSession));
                         }
-                    }).then(withNullableTimeoutMonoDeferred(chunksCollection, operationTimeout))
+                    }).then(collectionWithTimeoutDeferred(chunksCollection, operationTimeout))
                     .flatMap(wrappedCollection -> {
                         if (clientSession == null) {
                             return Mono.from(wrappedCollection.drop());

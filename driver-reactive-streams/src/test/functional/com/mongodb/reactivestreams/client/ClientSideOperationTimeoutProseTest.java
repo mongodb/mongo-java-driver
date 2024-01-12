@@ -29,10 +29,7 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -107,7 +104,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
 
-            EventPublisher eventPublisher = new EventPublisher();
+            EventPublisher<ByteBuffer> eventPublisher = new EventPublisher<>();
             TestSubscriber<ObjectId> testSubscriber = new TestSubscriber<>();
 
             gridFsBucket.uploadFromPublisher("filename", eventPublisher.getEventStream())
@@ -162,11 +159,10 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
                 .timeout(rtt + 400, TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(gridFsFileNamespace.getDatabaseName());
-            Mono.from(database.getCollection(gridFsFileNamespace.getCollectionName()).find()).block();
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
 
-            EventPublisher eventPublisher = new EventPublisher();
+            EventPublisher<ByteBuffer> eventPublisher = new EventPublisher<>();
             TestSubscriber<ObjectId> testSubscriber = new TestSubscriber<>();
 
             gridFsBucket.uploadFromPublisher("filename", eventPublisher.getEventStream())
@@ -192,28 +188,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             assertEquals(cause, commandListener.getCommandFailedEvent("delete").getThrowable());
             // When subscription is cancelled, we should not receive any more events.
             testSubscriber.assertNoTerminalEvent();
-        }
-    }
-
-
-    private static class EventPublisher {
-        private final Sinks.Many<ByteBuffer> sink;
-
-        EventPublisher() {
-            this.sink = Sinks.many().unicast().onBackpressureBuffer();
-        }
-
-        // Method to send events
-        public void sendEvent(final ByteBuffer event) {
-            sink.tryEmitNext(event);
-        }
-
-        public Flux<ByteBuffer> getEventStream() {
-            return sink.asFlux();
-        }
-
-        public void complete() {
-            sink.tryEmitComplete();
         }
     }
 }

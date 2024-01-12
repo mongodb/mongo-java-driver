@@ -38,7 +38,7 @@ import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.calculateTimeout;
-import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.withNullableTimeout;
+import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.collectionWithTimeout;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -97,9 +97,9 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
         Document filter = new Document("files_id", gridFSFile.getId());
         FindPublisher<Document> chunkPublisher;
         if (clientSession != null) {
-            chunkPublisher = withNullableTimeout(chunksCollection, timeout).find(clientSession, filter);
+            chunkPublisher = collectionWithTimeout(chunksCollection, timeout).find(clientSession, filter);
         } else {
-            chunkPublisher = withNullableTimeout(chunksCollection, timeout).find(filter);
+            chunkPublisher = collectionWithTimeout(chunksCollection, timeout).find(filter);
         }
 
         AtomicInteger chunkCounter = new AtomicInteger(0);

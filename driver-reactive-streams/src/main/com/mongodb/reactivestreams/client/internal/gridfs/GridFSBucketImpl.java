@@ -248,7 +248,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession, final BsonValue id) {
         Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                timeout -> createGridFSFindPublisher(filesCollection, clientSession, new BsonDocument("_id", id), timeout);
+                operationTimeout -> createGridFSFindPublisher(filesCollection, clientSession, new BsonDocument("_id", id), operationTimeout);
         return createGridFSDownloadPublisher(chunksCollection, notNull("clientSession", clientSession), findPublisherCreator);
     }
 
