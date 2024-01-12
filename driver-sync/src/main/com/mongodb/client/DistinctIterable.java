@@ -114,7 +114,7 @@ public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     DistinctIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 }

@@ -28,6 +28,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
@@ -84,8 +85,11 @@ final class CommandOperationHelper {
 
     /* Read Binding Helpers */
 
-    static RetryState initialRetryState(final boolean retry) {
-        return new RetryState(retry ? RetryState.RETRIES : 0);
+    static RetryState initialRetryState(final boolean retry, final TimeoutContext timeoutContext) {
+        if (retry) {
+            return RetryState.withRetryableState(RetryState.RETRIES, timeoutContext);
+        }
+        return RetryState.withNonRetryableState();
     }
 
     private static final List<Integer> RETRYABLE_ERROR_CODES = asList(6, 7, 89, 91, 189, 262, 9001, 13436, 13435, 11602, 11600, 10107);

@@ -50,7 +50,7 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): ListCollectionsFlow<T> = apply {
         wrapped.timeoutMode(timeoutMode)

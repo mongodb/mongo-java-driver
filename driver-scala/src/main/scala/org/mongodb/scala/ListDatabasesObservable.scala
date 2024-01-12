@@ -131,7 +131,7 @@ case class ListDatabasesObservable[TResult](wrapped: ListDatabasesPublisher[TRes
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since 4.x
+   * @since CSOT
    */
   def timeoutMode(timeoutMode: TimeoutMode): ListDatabasesObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)

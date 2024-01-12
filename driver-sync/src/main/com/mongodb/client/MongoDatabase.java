@@ -103,7 +103,7 @@ public interface MongoDatabase {
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
-     * @since 4.x
+     * @since CSOT
      */
     @Nullable
     Long getTimeout(TimeUnit timeUnit);
@@ -160,7 +160,7 @@ public interface MongoDatabase {
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
      * @return a new MongoDatabase instance with the set time limit for the full execution of an operation.
-     * @since 4.x
+     * @since CSOT
      * @see #getTimeout
      */
     MongoDatabase withTimeout(long timeout, TimeUnit timeUnit);

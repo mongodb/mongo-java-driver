@@ -70,7 +70,7 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * - `> 0` The time limit to use for the full execution of an operation.
      *
      * @return the optional timeout duration
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
@@ -126,7 +126,7 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return a new MongoDatabase instance with the set time limit for operations
      * @see [MongoDatabase.timeout]
-     * @since 4.x
+     * @since CSOT
      */
     public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoDatabase =
         MongoDatabase(wrapped.withTimeout(timeout, timeUnit))

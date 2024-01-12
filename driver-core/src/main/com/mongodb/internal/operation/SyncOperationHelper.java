@@ -186,7 +186,8 @@ final class SyncOperationHelper {
             final Decoder<D> decoder,
             final CommandReadTransformer<D, T> transformer,
             final boolean retryReads) {
-        RetryState retryState = CommandOperationHelper.initialRetryState(retryReads);
+        RetryState retryState = CommandOperationHelper.initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
+
         Supplier<T> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
                 withSourceAndConnection(readConnectionSourceSupplier, false, (source, connection) -> {
                     retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
@@ -238,7 +239,7 @@ final class SyncOperationHelper {
             final CommandCreator commandCreator,
             final CommandWriteTransformer<T, R> transformer,
             final com.mongodb.Function<BsonDocument, BsonDocument> retryCommandModifier) {
-        RetryState retryState = CommandOperationHelper.initialRetryState(true);
+        RetryState retryState = CommandOperationHelper.initialRetryState(true, binding.getOperationContext().getTimeoutContext());
         Supplier<R> retryingWrite = decorateWriteWithRetries(retryState, binding.getOperationContext(), () -> {
             boolean firstAttempt = retryState.isFirstAttempt();
             SessionContext sessionContext = binding.getOperationContext().getSessionContext();

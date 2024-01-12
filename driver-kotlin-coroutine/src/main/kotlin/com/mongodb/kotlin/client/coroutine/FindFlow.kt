@@ -59,7 +59,7 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): FindFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 

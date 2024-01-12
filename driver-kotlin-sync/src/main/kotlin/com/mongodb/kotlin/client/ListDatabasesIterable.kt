@@ -43,7 +43,7 @@ public class ListDatabasesIterable<T : Any>(private val wrapped: JListDatabasesI
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): ListDatabasesIterable<T> {
         wrapped.timeoutMode(timeoutMode)

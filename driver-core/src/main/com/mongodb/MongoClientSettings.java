@@ -700,7 +700,7 @@ public final class MongoClientSettings {
          * @param timeout the timeout
          * @param timeUnit the time unit
          * @return this
-         * @since 4.x
+         * @since CSOT
          * @see #getTimeout
          */
         public Builder timeout(final long timeout, final TimeUnit timeUnit) {
@@ -915,7 +915,7 @@ public final class MongoClientSettings {
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
-     * @since 4.x
+     * @since CSOT
      */
     @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {

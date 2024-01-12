@@ -20,7 +20,7 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoWriteException;
@@ -64,10 +64,11 @@ final class ErrorMatcher {
                     e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
                             || e instanceof MongoSocketException);
         }
+
         if (expectedError.containsKey("isTimeoutError")) {
-            assertEquals(context.getMessage("Exception must be of type MongoExecutionTimeoutException"),
+            assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
                     expectedError.getBoolean("isTimeoutError").getValue(),
-                    e instanceof MongoExecutionTimeoutException);
+                    e instanceof MongoOperationTimeoutException);
         }
 
         if (expectedError.containsKey("errorContains")) {

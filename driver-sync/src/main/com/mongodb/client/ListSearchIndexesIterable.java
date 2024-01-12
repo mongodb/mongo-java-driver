@@ -108,7 +108,7 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     ListSearchIndexesIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 

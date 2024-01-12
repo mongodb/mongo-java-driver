@@ -50,7 +50,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): AggregateIterable<T> {
         wrapped.timeoutMode(timeoutMode)
