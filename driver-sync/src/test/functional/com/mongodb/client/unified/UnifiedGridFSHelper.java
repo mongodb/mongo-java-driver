@@ -57,7 +57,8 @@ final class UnifiedGridFSHelper extends UnifiedHelper{
                 return OperationResult.NONE;
             }
 
-            throw new UnsupportedOperationException("expectResult is not implemented for Unified GridFS tests.");
+            throw new UnsupportedOperationException("expectResult is not implemented for Unified GridFS tests. "
+                    + "Unexpected result: " + target);
         } catch (Exception e) {
             return OperationResult.of(e);
         }
