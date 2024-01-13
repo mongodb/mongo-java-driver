@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal.gridfs;
 
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
@@ -259,12 +259,12 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     }
 
     /**
-     * Creates a Mono that emits a {@link MongoExecutionTimeoutException} after the specified timeout.
+     * Creates a Mono that emits a {@link MongoOperationTimeoutException} after the specified timeout.
      *
      * @param timeout - remaining timeout.
-     * @return Mono that emits a {@link MongoExecutionTimeoutException}.
+     * @return Mono that emits a {@link MongoOperationTimeoutException}.
      */
-    private static Mono<MongoExecutionTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
+    private static Mono<MongoOperationTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
         if (timeout != null && !timeout.isInfinite()) {
             return Mono.delay(ofMillis(timeout.remaining(MILLISECONDS)))
                     .then(Mono.error(TimeoutContext.createMongoTimeoutException("GridFS timeout out waiting for data"

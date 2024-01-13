@@ -18,7 +18,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
@@ -126,7 +126,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             assertEquals(1, onErrorEvents.size());
 
             Throwable throwable = onErrorEvents.get(0);
-            assertEquals(MongoExecutionTimeoutException.class, throwable.getClass());
+            assertEquals(MongoOperationTimeoutException.class, throwable.getClass());
             assertEquals("Operation timed out: Timeout while receiving message", throwable.getMessage());
 
             CommandFailedEvent chunkInsertFailedEvent = commandListener.getCommandFailedEvent("insert");
@@ -180,7 +180,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             //then
             Throwable droppedError = droppedErrorFuture.get(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
             Throwable cause = droppedError.getCause();
-            assertEquals(MongoExecutionTimeoutException.class, cause.getClass());
+            assertEquals(MongoOperationTimeoutException.class, cause.getClass());
             assertEquals("Operation timed out: Timeout while receiving message", cause.getMessage());
 
             CommandFailedEvent deleteFailedEvent = commandListener.getCommandFailedEvent("delete");

@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal.gridfs;
 
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -34,7 +34,7 @@ final class CollectionTimeoutHelper {
         if (timeout != null && !timeout.isInfinite()) {
             long remainingMs = timeout.remaining(MILLISECONDS);
             if (remainingMs <= 0) {
-                throw new MongoExecutionTimeoutException("GridFS timed out");
+                throw new MongoOperationTimeoutException("GridFS timed out");
             }
             return collection.withTimeout(remainingMs, MILLISECONDS);
         }
@@ -45,7 +45,7 @@ final class CollectionTimeoutHelper {
                                                                          @Nullable final Timeout timeout) {
         try {
             return Mono.just(collectionWithTimeout(collection, timeout));
-        } catch (MongoExecutionTimeoutException e) {
+        } catch (MongoOperationTimeoutException e) {
             return Mono.error(e);
         }
     }

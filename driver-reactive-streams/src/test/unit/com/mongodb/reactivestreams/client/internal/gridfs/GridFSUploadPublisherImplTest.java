@@ -18,7 +18,7 @@ package com.mongodb.reactivestreams.client.internal.gridfs;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -88,7 +88,7 @@ class GridFSUploadPublisherTest {
             assertEquals(1, onErrorEvents.size());
 
             Throwable throwable = onErrorEvents.get(0);
-            assertEquals(MongoExecutionTimeoutException.class, throwable.getClass());
+            assertEquals(MongoOperationTimeoutException.class, throwable.getClass());
             assertEquals("GridFS timeout out waiting for data"
                     + " from provided source Publisher", throwable.getMessage());
 
