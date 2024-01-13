@@ -16,7 +16,7 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -35,7 +35,7 @@ final class CollectionTimeoutHelper {
             long remainingMs = timeout.remaining(MILLISECONDS);
             if (timeout.hasExpired()) {
                 // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
-                throw new MongoExecutionTimeoutException(message);
+                throw new MongoOperationTimeoutException(message);
             }
             return collection.withTimeout(remainingMs, MILLISECONDS);
         }

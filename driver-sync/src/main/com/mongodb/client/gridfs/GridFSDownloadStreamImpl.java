@@ -16,7 +16,7 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
@@ -214,7 +214,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private void checkTimeout() {
         if (timeout != null && timeout.hasExpired()) {
             // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
-            throw new MongoExecutionTimeoutException("The GridFS download stream has timed out");
+            throw new MongoOperationTimeoutException("The GridFS download stream has timed out");
         }
     }
     private void checkClosed() {

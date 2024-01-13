@@ -16,11 +16,11 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -146,8 +146,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     private void checkTimeout() {
         if (timeout != null && timeout.hasExpired()) {
-            // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
-            throw new MongoExecutionTimeoutException(TIMEOUT_MESSAGE);
+            throw TimeoutContext.createMongoTimeoutException(TIMEOUT_MESSAGE);
         }
     }
 

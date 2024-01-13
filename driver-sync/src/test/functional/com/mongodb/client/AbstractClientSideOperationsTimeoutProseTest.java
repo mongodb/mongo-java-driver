@@ -123,7 +123,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
             try (GridFSUploadStream uploadStream = gridFsBucket.openUploadStream("filename")){
                 uploadStream.write(0x12);
-                assertThrows(MongoExecutionTimeoutException.class, uploadStream::close);
+                assertThrows(MongoOperationTimeoutException.class, uploadStream::close);
             }
         }
     }
@@ -152,7 +152,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
             try (GridFSUploadStream uploadStream = gridFsBucket.openUploadStream("filename")){
                 uploadStream.write(new byte[]{0x01, 0x02, 0x03, 0x04});
-                assertThrows(MongoExecutionTimeoutException.class, uploadStream::abort);
+                assertThrows(MongoOperationTimeoutException.class, uploadStream::abort);
             }
         }
     }
@@ -196,7 +196,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         + "    blockTimeMS: " + (rtt + 95)
                         + "  }"
                         + "}");
-                assertThrows(MongoExecutionTimeoutException.class, downloadStream::read);
+                assertThrows(MongoOperationTimeoutException.class, downloadStream::read);
 
                 List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
                 List<CommandStartedEvent> findCommands = events.stream().filter(e -> e.getCommandName().equals("find")).collect(Collectors.toList());

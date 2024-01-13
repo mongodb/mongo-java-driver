@@ -17,7 +17,7 @@
 package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -634,7 +634,7 @@ final class GridFSBucketImpl implements GridFSBucket {
             while ((len = downloadStream.read(buffer)) != -1) {
                 destination.write(buffer, 0, len);
             }
-        } catch (MongoExecutionTimeoutException e){ // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
+        } catch (MongoOperationTimeoutException e){ // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
             throw e;
         } catch (IOException e) {
             savedThrowable = new MongoGridFSException("IOException when reading from the OutputStream", e);
