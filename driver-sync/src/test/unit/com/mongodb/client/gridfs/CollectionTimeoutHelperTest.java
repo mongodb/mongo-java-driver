@@ -16,7 +16,7 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.internal.time.Timeout;
 import org.bson.Document;
@@ -89,8 +89,8 @@ class CollectionTimeoutHelperTest {
         Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS);
 
         //when
-        MongoExecutionTimeoutException mongoExecutionTimeoutException =
-                assertThrows(MongoExecutionTimeoutException.class, () -> collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, timeout));
+        MongoOperationTimeoutException mongoExecutionTimeoutException =
+                assertThrows(MongoOperationTimeoutException.class, () -> collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, timeout));
 
         //then
         assertEquals(TIMEOUT_ERROR_MESSAGE, mongoExecutionTimeoutException.getMessage());
@@ -108,7 +108,7 @@ class CollectionTimeoutHelperTest {
         });
 
         //when
-        assertThrows(MongoExecutionTimeoutException.class, () -> collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, timeout));
+        assertThrows(MongoOperationTimeoutException.class, () -> collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, timeout));
 
         //then
         verifyNoInteractions(collection);
