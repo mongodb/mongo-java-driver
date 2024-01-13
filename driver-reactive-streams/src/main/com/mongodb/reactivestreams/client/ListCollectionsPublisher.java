@@ -94,7 +94,7 @@ public interface ListCollectionsPublisher<TResult> extends Publisher<TResult> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     ListCollectionsPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 

@@ -20,9 +20,9 @@ import com.mongodb.LoggerSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
-import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -514,7 +514,7 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
             } else {
-                Optional<MongoExecutionTimeoutException> e = validateHasTimedOutAndClose(commandEventSender, operationContext);
+                Optional<MongoOperationTimeoutException> e = validateHasTimedOutAndClose(commandEventSender, operationContext);
                 if (e.isPresent()) {
                     callback.onResult(null, e.get());
                     return;
@@ -554,14 +554,14 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
 
-    private Optional<MongoExecutionTimeoutException> validateHasTimedOut(final OperationContext operationContext) {
+    private Optional<MongoOperationTimeoutException> validateHasTimedOut(final OperationContext operationContext) {
         if (operationContext.getTimeoutContext().hasTimedOutForCommandExecution()) {
             return Optional.of(TimeoutContext.createMongoTimeoutException());
         }
         return Optional.empty();
     }
 
-    private Optional<MongoExecutionTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
+    private Optional<MongoOperationTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
         return validateHasTimedOut(operationContext).map(e -> {
             close();

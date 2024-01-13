@@ -235,8 +235,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     OperationResult executeListCollections(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments");
         ClientSession session = getSession(arguments);
         ListCollectionsIterable<BsonDocument> iterable = session == null
@@ -268,7 +267,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     OperationResult executeListCollectionNames(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
 
         BsonDocument arguments = operation.getDocument("arguments");
         ClientSession session = getSession(arguments);
@@ -617,20 +616,14 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         AggregateIterable<BsonDocument> iterable;
         if (entities.hasDatabase(entityName)) {
-            MongoDatabase database = entities.getDatabase(entityName);
             Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments"));
-            if (timeoutMS != null) {
-                database = database.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
-            }
+            MongoDatabase database = entities.getDatabaseWithTimeoutMS(entityName, timeoutMS);
             iterable = session == null
                     ? database.aggregate(requireNonNull(pipeline), BsonDocument.class)
                     : database.aggregate(session, requireNonNull(pipeline), BsonDocument.class);
         } else if (entities.hasCollection(entityName)) {
-            MongoCollection<BsonDocument> collection = entities.getCollection(entityName);
             Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments"));
-            if (timeoutMS != null) {
-                collection = collection.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
-            }
+            MongoCollection<BsonDocument> collection = entities.getCollectionWithTimeoutMS(entityName, timeoutMS);
             iterable = session == null
                     ? collection.aggregate(requireNonNull(pipeline))
                     : collection.aggregate(session, requireNonNull(pipeline));
@@ -1113,7 +1106,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     public OperationResult executeDropCollection(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments");
         String collectionName = arguments.getString("collection").getValue();
 
@@ -1128,7 +1121,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     public OperationResult executeCreateCollection(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments");
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
@@ -1198,7 +1191,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     public OperationResult executeModifyCollection(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments");
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
@@ -1537,8 +1530,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         }
 
         return resultOf(() -> {
+            MongoCursor<BsonDocument> changeStreamWrappingCursor = createChangeStreamWrappingCursor(iterable);
             entities.addCursor(operation.getString("saveResultAsEntity",
-                    new BsonString(createRandomEntityId())).getValue(), createChangeStreamWrappingCursor(iterable));
+                    new BsonString(createRandomEntityId())).getValue(), changeStreamWrappingCursor);
             return null;
         });
     }
@@ -1568,7 +1562,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     public OperationResult executeRunCommand(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument command = arguments.getDocument("command");
@@ -1737,6 +1731,18 @@ final class UnifiedCrudHelper extends UnifiedHelper {
             collection = collection.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
         }
         return collection;
+    }
+    private MongoDatabase getMongoDatabase(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        if (operation.containsKey("arguments")) {
+            BsonDocument arguments = operation.getDocument("arguments");
+            Long timeoutMS = getAndRemoveTimeoutMS(arguments);
+            if (timeoutMS != null) {
+                database = database.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
+                arguments.remove("timeoutMS");
+            }
+        }
+        return database;
     }
 
     private static void setCursorType(final FindIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {

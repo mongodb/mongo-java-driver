@@ -223,7 +223,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since 4.x
+   * @since CSOT
    */
   def timeoutMode(timeoutMode: TimeoutMode): AggregateObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)

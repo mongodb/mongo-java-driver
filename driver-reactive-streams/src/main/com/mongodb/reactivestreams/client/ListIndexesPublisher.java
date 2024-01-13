@@ -83,7 +83,7 @@ public interface ListIndexesPublisher<TResult> extends Publisher<TResult> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     ListIndexesPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 

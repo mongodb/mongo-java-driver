@@ -190,7 +190,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     MapReduceIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 }

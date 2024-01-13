@@ -101,7 +101,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *   - `> 0` The time limit to use for the full execution of an operation.
    *
    * @return the optional timeout duration
-   * @since 4.x
+   * @since CSOT
    */
   lazy val timeout: Option[Duration] =
     Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
@@ -167,7 +167,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *
    * @param timeout the timeout, which must be greater than or equal to 0
    * @return a new MongoCollection instance with the set time limit for operations
-   * @since 4.x
+   * @since CSOT
    */
   def withTimeout(timeout: Duration): MongoCollection[TResult] =
     MongoCollection(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))

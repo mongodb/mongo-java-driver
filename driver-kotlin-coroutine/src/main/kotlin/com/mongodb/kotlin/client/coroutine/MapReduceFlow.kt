@@ -56,7 +56,7 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): MapReduceFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 

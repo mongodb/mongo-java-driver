@@ -108,7 +108,7 @@ public interface ListSearchIndexesPublisher<TResult> extends Publisher<TResult> 
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     ListSearchIndexesPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 

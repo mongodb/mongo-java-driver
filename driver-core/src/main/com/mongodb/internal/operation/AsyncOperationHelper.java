@@ -178,7 +178,7 @@ final class AsyncOperationHelper {
             final CommandReadTransformerAsync<D, T> transformer,
             final boolean retryReads,
             final SingleResultCallback<T> callback) {
-        RetryState retryState = initialRetryState(retryReads);
+        RetryState retryState = initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
         binding.retain();
         OperationContext operationContext = binding.getOperationContext();
         AsyncCallbackSupplier<T> asyncRead = decorateReadWithRetriesAsync(retryState, binding.getOperationContext(),
@@ -237,7 +237,7 @@ final class AsyncOperationHelper {
             final Function<BsonDocument, BsonDocument> retryCommandModifier,
             final SingleResultCallback<R> callback) {
 
-        RetryState retryState = initialRetryState(true);
+        RetryState retryState = initialRetryState(true, binding.getOperationContext().getTimeoutContext());
         binding.retain();
         OperationContext operationContext = binding.getOperationContext();
 

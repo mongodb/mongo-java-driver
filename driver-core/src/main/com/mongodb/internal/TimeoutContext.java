@@ -15,7 +15,7 @@
  */
 package com.mongodb.internal;
 
-import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -39,22 +39,19 @@ public class TimeoutContext {
     private Timeout timeout;
     private long minRoundTripTimeMS = 0;
 
-    // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
-    public static MongoExecutionTimeoutException createMongoTimeoutException() {
+    public static MongoOperationTimeoutException createMongoTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
     }
 
-    // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
-    public static MongoExecutionTimeoutException createMongoTimeoutException(final String message) {
-        return new MongoExecutionTimeoutException(message);
+    public static MongoOperationTimeoutException createMongoTimeoutException(final String message) {
+        return new MongoOperationTimeoutException(message);
     }
 
-    // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
-    public static MongoExecutionTimeoutException createMongoTimeoutException(final Throwable cause) {
-        if (cause instanceof MongoExecutionTimeoutException) {
-            return (MongoExecutionTimeoutException) cause;
+    public static MongoOperationTimeoutException createMongoTimeoutException(final Throwable cause) {
+        if (cause instanceof MongoOperationTimeoutException) {
+            return (MongoOperationTimeoutException) cause;
         }
-        return new MongoExecutionTimeoutException("Operation timed out: " + cause.getMessage());
+        return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage());
     }
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
