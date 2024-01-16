@@ -20,11 +20,22 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration
+import org.bson.BsonReader
+import org.bson.BsonWriter
+import org.bson.codecs.Codec
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.configuration.CodecRegistries.fromCodecs
+import org.bson.codecs.configuration.CodecRegistries.fromProviders
+import org.bson.codecs.configuration.CodecRegistries.fromRegistries
 import org.bson.codecs.kotlin.samples.DataClassParameterized
+import org.bson.codecs.kotlin.samples.DataClassWithJVMErasure
 import org.bson.codecs.kotlin.samples.DataClassWithSimpleValues
 import org.bson.conversions.Bson
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 
 class DataClassCodecProviderTest {
@@ -58,5 +69,24 @@ class DataClassCodecProviderTest {
         assertNotNull(codec)
         assertTrue { codec is DataClassCodec }
         assertEquals(DataClassWithSimpleValues::class.java, codec.encoderClass)
+    }
+
+    @Test
+    fun shouldBeAbleHandleDataClassWithJVMErasure() {
+
+        class DurationCodec : Codec<Duration> {
+            override fun encode(writer: BsonWriter, value: Duration, encoderContext: EncoderContext) = TODO()
+            override fun getEncoderClass(): Class<Duration> = Duration::class.java
+            override fun decode(reader: BsonReader, decoderContext: DecoderContext): Duration = TODO()
+        }
+
+        val registry =
+            fromRegistries(
+                fromCodecs(DurationCodec()), fromProviders(DataClassCodecProvider()), Bson.DEFAULT_CODEC_REGISTRY)
+
+        val codec = assertDoesNotThrow { registry.get(DataClassWithJVMErasure::class.java) }
+        assertNotNull(codec)
+        assertTrue { codec is DataClassCodec }
+        assertEquals(DataClassWithJVMErasure::class.java, codec.encoderClass)
     }
 }
