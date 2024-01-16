@@ -22,6 +22,7 @@ import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNotPrimaryException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.internal.VisibleForTesting;
 
@@ -39,7 +40,8 @@ final class ChangeStreamBatchCursorHelper {
     static final String RESUMABLE_CHANGE_STREAM_ERROR_LABEL = "ResumableChangeStreamError";
 
     static boolean isResumableError(final Throwable t, final int maxWireVersion) {
-        if (!(t instanceof MongoException) || (t instanceof MongoChangeStreamException) || (t instanceof MongoInterruptedException)) {
+        if (!(t instanceof MongoException) || (t instanceof MongoChangeStreamException) || (t instanceof MongoInterruptedException)
+            || (t instanceof MongoOperationTimeoutException)) {
             return false;
         } else if (t instanceof MongoNotPrimaryException || t instanceof MongoCursorNotFoundException
                 || t instanceof MongoSocketException | t instanceof MongoClientException) {
