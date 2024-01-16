@@ -223,7 +223,7 @@ internal data class DataClassCodec<T : Any>(
 
         private fun computeJavaType(kTypeProjection: KTypeProjection): Type? {
             val javaType: Type = kTypeProjection.type?.javaType!!
-            return if (javaType == Any().javaClass) {
+            return if (javaType == Any::class.java) {
                 kTypeProjection.type?.jvmErasure?.javaObjectType
             } else javaType
         }
