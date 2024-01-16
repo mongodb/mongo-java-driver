@@ -75,7 +75,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS can be overridden for an operation"));
         assumeFalse("No iterateOnce support", testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set"));
 
-        assumeFalse("TODO (CSOT) - JAVA-5258", testDescription.startsWith("socketTimeoutMS is ignored if timeoutMS is set"));
         assumeFalse("TODO (CSOT) - JAVA-5259 No client.withTimeout", testDescription.endsWith("on client"));
 
         checkOperationSupportsMaxTimeMS(fileDescription, testDescription);
