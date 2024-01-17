@@ -19,10 +19,10 @@ package com.mongodb.reactivestreams.client;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-public class EventPublisher<T> {
+public class TestEventPublisher<T> {
     private final Sinks.Many<T> sink;
 
-    public EventPublisher() {
+    public TestEventPublisher() {
         this.sink = Sinks.many().unicast().onBackpressureBuffer();
     }
 

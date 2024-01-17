@@ -26,7 +26,7 @@ import com.mongodb.client.Fixture;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
-import com.mongodb.reactivestreams.client.EventPublisher;
+import com.mongodb.reactivestreams.client.TestEventPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
@@ -37,11 +37,15 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Subscription;
+import reactor.core.publisher.Flux;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,7 +77,7 @@ class GridFSUploadPublisherTest {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             GridFSBucket gridFsBucket = GridFSBuckets.create(database, GRID_FS_BUCKET_NAME);
 
-            EventPublisher<ByteBuffer> eventPublisher = new EventPublisher<>();
+            TestEventPublisher<ByteBuffer> eventPublisher = new TestEventPublisher<>();
             TestSubscriber<ObjectId> testSubscriber = new TestSubscriber<>();
 
             //when
@@ -100,29 +104,32 @@ class GridFSUploadPublisherTest {
     }
 
     @Test
-    void shouldCancelSubscriptionToSourceWhenOperationTimeoutOccurs() {
+    void shouldCancelSubscriptionToSourceWhenOperationTimeoutOccurs() throws Exception {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
 
         //given
         try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
-                .timeout(rtt + 800, TimeUnit.MILLISECONDS).build())) {
+                .timeout(rtt + 1000, TimeUnit.MILLISECONDS).build())) {
             MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
             GridFSBucket gridFsBucket = GridFSBuckets.create(database, GRID_FS_BUCKET_NAME);
 
-            EventPublisher<ByteBuffer> eventPublisher = new EventPublisher<>();
+            TestEventPublisher<ByteBuffer> testEventPublisher = new TestEventPublisher<>();
+            CompletableFuture<Subscription> subscriptionSignal = new CompletableFuture<>();
+            Flux<ByteBuffer> eventStream = testEventPublisher.getEventStream().doOnSubscribe(subscriptionSignal::complete);
             TestSubscriber<ObjectId> testSubscriber = new TestSubscriber<>();
 
             //when
-            gridFsBucket.uploadFromPublisher("filename", eventPublisher.getEventStream())
+            gridFsBucket.uploadFromPublisher("filename", eventStream)
                     .subscribe(testSubscriber);
             testSubscriber.requestMore(1);
 
-            assertEquals(1, eventPublisher.currentSubscriberCount());
-            testSubscriber.cancelSubscription();
-
             //then
-            assertEquals(0, eventPublisher.currentSubscriberCount());
+            subscriptionSignal.get(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
+            assertEquals(1, testEventPublisher.currentSubscriberCount());
+            //We wait for timeout to occur here
+            testSubscriber.assertTerminalEvent();
+            assertEquals(0, testEventPublisher.currentSubscriberCount());
         }
     }
 

@@ -104,7 +104,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
 
-            EventPublisher<ByteBuffer> eventPublisher = new EventPublisher<>();
+            TestEventPublisher<ByteBuffer> eventPublisher = new TestEventPublisher<>();
             TestSubscriber<ObjectId> testSubscriber = new TestSubscriber<>();
 
             gridFsBucket.uploadFromPublisher("filename", eventPublisher.getEventStream())
@@ -162,7 +162,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
 
-            EventPublisher<ByteBuffer> eventPublisher = new EventPublisher<>();
+            TestEventPublisher<ByteBuffer> eventPublisher = new TestEventPublisher<>();
             TestSubscriber<ObjectId> testSubscriber = new TestSubscriber<>();
 
             gridFsBucket.uploadFromPublisher("filename", eventPublisher.getEventStream())
