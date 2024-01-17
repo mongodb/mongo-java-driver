@@ -182,6 +182,9 @@ public final class RetryState {
             final boolean onlyRuntimeExceptions) throws Throwable {
         assertTrue(attempt() < attempts);
         assertNotNull(attemptException);
+        if (attemptException instanceof MongoOperationTimeoutException) {
+            throw attemptException;
+        }
         if (onlyRuntimeExceptions) {
             assertTrue(isRuntime(attemptException));
         }

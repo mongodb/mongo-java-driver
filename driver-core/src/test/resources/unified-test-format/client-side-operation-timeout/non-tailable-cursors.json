@@ -429,7 +429,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 101
+                "blockTimeMS": 150
               }
             }
           }

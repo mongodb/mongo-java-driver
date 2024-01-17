@@ -128,7 +128,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     private static final StructuredLogger STRUCTURED_LOGGER = new StructuredLogger("connection");
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
-    private final Supplier<OperationContext> connectionOperationContextSupplier;
+    private final InternalOperationContextFactory operationContextFactory;
     private final BackgroundMaintenanceManager backgroundMaintenance;
     private final AsyncWorkManager asyncWorkManager;
     private final ConnectionPoolListener connectionPoolListener;
@@ -143,9 +143,9 @@ final class DefaultConnectionPool implements ConnectionPool {
     @VisibleForTesting(otherwise = PRIVATE)
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
             final ConnectionPoolSettings settings, final OptionalProvider<SdamServerDescriptionManager> sdamProvider,
-            final Supplier<OperationContext> connectionOperationContextSupplier) {
+            final InternalOperationContextFactory operationContextFactory) {
         this(serverId, internalConnectionFactory, settings, InternalConnectionPoolSettings.builder().build(), sdamProvider,
-                connectionOperationContextSupplier);
+                operationContextFactory);
     }
 
     /**
@@ -160,14 +160,14 @@ final class DefaultConnectionPool implements ConnectionPool {
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
             final ConnectionPoolSettings settings, final InternalConnectionPoolSettings internalSettings,
             final OptionalProvider<SdamServerDescriptionManager> sdamProvider,
-            final Supplier<OperationContext> connectionOperationContextSupplier) {
+            final InternalOperationContextFactory operationContextFactory) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory =
                 new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
         pool = new ConcurrentPool<>(maxSize(settings), connectionItemFactory, format("The server at %s is no longer available",
                 serverId.getAddress()));
-        this.connectionOperationContextSupplier = assertNotNull(connectionOperationContextSupplier);
+        this.operationContextFactory = assertNotNull(operationContextFactory);
         this.sdamProvider = assertNotNull(sdamProvider);
         this.connectionPoolListener = getConnectionPoolListener(settings);
         backgroundMaintenance = new BackgroundMaintenanceManager();
@@ -416,7 +416,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             if (shouldEnsureMinSize()) {
                 pool.ensureMinSize(settings.getMinSize(), newConnection -> {
                     try {
-                        OperationContext operationContext = connectionOperationContextSupplier.get();
+                        OperationContext operationContext = operationContextFactory.createMaintenanceContext();
                         openConcurrencyLimiter.openImmediatelyAndTryHandOverOrRelease(operationContext, new PooledConnection(newConnection));
                     } catch (MongoException | MongoOpenConnectionInternalException e) {
                         RuntimeException actualException = e instanceof MongoOpenConnectionInternalException

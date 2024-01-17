@@ -54,6 +54,7 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.connection.InternalOperationContextFactory;
 import com.mongodb.internal.connection.MongoCredentialWithCache;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
@@ -88,7 +89,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
@@ -193,7 +193,8 @@ public final class ClusterFixture {
             new TimeoutContext(TIMEOUT_SETTINGS),
             getServerApi());
 
-    public static final Supplier<OperationContext> OPERATION_CONTEXT_SUPPLIER = () -> OPERATION_CONTEXT;
+    public static final InternalOperationContextFactory OPERATION_CONTEXT_FACTORY =
+            new InternalOperationContextFactory(TIMEOUT_SETTINGS, getServerApi());
 
     public static OperationContext createOperationContext(final TimeoutSettings timeoutSettings) {
         return new OperationContext(

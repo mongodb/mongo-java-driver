@@ -23,6 +23,7 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.TimeoutSettings
 import org.bson.BsonDocument
 import spock.lang.Specification
 
@@ -34,11 +35,13 @@ import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
+import static com.mongodb.internal.connection.OperationContext.simpleOperationContext
 import static org.junit.Assert.assertEquals
 
 class ScramShaAuthenticatorSpecification extends Specification {
     def serverId = new ServerId(new ClusterId(), new ServerAddress('localhost', 27017))
     def connectionDescription = new ConnectionDescription(serverId)
+    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT, null)
     private final static MongoCredentialWithCache SHA1_CREDENTIAL =
             new MongoCredentialWithCache(createScramSha1Credential('user', 'database', 'pencil' as char[]))
     private final static MongoCredentialWithCache SHA256_CREDENTIAL =
@@ -522,10 +525,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
     def authenticate(TestInternalConnection connection, ScramShaAuthenticator authenticator, boolean async) {
         if (async) {
             FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>()
-            authenticator.authenticateAsync(connection, connectionDescription, futureCallback)
+            authenticator.authenticateAsync(connection, connectionDescription, operationContext, futureCallback)
             futureCallback.get(5, TimeUnit.SECONDS)
         } else {
-            authenticator.authenticate(connection, connectionDescription)
+            authenticator.authenticate(connection, connectionDescription, operationContext)
         }
     }
 
