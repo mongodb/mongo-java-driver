@@ -175,12 +175,14 @@ public class TimeoutContext {
     }
 
     public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {
+        // Check existing read timeout is infinite
+        if (getReadTimeoutMS() == 0) {
+            return this;
+        }
+
         long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
         newReadTimeout = newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE;
         if (timeout != null) {
-            if (timeout.isInfinite()) {
-                return this;
-            }
             return new TimeoutContext(timeoutSettings.withTimeoutMS(newReadTimeout));
         } else {
             return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout));
