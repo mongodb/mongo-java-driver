@@ -33,7 +33,6 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.ServerHelper;
@@ -45,7 +44,6 @@ import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.ObjectId;
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -71,7 +69,6 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,23 +85,22 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @SuppressWarnings("checkstyle:VisibilityModifier")
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
-    private static final String GRID_FS_BUCKET_NAME = "db.fs";
-    private static final String GRID_FS_COLLECTION_NAME_CHUNKS = GRID_FS_BUCKET_NAME + ".chunks";
-    private static final String GRID_FS_COLLECTION_NAME_FILE = GRID_FS_BUCKET_NAME + ".files";
+    protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
     private MongoNamespace namespace;
     protected MongoNamespace gridFsFileNamespace;
     protected MongoNamespace gridFsChunksNamespace;
 
-    @Nullable
-    private CollectionHelper<BsonDocument> collectionHelper;
+    protected CollectionHelper<BsonDocument> collectionHelper;
     private CollectionHelper<BsonDocument> filesCollectionHelper;
     private CollectionHelper<BsonDocument> chunksCollectionHelper;
 
-    private TestCommandListener commandListener;
+    protected TestCommandListener commandListener;
 
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
+
+    protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
 
     protected abstract boolean isAsync();
 

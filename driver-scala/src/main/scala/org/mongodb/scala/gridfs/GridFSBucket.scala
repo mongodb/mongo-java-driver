@@ -180,7 +180,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param filename the filename for the stream
@@ -198,7 +198,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param filename the filename for the stream
@@ -221,7 +221,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param id       the custom id value of the file
@@ -244,7 +244,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param id       the custom id value of the file
@@ -269,7 +269,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
@@ -293,7 +293,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
@@ -319,7 +319,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
@@ -345,7 +345,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
    * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
-   * settings or [[GridFSBucket.withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
    * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
