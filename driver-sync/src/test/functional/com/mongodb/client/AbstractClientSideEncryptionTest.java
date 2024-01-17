@@ -26,6 +26,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -325,7 +326,7 @@ public abstract class AbstractClientSideEncryptionTest {
 
         if (definition.containsKey("expectations")) {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), "default", null);
-            List<CommandEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
             assertEventsEquality(expectedEvents, events);
         }
 

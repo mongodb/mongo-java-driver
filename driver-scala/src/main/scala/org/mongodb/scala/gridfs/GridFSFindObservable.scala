@@ -122,27 +122,6 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
   }
 
   /**
-   * Sets the timeoutMode for the cursor.
-   *
-   * Requires the `timeout` to be set, either in the `MongoClientSettings`,
-   * via `MongoDatabase` or via `MongoCollection`
-   *
-   * If the `timeout` is set then:
-   *
-   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
-   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
-   * to configure it as: `TimeoutMode.CURSOR_LIFETIME`
-   *
-   * @param timeoutMode the timeout mode
-   * @return this
-   * @since CSOT
-   */
-  def timeoutMode(timeoutMode: TimeoutMode): GridFSFindObservable = {
-    wrapped.timeoutMode(timeoutMode)
-    this
-  }
-
-  /**
    * Helper to return a single observable limited to the first result.
    *
    * @return a single observable which will the first result.

@@ -144,24 +144,27 @@ public class TestCommandListener implements CommandListener {
                 .orElseThrow(() -> new IllegalArgumentException(commandName + " not found in command failed event list"));
     }
 
-    public List<CommandEvent> getCommandStartedEvents() {
+    public List<CommandStartedEvent> getCommandStartedEvents() {
         return getEvents(CommandStartedEvent.class, Integer.MAX_VALUE);
     }
 
-    public List<CommandEvent> getCommandSucceededEvents() {
+    public List<CommandSucceededEvent> getCommandSucceededEvents() {
         return getEvents(CommandSucceededEvent.class, Integer.MAX_VALUE);
     }
 
-    private List<CommandEvent> getEvents(final Class<? extends CommandEvent> type, final int maxEvents) {
+    private <T extends CommandEvent> List<T> getEvents(final Class<T> type, final int maxEvents) {
         lock.lock();
         try {
-            return getEvents().stream().filter(e -> e.getClass() == type).limit(maxEvents).collect(Collectors.toList());
+            return getEvents().stream()
+                    .filter(e -> e.getClass() == type)
+                    .map(type::cast)
+                    .limit(maxEvents).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
     }
 
-    public List<CommandEvent> waitForStartedEvents(final int numEvents) {
+    public List<CommandStartedEvent> waitForStartedEvents(final int numEvents) {
         lock.lock();
         try {
             while (!hasCompletedEvents(numEvents)) {

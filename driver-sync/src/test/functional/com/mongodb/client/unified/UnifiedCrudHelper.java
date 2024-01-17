@@ -79,7 +79,6 @@ import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.lang.NonNull;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -109,7 +108,7 @@ import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
-final class UnifiedCrudHelper {
+final class UnifiedCrudHelper extends UnifiedHelper {
     private final Entities entities;
     private final String testDescription;
     private final AtomicInteger uniqueIdGenerator = new AtomicInteger();
@@ -1733,7 +1732,6 @@ final class UnifiedCrudHelper {
         }
         return collection;
     }
-
     private MongoDatabase getMongoDatabase(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
         if (operation.containsKey("arguments")) {
@@ -1745,16 +1743,6 @@ final class UnifiedCrudHelper {
             }
         }
         return database;
-    }
-
-    @Nullable
-    private Long getAndRemoveTimeoutMS(final BsonDocument arguments) {
-        Long timeoutMS = null;
-        if (arguments.containsKey("timeoutMS")) {
-            timeoutMS = arguments.getNumber("timeoutMS").longValue();
-            arguments.remove("timeoutMS");
-        }
-        return timeoutMS;
     }
 
     private static void setCursorType(final FindIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {

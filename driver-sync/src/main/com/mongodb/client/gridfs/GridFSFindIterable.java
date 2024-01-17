@@ -16,10 +16,7 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -118,25 +115,4 @@ public interface GridFSFindIterable extends MongoIterable<GridFSFile> {
      * @mongodb.server.release 3.4
      */
     GridFSFindIterable collation(@Nullable Collation collation);
-
-    /**
-     * Sets the timeoutMode for the cursor.
-     *
-     * <p>
-     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
-     *     via {@link MongoDatabase} or via {@link MongoCollection}
-     * </p>
-     * <p>
-     *     If the {@code timeout} is set then:
-     *     <ul>
-     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
-     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
-     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
-     *     </ul>
-     *
-     * @param timeoutMode the timeout mode
-     * @return this
-     * @since CSOT
-     */
-    GridFSFindIterable timeoutMode(TimeoutMode timeoutMode);
 }

@@ -393,7 +393,7 @@ public abstract class AbstractUnifiedTest {
 
         if (definition.containsKey("expectations")) {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
-            List<CommandEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
 
             assertTrue("Actual number of events is less than expected number of events", events.size() >= expectedEvents.size());
             assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()), lsidMap);
@@ -570,7 +570,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("assertDifferentLsidOnLastTwoCommands")) {
                         List<CommandEvent> events = lastTwoCommandEvents();
                         String eventsJson = commandListener.getCommandStartedEvents().stream()
-                                .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                                .map(e -> e.getCommand().toJson())
                                 .collect(Collectors.joining(", "));
 
                         assertNotEquals(eventsJson, ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid"),
@@ -578,7 +578,7 @@ public abstract class AbstractUnifiedTest {
                     } else if (operationName.equals("assertSameLsidOnLastTwoCommands")) {
                         List<CommandEvent> events = lastTwoCommandEvents();
                         String eventsJson = commandListener.getCommandStartedEvents().stream()
-                                        .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                                        .map(e -> e.getCommand().toJson())
                                         .collect(Collectors.joining(", "));
                         assertEquals(eventsJson, ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid"),
                                 ((CommandStartedEvent) events.get(1)).getCommand().getDocument("lsid"));
@@ -723,9 +723,9 @@ public abstract class AbstractUnifiedTest {
     }
 
     private List<CommandEvent> lastTwoCommandEvents() {
-        List<CommandEvent> events = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
         assertTrue(events.size() >= 2);
-        return events.subList(events.size() - 2, events.size());
+        return new ArrayList<>(events.subList(events.size() - 2, events.size()));
     }
 
     private TransactionOptions createTransactionOptions(final BsonDocument options) {

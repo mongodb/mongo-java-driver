@@ -16,12 +16,9 @@
 
 package com.mongodb.reactivestreams.client.gridfs;
 
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.MongoCollection;
-import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
@@ -127,17 +124,4 @@ public interface GridFSFindPublisher extends Publisher<GridFSFile> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     GridFSFindPublisher batchSize(int batchSize);
-
-    /**
-     * Sets the timeoutMode for the cursor.
-     *
-     * <p>
-     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
-     *     via {@link MongoDatabase} or via {@link MongoCollection}
-     * </p>
-     * @param timeoutMode the timeout mode
-     * @return this
-     * @since CSOT
-     */
-    GridFSFindPublisher timeoutMode(TimeoutMode timeoutMode);
 }

@@ -20,7 +20,6 @@ import com.mongodb.Function;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -71,12 +70,6 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
     @Override
     public GridFSFindIterable batchSize(final int batchSize) {
         underlying.batchSize(batchSize);
-        return this;
-    }
-
-    @Override
-    public GridFSFindIterable timeoutMode(final TimeoutMode timeoutMode) {
-        underlying.timeoutMode(timeoutMode);
         return this;
     }
 

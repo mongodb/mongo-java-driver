@@ -209,7 +209,7 @@ public class TimeoutContext {
     }
 
     @Nullable
-    private static Timeout calculateTimeout(@Nullable final Long timeoutMS) {
+    public static Timeout calculateTimeout(@Nullable final Long timeoutMS) {
         if (timeoutMS != null) {
             return timeoutMS == 0 ? Timeout.infinite() : Timeout.expiresIn(timeoutMS, MILLISECONDS);
         }

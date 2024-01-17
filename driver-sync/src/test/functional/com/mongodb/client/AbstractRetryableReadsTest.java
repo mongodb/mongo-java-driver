@@ -28,6 +28,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -235,7 +236,7 @@ public abstract class AbstractRetryableReadsTest {
 
         if (definition.containsKey("expectations")) {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
-            List<CommandEvent> events = commandListener.waitForStartedEvents(expectedEvents.size());
+            List<CommandStartedEvent> events = commandListener.waitForStartedEvents(expectedEvents.size());
 
             assertEventsEquality(expectedEvents, events);
         }

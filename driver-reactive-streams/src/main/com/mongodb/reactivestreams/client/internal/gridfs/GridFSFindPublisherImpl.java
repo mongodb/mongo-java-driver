@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.internal.gridfs;
 
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -91,12 +90,6 @@ public final class GridFSFindPublisherImpl implements GridFSFindPublisher {
     @Override
     public GridFSFindPublisher batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
-        return this;
-    }
-
-    @Override
-    public GridFSFindPublisher timeoutMode(final TimeoutMode timeoutMode) {
-        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 
