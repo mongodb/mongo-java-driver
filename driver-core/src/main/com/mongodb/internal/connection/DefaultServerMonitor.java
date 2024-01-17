@@ -256,13 +256,8 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private OperationContext operationContextWithAdditionalTimeout(final OperationContext originalOperationContext) {
-            TimeoutContext timeoutContext = originalOperationContext.getTimeoutContext();
-            if (timeoutContext.getReadTimeoutMS() == 0) {
-                return originalOperationContext;
-            }
-
-            TimeoutContext newTimeoutContext =
-                    timeoutContext.withAdditionalReadTimeout(Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+            TimeoutContext newTimeoutContext = originalOperationContext.getTimeoutContext()
+                            .withAdditionalReadTimeout(Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
             return originalOperationContext.withTimeoutContext(newTimeoutContext);
         }
 

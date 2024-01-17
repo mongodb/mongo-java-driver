@@ -23,6 +23,7 @@ import com.mongodb.lang.Nullable;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -175,18 +176,16 @@ public class TimeoutContext {
     }
 
     public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {
+        // Only used outside timeoutMS usage
+        assertNull(timeout);
+
         // Check existing read timeout is infinite
-        if (getReadTimeoutMS() == 0) {
+        if (timeoutSettings.getReadTimeoutMS() == 0) {
             return this;
         }
 
         long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
-        newReadTimeout = newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE;
-        if (timeout != null) {
-            return new TimeoutContext(timeoutSettings.withTimeoutMS(newReadTimeout));
-        } else {
-            return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout));
-        }
+        return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE));
     }
 
     private long timeoutRemainingMS() {

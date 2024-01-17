@@ -164,6 +164,10 @@ final class TimeoutContextTest {
                 )),
                 dynamicTest("withAdditionalReadTimeout works as expected", () -> assertAll(
                         () -> {
+                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(0));
+                            assertEquals(0L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
+                        },
+                        () -> {
                             TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(10_000L));
                             assertEquals(10_101L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
                         },
@@ -173,17 +177,12 @@ final class TimeoutContextTest {
                             assertEquals(Long.MAX_VALUE, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
                         },
                         () -> {
+                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L));
+                            assertThrows(AssertionError.class, () -> timeoutContext.withAdditionalReadTimeout(1));
+                        },
+                        () -> {
                             TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(10_000L));
-                            long readTimeoutMS = timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS();
-                            assertTrue(10_101L >= readTimeoutMS && readTimeoutMS > 10_000L);
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(0));
-                            assertEquals(0L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0));
-                            assertEquals(0L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
+                            assertThrows(AssertionError.class, () -> timeoutContext.withAdditionalReadTimeout(1));
                         }
                 )),
                 dynamicTest("Expired works as expected", () -> {
