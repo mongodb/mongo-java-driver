@@ -19,7 +19,7 @@ package com.mongodb;
 /**
  * This exception is thrown when there is a timeout writing a response from the socket.
  *
- * @since 4.x
+ * @since CSOT
  */
 public class MongoSocketWriteTimeoutException extends MongoSocketException {
 

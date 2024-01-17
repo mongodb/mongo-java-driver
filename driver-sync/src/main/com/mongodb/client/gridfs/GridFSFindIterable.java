@@ -136,7 +136,7 @@ public interface GridFSFindIterable extends MongoIterable<GridFSFile> {
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     GridFSFindIterable timeoutMode(TimeoutMode timeoutMode);
 }

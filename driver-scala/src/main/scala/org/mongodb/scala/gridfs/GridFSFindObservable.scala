@@ -135,7 +135,7 @@ case class GridFSFindObservable(private val wrapped: GridFSFindPublisher) extend
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since 4.x
+   * @since CSOT
    */
   def timeoutMode(timeoutMode: TimeoutMode): GridFSFindObservable = {
     wrapped.timeoutMode(timeoutMode)

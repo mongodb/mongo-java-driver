@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @see MongoClientSettings.Builder#timeout(long, TimeUnit)
  * @see MongoClientSettings#getTimeout(TimeUnit)
- * @since 4.x
+ * @since CSOT
  */
 public final class MongoOperationTimeoutException extends MongoTimeoutException {
     private static final long serialVersionUID = 1L;

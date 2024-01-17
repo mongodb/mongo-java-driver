@@ -43,7 +43,7 @@ public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): DistinctIterable<T> {
         wrapped.timeoutMode(timeoutMode)

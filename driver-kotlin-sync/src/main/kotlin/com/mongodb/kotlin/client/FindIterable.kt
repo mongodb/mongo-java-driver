@@ -51,7 +51,7 @@ public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : Mong
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): FindIterable<T> {
         wrapped.timeoutMode(timeoutMode)

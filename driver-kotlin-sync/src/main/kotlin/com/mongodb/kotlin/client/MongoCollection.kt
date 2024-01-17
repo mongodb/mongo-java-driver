@@ -101,7 +101,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * - `> 0` The time limit to use for the full execution of an operation.
      *
      * @return the optional timeout duration
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
@@ -177,7 +177,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return a new MongoCollection instance with the set time limit for operations
      * @see [MongoCollection.timeout]
-     * @since 4.x
+     * @since CSOT
      */
     public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCollection<T> =
         MongoCollection(wrapped.withTimeout(timeout, timeUnit))

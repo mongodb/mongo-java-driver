@@ -357,7 +357,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since 4.x
+   * @since CSOT
    */
   def timeoutMode(timeoutMode: TimeoutMode): FindObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)

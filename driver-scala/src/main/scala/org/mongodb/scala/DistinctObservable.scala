@@ -128,7 +128,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since 4.x
+   * @since CSOT
    */
   def timeoutMode(timeoutMode: TimeoutMode): DistinctObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)

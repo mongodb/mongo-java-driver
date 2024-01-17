@@ -49,7 +49,7 @@ public class ListDatabasesFlow<T : Any>(private val wrapped: ListDatabasesPublis
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since 4.x
+     * @since CSOT
      */
     public fun timeoutMode(timeoutMode: TimeoutMode): ListDatabasesFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 

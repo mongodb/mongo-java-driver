@@ -36,7 +36,7 @@ public class MongoTimeoutException extends MongoClientException {
      * Construct a new instance
      * @param message the message
      * @param cause the cause
-     * @since 4.x
+     * @since CSOT
      */
     public MongoTimeoutException(final String message, final Throwable cause) {
         super(message, cause);
