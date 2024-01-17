@@ -19,6 +19,7 @@ package com.mongodb.client.unified;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSFindIterable;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.internal.HexUtils;
 import org.bson.BsonDocument;
@@ -37,10 +38,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.unified.UnifiedTestUtils.getAndRemoveTimeoutMS;
 import static java.util.Objects.requireNonNull;
 
-final class UnifiedGridFSHelper {
+final class UnifiedGridFSHelper extends UnifiedHelper{
     private final Entities entities;
 
     UnifiedGridFSHelper(final Entities entities) {
@@ -50,15 +50,22 @@ final class UnifiedGridFSHelper {
     public OperationResult executeFind(final BsonDocument operation) {
         GridFSFindIterable iterable = createGridFSFindIterable(operation);
         try {
-             iterable.into(new ArrayList<>());
-            return OperationResult.NONE; // we don't expect results in the tests.
+            ArrayList<GridFSFile> target = new ArrayList<>();
+            iterable.into(target);
+
+            if (target.isEmpty()) {
+                return OperationResult.NONE;
+            }
+
+            throw new UnsupportedOperationException("expectResult is not implemented for Unified GridFS tests. "
+                    + "Unexpected result: " + target);
         } catch (Exception e) {
             return OperationResult.of(e);
         }
     }
 
     public OperationResult executeRename(final BsonDocument operation) {
-        GridFSBucket bucket = getGirdFsBucket(operation);
+        GridFSBucket bucket = getGridFsBucket(operation);
         BsonDocument arguments = operation.getDocument("arguments");
         BsonValue id = arguments.get("id");
         String fileName = arguments.get("newFilename").asString().getValue();
@@ -75,7 +82,7 @@ final class UnifiedGridFSHelper {
     }
 
     OperationResult executeDelete(final BsonDocument operation) {
-        GridFSBucket bucket = getGirdFsBucket(operation);
+        GridFSBucket bucket = getGridFsBucket(operation);
 
         BsonDocument arguments = operation.getDocument("arguments");
         BsonValue id = arguments.get("id");
@@ -95,7 +102,7 @@ final class UnifiedGridFSHelper {
     }
 
     public OperationResult executeDrop(final BsonDocument operation) {
-        GridFSBucket bucket = getGirdFsBucket(operation);
+        GridFSBucket bucket = getGridFsBucket(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         if (arguments.size() > 0) {
             throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
@@ -110,7 +117,7 @@ final class UnifiedGridFSHelper {
     }
 
     public OperationResult executeDownload(final BsonDocument operation) {
-        GridFSBucket bucket = getGirdFsBucket(operation);
+        GridFSBucket bucket = getGridFsBucket(operation);
 
         BsonDocument arguments = operation.getDocument("arguments");
         BsonValue id = arguments.get("id");
@@ -165,7 +172,7 @@ final class UnifiedGridFSHelper {
     }
 
     public OperationResult executeUpload(final BsonDocument operation) {
-        GridFSBucket bucket = getGirdFsBucket(operation);
+        GridFSBucket bucket = getGridFsBucket(operation);
 
         BsonDocument arguments = operation.getDocument("arguments");
         String filename = null;
@@ -212,7 +219,7 @@ final class UnifiedGridFSHelper {
         return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
     }
 
-    private GridFSBucket getGirdFsBucket(final BsonDocument operation) {
+    private GridFSBucket getGridFsBucket(final BsonDocument operation) {
         GridFSBucket bucket = entities.getBucket(operation.getString("object").getValue());
         Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments", new BsonDocument()));
         if (timeoutMS != null) {
@@ -222,7 +229,7 @@ final class UnifiedGridFSHelper {
     }
 
     private GridFSFindIterable createGridFSFindIterable(final BsonDocument operation) {
-        GridFSBucket bucket = getGirdFsBucket(operation);
+        GridFSBucket bucket = getGridFsBucket(operation);
 
         BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument filter = arguments.getDocument("filter");

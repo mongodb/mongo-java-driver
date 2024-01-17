@@ -33,7 +33,9 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.test.FlakyTest;
@@ -43,6 +45,7 @@ import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.ObjectId;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -68,6 +71,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -84,18 +88,25 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @SuppressWarnings("checkstyle:VisibilityModifier")
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
+    private static final String GRID_FS_BUCKET_NAME = "db.fs";
+    private static final String GRID_FS_COLLECTION_NAME_CHUNKS = GRID_FS_BUCKET_NAME + ".chunks";
+    private static final String GRID_FS_COLLECTION_NAME_FILE = GRID_FS_BUCKET_NAME + ".files";
     private static final AtomicInteger COUNTER = new AtomicInteger();
-    protected static final String GRID_FS_BUCKET_NAME = "db.fs";
+
     private MongoNamespace namespace;
     protected MongoNamespace gridFsFileNamespace;
     protected MongoNamespace gridFsChunksNamespace;
 
-    protected TestCommandListener commandListener;
-    protected CollectionHelper<BsonDocument> collectionHelper;
-    protected CollectionHelper<BsonDocument> filesCollectionHelper;
-    protected CollectionHelper<BsonDocument> chunksCollectionHelper;
+    @Nullable
+    private CollectionHelper<BsonDocument> collectionHelper;
+    private CollectionHelper<BsonDocument> filesCollectionHelper;
+    private CollectionHelper<BsonDocument> chunksCollectionHelper;
+
+    private TestCommandListener commandListener;
+
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
-    protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
+
+    protected abstract boolean isAsync();
 
     @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
@@ -207,8 +218,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    protected abstract boolean isAsync();
-
     @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
@@ -240,7 +249,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertThrows(MongoOperationTimeoutException.class, cursor::next);
             }
 
-            List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandSucceededEvent> events = commandListener.getCommandSucceededEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
             long getMoreCount = events.stream().filter(e -> e.getCommandName().equals("getMore")).count();
             assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);
@@ -288,7 +297,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertEquals(1, fullDocument.get("x"));
                 assertThrows(MongoOperationTimeoutException.class, cursor::next);
             }
-            List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandSucceededEvent> events = commandListener.getCommandSucceededEvents();
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("aggregate")).count());
             long getMoreCount = events.stream().filter(e -> e.getCommandName().equals("getMore")).count();
             assertTrue(getMoreCount <= 2, "getMoreCount expected to less than or equal to two but was: " +  getMoreCount);

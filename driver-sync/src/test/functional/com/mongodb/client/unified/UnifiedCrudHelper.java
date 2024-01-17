@@ -109,7 +109,7 @@ import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
-final class UnifiedCrudHelper {
+final class UnifiedCrudHelper extends UnifiedHelper {
     private final Entities entities;
     private final String testDescription;
     private final AtomicInteger uniqueIdGenerator = new AtomicInteger();
@@ -1733,7 +1733,6 @@ final class UnifiedCrudHelper {
         }
         return collection;
     }
-
     private MongoDatabase getMongoDatabase(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
         if (operation.containsKey("arguments")) {

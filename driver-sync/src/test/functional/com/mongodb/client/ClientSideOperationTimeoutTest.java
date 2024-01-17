@@ -86,12 +86,24 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("legacy timeouts behave correctly for retryable operations"));
 
         assumeFalse("TODO (CSOT) - JAVA-4063", testDescription.contains("RTT"));
-        assumeFalse("TODO (CSOT) - JAVA-4059", fileDescription.contains("GridFS"));
 
         assumeFalse("TODO (CSOT) - JAVA-5248",
                 fileDescription.equals("MaxTimeMSExpired server errors are transformed into a custom timeout error"));
 
         assumeFalse("TODO (CSOT) - JAVA-4062", testDescription.contains("wTimeoutMS is ignored"));
+
+
+        if (fileDescription.contains("GridFS")) { //TODO (CSOT) - JAVA-4057
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("chunk insertion"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("creation of files document"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("delete against the files collection"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("delete against the chunks collection"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("overridden for a rename"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("update during a rename"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("collection drop"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("drop as a whole"));
+            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("entire delete"));
+        }
 
         assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.equals("maxTimeMS value in the command is less than timeoutMS"));
         assumeFalse("TODO (CSOT) - JAVA-4057", fileDescription.contains("bulkWrite") || testDescription.contains("bulkWrite"));
