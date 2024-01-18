@@ -183,6 +183,10 @@ final class TimeoutContextTest {
                         () -> {
                             TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(10_000L));
                             assertThrows(AssertionError.class, () -> timeoutContext.withAdditionalReadTimeout(1));
+                        },
+                        () -> {
+                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+                            assertThrows(AssertionError.class, () -> timeoutContext.withAdditionalReadTimeout(-101));
                         }
                 )),
                 dynamicTest("Expired works as expected", () -> {
