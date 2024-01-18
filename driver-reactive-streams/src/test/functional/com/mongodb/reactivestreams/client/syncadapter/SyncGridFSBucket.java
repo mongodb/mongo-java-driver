@@ -82,7 +82,7 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public Long getTimeout(final TimeUnit timeUnit) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return wrapped.getTimeout(timeUnit);
     }
 
     @Override
@@ -107,7 +107,7 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return new SyncGridFSBucket(wrapped.withTimeout(timeout, timeUnit));
     }
 
     @Override
@@ -208,7 +208,7 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public GridFSDownloadStream openDownloadStream(final BsonValue id) {
-        throw new UnsupportedOperationException();
+        return new SyncGridFSDownloadStream(wrapped.downloadToPublisher(id));
     }
 
     @Override
@@ -290,17 +290,17 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public GridFSFindIterable find(final Bson filter) {
-        throw new UnsupportedOperationException();
+        return new SyncGridFSFindIterable(wrapped.find(filter));
     }
 
     @Override
     public GridFSFindIterable find(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return new SyncGridFSFindIterable(wrapped.find(unwrap(clientSession)));
     }
 
     @Override
     public GridFSFindIterable find(final ClientSession clientSession, final Bson filter) {
-        throw new UnsupportedOperationException();
+        return new SyncGridFSFindIterable(wrapped.find(unwrap(clientSession), filter));
     }
 
     @Override
@@ -345,12 +345,16 @@ public class SyncGridFSBucket implements GridFSBucket {
 
     @Override
     public void drop() {
-        Mono.from(wrapped.drop()).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop())
+                .contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION);
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        Mono.from(wrapped.drop(unwrap(clientSession))).contextWrite(CONTEXT).block(TIMEOUT_DURATION);
+        Mono.from(wrapped.drop())
+                .contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION);
     }
 
     private void toOutputStream(final GridFSDownloadPublisher downloadPublisher, final OutputStream destination) {

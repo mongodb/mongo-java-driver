@@ -206,7 +206,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         int chunkSize = chunkSizeBytes == null ? this.chunkSizeBytes : chunkSizeBytes;
         checkCreateIndex(clientSession, operationTimeout);
         return new GridFSUploadStreamImpl(clientSession, filesCollection,
-               chunksCollection, id, filename, chunkSize,
+                chunksCollection, id, filename, chunkSize,
                 options.getMetadata(), operationTimeout);
     }
 
@@ -571,11 +571,11 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private <T> void createIndex(@Nullable final ClientSession clientSession, final MongoCollection<T> collection, final Document index,
                                  final IndexOptions indexOptions, final @Nullable Timeout operationTimeout) {
-       if (clientSession != null) {
-           withNullableTimeout(collection, operationTimeout).createIndex(clientSession, index, indexOptions);
-       } else {
-           withNullableTimeout(collection, operationTimeout).createIndex(index, indexOptions);
-       }
+        if (clientSession != null) {
+            withNullableTimeout(collection, operationTimeout).createIndex(clientSession, index, indexOptions);
+        } else {
+            withNullableTimeout(collection, operationTimeout).createIndex(index, indexOptions);
+        }
     }
 
     private GridFSFile getFileByName(@Nullable final ClientSession clientSession, final String filename,
@@ -653,8 +653,8 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     private static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
-                                                       @Nullable final Timeout timeout) {
-       return CollectionTimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
+                                                              @Nullable final Timeout timeout) {
+        return CollectionTimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
     }
 
     @Nullable
