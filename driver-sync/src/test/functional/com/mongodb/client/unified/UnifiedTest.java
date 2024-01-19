@@ -449,6 +449,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeCreateIndex(operation);
                 case "dropIndex":
                     return crudHelper.executeDropIndex(operation);
+                case "dropIndexes":
+                    return crudHelper.executeDropIndexes(operation);
                 case "startTransaction":
                     return crudHelper.executeStartTransaction(operation);
                 case "commitTransaction":
