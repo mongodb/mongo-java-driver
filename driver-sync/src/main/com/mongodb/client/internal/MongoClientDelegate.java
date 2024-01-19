@@ -161,6 +161,7 @@ final class MongoClientDelegate {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
+                System.err.println("READ BINDING TIMEOUT: " + binding.getOperationContext().getTimeoutContext());
                 return operation.execute(binding);
             } catch (MongoException e) {
                 labelException(actualClientSession, e);

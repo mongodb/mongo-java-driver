@@ -46,7 +46,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Tag;
@@ -105,9 +104,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected abstract boolean isAsync();
 
     @Tag("setsFailPoint")
-    @FlakyTest(maxAttempts = 3)
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
-    @Disabled("TODO (CSOT) - JAVA-4057")
+    @Test
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -118,11 +116,15 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 100)
+                + "    blockTimeMS: " + (rtt + 205)
                 + "  }"
                 + "}");
+
+        chunksCollectionHelper.create();
+        filesCollectionHelper.create();
+
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 95, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + 200, TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
@@ -134,9 +136,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @Tag("setsFailPoint")
-    @FlakyTest(maxAttempts = 3)
-    @Disabled("TODO (CSOT) - JAVA-4057")
     @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
+    @Test
     public void testAbortingGridFsUploadStreamTimeout() throws Throwable {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -147,11 +148,15 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"delete\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 100)
+                + "    blockTimeMS: " + (rtt + 305)
                 + "  }"
                 + "}");
+
+        chunksCollectionHelper.create();
+        filesCollectionHelper.create();
+
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 95, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
 
@@ -168,6 +173,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     public void testGridFsDownloadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
+
+        chunksCollectionHelper.create();
+        filesCollectionHelper.create();
 
         filesCollectionHelper.insertDocuments(singletonList(BsonDocument.parse(
                 "{"

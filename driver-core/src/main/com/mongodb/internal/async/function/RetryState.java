@@ -72,7 +72,10 @@ public final class RetryState {
      */
     public static RetryState withRetryableState(final int retries, final TimeoutContext timeoutContext) {
         assertTrue(retries > 0);
-        return new RetryState(retries, timeoutContext);
+        if (timeoutContext.hasTimeoutMS()){
+            return new RetryState(INFINITE_ATTEMPTS, timeoutContext);
+        }
+        return new RetryState(retries, null);
     }
 
     public static RetryState withNonRetryableState() {

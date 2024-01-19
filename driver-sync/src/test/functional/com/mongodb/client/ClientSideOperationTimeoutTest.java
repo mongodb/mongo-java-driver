@@ -41,6 +41,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
+        assumeFalse("No maxTimeMS parameter for createIndex() method", testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
         checkSkipCSOTTest(fileDescription, testDescription);
     }
 
@@ -77,7 +78,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("TODO (CSOT) - JAVA-5259 No client.withTimeout", testDescription.endsWith("on client"));
 
-        checkOperationSupportsMaxTimeMS(fileDescription, testDescription);
         checkTransactionSessionSupport(fileDescription, testDescription);
 
         assumeFalse("TODO (CSOT) - JAVA-4054", fileDescription.equals("timeoutMS behaves correctly for change streams"));
@@ -91,21 +91,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("TODO (CSOT) - JAVA-4062", testDescription.contains("wTimeoutMS is ignored"));
 
-
-        if (fileDescription.contains("GridFS")) { //TODO (CSOT) - JAVA-4057
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("chunk insertion"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("creation of files document"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("delete against the files collection"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("delete against the chunks collection"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("overridden for a rename"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("update during a rename"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("collection drop"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("drop as a whole"));
-            assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.contains("entire delete"));
-        }
-
-        assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.equals("maxTimeMS value in the command is less than timeoutMS"));
-        assumeFalse("TODO (CSOT) - JAVA-4057", fileDescription.contains("bulkWrite") || testDescription.contains("bulkWrite"));
+        assumeFalse("TODO (CSOT) - JAVA-4060", testDescription.contains("socketTimeoutMS is ignored"));
 
         // TEST BUGS / ISSUES
         assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",
@@ -119,11 +105,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
              testDescription.equals("timeoutMS can be overridden for close"));
     }
 
-    private static void checkOperationSupportsMaxTimeMS(final String fileDescription, final String testDescription) {
-        // TODO (CSOT) JAVA-4057 - check if maxTimeMS is set when using timeoutMS
-        assumeFalse("No maxTimeMS support", NO_MAX_TIME_MS_SUPPORT.stream().anyMatch(testDescription::endsWith));
-    }
-
     private static void checkTransactionSessionSupport(final String fileDescription, final String testDescription) {
         assumeFalse("TODO (CSOT) - JAVA-4066", fileDescription.contains("timeoutMS behaves correctly for the withTransaction API"));
         assumeFalse("TODO (CSOT) - JAVA-4067", testDescription.contains("Transaction"));
@@ -134,24 +115,4 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
     private static final List<String> RACY_GET_MORE_TESTS = asList(
             "remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime",
             "remaining timeoutMS applied to getMore if timeoutMode is unset");
-
-    private static final List<String> NO_MAX_TIME_MS_SUPPORT = asList(
-            "createIndex on collection",
-            "deleteMany on collection",
-            "deleteOne on collection",
-            "distinct on collection",
-            "dropIndex on collection",
-            "dropIndexes on collection",
-            "dropIndexes on collection",
-            "findOneAndDelete on collection",
-            "findOneAndReplace on collection",
-            "findOneAndUpdate on collection",
-            "insertMany on collection",
-            "insertOne on collection",
-            "listIndexNames on collection",
-            "listIndexes on collection",
-            "replaceOne on collection",
-            "updateMany on collection",
-            "updateOne on collection"
-    );
 }
