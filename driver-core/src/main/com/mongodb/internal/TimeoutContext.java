@@ -108,7 +108,7 @@ public class TimeoutContext {
         return Optional.empty();
     }
 
-    public boolean hasTimedOutForCommandExecution() {
+    private boolean hasTimedOutForCommandExecution() {
         if (timeout == null || timeout.isInfinite()) {
             return false;
         }
@@ -252,7 +252,7 @@ public class TimeoutContext {
         return null;
     }
 
-    public Timeout startServerSelectionTimeout() {
+    public Timeout computedServerSelectionTimeout() {
         long ms = getTimeoutSettings().getServerSelectionTimeoutMS();
         Timeout serverSelectionTimeout = StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
         return serverSelectionTimeout.orEarlier(timeout);

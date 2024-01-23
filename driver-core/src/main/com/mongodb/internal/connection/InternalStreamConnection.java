@@ -407,7 +407,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        validateHasTimedOut(operationContext).ifPresent(e -> {
+        operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
             throw e;
         });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
@@ -547,17 +547,9 @@ public class InternalStreamConnection implements InternalConnection {
         });
     }
 
-
-    private Optional<MongoOperationTimeoutException> validateHasTimedOut(final OperationContext operationContext) {
-        if (operationContext.getTimeoutContext().hasTimedOutForCommandExecution()) {
-            return Optional.of(TimeoutContext.createMongoTimeoutException());
-        }
-        return Optional.empty();
-    }
-
     private Optional<MongoOperationTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
-        return validateHasTimedOut(operationContext).map(e -> {
+        return operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().map(e -> {
             close();
             commandEventSender.sendFailedEvent(e);
             return e;
