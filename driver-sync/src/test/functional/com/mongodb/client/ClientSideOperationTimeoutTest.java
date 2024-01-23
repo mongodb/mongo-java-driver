@@ -104,6 +104,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.equals("maxTimeMS value in the command is less than timeoutMS"));
         assumeFalse("TODO (CSOT) - JAVA-4057", fileDescription.contains("bulkWrite") || testDescription.contains("bulkWrite"));
+        assumeFalse("TODO (CSOT) - JAVA-4057", testDescription.equals("short-circuit is not enabled with only 1 RTT measurement"));
 
         // TEST BUGS / ISSUES
         assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",

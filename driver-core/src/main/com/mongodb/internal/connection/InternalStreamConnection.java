@@ -341,6 +341,9 @@ public class InternalStreamConnection implements InternalConnection {
         CommandEventSender commandEventSender;
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
+            operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
+                throw e;
+            });
             message.encode(bsonOutput, operationContext.getSessionContext());
             commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
             commandEventSender.sendStartedEvent();
