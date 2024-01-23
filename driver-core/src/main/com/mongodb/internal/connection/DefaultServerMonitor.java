@@ -437,9 +437,10 @@ class DefaultServerMonitor implements ServerMonitor {
 
         private void pingServer(final InternalConnection connection) {
             long start = System.nanoTime();
+            OperationContext operationContext = operationContextFactory.create();
             executeCommand("admin",
                     new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
-                    clusterConnectionMode, serverApi, connection);
+                    clusterConnectionMode, serverApi, connection, operationContext);
             long elapsedTimeNanos = System.nanoTime() - start;
             roundTripTimeSampler.addSample(elapsedTimeNanos);
         }

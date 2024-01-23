@@ -98,10 +98,10 @@ class InternalStreamConnectionSpecification extends Specification {
         create(_) >> { stream }
     }
     def initializer = Mock(InternalConnectionInitializer) {
-        startHandshake(_) >> { internalConnectionInitializationDescription }
-        finishHandshake(_, _) >> { internalConnectionInitializationDescription }
-        startHandshakeAsync(_, _) >> { it[1].onResult(internalConnectionInitializationDescription, null) }
-        finishHandshakeAsync(_, _, _) >> { it[2].onResult(internalConnectionInitializationDescription, null) }
+        startHandshake(_, _) >> { internalConnectionInitializationDescription }
+        finishHandshake(_, _, _) >> { internalConnectionInitializationDescription }
+        startHandshakeAsync(_, _, _) >> { it[2].onResult(internalConnectionInitializationDescription, null) }
+        finishHandshakeAsync(_, _, _, _) >> { it[3].onResult(internalConnectionInitializationDescription, null) }
     }
 
     def getConnection() {
@@ -168,7 +168,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when initialization throws an exception'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
-            startHandshake(_) >> { throw new MongoInternalException('Something went wrong') }
+            startHandshake(_, _) >> { throw new MongoInternalException('Something went wrong') }
         }
         def connection = new InternalStreamConnection(SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(), streamFactory, [], null,
                 failedInitializer)
@@ -185,7 +185,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when initialization throws an exception asynchronously'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
-            startHandshakeAsync(_, _) >> { it[1].onResult(null, new MongoInternalException('Something went wrong')) }
+            startHandshakeAsync(_, _, _) >> { it[2].onResult(null, new MongoInternalException('Something went wrong')) }
         }
         def connection = new InternalStreamConnection(SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(), streamFactory, [], null,
                 failedInitializer)
