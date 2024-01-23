@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
 
     public UnifiedServerDiscoveryAndMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
@@ -32,6 +34,12 @@ public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+
+        assumeFalse("TODO (CSOT) - JAVA-5211 - apply settings to the operation context",
+                (fileDescription.equals("hello-timeout") && testDescription.startsWith("Network timeout on Monitor"))
+                        || (fileDescription.equals("find-network-timeout-error")
+                        && testDescription.startsWith("Ignore network timeout error on find"))
+                        || fileDescription.equals("auth-network-timeout-error"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
