@@ -45,15 +45,15 @@ public class OperationContext {
 
     public static OperationContext todoOperationContext() {
         // TODO (CSOT) - JAVA-4055 : should be removed during crypt work
-        return nonUserOperationContext(TimeoutSettings.DEFAULT, null);
+        return simpleOperationContext(TimeoutSettings.DEFAULT, null);
     }
 
-    public static OperationContext nonUserOperationContext(
+    public static OperationContext simpleOperationContext(
             final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
         return new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
-                new TimeoutContext(timeoutSettings.connectionOnly()),
+                new TimeoutContext(timeoutSettings),
                 serverApi);
     }
 

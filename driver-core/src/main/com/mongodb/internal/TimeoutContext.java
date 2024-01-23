@@ -21,6 +21,7 @@ import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
@@ -34,6 +35,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class TimeoutContext {
 
+    private final boolean isMaintenanceContext;
     private final TimeoutSettings timeoutSettings;
 
     @Nullable
@@ -55,11 +57,16 @@ public class TimeoutContext {
         return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage());
     }
 
-    public TimeoutContext(final TimeoutSettings timeoutSettings) {
-        this(timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
+    public static TimeoutContext createMaintenanceTimeoutContext(final TimeoutSettings timeoutSettings) {
+        return new TimeoutContext(true, timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
     }
 
-    TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+    public TimeoutContext(final TimeoutSettings timeoutSettings) {
+        this(false, timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
+    }
+
+    TimeoutContext(final boolean isMaintenanceContext, final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+        this.isMaintenanceContext = isMaintenanceContext;
         this.timeoutSettings = timeoutSettings;
         this.timeout = timeout;
     }
@@ -92,6 +99,13 @@ public class TimeoutContext {
         isTrue("'minRoundTripTimeMS' must be a positive number", minRoundTripTimeMS >= 0);
         this.minRoundTripTimeMS = minRoundTripTimeMS;
         return this;
+    }
+
+    public Optional<MongoOperationTimeoutException> validateHasTimedOutForCommandExecution() {
+        if (hasTimedOutForCommandExecution()) {
+            return Optional.of(createMongoTimeoutException());
+        }
+        return Optional.empty();
     }
 
     public boolean hasTimedOutForCommandExecution() {
@@ -173,6 +187,15 @@ public class TimeoutContext {
     public void resetTimeout() {
         assertNotNull(timeout);
         timeout = calculateTimeout(timeoutSettings.getTimeoutMS());
+    }
+
+    /**
+     * Resest the timeout if this timeout context is being used by pool maintenance
+     */
+    public void resetMaintenanceTimeout() {
+        if (isMaintenanceContext && timeout != null && !timeout.isInfinite()) {
+            timeout = calculateTimeout(timeoutSettings.getTimeoutMS());
+        }
     }
 
     public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {

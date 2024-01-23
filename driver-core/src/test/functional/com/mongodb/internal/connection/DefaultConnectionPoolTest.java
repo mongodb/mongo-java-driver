@@ -60,7 +60,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_SUPPLIER;
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
 import static java.lang.Long.MAX_VALUE;
@@ -116,7 +116,7 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
         TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS.withMaxWaitTimeMS(50);
         provider.get(createOperationContext(timeoutSettings));
@@ -137,7 +137,7 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.close();
 
         String expectedExceptionMessage = "The server at 127.0.0.1:27017 is no longer available";
@@ -159,7 +159,7 @@ public class DefaultConnectionPoolTest {
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(50, MILLISECONDS)
                         .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
 
         // when
@@ -180,7 +180,7 @@ public class DefaultConnectionPoolTest {
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
                         .maxConnectionLifeTime(20, MILLISECONDS).build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
 
         // when
@@ -201,7 +201,7 @@ public class DefaultConnectionPoolTest {
                         .maxSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionIdleTime(50, MILLISECONDS).build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
 
         // when
@@ -223,7 +223,7 @@ public class DefaultConnectionPoolTest {
                         .maxSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(20, MILLISECONDS).build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
 
         // when
@@ -245,7 +245,7 @@ public class DefaultConnectionPoolTest {
                         .maxSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(20, MILLISECONDS).build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
 
         // when
@@ -269,7 +269,7 @@ public class DefaultConnectionPoolTest {
                         .maxConnectionLifeTime(1, MILLISECONDS)
                         .maintenanceInitialDelay(5, MINUTES)
                         .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
         provider.get(OPERATION_CONTEXT).close();
 
@@ -286,7 +286,7 @@ public class DefaultConnectionPoolTest {
     void infiniteMaxSize() {
         int defaultMaxSize = ConnectionPoolSettings.builder().build().getMaxSize();
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                ConnectionPoolSettings.builder().maxSize(0).build(), EmptyProvider.instance(), OPERATION_CONTEXT_SUPPLIER);
+                ConnectionPoolSettings.builder().maxSize(0).build(), EmptyProvider.instance(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
         List<InternalConnection> connections = new ArrayList<>();
         try {
@@ -322,7 +322,7 @@ public class DefaultConnectionPoolTest {
                     .maxConnectionLifeTime(limitConnectionLifeIdleTime ? 350 : 0, MILLISECONDS)
                     .maxConnectionIdleTime(limitConnectionLifeIdleTime ? 50 : 0, MILLISECONDS)
                     .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
         assertUseConcurrently(provider, concurrentUsersCount,
                 checkoutSync, checkoutAsync,
@@ -357,7 +357,7 @@ public class DefaultConnectionPoolTest {
                     .addConnectionPoolListener(listener)
                     .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                     .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
         TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS.withMaxWaitTimeMS(TEST_WAIT_TIMEOUT_MILLIS);
         acquireOpenPermits(provider, DEFAULT_MAX_CONNECTING, InfiniteCheckoutEmulation.INFINITE_CALLBACK,
@@ -396,7 +396,7 @@ public class DefaultConnectionPoolTest {
                     .addConnectionPoolListener(listener)
                     .maintenanceInitialDelay(MAX_VALUE, NANOSECONDS)
                     .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
         List<InternalConnection> connections = new ArrayList<>();
         for (int i = 0; i < openConnectionsCount; i++) {
@@ -454,7 +454,7 @@ public class DefaultConnectionPoolTest {
                 SERVER_ID,
                 connectionFactory,
                 ConnectionPoolSettings.builder().maxSize(1).build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.close();
         provider.ready();
     }
@@ -465,7 +465,7 @@ public class DefaultConnectionPoolTest {
                 SERVER_ID,
                 connectionFactory,
                 ConnectionPoolSettings.builder().maxSize(1).build(),
-                mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
         provider.close();
         provider.invalidate(null);
@@ -479,7 +479,7 @@ public class DefaultConnectionPoolTest {
                     SERVER_ID,
                     connectionFactory,
                     ConnectionPoolSettings.builder().maxSize(1).build(),
-                    mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER);
+                    mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
             try {
                 readyAndInvalidateResult = cachedExecutor.submit(() -> {
                     provider.ready();
