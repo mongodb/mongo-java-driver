@@ -171,16 +171,16 @@ public class SocketStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
-        int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
-        if (readTimeoutMS > 0) {
-            socket.setSoTimeout(readTimeoutMS);
-        }
         try {
             ByteBuf buffer = bufferProvider.getBuffer(numBytes);
             try {
                 int totalBytesRead = 0;
                 byte[] bytes = buffer.array();
                 while (totalBytesRead < buffer.limit()) {
+                    int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
+                    if (readTimeoutMS > 0) {
+                        socket.setSoTimeout(readTimeoutMS);
+                    }
                     int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
                     if (bytesRead == -1) {
                         throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
