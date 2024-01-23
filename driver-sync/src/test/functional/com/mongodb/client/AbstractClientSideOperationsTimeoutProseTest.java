@@ -20,7 +20,6 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.CursorType;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
@@ -36,12 +35,8 @@ import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
-import com.mongodb.event.ConnectionClosedEvent;
-import com.mongodb.event.ConnectionCreatedEvent;
-import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
-import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.test.FlakyTest;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -68,20 +63,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
-import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -112,80 +103,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
 
     protected abstract boolean isAsync();
-
-    @Tag("setsFailPoint")
-    @SuppressWarnings("try")
-    @FlakyTest(maxAttempts = 3)
-    @DisplayName("4. Background Connection Pooling - timeoutMS used for handshake commands")
-    public void testBackgroundConnectionPoolingTimeoutMSUsedForHandshakeCommands() {
-        assumeTrue(serverVersionAtLeast(4, 4));
-        assumeTrue(isAuthenticated());
-        assumeFalse(isServerlessTest());
-
-        collectionHelper.runAdminCommand("{"
-                + "    configureFailPoint: \"failCommand\","
-                + "    mode: {"
-                + "        times: 1"
-                + "    },"
-                + "    data: {"
-                + "        failCommands: [\"saslContinue\"],"
-                + "        blockConnection: true,"
-                + "        blockTimeMS: 150,"
-                + "        appName: \"timeoutBackgroundPoolTest\""
-                + "    }"
-                + "}");
-
-        TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener();
-
-        try (MongoClient ignoredClient = createMongoClient(getMongoClientSettingsBuilder()
-                .applicationName("timeoutBackgroundPoolTest")
-                .applyToConnectionPoolSettings(builder -> {
-                    builder.minSize(1);
-                    builder.addConnectionPoolListener(connectionPoolListener);
-                })
-                .timeout(100, TimeUnit.MILLISECONDS))) {
-
-            assertDoesNotThrow(() ->
-                    connectionPoolListener.waitForEvents(asList(ConnectionCreatedEvent.class, ConnectionClosedEvent.class),
-                            10, TimeUnit.SECONDS));
-        }
-    }
-
-    @Tag("setsFailPoint")
-    @SuppressWarnings("try")
-    @FlakyTest(maxAttempts = 3)
-    @DisplayName("4. Background Connection Pooling - timeoutMS is refreshed for each handshake command")
-    public void testBackgroundConnectionPoolingTimeoutMSIsRefreshedForEachHandshakeCommand() {
-        assumeTrue(serverVersionAtLeast(4, 4));
-        assumeTrue(isAuthenticated());
-        assumeFalse(isServerlessTest());
-
-        collectionHelper.runAdminCommand("{"
-                + "    configureFailPoint: \"failCommand\","
-                + "    mode: \"alwaysOn\","
-                + "    data: {"
-                + "        failCommands: [\"hello\", \"isMaster\", \"saslContinue\"],"
-                + "        blockConnection: true,"
-                + "        blockTimeMS: 150,"
-                + "        appName: \"refreshTimeoutBackgroundPoolTest\""
-                + "    }"
-                + "}");
-
-        TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener();
-
-        try (MongoClient ignoredClient = createMongoClient(getMongoClientSettingsBuilder()
-                .applicationName("refreshTimeoutBackgroundPoolTest")
-                .applyToConnectionPoolSettings(builder -> {
-                    builder.minSize(1);
-                    builder.addConnectionPoolListener(connectionPoolListener);
-                })
-                .timeout(250, TimeUnit.MILLISECONDS))) {
-
-            assertDoesNotThrow(() ->
-                    connectionPoolListener.waitForEvents(asList(ConnectionCreatedEvent.class, ConnectionReadyEvent.class),
-                            10, TimeUnit.SECONDS));
-        }
-    }
 
     @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
@@ -384,7 +301,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @DisplayName("8. Server Selection 1 / 2")
+    @DisplayName("8. Server Selection")
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("test8ServerSelectionArguments")
     public void test8ServerSelection(final String connectionString) {
@@ -406,48 +323,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
-    @DisplayName("8. Server Selection 2 / 2")
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("test8ServerSelectionHandshakeArguments")
-    public void test8ServerSelectionHandshake(final String ignoredTestName, final int timeoutMS, final int serverSelectionTimeoutMS) {
-        assumeTrue(serverVersionAtLeast(4, 4));
-        assumeTrue(isAuthenticated());
-        assumeFalse(isServerlessTest());
-
-        MongoCredential credential = getConnectionString().getCredential();
-        assertNotNull(credential);
-        assertNull(credential.getAuthenticationMechanism());
-
-        MongoNamespace namespace = generateNamespace();
-        collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
-        collectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
-                + "  mode: { times: 1 },"
-                + "  data: {"
-                + "    failCommands: [\"saslContinue\"],"
-                + "    blockConnection: true,"
-                + "    blockTimeMS: 150"
-                + "  }"
-                + "}");
-
-        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(timeoutMS, TimeUnit.MILLISECONDS)
-                .applyToClusterSettings(b -> b.serverSelectionTimeout(serverSelectionTimeoutMS, TimeUnit.MILLISECONDS))
-                .retryWrites(false))) {
-
-            long start = System.nanoTime();
-            assertThrows(MongoTimeoutException.class, () -> {
-                mongoClient.getDatabase(namespace.getDatabaseName())
-                        .getCollection(namespace.getCollectionName())
-                        .insertOne(new Document("x", 1));
-            });
-            long elapsed = msElapsedSince(start);
-            assertTrue(elapsed <= 200, "Took too long to time out, elapsedMS: " + elapsed);
-        }
-    }
-
-    private static Stream<Arguments> test8ServerSelectionArguments() {
+    static Stream<Arguments> test8ServerSelectionArguments() {
         return Stream.of(
                 Arguments.of(Named.of("serverSelectionTimeoutMS honored if timeoutMS is not set",
                         "mongodb://invalid/?serverSelectionTimeoutMS=10")),
@@ -461,12 +337,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         );
     }
 
-    private static Stream<Arguments> test8ServerSelectionHandshakeArguments() {
-        return Stream.of(
-                Arguments.of("timeoutMS honored for connection handshake commands if it's lower than serverSelectionTimeoutMS", 100, 200),
-                Arguments.of("serverSelectionTimeoutMS honored for connection handshake commands if it's lower than timeoutMS", 200, 100)
-        );
-    }
 
     private MongoNamespace generateNamespace() {
         return new MongoNamespace(getDefaultDatabaseName(),

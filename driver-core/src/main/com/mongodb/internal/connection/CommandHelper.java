@@ -47,23 +47,24 @@ public final class CommandHelper {
     static final String LEGACY_HELLO_LOWER = LEGACY_HELLO.toLowerCase(Locale.ROOT);
 
     static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
-            @Nullable final ServerApi serverApi, final InternalConnection internalConnection, final OperationContext operationContext) {
-        return sendAndReceive(database, command, clusterConnectionMode, serverApi, internalConnection, operationContext);
+                                       @Nullable final ServerApi serverApi, final InternalConnection internalConnection) {
+        return sendAndReceive(database, command, clusterConnectionMode, serverApi, internalConnection);
     }
 
     static BsonDocument executeCommandWithoutCheckingForFailure(final String database, final BsonDocument command,
-            final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi,
-            final InternalConnection internalConnection, final OperationContext operationContext) {
+                                                                final ClusterConnectionMode clusterConnectionMode,
+                                                                @Nullable final ServerApi serverApi,
+                                                                final InternalConnection internalConnection) {
         try {
-            return executeCommand(database, command, clusterConnectionMode, serverApi, internalConnection, operationContext);
+            return sendAndReceive(database, command, clusterConnectionMode, serverApi, internalConnection);
         } catch (MongoServerException e) {
             return new BsonDocument();
         }
     }
 
     static void executeCommandAsync(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
-            @Nullable final ServerApi serverApi, final InternalConnection internalConnection, final OperationContext operationContext,
-            final SingleResultCallback<BsonDocument> callback) {
+                                    @Nullable final ServerApi serverApi, final InternalConnection internalConnection,
+                                    final SingleResultCallback<BsonDocument> callback) {
         internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
                 new BsonDocumentCodec(), createOperationContext(NoOpSessionContext.INSTANCE, serverApi),
                 (result, t) -> {
@@ -97,12 +98,11 @@ public final class CommandHelper {
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
                                                final ClusterConnectionMode clusterConnectionMode,
                                                @Nullable final ServerApi serverApi,
-                                               final InternalConnection internalConnection,
-                                               final OperationContext operationContext) {
+                                               final InternalConnection internalConnection) {
             return assertNotNull(
                     internalConnection.sendAndReceive(
                             getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
-                            new BsonDocumentCodec(), operationContext)
+                            new BsonDocumentCodec(), createOperationContext(NoOpSessionContext.INSTANCE, serverApi))
             );
     }
 

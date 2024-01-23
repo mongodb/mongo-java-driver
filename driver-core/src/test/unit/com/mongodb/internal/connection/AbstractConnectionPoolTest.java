@@ -79,7 +79,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_SUPPLIER;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -171,7 +171,7 @@ public abstract class AbstractConnectionPoolTest {
             case UNIT: {
                 ServerId serverId = new ServerId(new ClusterId(), new ServerAddress("host1"));
                 pool = new DefaultConnectionPool(serverId, new TestInternalConnectionFactory(), settings, internalSettings,
-                        SameObjectProvider.initialized(mock(SdamServerDescriptionManager.class)), OPERATION_CONTEXT_FACTORY);
+                        SameObjectProvider.initialized(mock(SdamServerDescriptionManager.class)), OPERATION_CONTEXT_SUPPLIER);
                 break;
             }
             case INTEGRATION: {
@@ -190,7 +190,7 @@ public abstract class AbstractConnectionPoolTest {
                                 new TestCommandListener(),
                                 ClusterFixture.getServerApi()
                         ),
-                        settings, internalSettings, sdamProvider, OPERATION_CONTEXT_FACTORY));
+                        settings, internalSettings, sdamProvider, OPERATION_CONTEXT_SUPPLIER));
                 sdamProvider.initialize(new DefaultSdamServerDescriptionManager(mockedCluster(), serverId, mock(ServerListener.class),
                         mock(ServerMonitor.class), pool, connectionMode));
                 setFailPoint();

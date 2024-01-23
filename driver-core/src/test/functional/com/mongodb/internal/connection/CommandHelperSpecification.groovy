@@ -59,7 +59,7 @@ class CommandHelperSpecification extends Specification {
         Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
         executeCommandAsync('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), getClusterConnectionMode(),
-                getServerApi(), connection, OPERATION_CONTEXT)
+                getServerApi(), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
         latch1.await()
 
@@ -71,7 +71,7 @@ class CommandHelperSpecification extends Specification {
         when:
         def latch2 = new CountDownLatch(1)
         executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), getClusterConnectionMode(),
-                getServerApi(), connection, OPERATION_CONTEXT)
+                getServerApi(), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch2.countDown() }
         latch2.await()
 

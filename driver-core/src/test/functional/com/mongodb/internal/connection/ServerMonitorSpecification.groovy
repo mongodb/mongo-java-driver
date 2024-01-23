@@ -34,7 +34,7 @@ import org.bson.types.ObjectId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_SUPPLIER
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
@@ -225,7 +225,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                         SocketSettings.builder().connectTimeout(500, TimeUnit.MILLISECONDS).build(), getSslSettings()),
                         getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null,
                         getServerApi()),
-                getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam), OPERATION_CONTEXT_FACTORY)
+                getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam), OPERATION_CONTEXT_SUPPLIER)
         serverMonitor.start()
         serverMonitor
     }

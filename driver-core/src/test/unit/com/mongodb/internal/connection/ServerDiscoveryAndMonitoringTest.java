@@ -122,7 +122,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
         if (expectedServerDescriptionDocument.isDocument("pool")) {
             int expectedGeneration = expectedServerDescriptionDocument.getDocument("pool").getNumber("generation").intValue();
-            Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().computedServerSelectionTimeout();
+            Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().startServerSelectionTimeout();
             DefaultServer server = (DefaultServer) getCluster().getServer(new ServerAddress(serverName), serverSelectionTimeout);
             assertEquals(expectedGeneration, server.getConnectionPool().getGeneration());
         }

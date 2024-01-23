@@ -39,7 +39,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_SUPPLIER
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
 
 @SuppressWarnings('BusyWait')
@@ -86,7 +86,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
                 internalConnectionFactory, ClusterConnectionMode.SINGLE, null, SameObjectProvider.initialized(sdam),
-                OPERATION_CONTEXT_FACTORY)
+                OPERATION_CONTEXT_SUPPLIER)
         monitor.start()
 
         when:
@@ -169,7 +169,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER)
 
         when:
         monitor.start()
@@ -248,7 +248,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider(), OPERATION_CONTEXT_SUPPLIER)
 
         when:
         monitor.start()

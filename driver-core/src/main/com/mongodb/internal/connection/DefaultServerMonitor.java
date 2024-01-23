@@ -46,6 +46,7 @@ import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
@@ -77,7 +78,7 @@ class DefaultServerMonitor implements ServerMonitor {
     @Nullable
     private final ServerApi serverApi;
     private final ServerSettings serverSettings;
-    private final InternalOperationContextFactory operationContextFactory;
+    private final Supplier<OperationContext> connectionOperationContextSupplier;
     private final ServerMonitorRunnable monitor;
     private final Thread monitorThread;
     private final RoundTripTimeRunnable roundTripTimeMonitor;
@@ -92,7 +93,7 @@ class DefaultServerMonitor implements ServerMonitor {
             final ClusterConnectionMode clusterConnectionMode,
             @Nullable final ServerApi serverApi,
             final Provider<SdamServerDescriptionManager> sdamProvider,
-            final InternalOperationContextFactory operationContextFactory) {
+            final Supplier<OperationContext> connectionOperationContextSupplier) {
         this.serverId = notNull("serverId", serverId);
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverMonitorListener = singleServerMonitorListener(serverSettings);
@@ -100,7 +101,7 @@ class DefaultServerMonitor implements ServerMonitor {
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
         this.sdamProvider = assertNotNull(sdamProvider);
-        this.operationContextFactory = assertNotNull(operationContextFactory);
+        this.connectionOperationContextSupplier = assertNotNull(connectionOperationContextSupplier);
         monitor = new ServerMonitorRunnable();
         monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
         monitorThread.setDaemon(true);
@@ -193,7 +194,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (connection == null || connection.isClosed()) {
                     currentCheckCancelled = false;
                     InternalConnection newConnection = internalConnectionFactory.create(serverId);
-                    newConnection.open(operationContextFactory.create());
+                    newConnection.open(connectionOperationContextSupplier.get());
                     connection = newConnection;
                     roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
                     return connection.getInitialServerDescription();
@@ -207,7 +208,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 long start = System.nanoTime();
                 try {
 
-                    OperationContext operationContext = operationContextFactory.create();
+                    OperationContext operationContext = connectionOperationContextSupplier.get();
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
@@ -431,16 +432,15 @@ class DefaultServerMonitor implements ServerMonitor {
         private void initialize() {
             connection = null;
             connection = internalConnectionFactory.create(serverId);
-            connection.open(operationContextFactory.create());
+            connection.open(connectionOperationContextSupplier.get());
             roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
         }
 
         private void pingServer(final InternalConnection connection) {
             long start = System.nanoTime();
-            OperationContext operationContext = operationContextFactory.create();
             executeCommand("admin",
                     new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
-                    clusterConnectionMode, serverApi, connection, operationContext);
+                    clusterConnectionMode, serverApi, connection);
             long elapsedTimeNanos = System.nanoTime() - start;
             roundTripTimeSampler.addSample(elapsedTimeNanos);
         }

@@ -202,10 +202,10 @@ public class InternalStreamConnection implements InternalConnection {
         try {
             stream.open(operationContext);
 
-            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
+            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
             initAfterHandshakeStart(initializationDescription);
 
-            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription, operationContext);
+            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
             initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
@@ -226,7 +226,7 @@ public class InternalStreamConnection implements InternalConnection {
 
                 @Override
                 public void completed(@Nullable final Void aVoid) {
-                    connectionInitializer.startHandshakeAsync(InternalStreamConnection.this, operationContext,
+                    connectionInitializer.startHandshakeAsync(InternalStreamConnection.this,
                             (initialResult, initialException) -> {
                                     if (initialException != null) {
                                         close();
@@ -235,7 +235,7 @@ public class InternalStreamConnection implements InternalConnection {
                                         assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
                                         connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, operationContext, (completedResult, completedException) ->  {
+                                                initialResult, (completedResult, completedException) ->  {
                                                         if (completedException != null) {
                                                             close();
                                                             callback.onResult(null, completedException);
@@ -407,7 +407,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
+        validateHasTimedOut(operationContext).ifPresent(e -> {
             throw e;
         });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
@@ -547,9 +547,17 @@ public class InternalStreamConnection implements InternalConnection {
         });
     }
 
+
+    private Optional<MongoOperationTimeoutException> validateHasTimedOut(final OperationContext operationContext) {
+        if (operationContext.getTimeoutContext().hasTimedOutForCommandExecution()) {
+            return Optional.of(TimeoutContext.createMongoTimeoutException());
+        }
+        return Optional.empty();
+    }
+
     private Optional<MongoOperationTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
-        return operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().map(e -> {
+        return validateHasTimedOut(operationContext).map(e -> {
             close();
             commandEventSender.sendFailedEvent(e);
             return e;

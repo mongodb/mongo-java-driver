@@ -81,7 +81,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     protected void applyApplicationError(final BsonDocument applicationError) {
-        Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().computedServerSelectionTimeout();
+        Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().startServerSelectionTimeout();
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
         int errorGeneration = applicationError.getNumber("generation",
                 new BsonInt32(((DefaultServer) getCluster().getServer(serverAddress, serverSelectionTimeout)).getConnectionPool().getGeneration())).intValue();

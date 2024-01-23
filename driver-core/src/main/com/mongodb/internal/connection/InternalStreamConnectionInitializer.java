@@ -72,29 +72,27 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     }
 
     @Override
-    public InternalConnectionInitializationDescription startHandshake(final InternalConnection internalConnection,
-                                                                      final OperationContext operationContext) {
+    public InternalConnectionInitializationDescription startHandshake(final InternalConnection internalConnection) {
         notNull("internalConnection", internalConnection);
 
-        return initializeConnectionDescription(internalConnection, operationContext);
+        return initializeConnectionDescription(internalConnection);
     }
 
     public InternalConnectionInitializationDescription finishHandshake(final InternalConnection internalConnection,
-                                                                       final InternalConnectionInitializationDescription description,
-                                                                       final OperationContext operationContext) {
+                                                                       final InternalConnectionInitializationDescription description) {
         notNull("internalConnection", internalConnection);
         notNull("description", description);
 
-        authenticate(internalConnection, description.getConnectionDescription(), operationContext);
-        return completeConnectionDescriptionInitialization(internalConnection, description, operationContext);
+        authenticate(internalConnection, description.getConnectionDescription());
+        return completeConnectionDescriptionInitialization(internalConnection, description);
     }
 
     @Override
-    public void startHandshakeAsync(final InternalConnection internalConnection, final OperationContext operationContext,
+    public void startHandshakeAsync(final InternalConnection internalConnection,
                                     final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
         long startTime = System.nanoTime();
         executeCommandAsync("admin", createHelloCommand(authenticator, internalConnection), clusterConnectionMode, serverApi,
-                internalConnection, operationContext, (helloResult, t) -> {
+                internalConnection, (helloResult, t) -> {
                     if (t != null) {
                         callback.onResult(null, t instanceof MongoException ? mapHelloException((MongoException) t) : t);
                     } else {
@@ -107,35 +105,31 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     @Override
     public void finishHandshakeAsync(final InternalConnection internalConnection,
                                      final InternalConnectionInitializationDescription description,
-                                     final OperationContext operationContext,
                                      final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
         if (authenticator == null || description.getConnectionDescription().getServerType()
                 == ServerType.REPLICA_SET_ARBITER) {
-            completeConnectionDescriptionInitializationAsync(internalConnection, description, operationContext, callback);
+            completeConnectionDescriptionInitializationAsync(internalConnection, description, callback);
         } else {
-            authenticator.authenticateAsync(internalConnection, description.getConnectionDescription(), operationContext,
+            authenticator.authenticateAsync(internalConnection, description.getConnectionDescription(),
                     (result1, t1) -> {
                         if (t1 != null) {
                             callback.onResult(null, t1);
                         } else {
-                            completeConnectionDescriptionInitializationAsync(internalConnection, description, operationContext, callback);
+                            completeConnectionDescriptionInitializationAsync(internalConnection, description, callback);
                         }
                     });
         }
     }
 
-    private InternalConnectionInitializationDescription initializeConnectionDescription(final InternalConnection internalConnection,
-            final OperationContext operationContext) {
+    private InternalConnectionInitializationDescription initializeConnectionDescription(final InternalConnection internalConnection) {
         BsonDocument helloResult;
         BsonDocument helloCommandDocument = createHelloCommand(authenticator, internalConnection);
 
         long start = System.nanoTime();
         try {
-            helloResult = executeCommand("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection, operationContext);
+            helloResult = executeCommand("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection);
         } catch (MongoException e) {
             throw mapHelloException(e);
-        } finally {
-            operationContext.getTimeoutContext().resetMaintenanceTimeout();
         }
         setSpeculativeAuthenticateResponse(helloResult);
         return createInitializationDescription(helloResult, internalConnection, start);
@@ -195,8 +189,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     private InternalConnectionInitializationDescription completeConnectionDescriptionInitialization(
             final InternalConnection internalConnection,
-            final InternalConnectionInitializationDescription description,
-            final OperationContext operationContext) {
+            final InternalConnectionInitializationDescription description) {
 
         if (description.getConnectionDescription().getConnectionId().getServerValue() != null) {
             return description;
@@ -204,14 +197,13 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
         return applyGetLastErrorResult(executeCommandWithoutCheckingForFailure("admin",
                 new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
-                internalConnection, operationContext),
+                internalConnection),
                 description);
     }
 
-    private void authenticate(final InternalConnection internalConnection, final ConnectionDescription connectionDescription,
-            final OperationContext operationContext) {
+    private void authenticate(final InternalConnection internalConnection, final ConnectionDescription connectionDescription) {
         if (authenticator != null && connectionDescription.getServerType() != ServerType.REPLICA_SET_ARBITER) {
-            authenticator.authenticate(internalConnection, connectionDescription, operationContext);
+            authenticator.authenticate(internalConnection, connectionDescription);
         }
     }
 
@@ -225,7 +217,6 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     private void completeConnectionDescriptionInitializationAsync(
             final InternalConnection internalConnection,
             final InternalConnectionInitializationDescription description,
-            final OperationContext operationContext,
             final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
 
         if (description.getConnectionDescription().getConnectionId().getServerValue() != null) {
@@ -234,7 +225,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         }
 
         executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
-                internalConnection, operationContext,
+                internalConnection,
                 (result, t) -> {
                     if (t != null) {
                         callback.onResult(description, null);

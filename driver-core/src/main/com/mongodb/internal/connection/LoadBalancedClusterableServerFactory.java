@@ -32,6 +32,7 @@ import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.mongodb.internal.event.EventListenerHelper.singleServerListener;
 
@@ -51,7 +52,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     private final MongoDriverInformation mongoDriverInformation;
     private final List<MongoCompressor> compressorList;
     private final ServerApi serverApi;
-    private final InternalOperationContextFactory operationContextFactory;
+    private final Supplier<OperationContext> connectionOperationContextSupplier;
 
     public LoadBalancedClusterableServerFactory(final ServerSettings serverSettings,
             final ConnectionPoolSettings connectionPoolSettings,
@@ -61,7 +62,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
             @Nullable final CommandListener commandListener,
             @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
-            final InternalOperationContextFactory operationContextFactory) {
+            final Supplier<OperationContext> connectionOperationContextSupplier) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
@@ -73,7 +74,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         this.mongoDriverInformation = mongoDriverInformation;
         this.compressorList = compressorList;
         this.serverApi = serverApi;
-        this.operationContextFactory = operationContextFactory;
+        this.connectionOperationContextSupplier = connectionOperationContextSupplier;
     }
 
     @Override
@@ -81,7 +82,7 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(cluster.getClusterId(), serverAddress),
                 new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
-                connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance(), operationContextFactory);
+                connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance(), connectionOperationContextSupplier);
         connectionPool.ready();
 
         return new LoadBalancedServer(new ServerId(cluster.getClusterId(), serverAddress), connectionPool, new DefaultConnectionFactory(),

@@ -122,13 +122,13 @@ abstract class BaseCluster implements Cluster {
 
         ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
         boolean selectionWaitingLogged = false;
-        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computedServerSelectionTimeout();
+        Timeout serverSelectionTimeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
         logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, description);
 
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
             ClusterDescription currentDescription = description;
-            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, computedServerSelectionTimeout);
+            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, serverSelectionTimeout);
 
             if (!currentDescription.isCompatibleWithDriver()) {
                 throw createAndLogIncompatibleException(operationContext.getId(), serverSelector, currentDescription);
@@ -138,15 +138,15 @@ abstract class BaseCluster implements Cluster {
                         serverSelector, currentDescription);
                 return serverTuple;
             }
-            if (computedServerSelectionTimeout.hasExpired()) {
+            if (serverSelectionTimeout.hasExpired()) {
                 throw createAndLogTimeoutException(operationContext.getId(), serverSelector, currentDescription);
             }
             if (!selectionWaitingLogged) {
-                logServerSelectionWaiting(clusterId, operationContext.getId(), computedServerSelectionTimeout, serverSelector, currentDescription);
+                logServerSelectionWaiting(clusterId, operationContext.getId(), serverSelectionTimeout, serverSelector, currentDescription);
                 selectionWaitingLogged = true;
             }
             connect();
-            Timeout heartbeatLimitedTimeout = computedServerSelectionTimeout.orEarlier(startMinWaitHeartbeatTimeout());
+            Timeout heartbeatLimitedTimeout = serverSelectionTimeout.orEarlier(startMinWaitHeartbeatTimeout());
             heartbeatLimitedTimeout.awaitOn(currentPhaseLatch,
                     () -> format("waiting for a server that matches %s", serverSelector));
         }
@@ -156,9 +156,9 @@ abstract class BaseCluster implements Cluster {
     public void selectServerAsync(final ServerSelector serverSelector, final OperationContext operationContext,
             final SingleResultCallback<ServerTuple> callback) {
         isTrue("open", !isClosed());
-        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computedServerSelectionTimeout();
+        Timeout timeout = operationContext.getTimeoutContext().startServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(
-                serverSelector, getCompositeServerSelector(serverSelector), operationContext.getId(), computedServerSelectionTimeout, callback);
+                serverSelector, getCompositeServerSelector(serverSelector), operationContext.getId(), timeout, callback);
 
         CountDownLatch currentPhase = phase.get();
         ClusterDescription currentDescription = description;
