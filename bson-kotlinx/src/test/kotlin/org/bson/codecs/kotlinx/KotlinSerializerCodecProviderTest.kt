@@ -26,7 +26,9 @@ import kotlinx.serialization.modules.plus
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
 import org.bson.codecs.kotlinx.samples.DataClassOpen
@@ -101,5 +103,8 @@ class KotlinSerializerCodecProviderTest {
         assertEquals(
             BsonDocument.parse("""{"open": {"__type": "org.bson.codecs.kotlinx.samples.DataClassOpenB", "b": 1}}"""),
             encodedDocument)
+
+        assertEquals(
+            dataClassContainsOpenB, codec.decode(BsonDocumentReader(encodedDocument), DecoderContext.builder().build()))
     }
 }
