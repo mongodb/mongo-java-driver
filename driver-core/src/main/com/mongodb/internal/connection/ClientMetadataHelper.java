@@ -32,12 +32,11 @@ import org.bson.io.BasicOutputBuffer;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.connection.FaasEnvironment.getFaasEnvironment;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static java.nio.file.Paths.get;
@@ -180,61 +179,6 @@ public final class ClientMetadataHelper {
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
-    private enum FaasEnvironment {
-        AWS_LAMBDA("aws.lambda"),
-        AZURE_FUNC("azure.func"),
-        GCP_FUNC("gcp.func"),
-        VERCEL("vercel"),
-        UNKNOWN(null);
-
-        @Nullable
-        private final String name;
-
-        FaasEnvironment(@Nullable final String name) {
-            this.name = name;
-        }
-
-        @Nullable
-        public String getName() {
-            return name;
-        }
-
-        @Nullable
-        public Integer getTimeoutSec() {
-            switch (this) {
-                case GCP_FUNC:
-                    return getEnvInteger("FUNCTION_TIMEOUT_SEC");
-                default:
-                    return null;
-            }
-        }
-
-        @Nullable
-        public Integer getMemoryMb() {
-            switch (this) {
-                case AWS_LAMBDA:
-                    return getEnvInteger("AWS_LAMBDA_FUNCTION_MEMORY_SIZE");
-                case GCP_FUNC:
-                    return getEnvInteger("FUNCTION_MEMORY_MB");
-                default:
-                    return null;
-            }
-        }
-
-        @Nullable
-        public String getRegion() {
-            switch (this) {
-                case AWS_LAMBDA:
-                    return System.getenv("AWS_REGION");
-                case GCP_FUNC:
-                    return System.getenv("FUNCTION_REGION");
-                case VERCEL:
-                    return System.getenv("VERCEL_REGION");
-                default:
-                    return null;
-            }
-        }
-    }
 
     public enum ContainerRuntime {
         DOCKER("docker") {
@@ -309,43 +253,6 @@ public final class ClientMetadataHelper {
             }
             return UNKNOWN;
         }
-    }
-
-    @Nullable
-    private static Integer getEnvInteger(final String name) {
-        try {
-            String value = System.getenv(name);
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    static FaasEnvironment getFaasEnvironment() {
-        List<FaasEnvironment> result = new ArrayList<>();
-        String awsExecutionEnv = System.getenv("AWS_EXECUTION_ENV");
-
-        if (System.getenv("VERCEL") != null) {
-            result.add(FaasEnvironment.VERCEL);
-        }
-        if ((awsExecutionEnv != null && awsExecutionEnv.startsWith("AWS_Lambda_"))
-                || System.getenv("AWS_LAMBDA_RUNTIME_API") != null) {
-            result.add(FaasEnvironment.AWS_LAMBDA);
-        }
-        if (System.getenv("FUNCTIONS_WORKER_RUNTIME") != null) {
-            result.add(FaasEnvironment.AZURE_FUNC);
-        }
-        if (System.getenv("K_SERVICE") != null || System.getenv("FUNCTION_NAME") != null) {
-            result.add(FaasEnvironment.GCP_FUNC);
-        }
-        // vercel takes precedence over aws.lambda
-        if (result.equals(Arrays.asList(FaasEnvironment.VERCEL, FaasEnvironment.AWS_LAMBDA))) {
-            return FaasEnvironment.VERCEL;
-        }
-        if (result.size() != 1) {
-            return FaasEnvironment.UNKNOWN;
-        }
-        return result.get(0);
     }
 
     static MongoDriverInformation getDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
