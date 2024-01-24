@@ -201,11 +201,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         isTrueArgument("timeout >= 0", timeout >= 0);
         notNull("timeUnit", timeUnit);
         TimeoutSettings newTimeoutSettings = timeoutSettings.withTimeoutMS(timeUnit.convert(timeout, TimeUnit.MILLISECONDS));
-        System.err.println("~~~~~~~~~ WITH TIMEOUT ON COLLECTION ~~~~~");
-        System.err.println("timeoutSettings: " + timeoutSettings);
-        System.err.println("timeout: " + timeout);
-        System.err.println("newTimeoutSettings: " + newTimeoutSettings);
-        System.err.println("~~~~~~~~~~~~~~~~");
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
                 retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, newTimeoutSettings, executor);
     }
@@ -248,7 +243,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public long estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        System.err.println("EXECUTING ESTIMATED DOCUMENT COUNT" + timeoutSettings);
         return executor.execute(operations.estimatedDocumentCount(options), readPreference, readConcern, null);
     }
 
