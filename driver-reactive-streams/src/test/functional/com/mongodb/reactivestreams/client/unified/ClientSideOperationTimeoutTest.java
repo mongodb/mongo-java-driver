@@ -53,10 +53,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
 
-        assumeFalse("No maxTimeMS parameter for createIndex() method", testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
-        assumeFalse("TODO JAVA-5248", fileDescription.contains("timeoutMS behaves correctly for GridFS upload operations")
-                && testDescription.contains("timeoutMS applied to creation of files document"));
-
         // Time sensitive - cannot just create a cursor with publishers
         assumeFalse(testDescription.endsWith("createChangeStream on client"));
         assumeFalse(testDescription.endsWith("createChangeStream on database"));

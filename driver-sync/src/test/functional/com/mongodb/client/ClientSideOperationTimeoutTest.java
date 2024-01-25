@@ -41,7 +41,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
-        assumeFalse("No maxTimeMS parameter for createIndex() method", testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
         checkSkipCSOTTest(fileDescription, testDescription);
     }
 
@@ -70,6 +69,8 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
     }
 
     public static void checkSkipCSOTTest(final String fileDescription, final String testDescription) {
+        assumeFalse("No maxTimeMS parameter for createIndex() method", testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
+
         assumeFalse("No run cursor command", fileDescription.startsWith("runCursorCommand")
                 || testDescription.contains("runCommand on database"));
         assumeFalse("No count command helper", testDescription.endsWith("count on collection"));
