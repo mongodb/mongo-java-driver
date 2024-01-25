@@ -20,6 +20,20 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.plus
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
+import org.bson.BsonDocumentWriter
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.EncoderContext
+import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
+import org.bson.codecs.kotlinx.samples.DataClassOpen
+import org.bson.codecs.kotlinx.samples.DataClassOpenA
+import org.bson.codecs.kotlinx.samples.DataClassOpenB
 import org.bson.codecs.kotlinx.samples.DataClassParameterized
 import org.bson.codecs.kotlinx.samples.DataClassWithSimpleValues
 import org.bson.conversions.Bson
@@ -59,5 +73,38 @@ class KotlinSerializerCodecProviderTest {
         assertNotNull(codec)
         assertTrue { codec is KotlinSerializerCodec }
         assertEquals(DataClassWithSimpleValues::class.java, codec.encoderClass)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun shouldAllowOverridingOfSerializersModuleAndBsonConfigurationInConstructor() {
+
+        val serializersModule =
+            SerializersModule {
+                this.polymorphic(DataClassOpen::class) {
+                    this.subclass(DataClassOpenA::class)
+                    this.subclass(DataClassOpenB::class)
+                }
+            } + defaultSerializersModule
+
+        val bsonConfiguration = BsonConfiguration(classDiscriminator = "__type")
+        val dataClassContainsOpenB = DataClassContainsOpen(DataClassOpenB(1))
+
+        val codec =
+            KotlinSerializerCodecProvider(serializersModule, bsonConfiguration)
+                .get(DataClassContainsOpen::class.java, Bson.DEFAULT_CODEC_REGISTRY)!!
+
+        assertTrue { codec is KotlinSerializerCodec }
+        val encodedDocument = BsonDocument()
+        val writer = BsonDocumentWriter(encodedDocument)
+        codec.encode(writer, dataClassContainsOpenB, EncoderContext.builder().build())
+        writer.flush()
+
+        assertEquals(
+            BsonDocument.parse("""{"open": {"__type": "org.bson.codecs.kotlinx.samples.DataClassOpenB", "b": 1}}"""),
+            encodedDocument)
+
+        assertEquals(
+            dataClassContainsOpenB, codec.decode(BsonDocumentReader(encodedDocument), DecoderContext.builder().build()))
     }
 }
