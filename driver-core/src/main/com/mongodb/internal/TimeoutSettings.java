@@ -59,6 +59,15 @@ public class TimeoutSettings {
                 settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
     }
 
+    public static TimeoutSettings createHeartbeatSettings(final MongoClientSettings settings) {
+        return new TimeoutSettings(
+                settings.getClusterSettings().getServerSelectionTimeout(TimeUnit.MILLISECONDS),
+                settings.getHeartbeatSocketSettings().getConnectTimeout(TimeUnit.MILLISECONDS),
+                settings.getHeartbeatSocketSettings().getReadTimeout(TimeUnit.MILLISECONDS),
+                settings.getTimeout(TimeUnit.MILLISECONDS),
+                settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
+    }
+
     public TimeoutSettings(
             final long serverSelectionTimeoutMS, final long connectTimeoutMS, final long readTimeoutMS,
             @Nullable final Long timeoutMS, final long maxWaitTimeMS) {
@@ -128,6 +137,11 @@ public class TimeoutSettings {
     }
 
     public TimeoutSettings withServerSelectionTimeoutMS(final long serverSelectionTimeoutMS) {
+        return new TimeoutSettings(timeoutMS, defaultTimeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+                maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
+    }
+
+    public TimeoutSettings withReadTimeoutMS(final long readTimeoutMS) {
         return new TimeoutSettings(timeoutMS, defaultTimeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }

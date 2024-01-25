@@ -42,6 +42,9 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
         checkSkipCSOTTest(fileDescription, testDescription);
+
+        assumeFalse("TODO (CSOT) - JAVA-5104", fileDescription.equals("timeoutMS behaves correctly for non-tailable cursors")
+                &&  testDescription.equals("timeoutMS applied to find if timeoutMode is iteration"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
@@ -70,6 +73,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
     public static void checkSkipCSOTTest(final String fileDescription, final String testDescription) {
         assumeFalse("No maxTimeMS parameter for createIndex() method", testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
+        assumeFalse("TODO (CSOT) - JAVA-4060. Handshake command is not ignoring deprecated read timeout yet", testDescription.contains("socketTimeoutMS is ignored"));
 
         assumeFalse("No run cursor command", fileDescription.startsWith("runCursorCommand")
                 || testDescription.contains("runCommand on database"));
@@ -85,14 +89,10 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
         assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("timeoutMS behaves correctly for retryable operations"));
         assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("legacy timeouts behave correctly for retryable operations"));
 
-        assumeFalse("TODO (CSOT) - JAVA-4063", testDescription.contains("RTT"));
-
         assumeFalse("TODO (CSOT) - JAVA-5248",
                 fileDescription.equals("MaxTimeMSExpired server errors are transformed into a custom timeout error"));
 
         assumeFalse("TODO (CSOT) - JAVA-4062", testDescription.contains("wTimeoutMS is ignored"));
-
-        assumeFalse("TODO (CSOT) - JAVA-4060", testDescription.contains("socketTimeoutMS is ignored"));
 
         // TEST BUGS / ISSUES
         assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",

@@ -171,14 +171,9 @@ public class SocketStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
-        return read(numBytes, 0, operationContext);
-    }
-
-    @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeout, final OperationContext operationContext) throws IOException {
         int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
         if (readTimeoutMS > 0) {
-            socket.setSoTimeout(readTimeoutMS + additionalTimeout);
+            socket.setSoTimeout(readTimeoutMS);
         }
         try {
             ByteBuf buffer = bufferProvider.getBuffer(numBytes);

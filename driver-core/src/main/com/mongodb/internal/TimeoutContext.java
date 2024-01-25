@@ -21,8 +21,10 @@ import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -33,6 +35,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class TimeoutContext {
 
+    private final boolean isMaintenanceContext;
     private final TimeoutSettings timeoutSettings;
 
     @Nullable
@@ -54,11 +57,16 @@ public class TimeoutContext {
         return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage(), cause);
     }
 
-    public TimeoutContext(final TimeoutSettings timeoutSettings) {
-        this(timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
+    public static TimeoutContext createMaintenanceTimeoutContext(final TimeoutSettings timeoutSettings) {
+        return new TimeoutContext(true, timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
     }
 
-    TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+    public TimeoutContext(final TimeoutSettings timeoutSettings) {
+        this(false, timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
+    }
+
+    TimeoutContext(final boolean isMaintenanceContext, final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+        this.isMaintenanceContext = isMaintenanceContext;
         this.timeoutSettings = timeoutSettings;
         this.timeout = timeout;
     }
@@ -93,7 +101,14 @@ public class TimeoutContext {
         return this;
     }
 
-    public boolean hasTimedOutForCommandExecution() {
+    public Optional<MongoOperationTimeoutException> validateHasTimedOutForCommandExecution() {
+        if (hasTimedOutForCommandExecution()) {
+            return Optional.of(createMongoTimeoutException());
+        }
+        return Optional.empty();
+    }
+
+    private boolean hasTimedOutForCommandExecution() {
         if (timeout == null || timeout.isInfinite()) {
             return false;
         }
@@ -174,11 +189,32 @@ public class TimeoutContext {
         timeout = calculateTimeout(timeoutSettings.getTimeoutMS());
     }
 
+    /**
+     * Resest the timeout if this timeout context is being used by pool maintenance
+     */
+    public void resetMaintenanceTimeout() {
+        if (isMaintenanceContext && timeout != null && !timeout.isInfinite()) {
+            timeout = calculateTimeout(timeoutSettings.getTimeoutMS());
+        }
+    }
+
+    public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {
+        // Only used outside timeoutMS usage
+        assertNull(timeout);
+
+        // Check existing read timeout is infinite
+        if (timeoutSettings.getReadTimeoutMS() == 0) {
+            return this;
+        }
+
+        long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
+        return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE));
+    }
+
     private long timeoutRemainingMS() {
         assertNotNull(timeout);
         return timeout.isInfinite() ? 0 : timeout.remaining(MILLISECONDS);
     }
-
 
     @Override
     public String toString() {
@@ -216,7 +252,7 @@ public class TimeoutContext {
         return null;
     }
 
-    public Timeout startServerSelectionTimeout() {
+    public Timeout computedServerSelectionTimeout() {
         long ms = getTimeoutSettings().getServerSelectionTimeoutMS();
         Timeout serverSelectionTimeout = StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
         return serverSelectionTimeout.orEarlier(timeout);

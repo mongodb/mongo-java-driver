@@ -110,17 +110,9 @@ public abstract class AsynchronousChannelStream implements Stream {
 
     @Override
     public void readAsync(final int numBytes, final OperationContext operationContext, final AsyncCompletionHandler<ByteBuf> handler) {
-        readAsync(numBytes, 0, operationContext, handler);
-    }
-
-    private void readAsync(final int numBytes, final int additionalTimeout, final OperationContext operationContext,
-            final AsyncCompletionHandler<ByteBuf> handler) {
         ByteBuf buffer = bufferProvider.getBuffer(numBytes);
 
         long timeout = operationContext.getTimeoutContext().getReadTimeoutMS();
-        if (timeout > 0 && additionalTimeout > 0) {
-            timeout += additionalTimeout;
-        }
         getChannel().read(buffer.asNIO(), timeout, MILLISECONDS, null, new BasicCompletionHandler(buffer, operationContext, handler));
     }
 
@@ -142,13 +134,6 @@ public abstract class AsynchronousChannelStream implements Stream {
     public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
         readAsync(numBytes, operationContext, handler);
-        return handler.getRead();
-    }
-
-    @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeout, final OperationContext operationContext) throws IOException {
-        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<>();
-        readAsync(numBytes, additionalTimeout, operationContext, handler);
         return handler.getRead();
     }
 

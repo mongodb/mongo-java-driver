@@ -57,6 +57,9 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         assumeFalse(testDescription.endsWith("createChangeStream on client"));
         assumeFalse(testDescription.endsWith("createChangeStream on database"));
         assumeFalse(testDescription.endsWith("createChangeStream on collection"));
+        assumeFalse("TODO (CSOT) - JAVA-5104", fileDescription.equals("timeoutMS behaves correctly during command execution")
+                &&  testDescription.equals("command is not sent if RTT is greater than timeoutMS"));
+
         checkSkipCSOTTest(fileDescription, testDescription);
 
         if (testDescription.equals("timeoutMS is refreshed for close")) {

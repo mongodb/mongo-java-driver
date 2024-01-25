@@ -34,6 +34,7 @@ import org.bson.types.ObjectId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
@@ -220,11 +221,11 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
             }
         }
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
-                new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(new DefaultInetAddressResolver(),
+                        new InternalStreamConnectionFactory(SINGLE, new SocketStreamFactory(new DefaultInetAddressResolver(),
                         SocketSettings.builder().connectTimeout(500, TimeUnit.MILLISECONDS).build(), getSslSettings()),
                         getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null,
                         getServerApi()),
-                getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam))
+                getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam), OPERATION_CONTEXT_FACTORY)
         serverMonitor.start()
         serverMonitor
     }

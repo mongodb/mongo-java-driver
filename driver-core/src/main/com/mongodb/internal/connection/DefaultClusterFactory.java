@@ -31,6 +31,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -60,7 +61,10 @@ public final class DefaultClusterFactory {
     public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,
                                  final ConnectionPoolSettings connectionPoolSettings,
                                  final InternalConnectionPoolSettings internalConnectionPoolSettings,
-                                 final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
+                                 final TimeoutSettings clusterTimeoutSettings,
+                                 final StreamFactory streamFactory,
+                                 final TimeoutSettings heartbeatTimeoutSettings,
+                                 final StreamFactory heartbeatStreamFactory,
                                  @Nullable final MongoCredential credential,
                                  final LoggerSettings loggerSettings,
                                  @Nullable final CommandListener commandListener,
@@ -98,17 +102,22 @@ public final class DefaultClusterFactory {
         }
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings, dnsClient);
+        InternalOperationContextFactory clusterOperationContextFactory =
+                new InternalOperationContextFactory(clusterTimeoutSettings, serverApi);
+        InternalOperationContextFactory heartBeatOperationContextFactory =
+                new InternalOperationContextFactory(heartbeatTimeoutSettings, serverApi);
 
         if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
                     applicationName, mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(),
-                    compressorList, serverApi);
+                    compressorList, serverApi, clusterOperationContextFactory);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings,
-                    streamFactory, heartbeatStreamFactory, credential, loggerSettings, commandListener, applicationName,
+                    clusterOperationContextFactory, streamFactory, heartBeatOperationContextFactory, heartbeatStreamFactory, credential,
+                    loggerSettings, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
                     serverApi);
 

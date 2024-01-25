@@ -290,7 +290,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
             try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch(
-                    singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
+                            singletonList(Document.parse("{ '$match': {'operationType': 'insert'}}")))
                     .startAtOperationTime(startTime)
                     .fullDocument(FullDocument.UPDATE_LOOKUP)
                     .cursor()) {

@@ -15,6 +15,8 @@
  */
 package org.bson.codecs.kotlinx
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.modules.SerializersModule
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.CodecProvider
 import org.bson.codecs.configuration.CodecRegistry
@@ -24,8 +26,12 @@ import org.bson.codecs.configuration.CodecRegistry
  *
  * The underlying class must be annotated with the `@Serializable`.
  */
-public class KotlinSerializerCodecProvider : CodecProvider {
+@OptIn(ExperimentalSerializationApi::class)
+public class KotlinSerializerCodecProvider(
+    private val serializersModule: SerializersModule = defaultSerializersModule,
+    private val bsonConfiguration: BsonConfiguration = BsonConfiguration()
+) : CodecProvider {
 
     override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry): Codec<T>? =
-        KotlinSerializerCodec.create(clazz.kotlin)
+        KotlinSerializerCodec.create(clazz.kotlin, serializersModule, bsonConfiguration)
 }

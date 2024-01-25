@@ -35,11 +35,11 @@ public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
 
-        assumeFalse("TODO (CSOT) - JAVA-4063 - apply settings to the operation context",
-                (fileDescription.equals("hello-timeout") && testDescription.startsWith("Network timeout on Monitor check"))
-                || (fileDescription.equals("find-network-timeout-error")
+        assumeFalse("TODO (CSOT) - JAVA-5211 - apply settings to the operation context",
+                (fileDescription.equals("hello-timeout") && testDescription.startsWith("Network timeout on Monitor"))
+                        || (fileDescription.equals("find-network-timeout-error")
                         && testDescription.startsWith("Ignore network timeout error on find"))
-                || fileDescription.equals("auth-network-timeout-error"));
+                        || fileDescription.equals("auth-network-timeout-error"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

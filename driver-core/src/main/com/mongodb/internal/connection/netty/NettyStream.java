@@ -70,7 +70,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
@@ -83,7 +82,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * A Stream implementation based on Netty 4.0.
  * Just like it is for the {@link java.nio.channels.AsynchronousSocketChannel},
  * concurrent pending<sup>1</sup> readers
- * (whether {@linkplain #read(int, int, OperationContext) synchronous} or
+ * (whether {@linkplain #read(int, OperationContext) synchronous} or
  * {@linkplain #readAsync(int, OperationContext, AsyncCompletionHandler) asynchronous})
  * are not supported by {@link NettyStream}.
  * However, this class does not have a fail-fast mechanism checking for such situations.
@@ -235,14 +234,8 @@ final class NettyStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
-        return read(numBytes, 0, operationContext);
-    }
-
-    @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeoutMillis, final OperationContext operationContext) throws IOException {
-        isTrueArgument("additionalTimeoutMillis must not be negative", additionalTimeoutMillis >= 0);
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<>();
-        readAsync(numBytes, future, combinedTimeout(operationContext.getTimeoutContext().getReadTimeoutMS(), additionalTimeoutMillis));
+        readAsync(numBytes, future, operationContext.getTimeoutContext().getReadTimeoutMS());
         return future.get();
     }
 
@@ -544,14 +537,6 @@ final class NettyStream implements Stream {
     private static void cancel(@Nullable final Future<?> f) {
         if (f != null) {
             f.cancel(false);
-        }
-    }
-
-    private static long combinedTimeout(final long timeout, final int additionalTimeout) {
-        if (timeout == NO_SCHEDULE_TIME) {
-            return NO_SCHEDULE_TIME;
-        } else {
-            return Math.addExact(timeout, additionalTimeout);
         }
     }
 

@@ -34,7 +34,7 @@ public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStre
             final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
 
-        assumeFalse("TODO (CSOT) - JAVA-4063 - apply settings to the operation context",
+        assumeFalse("TODO (CSOT) - JAVA-5211 - apply settings to the operation context",
                 (fileDescription.equals("hello-timeout") && testDescription.startsWith("Network timeout on Monitor"))
                         || (fileDescription.equals("find-network-timeout-error")
                         && testDescription.startsWith("Ignore network timeout error on find"))
