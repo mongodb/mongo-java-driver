@@ -54,7 +54,7 @@ public class TimeoutContext {
         if (cause instanceof MongoOperationTimeoutException) {
             return (MongoOperationTimeoutException) cause;
         }
-        return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage());
+        return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage(), cause);
     }
 
     public static TimeoutContext createMaintenanceTimeoutContext(final TimeoutSettings timeoutSettings) {

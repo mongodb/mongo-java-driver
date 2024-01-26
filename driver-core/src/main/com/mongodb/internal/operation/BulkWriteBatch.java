@@ -33,6 +33,7 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.bulk.WriteRequestWithIndex;
 import com.mongodb.internal.connection.BulkWriteBatchCombiner;
 import com.mongodb.internal.connection.IndexMap;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
@@ -64,6 +65,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.operation.CommandOperationHelper.appendMaxTimeMs;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
@@ -90,7 +92,7 @@ public final class BulkWriteBatch {
     private final BsonDocument command;
     private final SplittablePayload payload;
     private final List<WriteRequestWithIndex> unprocessed;
-    private final SessionContext sessionContext;
+    private final OperationContext operationContext;
     private final BsonValue comment;
     private final BsonDocument variables;
 
@@ -99,8 +101,9 @@ public final class BulkWriteBatch {
                                                       final boolean ordered, final WriteConcern writeConcern,
                                                       final Boolean bypassDocumentValidation, final boolean retryWrites,
                                                       final List<? extends WriteRequest> writeRequests,
-                                                      final SessionContext sessionContext,
+                                                      final OperationContext operationContext,
                                                       @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
+        SessionContext sessionContext = operationContext.getSessionContext();
         if (sessionContext.hasSession() && !sessionContext.isImplicitSession() && !sessionContext.hasActiveTransaction()
                 && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
@@ -119,13 +122,13 @@ public final class BulkWriteBatch {
         }
         return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation,
                 canRetryWrites, new BulkWriteBatchCombiner(connectionDescription.getServerAddress(), ordered, writeConcern),
-                writeRequestsWithIndex, sessionContext, comment, variables);
+                writeRequestsWithIndex, operationContext, comment, variables);
     }
 
     private BulkWriteBatch(final MongoNamespace namespace, final ConnectionDescription connectionDescription,
                            final boolean ordered, final WriteConcern writeConcern, @Nullable final Boolean bypassDocumentValidation,
                            final boolean retryWrites, final BulkWriteBatchCombiner bulkWriteBatchCombiner,
-                           final List<WriteRequestWithIndex> writeRequestsWithIndices, final SessionContext sessionContext,
+                           final List<WriteRequestWithIndex> writeRequestsWithIndices, final OperationContext operationContext,
                            @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
         this.namespace = namespace;
         this.connectionDescription = connectionDescription;
@@ -159,11 +162,12 @@ public final class BulkWriteBatch {
         this.indexMap = indexMap;
         this.unprocessed = unprocessedItems;
         this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems);
-        this.sessionContext = sessionContext;
+        this.operationContext = operationContext;
         this.comment = comment;
         this.variables = variables;
         this.command = new BsonDocument();
 
+        SessionContext sessionContext = operationContext.getSessionContext();
         if (!payloadItems.isEmpty()) {
             command.put(getCommandName(batchType), new BsonString(namespace.getCollectionName()));
             command.put("ordered", new BsonBoolean(ordered));
@@ -185,7 +189,7 @@ public final class BulkWriteBatch {
                            final boolean ordered, final WriteConcern writeConcern, final Boolean bypassDocumentValidation,
                            final boolean retryWrites, final BulkWriteBatchCombiner bulkWriteBatchCombiner, final IndexMap indexMap,
                            final WriteRequest.Type batchType, final BsonDocument command, final SplittablePayload payload,
-                           final List<WriteRequestWithIndex> unprocessed, final SessionContext sessionContext,
+                           final List<WriteRequestWithIndex> unprocessed, final OperationContext operationContext,
                            @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
         this.namespace = namespace;
         this.connectionDescription = connectionDescription;
@@ -198,11 +202,11 @@ public final class BulkWriteBatch {
         this.payload = payload;
         this.unprocessed = unprocessed;
         this.retryWrites = retryWrites;
-        this.sessionContext = sessionContext;
+        this.operationContext = operationContext;
         this.comment = comment;
         this.variables = variables;
         if (retryWrites) {
-            command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
+            command.put("txnNumber", new BsonInt64(operationContext.getSessionContext().advanceTransactionNumber()));
         }
         this.command = command;
     }
@@ -223,7 +227,7 @@ public final class BulkWriteBatch {
     }
 
     BsonDocument getCommand() {
-        return command;
+        return appendMaxTimeMs(operationContext.getTimeoutContext(), command);
     }
 
     SplittablePayload getPayload() {
@@ -266,11 +270,11 @@ public final class BulkWriteBatch {
 
 
             return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, retryWrites,
-                    bulkWriteBatchCombiner, nextIndexMap, batchType, command, payload.getNextSplit(), unprocessed, sessionContext,
+                    bulkWriteBatchCombiner, nextIndexMap, batchType, command, payload.getNextSplit(), unprocessed, operationContext,
                     comment, variables);
         } else {
             return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, retryWrites,
-                    bulkWriteBatchCombiner, unprocessed, sessionContext, comment, variables);
+                    bulkWriteBatchCombiner, unprocessed, operationContext, comment, variables);
         }
     }
 
