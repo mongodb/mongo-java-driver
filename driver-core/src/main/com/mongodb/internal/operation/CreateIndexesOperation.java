@@ -25,7 +25,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -60,15 +59,13 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
     private CreateIndexCommitQuorum commitQuorum;
 
-    public CreateIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final List<IndexRequest> requests, @Nullable final WriteConcern writeConcern) {
-        this.timeoutSettings = timeoutSettings;
+    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests,
+            @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
@@ -101,11 +98,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     public CreateIndexesOperation commitQuorum(@Nullable final CreateIndexCommitQuorum commitQuorum) {
         this.commitQuorum = commitQuorum;
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

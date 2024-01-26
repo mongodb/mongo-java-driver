@@ -20,7 +20,6 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -44,14 +43,13 @@ import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSIO
 public class AggregateOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private final AggregateOperationImpl<T> wrapped;
 
-    public AggregateOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(timeoutSettings, namespace, pipeline, decoder, AggregationLevel.COLLECTION);
+    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
+        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION);
     }
 
-    public AggregateOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
-        this.wrapped = new AggregateOperationImpl<>(timeoutSettings, namespace, pipeline, decoder, aggregationLevel);
+    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+            final AggregationLevel aggregationLevel) {
+        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, decoder, aggregationLevel);
     }
 
     public List<BsonDocument> getPipeline() {
@@ -131,11 +129,6 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
         return this;
     }
 
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return wrapped.getTimeoutSettings();
-    }
-
     public AggregateOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
         wrapped.timeoutMode(timeoutMode);
         return this;
@@ -161,7 +154,7 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
     }
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(wrapped.getTimeoutSettings(), getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 (operationContext, serverDescription, connectionDescription) ->
                         asExplainCommand(wrapped.getCommand(operationContext, MIN_WIRE_VERSION), verbosity), resultDecoder);
     }

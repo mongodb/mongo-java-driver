@@ -84,6 +84,10 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listIndexes(resultClass, getBatchSize(), maxTimeMS, comment, getTimeoutMode());
+        return operations.listIndexes(resultClass, getBatchSize(), comment, getTimeoutMode());
+    }
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
     }
 }

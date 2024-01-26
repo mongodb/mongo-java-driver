@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -34,27 +33,18 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
-    private final TimeoutSettings timeoutSettings;
     private final String databaseName;
     private final CommandCreator commandCreator;
     private final Decoder<T> decoder;
 
-    public CommandReadOperation(final TimeoutSettings timeoutSettings, final String databaseName,
-            final BsonDocument command, final Decoder<T> decoder) {
-        this(timeoutSettings, databaseName, (operationContext, serverDescription, connectionDescription) -> command, decoder);
+    public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
+        this(databaseName, (operationContext, serverDescription, connectionDescription) -> command, decoder);
     }
 
-    public CommandReadOperation(final TimeoutSettings timeoutSettings, final String databaseName,
-            final CommandCreator commandCreator, final Decoder<T> decoder) {
-        this.timeoutSettings = timeoutSettings;
+    public CommandReadOperation(final String databaseName, final CommandCreator commandCreator, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
         this.commandCreator = notNull("commandCreator", commandCreator);
         this.decoder = notNull("decoder", decoder);
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

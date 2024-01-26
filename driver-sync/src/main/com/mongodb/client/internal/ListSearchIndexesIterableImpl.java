@@ -142,12 +142,18 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     }
 
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
-        return getExecutor().execute(asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)),
-                getReadPreference(), getReadConcern(), getClientSession());
+        return getExecutor().execute(asAggregateOperation()
+                        .asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
     }
 
     private ExplainableReadOperation<BatchCursor<TResult>> asAggregateOperation() {
-        return operations.listSearchIndexes(resultClass, maxTimeMS, indexName, getBatchSize(), collation, comment,
+        return operations.listSearchIndexes(resultClass, indexName, getBatchSize(), collation, comment,
                 allowDiskUse);
     }
+
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
+    }
+
 }

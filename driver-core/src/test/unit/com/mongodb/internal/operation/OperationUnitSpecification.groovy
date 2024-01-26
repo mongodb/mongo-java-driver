@@ -41,7 +41,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.createNewOperationContext
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 
 class OperationUnitSpecification extends Specification {
 
@@ -96,7 +96,7 @@ class OperationUnitSpecification extends Specification {
     def testSyncOperation(operation, List<Integer> serverVersion, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null,
                           Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
-        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
+        def operationContext = OPERATION_CONTEXT
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> false
                     getReadConcern() >> ReadConcern.DEFAULT
@@ -153,7 +153,7 @@ class OperationUnitSpecification extends Specification {
                            Boolean checkCommand=true, BsonDocument expectedCommand=null,
                            Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
 
-        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
+        def operationContext = OPERATION_CONTEXT
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> false
                     getReadConcern() >> ReadConcern.DEFAULT

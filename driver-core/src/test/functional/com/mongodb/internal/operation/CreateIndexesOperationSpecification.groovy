@@ -20,11 +20,9 @@ import com.mongodb.CreateIndexCommitQuorum
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoClientException
 import com.mongodb.MongoCommandException
-import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.bulk.IndexRequest
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -36,13 +34,8 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -77,27 +70,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes('key') == [field1Index]
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        def keys = new BsonDocument('field', new BsonInt32(1))
-        def operation = createOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, [new IndexRequest(keys)])
-
-        enableMaxTimeFailPoint()
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
 
         where:
         async << [true, false]
@@ -443,7 +415,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     def 'should throw on write concern error'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
-        def operation = new CreateIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), [new IndexRequest(keys)], new WriteConcern(5))
+        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keys)], new WriteConcern(5))
 
         when:
         execute(operation, async)
@@ -540,7 +512,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
     List<Document> getIndexes() {
         def indexes = []
-        def cursor = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec()).execute(getBinding())
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())
         }
@@ -556,11 +528,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     }
 
     def createOperation(final List<IndexRequest> requests) {
-        createOperation(TIMEOUT_SETTINGS, requests)
-    }
-
-    def createOperation(final TimeoutSettings timeoutSettings, final List<IndexRequest> requests) {
-        new CreateIndexesOperation(timeoutSettings, getNamespace(), requests, null)
+        new CreateIndexesOperation(getNamespace(), requests, null)
     }
 
 }

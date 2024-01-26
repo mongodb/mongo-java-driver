@@ -39,7 +39,6 @@ import spock.lang.Specification
 import java.util.function.Consumer
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -84,7 +83,7 @@ class FindIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new FindOperation<Document>(TIMEOUT_SETTINGS, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .projection(new BsonDocument('projection', new BsonInt32(1)))
@@ -129,7 +128,7 @@ class FindIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(
-                new FindOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME, namespace, new DocumentCodec())
+                new FindOperation<Document>(namespace, new DocumentCodec())
                         .filter(new BsonDocument('filter', new BsonInt32(2)))
                         .sort(new BsonDocument('sort', new BsonInt32(2)))
                         .projection(new BsonDocument('projection', new BsonInt32(2)))
@@ -166,7 +165,7 @@ class FindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should set an empty doc for the filter'
-        expect operation, isTheSameAs(new FindOperation<Document>(TIMEOUT_SETTINGS, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
                 .filter(new BsonDocument()).retryReads(true))
     }
 
@@ -209,7 +208,7 @@ class FindIterableSpecification extends Specification {
         def operation = executor.getReadOperation() as FindOperation<Document>
 
         then:
-        expect operation, isTheSameAs(new FindOperation<Document>(TIMEOUT_SETTINGS, namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)

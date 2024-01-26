@@ -37,7 +37,6 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -66,7 +65,7 @@ class DistinctIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new DistinctOperation<Document>(TIMEOUT_SETTINGS, namespace, 'field', new DocumentCodec())
+        expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
                 .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
@@ -77,7 +76,7 @@ class DistinctIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(
-                new DistinctOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace, 'field', new DocumentCodec())
+                new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
                         .filter(new BsonDocument('field', new BsonInt32(1))).collation(collation).retryReads(true))
     }
 

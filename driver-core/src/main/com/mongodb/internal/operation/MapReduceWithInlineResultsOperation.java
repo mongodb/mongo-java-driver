@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -56,7 +55,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  */
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
                                                                ReadOperation<MapReduceBatchCursor<T>> {
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -70,9 +68,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private boolean verbose;
     private Collation collation;
 
-    public MapReduceWithInlineResultsOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
-        this.timeoutSettings = timeoutSettings;
+    public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final BsonJavaScript mapFunction,
+            final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -168,11 +165,6 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
-    }
-
-    @Override
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(binding, namespace.getDatabaseName(),
                 getCommandCreator(),
@@ -196,7 +188,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(timeoutSettings, namespace.getDatabaseName(),
+        return new CommandReadOperation<>(namespace.getDatabaseName(),
                 (operationContext, serverDescription, connectionDescription) ->
                         asExplainCommand(getCommandCreator().create(operationContext, serverDescription, connectionDescription),
                         explainVerbosity), new BsonDocumentCodec());

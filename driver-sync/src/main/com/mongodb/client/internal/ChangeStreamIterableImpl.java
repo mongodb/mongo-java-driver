@@ -147,6 +147,12 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
             public ReadOperation<BatchCursor<TDocument>> asReadOperation() {
                 throw new UnsupportedOperationException();
             }
+
+            @Override
+
+            protected OperationExecutor getExecutor() {
+                return ChangeStreamIterableImpl.this.getExecutor();
+            }
         };
     }
 
@@ -207,9 +213,14 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         throw new UnsupportedOperationException();
     }
 
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(0, maxAwaitTimeMS));
+    }
+
     private ReadOperation<BatchCursor<RawBsonDocument>> createChangeStreamOperation() {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, new RawBsonDocumentCodec(), changeStreamLevel,
-                getBatchSize(), collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                getBatchSize(), collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 
     private BatchCursor<RawBsonDocument> execute() {

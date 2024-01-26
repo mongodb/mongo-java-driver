@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
@@ -57,6 +58,11 @@ public class TestOperationExecutor implements OperationExecutor {
         clientSessions.add(session);
         writeOperations.add(operation);
         return createMono();
+    }
+
+    @Override
+    public OperationExecutor withTimeoutSettings(final TimeoutSettings timeoutSettings) {
+        return this;
     }
 
     <T> Mono<T> createMono() {

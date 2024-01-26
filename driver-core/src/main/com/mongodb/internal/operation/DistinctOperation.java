@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -49,8 +48,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  */
 public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String VALUES = "values";
-
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Decoder<T> decoder;
@@ -59,9 +56,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private Collation collation;
     private BsonValue comment;
 
-    public DistinctOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final String fieldName, final Decoder<T> decoder) {
-        this.timeoutSettings = timeoutSettings;
+    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
@@ -101,11 +96,6 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     public DistinctOperation<T> comment(final BsonValue comment) {
         this.comment = comment;
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

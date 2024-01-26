@@ -31,7 +31,6 @@ import org.junit.Test;
 import java.util.Locale;
 import java.util.UUID;
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.getBinding;
@@ -346,7 +345,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     BsonDocument getCollectionInfo(final String collectionName) {
-        return new ListCollectionsOperation<>(TIMEOUT_SETTINGS, getDefaultDatabaseName(), new BsonDocumentCodec())
+        return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec())
                 .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
     }
 

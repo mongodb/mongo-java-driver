@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -43,21 +42,14 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
-    private final TimeoutSettings timeoutSettings;
     private final WriteConcern writeConcern;
 
-    TransactionOperation(final TimeoutSettings timeoutSettings, final WriteConcern writeConcern) {
-        this.timeoutSettings = timeoutSettings;
+    TransactionOperation(final WriteConcern writeConcern) {
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
     public WriteConcern getWriteConcern() {
         return writeConcern;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

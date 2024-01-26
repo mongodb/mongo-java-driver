@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator;
@@ -49,9 +48,9 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     private boolean upsert;
     private Boolean bypassDocumentValidation;
 
-    public FindAndReplaceOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final BsonDocument replacement) {
-        super(timeoutSettings, namespace, writeConcern, retryWrites, decoder);
+    public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
+            final Decoder<T> decoder, final BsonDocument replacement) {
+        super(namespace, writeConcern, retryWrites, decoder);
         this.replacement = notNull("replacement", replacement);
     }
 

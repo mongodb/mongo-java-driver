@@ -42,7 +42,6 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -72,7 +71,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(TIMEOUT_SETTINGS, namespace,
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace,
                 FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [BsonDocument.parse('{$match: 1}')], codec,
                 ChangeStreamLevel.COLLECTION)
                 .retryReads(true))
@@ -91,7 +90,7 @@ class ChangeStreamIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME, namespace,
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace,
                 FullDocument.UPDATE_LOOKUP, FullDocumentBeforeChange.WHEN_AVAILABLE, [BsonDocument.parse('{$match: 1}')], codec,
                 ChangeStreamLevel.COLLECTION)
                 .retryReads(true)

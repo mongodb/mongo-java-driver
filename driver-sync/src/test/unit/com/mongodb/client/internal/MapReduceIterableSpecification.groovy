@@ -42,7 +42,6 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -73,7 +72,7 @@ class MapReduceIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(TIMEOUT_SETTINGS, namespace,
+        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(namespace,
                 new BsonJavaScript('map'), new BsonJavaScript('reduce'), new DocumentCodec())
                 .verbose(true))
         readPreference == secondary()
@@ -92,7 +91,7 @@ class MapReduceIterableSpecification extends Specification {
         operation = (executor.getReadOperation() as MapReduceIterableImpl.WrappedMapReduceReadOperation<Document>).getOperation()
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace,
+        expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(namespace,
                 new BsonJavaScript('map'), new BsonJavaScript('reduce'), new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .finalizeFunction(new BsonJavaScript('finalize'))
@@ -129,7 +128,7 @@ class MapReduceIterableSpecification extends Specification {
         mapReduceIterable.iterator()
 
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
-        def expectedOperation = new MapReduceToCollectionOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace,
+        def expectedOperation = new MapReduceToCollectionOperation(namespace,
                 new BsonJavaScript('map'), new BsonJavaScript('reduce'), 'collName', writeConcern)
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))

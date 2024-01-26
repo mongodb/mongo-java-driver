@@ -21,7 +21,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
@@ -66,15 +65,12 @@ import static java.util.Collections.singletonList;
 public class DropCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private static final String ENCRYPT_PREFIX = "enxcol_.";
     private static final BsonValueCodec BSON_VALUE_CODEC = new BsonValueCodec();
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private BsonDocument encryptedFields;
     private boolean autoEncryptedFields;
 
-    public DropCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            @Nullable final WriteConcern writeConcern) {
-        this.timeoutSettings = timeoutSettings;
+    public DropCollectionOperation(final MongoNamespace namespace, @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = writeConcern;
     }
@@ -91,11 +87,6 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     public DropCollectionOperation autoEncryptedFields(final boolean autoEncryptedFields) {
         this.autoEncryptedFields = autoEncryptedFields;
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override
@@ -229,7 +220,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     }
 
     private ListCollectionsOperation<BsonValue> listCollectionOperation() {
-        return new ListCollectionsOperation<>(timeoutSettings, namespace.getDatabaseName(), BSON_VALUE_CODEC)
+        return new ListCollectionsOperation<>(namespace.getDatabaseName(), BSON_VALUE_CODEC)
                 .filter(new BsonDocument("name", new BsonString(namespace.getCollectionName())))
                 .batchSize(1);
     }

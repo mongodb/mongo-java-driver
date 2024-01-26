@@ -33,7 +33,6 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -63,7 +62,7 @@ class ListCollectionsIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>(TIMEOUT_SETTINGS, 'db', new DocumentCodec())
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100)
                 .retryReads(true)
                 .authorizedCollections(false))
@@ -75,7 +74,7 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, 'db', new DocumentCodec())
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99)
                 .retryReads(true))
 
@@ -85,7 +84,7 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should create operation with nameOnly'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>(TIMEOUT_SETTINGS, 'db', new DocumentCodec()).nameOnly(true)
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true)
                 .retryReads(true))
 
         when: 'requesting `authorizedCollections`'
@@ -93,7 +92,7 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should create operation with `authorizedCollections`'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>(TIMEOUT_SETTINGS, 'db', new DocumentCodec())
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
                 .authorizedCollections(true)
                 .nameOnly(true)
                 .retryReads(true))

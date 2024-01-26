@@ -34,8 +34,6 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.disableFailPoint
 import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailPoint
@@ -54,7 +52,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
 
     def 'should have the correct defaults'() {
         when:
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, false, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec)
 
         then:
         operation.getNamespace() == getNamespace()
@@ -73,7 +71,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def projection = BsonDocument.parse('{ projection : 1}')
 
         when:
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, false, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec)
             .filter(filter)
             .sort(sort)
             .projection(projection)
@@ -94,7 +92,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, false, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = execute(operation, async)
 
@@ -115,7 +113,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Worker>(TIMEOUT_SETTINGS, getNamespace(),
+        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Worker>(getNamespace(),
                 ACKNOWLEDGED, false, workerCodec).filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = execute(operation, async)
 
@@ -135,7 +133,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         helper.insertDocuments(new DocumentCodec(), pete)
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), new WriteConcern(5, 1), false,
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), new WriteConcern(5, 1), false,
                 documentCodec).filter(new BsonDocument('name', new BsonString('Pete')))
 
         when:
@@ -167,7 +165,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
                       "writeConcernError": {"code": 91, "errmsg": "Replication is being shut down"}}}''')
         configureFailPoint(failPoint)
 
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, false,
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, false,
                 documentCodec).filter(new BsonDocument('name', new BsonString('Pete')))
 
         when:
@@ -193,11 +191,10 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def includeTxnNumber = retryWrites && writeConcern.isAcknowledged() && serverType != STANDALONE
         def includeWriteConcern = writeConcern.isAcknowledged() && !writeConcern.isServerDefault()
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, getNamespace(), writeConcern as WriteConcern,
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern as WriteConcern,
                 retryWrites as boolean, documentCodec)
         def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
-                .append('maxTimeMS', new BsonInt64(100))
 
         if (includeWriteConcern) {
             expectedCommand.put('writeConcern', writeConcern.asDocument())
@@ -248,7 +245,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, true, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, true, documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         enableOnPrimaryTransactionalWriteFailPoint(BsonDocument.parse('{times: 1}'))
 
@@ -269,7 +266,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
     def 'should retry if the connection initially fails'() {
         when:
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, true, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, true, documentCodec)
         def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
                 .append('txnNumber', new BsonInt64(0))
@@ -283,7 +280,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
 
     def 'should throw original error when retrying and failing'() {
         given:
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, true, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, true, documentCodec)
         def originalException = new MongoSocketException('Some failure', new ServerAddress())
 
         when:
@@ -311,7 +308,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')
         getCollectionHelper().insertDocuments(document)
-        def operation = new FindAndDeleteOperation<Document>(TIMEOUT_SETTINGS, getNamespace(), ACKNOWLEDGED, false, documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec)
                 .filter(BsonDocument.parse('{str: "FOO"}'))
                 .collation(caseInsensitiveCollation)
 

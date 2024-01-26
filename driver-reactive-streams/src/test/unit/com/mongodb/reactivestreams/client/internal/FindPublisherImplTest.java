@@ -31,8 +31,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -52,7 +50,7 @@ public class FindPublisherImplTest extends TestHelper {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
         FindPublisher<Document> publisher = new FindPublisherImpl<>(null, createMongoOperationPublisher(executor), new Document());
 
-        FindOperation<Document> expectedOperation = new FindOperation<>(TIMEOUT_SETTINGS, NAMESPACE,
+        FindOperation<Document> expectedOperation = new FindOperation<>(NAMESPACE,
                                                                         getDefaultCodecRegistry().get(Document.class))
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true)
@@ -86,8 +84,8 @@ public class FindPublisherImplTest extends TestHelper {
                 .showRecordId(false)
                 .allowDiskUse(false);
 
-        expectedOperation = new FindOperation<>(TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME, NAMESPACE,
-                getDefaultCodecRegistry().get(Document.class))
+        expectedOperation = new FindOperation<>(NAMESPACE,
+                                                getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true)
                 .filter(new BsonDocument())
                 .allowDiskUse(false)

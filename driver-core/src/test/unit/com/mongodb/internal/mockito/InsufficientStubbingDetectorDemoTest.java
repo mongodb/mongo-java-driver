@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.mockito;
 
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -38,7 +37,7 @@ final class InsufficientStubbingDetectorDemoTest {
 
     @BeforeEach
     void beforeEach() {
-        operation = new ListCollectionsOperation<>(TimeoutSettings.DEFAULT, "db", new BsonDocumentCodec());
+        operation = new ListCollectionsOperation<>("db", new BsonDocumentCodec());
     }
 
     @Test

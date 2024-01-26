@@ -26,8 +26,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -44,7 +42,7 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
         ListCollectionsPublisher<String> publisher = new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)
                 .withDocumentClass(String.class), true);
 
-        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(TIMEOUT_SETTINGS, DATABASE_NAME,
+        ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
                                                                                             getDefaultCodecRegistry().get(String.class))
                 .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true).retryReads(true);
@@ -61,8 +59,8 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
                 .maxTime(100, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation = new ListCollectionsOperation<>(TIMEOUT_SETTINGS_WITH_MAX_TIME, DATABASE_NAME,
-                getDefaultCodecRegistry().get(String.class))
+        expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
+                                                           getDefaultCodecRegistry().get(String.class))
                 .nameOnly(true)
                 .retryReads(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)))

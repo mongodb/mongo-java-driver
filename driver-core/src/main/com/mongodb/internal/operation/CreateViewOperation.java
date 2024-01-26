@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -48,7 +47,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final TimeoutSettings timeoutSettings;
     private final String databaseName;
     private final String viewName;
     private final String viewOn;
@@ -56,9 +54,8 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     private final WriteConcern writeConcern;
     private Collation collation;
 
-    public CreateViewOperation(final TimeoutSettings timeoutSettings, final String databaseName,
-            final String viewName, final String viewOn, final List<BsonDocument> pipeline, final WriteConcern writeConcern) {
-        this.timeoutSettings = timeoutSettings;
+    public CreateViewOperation(final String databaseName, final String viewName, final String viewOn, final List<BsonDocument> pipeline,
+            final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.viewName = notNull("viewName", viewName);
         this.viewOn = notNull("viewOn", viewOn);
@@ -124,11 +121,6 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     public CreateViewOperation collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

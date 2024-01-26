@@ -63,8 +63,10 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return clientSession;
     }
 
-    OperationExecutor getExecutor() {
-        return executor;
+    protected abstract OperationExecutor getExecutor();
+
+    OperationExecutor getExecutor(final TimeoutSettings timeoutSettings) {
+        return executor.withTimeoutSettings(timeoutSettings);
     }
 
     ReadPreference getReadPreference() {
@@ -146,6 +148,6 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     }
 
     private BatchCursor<TResult> execute() {
-        return executor.execute(asReadOperation(), readPreference, readConcern, clientSession);
+        return getExecutor().execute(asReadOperation(), readPreference, readConcern, clientSession);
     }
 }

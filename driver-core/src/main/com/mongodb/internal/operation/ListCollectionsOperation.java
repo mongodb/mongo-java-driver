@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.cursor.TimeoutMode;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -35,7 +34,6 @@ import org.bson.codecs.Decoder;
 
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -55,6 +53,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
+import static com.mongodb.internal.operation.OperationHelper.validateTimeoutMode;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
@@ -72,7 +71,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-    private final TimeoutSettings timeoutSettings;
     private final String databaseName;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -81,11 +79,9 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private boolean nameOnly;
     private boolean authorizedCollections;
     private BsonValue comment;
-    private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
+    private TimeoutMode timeoutMode;
 
-
-    public ListCollectionsOperation(final TimeoutSettings timeoutSettings, final String databaseName, final Decoder<T> decoder) {
-        this.timeoutSettings = timeoutSettings;
+    public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
     }
@@ -150,17 +146,12 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return authorizedCollections;
     }
 
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
-    }
 
     public TimeoutMode getTimeoutMode() {
         return timeoutMode;
     }
 
     public ListCollectionsOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        isTrueArgument("timeoutMode requires timeoutMS.", timeoutMode == null || timeoutSettings.getTimeoutMS() != null);
         if (timeoutMode != null) {
             this.timeoutMode = timeoutMode;
         }
@@ -225,6 +216,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
+            validateTimeoutMode(operationContext, timeoutMode);
             BsonDocument commandDocument = new BsonDocument("listCollections", new BsonInt32(1))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             putIfNotNull(commandDocument, "filter", filter);

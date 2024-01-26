@@ -90,7 +90,7 @@ public final class MongoClientImpl implements MongoClient {
         AutoEncryptionSettings autoEncryptSettings = settings.getAutoEncryptionSettings();
         this.crypt = autoEncryptSettings != null ? Crypts.createCrypt(this, autoEncryptSettings) : null;
         if (executor == null) {
-            this.executor = new OperationExecutorImpl(this, clientSessionHelper);
+            this.executor = new OperationExecutorImpl(this, clientSessionHelper, timeoutSettings);
         } else {
             this.executor = executor;
         }

@@ -98,8 +98,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
 
-        getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, getTimeoutMode(), allowDiskUse,
-                bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
+        getExecutor().execute(
+                operations.aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse,
+                        bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
                 getReadPreference(), getReadConcern(), getClientSession());
     }
 
@@ -122,7 +123,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    @SuppressWarnings("deprecation")
+    @Deprecated
     public AggregateIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
@@ -200,8 +201,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
-        return getExecutor().execute(asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)),
-                getReadPreference(), getReadConcern(), getClientSession());
+        return getExecutor().execute(
+                asAggregateOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(),
+                getReadConcern(), getClientSession());
     }
 
     @Override
@@ -209,8 +211,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         MongoNamespace outNamespace = getOutNamespace();
         if (outNamespace != null) {
             validateTimeoutMode();
-            getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, getTimeoutMode(), allowDiskUse,
-                    bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
+            getExecutor().execute(
+                    operations.aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse,
+                            bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
                     getReadPreference(), getReadConcern(), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
@@ -224,9 +227,13 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
     }
 
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
+    }
+
     private ExplainableReadOperation<BatchCursor<TResult>> asAggregateOperation() {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getTimeoutMode(), getBatchSize(), collation,
-                hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
+        return operations.aggregate(pipeline, resultClass, getTimeoutMode(), getBatchSize(), collation, hint, hintString, comment,
+                variables, allowDiskUse, aggregationLevel);
     }
 
     @Nullable

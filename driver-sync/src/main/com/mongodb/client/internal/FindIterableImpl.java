@@ -208,8 +208,8 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     @Nullable
     @Override
     public TResult first() {
-        try (BatchCursor<TResult> batchCursor = getExecutor().execute(operations.findFirst(filter, resultClass, findOptions),
-                getReadPreference(), getReadConcern(), getClientSession())) {
+        try (BatchCursor<TResult> batchCursor = getExecutor().execute(
+                operations.findFirst(filter, resultClass, findOptions), getReadPreference(), getReadConcern(), getClientSession())) {
             return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
         }
     }
@@ -234,10 +234,15 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(findOptions));
+    }
+
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
-        return getExecutor().execute(asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)),
-                getReadPreference(), getReadConcern(), getClientSession());
+        return getExecutor().execute(
+                asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
     }
 
     public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {

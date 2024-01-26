@@ -477,7 +477,7 @@ public abstract class AbstractConnectionPoolTest {
     }
 
     private static void executeAdminCommand(final BsonDocument command) {
-        new CommandReadOperation<>(TIMEOUT_SETTINGS, "admin", command, new BsonDocumentCodec())
+        new CommandReadOperation<>("admin", command, new BsonDocumentCodec())
                 .execute(ClusterFixture.getBinding());
     }
 

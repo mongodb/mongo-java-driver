@@ -188,11 +188,16 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
     }
 
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
+    }
+
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         if (inline) {
             ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
-                    resultClass, filter, limit, maxTimeMS, jsMode, scope, sort, verbose, collation);
+                    resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
             return new WrappedMapReduceReadOperation<>(operation);
         } else {
             getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
@@ -211,7 +216,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     private WriteOperation<MapReduceStatistics> createMapReduceToCollectionOperation() {
         return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
-                limit, maxTimeMS, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation
+                limit, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation
         );
     }
 
@@ -225,11 +230,6 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
         WrappedMapReduceReadOperation(final ReadOperation<MapReduceBatchCursor<TResult>> operation) {
             this.operation = operation;
-        }
-
-        @Override
-        public TimeoutSettings getTimeoutSettings() {
-            return operation.getTimeoutSettings();
         }
 
         @Override

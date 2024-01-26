@@ -105,6 +105,11 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation, comment);
+        return operations.distinct(fieldName, filter, resultClass, collation, comment);
+    }
+
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
     }
 }

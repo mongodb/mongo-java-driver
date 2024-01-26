@@ -180,7 +180,7 @@ public final class ClusterFixture {
 
     public static ServerVersion getServerVersion() {
         if (serverVersion == null) {
-            serverVersion = getVersion(new CommandReadOperation<>(TIMEOUT_SETTINGS_WITH_TIMEOUT, "admin",
+            serverVersion = getVersion(new CommandReadOperation<>("admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
                     .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, OPERATION_CONTEXT)));
         }
@@ -241,7 +241,7 @@ public final class ClusterFixture {
     }
 
     public static Document getServerStatus() {
-        return new CommandReadOperation<>(TIMEOUT_SETTINGS_WITH_TIMEOUT, "admin", new BsonDocument("serverStatus", new BsonInt32(1)),
+        return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)),
                 new DocumentCodec())
                 .execute(getBinding());
     }
@@ -257,7 +257,7 @@ public final class ClusterFixture {
         @Override
         public void run() {
             if (cluster != null) {
-                new DropDatabaseOperation(TIMEOUT_SETTINGS_WITH_TIMEOUT, getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
+                new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
                 cluster.close();
             }
         }
@@ -295,7 +295,7 @@ public final class ClusterFixture {
         Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
                 new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
-            BsonDocument helloResult = new CommandReadOperation<>(TIMEOUT_SETTINGS_WITH_TIMEOUT, "admin",
+            BsonDocument helloResult = new CommandReadOperation<>("admin",
                     new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec())
                     .execute(new ClusterBinding(cluster, ReadPreference.nearest(), ReadConcern.DEFAULT, OPERATION_CONTEXT));
             if (helloResult.containsKey("setName")) {
@@ -583,7 +583,7 @@ public final class ClusterFixture {
 
     public static BsonDocument getServerParameters() {
         if (serverParameters == null) {
-            serverParameters = new CommandReadOperation<>(TIMEOUT_SETTINGS_WITH_TIMEOUT, "admin",
+            serverParameters = new CommandReadOperation<>("admin",
                     new BsonDocument("getParameter", new BsonString("*")), new BsonDocumentCodec())
                     .execute(getBinding());
         }
@@ -648,7 +648,7 @@ public final class ClusterFixture {
         boolean failsPointsSupported = true;
         if (!isSharded()) {
             try {
-                new CommandReadOperation<>(TIMEOUT_SETTINGS_WITH_TIMEOUT, "admin", failPointDocument, new BsonDocumentCodec())
+                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
@@ -664,7 +664,7 @@ public final class ClusterFixture {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString(failPoint))
                     .append("mode", new BsonString("off"));
             try {
-                new CommandReadOperation<>(TIMEOUT_SETTINGS_WITH_TIMEOUT, "admin", failPointDocument, new BsonDocumentCodec())
+                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
                         .execute(getBinding());
             } catch (MongoCommandException e) {
                 // ignore
@@ -674,7 +674,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final WriteOperation<T> op) {
-        return executeSync(op, getBinding(op.getTimeoutSettings()));
+        return executeSync(op, getBinding());
     }
 
     @SuppressWarnings("overloads")
@@ -684,7 +684,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T> op) {
-        return executeSync(op, getBinding(op.getTimeoutSettings()));
+        return executeSync(op, getBinding());
     }
 
     @SuppressWarnings("overloads")
@@ -694,7 +694,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncWriteOperation<T> op) throws Throwable {
-        return executeAsync(op, getAsyncBinding(op.getTimeoutSettings()));
+        return executeAsync(op, getAsyncBinding());
     }
 
     @SuppressWarnings("overloads")
@@ -706,7 +706,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncReadOperation<T> op) throws Throwable {
-        return executeAsync(op, getAsyncBinding(op.getTimeoutSettings()));
+        return executeAsync(op, getAsyncBinding());
     }
 
     @SuppressWarnings("overloads")

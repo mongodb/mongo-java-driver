@@ -20,10 +20,12 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncExplainableReadOperation;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
@@ -37,6 +39,7 @@ import org.reactivestreams.Publisher;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -144,7 +147,9 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         if (lastPipelineStage == null || !lastPipelineStage.containsKey("$out") && !lastPipelineStage.containsKey("$merge")) {
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
-        return getMongoOperationPublisher().createReadOperationMono(this::getAggregateToCollectionOperation, getClientSession());
+        return getMongoOperationPublisher().createReadOperationMono(
+                (asyncOperations) -> asyncOperations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS),
+                this::getAggregateToCollectionOperation, getClientSession());
     }
 
     @Override
@@ -169,10 +174,10 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
-        return getMongoOperationPublisher().createReadOperationMono(() ->
-                        asAggregateOperation(1).asAsyncExplainableOperation(verbosity,
-                                getCodecRegistry().get(explainResultClass)),
-                getClientSession());
+        return getMongoOperationPublisher().createReadOperationMono(
+                AsyncOperations::getTimeoutSettings,
+                () -> asAggregateOperation(1).asAsyncExplainableOperation(verbosity,
+                        getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
     @Override
@@ -193,14 +198,19 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         }
     }
 
+    @Override
+    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS, maxAwaitTimeMS));
+    }
+
     private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
-                .aggregate(pipeline, getDocumentClass(), maxTimeMS, maxAwaitTimeMS, getTimeoutMode(),
+                .aggregate(pipeline, getDocumentClass(), getTimeoutMode(),
                            initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
     }
 
     private AsyncReadOperation<Void> getAggregateToCollectionOperation() {
-        return getOperations().aggregateToCollection(pipeline, maxTimeMS, getTimeoutMode(), allowDiskUse, bypassDocumentValidation,
+        return getOperations().aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse, bypassDocumentValidation,
                 collation, hint, hintString, comment, variables, aggregationLevel);
     }
 

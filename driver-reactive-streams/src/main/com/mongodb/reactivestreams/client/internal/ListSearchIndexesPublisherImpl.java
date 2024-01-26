@@ -19,8 +19,10 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncExplainableReadOperation;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher;
@@ -30,6 +32,7 @@ import org.bson.Document;
 import org.reactivestreams.Publisher;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -124,8 +127,9 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
     }
 
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
-        return getMongoOperationPublisher().createReadOperationMono(() ->
-                asAggregateOperation(1).asAsyncExplainableOperation(verbosity,
+        return getMongoOperationPublisher().createReadOperationMono(
+                (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS)),
+                () -> asAggregateOperation(1).asAsyncExplainableOperation(verbosity,
                         getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
@@ -134,9 +138,12 @@ final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> im
         return asAggregateOperation(initialBatchSize);
     }
 
+    @Override
+    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+        return  (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS));
+    }
+
     private AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAggregateOperation(final int initialBatchSize) {
-        return getOperations().listSearchIndexes(getDocumentClass(), maxTimeMS, indexName, initialBatchSize, collation,
-                comment,
-                allowDiskUse);
+        return getOperations().listSearchIndexes(getDocumentClass(), indexName, initialBatchSize, collation, comment, allowDiskUse);
     }
 }

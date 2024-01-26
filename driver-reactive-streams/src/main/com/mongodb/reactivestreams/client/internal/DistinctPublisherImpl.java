@@ -18,7 +18,9 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -28,6 +30,7 @@ import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -95,6 +98,11 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         // initialBatchSize is ignored for distinct operations.
-        return getOperations().distinct(fieldName, filter, getDocumentClass(), maxTimeMS, collation, comment);
+        return getOperations().distinct(fieldName, filter, getDocumentClass(), collation, comment);
+    }
+
+    @Override
+    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS));
     }
 }

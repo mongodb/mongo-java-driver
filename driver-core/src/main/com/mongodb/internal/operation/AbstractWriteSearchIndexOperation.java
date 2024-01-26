@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -39,17 +38,10 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
 
-    AbstractWriteSearchIndexOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
-        this.timeoutSettings = timeoutSettings;
+    AbstractWriteSearchIndexOperation(final MongoNamespace namespace) {
         this.namespace = namespace;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

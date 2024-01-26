@@ -20,8 +20,10 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -36,6 +38,7 @@ import org.reactivestreams.Publisher;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -140,6 +143,11 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
             AsyncReadOperation<AsyncBatchCursor<TDocument>> asAsyncReadOperation(final int initialBatchSize) {
                 return createChangeStreamOperation(getMongoOperationPublisher().getCodecRegistry().get(clazz), initialBatchSize);
             }
+
+            @Override
+            Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+                return (asyncOperations -> asyncOperations.createTimeoutSettings(0, maxAwaitTimeMS));
+            }
         };
     }
 
@@ -166,8 +174,14 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
         return createChangeStreamOperation(codec, initialBatchSize);
     }
 
+
+    @Override
+    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (asyncOperations -> asyncOperations.createTimeoutSettings(0, maxAwaitTimeMS));
+    }
+
     private <S> AsyncReadOperation<AsyncBatchCursor<S>> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
         return getOperations().changeStream(fullDocument, fullDocumentBeforeChange, pipeline, codec, changeStreamLevel, initialBatchSize,
-                collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 }

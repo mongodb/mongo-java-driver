@@ -38,9 +38,6 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -62,7 +59,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
                                                                                   getDefaultCodecRegistry().get(Document.class))
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
@@ -84,7 +81,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .maxAwaitTime(1001, MILLISECONDS)
                 .maxTime(101, MILLISECONDS);
 
-        expectedOperation = new AggregateOperation<>(TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME, NAMESPACE, pipeline,
+        expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
                 getDefaultCodecRegistry().get(Document.class))
                 .retryReads(true)
                 .allowDiskUse(true)
@@ -107,7 +104,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
                                                                                   getDefaultCodecRegistry().get(Document.class))
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
@@ -131,7 +128,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
                                                                                   getDefaultCodecRegistry().get(Document.class))
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
@@ -160,7 +157,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                                                                                               ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         // default input should be as expected
@@ -181,7 +178,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .maxAwaitTime(1001, MILLISECONDS) // Ignored on $out
                 .maxTime(100, MILLISECONDS);
 
-        expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, NAMESPACE, pipeline,
+        expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                 ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED)
                 .allowDiskUse(true)
                 .bypassDocumentValidation(true)
@@ -195,7 +192,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
-                new FindOperation<>(TIMEOUT_SETTINGS, collectionNamespace, getDefaultCodecRegistry().get(Document.class))
+                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
                         .batchSize(100)
                         .collation(COLLATION)
                         .filter(new BsonDocument())
@@ -207,7 +204,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         // Should handle database level aggregations
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.DATABASE);
 
-        expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline, ReadConcern.DEFAULT,
+        expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline, ReadConcern.DEFAULT,
                                                                WriteConcern.ACKNOWLEDGED);
 
         Flux.from(publisher).blockFirst();
@@ -218,7 +215,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         // Should handle toCollection
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline, ReadConcern.DEFAULT,
+        expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline, ReadConcern.DEFAULT,
                                                                WriteConcern.ACKNOWLEDGED);
 
         // default input should be as expected
@@ -238,7 +235,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                                                                                               ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         publisher
@@ -265,7 +262,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                                                                                               ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         publisher
@@ -298,7 +295,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION)
                         .toCollection();
 
-        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                                                                                               ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         Flux.from(toCollectionPublisher).blockFirst();
@@ -319,7 +316,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                                                              AggregationLevel.COLLECTION)
                 .toCollection();
 
-        expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipelineWithNamespace, ReadConcern.DEFAULT,
+        expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipelineWithNamespace, ReadConcern.DEFAULT,
                                                                WriteConcern.ACKNOWLEDGED);
 
         Flux.from(toCollectionPublisher).blockFirst();
@@ -339,7 +336,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                                                                                               ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         // default input should be as expected
@@ -360,7 +357,7 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .maxAwaitTime(1001, MILLISECONDS) // Ignored on $out
                 .maxTime(100, MILLISECONDS);
 
-        expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, NAMESPACE, pipeline,
+        expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                 ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED)
                 .allowDiskUse(true)
                 .bypassDocumentValidation(true)
@@ -374,7 +371,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
-                new FindOperation<>(TIMEOUT_SETTINGS, collectionNamespace, getDefaultCodecRegistry().get(Document.class))
+                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
                         .batchSize(100)
                         .collation(COLLATION)
                         .filter(new BsonDocument())
@@ -386,7 +383,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         // Should handle database level aggregations
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.DATABASE);
 
-        expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline, ReadConcern.DEFAULT,
+        expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline, ReadConcern.DEFAULT,
                                                                WriteConcern.ACKNOWLEDGED);
 
         Flux.from(publisher).blockFirst();
@@ -397,7 +394,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         // Should handle toCollection
         publisher = new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline, ReadConcern.DEFAULT,
+        expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline, ReadConcern.DEFAULT,
                                                                WriteConcern.ACKNOWLEDGED);
 
         // default input should be as expected
@@ -417,7 +414,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(TIMEOUT_SETTINGS, NAMESPACE, pipeline,
+        AggregateToCollectionOperation expectedOperation = new AggregateToCollectionOperation(NAMESPACE, pipeline,
                                                                                               ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED);
 
         // default input should be as expected
@@ -428,7 +425,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
-                new FindOperation<>(TIMEOUT_SETTINGS, collectionNamespace, getDefaultCodecRegistry().get(Document.class))
+                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
                 .filter(new BsonDocument())
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);

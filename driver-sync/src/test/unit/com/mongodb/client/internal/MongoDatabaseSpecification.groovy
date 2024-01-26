@@ -214,7 +214,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as DropDatabaseOperation
 
         then:
-        expect operation, isTheSameAs(new DropDatabaseOperation(TIMEOUT_SETTINGS, name, writeConcern))
+        expect operation, isTheSameAs(new DropDatabaseOperation(name, writeConcern))
         executor.getClientSession() == session
 
         where:
@@ -268,7 +268,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(TIMEOUT_SETTINGS, name, collectionName, writeConcern))
+        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern))
         executor.getClientSession() == session
 
         when:
@@ -287,7 +287,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(TIMEOUT_SETTINGS, name, collectionName, writeConcern)
+        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern)
                 .collation(collation)
                 .capped(true)
                 .maxDocuments(100)
@@ -319,7 +319,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(TIMEOUT_SETTINGS, name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
         executor.getClientSession() == session
 
@@ -328,7 +328,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
-        expect operation, isTheSameAs(new CreateViewOperation(TIMEOUT_SETTINGS, name, viewName, viewOn,
+        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
         executor.getClientSession() == session
 
@@ -341,7 +341,7 @@ class MongoDatabaseSpecification extends Specification {
         def viewName = 'view1'
         def viewOn = 'col1'
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
-                readConcern, JAVA_LEGACY, null, null, Stub(OperationExecutor))
+                readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, Stub(OperationExecutor))
 
         when:
         database.createView(viewName, viewOn, null)

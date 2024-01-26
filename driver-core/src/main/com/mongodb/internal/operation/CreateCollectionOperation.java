@@ -26,7 +26,6 @@ import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -72,7 +71,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private static final BsonDocument ENCRYPT_CLUSTERED_INDEX = BsonDocument.parse("{key: {_id: 1}, unique: true}");
     private static final BsonArray SAFE_CONTENT_ARRAY = new BsonArray(
             singletonList(BsonDocument.parse("{key: {__safeContent__: 1}, name: '__safeContent___1'}")));
-    private final TimeoutSettings timeoutSettings;
     private final String databaseName;
     private final String collectionName;
     private final WriteConcern writeConcern;
@@ -94,9 +92,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private String clusteredIndexName;
     private BsonDocument encryptedFields;
 
-    public CreateCollectionOperation(final TimeoutSettings timeoutSettings, final String databaseName,
-            final String collectionName, @Nullable final WriteConcern writeConcern) {
-        this.timeoutSettings = timeoutSettings;
+    public CreateCollectionOperation(final String databaseName, final String collectionName, @Nullable final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
         this.writeConcern = writeConcern;
@@ -233,11 +229,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     public CreateCollectionOperation encryptedFields(@Nullable final BsonDocument encryptedFields) {
         this.encryptedFields = encryptedFields;
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

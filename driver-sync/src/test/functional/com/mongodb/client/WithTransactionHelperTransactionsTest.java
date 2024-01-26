@@ -45,6 +45,9 @@ public class WithTransactionHelperTransactionsTest extends AbstractUnifiedTest {
                                                  final BsonDocument definition, final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, definition, skipTest, true);
         assumeFalse(isServerlessTest());
+
+        // TODO (CSOT) - JAVA-4067 / JAVA-4066
+        assumeFalse(description.equals("commit is not retried after MaxTimeMSExpired error"));
     }
 
     @Override

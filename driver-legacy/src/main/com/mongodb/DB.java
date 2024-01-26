@@ -196,7 +196,7 @@ public class DB {
      */
     public void dropDatabase() {
         try {
-            getExecutor().execute(new DropDatabaseOperation(getTimeoutSettings(), getName(), getWriteConcern()), getReadConcern());
+            getExecutor().execute(new DropDatabaseOperation(getName(), getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -224,7 +224,12 @@ public class DB {
                                                 mongo.getMongoClientOptions().getRetryReads(), DB.this.getTimeoutSettings()) {
                     @Override
                     public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<>(super.getTimeoutSettings(), name, commandCodec).nameOnly(true);
+                        return new ListCollectionsOperation<>(name, commandCodec).nameOnly(true);
+                    }
+
+                    @Override
+                    protected OperationExecutor getExecutor() {
+                        return executor;
                     }
                 }.map(result -> (String) result.get("name")).into(new ArrayList<>());
         Collections.sort(collectionNames);
@@ -304,7 +309,7 @@ public class DB {
         try {
             notNull("options", options);
             DBCollection view = getCollection(viewName);
-            executor.execute(new CreateViewOperation(getTimeoutSettings(), name, viewName, viewOn,
+            executor.execute(new CreateViewOperation(name, viewName, viewOn,
                     view.preparePipeline(pipeline), writeConcern)
                     .collation(options.getCollation()), getReadConcern());
             return view;
@@ -381,7 +386,7 @@ public class DB {
             validationAction = ValidationAction.fromString((String) options.get("validationAction"));
         }
         Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
-        return new CreateCollectionOperation(getTimeoutSettings(), getName(), collectionName,
+        return new CreateCollectionOperation(getName(), collectionName,
                 getWriteConcern())
                    .capped(capped)
                    .collation(collation)
@@ -516,8 +521,8 @@ public class DB {
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
         return new CommandResult(executor.execute(
-                new CommandReadOperation<>(getTimeoutSettings(), getName(), commandDocument,
-                        new BsonDocumentCodec()), readPreference, getReadConcern()), getDefaultDBObjectCodec());
+                new CommandReadOperation<>(getName(), commandDocument,
+                        new BsonDocumentCodec()), readPreference, getReadConcern(), null), getDefaultDBObjectCodec());
     }
 
     OperationExecutor getExecutor() {

@@ -26,6 +26,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.MapReduceAsyncBatchCursor;
@@ -37,6 +38,7 @@ import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -164,7 +166,10 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         if (inline) {
             throw new IllegalStateException("The options must specify a non-inline result");
         }
-        return getMongoOperationPublisher().createWriteOperationMono(this::createMapReduceToCollectionOperation, getClientSession());
+        return getMongoOperationPublisher().createWriteOperationMono(
+                (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS)),
+                this::createMapReduceToCollectionOperation,
+                getClientSession());
     }
 
     @Override
@@ -183,6 +188,11 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
+    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (asyncOperations -> asyncOperations.createTimeoutSettings(maxTimeMS));
+    }
+
+    @Override
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         if (inline) {
             // initialBatchSize is ignored for map reduce operations.
@@ -195,15 +205,13 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
     private WrappedMapReduceReadOperation<T> createMapReduceInlineOperation() {
         return new WrappedMapReduceReadOperation<>(getOperations().mapReduce(mapFunction, reduceFunction, finalizeFunction,
-                getDocumentClass(), filter, limit, maxTimeMS, jsMode, scope,
-                sort, verbose, collation));
+                getDocumentClass(), filter, limit, jsMode, scope, sort, verbose, collation));
     }
 
     private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation() {
-        return new WrappedMapReduceWriteOperation(getOperations().mapReduceToCollection(databaseName, collectionName, mapFunction,
-                                                                                        reduceFunction, finalizeFunction, filter, limit,
-                                                                                        maxTimeMS, jsMode, scope, sort, verbose, action,
-                bypassDocumentValidation, collation));
+        return new WrappedMapReduceWriteOperation(
+                getOperations().mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
+                        limit, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation));
     }
 
     private AsyncReadOperation<AsyncBatchCursor<T>> createFindOperation(final int initialBatchSize) {
@@ -225,11 +233,6 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
         }
 
         @Override
-        public TimeoutSettings getTimeoutSettings() {
-            return operation.getTimeoutSettings();
-        }
-
-        @Override
         public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
             operation.executeAsync(binding, callback::onResult);
         }
@@ -244,11 +247,6 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
         AsyncWriteOperation<MapReduceStatistics> getOperation() {
             return operation;
-        }
-
-        @Override
-        public TimeoutSettings getTimeoutSettings() {
-            return operation.getTimeoutSettings();
         }
 
         @Override
