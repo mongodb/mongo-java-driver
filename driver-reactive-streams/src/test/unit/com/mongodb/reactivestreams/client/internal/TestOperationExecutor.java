@@ -65,6 +65,11 @@ public class TestOperationExecutor implements OperationExecutor {
         return this;
     }
 
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        throw new UnsupportedOperationException("Not supported");
+    }
+
     <T> Mono<T> createMono() {
         return Mono.create(sink -> {
            Object response = responses.remove(0);

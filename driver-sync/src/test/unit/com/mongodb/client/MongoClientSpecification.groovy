@@ -32,6 +32,7 @@ import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
@@ -41,12 +42,12 @@ import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -55,7 +56,8 @@ import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
 
-    private static CodecRegistry codecRegistry = fromProviders(new ValueCodecProvider())
+    private static final CodecRegistry CODEC_REGISTRY = fromProviders(new ValueCodecProvider())
+    private static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(120))
 
     def 'should pass the correct settings to getDatabase'() {
         given:
@@ -64,7 +66,7 @@ class MongoClientSpecification extends Specification {
                 .writeConcern(WriteConcern.MAJORITY)
                 .readConcern(ReadConcern.MAJORITY)
                 .retryWrites(true)
-                .codecRegistry(codecRegistry)
+                .codecRegistry(CODEC_REGISTRY)
                 .build()
         def client = new MongoClientImpl(Stub(Cluster), null, settings, new TestOperationExecutor([]))
 
@@ -75,7 +77,7 @@ class MongoClientSpecification extends Specification {
         expect database, isTheSameAs(expectedDatabase)
 
         where:
-        expectedDatabase << new MongoDatabaseImpl('name', withUuidRepresentation(codecRegistry, UNSPECIFIED), secondary(),
+        expectedDatabase << new MongoDatabaseImpl('name', withUuidRepresentation(CODEC_REGISTRY, UNSPECIFIED), secondary(),
                 WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, null,
                 TIMEOUT_SETTINGS, new TestOperationExecutor([]))
     }
