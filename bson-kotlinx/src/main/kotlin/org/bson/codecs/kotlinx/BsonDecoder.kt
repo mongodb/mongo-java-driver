@@ -33,8 +33,18 @@ import org.bson.BsonInvalidOperationException
 import org.bson.BsonReader
 import org.bson.BsonType
 import org.bson.BsonValue
+import org.bson.codecs.BooleanCodec
 import org.bson.codecs.BsonValueCodec
+import org.bson.codecs.ByteCodec
+import org.bson.codecs.CharacterCodec
 import org.bson.codecs.DecoderContext
+import org.bson.codecs.DoubleCodec
+import org.bson.codecs.FloatCodec
+import org.bson.codecs.IntegerCodec
+import org.bson.codecs.LongCodec
+import org.bson.codecs.ObjectIdCodec
+import org.bson.codecs.ShortCodec
+import org.bson.codecs.StringCodec
 import org.bson.types.ObjectId
 
 /**
@@ -67,6 +77,16 @@ internal open class DefaultBsonDecoder(
     companion object {
         val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
         val bsonValueCodec = BsonValueCodec()
+        val longCodec = LongCodec()
+        val shortCodec = ShortCodec()
+        val intCodec = IntegerCodec()
+        val doubleCodec = DoubleCodec()
+        val floatCodec = FloatCodec()
+        val byteCodec = ByteCodec()
+        val booleanCodec = BooleanCodec()
+        val chatCodec = CharacterCodec()
+        val stingCodec = StringCodec()
+        val objectIdCodec = ObjectIdCodec()
         const val UNKNOWN_INDEX = -10
     }
 
@@ -154,15 +174,15 @@ internal open class DefaultBsonDecoder(
         }
     }
 
-    override fun decodeByte(): Byte = decodeInt().toByte()
-    override fun decodeChar(): Char = decodeString().single()
-    override fun decodeFloat(): Float = decodeDouble().toFloat()
-    override fun decodeShort(): Short = decodeInt().toShort()
-    override fun decodeBoolean(): Boolean = readOrThrow({ reader.readBoolean() }, BsonType.BOOLEAN)
-    override fun decodeDouble(): Double = readOrThrow({ reader.readDouble() }, BsonType.DOUBLE)
-    override fun decodeInt(): Int = readOrThrow({ reader.readInt32() }, BsonType.INT32)
-    override fun decodeLong(): Long = readOrThrow({ reader.readInt64() }, BsonType.INT64)
-    override fun decodeString(): String = readOrThrow({ reader.readString() }, BsonType.STRING)
+    override fun decodeByte(): Byte = byteCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeChar(): Char = chatCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeFloat(): Float = floatCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeShort(): Short = shortCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeBoolean(): Boolean = booleanCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeDouble(): Double = doubleCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeInt(): Int = intCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeLong(): Long = longCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeString(): String = stingCodec.decode(reader, DecoderContext.builder().build())
 
     override fun decodeNull(): Nothing? {
         if (reader.state == AbstractBsonReader.State.VALUE) {
@@ -176,7 +196,7 @@ internal open class DefaultBsonDecoder(
         return reader.state != AbstractBsonReader.State.END_OF_DOCUMENT && reader.currentBsonType != BsonType.NULL
     }
 
-    override fun decodeObjectId(): ObjectId = readOrThrow({ reader.readObjectId() }, BsonType.OBJECT_ID)
+    override fun decodeObjectId(): ObjectId = objectIdCodec.decode(reader, DecoderContext.builder().build())
     override fun decodeBsonValue(): BsonValue = bsonValueCodec.decode(reader, DecoderContext.builder().build())
     override fun reader(): BsonReader = reader
 
