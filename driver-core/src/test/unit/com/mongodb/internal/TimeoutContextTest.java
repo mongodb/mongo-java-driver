@@ -32,6 +32,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT;
 import static com.mongodb.ClusterFixture.sleep;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -195,6 +196,30 @@ final class TimeoutContextTest {
                             () -> assertFalse(noTimeout.hasExpired()),
                             () -> assertFalse(longTimeout.hasExpired()),
                             () -> assertTrue(smallTimeout.hasExpired())
+                    );
+                }),
+                dynamicTest("throws when calculating timeout if expired", () -> {
+                    TimeoutContext smallTimeout = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(1));
+                    TimeoutContext longTimeout =
+                            new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(9999999));
+                    TimeoutContext noTimeout = new TimeoutContext(TIMEOUT_SETTINGS);
+                    sleep(100);
+                    assertAll(
+                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getReadTimeoutMS),
+                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getWriteTimeoutMS),
+                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxTimeMS),
+                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxCommitTimeMS),
+                            () -> assertThrows(MongoOperationTimeoutException.class, () -> smallTimeout.timeoutOrAlternative(1)),
+                            () -> assertDoesNotThrow(longTimeout::getReadTimeoutMS),
+                            () -> assertDoesNotThrow(longTimeout::getWriteTimeoutMS),
+                            () -> assertDoesNotThrow(longTimeout::getMaxTimeMS),
+                            () -> assertDoesNotThrow(longTimeout::getMaxCommitTimeMS),
+                            () -> assertDoesNotThrow(() -> longTimeout.timeoutOrAlternative(1)),
+                            () -> assertDoesNotThrow(noTimeout::getReadTimeoutMS),
+                            () -> assertDoesNotThrow(noTimeout::getWriteTimeoutMS),
+                            () -> assertDoesNotThrow(noTimeout::getMaxTimeMS),
+                            () -> assertDoesNotThrow(noTimeout::getMaxCommitTimeMS),
+                            () -> assertDoesNotThrow(() -> noTimeout.timeoutOrAlternative(1))
                     );
                 }),
                 dynamicTest("validates minRoundTripTime for maxTimeMS", () -> {
