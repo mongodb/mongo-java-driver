@@ -170,7 +170,7 @@ public final class ClusterSettings {
          * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
          * service name, which is limited to 15 characters
          * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
-         * If specified, it is combined with the host name specified by
+         * It is combined with the host name specified by
          * {@link #getSrvHost()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
          * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
          * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
@@ -408,7 +408,7 @@ public final class ClusterSettings {
       * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
       * service name, which is limited to 15 characters
       * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
-      * If specified, it is combined with the host name specified by
+      * It is combined with the host name specified by
       * {@link #getSrvHost()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
       * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
       * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
