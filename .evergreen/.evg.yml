@@ -227,24 +227,29 @@ functions:
       type: test
       params:
         working_dir: "src"
+        env:
+          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
+          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
+          AZURE_TENANT_ID: ${azure_tenant_id}
+          AZURE_CLIENT_ID: ${azure_client_id}
+          AZURE_CLIENT_SECRET: ${azure_client_secret}
+          GCP_EMAIL: ${gcp_email}
+          GCP_PRIVATE_KEY: ${gcp_private_key}
+          AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
+          AZUREKMS_KEY_NAME: ${testazurekms_keyname}
         script: |
           ${PREPARE_SHELL}
-          export AWS_ACCESS_KEY_ID=${aws_access_key_id}
-          export AWS_SECRET_ACCESS_KEY=${aws_secret_access_key}
-          export AWS_DEFAULT_REGION=us-east-1
+          
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
+          
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
-          COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" \
-          AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
+          COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
           AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
           AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN \
-          AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
-          GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
-          AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} \
-          AZUREKMS_KEY_NAME=${testazurekms_keyname} \
-          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
-          CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" \
+          CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH} \
           .evergreen/run-tests.sh
 
   "run load-balancer tests":
@@ -795,22 +800,25 @@ functions:
       type: test
       params:
         working_dir: "src"
+        env:
+          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
+          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_DEFAULT_REGION: us-east-1
+          AZURE_TENANT_ID: ${azure_tenant_id}
+          AZURE_CLIENT_ID: ${azure_client_id}
+          AZURE_CLIENT_SECRET: ${azure_client_secret}
+          GCP_EMAIL: ${gcp_email}
+          GCP_PRIVATE_KEY: ${gcp_private_key}
+          AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
+          AZUREKMS_KEY_NAME: ${testazurekms_keyname}
         script: |
           ${PREPARE_SHELL}
-          export AWS_ACCESS_KEY_ID=${aws_access_key_id}
-          export AWS_SECRET_ACCESS_KEY=${aws_secret_access_key}
-          export AWS_DEFAULT_REGION=us-east-1
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
-          MONGODB_URI="${MONGODB_URI}" \
-          JAVA_VERSION="${JAVA_VERSION}" \
-          AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
+          
+          MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" \
           AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
           AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
           AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN \
-          AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
-          GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
-          AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} \
-          AZUREKMS_KEY_NAME=${testazurekms_keyname} \
           .evergreen/run-csfle-tests-with-mongocryptd.sh
 
   "publish snapshot":
@@ -818,18 +826,26 @@ functions:
       type: test
       params:
         working_dir: "src"
+        env:
+          NEXUS_USERNAME: ${nexus_username}
+          NEXUS_PASSWORD: ${nexus_password}
+          SIGNING_PASSWORD: ${signing_password}
+          SIGNING_KEY: ${gpg_ascii_armored}
         script: |
-          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          RELEASE=false PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY="${gpg_ascii_armored}" .evergreen/publish.sh
+          RELEASE=false PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/publish.sh
 
   "publish release":
     - command: shell.exec
       type: test
       params:
         working_dir: "src"
+        env:
+          NEXUS_USERNAME: ${nexus_username}
+          NEXUS_PASSWORD: ${nexus_password}
+          SIGNING_PASSWORD: ${signing_password}
+          SIGNING_KEY: ${gpg_ascii_armored}
         script: |
-          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          RELEASE=true PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY="${gpg_ascii_armored}" .evergreen/publish.sh
+          RELEASE=true PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/publish.sh
 
   "cleanup":
     - command: shell.exec
