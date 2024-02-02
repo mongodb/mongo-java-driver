@@ -73,6 +73,7 @@ import java.util.stream.Collectors;
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -217,6 +218,9 @@ public abstract class UnifiedTest {
                 this::createMongoClient,
                 this::createGridFSBucket,
                 this::createClientEncryption);
+
+        killAllSessions();
+
         addInitialData();
     }
 
@@ -301,8 +305,22 @@ public abstract class UnifiedTest {
         }
     }
 
+    private void assertOperationAndThrow(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex) {
+        OperationResult result = executeOperation(context, operation, operationIndex);
+        assertOperationResult(context, operation, operationIndex, result);
+
+        if (result.getException() != null) {
+            throw (RuntimeException) result.getException();
+        }
+    }
+
     private void assertOperation(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex) {
         OperationResult result = executeOperation(context, operation, operationIndex);
+        assertOperationResult(context, operation, operationIndex, result);
+    }
+
+    private static void assertOperationResult(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex,
+            final OperationResult result) {
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
@@ -449,7 +467,7 @@ public abstract class UnifiedTest {
                 case "abortTransaction":
                     return crudHelper.executeAbortTransaction(operation);
                 case "withTransaction":
-                    return crudHelper.executeWithTransaction(operation, (op, idx) -> assertOperation(context, op, idx));
+                    return crudHelper.executeWithTransaction(operation, (op, idx) -> assertOperationAndThrow(context, op, idx));
                 case "createFindCursor":
                     return crudHelper.createFindCursor(operation);
                 case "createChangeStream":
@@ -838,6 +856,7 @@ public abstract class UnifiedTest {
         //noinspection SwitchStatementWithTooFewBranches
         switch (state) {
             case "starting":
+            case "in_progress":
                 assertTrue(session.hasActiveTransaction());
                 break;
             default:

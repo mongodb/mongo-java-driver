@@ -19,6 +19,7 @@ package com.mongodb.client.test;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
@@ -34,6 +35,8 @@ import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -70,6 +73,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public final class CollectionHelper<T> {
+    private static final Logger LOGGER = Loggers.getLogger("test");
 
     private final Codec<T> codec;
     private final CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
@@ -89,7 +93,16 @@ public final class CollectionHelper<T> {
     }
 
     public static void drop(final MongoNamespace namespace, final WriteConcern writeConcern) {
-        new DropCollectionOperation(namespace, writeConcern).execute(getBinding());
+        boolean success = false;
+        while (!success) {
+            try {
+                new DropCollectionOperation(namespace, writeConcern).execute(getBinding());
+                success = true;
+            } catch (MongoWriteConcernException e) {
+                LOGGER.info("Retrying drop collection after a write concern error: " + e);
+                // repeat until success!
+            }
+        }
     }
 
     public static void dropDatabase(final String name) {
@@ -394,7 +407,7 @@ public final class CollectionHelper<T> {
         return indexes;
     }
 
-    public void killAllSessions() {
+    public static void killAllSessions() {
         try {
             new CommandReadOperation<>("admin", new BsonDocument("killAllSessions", new BsonArray()),
                     new BsonDocumentCodec()).execute(getBinding());

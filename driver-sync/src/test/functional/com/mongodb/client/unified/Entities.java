@@ -21,6 +21,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
 import com.mongodb.internal.connection.TestClusterListener;
@@ -444,6 +445,9 @@ public final class Entities {
                     case "retryWrites":
                         clientSettingsBuilder.retryWrites(value.asBoolean().getValue());
                         break;
+                    case "readPreference":
+                        clientSettingsBuilder.readPreference(ReadPreference.valueOf(value.asString().getValue()));
+                        break;
                     case "readConcernLevel":
                         clientSettingsBuilder.readConcern(
                                 new ReadConcern(ReadConcernLevel.fromString(value.asString().getValue())));
@@ -608,6 +612,9 @@ public final class Entities {
                     case "snapshot":
                         optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
                         break;
+                    case "causalConsistency":
+                        optionsBuilder.causallyConsistent(entry.getValue().asBoolean().getValue());
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());
                 }
@@ -669,6 +676,12 @@ public final class Entities {
                     break;
                 case "writeConcern":
                     transactionOptionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                case "readPreference":
+                    transactionOptionsBuilder.readPreference(asReadPreference(entry.getValue().asDocument()));
+                    break;
+                case "maxCommitTimeMS":
+                    transactionOptionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());

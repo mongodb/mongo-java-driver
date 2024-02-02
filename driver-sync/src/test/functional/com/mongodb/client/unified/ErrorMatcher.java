@@ -27,6 +27,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
@@ -66,7 +67,7 @@ final class ErrorMatcher {
         if (expectedError.containsKey("errorContains")) {
             String errorContains = expectedError.getString("errorContains").getValue();
             assertTrue(context.getMessage("Error message does not contain expected string: " + errorContains),
-                    e.getMessage().contains(errorContains));
+                    e.getMessage().toLowerCase(Locale.ROOT).contains(errorContains.toLowerCase(Locale.ROOT)));
         }
         if (expectedError.containsKey("errorResponse")) {
             valueMatcher.assertValuesMatch(expectedError.getDocument("errorResponse"), ((MongoCommandException) e).getResponse());
