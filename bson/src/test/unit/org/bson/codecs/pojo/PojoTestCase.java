@@ -16,7 +16,6 @@
 
 package org.bson.codecs.pojo;
 
-import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
