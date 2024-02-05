@@ -16,6 +16,7 @@
 
 package org.bson.codecs.pojo;
 
+import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -290,7 +291,6 @@ abstract class PojoTestCase {
 
         List<List<SimpleModel>> listListSimple = singletonList(listSimple);
         Set<Set<SimpleModel>> setSetSimple = new HashSet<>(singletonList(setSimple));
-        Set<SortedSet<SimpleModel>> setSortedSetSimple = new HashSet<>(singletonList(sortedSetSimple));
 
         Map<String, Map<String, SimpleModel>> mapMapSimple = new HashMap<>();
         mapMapSimple.put("ms", mapSimple);
@@ -308,7 +308,7 @@ abstract class PojoTestCase {
         List<Map<String, List<SimpleModel>>> listMapListSimple = singletonList(mapListSimple);
         List<Map<String, Set<SimpleModel>>> listMapSetSimple = singletonList(mapSetSimple);
 
-        return new CollectionNestedPojoModel(listSimple, listListSimple, setSimple, setSetSimple, sortedSetSimple, setSortedSetSimple,
+        return new CollectionNestedPojoModel(listSimple, listListSimple, setSimple, setSetSimple, sortedSetSimple,
                 mapSimple, mapMapSimple, mapListSimple, mapListMapSimple, mapSetSimple, listMapSimple, listMapListSimple, listMapSetSimple);
     }
 

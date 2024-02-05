@@ -81,7 +81,7 @@ public final class SimpleModel implements Comparable<SimpleModel> {
     }
 
     @Override
-    public int compareTo(SimpleModel o) {
+    public int compareTo(final SimpleModel o) {
         int integerFieldCompareResult = this.integerField.compareTo(o.integerField);
         return integerFieldCompareResult == 0 ? this.stringField.compareTo(o.stringField) : integerFieldCompareResult;
     }

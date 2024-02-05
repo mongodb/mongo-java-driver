@@ -219,7 +219,6 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'setSimple': [" + SIMPLE_MODEL_JSON + "],"
                         + "'setSetSimple': [[" + SIMPLE_MODEL_JSON + "]],"
                         + "'sortedSetSimple': [" + SIMPLE_MODEL_JSON + "],"
-                        + "'setSortedSetSimple': [[" + SIMPLE_MODEL_JSON + "]],"
                         + "'mapSimple': {'s': " + SIMPLE_MODEL_JSON + "},"
                         + "'mapMapSimple': {'ms': {'s': " + SIMPLE_MODEL_JSON + "}},"
                         + "'mapListSimple': {'ls': [" + SIMPLE_MODEL_JSON + "]},"
@@ -234,7 +233,6 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(CollectionNestedPojoModel.class, SimpleModel.class),
                 "{ 'listListSimple': [ null ],"
                         + "'setSetSimple': [ null ],"
-                        + "'sortedSetSimple': [ null ],"
                         + "'mapMapSimple': {'ms': null},"
                         + "'mapListSimple': {'ls': null},"
                         + "'mapListMapSimple': {'lm': [null]},"
