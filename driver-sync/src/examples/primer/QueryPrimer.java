@@ -18,7 +18,7 @@ package primer;
 
 import com.mongodb.client.FindIterable;
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;

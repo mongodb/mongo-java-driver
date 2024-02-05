@@ -16,7 +16,7 @@
 
 package primer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 // @import: start
 import org.bson.Document;

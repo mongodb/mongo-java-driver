@@ -16,12 +16,11 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.connection.ConnectionDescription;
+
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -34,13 +33,13 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBatchCursorTransformer;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
+import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCursorTransformer;
 
 
 /**
@@ -49,6 +48,9 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+
+    private static final String DATABASES = "databases";
+
     private final Decoder<T> decoder;
     private boolean retryReads;
 
@@ -122,28 +124,16 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(binding, "admin", getCommandCreator(),
-                CommandResultDocumentCodec.create(decoder, "databases"), transformer(), retryReads);
+                CommandResultDocumentCodec.create(decoder, DATABASES),
+                singleBatchCursorTransformer(DATABASES), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         executeRetryableReadAsync(binding, "admin", getCommandCreator(),
-                CommandResultDocumentCodec.create(decoder, "databases"), asyncTransformer(),
-                retryReads, errorHandlingCallback(callback, LOGGER));
-    }
-
-    private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return (result, source, connection) -> new QueryBatchCursor<>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, comment, source);
-    }
-
-    private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> new AsyncQueryBatchCursor<>(createQueryResult(result, connection.getDescription()), 0, 0, 0, decoder,
-                comment, source, connection, result);
-    }
-
-    private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        return new QueryResult<>(null, BsonDocumentWrapperHelper.toList(result, "databases"), 0,
-                description.getServerAddress());
+                CommandResultDocumentCodec.create(decoder, DATABASES),
+                asyncSingleBatchCursorTransformer(DATABASES), retryReads,
+                errorHandlingCallback(callback, LOGGER));
     }
 
     private CommandCreator getCommandCreator() {

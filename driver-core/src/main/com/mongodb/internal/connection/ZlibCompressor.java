@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCompressor;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.zip.Deflater;
@@ -48,6 +49,15 @@ class ZlibCompressor extends Compressor {
 
     @Override
     OutputStream getOutputStream(final OutputStream source) {
-        return new DeflaterOutputStream(source, new Deflater(level));
+        return new DeflaterOutputStream(source, new Deflater(level)) {
+            @Override
+            public void close() throws IOException {
+                try {
+                    super.close();
+                } finally {
+                    def.end();
+                }
+            }
+        };
     }
 }

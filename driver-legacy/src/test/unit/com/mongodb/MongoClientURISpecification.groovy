@@ -422,7 +422,7 @@ class MongoClientURISpecification extends Specification {
                                                         + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;maxConnecting=1;'
                                                         + 'replicaSet=test;'
                                                         + 'connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;'
-                                                        + 'slaveOk=true;safe=false;w=1;wtimeout=2600')
+                                                        + 'readPreference=secondaryPreferred;safe=false;w=1;wtimeout=2600')
 
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
                                                                .connectionsPerHost(10)

@@ -42,7 +42,7 @@ import javax.security.sasl.SaslException;
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_KEY;
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
@@ -199,7 +199,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     @NonNull
     private SubjectProvider getSubjectProvider() {
-        return withLock(getMongoCredentialWithCache().getLock(), () -> {
+        return withInterruptibleLock(getMongoCredentialWithCache().getLock(), () -> {
             SubjectProvider subjectProvider =
                     getMongoCredentialWithCache().getFromCache(SUBJECT_PROVIDER_CACHE_KEY, SubjectProvider.class);
             if (subjectProvider == null) {
@@ -335,4 +335,3 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
 }
-

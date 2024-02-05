@@ -244,7 +244,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
         if (getLastErrorResult.containsKey("connectionId")) {
             connectionId = connectionDescription.getConnectionId()
-                    .withServerValue(getLastErrorResult.getNumber("connectionId").intValue());
+                    .withServerValue(getLastErrorResult.getNumber("connectionId").longValue());
         } else {
             connectionId = connectionDescription.getConnectionId();
         }

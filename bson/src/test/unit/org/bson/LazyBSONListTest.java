@@ -16,16 +16,17 @@
 
 package org.bson;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings({"rawtypes"})
 public class LazyBSONListTest {
@@ -86,12 +87,14 @@ public class LazyBSONListTest {
         assertFalse(it.hasNext());
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void testIteratorNextWhileNothingLeft() {
-        LazyBSONList list = encodeAndExtractList(asList());
-        Iterator it = list.iterator();
-        assertFalse(it.hasNext());
-        it.next();
+        assertThrows(NoSuchElementException.class, () -> {
+            LazyBSONList list = encodeAndExtractList(asList());
+            Iterator it = list.iterator();
+            assertFalse(it.hasNext());
+            it.next();
+        });
     }
 
 }

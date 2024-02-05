@@ -52,6 +52,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
+import static com.mongodb.internal.Locks.checkedWithLock;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
@@ -69,7 +71,6 @@ class DefaultServerMonitor implements ServerMonitor {
 
     private final ServerId serverId;
     private final ServerMonitorListener serverMonitorListener;
-    private final ClusterClock clusterClock;
     private final Provider<SdamServerDescriptionManager> sdamProvider;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -86,15 +87,13 @@ class DefaultServerMonitor implements ServerMonitor {
     private volatile boolean isClosed;
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
-                         final ClusterClock clusterClock,
-                         final InternalConnectionFactory internalConnectionFactory,
+            final InternalConnectionFactory internalConnectionFactory,
                          final ClusterConnectionMode clusterConnectionMode,
                          @Nullable final ServerApi serverApi,
                          final Provider<SdamServerDescriptionManager> sdamProvider) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
         this.serverMonitorListener = singleServerMonitorListener(serverSettings);
-        this.clusterClock = notNull("clusterClock", clusterClock);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
@@ -117,12 +116,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     @Override
     public void connect() {
-        lock.lock();
-        try {
-            condition.signal();
-        } finally {
-            lock.unlock();
-        }
+        withLock(lock, condition::signal);
     }
 
     @Override
@@ -209,7 +203,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
                 long start = System.nanoTime();
                 try {
-                    SessionContext sessionContext = new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
+                    SessionContext sessionContext = NoOpSessionContext.INSTANCE;
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
@@ -244,14 +238,11 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
             } catch (Throwable t) {
                 averageRoundTripTime.reset();
-                InternalConnection localConnection;
-                lock.lock();
-                try {
-                    localConnection = connection;
+                InternalConnection localConnection = withLock(lock, () -> {
+                    InternalConnection result = connection;
                     connection = null;
-                } finally {
-                    lock.unlock();
-                }
+                    return result;
+                });
                 if (localConnection != null) {
                     localConnection.close();
                 }
@@ -260,7 +251,7 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private boolean shouldStreamResponses(final ServerDescription currentServerDescription) {
-            return currentServerDescription.getTopologyVersion() != null && connection.supportsAdditionalTimeout();
+            return currentServerDescription.getTopologyVersion() != null;
         }
 
         private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,
@@ -300,25 +291,18 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private long waitForSignalOrTimeout() throws InterruptedException {
-            lock.lock();
-            try {
-                return condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS));
-            } finally {
-                lock.unlock();
-            }
+            return checkedWithLock(lock, () -> condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS)));
         }
 
         public void cancelCurrentCheck() {
-            InternalConnection localConnection = null;
-            lock.lock();
-            try {
+            InternalConnection localConnection = withLock(lock, () -> {
                 if (connection != null && !currentCheckCancelled) {
-                    localConnection = connection;
+                    InternalConnection result = connection;
                     currentCheckCancelled = true;
+                    return result;
                 }
-            } finally {
-                lock.unlock();
-            }
+                return null;
+            });
             if (localConnection != null) {
                 localConnection.close();
             }
@@ -445,7 +429,7 @@ class DefaultServerMonitor implements ServerMonitor {
             long start = System.nanoTime();
             executeCommand("admin",
                     new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
-                    clusterClock, clusterConnectionMode, serverApi, connection);
+                    clusterConnectionMode, serverApi, connection);
             long elapsedTimeNanos = System.nanoTime() - start;
             averageRoundTripTime.addSample(elapsedTimeNanos);
         }

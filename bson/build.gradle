@@ -22,4 +22,7 @@ ext {
     pomURL = 'https://bsonspec.org'
 }
 
-jar.manifest.attributes['Import-Package'] = 'org.slf4j.*;resolution:=optional'
+afterEvaluate {
+    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.bson'
+    jar.manifest.attributes['Import-Package'] = 'org.slf4j.*;resolution:=optional'
+}

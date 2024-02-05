@@ -105,7 +105,11 @@ public final class SocksSocket extends Socket {
              * 1. Enforces self-closing under RFC 1928 if METHOD is X'FF'.
              * 2. Handles all other errors during connection, distinct from external closures.
              */
-            close();
+            try {
+                close();
+            } catch (Exception closeException) {
+                socketException.addSuppressed(closeException);
+            }
             throw socketException;
         }
     }

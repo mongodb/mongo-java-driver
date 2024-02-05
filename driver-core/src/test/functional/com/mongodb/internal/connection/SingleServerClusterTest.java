@@ -25,7 +25,6 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.binding.StaticBindingContext;
 import com.mongodb.internal.selector.ServerAddressSelector;
@@ -51,13 +50,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("deprecation")
 public class SingleServerClusterTest {
     private SingleServerCluster cluster;
 
 
     private void setUpCluster(final ServerAddress serverAddress) {
-        SocketStreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(),
+        SocketStreamFactory streamFactory = new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(),
                 getSslSettings());
         ClusterId clusterId = new ClusterId();
         ClusterSettings clusterSettings = ClusterSettings.builder()
@@ -71,7 +69,7 @@ public class SingleServerClusterTest {
                         streamFactory, streamFactory, getCredential(),
 
                         LoggerSettings.builder().build(), null, null, null,
-                        Collections.emptyList(), getServerApi(), null));
+                        Collections.emptyList(), getServerApi()));
     }
 
     @After
@@ -80,22 +78,13 @@ public class SingleServerClusterTest {
     }
 
     @Test
-    public void shouldGetDescription() {
-        // given
-        setUpCluster(getPrimary());
-
-        // expect
-        assertNotNull(cluster.getDescription());
-    }
-
-    @Test
     public void descriptionShouldIncludeSettings() {
         // given
         setUpCluster(getPrimary());
 
         // expect
-        assertNotNull(cluster.getDescription().getClusterSettings());
-        assertNotNull(cluster.getDescription().getServerSettings());
+        assertNotNull(cluster.getCurrentDescription().getClusterSettings());
+        assertNotNull(cluster.getCurrentDescription().getServerSettings());
     }
 
     @Test

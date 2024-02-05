@@ -21,7 +21,6 @@ import com.mongodb.internal.bulk.WriteRequest;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 
 /**
@@ -100,36 +99,6 @@ public abstract class BulkWriteResult {
     /**
      * Create an acknowledged BulkWriteResult
      *
-     * @param type    the type of the write
-     * @param count   the number of documents matched
-     * @param upserts the list of upserts
-     * @return an acknowledged BulkWriteResult
-     * @deprecated Prefer {@link BulkWriteResult#acknowledged(int, int, int, Integer, List, List)} instead
-     */
-    @Deprecated
-    public static BulkWriteResult acknowledged(final WriteRequest.Type type, final int count, final List<BulkWriteUpsert> upserts) {
-        return acknowledged(type, count, 0, upserts, emptyList());
-    }
-
-    /**
-     * Create an acknowledged BulkWriteResult
-     *
-     * @param type          the type of the write
-     * @param count         the number of documents matched
-     * @param modifiedCount the number of documents modified, which may be null if the server was not able to provide the count
-     * @param upserts       the list of upserts
-     * @return an acknowledged BulkWriteResult
-     * @deprecated Prefer {@link BulkWriteResult#acknowledged(int, int, int, Integer, List, List)} instead
-     */
-    @Deprecated
-    public static BulkWriteResult acknowledged(final WriteRequest.Type type, final int count, final Integer modifiedCount,
-                                               final List<BulkWriteUpsert> upserts) {
-        return acknowledged(type, count, modifiedCount, upserts, emptyList());
-    }
-
-    /**
-     * Create an acknowledged BulkWriteResult
-     *
      * @param type          the type of the write
      * @param count         the number of documents matched
      * @param modifiedCount the number of documents modified, which may be null if the server was not able to provide the count
@@ -144,23 +113,6 @@ public abstract class BulkWriteResult {
                 (type == WriteRequest.Type.UPDATE || type == WriteRequest.Type.REPLACE) ? count : 0,
                 type == WriteRequest.Type.DELETE ? count : 0,
                 modifiedCount, upserts, inserts);
-    }
-
-    /**
-     * Create an acknowledged BulkWriteResult
-     *
-     * @param insertedCount the number of documents inserted by the write operation
-     * @param matchedCount  the number of documents matched by the write operation
-     * @param removedCount  the number of documents removed by the write operation
-     * @param modifiedCount the number of documents modified, which may not be null
-     * @param upserts       the list of upserts
-     * @return an acknowledged BulkWriteResult
-     * @deprecated Prefer {@link BulkWriteResult#acknowledged(int, int, int, Integer, List, List)} instead
-     */
-    @Deprecated
-    public static BulkWriteResult acknowledged(final int insertedCount, final int matchedCount, final int removedCount,
-                                               final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
-        return acknowledged(insertedCount, matchedCount, removedCount, modifiedCount, upserts, emptyList());
     }
 
     /**

@@ -22,11 +22,8 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerVersion;
-import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -37,14 +34,12 @@ import java.util.List;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getServerApi;
-import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.Thread.sleep;
 
 /**
  * Helper class for asynchronous tests.
  */
-@SuppressWarnings("deprecation")
 public final class Fixture {
     private static MongoClientImpl mongoClient;
     private static ServerVersion serverVersion;
@@ -162,14 +157,6 @@ public final class Fixture {
         return clusterType == ClusterType.REPLICA_SET;
     }
 
-    public static StreamFactoryFactory getStreamFactoryFactory() {
-        if (getSslSettings().isEnabled()) {
-            return new TlsChannelStreamFactoryFactory();
-        } else {
-            return AsynchronousSocketChannelStreamFactoryFactory.builder().build();
-        }
-    }
-
     public static synchronized ConnectionString getConnectionString() {
         return ClusterFixture.getConnectionString();
     }
@@ -177,7 +164,6 @@ public final class Fixture {
     public static MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applyConnectionString(getConnectionString());
-        builder.streamFactoryFactory(getStreamFactoryFactory());
         if (getServerApi() != null) {
             builder.serverApi(getServerApi());
         }

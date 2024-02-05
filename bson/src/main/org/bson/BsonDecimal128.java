@@ -84,17 +84,17 @@ public final class BsonDecimal128 extends BsonNumber {
 
     @Override
     public int intValue() {
-        return value.bigDecimalValue().intValue();
+        return value.intValue();
     }
 
     @Override
     public long longValue() {
-        return value.bigDecimalValue().longValue();
+        return value.longValue();
     }
 
     @Override
     public double doubleValue() {
-        return value.bigDecimalValue().doubleValue();
+        return value.doubleValue();
     }
 
     @Override

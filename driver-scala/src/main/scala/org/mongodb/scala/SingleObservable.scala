@@ -40,7 +40,7 @@ object SingleObservable {
 }
 
 /**
- * A `SingleObservable` represents an [[Observable]] that contains only a single item.
+ * A `SingleObservable` represents an [[Observable]] that emits one or no items.
  *
  * @tparam T the type of element signaled.
  * @since 2.0

@@ -62,6 +62,7 @@ public class FindOneAndReplaceOptions {
      * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
+     * @see Projections
      */
     public FindOneAndReplaceOptions projection(@Nullable final Bson projection) {
         this.projection = projection;

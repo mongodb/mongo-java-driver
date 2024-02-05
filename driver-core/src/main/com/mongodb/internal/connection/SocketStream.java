@@ -21,11 +21,10 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.connection.Stream;
+import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 
 import javax.net.SocketFactory;
@@ -43,16 +42,18 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
+import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@SuppressWarnings("deprecation")
 public class SocketStream implements Stream {
     private final ServerAddress address;
+    private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
     private final SslSettings sslSettings;
     private final SocketFactory socketFactory;
@@ -62,13 +63,15 @@ public class SocketStream implements Stream {
     private volatile InputStream inputStream;
     private volatile boolean isClosed;
 
-    public SocketStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
-                        final SocketFactory socketFactory, final BufferProvider bufferProvider) {
+    public SocketStream(final ServerAddress address, final InetAddressResolver inetAddressResolver,
+            final SocketSettings settings, final SslSettings sslSettings,
+            final SocketFactory socketFactory, final BufferProvider bufferProvider) {
         this.address = notNull("address", address);
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.socketFactory = notNull("socketFactory", socketFactory);
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
+        this.inetAddressResolver = inetAddressResolver;
     }
 
     @Override
@@ -79,11 +82,11 @@ public class SocketStream implements Stream {
             inputStream = socket.getInputStream();
         } catch (IOException e) {
             close();
-            throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
+            throw translateInterruptedException(e, "Interrupted while connecting")
+                    .orElseThrow(() -> new MongoSocketOpenException("Exception opening socket", getAddress(), e));
         }
     }
 
-    @SuppressWarnings("deprecation")
     protected Socket initializeSocket() throws IOException {
         ProxySettings proxySettings = settings.getProxySettings();
         if (proxySettings.isProxyEnabled()) {
@@ -95,7 +98,7 @@ public class SocketStream implements Stream {
             return initializeSocketOverSocksProxy();
         }
 
-        Iterator<InetSocketAddress> inetSocketAddresses = address.getSocketAddresses().iterator();
+        Iterator<InetSocketAddress> inetSocketAddresses = getSocketAddresses(address, inetAddressResolver).iterator();
         while (inetSocketAddresses.hasNext()) {
             Socket socket = socketFactory.createSocket();
             try {
@@ -184,11 +187,6 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public boolean supportsAdditionalTimeout() {
-        return true;
-    }
-
-    @Override
     public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
         int curTimeout = socket.getSoTimeout();
         if (curTimeout > 0 && additionalTimeout > 0) {
@@ -240,7 +238,7 @@ public class SocketStream implements Stream {
             if (socket != null) {
                 socket.close();
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             // ignore
         }
     }

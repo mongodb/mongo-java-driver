@@ -24,6 +24,9 @@ import com.mongodb.internal.logging.LogMessage.Level;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
@@ -68,10 +71,11 @@ public final class StructuredLogger {
             return true;
         }
 
-        //noinspection SwitchStatementWithTooFewBranches
         switch (level) {
             case DEBUG:
                 return logger.isDebugEnabled();
+            case INFO:
+                return logger.isInfoEnabled();
             default:
                 throw new UnsupportedOperationException();
         }
@@ -82,22 +86,32 @@ public final class StructuredLogger {
         if (interceptor != null) {
             interceptor.intercept(logMessage);
         }
-        //noinspection SwitchStatementWithTooFewBranches
         switch (logMessage.getLevel()) {
             case DEBUG:
-                if (logger.isDebugEnabled()) {
-                    LogMessage.UnstructuredLogMessage unstructuredLogMessage = logMessage.toUnstructuredLogMessage();
-                    String message = unstructuredLogMessage.interpolate();
-                    Throwable exception = logMessage.getException();
-                    if (exception == null) {
-                        logger.debug(message);
-                    } else {
-                        logger.debug(message, exception);
-                    }
-                }
+                logUnstructured(logMessage, logger::isDebugEnabled, logger::debug, logger::debug);
+                break;
+            case INFO:
+                logUnstructured(logMessage, logger::isInfoEnabled, logger::info, logger::info);
                 break;
             default:
                 throw new UnsupportedOperationException();
+        }
+    }
+
+    private static void logUnstructured(
+            final LogMessage logMessage,
+            final Supplier<Boolean> loggingEnabled,
+            final Consumer<String> doLog,
+            final BiConsumer<String, Throwable> doLogWithException) {
+        if (loggingEnabled.get()) {
+            LogMessage.UnstructuredLogMessage unstructuredLogMessage = logMessage.toUnstructuredLogMessage();
+            String message = unstructuredLogMessage.interpolate();
+            Throwable exception = logMessage.getException();
+            if (exception == null) {
+                doLog.accept(message);
+            } else {
+                doLogWithException.accept(message, exception);
+            }
         }
     }
 }

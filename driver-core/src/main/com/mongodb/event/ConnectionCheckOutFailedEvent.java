@@ -79,34 +79,6 @@ public final class ConnectionCheckOutFailedEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param serverId the server id
-     * @param operationId the operation id
-     * @param reason the reason the connection check out failed
-     * @since 4.10
-     * @deprecated Prefer {@link ConnectionCheckOutFailedEvent#ConnectionCheckOutFailedEvent(ServerId, long, Reason, long)}.
-     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
-     */
-    @Deprecated
-    public ConnectionCheckOutFailedEvent(final ServerId serverId, final long operationId, final Reason reason) {
-        this(serverId, operationId, reason, 0);
-    }
-
-    /**
-     * Construct an instance
-     *
-     * @param serverId the server id
-     * @param reason the reason the connection check out failed
-     * @deprecated Prefer {@link #ConnectionCheckOutFailedEvent(ServerId, long, Reason)}
-     * If this constructor is used, then {@link #getOperationId()} is -1.
-     */
-    @Deprecated
-    public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
-        this(serverId, -1, reason);
-    }
-
-    /**
      * Gets the server id
      *
      * @return the server id
@@ -137,15 +109,13 @@ public final class ConnectionCheckOutFailedEvent {
 
     /**
      * The time it took to check out the connection.
-     * More specifically, the time elapsed between the {@link ConnectionCheckOutStartedEvent} emitted by the same checking out and this event.
+     * More specifically, the time elapsed between emitting a {@link ConnectionCheckOutStartedEvent}
+     * and emitting this event as part of the same checking out.
      * <p>
      * Naturally, if a new connection was not {@linkplain ConnectionCreatedEvent created}
      * and {@linkplain ConnectionReadyEvent established} as part of checking out,
      * this duration is usually not greater than {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)},
      * but may occasionally be greater than that, because the driver does not provide hard real-time guarantees.</p>
-     * <p>
-     * This duration does not currently include the time to deliver the {@link ConnectionCheckOutStartedEvent}.
-     * Subject to change.</p>
      *
      * @param timeUnit The time unit of the result.
      * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.

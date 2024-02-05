@@ -213,7 +213,7 @@ public class BatchCursorFluxTest {
         findPublisher.subscribe(subscriber);
         assertCommandNames(emptyList());
 
-        subscriber.requestMore(100);
+        subscriber.requestMore(101);
         subscriber.assertReceivedOnNext(docs);
         subscriber.assertNoErrors();
         subscriber.assertTerminalEvent();

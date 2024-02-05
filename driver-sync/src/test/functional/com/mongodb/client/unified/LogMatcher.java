@@ -16,8 +16,11 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.Function;
 import com.mongodb.MongoCommandException;
+import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils;
 import com.mongodb.internal.logging.LogMessage;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -43,14 +46,20 @@ final class LogMatcher {
         this.context = context;
     }
 
-    void assertLogMessageEquality(final String client, final BsonArray expectedMessages, final List<LogMessage> actualMessages) {
+    void assertLogMessageEquality(final String client, final BsonArray expectedMessages, final List<LogMessage> actualMessages,
+            final Iterable<Tweak> tweaks) {
         context.push(ContextElement.ofLogMessages(client, expectedMessages, actualMessages));
 
         assertEquals(context.getMessage("Number of log messages must be the same"), expectedMessages.size(), actualMessages.size());
 
         for (int i = 0; i < expectedMessages.size(); i++) {
-            BsonDocument expectedMessageAsDocument = expectedMessages.get(i).asDocument().clone();
-            valueMatcher.assertValuesMatch(expectedMessageAsDocument, asDocument(actualMessages.get(i)));
+            BsonDocument expectedMessage = expectedMessages.get(i).asDocument().clone();
+            for (Tweak tweak : tweaks) {
+                expectedMessage = tweak.apply(expectedMessage);
+            }
+            if (expectedMessage != null) {
+                valueMatcher.assertValuesMatch(expectedMessage, asDocument(actualMessages.get(i)));
+            }
         }
 
         context.pop();
@@ -58,7 +67,7 @@ final class LogMatcher {
 
      static BsonDocument asDocument(final LogMessage message) {
         BsonDocument document = new BsonDocument();
-        document.put("component", new BsonString(message.getComponent().name().toLowerCase()));
+        document.put("component", new BsonString(message.getComponent().getValue()));
         document.put("level", new BsonString(message.getLevel().name().toLowerCase()));
         document.put("hasFailure", BsonBoolean.valueOf(message.getException() != null));
         document.put("failureIsRedacted",
@@ -79,7 +88,9 @@ final class LogMatcher {
     }
 
     private static boolean exceptionIsRedacted(final Throwable exception) {
-        return exception instanceof MongoCommandException && ((MongoCommandException) exception).getResponse().isEmpty();
+        return exception instanceof MongoCommandException
+                && MongoCommandExceptionUtils.SecurityInsensitiveResponseField.fieldNames()
+                        .containsAll(((MongoCommandException) exception).getResponse().keySet());
     }
 
     private static BsonValue asBsonValue(final Object value) {
@@ -100,4 +111,27 @@ final class LogMatcher {
         }
     }
 
+    interface Tweak extends Function<BsonDocument, BsonDocument> {
+        /**
+         * @param expectedMessage May be {@code null}, in which case the method simply returns {@code null}.
+         * This method may mutate {@code expectedMessage}.
+         * @return {@code null} iff matching {@code expectedMessage} with the actual message must be skipped.
+         */
+        @Nullable
+        BsonDocument apply(@Nullable BsonDocument expectedMessage);
+
+        static Tweak skip(final LogMessage.Entry.Name name) {
+            return expectedMessage -> {
+                if (expectedMessage == null) {
+                    return null;
+                } else {
+                    BsonDocument expectedData = expectedMessage.getDocument("data", null);
+                    if (expectedData != null) {
+                        expectedData.remove(name.getValue());
+                    }
+                    return expectedMessage;
+                }
+            };
+        }
+    }
 }

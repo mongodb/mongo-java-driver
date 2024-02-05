@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.IgnorableRequestContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
@@ -27,7 +28,8 @@ import spock.lang.Specification
 class CommandEventSpecification extends Specification {
     def 'should fail if elapsed time is negative'() {
         when:
-        new CommandSucceededEvent(1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'ping',
+        new CommandSucceededEvent(IgnorableRequestContext.INSTANCE, 1, 1,
+                new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'test', 'ping',
                 new BsonDocument('ok', new BsonInt32(1)), -1)
 
         then:
@@ -35,8 +37,8 @@ class CommandEventSpecification extends Specification {
         e.getMessage() == 'state should be: elapsed time is not negative'
 
         when:
-        new CommandFailedEvent(1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'ping', -1,
-                new Throwable())
+        new CommandFailedEvent(IgnorableRequestContext.INSTANCE, 1, 1,
+                new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())), 'test', 'ping', -1, new Throwable())
 
         then:
         e = thrown(IllegalArgumentException)

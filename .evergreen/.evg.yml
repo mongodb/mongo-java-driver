@@ -148,7 +148,9 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} SKIP_LEGACY_SHELL=${SKIP_LEGACY_SHELL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
+          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
+          AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
+          INSTALL_LEGACY_SHELL=${INSTALL_LEGACY_SHELL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     # run-orchestration generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
@@ -158,12 +160,11 @@ functions:
     - command: shell.exec
       params:
         script: |
-          DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/build-mongohouse-local.sh
+          DRIVERS_TOOLS="${DRIVERS_TOOLS}" bash ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/pull-mongohouse-image.sh
     - command: shell.exec
       params:
-        background: true
         script: |
-          DRIVERS_TOOLS="${DRIVERS_TOOLS}" sh ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-local.sh
+          DRIVERS_TOOLS="${DRIVERS_TOOLS}" bash ${DRIVERS_TOOLS}/.evergreen/atlas_data_lake/run-mongohouse-image.sh
 
   "run load-balancer":
     - command: shell.exec
@@ -856,25 +857,6 @@ functions:
             perl -p -i -e "s|ABSOLUTE_PATH_REPLACEMENT_TOKEN|${DRIVERS_TOOLS}|g" $filename
           done
 
-  "windows fix":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          for i in $(find ${DRIVERS_TOOLS}/.evergreen ${PROJECT_DIRECTORY}/.evergreen -name \*.sh); do
-            cat $i | tr -d '\r' > $i.new
-            mv $i.new $i
-          done
-
-  "make files executable":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          for i in $(find ${DRIVERS_TOOLS}/.evergreen ${PROJECT_DIRECTORY}/.evergreen -name \*.sh); do
-            chmod +x $i
-          done
-
   "run perf tests":
     - command: shell.exec
       type: test
@@ -894,9 +876,7 @@ functions:
 pre:
   - func: "fetch source"
   - func: "prepare resources"
-  - func: "windows fix"
   - func: "fix absolute paths"
-  - func: "make files executable"
 
 post:
   - func: "upload mo artifacts"
@@ -971,6 +951,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with regular aws credentials"
 
@@ -981,6 +962,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with assume role credentials"
 
@@ -991,6 +973,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with aws credentials as environment variables"
 
@@ -1001,6 +984,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with aws credentials and session token as environment variables"
 
@@ -1011,6 +995,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with aws EC2 credentials"
 
@@ -1021,6 +1006,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws auth test with web identity credentials"
 
@@ -1031,6 +1017,7 @@ tasks:
             AUTH: "auth"
             ORCHESTRATION_FILE: "auth-aws.json"
             TOPOLOGY: "server"
+            INSTALL_LEGACY_SHELL: "true"
         - func: "add aws auth variables to file"
         - func: "run aws ECS auth test"
 
@@ -1477,20 +1464,6 @@ tasks:
       depends_on:
         - variant: "static-checks"
           name: "static-analysis"
-        - variant: ".tests-variant"
-          name: "test"
-        - variant: ".tests-slow-variant"
-          name: "slow-test"
-        - variant: ".test-gssapi-variant"
-          name: "gssapi-auth-test"
-        - variant: "plain-auth-test"
-          name: "plain-auth-test"
-        - variant: ".test-scala-variant"
-          name: "scala-tests"
-        - variant: ".test-kotlin-variant"
-          name: "kotlin-tests"
-        - variant: ".tests-netty-variant"
-          name: "netty-test"
       commands:
         - func: "publish snapshot"
 
@@ -1508,7 +1481,6 @@ tasks:
             TOPOLOGY: "server"
             SSL: "nossl"
             AUTH: "noauth"
-            SKIP_LEGACY_SHELL: "true"
         - func: "run perf tests"
         - func: "send dashboard data"
 
@@ -1878,7 +1850,6 @@ task_groups:
     setup_group:
       - func: fetch source
       - func: prepare resources
-      - func: make files executable
       - command: subprocess.exec
         params:
           working_dir: src
@@ -1908,7 +1879,6 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
-      - func: make files executable
       - command: shell.exec
         params:
           shell: "bash"
@@ -1944,7 +1914,6 @@ task_groups:
       - func: fetch source
       - func: prepare resources
       - func: fix absolute paths
-      - func: make files executable
       - command: shell.exec
         params:
           shell: "bash"
@@ -2160,22 +2129,21 @@ buildvariants:
 - matrix_name: "aws-auth-test"
   matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",
                  aws-credential-provider: "*" }
-  display_name: "MONGODB-AWS Auth test ${version} ${jdk} ${aws-credential-provider}"
+  display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu2004-small
   tasks:
     - name: "aws-auth-test-with-regular-aws-credentials"
+
+- matrix_name: "aws-ec2-auth-test"
+  matrix_spec: { ssl: "nossl", jdk: ["jdk17"], version: ["7.0"], os: "ubuntu", aws-credential-provider: "*" }
+  display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider}"
+  run_on: ubuntu2004-small
+  tasks:
+    - name: "aws-auth-test-with-aws-EC2-credentials"
     - name: "aws-auth-test-with-assume-role-credentials"
     - name: "aws-auth-test-with-aws-credentials-as-environment-variables"
     - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables"
-    - name: "aws-auth-test-with-aws-EC2-credentials"
     - name: "aws-auth-test-with-web-identity-credentials"
-
-#- matrix_name: "aws-ecs-auth-test"
-#  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu" }
-#  display_name: "MONGODB-AWS ECS Auth test ${version} ${jdk}"
-#  run_on: ubuntu2004-small
-#  tasks:
-#    - name: "aws-ECS-auth-test"
 
 - matrix_name: "accept-api-version-2-test"
   matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }

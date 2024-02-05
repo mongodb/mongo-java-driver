@@ -27,7 +27,6 @@ import org.bson.BsonDocument;
  * @since 3.1
  */
 public final class CommandStartedEvent extends CommandEvent {
-    private final String databaseName;
     private final BsonDocument command;
 
     /**
@@ -45,55 +44,8 @@ public final class CommandStartedEvent extends CommandEvent {
     public CommandStartedEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
             final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
             final BsonDocument command) {
-        super(requestContext, operationId, requestId, connectionDescription, commandName);
-        this.databaseName = databaseName;
+        super(requestContext, operationId, requestId, connectionDescription, databaseName, commandName);
         this.command = command;
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param requestContext the request context
-     * @param requestId             the request id
-     * @param connectionDescription the connection description
-     * @param databaseName          the database name
-     * @param commandName           the command name
-     * @param command the command as a BSON document
-     * @since 4.4
-     * @deprecated Prefer {@link
-     * CommandStartedEvent#CommandStartedEvent(RequestContext, long, int, ConnectionDescription, String, String, BsonDocument)}
-     */
-    @Deprecated
-    public CommandStartedEvent(@Nullable final RequestContext requestContext, final int requestId,
-            final ConnectionDescription connectionDescription, final String databaseName, final String commandName,
-            final BsonDocument command) {
-        this(requestContext, -1, requestId, connectionDescription, databaseName, commandName, command);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param requestId             the request id
-     * @param connectionDescription the connection description
-     * @param databaseName          the database name
-     * @param commandName           the command name
-     * @param command the command as a BSON document
-     * @deprecated Prefer {@link
-     * CommandStartedEvent#CommandStartedEvent(RequestContext, long, int, ConnectionDescription, String, String, BsonDocument)}
-     */
-    @Deprecated
-    public CommandStartedEvent(final int requestId, final ConnectionDescription connectionDescription,
-            final String databaseName, final String commandName, final BsonDocument command) {
-        this(null, requestId, connectionDescription, databaseName, commandName, command);
-    }
-
-    /**
-     * Gets the database on which the operation will be executed.
-     *
-     * @return the database name
-     */
-    public String getDatabaseName() {
-        return databaseName;
     }
 
     /**

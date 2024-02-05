@@ -35,7 +35,7 @@ class ReplyHeaderSpecification extends Specification {
             writeInt(responseFlags)
             writeLong(9000)
             writeInt(4)
-            writeInt(30)
+            writeInt(1)
         }
         def byteBuf = outputBuffer.byteBuffers.get(0)
 
@@ -46,12 +46,6 @@ class ReplyHeaderSpecification extends Specification {
         replyHeader.messageLength == 186
         replyHeader.requestId == 45
         replyHeader.responseTo == 23
-        replyHeader.responseFlags == responseFlags
-        replyHeader.cursorId == 9000
-        replyHeader.startingFrom == 4
-        replyHeader.numberReturned == 30
-        replyHeader.cursorNotFound == cursorNotFound
-        replyHeader.queryFailure == queryFailure
 
         where:
         responseFlags << [0, 1, 2, 3]
@@ -72,7 +66,7 @@ class ReplyHeaderSpecification extends Specification {
             writeInt(responseFlags)
             writeLong(9000)
             writeInt(4)
-            writeInt(30)
+            writeInt(1)
         }
         def byteBuf = outputBuffer.byteBuffers.get(0)
         def compressedHeader = new CompressedHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()))
@@ -84,12 +78,6 @@ class ReplyHeaderSpecification extends Specification {
         replyHeader.messageLength == 274
         replyHeader.requestId == 45
         replyHeader.responseTo == 23
-        replyHeader.responseFlags == responseFlags
-        replyHeader.cursorId == 9000
-        replyHeader.startingFrom == 4
-        replyHeader.numberReturned == 30
-        replyHeader.cursorNotFound == cursorNotFound
-        replyHeader.queryFailure == queryFailure
 
         where:
         responseFlags << [0, 1, 2, 3]
@@ -138,7 +126,7 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == 'The reply message length 35 is less than the mimimum message length 36'
+        ex.getMessage() == 'The reply message length 35 is less than the minimum message length 36'
     }
 
     def 'should throw MongoInternalException on message size > max message size'() {
@@ -182,7 +170,7 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == 'The reply message number of returned documents, -1, is less than 0'
+        ex.getMessage() == 'The reply message number of returned documents, -1, is expected to be 1'
     }
 
     def 'should throw MongoInternalException on num documents < 0 with compressed header'() {
@@ -208,6 +196,6 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == 'The reply message number of returned documents, -1, is less than 0'
+        ex.getMessage() == 'The reply message number of returned documents, -1, is expected to be 1'
     }
 }

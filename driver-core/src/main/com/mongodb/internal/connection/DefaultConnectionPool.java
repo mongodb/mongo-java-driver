@@ -43,8 +43,6 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.time.TimePoint;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
@@ -56,6 +54,8 @@ import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.internal.time.TimePoint;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
@@ -98,11 +98,12 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.event.ConnectionClosedEvent.Reason.ERROR;
+import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.Locks.withUnfairLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
-import static com.mongodb.internal.connection.ConcurrentPool.lockInterruptibly;
-import static com.mongodb.internal.connection.ConcurrentPool.lockUnfair;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static com.mongodb.internal.logging.LogMessage.Component.CONNECTION;
@@ -497,27 +498,25 @@ final class DefaultConnectionPool implements ConnectionPool {
             logMessage("Connection pool created", clusterId, message, entries);
         }
         connectionPoolListener.connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, settings));
-        connectionPoolListener.connectionPoolOpened(new com.mongodb.event.ConnectionPoolOpenedEvent(serverId, settings));
     }
 
     /**
      * Send both current and deprecated events in order to preserve backwards compatibility.
      * Must not throw {@link Exception}s.
      *
-     * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionAdded(com.mongodb.event.ConnectionAddedEvent)},
-     * {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}.
-     * This order is required by
+     * @return A {@link TimePoint} before executing {@link ConnectionPoolListener#connectionCreated(ConnectionCreatedEvent)}
+     * and logging the event. This order is required by
      * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
      * and {@link ConnectionReadyEvent#getElapsedTime(TimeUnit)}.
      */
     private TimePoint connectionCreated(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId) {
+        TimePoint openStart = TimePoint.now();
         logEventMessage("Connection created",
                 "Connection created: address={}:{}, driver-generated ID={}",
                 connectionId.getLocalValue());
 
-        connectionPoolListener.connectionAdded(new com.mongodb.event.ConnectionAddedEvent(connectionId));
         connectionPoolListener.connectionCreated(new ConnectionCreatedEvent(connectionId));
-        return TimePoint.now();
+        return openStart;
     }
 
     /**
@@ -540,7 +539,6 @@ final class DefaultConnectionPool implements ConnectionPool {
                     "Connection closed: address={}:{}, driver-generated ID={}. Reason: {}.[ Error: {}]",
                     entries);
         }
-        connectionPoolListener.connectionRemoved(new com.mongodb.event.ConnectionRemovedEvent(connectionId, getReasonForRemoved(reason)));
         connectionPoolListener.connectionClosed(new ConnectionClosedEvent(connectionId, reason));
     }
 
@@ -564,37 +562,18 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     /**
-     * @return A {@link TimePoint} after executing {@link ConnectionPoolListener#connectionCheckOutStarted(ConnectionCheckOutStartedEvent)}.
+     * @return A {@link TimePoint} before executing
+     * {@link ConnectionPoolListener#connectionCheckOutStarted(ConnectionCheckOutStartedEvent)} and logging the event.
      * This order is required by
      * <a href="https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#events">CMAP</a>
      * and {@link ConnectionCheckedOutEvent#getElapsedTime(TimeUnit)}, {@link ConnectionCheckOutFailedEvent#getElapsedTime(TimeUnit)}.
      */
     private TimePoint connectionCheckoutStarted(final OperationContext operationContext) {
+        TimePoint checkoutStart = TimePoint.now();
         logEventMessage("Connection checkout started", "Checkout started for connection to {}:{}");
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
-        return TimePoint.now();
-    }
-
-    private com.mongodb.event.ConnectionRemovedEvent.Reason getReasonForRemoved(final ConnectionClosedEvent.Reason reason) {
-        com.mongodb.event.ConnectionRemovedEvent.Reason removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.UNKNOWN;
-        switch (reason) {
-            case STALE:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.STALE;
-                break;
-            case IDLE:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.MAX_IDLE_TIME_EXCEEDED;
-                break;
-            case ERROR:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.ERROR;
-                break;
-            case POOL_CLOSED:
-                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.POOL_CLOSED;
-                break;
-            default:
-                break;
-        }
-        return removedReason;
+        return checkoutStart;
     }
 
     /**
@@ -774,12 +753,6 @@ final class DefaultConnectionPool implements ConnectionPool {
         public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext) {
             isTrue("open", !isClosed.get());
             return wrapped.receive(decoder, sessionContext);
-        }
-
-        @Override
-        public boolean supportsAdditionalTimeout() {
-            isTrue("open", !isClosed.get());
-            return wrapped.supportsAdditionalTimeout();
         }
 
         @Override
@@ -1102,14 +1075,11 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            lockUnfair(lock);
-            try {
+            withUnfairLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 permits++;
                 permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         private void expressDesireToGetAvailableConnection() {
@@ -1140,29 +1110,24 @@ final class DefaultConnectionPool implements ConnectionPool {
          * from threads that are waiting for a permit to open a connection.
          */
         void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
-            lockUnfair(lock);
-            try {
+            boolean handedOver = withUnfairLock(lock, () -> {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
                     if (desiredConnectionSlot.reference == null) {
                         desiredConnectionSlot.reference = new PooledConnection(openConnection);
                         permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
-                        return;
+                        return true;
                     }
                 }
-            } finally {
-                lock.unlock();
+                return false;
+            });
+            if (!handedOver) {
+                pool.release(openConnection);
             }
-            pool.release(openConnection);
         }
 
         void signalClosedOrPaused() {
-            lockUnfair(lock);
-            try {
-                permitAvailableOrHandedOverOrClosedOrPausedCondition.signalAll();
-            } finally {
-                lock.unlock();
-            }
+            withUnfairLock(lock, permitAvailableOrHandedOverOrClosedOrPausedCondition::signalAll);
         }
 
         /**
@@ -1326,16 +1291,16 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void enqueue(final Task task) {
-            lock.lock();
-            try {
+            boolean closed = withLock(lock, () -> {
                 if (initUnlessClosed()) {
                     tasks.add(task);
-                    return;
+                    return false;
                 }
-            } finally {
-                lock.unlock();
+                return true;
+            });
+            if (closed) {
+                task.failAsClosed();
             }
-            task.failAsClosed();
         }
 
         /**
@@ -1362,17 +1327,14 @@ final class DefaultConnectionPool implements ConnectionPool {
         @Override
         @SuppressWarnings("try")
         public void close() {
-            lock.lock();
-            try {
+            withLock(lock, () -> {
                 if (state != State.CLOSED) {
                     state = State.CLOSED;
                     if (worker != null) {
                         worker.shutdownNow(); // at this point we interrupt `worker`s thread
                     }
                 }
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         private void workerRun() {
@@ -1394,18 +1356,15 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void failAllTasksAfterClosing() {
-            Queue<Task> localGets;
-            lock.lock();
-            try {
+            Queue<Task> localGets = withLock(lock, () -> {
                 assertTrue(state == State.CLOSED);
                 // at this point it is guaranteed that no thread enqueues a task
-                localGets = tasks;
+                Queue<Task> result = tasks;
                 if (!tasks.isEmpty()) {
                     tasks = new LinkedBlockingQueue<>();
                 }
-            } finally {
-                lock.unlock();
-            }
+                return result;
+            });
             localGets.forEach(Task::failAsClosed);
             localGets.clear();
         }
@@ -1559,9 +1518,8 @@ final class DefaultConnectionPool implements ConnectionPool {
          * The generation is incremented regardless of the returned value.
          */
         boolean pauseAndIncrementGeneration(@Nullable final Throwable cause) {
-            boolean result = false;
-            lock.writeLock().lock();
-            try {
+            return withLock(lock.writeLock(), () -> {
+                boolean result = false;
                 if (!paused) {
                     paused = true;
                     pool.pause(() -> new MongoConnectionPoolClearedException(serverId, cause));
@@ -1577,17 +1535,14 @@ final class DefaultConnectionPool implements ConnectionPool {
                     // one additional run is required to guarantee that a paused pool releases resources
                     backgroundMaintenance.runOnceAndStop();
                 }
-            } finally {
-                lock.writeLock().unlock();
-            }
-            return result;
+                return result;
+            });
         }
 
         boolean ready() {
             boolean result = false;
             if (paused) {
-                lock.writeLock().lock();
-                try {
+                result = withLock(lock.writeLock(), () -> {
                     if (paused) {
                         paused = false;
                         cause = null;
@@ -1596,11 +1551,10 @@ final class DefaultConnectionPool implements ConnectionPool {
 
                         connectionPoolListener.connectionPoolReady(new ConnectionPoolReadyEvent(serverId));
                         backgroundMaintenance.start();
-                        result = true;
+                        return true;
                     }
-                } finally {
-                    lock.writeLock().unlock();
-                }
+                    return false;
+                });
             }
             return result;
         }
@@ -1625,20 +1579,17 @@ final class DefaultConnectionPool implements ConnectionPool {
                 throw pool.poolClosedException();
             }
             if (paused) {
-                lock.readLock().lock();
-                try {
+                withLock(lock.readLock(), () -> {
                     if (paused) {
                         throw new MongoConnectionPoolClearedException(serverId, cause);
                     }
-                } finally {
-                    lock.readLock().unlock();
-                }
+                });
             }
             return false;
         }
 
     }
-    private void logEventMessage(final String messageId, final String format, final int driverConnectionId) {
+    private void logEventMessage(final String messageId, final String format, final long driverConnectionId) {
         ClusterId clusterId = serverId.getClusterId();
         if (requiresLogging(clusterId)) {
             List<LogMessage.Entry> entries = createBasicEntries();

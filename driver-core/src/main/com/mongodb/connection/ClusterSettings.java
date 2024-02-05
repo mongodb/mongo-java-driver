@@ -151,10 +151,12 @@ public final class ClusterSettings {
 
         /**
          * Sets the maximum number of hosts to connect to when using SRV protocol.
+         * This setting is not used if {@link #getMode()} is {@link ClusterConnectionMode#LOAD_BALANCED}.
          *
          * @param srvMaxHosts the maximum number of hosts to connect to when using SRV protocol
          * @return this
          * @since 4.4
+         * @see #getSrvMaxHosts()
          */
         public Builder srvMaxHosts(final Integer srvMaxHosts) {
             this.srvMaxHosts = srvMaxHosts;
@@ -168,8 +170,8 @@ public final class ClusterSettings {
          * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
          * service name, which is limited to 15 characters
          * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
-         * If specified, it is combined with the single host name specified by
-         * {@link #getHosts()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
+         * It is combined with the host name specified by
+         * {@link #getSrvHost()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
          * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
          * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
          * </p>
@@ -177,6 +179,7 @@ public final class ClusterSettings {
          * @param srvServiceName the SRV service name
          * @return this
          * @since 4.5
+         * @see #getSrvServiceName()
         */
         public Builder srvServiceName(final String srvServiceName) {
             this.srvServiceName = notNull("srvServiceName", srvServiceName);
@@ -219,6 +222,7 @@ public final class ClusterSettings {
 
         /**
          * Sets the required replica set name for the cluster.
+         * This setting is not used if {@link #getMode()} is {@link ClusterConnectionMode#LOAD_BALANCED}.
          *
          * @param requiredReplicaSetName the required replica set name.
          * @return this
@@ -231,9 +235,11 @@ public final class ClusterSettings {
 
         /**
          * Sets the required cluster type for the cluster.
+         * This setting is not used if {@link #getMode()} is {@link ClusterConnectionMode#LOAD_BALANCED}.
          *
          * @param requiredClusterType the required cluster type
          * @return this
+         * @see #getRequiredClusterType()
          */
         public Builder requiredClusterType(final ClusterType requiredClusterType) {
             this.requiredClusterType = notNull("requiredClusterType", requiredClusterType);
@@ -337,16 +343,16 @@ public final class ClusterSettings {
                 if (srvServiceName != null) {
                     srvServiceName(srvServiceName);
                 }
-            } else if ((directConnection != null && directConnection)
-                    || (directConnection == null && connectionString.getHosts().size() == 1
-                        && connectionString.getRequiredReplicaSetName() == null)) {
-                mode(ClusterConnectionMode.SINGLE)
-                        .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
+            } else if (directConnection != null) {
+                mode(directConnection ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE);
+                List<String> hosts = directConnection ? singletonList(connectionString.getHosts().get(0)) : connectionString.getHosts();
+                hosts(hosts.stream().map(ServerAddressHelper::createServerAddress).collect(Collectors.toList()));
             } else {
+                mode = null;
                 List<ServerAddress> seedList = connectionString.getHosts().stream()
                         .map(ServerAddressHelper::createServerAddress)
                         .collect(Collectors.toList());
-                mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
+                hosts(seedList);
             }
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
 
@@ -384,9 +390,11 @@ public final class ClusterSettings {
 
     /**
      * Gets the maximum number of hosts to connect to when using SRV protocol.
+     * This setting is not used if {@link #getMode()} is {@link ClusterConnectionMode#LOAD_BALANCED}.
      *
      * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
      * @since 4.4
+     * @see Builder#srvMaxHosts(Integer)
      */
     @Nullable
     public Integer getSrvMaxHosts() {
@@ -400,14 +408,15 @@ public final class ClusterSettings {
       * The SRV resource record (<a href="https://www.rfc-editor.org/rfc/rfc2782">RFC 2782</a>)
       * service name, which is limited to 15 characters
       * (<a href="https://www.rfc-editor.org/rfc/rfc6335#section-5.1">RFC 6335 section 5.1</a>).
-      * If specified, it is combined with the single host name specified by
-      * {@link #getHosts()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
+      * It is combined with the host name specified by
+      * {@link #getSrvHost()} as follows: {@code _srvServiceName._tcp.hostName}. The combined string is an SRV resource record
       * name (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.1">RFC 1035 section 2.3.1</a>), which is limited to 255
       * characters (<a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4</a>).
       * </p>
       *
       * @return the SRV service name, which defaults to {@code "mongodb"}
       * @since 4.5
+      * @see Builder#srvServiceName(String)
      */
     public String getSrvServiceName() {
         return srvServiceName;
@@ -433,8 +442,10 @@ public final class ClusterSettings {
 
     /**
      * Gets the required cluster type
+     * This setting is not used if {@link #getMode()} is {@link ClusterConnectionMode#LOAD_BALANCED}.
      *
      * @return the required cluster type
+     * @see Builder#requiredClusterType(ClusterType)
      */
     public ClusterType getRequiredClusterType() {
         return requiredClusterType;
@@ -442,6 +453,7 @@ public final class ClusterSettings {
 
     /**
      * Gets the required replica set name.
+     * This setting is not used if {@link #getMode()} is {@link ClusterConnectionMode#LOAD_BALANCED}.
      *
      * @return the required replica set name
      * @see Builder#requiredReplicaSetName(String)
@@ -612,26 +624,39 @@ public final class ClusterSettings {
             }
         }
 
-        if (builder.mode == ClusterConnectionMode.LOAD_BALANCED && builder.srvHost == null && builder.hosts.size() != 1) {
-            throw new IllegalArgumentException("Multiple hosts cannot be specified when in load balancing mode");
-        }
-
         srvHost = builder.srvHost;
         srvMaxHosts = builder.srvMaxHosts;
         srvServiceName = builder.srvServiceName;
         hosts = builder.hosts;
-        if (srvHost != null) {
-            if (builder.mode == ClusterConnectionMode.SINGLE) {
-                throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
-            }
-            mode = builder.mode != null ? builder.mode : ClusterConnectionMode.MULTIPLE;
-        } else {
-            if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
-                throw new IllegalArgumentException("Can not directly connect to more than one server");
-            }
-            mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
-        }
         requiredReplicaSetName = builder.requiredReplicaSetName;
+        if (builder.mode != null) {
+            switch (builder.mode) {
+                case SINGLE: {
+                    if (srvHost != null) {
+                        throw new IllegalArgumentException("An SRV host name was provided but the connection mode is not MULTIPLE");
+                    } else if (builder.hosts.size() > 1) {
+                        throw new IllegalArgumentException("Can not directly connect to more than one server");
+                    }
+                    break;
+                }
+                case LOAD_BALANCED: {
+                    if (builder.srvHost == null && builder.hosts.size() != 1) {
+                        throw new IllegalArgumentException("Multiple hosts cannot be specified when in load balancing mode");
+                    }
+                    break;
+                }
+                default:
+            }
+            mode = builder.mode;
+        } else {
+            if (srvHost != null) {
+                mode = ClusterConnectionMode.MULTIPLE;
+            } else {
+                mode = hosts.size() == 1 && requiredReplicaSetName == null
+                        ? ClusterConnectionMode.SINGLE
+                        : ClusterConnectionMode.MULTIPLE;
+            }
+        }
         requiredClusterType = builder.requiredClusterType;
         localThresholdMS = builder.localThresholdMS;
         serverSelector = builder.serverSelector;

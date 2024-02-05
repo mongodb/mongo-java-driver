@@ -1,6 +1,6 @@
 {
   "description": "find",
-  "schemaVersion": "1.1",
+  "schemaVersion": "1.15",
   "createEntities": [
     {
       "client": {
@@ -103,7 +103,8 @@
                     ]
                   }
                 },
-                "commandName": "find"
+                "commandName": "find",
+                "databaseName": "command-monitoring-tests"
               }
             }
           ]
@@ -198,7 +199,8 @@
                     ]
                   }
                 },
-                "commandName": "find"
+                "commandName": "find",
+                "databaseName": "command-monitoring-tests"
               }
             }
           ]
@@ -262,7 +264,8 @@
                     ]
                   }
                 },
-                "commandName": "find"
+                "commandName": "find",
+                "databaseName": "command-monitoring-tests"
               }
             }
           ]
@@ -338,7 +341,8 @@
                     ]
                   }
                 },
-                "commandName": "find"
+                "commandName": "find",
+                "databaseName": "command-monitoring-tests"
               }
             },
             {
@@ -376,7 +380,8 @@
                     ]
                   }
                 },
-                "commandName": "getMore"
+                "commandName": "getMore",
+                "databaseName": "command-monitoring-tests"
               }
             }
           ]
@@ -385,6 +390,7 @@
     },
     {
       "description": "A successful find event with a getmore and the server kills the cursor (<= 4.4)",
+      "comment": "UPDATED final batchSize to 3 as batchSize is no longer calculated see: DRIVERS-1448 ",
       "runOnRequirements": [
         {
           "minServerVersion": "3.1",
@@ -464,7 +470,8 @@
                     ]
                   }
                 },
-                "commandName": "find"
+                "commandName": "find",
+                "databaseName": "command-monitoring-tests"
               }
             },
             {
@@ -477,7 +484,7 @@
                     ]
                   },
                   "collection": "test",
-                  "batchSize": 1
+                  "batchSize": 3
                 },
                 "commandName": "getMore",
                 "databaseName": "command-monitoring-tests"
@@ -498,7 +505,8 @@
                     ]
                   }
                 },
-                "commandName": "getMore"
+                "commandName": "getMore",
+                "databaseName": "command-monitoring-tests"
               }
             }
           ]
@@ -539,7 +547,8 @@
             },
             {
               "commandFailedEvent": {
-                "commandName": "find"
+                "commandName": "find",
+                "databaseName": "command-monitoring-tests"
               }
             }
           ]

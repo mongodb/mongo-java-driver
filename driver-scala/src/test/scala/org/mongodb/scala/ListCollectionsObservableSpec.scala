@@ -27,7 +27,7 @@ import scala.concurrent.duration.Duration
 
 class ListCollectionsObservableSpec extends BaseSpec with MockitoSugar {
 
-  "ListCollectionsObservable" should "have the same methods as the wrapped ListCollectionsObservable" in {
+  "ListCollectionsObservable" should "have the same methods as the wrapped ListCollectionsPublisher" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
     val wrapped = classOf[ListCollectionsPublisher[Document]].getMethods.map(_.getName).toSet -- mongoPublisher
     val local = classOf[ListCollectionsObservable[Document]].getMethods.map(_.getName).toSet

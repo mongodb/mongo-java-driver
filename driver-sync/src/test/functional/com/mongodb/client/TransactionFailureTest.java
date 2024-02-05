@@ -18,28 +18,29 @@ package com.mongodb.client;
 
 import com.mongodb.MongoClientException;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class TransactionFailureTest extends DatabaseTestCase {
     public TransactionFailureTest() {
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         assumeTrue(canRunTests());
         super.setUp();
     }
 
-    @Test(expected = MongoClientException.class)
+    @Test
     public void testTransactionFails() {
         try (ClientSession clientSession = client.startSession()) {
             clientSession.startTransaction();
-            collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}"));
+            assertThrows(MongoClientException.class, () -> collection.insertOne(clientSession, Document.parse("{_id: 1, a: 1}")));
         }
     }
 

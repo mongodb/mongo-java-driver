@@ -35,14 +35,14 @@ trait ClientSessionImplicits {
      *
      * A transaction can only be commmited if one has first been started.
      */
-    def commitTransaction(): SingleObservable[Void] = clientSession.commitTransaction()
+    def commitTransaction(): SingleObservable[Unit] = clientSession.commitTransaction()
 
     /**
      * Abort a transaction in the context of this session.
      *
      * A transaction can only be aborted if one has first been started.
      */
-    def abortTransaction(): SingleObservable[Void] = clientSession.abortTransaction()
+    def abortTransaction(): SingleObservable[Unit] = clientSession.abortTransaction()
   }
 
 }

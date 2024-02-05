@@ -40,17 +40,10 @@ public final class ReplyHeader {
      */
     public static final int TOTAL_REPLY_HEADER_LENGTH = REPLY_HEADER_LENGTH + MESSAGE_HEADER_LENGTH;
 
-    private static final int CURSOR_NOT_FOUND_RESPONSE_FLAG = 1;
-    private static final int QUERY_FAILURE_RESPONSE_FLAG = 2;
-
     private final int messageLength;
     private final int requestId;
     private final int responseTo;
-    private final int responseFlags;
-    private final long cursorId;
-    private final int startingFrom;
-    private final int numberReturned;
-    private final int opMsgFlagBits;
+    private final boolean hasMoreToCome;
 
     ReplyHeader(final ByteBuf header, final MessageHeader messageHeader) {
         this(messageHeader.getMessageLength(), messageHeader.getOpCode(), messageHeader, header);
@@ -66,27 +59,23 @@ public final class ReplyHeader {
         this.requestId = messageHeader.getRequestId();
         this.responseTo = messageHeader.getResponseTo();
         if (opCode == OP_MSG.getValue()) {
-            responseFlags = 0;
-            cursorId = 0;
-            startingFrom = 0;
-            numberReturned = 1;
-
-            opMsgFlagBits = header.getInt();
-            header.get();  // ignore payload type
+            int flagBits = header.getInt();
+            hasMoreToCome = (flagBits & (1 << 1)) != 0;
+            header.get();  // ignored payload type
         } else if (opCode == OP_REPLY.getValue()) {
             if (messageLength < TOTAL_REPLY_HEADER_LENGTH) {
-                throw new MongoInternalException(format("The reply message length %d is less than the mimimum message length %d",
+                throw new MongoInternalException(format("The reply message length %d is less than the minimum message length %d",
                         messageLength, TOTAL_REPLY_HEADER_LENGTH));
             }
+            hasMoreToCome = false;
 
-            responseFlags = header.getInt();
-            cursorId = header.getLong();
-            startingFrom = header.getInt();
-            numberReturned = header.getInt();
-            opMsgFlagBits = 0;
+            header.getInt();  // ignored responseFlags
+            header.getLong(); // ignored cursorId
+            header.getInt();  // ignored startingFrom
+            int numberReturned = header.getInt();
 
-            if (numberReturned < 0) {
-                throw new MongoInternalException(format("The reply message number of returned documents, %d, is less than 0",
+            if (numberReturned != 1) {
+                throw new MongoInternalException(format("The reply message number of returned documents, %d, is expected to be 1",
                         numberReturned));
             }
         } else {
@@ -123,78 +112,7 @@ public final class ReplyHeader {
         return responseTo;
     }
 
-    /**
-     * Gets additional information about the response.
-     * <ul>
-     *     <li>0 - <i>CursorNotFound</i>: Set when getMore is called but the cursor id is not valid at the server. Returned with zero
-     *     results.</li>
-     *     <li>1 - <i>QueryFailure</i>: Set when query failed. Results consist of one document containing an "$err" field describing the
-     *     failure.
-     *     <li>2 - <i>ShardConfigStale</i>: Drivers should ignore this. Only mongos will ever see this set, in which case,
-     *     it needs to update config from the server.
-     *     <li>3 - <i>AwaitCapable</i>: Set when the server supports the AwaitData Query option. If it doesn't,
-     *     a client should sleep a little between getMore's of a Tailable cursor. Mongod version 1.6 supports AwaitData and thus always
-     *     sets AwaitCapable.
-     *     <li>4-31 - <i>Reserved</i>: Ignore
-     * </ul>
-     *
-     * @return bit vector - see details above
-     */
-    public int getResponseFlags() {
-        return responseFlags;
-    }
-
-    /**
-     * Gets the cursor ID that this response is a part of. If there are no more documents to fetch from the server, the cursor ID will be 0.
-     * This cursor ID must be used in any messages used to get more data, and also must be closed by the client when no longer needed.
-     *
-     * @return cursor ID to use if the client needs to fetch more from the server
-     */
-    public long getCursorId() {
-        return cursorId;
-    }
-
-    /**
-     * Returns the position in the cursor that is the start point of this reply.
-     *
-     * @return where in the cursor this reply is starting
-     */
-    public int getStartingFrom() {
-        return startingFrom;
-    }
-
-    /**
-     * Gets the number of documents to expect in the body of this reply.
-     *
-     * @return number of documents in the reply
-     */
-    public int getNumberReturned() {
-        return numberReturned;
-    }
-
-    /**
-     * Gets whether this query was performed with a cursor ID that was not valid on the server.
-     *
-     * @return true if this reply indicates the request to get more data was performed with a cursor ID that's not valid on the server
-     */
-    public boolean isCursorNotFound() {
-        return (responseFlags & CURSOR_NOT_FOUND_RESPONSE_FLAG) == CURSOR_NOT_FOUND_RESPONSE_FLAG;
-    }
-
-    /**
-     * Gets whether the query failed or not.
-     *
-     * @return true if this reply indicates the query failed.
-     */
-    public boolean isQueryFailure() {
-        return (responseFlags & QUERY_FAILURE_RESPONSE_FLAG) == QUERY_FAILURE_RESPONSE_FLAG;
-    }
-
-    public int getOpMsgFlagBits() {
-        return opMsgFlagBits;
-    }
-
     public boolean hasMoreToCome() {
-        return (opMsgFlagBits & (1 << 1)) != 0;
+        return hasMoreToCome;
     }
 }

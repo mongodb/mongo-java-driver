@@ -250,7 +250,7 @@ public class TestCommandListener implements CommandListener {
         lock.lock();
         try {
             events.add(new CommandSucceededEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
-                    event.getConnectionDescription(), event.getCommandName(),
+                    event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(),
                     event.getResponse() == null ? null : event.getResponse().clone(),
                     event.getElapsedTime(TimeUnit.NANOSECONDS)));
             commandCompletedCondition.signal();

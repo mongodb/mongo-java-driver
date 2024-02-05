@@ -197,7 +197,6 @@ final class Operations<TDocument> {
                 .sort(toBsonDocument(options.getSort()))
                 .cursorType(options.getCursorType())
                 .noCursorTimeout(options.isNoCursorTimeout())
-                .oplogReplay(options.isOplogReplay())
                 .partial(options.isPartial())
                 .collation(options.getCollation())
                 .comment(options.getComment())
@@ -269,7 +268,6 @@ final class Operations<TDocument> {
                                                                 final int limit, final long maxTimeMS, final boolean jsMode,
                                                                 final Bson scope, final Bson sort, final boolean verbose,
                                                                 final com.mongodb.client.model.MapReduceAction action,
-                                                                final boolean nonAtomic, final boolean sharded,
                                                                 final Boolean bypassDocumentValidation, final Collation collation) {
         MapReduceToCollectionOperation operation = new MapReduceToCollectionOperation(assertNotNull(namespace),
                 new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction), collectionName, writeConcern)
@@ -281,8 +279,6 @@ final class Operations<TDocument> {
                 .sort(toBsonDocument(sort))
                 .verbose(verbose)
                 .action(action.getValue())
-                .nonAtomic(nonAtomic)
-                .sharded(sharded)
                 .databaseName(databaseName)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation);
@@ -609,7 +605,6 @@ final class Operations<TDocument> {
                 assertNotNull(toBsonDocumentList(pipeline)), writeConcern).collation(createViewOptions.getCollation());
     }
 
-    @SuppressWarnings("deprecation")
     CreateIndexesOperation createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
         notNull("indexes", indexes);
         notNull("createIndexOptions", createIndexOptions);
@@ -633,7 +628,6 @@ final class Operations<TDocument> {
                     .bits(model.getOptions().getBits())
                     .min(model.getOptions().getMin())
                     .max(model.getOptions().getMax())
-                    .bucketSize(model.getOptions().getBucketSize())
                     .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
                     .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
                     .collation(model.getOptions().getCollation())
@@ -651,20 +645,19 @@ final class Operations<TDocument> {
                 .map(this::createSearchIndexRequest)
                 .collect(Collectors.toList());
 
-        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, writeConcern);
+        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests);
     }
 
     UpdateSearchIndexesOperation updateSearchIndex(final String indexName, final Bson definition) {
         BsonDocument definitionDocument = assertNotNull(toBsonDocument(definition));
         SearchIndexRequest searchIndexRequest = new SearchIndexRequest(definitionDocument, indexName);
 
-        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest,
-                writeConcern);
+        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest);
     }
 
 
     DropSearchIndexOperation dropSearchIndex(final String indexName) {
-        return new DropSearchIndexOperation(assertNotNull(namespace), indexName, writeConcern);
+        return new DropSearchIndexOperation(assertNotNull(namespace), indexName);
     }
 
 
@@ -693,12 +686,14 @@ final class Operations<TDocument> {
 
     <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                 final Bson filter, final boolean collectionNamesOnly,
+                                                                final boolean authorizedCollections,
                                                                 @Nullable final Integer batchSize, final long maxTimeMS,
                                                                 final BsonValue comment) {
         return new ListCollectionsOperation<>(databaseName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(collectionNamesOnly)
+                .authorizedCollections(authorizedCollections)
                 .batchSize(batchSize == null ? 0 : batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .comment(comment);

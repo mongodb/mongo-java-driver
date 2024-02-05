@@ -20,29 +20,33 @@ import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
-import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
-import com.mongodb.spi.dns.InetAddressResolver;
 
 import java.util.List;
 
+import static com.mongodb.internal.connection.DefaultClusterFactory.ClusterEnvironment.detectCluster;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_MONITOR_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.clusterListenerMulticaster;
 import static com.mongodb.internal.event.EventListenerHelper.serverListenerMulticaster;
 import static com.mongodb.internal.event.EventListenerHelper.serverMonitorListenerMulticaster;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 /**
@@ -50,8 +54,8 @@ import static java.util.Collections.singletonList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@SuppressWarnings("deprecation")
 public final class DefaultClusterFactory {
+    private static final Logger LOGGER = Loggers.getLogger("client");
 
     public Cluster createCluster(final ClusterSettings originalClusterSettings, final ServerSettings originalServerSettings,
                                  final ConnectionPoolSettings connectionPoolSettings,
@@ -63,7 +67,9 @@ public final class DefaultClusterFactory {
                                  @Nullable final String applicationName,
                                  @Nullable final MongoDriverInformation mongoDriverInformation,
                                  final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
-                                 @Nullable final DnsClient dnsClient, @Nullable final InetAddressResolver inetAddressResolver) {
+                                 @Nullable final DnsClient dnsClient) {
+
+        detectAndLogClusterEnvironment(originalClusterSettings);
 
         ClusterId clusterId = new ClusterId(applicationName);
         ClusterSettings clusterSettings;
@@ -97,14 +103,14 @@ public final class DefaultClusterFactory {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
                     applicationName, mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(),
-                    compressorList, serverApi, inetAddressResolver);
+                    compressorList, serverApi);
             return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings,
                     streamFactory, heartbeatStreamFactory, credential, loggerSettings, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
-                    serverApi, inetAddressResolver);
+                    serverApi);
 
             if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
                 return new SingleServerCluster(clusterId, clusterSettings, serverFactory);
@@ -142,5 +148,64 @@ public final class DefaultClusterFactory {
         return serverSettings.getServerMonitorListeners().size() == 0
                 ? NO_OP_SERVER_MONITOR_LISTENER
                 : serverMonitorListenerMulticaster(serverSettings.getServerMonitorListeners());
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public void detectAndLogClusterEnvironment(final ClusterSettings clusterSettings) {
+        String srvHost = clusterSettings.getSrvHost();
+        ClusterEnvironment clusterEnvironment;
+        if (srvHost != null) {
+            clusterEnvironment = detectCluster(srvHost);
+        } else {
+            clusterEnvironment = detectCluster(clusterSettings.getHosts()
+                    .stream()
+                    .map(ServerAddress::getHost)
+                    .toArray(String[]::new));
+        }
+
+        if (clusterEnvironment != null) {
+            LOGGER.info(format("You appear to be connected to a %s cluster. For more information regarding feature compatibility"
+                    + " and support please visit %s", clusterEnvironment.clusterProductName, clusterEnvironment.documentationUrl));
+        }
+    }
+
+    enum ClusterEnvironment {
+        AZURE("https://www.mongodb.com/supportability/cosmosdb",
+                "CosmosDB",
+                ".cosmos.azure.com"),
+        AWS("https://www.mongodb.com/supportability/documentdb",
+                "DocumentDB",
+                ".docdb.amazonaws.com", ".docdb-elastic.amazonaws.com");
+
+        private final String documentationUrl;
+        private final String clusterProductName;
+        private final String[] hostSuffixes;
+
+        ClusterEnvironment(final String url, final String name, final String... hostSuffixes) {
+            this.hostSuffixes = hostSuffixes;
+            this.documentationUrl = url;
+            this.clusterProductName = name;
+        }
+        @Nullable
+        public static ClusterEnvironment detectCluster(final String... hosts) {
+            for (String host : hosts) {
+                for (ClusterEnvironment clusterEnvironment : values()) {
+                    if (clusterEnvironment.isExternalClusterProvider(host)) {
+                        return clusterEnvironment;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private boolean isExternalClusterProvider(final String host) {
+            for (String hostSuffix : hostSuffixes) {
+                String lowerCaseHost = host.toLowerCase();
+                if (lowerCaseHost.endsWith(hostSuffix)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

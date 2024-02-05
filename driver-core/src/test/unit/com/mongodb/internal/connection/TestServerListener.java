@@ -16,14 +16,16 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
+import com.mongodb.lang.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -31,15 +33,16 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.withLock;
 
 public class TestServerListener implements ServerListener {
-    private ServerOpeningEvent serverOpeningEvent;
-    private ServerClosedEvent serverClosedEvent;
+    @Nullable
+    private volatile ServerOpeningEvent serverOpeningEvent;
+    @Nullable
+    private volatile ServerClosedEvent serverClosedEvent;
     private final List<ServerDescriptionChangedEvent> serverDescriptionChangedEvents = new ArrayList<>();
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
-    private volatile int waitingForEventCount;
-    private Predicate<ServerDescriptionChangedEvent> waitingForEventMatcher;
 
     @Override
     public void serverOpening(final ServerOpeningEvent event) {
@@ -54,61 +57,53 @@ public class TestServerListener implements ServerListener {
     @Override
     public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
         notNull("event", event);
-        lock.lock();
-        try {
+        withLock(lock, () -> {
             serverDescriptionChangedEvents.add(event);
-            if (waitingForEventCount != 0 && containsEvents()) {
-                condition.signalAll();
-            }
-
-        } finally {
-            lock.unlock();
-        }
+            condition.signalAll();
+        });
     }
 
+    @Nullable
     public ServerOpeningEvent getServerOpeningEvent() {
         return serverOpeningEvent;
     }
 
+    @Nullable
     public ServerClosedEvent getServerClosedEvent() {
         return serverClosedEvent;
     }
 
     public List<ServerDescriptionChangedEvent> getServerDescriptionChangedEvents() {
-        return serverDescriptionChangedEvents;
+        return withLock(lock, () -> new ArrayList<>(serverDescriptionChangedEvents));
     }
 
-    public void waitForServerDescriptionChangedEvent(final Predicate<ServerDescriptionChangedEvent> matcher, final int count,
-            final int time, final TimeUnit unit) throws InterruptedException, TimeoutException {
+    public void waitForServerDescriptionChangedEvents(
+            final Predicate<ServerDescriptionChangedEvent> matcher, final int count, final Duration duration)
+            throws InterruptedException, TimeoutException {
         if (count <= 0) {
             throw new IllegalArgumentException();
         }
+        long nanosRemaining = duration.toNanos();
         lock.lock();
         try {
-            if (waitingForEventCount != 0) {
-                throw new IllegalStateException("Already waiting for events");
-            }
-            waitingForEventCount = count;
-            waitingForEventMatcher = matcher;
-            if (containsEvents()) {
-                return;
-            }
-            if (!condition.await(time, unit)) {
-                throw new TimeoutException("Timed out waiting for " + count + " ServerDescriptionChangedEvent events. "
-                        + "The count after timing out is " + countEvents());
+            long observedCount = unguardedCount(matcher);
+            while (observedCount < count) {
+                if (nanosRemaining <= 0) {
+                    throw new TimeoutException(String.format("Timed out waiting for %d %s events. The observed count is %d.",
+                            count, ClusterDescriptionChangedEvent.class.getSimpleName(), observedCount));
+                }
+                nanosRemaining = condition.awaitNanos(nanosRemaining);
+                observedCount = unguardedCount(matcher);
             }
         } finally {
-            waitingForEventCount = 0;
-            waitingForEventMatcher = null;
             lock.unlock();
         }
     }
 
-    private long countEvents() {
-        return serverDescriptionChangedEvents.stream().filter(waitingForEventMatcher).count();
-    }
-
-    private boolean containsEvents() {
-        return countEvents() >= waitingForEventCount;
+    /**
+     * Must be guarded by {@link #lock}.
+     */
+    private long unguardedCount(final Predicate<ServerDescriptionChangedEvent> matcher) {
+        return serverDescriptionChangedEvents.stream().filter(matcher).count();
     }
 }

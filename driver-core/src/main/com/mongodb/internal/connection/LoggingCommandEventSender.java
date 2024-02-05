@@ -22,6 +22,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.LogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
@@ -97,7 +98,7 @@ class LoggingCommandEventSender implements CommandEventSender {
     @Override
     public void sendStartedEvent() {
         if (loggingRequired()) {
-            String messagePrefix = "Command \"{}\" started on database {}";
+            String messagePrefix = "Command \"{}\" started on database \"{}\"";
             String command = redactionRequired ? "{}" : getTruncatedJsonCommand(commandDocument);
 
             logEventMessage(messagePrefix, "Command started", null, entries -> {
@@ -124,26 +125,25 @@ class LoggingCommandEventSender implements CommandEventSender {
     public void sendFailedEvent(final Throwable t) {
         Throwable commandEventException = t;
         if (t instanceof MongoCommandException && redactionRequired) {
-            MongoCommandException originalCommandException = (MongoCommandException) t;
-            commandEventException = new MongoCommandException(new BsonDocument(), originalCommandException.getServerAddress());
-            commandEventException.setStackTrace(t.getStackTrace());
+            commandEventException = MongoCommandExceptionUtils.redacted((MongoCommandException) t);
         }
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {
-            String messagePrefix = "Command \"{}\" failed in {} ms";
+            String messagePrefix = "Command \"{}\" failed on database \"{}\" in {} ms";
 
             logEventMessage(messagePrefix, "Command failed", commandEventException,
                     entries -> {
                         entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
                         entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
                     },
                     entries -> entries.add(new Entry(COMMAND_CONTENT, null)));
         }
 
         if (eventRequired()) {
-            sendCommandFailedEvent(message, commandName, description, elapsedTimeNanos, commandEventException, commandListener,
-                    requestContext, operationContext);
+            sendCommandFailedEvent(message, message.getNamespace().getDatabaseName(), commandName, description, elapsedTimeNanos,
+                    commandEventException, commandListener, requestContext, operationContext);
         }
     }
 
@@ -161,7 +161,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {
-            String format = "Command \"{}\" succeeded in {} ms using a connection with driver-generated ID {}"
+            String format = "Command \"{}\" succeeded on database \"{}\" in {} ms using a connection with driver-generated ID {}"
                     + "[ and server-generated ID {}] to {}:{}[ with service ID {}]. The request ID is {}"
                     + " and the operation ID is {}. Command reply: {}";
 
@@ -171,6 +171,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             logEventMessage("Command succeeded", null,
                     entries -> {
                         entries.add(new Entry(COMMAND_NAME, commandName));
+                        entries.add(new Entry(DATABASE_NAME, message.getNamespace().getDatabaseName()));
                         entries.add(new Entry(DURATION_MS, elapsedTimeNanos / NANOS_PER_MILLI));
                     },
                     entries -> entries.add(new Entry(REPLY, replyString)), format);
@@ -178,7 +179,7 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (eventRequired()) {
             BsonDocument responseDocumentForEvent = redactionRequired ? new BsonDocument() : reply;
-            sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description,
+            sendCommandSucceededEvent(message, message.getNamespace().getDatabaseName(), commandName, responseDocumentForEvent, description,
                     elapsedTimeNanos, commandListener, requestContext, operationContext);
         }
     }

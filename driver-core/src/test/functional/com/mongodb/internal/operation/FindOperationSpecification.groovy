@@ -95,7 +95,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getProjection() == null
         operation.getCollation() == null
         !operation.isNoCursorTimeout()
-        !operation.isOplogReplay()
         !operation.isPartial()
         operation.isAllowDiskUse() == null
     }
@@ -119,7 +118,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .cursorType(Tailable)
                 .collation(defaultCollation)
                 .partial(true)
-                .oplogReplay(true)
                 .noCursorTimeout(true)
                 .allowDiskUse(true)
 
@@ -134,7 +132,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getProjection() == projection
         operation.getCollation() == defaultCollation
         operation.isNoCursorTimeout()
-        operation.isOplogReplay()
         operation.isPartial()
         operation.isAllowDiskUse()
     }
@@ -409,7 +406,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def explainPlan = execute(operation, async)
 
         then:
-        assertEquals(index, QueryOperationHelper.getKeyPattern(explainPlan))
+        assertEquals(index, TestOperationHelper.getKeyPattern(explainPlan))
 
         where:
         [async, hint] << [[true, false], [new BsonDocument('a', new BsonInt32(1)),
@@ -709,7 +706,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
                 .noCursorTimeout(true)
                 .partial(true)
-                .oplogReplay(true)
 
         when:
         execute(operation, async)

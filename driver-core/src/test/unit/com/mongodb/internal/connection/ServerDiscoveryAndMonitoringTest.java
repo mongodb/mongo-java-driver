@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.getClusterDescription;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
@@ -140,7 +141,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
             case "Single":
                 assertTrue(getCluster().getClass() == SingleServerCluster.class
                         || (getCluster().getClass() == MultiServerCluster.class
-                            && getCluster().getDescription().getType() == ClusterType.STANDALONE));
+                            && getClusterDescription(getCluster()).getType() == ClusterType.STANDALONE));
                 assertEquals(getClusterType(topologyType, getCluster().getCurrentDescription().getServerDescriptions()),
                         getCluster().getCurrentDescription().getType());
                 break;

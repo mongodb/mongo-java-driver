@@ -22,7 +22,6 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -46,20 +45,14 @@ public final class CommandHelper {
 
     static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
                                        @Nullable final ServerApi serverApi, final InternalConnection internalConnection) {
-        return sendAndReceive(database, command, null, clusterConnectionMode, serverApi, internalConnection);
-    }
-
-    public static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterClock clusterClock,
-                                              final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi,
-                                              final InternalConnection internalConnection) {
-        return sendAndReceive(database, command, clusterClock, clusterConnectionMode, serverApi, internalConnection);
+        return sendAndReceive(database, command, clusterConnectionMode, serverApi, internalConnection);
     }
 
     static BsonDocument executeCommandWithoutCheckingForFailure(final String database, final BsonDocument command,
                                                                 final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi,
                                                                 final InternalConnection internalConnection) {
         try {
-            return sendAndReceive(database, command, null, clusterConnectionMode, serverApi, internalConnection);
+            return sendAndReceive(database, command, clusterConnectionMode, serverApi, internalConnection);
         } catch (MongoServerException e) {
             return new BsonDocument();
         }
@@ -94,14 +87,11 @@ public final class CommandHelper {
     }
 
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
-                                               @Nullable final ClusterClock clusterClock,
                                                final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi,
                                                final InternalConnection internalConnection) {
-        SessionContext sessionContext = clusterClock == null ? NoOpSessionContext.INSTANCE
-                : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
         return assertNotNull(internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection,
-                        clusterConnectionMode, serverApi), new BsonDocumentCodec(), sessionContext, IgnorableRequestContext.INSTANCE,
-                new OperationContext()));
+                        clusterConnectionMode, serverApi), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
+                IgnorableRequestContext.INSTANCE, new OperationContext()));
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,

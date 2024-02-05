@@ -16,14 +16,14 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-import com.mongodb.{ CursorType, ExplainVerbosity }
 import com.mongodb.reactivestreams.client.FindPublisher
+import com.mongodb.{ CursorType, ExplainVerbosity }
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
 import org.reactivestreams.Publisher
 import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 
 class FindObservableSpec extends BaseSpec with MockitoSugar {
@@ -67,7 +67,6 @@ class FindObservableSpec extends BaseSpec with MockitoSugar {
     observable.maxAwaitTime(maxDuration)
     observable.maxTime(duration)
     observable.noCursorTimeout(true)
-    observable.oplogReplay(true)
     observable.partial(true)
     observable.projection(projection)
     observable.skip(1)
@@ -86,7 +85,6 @@ class FindObservableSpec extends BaseSpec with MockitoSugar {
     verify(wrapper).maxAwaitTime(maxDuration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).noCursorTimeout(true)
-    verify(wrapper).oplogReplay(true)
     verify(wrapper).partial(true)
     verify(wrapper).projection(projection)
     verify(wrapper).skip(1)

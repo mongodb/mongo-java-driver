@@ -20,6 +20,8 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.UnixServerAddress;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
@@ -72,6 +74,7 @@ import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -181,17 +184,22 @@ public abstract class UnifiedTest {
     @Before
     public void setUp() {
         assertTrue(String.format("Unsupported schema version %s", schemaVersion),
-                schemaVersion.startsWith("1.0")
-                        || schemaVersion.startsWith("1.1")
-                        || schemaVersion.startsWith("1.2")
-                        || schemaVersion.startsWith("1.3")
-                        || schemaVersion.startsWith("1.4")
-                        || schemaVersion.startsWith("1.5")
-                        || schemaVersion.startsWith("1.6")
-                        || schemaVersion.startsWith("1.7")
-                        || schemaVersion.startsWith("1.8")
-                        || schemaVersion.startsWith("1.9")
-                        || schemaVersion.startsWith("1.10"));
+                schemaVersion.equals("1.0")
+                        || schemaVersion.equals("1.1")
+                        || schemaVersion.equals("1.2")
+                        || schemaVersion.equals("1.3")
+                        || schemaVersion.equals("1.4")
+                        || schemaVersion.equals("1.5")
+                        || schemaVersion.equals("1.6")
+                        || schemaVersion.equals("1.7")
+                        || schemaVersion.equals("1.8")
+                        || schemaVersion.equals("1.9")
+                        || schemaVersion.equals("1.10")
+                        || schemaVersion.equals("1.11")
+                        || schemaVersion.equals("1.12")
+                        || schemaVersion.equals("1.13")
+                        || schemaVersion.equals("1.14")
+                        || schemaVersion.equals("1.15"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
@@ -237,7 +245,14 @@ public abstract class UnifiedTest {
         }
 
         if (definition.containsKey("expectLogMessages")) {
-            compareLogMessages(rootContext, definition);
+            ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
+                    // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
+                    LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
+            if (getMongoClientSettings().getClusterSettings()
+                    .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
+                tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
+            }
+            compareLogMessages(rootContext, definition, tweaks);
         }
     }
 
@@ -261,14 +276,15 @@ public abstract class UnifiedTest {
         }
     }
 
-    private void compareLogMessages(final UnifiedTestContext rootContext, final BsonDocument definition) {
+    private void compareLogMessages(final UnifiedTestContext rootContext, final BsonDocument definition,
+            final Iterable<LogMatcher.Tweak> tweaks) {
         for (BsonValue cur : definition.getArray("expectLogMessages")) {
             BsonDocument curLogMessagesForClient = cur.asDocument();
             String clientId = curLogMessagesForClient.getString("client").getValue();
             TestLoggingInterceptor loggingInterceptor =
                     entities.getClientLoggingInterceptor(clientId);
             rootContext.getLogMatcher().assertLogMessageEquality(clientId, curLogMessagesForClient.getArray("messages"),
-                    loggingInterceptor.getMessages());
+                    loggingInterceptor.getMessages(), tweaks);
         }
     }
 
@@ -573,6 +589,10 @@ public abstract class UnifiedTest {
                 context.getEventMatcher().waitForServerDescriptionChangedEvents(clientId, event, count,
                         entities.getServerListener(clientId));
                 break;
+            case "topologyDescriptionChangedEvent":
+                context.getEventMatcher().waitForClusterDescriptionChangedEvents(clientId, event, count,
+                        entities.getClusterListener(clientId));
+                break;
             case "poolClearedEvent":
             case "poolReadyEvent":
             case "connectionCreatedEvent":
@@ -597,6 +617,10 @@ public abstract class UnifiedTest {
             case "serverDescriptionChangedEvent":
                 context.getEventMatcher().assertServerDescriptionChangeEventCount(clientId, event, count,
                         entities.getServerListener(clientId).getServerDescriptionChangedEvents());
+                break;
+            case "topologyDescriptionChangedEvent":
+                context.getEventMatcher().assertClusterDescriptionChangeEventCount(clientId, event, count,
+                        entities.getClusterListener(clientId).getClusterDescriptionChangedEvents());
                 break;
             case "poolClearedEvent":
             case "poolReadyEvent":

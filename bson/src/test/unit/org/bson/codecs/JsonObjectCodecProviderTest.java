@@ -19,7 +19,7 @@ package org.bson.codecs;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.json.JsonObject;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;

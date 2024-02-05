@@ -18,13 +18,11 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -40,7 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -48,7 +45,6 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTra
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -239,25 +235,16 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return commandDocument;
     }
 
-    private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        assertNotNull(result);
-        return cursorDocumentToQueryResult(result.getDocument(CURSOR), description.getServerAddress());
-    }
-
-    private CommandReadTransformer<BsonDocument, QueryBatchCursor<T>> transformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-            return new QueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, comment,
-                    source, connection, result);
-        };
+    private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
+        return (result, source, connection) ->
+                new CommandBatchCursor<>(result, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
+                        comment, source, connection);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-            return new AsyncQueryBatchCursor<>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
-                    comment, source, connection, result);
-        };
+        return (result, source, connection) ->
+                new AsyncCommandBatchCursor<>(result, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
+                        comment, source, connection);
     }
 
     interface AggregateTarget {

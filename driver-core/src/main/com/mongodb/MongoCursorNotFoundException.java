@@ -44,19 +44,6 @@ public class MongoCursorNotFoundException extends MongoQueryException {
     }
 
     /**
-     * Construct a new instance.
-     *
-     * @param cursorId      cursor identifier
-     * @param serverAddress server address
-     * @deprecated Prefer {@link #MongoCursorNotFoundException(long, BsonDocument, ServerAddress)}
-     */
-    @Deprecated
-    public MongoCursorNotFoundException(final long cursorId, final ServerAddress serverAddress) {
-        super(serverAddress, -5, "Cursor " + cursorId + " not found on server " + serverAddress);
-        this.cursorId = cursorId;
-    }
-
-    /**
      * Get the cursor id that wasn't found.
      *
      * @return the ID of the cursor

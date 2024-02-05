@@ -35,7 +35,6 @@ import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.operation.AggregateOperation
 import com.mongodb.internal.operation.AggregateToCollectionOperation
 import com.mongodb.internal.operation.BatchCursor
-import com.mongodb.internal.operation.CommandReadOperation
 import com.mongodb.internal.operation.CountOperation
 import com.mongodb.internal.operation.CreateIndexesOperation
 import com.mongodb.internal.operation.DistinctOperation
@@ -53,18 +52,15 @@ import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
-import org.bson.BsonString
 import org.bson.UuidRepresentation
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.UuidCodec
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
 import static Fixture.getMongoClient
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForDelete
 import static com.mongodb.LegacyMixedBulkWriteOperation.createBulkWriteOperationForUpdate
@@ -159,7 +155,7 @@ class DBCollectionSpecification extends Specification {
                                                       'expireAfterSeconds': 100, 'v': 1, 'weights': new BasicDBObject(['a': 1000]),
                                                       'default_language': 'es', 'language_override': 'language', 'textIndexVersion': 1,
                                                       '2dsphereIndexVersion': 1, 'bits': 1, 'min': new Double(-180.0),
-                                                      'max'          : new Double(180.0), 'bucketSize': new Double(200.0), 'dropDups': true,
+                                                      'max'          : new Double(180.0), 'dropDups': true,
                                                       'storageEngine': BasicDBObject.parse(storageEngine),
                                                       'partialFilterExpression':  BasicDBObject.parse(partialFilterExpression),
                                                       'collation': BasicDBObject.parse(collation.asDocument().toJson())]))
@@ -182,7 +178,6 @@ class DBCollectionSpecification extends Specification {
                 .bits(1)
                 .min(-180.0)
                 .max(180.0)
-                .bucketSize(200.0)
                 .dropDups(true)
                 .storageEngine(BsonDocument.parse(storageEngine))
                 .partialFilterExpression(BsonDocument.parse(partialFilterExpression))
@@ -260,23 +255,6 @@ class DBCollectionSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(6, 2) })
-    def 'getStats should execute the expected command with the collection default read preference'() {
-        given:
-        def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonInt32(1))])
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        collection.setReadPreference(ReadPreference.secondary())
-
-        when:
-        collection.getStats()
-
-        then:
-        expect executor.getReadOperation(), isTheSameAs(new CommandReadOperation('myDatabase',
-                                                                                 new BsonDocument('collStats', new BsonString('test')),
-                                                                new BsonDocumentCodec()))
-        executor.getReadPreference() == collection.getReadPreference()
     }
 
     def 'find should create the correct FindOperation'() {

@@ -170,37 +170,6 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
   }
 
   /**
-   * Sets if the output database is sharded
-   *
-   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce#output-to-a-collection-with-an-action output with an action]]
-   * @param sharded if the output database is sharded
-   * @return this
-   */
-  @deprecated("This option will no longer be supported in MongoDB 4.4.", "4.1.0")
-  def sharded(sharded: Boolean): MapReduceObservable[TResult] = {
-    wrapped.sharded(sharded)
-    this
-  }
-
-  /**
-   * Sets if the post-processing step will prevent MongoDB from locking the database.
-   *
-   * Valid only with the `MapReduceAction.MERGE` or `MapReduceAction.REDUCE` actions.
-   *
-   * [[https://www.mongodb.com/docs/manual/reference/command/mapReduce/#output-to-a-collection-with-an-action Output with an action]]
-   * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
-   * @return this
-   */
-  @deprecated(
-    "This option will no longer be supported in MongoDB 4.4 as it will no longer hold a global or database level write lock",
-    "4.1.0"
-  )
-  def nonAtomic(nonAtomic: Boolean): MapReduceObservable[TResult] = {
-    wrapped.nonAtomic(nonAtomic)
-    this
-  }
-
-  /**
    * Sets the bypass document level validation flag.
    *
    * '''Note:''': This only applies when an `\$out` stage is specified.
@@ -247,10 +216,10 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
    * non-inline result.
    *
-   * @return an empty Observable that indicates when the operation has completed
+   * @return an Observable that indicates when the operation has completed
    * [[https://www.mongodb.com/docs/manual/aggregation/ Aggregation]]
    */
-  def toCollection(): SingleObservable[Void] = wrapped.toCollection()
+  def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
 
   /**
    * Helper to return a single observable limited to the first result.
