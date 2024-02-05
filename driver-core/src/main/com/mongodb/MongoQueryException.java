@@ -16,10 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonString;
 
 /**
  * An exception indicating that a query operation failed on the server.
@@ -39,56 +36,5 @@ public class MongoQueryException extends MongoCommandException {
      */
     public MongoQueryException(final BsonDocument response, final ServerAddress serverAddress) {
         super(response, serverAddress);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param address the server address
-     * @param errorCode the error code
-     * @param errorMessage the error message
-     * @deprecated Prefer {@link #MongoQueryException(BsonDocument, ServerAddress)}
-     */
-    @Deprecated
-    public MongoQueryException(final ServerAddress address, final int errorCode, final String errorMessage) {
-        this(manufactureResponse(errorCode, null, errorMessage), address);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param address the server address
-     * @param errorCode the error code
-     * @param errorCodeName the error code name
-     * @param errorMessage the error message
-     * @since 4.6
-     * @deprecated Prefer {@link #MongoQueryException(BsonDocument, ServerAddress)}
-     */
-    @Deprecated
-    public MongoQueryException(final ServerAddress address, final int errorCode, @Nullable final String errorCodeName,
-            final String errorMessage) {
-        this(manufactureResponse(errorCode, errorCodeName, errorMessage), address);
-    }
-
-    /**
-     * Construct an instance from a command exception.
-     *
-     * @param commandException the command exception
-     * @since 3.7
-     * @deprecated Prefer {@link #MongoQueryException(BsonDocument, ServerAddress)}
-     */
-    @Deprecated
-    public MongoQueryException(final MongoCommandException commandException) {
-        this(commandException.getResponse(), commandException.getServerAddress());
-    }
-
-    private static BsonDocument manufactureResponse(final int errorCode, @Nullable final String errorCodeName, final String errorMessage) {
-        BsonDocument response = new BsonDocument("ok", new BsonInt32(1))
-                .append("code", new BsonInt32(errorCode))
-                .append("errmsg", new BsonString(errorMessage));
-        if (errorCodeName != null) {
-            response.append("codeName", new BsonString(errorCodeName));
-        }
-        return response;
     }
 }

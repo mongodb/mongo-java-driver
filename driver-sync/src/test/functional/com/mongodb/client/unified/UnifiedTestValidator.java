@@ -26,12 +26,18 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedTestValidator extends UnifiedSyncTest {
     public UnifiedTestValidator(@SuppressWarnings("unused") final String fileDescription,
                                 @SuppressWarnings("unused") final String testDescription,
                                 final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                                 final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        assumeFalse("MongoDB releases prior to 4.4 incorrectly add errorLabels as a field within the writeConcernError document "
+                        + "instead of as a top-level field.  Rather than handle that in code, we skip the test on older server versions.",
+                testDescription.equals("InsertOne fails after multiple retryable writeConcernErrors") && serverVersionLessThan(4, 4));
     }
 
     @Before

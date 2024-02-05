@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
@@ -35,7 +36,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * This setting is furthermore ignored if:
  * <ul>
  *     <li>the communication is via {@linkplain com.mongodb.UnixServerAddress Unix domain socket}.</li>
- *     <li>a {@link StreamFactoryFactory} is {@linkplain com.mongodb.MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)
+ *     <li>a {@link TransportSettings} is {@linkplain MongoClientSettings.Builder#transportSettings(TransportSettings)}
  *     configured}.</li>
  * </ul>
  *

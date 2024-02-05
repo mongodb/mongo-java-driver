@@ -26,7 +26,7 @@ class ConnectionIdSpecification extends Specification {
     def 'should set all properties'() {
         given:
         def id1 = new ConnectionId(serverId)
-        def id2 = new ConnectionId(serverId, 11, 32)
+        def id2 = new ConnectionId(serverId, Long.MAX_VALUE - 1, Long.MAX_VALUE)
 
         expect:
         id1.serverId == serverId
@@ -34,8 +34,8 @@ class ConnectionIdSpecification extends Specification {
         !id1.serverValue
 
         id2.serverId == serverId
-        id2.localValue == 11
-        id2.serverValue == 32
+        id2.localValue == Long.MAX_VALUE - 1
+        id2.serverValue == Long.MAX_VALUE
     }
 
     def 'should increment local value'() {

@@ -130,11 +130,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public boolean supportsAdditionalTimeout() {
-        return wrapped.supportsAdditionalTimeout();
-    }
-
-    @Override
     public <T> T receive(final Decoder<T> decoder, final SessionContext sessionContext, final int additionalTimeout) {
         T result = wrapped.receive(decoder, sessionContext, additionalTimeout);
         lastUsedAt = System.currentTimeMillis();

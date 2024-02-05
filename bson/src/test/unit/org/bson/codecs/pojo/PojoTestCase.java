@@ -78,7 +78,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static util.ThreadTestHelpers.executeAll;
 
 abstract class PojoTestCase {
@@ -135,7 +135,7 @@ abstract class PojoTestCase {
         OutputBuffer encoded = encode(codec, value, collectible);
 
         BsonDocument asBsonDocument = decode(DOCUMENT_CODEC, encoded);
-        assertEquals("Encoded value", BsonDocument.parse(json), asBsonDocument);
+        assertEquals(BsonDocument.parse(json), asBsonDocument);
     }
 
     <T> void decodesTo(final PojoCodecProvider.Builder builder, final String json, final T expected) {
@@ -151,7 +151,7 @@ abstract class PojoTestCase {
     <T> void decodesTo(final Codec<T> codec, final String json, final T expected) {
         OutputBuffer encoded = encode(DOCUMENT_CODEC, BsonDocument.parse(json), false);
         T result = decode(codec, encoded);
-        assertEquals("Decoded value", expected, result);
+        assertEquals(expected, result);
     }
 
     <T> void decodingShouldFail(final Codec<T> codec, final String json) {

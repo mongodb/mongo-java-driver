@@ -23,7 +23,6 @@ import com.mongodb.SubjectProvider
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
-import com.mongodb.connection.SocketStreamFactory
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -48,9 +47,9 @@ class GSSAPIAuthenticatorSpecification extends Specification {
         def subjectProvider = Mock(SubjectProvider)
         def credential = ClusterFixture.getCredential().withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, subjectProvider)
         def credentialWithCache = new MongoCredentialWithCache(credential)
-        def streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings())
+        def streamFactory = new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), getSslSettings())
         def internalConnection = new InternalStreamConnectionFactory(SINGLE, streamFactory, credentialWithCache, null,
-                null, Collections.<MongoCompressor> emptyList(), LoggerSettings.builder().build(), null, getServerApi(), null)
+                null, Collections.<MongoCompressor> emptyList(), LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
 
         when:

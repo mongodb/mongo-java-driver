@@ -33,7 +33,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -42,6 +41,9 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.lockInterruptibly;
+import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
+import static com.mongodb.internal.Locks.withUnfairLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -370,8 +372,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            lockUnfair(lock);
-            try {
+            return withUnfairLock(lock, () -> {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
                     //noinspection NonAtomicOperationOnVolatileField
@@ -380,9 +381,7 @@ public class ConcurrentPool<T> implements Pool<T> {
                 } else {
                     return false;
                 }
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         /**
@@ -427,39 +426,30 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void releasePermit() {
-            lockUnfair(lock);
-            try {
+            withUnfairLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
                 permits++;
                 permitAvailableOrClosedOrPausedCondition.signal();
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            lockUnfair(lock);
-            try {
+            withUnfairLock(lock, () -> {
                 if (!paused) {
                     this.paused = true;
                     permitAvailableOrClosedOrPausedCondition.signalAll();
                 }
                 this.causeSupplier = assertNotNull(causeSupplier);
-            } finally {
-                lock.unlock();
-            }
+            });
         }
 
         void ready() {
             if (paused) {
-                lockUnfair(lock);
-                try {
+                withUnfairLock(lock, () -> {
                     this.paused = false;
                     this.causeSupplier = null;
-                } finally {
-                    lock.unlock();
-                }
+                });
             }
         }
 
@@ -468,16 +458,14 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                lockUnfair(lock);
-                try {
+                return withUnfairLock(lock, () -> {
                     if (!closed) {
                         closed = true;
                         permitAvailableOrClosedOrPausedCondition.signalAll();
                         return true;
                     }
-                } finally {
-                    lock.unlock();
-                }
+                    return false;
+                });
             }
             return false;
         }
@@ -513,34 +501,5 @@ public class ConcurrentPool<T> implements Pool<T> {
      */
     static String sizeToString(final int size) {
         return size == INFINITE_SIZE ? "infinite" : Integer.toString(size);
-    }
-
-    static void lockInterruptibly(final Lock lock) throws MongoInterruptedException {
-        try {
-            lock.lockInterruptibly();
-        } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(null, e);
-        }
-    }
-
-    private static void lockInterruptiblyUnfair(final ReentrantLock lock) throws MongoInterruptedException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw interruptAndCreateMongoInterruptedException(null, null);
-        }
-        // `ReentrantLock.tryLock` is unfair
-        if (!lock.tryLock()) {
-            try {
-                lock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                throw interruptAndCreateMongoInterruptedException(null, e);
-            }
-        }
-    }
-
-    static void lockUnfair(final ReentrantLock lock) {
-        // `ReentrantLock.tryLock` is unfair
-        if (!lock.tryLock()) {
-            lock.lock();
-        }
     }
 }

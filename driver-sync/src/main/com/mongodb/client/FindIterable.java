@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.Projections;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -96,6 +97,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
+     * @see Projections
      */
     FindIterable<TResult> projection(@Nullable Bson projection);
 
@@ -116,16 +118,6 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      */
     FindIterable<TResult> noCursorTimeout(boolean noCursorTimeout);
-
-    /**
-     * Users should not set this under normal circumstances.
-     *
-     * @param oplogReplay if oplog replay is enabled
-     * @return this
-     * @deprecated oplogReplay has been deprecated in MongoDB 4.4.
-     */
-    @Deprecated
-    FindIterable<TResult> oplogReplay(boolean oplogReplay);
 
     /**
      * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).

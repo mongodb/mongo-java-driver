@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -111,10 +112,6 @@ public class TestHelper {
         Map<String, Object> expectedMap = getClassGetterValues(unwrapOperation(expectedOperation));
         Map<String, Object> actualMap = getClassGetterValues(unwrapOperation(actualOperation));
         assertEquals(expectedMap, actualMap);
-    }
-
-    public static void assertPublisherIsTheSameAs(final Publisher<?> expectedPublisher, final Publisher<?> actualPublisher) {
-        assertPublisherIsTheSameAs(expectedPublisher, actualPublisher, null);
     }
 
     public static void assertPublisherIsTheSameAs(final Publisher<?> expectedPublisher, final Publisher<?> actualPublisher,
@@ -187,21 +184,22 @@ public class TestHelper {
     }
 
     private static Publisher<?> getRootSource(final Publisher<?> publisher) {
-        Optional<Publisher<?>> sourcePublisher = Optional.of(publisher);
+        Publisher<?> sourcePublisher = publisher;
         // Uses reflection to find the root / source publisher
         if (publisher instanceof Scannable) {
             Scannable scannable = (Scannable) publisher;
             List<? extends Scannable> parents = scannable.parents().collect(toList());
             if (parents.isEmpty()) {
-                sourcePublisher = getSource(scannable);
+                sourcePublisher = getSource(scannable).orElse(publisher);
             } else {
                 sourcePublisher = parents.stream().map(TestHelper::getSource)
                         .filter(Optional::isPresent)
                         .reduce((first, second) -> second)
-                        .orElse(Optional.empty());
+                        .flatMap(Function.identity())
+                        .orElse(publisher);
             }
         }
-        return sourcePublisher.orElse(publisher);
+        return unwrap(sourcePublisher);
     }
 
     private static Optional<Publisher<?>> getSource(final Scannable scannable) {
@@ -210,6 +208,14 @@ public class TestHelper {
             return optionalSource;
         } else {
             return getScannableArray(scannable);
+        }
+    }
+
+    private static Publisher<?> unwrap(final Publisher<?> maybeWrappingPublisher) {
+        if (maybeWrappingPublisher instanceof ListCollectionNamesPublisherImpl) {
+            return ((ListCollectionNamesPublisherImpl) maybeWrappingPublisher).getWrapped();
+        } else {
+            return maybeWrappingPublisher;
         }
     }
 
@@ -250,7 +256,7 @@ public class TestHelper {
         Mockito.lenient().doAnswer(i -> isClosed.get()).when(getBatchCursor()).isClosed();
         Mockito.lenient().doAnswer(invocation -> {
             isClosed.set(true);
-            invocation.getArgument(0, SingleResultCallback.class).onResult(null, null);
+            invocation.getArgument(0, SingleResultCallback.class).onResult(emptyList(), null);
             return null;
         }).when(getBatchCursor()).next(any(SingleResultCallback.class));
     }

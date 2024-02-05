@@ -22,7 +22,6 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.async.function.RetryState;
-import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.lang.Nullable;
@@ -39,11 +38,11 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
-import static com.mongodb.internal.operation.AsyncOperationHelper.createEmptyAsyncBatchCursor;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
@@ -52,7 +51,7 @@ import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromB
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
-import static com.mongodb.internal.operation.OperationHelper.createEmptyBatchCursor;
+import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
@@ -127,8 +126,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     return createReadCommandAndExecute(retryState, binding, source, namespace.getDatabaseName(), getCommandCreator(),
                             createCommandDecoder(), transformer(), connection);
                 } catch (MongoCommandException e) {
-                    return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
-                            source.getServerDescription().getAddress(), batchSize));
+                    return rethrowIfNotNamespaceError(e,
+                            createEmptySingleBatchCursor(source.getServerDescription().getAddress(), batchSize));
                 }
             })
         );
@@ -152,7 +151,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                             if (t != null && !isNamespaceError(t)) {
                                                 releasingCallback.onResult(null, t);
                                             } else {
-                                                releasingCallback.onResult(result != null ? result : emptyAsyncCursor(source), null);
+                                                releasingCallback.onResult(result != null
+                                                        ? result : createEmptyAsyncSingleBatchCursor(getBatchSize()), null);
                                             }
                                         });
                             })
@@ -160,9 +160,6 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 
-    private AsyncBatchCursor<T> emptyAsyncCursor(final AsyncConnectionSource source) {
-        return createEmptyAsyncBatchCursor(namespace, source.getServerDescription().getAddress());
-    }
 
     private CommandCreator getCommandCreator() {
         return (serverDescription, connectionDescription) -> getCommand();
@@ -179,11 +176,11 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return (result, source, connection) -> cursorDocumentToBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
+        return (result, source, connection) -> cursorDocumentToBatchCursor(result, decoder, comment, source, connection, batchSize);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, comment, source, connection, batchSize);
+        return (result, source, connection) -> cursorDocumentToAsyncBatchCursor(result, decoder, comment, source, connection, batchSize);
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

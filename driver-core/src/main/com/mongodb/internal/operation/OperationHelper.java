@@ -17,8 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
@@ -30,18 +28,14 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
-import org.bson.codecs.Decoder;
 import org.bson.conversions.Bson;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -199,26 +193,6 @@ final class OperationHelper {
         }
         return true;
     }
-
-    static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
-                                                          final ServerAddress serverAddress, final int batchSize) {
-        return new QueryBatchCursor<>(new QueryResult<>(namespace, Collections.emptyList(), 0L,
-                serverAddress),
-                0, batchSize, decoder);
-    }
-
-    static <T> QueryResult<T> cursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
-        return cursorDocumentToQueryResult(cursorDocument, serverAddress, "firstBatch");
-    }
-
-    static <T> QueryResult<T> cursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress,
-            final String fieldNameContainingBatch) {
-        long cursorId = ((BsonInt64) cursorDocument.get("id")).getValue();
-        MongoNamespace queryResultNamespace = new MongoNamespace(cursorDocument.getString("ns").getValue());
-        return new QueryResult<>(queryResultNamespace, BsonDocumentWrapperHelper.toList(cursorDocument, fieldNameContainingBatch),
-                cursorId, serverAddress);
-    }
-
 
     /**
      * This internal exception is used to

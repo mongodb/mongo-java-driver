@@ -23,13 +23,13 @@ import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 // Don't convert to Spock, as Groovy intercepts equals/hashCode methods that we are trying to test
 public class BsonDocumentTest {
@@ -78,8 +78,7 @@ public class BsonDocumentTest {
 
     @Test
     public void toJsonShouldReturnEquivalent() {
-        assertEquals(new BsonDocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()),
-                     document);
+        assertEquals(new BsonDocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()), document);
     }
 
     @Test

@@ -4,11 +4,15 @@
   <CurrentIssues>
     <ID>IteratorNotThrowingNoSuchElementException:MongoCursor.kt$MongoCursor&lt;T : Any> : IteratorCloseable</ID>
     <ID>LargeClass:MongoCollectionTest.kt$MongoCollectionTest</ID>
-    <ID>LongMethod:FindFlowTest.kt$FindFlowTest$@Suppress("DEPRECATION") @Test fun shouldCallTheUnderlyingMethods()</ID>
-    <ID>LongMethod:FindIterableTest.kt$FindIterableTest$@Suppress("DEPRECATION") @Test fun shouldCallTheUnderlyingMethods()</ID>
+    <ID>LongMethod:FindFlowTest.kt$FindFlowTest$@Test fun shouldCallTheUnderlyingMethods()</ID>
+    <ID>LongMethod:FindIterableTest.kt$FindIterableTest$@Test fun shouldCallTheUnderlyingMethods()</ID>
     <ID>LongMethod:KotlinSerializerCodecTest.kt$KotlinSerializerCodecTest$@Test fun testDataClassOptionalBsonValues()</ID>
     <ID>MaxLineLength:MapReduceFlow.kt$MapReduceFlow$*</ID>
     <ID>MaxLineLength:MapReduceIterable.kt$MapReduceIterable$*</ID>
+    <ID>MaxLineLength:ListCollectionsFlow.kt$ListCollectionsFlow$*</ID>
+    <ID>MaxLineLength:ListCollectionsIterable.kt$ListCollectionsIterable$*</ID>
+    <ID>MaxLineLength:ListCollectionNamesIterable.kt$ListCollectionNamesIterable$*</ID>
+    <ID>MaxLineLength:ListCollectionNamesFlow.kt$ListCollectionNamesFlow$*</ID>
     <ID>SwallowedException:MockitoHelper.kt$MockitoHelper.DeepReflectionEqMatcher$e: Throwable</ID>
     <ID>TooManyFunctions:ClientSession.kt$ClientSession : jClientSession</ID>
     <ID>TooManyFunctions:FindFlow.kt$FindFlow&lt;T : Any> : Flow</ID>

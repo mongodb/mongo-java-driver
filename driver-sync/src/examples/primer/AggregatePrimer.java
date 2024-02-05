@@ -18,7 +18,7 @@ package primer;
 
 import com.mongodb.client.AggregateIterable;
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static java.util.Arrays.asList;
 

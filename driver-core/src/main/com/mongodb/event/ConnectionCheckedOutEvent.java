@@ -51,32 +51,6 @@ public final class ConnectionCheckedOutEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param connectionId the connectionId
-     * @param operationId the operation id
-     * @since 4.10
-     * @deprecated Prefer {@link ConnectionCheckedOutEvent#ConnectionCheckedOutEvent(ConnectionId, long, long)}.
-     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
-     */
-    @Deprecated
-    public ConnectionCheckedOutEvent(final ConnectionId connectionId, final long operationId) {
-        this(connectionId, operationId, 0);
-    }
-
-    /**
-     * Construct an instance
-     *
-     * @param connectionId the connectionId
-     * @deprecated Prefer {@link #ConnectionCheckedOutEvent(ConnectionId, long)}.
-     * If this constructor is used, then {@link #getOperationId()} is -1.
-     */
-    @Deprecated
-    public ConnectionCheckedOutEvent(final ConnectionId connectionId) {
-        this(connectionId, -1);
-    }
-
-    /**
      * Gets the connection id
      *
      * @return the connection id
@@ -97,15 +71,13 @@ public final class ConnectionCheckedOutEvent {
 
     /**
      * The time it took to check out the connection.
-     * More specifically, the time elapsed between the {@link ConnectionCheckOutStartedEvent} emitted by the same checking out and this event.
+     * More specifically, the time elapsed between emitting a {@link ConnectionCheckOutStartedEvent}
+     * and emitting this event as part of the same checking out.
      * <p>
      * Naturally, if a new connection was not {@linkplain ConnectionCreatedEvent created}
      * and {@linkplain ConnectionReadyEvent established} as part of checking out,
      * this duration is usually not greater than {@link ConnectionPoolSettings#getMaxWaitTime(TimeUnit)},
      * but may occasionally be greater than that, because the driver does not provide hard real-time guarantees.</p>
-     * <p>
-     * This duration does not currently include the time to deliver the {@link ConnectionCheckOutStartedEvent}.
-     * Subject to change.</p>
      *
      * @param timeUnit The time unit of the result.
      * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.

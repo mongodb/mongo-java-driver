@@ -98,7 +98,7 @@ class KeyManagementService {
     private void closeSocket(final Socket socket) {
         try {
             socket.close();
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             // ignore
         }
     }

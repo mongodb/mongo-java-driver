@@ -87,29 +87,28 @@ class BatchCursorFlux<T> implements Publisher<T> {
                 batchCursor.setBatchSize(calculateBatchSize(sink.requestedFromDownstream()));
                 Mono.from(batchCursor.next(() -> sink.isCancelled()))
                         .doOnCancel(this::closeCursor)
-                        .doOnError((e) -> {
-                            try {
-                                closeCursor();
-                            } finally {
-                                sink.error(e);
-                            }
-                        })
-                        .doOnSuccess(results -> {
-                            if (results != null) {
-                                results
-                                        .stream()
-                                        .filter(Objects::nonNull)
-                                        .forEach(sink::next);
-                                calculateDemand(-results.size());
-                            }
-                            if (batchCursor.isClosed()) {
-                                sink.complete();
-                            } else {
-                                inProgress.set(false);
-                                recurseCursor();
-                            }
-                        })
-                        .subscribe();
+                        .subscribe(results -> {
+                                    if (!results.isEmpty()) {
+                                        results
+                                                .stream()
+                                                .filter(Objects::nonNull)
+                                                .forEach(sink::next);
+                                        calculateDemand(-results.size());
+                                    }
+                                    if (batchCursor.isClosed()) {
+                                        sink.complete();
+                                    } else {
+                                        inProgress.set(false);
+                                        recurseCursor();
+                                    }
+                                },
+                                e -> {
+                                    try {
+                                        closeCursor();
+                                    } finally {
+                                        sink.error(e);
+                                    }
+                                });
                 }
         }
     }

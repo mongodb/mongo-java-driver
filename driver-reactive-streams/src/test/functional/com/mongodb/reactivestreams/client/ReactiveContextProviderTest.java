@@ -86,6 +86,10 @@ public class ReactiveContextProviderTest {
                     getDatabase().listCollections().first();
                     assertContextPassedThrough();
                 }),
+                dynamicTest("List Collection Names Publisher", () -> {
+                    getDatabase().listCollectionNames().first();
+                    assertContextPassedThrough();
+                }),
                 dynamicTest("List Databases Publisher", () -> {
                     getMongoClient().listDatabases().first();
                     assertContextPassedThrough();

@@ -25,7 +25,7 @@ import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -37,10 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("rawtypes")
 public final class ClassModelBuilderTest {
@@ -148,32 +149,36 @@ public final class ClassModelBuilderTest {
         assertEquals(3, builder.getPropertyModelBuilders().size());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test()
     public void testValidationIdProperty() {
-        ClassModel.builder(SimpleGenericsModel.class).idPropertyName("ID").build();
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(SimpleGenericsModel.class).idPropertyName("ID").build());
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test()
     public void testValidationDuplicateDocumentFieldName() {
-        ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
-        builder.getProperty("myIntegerField").writeName("myGenericField");
-        builder.build();
+        assertThrows(CodecConfigurationException.class, () -> {
+            ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
+            builder.getProperty("myIntegerField").writeName("myGenericField");
+            builder.build();
+        });
     }
 
-    @Test(expected = CodecConfigurationException.class)
+    @Test()
     public void testDifferentTypeIdGenerator() {
-        ClassModel.builder(SimpleIdModel.class)
-                .idGenerator(new IdGenerator<String>() {
-                    @Override
-                    public String generate() {
-                        return "id";
-                    }
+        assertThrows(CodecConfigurationException.class, () ->
+                ClassModel.builder(SimpleIdModel.class)
+                        .idGenerator(new IdGenerator<String>() {
+                            @Override
+                            public String generate() {
+                                return "id";
+                            }
 
-                    @Override
-                    public Class<String> getType() {
-                        return String.class;
-                    }
-                }).build();
+                            @Override
+                            public Class<String> getType() {
+                                return String.class;
+                            }
+                        }).build());
     }
 
     private static final List<Annotation> TEST_ANNOTATIONS = Collections.singletonList(

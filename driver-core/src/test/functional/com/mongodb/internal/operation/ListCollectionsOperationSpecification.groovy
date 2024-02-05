@@ -34,7 +34,6 @@ import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.QueryResult
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
@@ -84,7 +83,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.next(callback)
 
         then:
-        callback.get() == null
+        callback.get() == []
 
         cleanup:
         collectionHelper.dropDatabase(madeUpDatabase)
@@ -191,12 +190,28 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() == 2
     }
 
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
+    def 'should only get collection names when nameOnly and authorizedCollections are requested'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .nameOnly(true)
+                .authorizedCollections(true)
+        getCollectionHelper().create('collection6', new CreateCollectionOptions())
+
+        when:
+        def cursor = operation.execute(getBinding())
+        def collection = cursor.next()[0]
+
+        then:
+        collection.size() == 2
+    }
+
     @IgnoreIf({ serverVersionLessThan(3, 4) || serverVersionAtLeast(4, 0) })
     def 'should only get all field names when nameOnly is requested on server versions that do not support nameOnly'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
                 .nameOnly(true)
-        getCollectionHelper().create('collection6', new CreateCollectionOptions())
+        getCollectionHelper().create('collection7', new CreateCollectionOptions())
 
         when:
         def cursor = operation.execute(getBinding())
@@ -206,6 +221,21 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collection.size() > 2
     }
 
+    @IgnoreIf({ serverVersionLessThan(4, 0) })
+    def 'should get all fields when authorizedCollections is requested and nameOnly is not requested'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .nameOnly(false)
+                .authorizedCollections(true)
+        getCollectionHelper().create('collection8', new CreateCollectionOptions())
+
+        when:
+        def cursor = operation.execute(getBinding())
+        def collection = cursor.next()[0]
+
+        then:
+        collection.size() > 2
+    }
 
     def 'should return collection names if a collection exists asynchronously'() {
         given:
@@ -380,7 +410,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.getBatchSize() == 2
 
         cleanup:
-        consumeAsyncResults(cursor)
+        cursor?.close()
     }
 
     @IgnoreIf({ isSharded() })
@@ -479,7 +509,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         threeSixConnectionDescription : Stub(ConnectionDescription) {
             getMaxWireVersion() >> 3
         },
-        queryResult: Stub(QueryResult) {
+        queryResult: Stub(CommandCursorResult) {
             getNamespace() >> new MongoNamespace('db', 'coll')
             getResults() >> []
             getCursor() >> new ServerCursor(1, Stub(ServerAddress))

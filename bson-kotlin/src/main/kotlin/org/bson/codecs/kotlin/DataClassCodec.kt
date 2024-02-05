@@ -23,12 +23,14 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
+import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.findAnnotations
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaType
+import kotlin.reflect.jvm.jvmErasure
 import org.bson.BsonReader
 import org.bson.BsonType
 import org.bson.BsonWriter
@@ -85,6 +87,8 @@ internal data class DataClassCodec<T : Any>(
                 if (logger.isTraceEnabled) {
                     logger.trace("Found property not present in the DataClass: $fieldName")
                 }
+            } else if (propertyModel.param.type.isMarkedNullable && reader.currentBsonType == BsonType.NULL) {
+                reader.readNull()
             } else {
                 try {
                     args[propertyModel.param] = decoderContext.decodeWithChildContext(propertyModel.codec, reader)
@@ -197,7 +201,7 @@ internal data class DataClassCodec<T : Any>(
                     codecRegistry.getCodec(
                         kParameter,
                         (kParameter.type.classifier as KClass<Any>).javaObjectType,
-                        kParameter.type.arguments.mapNotNull { typeMap[it.type] ?: it.type?.javaType }.toList())
+                        kParameter.type.arguments.mapNotNull { typeMap[it.type] ?: computeJavaType(it) }.toList())
                 }
                 is KTypeParameter -> {
                     when (val pType = typeMap[kParameter.type] ?: kParameter.type.javaType) {
@@ -215,6 +219,13 @@ internal data class DataClassCodec<T : Any>(
             }
                 ?: throw CodecConfigurationException(
                     "Could not find codec for ${kParameter.name} with type ${kParameter.type}")
+        }
+
+        private fun computeJavaType(kTypeProjection: KTypeProjection): Type? {
+            val javaType: Type = kTypeProjection.type?.javaType!!
+            return if (javaType == Any::class.java) {
+                kTypeProjection.type?.jvmErasure?.javaObjectType
+            } else javaType
         }
 
         @Suppress("UNCHECKED_CAST")

@@ -17,9 +17,9 @@
 package com.mongodb.connection;
 
 import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.oio.OioEventLoopGroup;
-import io.netty.channel.socket.oio.OioSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.junit.jupiter.api.Test;
@@ -40,20 +40,19 @@ class NettyTransportSettingsTest {
         assertNull(settings.getSocketChannelClass());
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void shouldApplySettingsFromBuilder() throws SSLException {
-        EventLoopGroup eventLoopGroup = new OioEventLoopGroup();
+        EventLoopGroup eventLoopGroup = new DefaultEventLoopGroup();
         SslContext sslContext = SslContextBuilder.forClient().build();
         NettyTransportSettings settings = TransportSettings.nettyBuilder()
                 .allocator(UnpooledByteBufAllocator.DEFAULT)
-                .socketChannelClass(OioSocketChannel.class)
+                .socketChannelClass(NioSocketChannel.class)
                 .eventLoopGroup(eventLoopGroup)
                 .sslContext(sslContext)
                 .build();
 
         assertEquals(UnpooledByteBufAllocator.DEFAULT, settings.getAllocator());
-        assertEquals(OioSocketChannel.class, settings.getSocketChannelClass());
+        assertEquals(NioSocketChannel.class, settings.getSocketChannelClass());
         assertEquals(eventLoopGroup, settings.getEventLoopGroup());
         assertEquals(sslContext, settings.getSslContext());
     }

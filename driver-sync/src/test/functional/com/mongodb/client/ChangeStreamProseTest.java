@@ -34,29 +34,30 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static com.mongodb.client.model.Updates.set;
 import static com.mongodb.client.CrudTestHelper.repeat;
+import static com.mongodb.client.model.Updates.set;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 
 // See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.rst#prose-tests
 public class ChangeStreamProseTest extends DatabaseTestCase {
     private BsonDocument failPointDocument;
 
-    @Before
+    @BeforeEach
     @Override
     public void setUp() {
         assumeTrue(canRunTests());

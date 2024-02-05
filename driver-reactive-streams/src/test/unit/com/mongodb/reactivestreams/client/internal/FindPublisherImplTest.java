@@ -37,7 +37,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SuppressWarnings("deprecation")
 public class FindPublisherImplTest extends TestHelper {
 
     private static final MongoNamespace NAMESPACE = new MongoNamespace("db", "coll");
@@ -73,7 +72,6 @@ public class FindPublisherImplTest extends TestHelper {
                 .limit(100)
                 .skip(10)
                 .cursorType(CursorType.NonTailable)
-                .oplogReplay(false)
                 .noCursorTimeout(false)
                 .partial(false)
                 .collation(COLLATION)

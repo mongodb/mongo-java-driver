@@ -48,18 +48,6 @@ public final class ConnectionReadyEvent {
     }
 
     /**
-     * Construct an instance
-     *
-     * @param connectionId the connection id
-     * @deprecated Prefer {@link ConnectionReadyEvent#ConnectionReadyEvent(ConnectionId, long)}.
-     * If this constructor is used, then {@link #getElapsedTime(TimeUnit)} is 0.
-     */
-    @Deprecated
-    public ConnectionReadyEvent(final ConnectionId connectionId) {
-        this(connectionId, 0);
-    }
-
-    /**
      * Gets the connection id
      *
      * @return the connection id
@@ -70,14 +58,12 @@ public final class ConnectionReadyEvent {
 
     /**
      * The time it took to establish the connection.
-     * More specifically, the time elapsed between the {@link ConnectionCreatedEvent} emitted by the same checking out and this event.
+     * More specifically, the time elapsed between emitting a {@link ConnectionCreatedEvent}
+     * and emitting this event as part of the same checking out.
      * <p>
      * Naturally, when establishing a connection is part of checking out,
      * this duration is not greater than
      * {@link ConnectionCheckedOutEvent#getElapsedTime(TimeUnit)}/{@link ConnectionCheckOutFailedEvent#getElapsedTime(TimeUnit)}.</p>
-     * <p>
-     * This duration does not currently include the time to deliver the {@link ConnectionCreatedEvent}.
-     * Subject to change.</p>
      *
      * @param timeUnit The time unit of the result.
      * {@link TimeUnit#convert(long, TimeUnit)} specifies how the conversion from nanoseconds to {@code timeUnit} is done.

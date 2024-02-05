@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <TResult> The type of the result.
  * @since 3.0
+ * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
 public interface ListCollectionsIterable<TResult> extends MongoIterable<TResult> {
 

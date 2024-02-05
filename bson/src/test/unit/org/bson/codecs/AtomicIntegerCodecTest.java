@@ -18,11 +18,12 @@ package org.bson.codecs;
 
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class AtomicIntegerCodecTest extends CodecTestCase {
 
@@ -44,20 +45,20 @@ public final class AtomicIntegerCodecTest extends CodecTestCase {
         roundTrip(new Document("a", 9.9999999999999992), new AtomicIntegerComparator(expected));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldThrowWhenHandlingLossyDoubleValues() {
         Document original = new Document("a", 9.9999999999999991);
-        roundTrip(original, new AtomicIntegerComparator(original));
+        assertThrows(BsonInvalidOperationException.class, () ->roundTrip(original, new AtomicIntegerComparator(original)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMinRange() {
-        roundTrip(new Document("a", Long.MIN_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () ->roundTrip(new Document("a", Long.MIN_VALUE)));
     }
 
-    @Test(expected = BsonInvalidOperationException.class)
+    @Test
     public void shouldErrorDecodingOutsideMaxRange() {
-        roundTrip(new Document("a", Long.MAX_VALUE));
+        assertThrows(BsonInvalidOperationException.class, () ->roundTrip(new Document("a", Long.MAX_VALUE)));
     }
 
     @Override
@@ -74,7 +75,7 @@ public final class AtomicIntegerCodecTest extends CodecTestCase {
 
         @Override
         public void apply(final Document result) {
-            assertEquals("Codec Round Trip",
+            assertEquals(
                     expected.get("a", AtomicInteger.class).get(),
                     result.get("a", AtomicInteger.class).get());
         }

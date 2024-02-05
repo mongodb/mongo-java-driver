@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
@@ -41,12 +42,12 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     private final ChangeStreamOperation<T> changeStreamOperation;
     private final int maxWireVersion;
 
-    private AggregateResponseBatchCursor<RawBsonDocument> wrapped;
+    private CommandBatchCursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
     private final AtomicBoolean closed;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
-                            final AggregateResponseBatchCursor<RawBsonDocument> wrapped,
+                            final CommandBatchCursor<RawBsonDocument> wrapped,
                             final ReadBinding binding,
                             @Nullable final BsonDocument resumeToken,
                             final int maxWireVersion) {
@@ -58,29 +59,29 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         closed = new AtomicBoolean();
     }
 
-    AggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
+    CommandBatchCursor<RawBsonDocument> getWrapped() {
         return wrapped;
     }
 
     @Override
     public boolean hasNext() {
-        return resumeableOperation(queryBatchCursor -> {
+        return resumeableOperation(commandBatchCursor -> {
             try {
-                return queryBatchCursor.hasNext();
+                return commandBatchCursor.hasNext();
             } finally {
-                cachePostBatchResumeToken(queryBatchCursor);
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
 
     @Override
     public List<T> next() {
-        return resumeableOperation(queryBatchCursor -> {
+        return resumeableOperation(commandBatchCursor -> {
             try {
-                return convertAndProduceLastId(queryBatchCursor.next(), changeStreamOperation.getDecoder(),
+                return convertAndProduceLastId(commandBatchCursor.next(), changeStreamOperation.getDecoder(),
                         lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(queryBatchCursor);
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
@@ -92,12 +93,13 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public List<T> tryNext() {
-        return resumeableOperation(queryBatchCursor -> {
+        return resumeableOperation(commandBatchCursor -> {
             try {
-                return convertAndProduceLastId(queryBatchCursor.tryNext(), changeStreamOperation.getDecoder(),
-                        lastId -> resumeToken = lastId);
+                List<RawBsonDocument> tryNext = commandBatchCursor.tryNext();
+                return tryNext == null ? null
+                        : convertAndProduceLastId(tryNext, changeStreamOperation.getDecoder(), lastId -> resumeToken = lastId);
             } finally {
-                cachePostBatchResumeToken(queryBatchCursor);
+                cachePostBatchResumeToken(commandBatchCursor);
             }
         });
     }
@@ -155,9 +157,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         return maxWireVersion;
     }
 
-    private void cachePostBatchResumeToken(final AggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
-        if (queryBatchCursor.getPostBatchResumeToken() != null) {
-            resumeToken = queryBatchCursor.getPostBatchResumeToken();
+    private void cachePostBatchResumeToken(final AggregateResponseBatchCursor<RawBsonDocument> commandBatchCursor) {
+        if (commandBatchCursor.getPostBatchResumeToken() != null) {
+            resumeToken = commandBatchCursor.getPostBatchResumeToken();
         }
     }
 
@@ -165,19 +167,17 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
      * @param lastIdConsumer Is {@linkplain Consumer#accept(Object) called} iff {@code rawDocuments} is successfully converted
      *                       and the returned {@link List} is neither {@code null} nor {@linkplain List#isEmpty() empty}.
      */
-    @Nullable
-    static <T> List<T> convertAndProduceLastId(@Nullable final List<RawBsonDocument> rawDocuments,
+    static <T> List<T> convertAndProduceLastId(final List<RawBsonDocument> rawDocuments,
                                                final Decoder<T> decoder,
                                                final Consumer<BsonDocument> lastIdConsumer) {
-        List<T> results = null;
-        if (rawDocuments != null) {
-            results = new ArrayList<>();
-            for (RawBsonDocument rawDocument : rawDocuments) {
-                if (!rawDocument.containsKey("_id")) {
-                    throw new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.");
-                }
-                results.add(rawDocument.decode(decoder));
+        List<T> results = new ArrayList<>();
+        for (RawBsonDocument rawDocument : assertNotNull(rawDocuments)) {
+            if (!rawDocument.containsKey("_id")) {
+                throw new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.");
             }
+            results.add(rawDocument.decode(decoder));
+        }
+        if (!rawDocuments.isEmpty()) {
             lastIdConsumer.accept(rawDocuments.get(rawDocuments.size() - 1).getDocument("_id"));
         }
         return results;

@@ -31,17 +31,9 @@ class UnixServerAddressSpecification extends Specification {
 
     def 'should throw if the path does not end with .sock'() {
         when:
-        new UnixServerAddress('localhost').getSocketAddress()
+        new UnixServerAddress('localhost')
 
         then:
         thrown(IllegalArgumentException)
-    }
-
-    def 'should throw when trying to get a InetSocketAddress'() {
-        when:
-        new UnixServerAddress('/tmp/mongodb.sock').getSocketAddress()
-
-        then:
-        thrown(UnsupportedOperationException)
     }
 }

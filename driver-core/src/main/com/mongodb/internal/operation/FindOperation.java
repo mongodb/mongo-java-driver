@@ -29,7 +29,6 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.connection.QueryResult;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -57,7 +56,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
-import static com.mongodb.internal.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
@@ -85,7 +83,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private int skip;
     private BsonDocument sort;
     private CursorType cursorType = CursorType.NonTailable;
-    private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean partial;
     private Collation collation;
@@ -195,15 +192,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     public FindOperation<T> cursorType(final CursorType cursorType) {
         this.cursorType = notNull("cursorType", cursorType);
-        return this;
-    }
-
-    public boolean isOplogReplay() {
-        return oplogReplay;
-    }
-
-    public FindOperation<T> oplogReplay(final boolean oplogReplay) {
-        this.oplogReplay = oplogReplay;
         return this;
     }
 
@@ -420,9 +408,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (isAwaitData()) {
             commandDocument.put("awaitData", BsonBoolean.TRUE);
         }
-        if (oplogReplay) {
-            commandDocument.put("oplogReplay", BsonBoolean.TRUE);
-        }
         if (noCursorTimeout) {
             commandDocument.put("noCursorTimeout", BsonBoolean.TRUE);
         }
@@ -471,13 +456,9 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         return cursorType == CursorType.TailableAwait;
     }
 
-    private CommandReadTransformer<BsonDocument, QueryBatchCursor<T>> transformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
-                    connection.getDescription().getServerAddress());
-            return new QueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection,
-                    result);
-        };
+    private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
+        return (result, source, connection) ->
+                new CommandBatchCursor<>(result, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection);
     }
 
     private long getMaxTimeForCursor() {
@@ -485,11 +466,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> {
-            QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
-                    connection.getDescription().getServerAddress());
-            return new AsyncQueryBatchCursor<>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, comment, source,
-                    connection, result);
-        };
+        return (result, source, connection) ->
+            new AsyncCommandBatchCursor<>(result, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection);
     }
 }

@@ -31,6 +31,8 @@ public abstract class CommandEvent {
     private final int requestId;
     private final ConnectionDescription connectionDescription;
     private final String commandName;
+    private final String databaseName;
+
     private final long operationId;
 
     /**
@@ -40,41 +42,18 @@ public abstract class CommandEvent {
      * @param operationId           the operation id
      * @param requestId             the request id
      * @param connectionDescription the connection description
+     * @param databaseName          the database name
      * @param commandName           the command name
-     * @since 4.10
+     * @since 4.11
      */
     public CommandEvent(@Nullable final RequestContext requestContext, final long operationId, final int requestId,
-            final ConnectionDescription connectionDescription, final String commandName) {
+            final ConnectionDescription connectionDescription, final String databaseName, final String commandName) {
         this.requestContext = requestContext;
         this.requestId = requestId;
         this.connectionDescription = connectionDescription;
         this.commandName = commandName;
+        this.databaseName = databaseName;
         this.operationId = operationId;
-    }
-
-    /**
-     * Construct an instance.
-     * @param requestContext the request context
-     * @param requestId the request id
-     * @param connectionDescription the connection description
-     * @param commandName the command name
-     * @since 4.4
-     * @deprecated Prefer {@link CommandEvent#CommandEvent(RequestContext, long, int, ConnectionDescription, String)}
-     */
-    @Deprecated
-    public CommandEvent(@Nullable final RequestContext requestContext, final int requestId,
-            final ConnectionDescription connectionDescription, final String commandName) {
-        this(requestContext, -1, requestId, connectionDescription, commandName);
-    }
-
-    /**
-     * Construct an instance.
-     * @param requestId the request id
-     * @param connectionDescription the connection description
-     * @param commandName the command name
-     */
-    public CommandEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName) {
-        this(null, requestId, connectionDescription, commandName);
     }
 
     /**
@@ -112,6 +91,16 @@ public abstract class CommandEvent {
      */
     public String getCommandName() {
         return commandName;
+    }
+
+    /**
+     * Gets the database on which the operation will be executed.
+     *
+     * @return the database name
+     * @since 4.11
+     */
+    public String getDatabaseName() {
+        return databaseName;
     }
 
     /**

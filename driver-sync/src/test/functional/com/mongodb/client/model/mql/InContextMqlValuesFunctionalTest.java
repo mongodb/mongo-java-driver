@@ -23,7 +23,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Aggregates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,8 +42,8 @@ import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.mql.MqlValues.current;
 import static com.mongodb.client.model.mql.MqlValues.of;
 import static com.mongodb.client.model.mql.MqlValues.ofArray;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class InContextMqlValuesFunctionalTest extends DatabaseTestCase {
 

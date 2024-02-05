@@ -21,13 +21,15 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
 
+import static java.util.Collections.emptyList
+
 class ChangeStreamBatchCursorSpecification extends Specification {
 
-    def 'should call the underlying QueryBatchCursor'() {
+    def 'should call the underlying CommandBatchCursor'() {
         given:
         def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Stub(ReadBinding)
-        def wrapped = Mock(QueryBatchCursor)
+        def wrapped = Mock(CommandBatchCursor)
         def resumeToken = new BsonDocument('_id': new BsonInt32(1))
         def cursor = new ChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, resumeToken,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
@@ -49,7 +51,7 @@ class ChangeStreamBatchCursorSpecification extends Specification {
         cursor.next()
 
         then:
-        1 * wrapped.next()
+        1 * wrapped.next() >> emptyList()
         1 * wrapped.getPostBatchResumeToken()
 
         when:

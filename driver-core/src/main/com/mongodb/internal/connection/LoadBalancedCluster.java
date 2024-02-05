@@ -34,6 +34,7 @@ import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.Locks;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -56,6 +57,8 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.connection.BaseCluster.logServerSelectionStarted;
+import static com.mongodb.internal.connection.BaseCluster.logServerSelectionSucceeded;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
@@ -173,13 +176,6 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterDescription getDescription() {
-        isTrue("open", !isClosed());
-        waitForSrv();
-        return description;
-    }
-
-    @Override
     public ClusterId getClusterId() {
         return clusterId;
     }
@@ -210,7 +206,11 @@ final class LoadBalancedCluster implements Cluster {
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
-        return new ServerTuple(assertNotNull(server), description.getServerDescriptions().get(0));
+        ClusterDescription curDescription = description;
+        logServerSelectionStarted(clusterId, operationContext, serverSelector, curDescription);
+        ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
+        logServerSelectionSucceeded(clusterId, operationContext, serverTuple.getServerDescription().getAddress(), serverSelector, curDescription);
+        return serverTuple;
     }
 
 
@@ -218,8 +218,7 @@ final class LoadBalancedCluster implements Cluster {
         if (initializationCompleted) {
             return;
         }
-        lock.lock();
-        try {
+        Locks.withLock(lock, () -> {
             long remainingTimeNanos = getMaxWaitTimeNanos();
             while (!initializationCompleted) {
                 if (isClosed()) {
@@ -228,13 +227,13 @@ final class LoadBalancedCluster implements Cluster {
                 if (remainingTimeNanos <= 0) {
                     throw createTimeoutException();
                 }
-                remainingTimeNanos = condition.awaitNanos(remainingTimeNanos);
+                try {
+                    remainingTimeNanos = condition.awaitNanos(remainingTimeNanos);
+                } catch (InterruptedException e) {
+                    throw interruptAndCreateMongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
+                }
             }
-        } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     @Override
@@ -245,7 +244,8 @@ final class LoadBalancedCluster implements Cluster {
             return;
         }
 
-        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(getMaxWaitTimeNanos(), callback);
+        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(
+                operationContext, serverSelector, getMaxWaitTimeNanos(), callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
         } else {
@@ -264,14 +264,10 @@ final class LoadBalancedCluster implements Cluster {
             if (dnsSrvRecordMonitor != null) {
                 dnsSrvRecordMonitor.close();
             }
-            ClusterableServer localServer;
-            lock.lock();
-            try {
+            ClusterableServer localServer = Locks.withLock(lock, () -> {
                 condition.signalAll();
-                localServer = server;
-            } finally {
-                lock.unlock();
-            }
+                return server;
+            });
             if (localServer != null) {
                 localServer.close();
             }
@@ -299,7 +295,13 @@ final class LoadBalancedCluster implements Cluster {
         if (srvRecordResolvedToMultipleHosts) {
             serverSelectionRequest.onError(createResolvedToMultipleHostsException());
         } else {
-            serverSelectionRequest.onSuccess(new ServerTuple(assertNotNull(server), description.getServerDescriptions().get(0)));
+            ClusterDescription curDescription = description;
+            logServerSelectionStarted(
+                    clusterId, serverSelectionRequest.operationContext, serverSelectionRequest.serverSelector, curDescription);
+            ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
+            logServerSelectionSucceeded(clusterId, serverSelectionRequest.operationContext,
+                    serverTuple.getServerDescription().getAddress(), serverSelectionRequest.serverSelector, curDescription);
+            serverSelectionRequest.onSuccess(serverTuple);
         }
     }
 
@@ -328,8 +330,7 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
-        lock.lock();
-        try {
+        Locks.withLock(lock, () ->  {
             if (isClosed()) {
                 request.onError(createShutdownException());
                 return;
@@ -348,9 +349,7 @@ final class LoadBalancedCluster implements Cluster {
             } else {
                 condition.signalAll();
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     private final class WaitQueueHandler implements Runnable {
@@ -395,24 +394,28 @@ final class LoadBalancedCluster implements Cluster {
             // waitQueue is guaranteed to be empty (as DnsSrvRecordInitializer.initialize clears it and no thread adds new elements to
             // it after that). So shutdownList is not empty iff LoadBalancedCluster is closed, in which case we need to complete the
             // requests in it.
-            List<ServerSelectionRequest> shutdownList;
-            lock.lock();
-            try {
-                shutdownList = new ArrayList<>(waitQueue);
+            List<ServerSelectionRequest> shutdownList = Locks.withLock(lock, () -> {
+                ArrayList<ServerSelectionRequest> result = new ArrayList<>(waitQueue);
                 waitQueue.clear();
-            } finally {
-                lock.unlock();
-            }
+                return result;
+            });
             shutdownList.forEach(request -> request.onError(createShutdownException()));
         }
     }
 
     private static final class ServerSelectionRequest {
+        private final OperationContext operationContext;
+        private final ServerSelector serverSelector;
         private final long maxWaitTimeNanos;
         private final long startTimeNanos = System.nanoTime();
         private final SingleResultCallback<ServerTuple> callback;
 
-        private ServerSelectionRequest(final long maxWaitTimeNanos, final SingleResultCallback<ServerTuple> callback) {
+        private ServerSelectionRequest(
+                final OperationContext operationContext,
+                final ServerSelector serverSelector,
+                final long maxWaitTimeNanos, final SingleResultCallback<ServerTuple> callback) {
+            this.operationContext = operationContext;
+            this.serverSelector = serverSelector;
             this.maxWaitTimeNanos = maxWaitTimeNanos;
             this.callback = callback;
         }

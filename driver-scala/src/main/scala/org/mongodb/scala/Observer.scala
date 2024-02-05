@@ -29,7 +29,7 @@ import org.reactivestreams.{ Subscriber, Subscription => JSubscription }
  *
  * After signaling demand:
  *
- * - One or more invocations of [[Observer.onNext]] up to the maximum number defined by [[Subscription.request]]
+ * - Zero or more invocations of [[Observer.onNext]] up to the maximum number defined by [[Subscription.request]]
  * - Single invocation of [[Observer.onError]] or [[Observer.onComplete]] which signals a terminal state after which no
  * further events will be sent.
  *

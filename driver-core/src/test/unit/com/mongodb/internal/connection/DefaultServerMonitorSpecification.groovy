@@ -84,7 +84,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
-                new ClusterClock(), internalConnectionFactory, ClusterConnectionMode.SINGLE, null, SameObjectProvider.initialized(sdam))
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, SameObjectProvider.initialized(sdam))
         monitor.start()
 
         when:
@@ -157,8 +157,6 @@ class DefaultServerMonitorSpecification extends Specification {
                         initialServerDescription
                     }
 
-                    supportsAdditionalTimeout() >> true
-
                     send(_, _, _) >> { }
 
                     receive(_, _) >> {
@@ -169,7 +167,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                new ClusterClock(), internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider())
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider())
 
         when:
         monitor.start()
@@ -238,8 +236,6 @@ class DefaultServerMonitorSpecification extends Specification {
                         initialServerDescription
                     }
 
-                    supportsAdditionalTimeout() >> true
-
                     send(_, _, _) >> { }
 
                     receive(_, _) >> {
@@ -250,7 +246,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                new ClusterClock(), internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider())
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider())
 
         when:
         monitor.start()

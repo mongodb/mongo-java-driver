@@ -29,15 +29,17 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.connection.FaasEnvironment.getFaasEnvironment;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
+import static java.nio.file.Paths.get;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -98,17 +100,26 @@ public final class ClientMetadataHelper {
             putAtPath(d, "driver.name", listToString(fullDriverInfo.getDriverNames()));
             putAtPath(d, "driver.version", listToString(fullDriverInfo.getDriverVersions()));
         });
+
         // optional fields:
-        Environment environment = getEnvironment();
+        FaasEnvironment faasEnvironment =  getFaasEnvironment();
+        ContainerRuntime containerRuntime = ContainerRuntime.determineExecutionContainer();
+        Orchestrator orchestrator = Orchestrator.determineExecutionOrchestrator();
+
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(baseDriverInfor.getDriverPlatforms())));
         tryWithLimit(client, d -> putAtPath(d, "platform", listToString(fullDriverInfo.getDriverPlatforms())));
-        tryWithLimit(client, d -> putAtPath(d, "env.name", environment.getName()));
         tryWithLimit(client, d -> putAtPath(d, "os.name", getOperatingSystemName()));
         tryWithLimit(client, d -> putAtPath(d, "os.architecture", getProperty("os.arch", "unknown")));
         tryWithLimit(client, d -> putAtPath(d, "os.version", getProperty("os.version", "unknown")));
-        tryWithLimit(client, d -> putAtPath(d, "env.timeout_sec", environment.getTimeoutSec()));
-        tryWithLimit(client, d -> putAtPath(d, "env.memory_mb", environment.getMemoryMb()));
-        tryWithLimit(client, d -> putAtPath(d, "env.region", environment.getRegion()));
+
+        tryWithLimit(client, d -> putAtPath(d, "env.name", faasEnvironment.getName()));
+        tryWithLimit(client, d -> putAtPath(d, "env.timeout_sec", faasEnvironment.getTimeoutSec()));
+        tryWithLimit(client, d -> putAtPath(d, "env.memory_mb", faasEnvironment.getMemoryMb()));
+        tryWithLimit(client, d -> putAtPath(d, "env.region", faasEnvironment.getRegion()));
+
+        tryWithLimit(client, d -> putAtPath(d, "env.container.runtime", containerRuntime.getName()));
+        tryWithLimit(client, d -> putAtPath(d, "env.container.orchestrator", orchestrator.getName()));
+
         return client;
     }
 
@@ -169,17 +180,24 @@ public final class ClientMetadataHelper {
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
     }
 
-    private enum Environment {
-        AWS_LAMBDA("aws.lambda"),
-        AZURE_FUNC("azure.func"),
-        GCP_FUNC("gcp.func"),
-        VERCEL("vercel"),
+    public enum ContainerRuntime {
+        DOCKER("docker") {
+            @Override
+            boolean isCurrentRuntimeContainer() {
+                try {
+                    return Files.exists(get(File.separator + ".dockerenv"));
+                } catch (Exception e) {
+                    return false;
+                    // NOOP. This could be a SecurityException.
+                }
+            }
+        },
         UNKNOWN(null);
 
         @Nullable
         private final String name;
 
-        Environment(@Nullable final String name) {
+        ContainerRuntime(@Nullable final String name) {
             this.name = name;
         }
 
@@ -188,78 +206,53 @@ public final class ClientMetadataHelper {
             return name;
         }
 
-        @Nullable
-        public Integer getTimeoutSec() {
-            switch (this) {
-                case GCP_FUNC:
-                    return getEnvInteger("FUNCTION_TIMEOUT_SEC");
-                default:
-                    return null;
-            }
+        boolean isCurrentRuntimeContainer() {
+            return false;
         }
 
-        @Nullable
-        public Integer getMemoryMb() {
-            switch (this) {
-                case AWS_LAMBDA:
-                    return getEnvInteger("AWS_LAMBDA_FUNCTION_MEMORY_SIZE");
-                case GCP_FUNC:
-                    return getEnvInteger("FUNCTION_MEMORY_MB");
-                default:
-                    return null;
+        static ContainerRuntime determineExecutionContainer() {
+            for (ContainerRuntime allegedContainer : ContainerRuntime.values()) {
+                if (allegedContainer.isCurrentRuntimeContainer()) {
+                    return allegedContainer;
+                }
             }
-        }
-
-        @Nullable
-        public String getRegion() {
-            switch (this) {
-                case AWS_LAMBDA:
-                    return System.getenv("AWS_REGION");
-                case GCP_FUNC:
-                    return System.getenv("FUNCTION_REGION");
-                case VERCEL:
-                    return System.getenv("VERCEL_REGION");
-                default:
-                    return null;
-            }
+            return UNKNOWN;
         }
     }
 
-    @Nullable
-    private static Integer getEnvInteger(final String name) {
-        try {
-            String value = System.getenv(name);
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
+    private enum Orchestrator {
+        K8S("kubernetes") {
+            @Override
+            boolean isCurrentOrchestrator() {
+                return System.getenv("KUBERNETES_SERVICE_HOST") != null;
+            }
+        },
+        UNKNOWN(null);
 
-    static Environment getEnvironment() {
-        List<Environment> result = new ArrayList<>();
-        String awsExecutionEnv = System.getenv("AWS_EXECUTION_ENV");
+        @Nullable
+        private final String name;
 
-        if (System.getenv("VERCEL") != null) {
-            result.add(Environment.VERCEL);
+        Orchestrator(@Nullable final String name) {
+            this.name = name;
         }
-        if ((awsExecutionEnv != null && awsExecutionEnv.startsWith("AWS_Lambda_"))
-                || System.getenv("AWS_LAMBDA_RUNTIME_API") != null) {
-            result.add(Environment.AWS_LAMBDA);
+
+        @Nullable
+        public String getName() {
+            return name;
         }
-        if (System.getenv("FUNCTIONS_WORKER_RUNTIME") != null) {
-            result.add(Environment.AZURE_FUNC);
+
+        boolean isCurrentOrchestrator() {
+            return false;
         }
-        if (System.getenv("K_SERVICE") != null || System.getenv("FUNCTION_NAME") != null) {
-            result.add(Environment.GCP_FUNC);
+
+        static Orchestrator determineExecutionOrchestrator() {
+            for (Orchestrator alledgedOrchestrator : Orchestrator.values()) {
+                if (alledgedOrchestrator.isCurrentOrchestrator()) {
+                    return alledgedOrchestrator;
+                }
+            }
+            return UNKNOWN;
         }
-        // vercel takes precedence over aws.lambda
-        if (result.equals(Arrays.asList(Environment.VERCEL, Environment.AWS_LAMBDA))) {
-            return Environment.VERCEL;
-        }
-        if (result.size() != 1) {
-            return Environment.UNKNOWN;
-        }
-        return result.get(0);
     }
 
     static MongoDriverInformation getDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {

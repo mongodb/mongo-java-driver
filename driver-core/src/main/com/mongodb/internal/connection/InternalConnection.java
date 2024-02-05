@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.RequestContext;
-import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -31,7 +30,6 @@ import java.util.List;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@SuppressWarnings("deprecation")
 public interface InternalConnection extends BufferProvider {
 
     int NOT_INITIALIZED_GENERATION = -1;
@@ -104,10 +102,6 @@ public interface InternalConnection extends BufferProvider {
 
     <T> T receive(Decoder<T> decoder, SessionContext sessionContext);
 
-
-    default boolean supportsAdditionalTimeout() {
-        return false;
-    }
 
     default <T> T receive(Decoder<T> decoder, SessionContext sessionContext, int additionalTimeout) {
         throw new UnsupportedOperationException();

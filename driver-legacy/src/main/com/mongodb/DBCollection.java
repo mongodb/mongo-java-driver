@@ -85,6 +85,7 @@ import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -1802,13 +1803,7 @@ public class DBCollection {
      * @return the factory
      */
     public DBDecoderFactory getDBDecoderFactory() {
-        factoryAndCodecLock.lock();
-        try {
-            return decoderFactory;
-        } finally {
-            factoryAndCodecLock.unlock();
-        }
-
+        return withLock(factoryAndCodecLock, () -> decoderFactory);
     }
 
     /**
@@ -1817,8 +1812,7 @@ public class DBCollection {
      * @param factory the factory to set.
      */
     public void setDBDecoderFactory(@Nullable final DBDecoderFactory factory) {
-        factoryAndCodecLock.lock();
-        try {
+        withLock(factoryAndCodecLock, () -> {
             this.decoderFactory = factory;
 
             //Are we are using default factory?
@@ -1827,9 +1821,7 @@ public class DBCollection {
                     ? getDefaultDBObjectCodec()
                     : new DBDecoderAdapter(factory.create(), this, PowerOfTwoBufferPool.DEFAULT);
             this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
-        } finally {
-            factoryAndCodecLock.unlock();
-        }
+        });
     }
 
     /**
@@ -1838,12 +1830,7 @@ public class DBCollection {
      * @return the factory
      */
     public DBEncoderFactory getDBEncoderFactory() {
-        factoryAndCodecLock.lock();
-        try {
-            return this.encoderFactory;
-        } finally {
-            factoryAndCodecLock.unlock();
-        }
+        return withLock(factoryAndCodecLock, () -> encoderFactory);
     }
 
     /**
@@ -1852,8 +1839,7 @@ public class DBCollection {
      * @param factory the factory to set.
      */
     public void setDBEncoderFactory(@Nullable final DBEncoderFactory factory) {
-        factoryAndCodecLock.lock();
-        try {
+        withLock(factoryAndCodecLock, () -> {
             this.encoderFactory = factory;
 
             //Are we are using default factory?
@@ -1862,9 +1848,7 @@ public class DBCollection {
                     ? getDefaultDBObjectCodec()
                     : new DBEncoderFactoryAdapter(encoderFactory);
             this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
-        } finally {
-            factoryAndCodecLock.unlock();
-        }
+        });
     }
 
     /**
@@ -1934,38 +1918,6 @@ public class DBCollection {
     }
 
     /**
-     * The collStats command returns a variety of storage statistics for a given collection
-     *
-     * @return a CommandResult containing the statistics about this collection
-     * @mongodb.driver.manual reference/command/collStats/ collStats Command
-     * @mongodb.driver.manual reference/operator/aggregation/collStats/ $collStats
-     * @deprecated If you are using server release 3.4 or newer, use the {@code $collStats} aggregation pipeline stage via
-     * {@link #aggregate(List, AggregationOptions)} instead.
-     * This method uses the {@code collStats} command, which is deprecated since server release 6.2.
-     */
-    @Deprecated
-    public CommandResult getStats() {
-        return getDB().executeCommand(new BsonDocument("collStats", new BsonString(getName())), getReadPreference());
-    }
-
-    /**
-     * Checks whether this collection is capped
-     *
-     * @return true if this is a capped collection
-     * @mongodb.driver.manual core/capped-collections/#check-if-a-collection-is-capped Capped Collections
-     * @mongodb.driver.manual reference/operator/aggregation/collStats/ $collStats
-     * @deprecated If you are using server release 3.4 or newer, use the {@code $collStats} aggregation pipeline stage via
-     * {@link #aggregate(List, AggregationOptions)} instead, and inspect the {@code storageStats.capped} field.
-     * This method uses the {@code collStats} command, which is deprecated since server release 6.2.
-     */
-    @Deprecated
-    public boolean isCapped() {
-        CommandResult commandResult = getStats();
-        Object cappedField = commandResult.get("capped");
-        return cappedField != null && (cappedField.equals(1) || cappedField.equals(true));
-    }
-
-    /**
      * Gets the default class for objects in the collection
      *
      * @return the class
@@ -1999,22 +1951,14 @@ public class DBCollection {
     }
 
     DBObjectFactory getObjectFactory() {
-        factoryAndCodecLock.lock();
-        try {
-            return this.objectFactory;
-        } finally {
-            factoryAndCodecLock.unlock();
-        }
+        return withLock(factoryAndCodecLock, () -> objectFactory);
     }
 
     void setObjectFactory(final DBCollectionObjectFactory factory) {
-        factoryAndCodecLock.lock();
-        try {
+        withLock(factoryAndCodecLock, () -> {
             this.objectFactory = factory;
             this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), getDefaultDBObjectCodec());
-        } finally {
-            factoryAndCodecLock.unlock();
-        }
+        });
     }
 
     /**
@@ -2162,9 +2106,6 @@ public class DBCollection {
         }
         if (options.containsField("max")) {
             request.max(convertOptionsToType(options, "max", Double.class));
-        }
-        if (options.containsField("bucketSize")) {
-            request.bucketSize(convertOptionsToType(options, "bucketSize", Double.class));
         }
         if (options.containsField("dropDups")) {
             request.dropDups(convertOptionsToType(options, "dropDups", Boolean.class));
