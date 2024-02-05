@@ -19,6 +19,7 @@ package org.bson.codecs.pojo.entities;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import static java.util.Collections.singletonList;
 
@@ -31,6 +32,9 @@ public final class CollectionNestedPojoModel {
 
     private Set<SimpleModel> setSimple;
     private Set<Set<SimpleModel>> setSetSimple;
+
+    private SortedSet<SimpleModel> sortedSetSimple;
+    private Set<SortedSet<SimpleModel>> setSortedSetSimple;
 
     private Map<String, SimpleModel> mapSimple;
     private Map<String, Map<String, SimpleModel>> mapMapSimple;
@@ -47,7 +51,8 @@ public final class CollectionNestedPojoModel {
     }
 
     public CollectionNestedPojoModel(final List<SimpleModel> listSimple, final List<List<SimpleModel>> listListSimple, final
-    Set<SimpleModel> setSimple, final Set<Set<SimpleModel>> setSetSimple, final Map<String, SimpleModel> mapSimple, final Map<String,
+    Set<SimpleModel> setSimple, final Set<Set<SimpleModel>> setSetSimple, final SortedSet<SimpleModel> sortedSetSimple,
+            final Set<SortedSet<SimpleModel>> setSortedSetSimple, final Map<String, SimpleModel> mapSimple, final Map<String,
             Map<String, SimpleModel>> mapMapSimple, final Map<String, List<SimpleModel>> mapListSimple, final Map<String,
             List<Map<String, SimpleModel>>> mapListMapSimple, final Map<String, Set<SimpleModel>> mapSetSimple, final List<Map<String,
             SimpleModel>> listMapSimple, final List<Map<String, List<SimpleModel>>> listMapListSimple, final List<Map<String,
@@ -56,6 +61,8 @@ public final class CollectionNestedPojoModel {
         this.listListSimple = listListSimple;
         this.setSimple = setSimple;
         this.setSetSimple = setSetSimple;
+        this.sortedSetSimple = sortedSetSimple;
+        this.setSortedSetSimple = setSortedSetSimple;
         this.mapSimple = mapSimple;
         this.mapMapSimple = mapMapSimple;
         this.mapListSimple = mapListSimple;
@@ -98,12 +105,28 @@ public final class CollectionNestedPojoModel {
         this.setSimple = setSimple;
     }
 
+    public SortedSet<SimpleModel> getSortedSetSimple() {
+        return sortedSetSimple;
+    }
+
+    public void setSortedSetSimple(final SortedSet<SimpleModel> sortedSetSimple) {
+        this.sortedSetSimple = sortedSetSimple;
+    }
+
     public Set<Set<SimpleModel>> getSetSetSimple() {
         return setSetSimple;
     }
 
     public void setSetSetSimple(final Set<Set<SimpleModel>> setSetSimple) {
         this.setSetSimple = setSetSimple;
+    }
+
+    public Set<SortedSet<SimpleModel>> getSetSortedSetSimple() {
+        return setSortedSetSimple;
+    }
+
+    public void setSetSortedSetSimple(final Set<SortedSet<SimpleModel>> setSetSimple) {
+        this.setSortedSetSimple = setSortedSetSimple;
     }
 
     public Map<String, SimpleModel> getMapSimple() {
@@ -193,6 +216,13 @@ public final class CollectionNestedPojoModel {
         if (getSetSetSimple() != null ? !getSetSetSimple().equals(that.getSetSetSimple()) : that.getSetSetSimple() != null) {
             return false;
         }
+        if (getSortedSetSimple() != null ? !getSortedSetSimple().equals(that.getSortedSetSimple()) : that.getSortedSetSimple() != null) {
+            return false;
+        }
+        if (getSetSortedSetSimple() != null ? !getSetSortedSetSimple().equals(that.getSetSortedSetSimple()) :
+                that.getSetSortedSetSimple() != null) {
+            return false;
+        }
         if (getMapSimple() != null ? !getMapSimple().equals(that.getMapSimple()) : that.getMapSimple() != null) {
             return false;
         }
@@ -230,6 +260,8 @@ public final class CollectionNestedPojoModel {
         result = 31 * result + (getListListSimple() != null ? getListListSimple().hashCode() : 0);
         result = 31 * result + (getSetSimple() != null ? getSetSimple().hashCode() : 0);
         result = 31 * result + (getSetSetSimple() != null ? getSetSetSimple().hashCode() : 0);
+        result = 31 * result + (getSortedSetSimple() != null ? getSortedSetSimple().hashCode() : 0);
+        result = 31 * result + (getSetSortedSetSimple() != null ? getSetSortedSetSimple().hashCode() : 0);
         result = 31 * result + (getMapSimple() != null ? getMapSimple().hashCode() : 0);
         result = 31 * result + (getMapMapSimple() != null ? getMapMapSimple().hashCode() : 0);
         result = 31 * result + (getMapListSimple() != null ? getMapListSimple().hashCode() : 0);
@@ -248,6 +280,8 @@ public final class CollectionNestedPojoModel {
                 + ", listListSimple=" + listListSimple
                 + ", setSimple=" + setSimple
                 + ", setSetSimple=" + setSetSimple
+                + ", setSortedSimple=" + sortedSetSimple
+                + ", setSortedSetSimple=" + setSortedSetSimple
                 + ", mapSimple=" + mapSimple
                 + ", mapMapSimple=" + mapMapSimple
                 + ", mapListSimple=" + mapListSimple

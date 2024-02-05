@@ -16,7 +16,7 @@
 
 package org.bson.codecs.pojo.entities;
 
-public final class SimpleModel {
+public final class SimpleModel implements Comparable<SimpleModel> {
     private Integer integerField;
     private String stringField;
 
@@ -78,5 +78,11 @@ public final class SimpleModel {
                 + "integerField=" + integerField
                 + ", stringField='" + stringField + "'"
                 + "}";
+    }
+
+    @Override
+    public int compareTo(SimpleModel o) {
+        int integerFieldCompareResult = this.integerField.compareTo(o.integerField);
+        return integerFieldCompareResult == 0 ? this.stringField.compareTo(o.stringField) : integerFieldCompareResult;
     }
 }
