@@ -1608,7 +1608,7 @@ tasks:
               PROVIDER: gcp
             script: |
               ${PREPARE_SHELL}
-              ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
+              "./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
 
     - name: testazurekms-task
       commands:
@@ -1637,14 +1637,14 @@ tasks:
             env:
               AZUREKMS_RESOURCEGROUP: ${testazurekms_resourcegroup}
               AZUREKMS_VMNAME: ${AZUREKMS_VMNAME}
-              AZUREKMS_PRIVATEKEYPATH: /tmp/testazurekms_privatekey
+              AZUREKMS_PRIVATEKEYPATH: "/tmp/testazurekms_privatekey"
               AZUREKMS_CMD: "MONGODB_URI=mongodb://localhost:27017"
               AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
               AZUREKMS_KEY_NAME: ${testazurekms_keyname}
               PROVIDER: azure
             script: |
               ${PREPARE_SHELL}
-              ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+              "./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
     - name: test-socks5
       tags: []
       commands:
