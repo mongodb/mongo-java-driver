@@ -30,6 +30,7 @@ import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -61,7 +62,7 @@ class KeyManagementService implements Closeable {
         tlsChannelStreamFactoryFactory.close();
     }
 
-    Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor) {
+    Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout) {
         SocketSettings socketSettings = SocketSettings.builder()
                 .connectTimeout(timeoutMillis, MILLISECONDS)
                 .readTimeout(timeoutMillis, MILLISECONDS)

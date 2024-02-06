@@ -26,6 +26,7 @@ import org.bson.Document;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ClientSideEncryption Simple tour
@@ -56,10 +57,12 @@ public class ClientSideEncryptionSimpleTour {
 
         AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
                 .keyVaultNamespace(keyVaultNamespace)
+                .keyVaultMongoClientSettings(MongoClientSettings.builder().build())
                 .kmsProviders(kmsProviders)
                 .build();
 
         MongoClientSettings clientSettings = MongoClientSettings.builder()
+                .timeout(10, TimeUnit.MINUTES)
                 .autoEncryptionSettings(autoEncryptionSettings)
                 .build();
 

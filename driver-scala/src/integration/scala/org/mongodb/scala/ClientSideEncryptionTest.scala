@@ -39,7 +39,8 @@ class ClientSideEncryptionTest(
     mongoClient.getDatabase(databaseName)
 
   @After
-  def cleanUp(): Unit = {
+  override def cleanUp(): Unit = {
+    super.cleanUp()
     if (mongoClient != null) mongoClient.close()
   }
 }

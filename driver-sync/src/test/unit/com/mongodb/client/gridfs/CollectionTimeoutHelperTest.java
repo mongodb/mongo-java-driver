@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.gridfs.CollectionTimeoutHelper.collectionWithTimeout;
+import static com.mongodb.client.internal.TimeoutHelper.collectionWithTimeout;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

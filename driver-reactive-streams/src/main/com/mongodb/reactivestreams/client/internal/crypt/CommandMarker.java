@@ -19,12 +19,15 @@ package com.mongodb.reactivestreams.client.internal.crypt;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.crypt.capi.MongoCrypt;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.bson.RawBsonDocument;
 import reactor.core.publisher.Mono;
 
@@ -36,6 +39,7 @@ import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdClient
 import static com.mongodb.internal.capi.MongoCryptHelper.createProcessBuilder;
 import static com.mongodb.internal.capi.MongoCryptHelper.isMongocryptdSpawningDisabled;
 import static com.mongodb.internal.capi.MongoCryptHelper.startProcess;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.databaseWithTimeoutDeferred;
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
@@ -80,14 +84,14 @@ class CommandMarker implements Closeable {
         }
     }
 
-    Mono<RawBsonDocument> mark(final String databaseName, final RawBsonDocument command) {
+    Mono<RawBsonDocument> mark(final String databaseName, final RawBsonDocument command, @Nullable final Timeout operationTimeout) {
         if (client != null) {
-            return runCommand(databaseName, command)
+            return runCommand(databaseName, command, operationTimeout)
                     .onErrorResume(Throwable.class, e -> {
-                        if (processBuilder == null) {
+                        if (processBuilder == null || e instanceof MongoOperationTimeoutException) {
                             throw MongoException.fromThrowable(e);
                         }
-                        return Mono.fromRunnable(() -> startProcess(processBuilder)).then(runCommand(databaseName, command));
+                        return Mono.fromRunnable(() -> startProcess(processBuilder)).then(runCommand(databaseName, command, operationTimeout));
                     })
                     .onErrorMap(t -> new MongoClientException("Exception in encryption library: " + t.getMessage(), t));
         } else {
@@ -95,12 +99,14 @@ class CommandMarker implements Closeable {
         }
     }
 
-    private Mono<RawBsonDocument> runCommand(final String databaseName, final RawBsonDocument command) {
+    private Mono<RawBsonDocument> runCommand(final String databaseName, final RawBsonDocument command, @Nullable final Timeout operationTimeout) {
         assertNotNull(client);
-        return Mono.from(client.getDatabase(databaseName)
-                                 .withReadConcern(ReadConcern.DEFAULT)
-                                 .withReadPreference(ReadPreference.primary())
-                                 .runCommand(command, RawBsonDocument.class));
+        MongoDatabase mongoDatabase = client.getDatabase(databaseName)
+                .withReadConcern(ReadConcern.DEFAULT)
+                .withReadPreference(ReadPreference.primary());
+
+       return databaseWithTimeoutDeferred(mongoDatabase, operationTimeout)
+               .flatMap(database -> Mono.from(database.runCommand(command, RawBsonDocument.class)));
     }
 
     @Override

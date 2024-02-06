@@ -16,13 +16,18 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import org.bson.BsonDocument;
 import reactor.core.publisher.Mono;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.databaseWithTimeoutDeferred;
 
 class CollectionInfoRetriever {
+
+    //TODO prolly a detailed message of timeout location.
 
     private final MongoClient client;
 
@@ -30,7 +35,8 @@ class CollectionInfoRetriever {
         this.client = notNull("client", client);
     }
 
-    public Mono<BsonDocument> filter(final String databaseName, final BsonDocument filter) {
-        return Mono.from(client.getDatabase(databaseName).listCollections(BsonDocument.class).filter(filter).first());
+    public Mono<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
+        return databaseWithTimeoutDeferred(client.getDatabase(databaseName), operationTimeout)
+                .flatMap(database -> Mono.from(database.listCollections(BsonDocument.class).filter(filter).first()));
     }
 }

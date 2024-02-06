@@ -14,31 +14,53 @@
  * limitations under the License.
  */
 
-package com.mongodb.reactivestreams.client.internal.gridfs;
+package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoCollection;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import reactor.core.publisher.Mono;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class CollectionTimeoutHelper {
-    private CollectionTimeoutHelper() {
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public final class TimeoutHelper {
+    private TimeoutHelper() {
         //NOP
     }
 
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                @Nullable final Timeout timeout) {
-        if (timeout != null && !timeout.isInfinite()) {
-            long remainingMs = timeout.remaining(MILLISECONDS);
-            if (remainingMs <= 0) {
-                throw new MongoOperationTimeoutException("GridFS timed out");
-            }
+        if (shouldOverrideTimeout(timeout)) {
+            long remainingMs = getRemainingMs(timeout);
             return collection.withTimeout(remainingMs, MILLISECONDS);
         }
         return collection;
+    }
+
+    public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
+                                                    @Nullable final Timeout timeout) {
+        if (shouldOverrideTimeout(timeout)) {
+            long remainingMs = getRemainingMs(timeout);
+            return database.withTimeout(remainingMs, MILLISECONDS);
+        }
+        return database;
+    }
+
+    private static long getRemainingMs(final Timeout timeout) {
+        long remainingMs = timeout.remaining(MILLISECONDS);
+        if (remainingMs <= 0) {
+            throw new MongoOperationTimeoutException("GridFS timed out");
+        }
+        return remainingMs;
+    }
+
+    private static boolean shouldOverrideTimeout(@Nullable final Timeout timeout) {
+        return timeout != null && !timeout.isInfinite();
     }
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
@@ -53,5 +75,18 @@ final class CollectionTimeoutHelper {
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutDeferred(final MongoCollection<T> collection,
                                                                              @Nullable final Timeout timeout) {
         return Mono.defer(() -> collectionWithTimeoutMono(collection, timeout));
+    }
+
+    public static Mono<MongoDatabase> databaseWithTimeoutDeferred(final MongoDatabase database,
+                                                                  @Nullable final Timeout timeout) {
+        return Mono.defer(() -> databaseWithTimeoutMono(database, timeout));
+    }
+
+    private static Mono<MongoDatabase> databaseWithTimeoutMono(final MongoDatabase database, final Timeout timeout) {
+        try {
+            return Mono.just(databaseWithTimeout(database, timeout));
+        } catch (MongoOperationTimeoutException e) {
+            return Mono.error(e);
+        }
     }
 }

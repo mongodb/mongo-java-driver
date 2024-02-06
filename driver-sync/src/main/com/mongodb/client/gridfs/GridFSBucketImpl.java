@@ -31,6 +31,7 @@ import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import com.mongodb.client.internal.TimeoutHelper;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -654,7 +655,7 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
                                                               @Nullable final Timeout timeout) {
-        return CollectionTimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
+        return TimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
     }
 
     @Nullable

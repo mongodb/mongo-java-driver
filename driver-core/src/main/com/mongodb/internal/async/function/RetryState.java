@@ -189,6 +189,11 @@ public final class RetryState {
             assertTrue(isRuntime(attemptException));
         }
         assertTrue(!isFirstAttempt() || previouslyChosenException == null);
+
+        if (attemptException instanceof MongoOperationTimeoutException){
+           throw attemptException;
+        }
+
         Throwable newlyChosenException = transformException(previouslyChosenException, attemptException, onlyRuntimeExceptions, exceptionTransformer);
 
         if (isLastAttempt()) {

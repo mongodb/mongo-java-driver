@@ -207,7 +207,7 @@ final class MongoClientDelegate {
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
                     getReadPreferenceForBinding(readPreference, session), readConcern, getOperationContext(timeoutSettings, readConcern));
 
-            if (crypt != null) {
+            if (crypt != null) { //crypt is set if AutoEncryptionSettings is set.
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
             }
 

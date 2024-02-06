@@ -268,4 +268,9 @@ public class TimeoutContext {
     public int getConnectTimeoutMs() {
         return (int) getTimeoutSettings().getConnectTimeoutMS();
     }
+
+    @Nullable
+    public Timeout getTimeout() {
+        return timeout;
+    }
 }

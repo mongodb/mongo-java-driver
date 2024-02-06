@@ -46,8 +46,8 @@ import java.util.function.Function;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.collectionWithTimeout;
-import static com.mongodb.reactivestreams.client.internal.gridfs.CollectionTimeoutHelper.collectionWithTimeoutDeferred;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeoutDeferred;
 import static java.time.Duration.ofMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 

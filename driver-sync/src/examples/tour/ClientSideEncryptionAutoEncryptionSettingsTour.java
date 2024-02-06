@@ -34,6 +34,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ClientSideEncryption AutoEncryptionSettings tour
@@ -62,7 +63,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
         String keyVaultNamespace = "encryption.__keyVault";
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://localhost"))
+//                        .applyConnectionString(new ConnectionString("mongodb://localhost"))
                         .build())
                 .keyVaultNamespace(keyVaultNamespace)
                 .kmsProviders(kmsProviders)
@@ -76,6 +77,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
         final String collName = "coll";
         AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
                 .keyVaultNamespace(keyVaultNamespace)
+                .keyVaultMongoClientSettings(MongoClientSettings.builder().build())
                 .kmsProviders(kmsProviders)
                 .schemaMap(new HashMap<String, BsonDocument>() {{
                     put(dbName + "." + collName,
@@ -97,10 +99,12 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
                                     + "  },"
                                     + "  \"bsonType\": \"object\""
                                     + "}"));
-                }}).build();
+                }})
+                .build();
 
         MongoClientSettings clientSettings = MongoClientSettings.builder()
                 .autoEncryptionSettings(autoEncryptionSettings)
+                .timeout(500, TimeUnit.MINUTES)
                 .build();
 
         MongoClient mongoClient = MongoClients.create(clientSettings);
