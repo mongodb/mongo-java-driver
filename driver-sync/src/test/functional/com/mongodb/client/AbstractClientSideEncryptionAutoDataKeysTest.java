@@ -46,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -204,8 +205,8 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
         ),
         AWS("aws",
                 kmsProviderProperties -> {
-                    kmsProviderProperties.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                    kmsProviderProperties.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                    kmsProviderProperties.put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
+                    kmsProviderProperties.put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
                 },
                 createEncryptedCollectionParams -> createEncryptedCollectionParams.masterKey(BsonDocument.parse(
                         "{"
@@ -219,7 +220,7 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
         private final Supplier<CreateEncryptedCollectionParams> createEncryptedCollectionParamsSupplier;
 
         private static Set<KmsProvider> detect() {
-            String awsAccessKeyId = System.getProperty("org.mongodb.test.awsAccessKeyId");
+            String awsAccessKeyId = getEnv("org.mongodb.test.awsAccessKeyId");
             return awsAccessKeyId != null && !awsAccessKeyId.isEmpty()
                     ? EnumSet.allOf(KmsProvider.class)
                     : EnumSet.of(KmsProvider.LOCAL);

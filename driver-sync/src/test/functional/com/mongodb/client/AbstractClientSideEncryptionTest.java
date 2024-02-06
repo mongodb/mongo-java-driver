@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
@@ -221,29 +222,29 @@ public abstract class AbstractClientSideEncryptionTest {
             kmsProvidersMap.put(kmsProviderKey.startsWith("aws") ? "aws" : kmsProviderKey, kmsProviderMap);
             switch (kmsProviderKey) {
                 case "aws":
-                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                    kmsProviderMap.put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
                     break;
                 case "awsTemporary":
-                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
-                    kmsProviderMap.put("sessionToken", System.getProperty("org.mongodb.test.tmpAwsSessionToken"));
+                    kmsProviderMap.put("accessKeyId", getEnv("org.mongodb.test.tmpAwsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("org.mongodb.test.tmpAwsSecretAccessKey"));
+                    kmsProviderMap.put("sessionToken", getEnv("org.mongodb.test.tmpAwsSessionToken"));
                     break;
                 case "awsTemporaryNoSessionToken":
-                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                    kmsProviderMap.put("accessKeyId", getEnv("org.mongodb.test.tmpAwsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("org.mongodb.test.tmpAwsSecretAccessKey"));
                     break;
                 case "azure":
-                    kmsProviderMap.put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
-                    kmsProviderMap.put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
-                    kmsProviderMap.put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                    kmsProviderMap.put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
+                    kmsProviderMap.put("clientId", getEnv("org.mongodb.test.azureClientId"));
+                    kmsProviderMap.put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
                     break;
                 case "gcp":
-                    kmsProviderMap.put("email", System.getProperty("org.mongodb.test.gcpEmail"));
-                    kmsProviderMap.put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                    kmsProviderMap.put("email", getEnv("org.mongodb.test.gcpEmail"));
+                    kmsProviderMap.put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
                     break;
                 case "kmip":
-                    kmsProviderMap.put("endpoint", System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
+                    kmsProviderMap.put("endpoint", getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
                     kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
@@ -384,7 +385,7 @@ public abstract class AbstractClientSideEncryptionTest {
     }
 
     static Optional<String> cryptSharedLibPathSysPropValue() {
-        String value = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
+        String value = getEnv("org.mongodb.test.crypt.shared.lib.path", "");
         return value.isEmpty() ? Optional.empty() : Optional.of(value);
     }
 }

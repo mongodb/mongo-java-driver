@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
@@ -82,18 +83,18 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws",  new HashMap<String, Object>() {{
-                put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
+                put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
             }});
             put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
-                put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
-                put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
+                put("clientId", getEnv("org.mongodb.test.azureClientId"));
+                put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
                 put("identityPlatformEndpoint", "login.microsoftonline.com:443");
             }});
             put("gcp",  new HashMap<String, Object>() {{
-                put("email", System.getProperty("org.mongodb.test.gcpEmail"));
-                put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                put("email", getEnv("org.mongodb.test.gcpEmail"));
+                put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
                 put("endpoint", "oauth2.googleapis.com:443");
             }});
             put("kmip", new HashMap<String, Object>() {{
@@ -108,14 +109,14 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
 
         Map<String, Map<String, Object>> invalidKmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
-                put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
-                put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
+                put("clientId", getEnv("org.mongodb.test.azureClientId"));
+                put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
                 put("identityPlatformEndpoint", "doesnotexist.invalid:443");
             }});
             put("gcp",  new HashMap<String, Object>() {{
-                put("email", System.getProperty("org.mongodb.test.gcpEmail"));
-                put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                put("email", getEnv("org.mongodb.test.gcpEmail"));
+                put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
                 put("endpoint", "doesnotexist.invalid:443");
             }});
             put("kmip",  new HashMap<String, Object>() {{

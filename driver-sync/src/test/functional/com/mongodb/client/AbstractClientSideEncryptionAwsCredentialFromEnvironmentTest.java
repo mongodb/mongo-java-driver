@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -108,8 +109,8 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
 
         Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
             put("aws", () -> new HashMap<String, Object>() {{
-                put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
+                put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
             }});
         }};
 
@@ -199,8 +200,8 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws", new HashMap<String, Object>() {{
-                put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
+                put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
             }});
         }};
 

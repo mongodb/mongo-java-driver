@@ -201,7 +201,7 @@ public final class ClusterFixture {
         List<String> requiredSystemProperties = asList("awsAccessKeyId", "awsSecretAccessKey", "azureTenantId", "azureClientId",
                 "azureClientSecret", "gcpEmail", "gcpPrivateKey", "tmpAwsAccessKeyId", "tmpAwsSecretAccessKey", "tmpAwsSessionToken");
         return requiredSystemProperties.stream()
-                        .map(name -> System.getProperty("org.mongodb.test." + name, ""))
+                        .map(name -> getEnv("org.mongodb.test." + name, ""))
                         .filter(s -> !s.isEmpty())
                         .count() == requiredSystemProperties.size();
     }
@@ -226,6 +226,16 @@ public final class ClusterFixture {
                 cluster.close();
             }
         }
+    }
+
+    public static String getEnv(final String name, final String defaultValue) {
+        String value = getEnv(name);
+        return value == null ? defaultValue : value;
+    }
+
+    @Nullable
+    public static String getEnv(String name) {
+        return System.getenv(name);
     }
 
     public static boolean getOcspShouldSucceed() {
@@ -541,7 +551,7 @@ public final class ClusterFixture {
     }
 
     public static boolean isClientSideEncryptionTest() {
-        return !System.getProperty("org.mongodb.test.awsAccessKeyId", "").isEmpty();
+        return !getEnv("org.mongodb.test.awsAccessKeyId", "").isEmpty();
     }
 
     public static boolean isAtlasSearchTest() {

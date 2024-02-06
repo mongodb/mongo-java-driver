@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
@@ -109,20 +110,20 @@ public class ClientSideEncryptionCorpusTest {
         // Step 4: Configure our objects
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws",  new HashMap<String, Object>() {{
-                put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
+                put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
             }});
             put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
-                put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
-                put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
+                put("clientId", getEnv("org.mongodb.test.azureClientId"));
+                put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
             }});
             put("gcp",  new HashMap<String, Object>() {{
-                put("email", System.getProperty("org.mongodb.test.gcpEmail"));
-                put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                put("email", getEnv("org.mongodb.test.gcpEmail"));
+                put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
             }});
             put("kmip",  new HashMap<String, Object>() {{
-                put("endpoint", System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
+                put("endpoint", getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
             }});
             put("local", new HashMap<String, Object>() {{
                 put("key", "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"

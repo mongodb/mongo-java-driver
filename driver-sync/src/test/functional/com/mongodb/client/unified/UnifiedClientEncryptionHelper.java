@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static java.lang.Math.toIntExact;
 
 public final class UnifiedClientEncryptionHelper {
@@ -82,7 +83,7 @@ public final class UnifiedClientEncryptionHelper {
                     break;
                 case "kmip":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "endpoint", () ->
-                            System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
+                            getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "key", UnifiedClientEncryptionHelper::localKmsProviderKey);
@@ -104,8 +105,8 @@ public final class UnifiedClientEncryptionHelper {
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
             final BsonDocument kmsProviderOptions, final String key, final String propertyName) {
         setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, key, () -> {
-            if (System.getProperties().containsKey(propertyName)) {
-                return System.getProperty(propertyName);
+            if (getEnv(propertyName) != null) {
+                return getEnv(propertyName);
             }
             throw new UnsupportedOperationException("Missing system property for: " + key);
         });

@@ -131,7 +131,7 @@ fi
 
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
-"${RELATIVE_DIR_PATH}/append-security-sensitive-properties-to-gradle-config.sh"
+"${RELATIVE_DIR_PATH}/export-security-sensitive-properties.sh"
 
 echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
@@ -145,5 +145,6 @@ else
     ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
               ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+              -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
               --stacktrace --info --continue test
 fi

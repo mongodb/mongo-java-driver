@@ -50,7 +50,7 @@ provision_ssl
 
 echo "Running tests with Java ${JAVA_VERSION}"
 
-"${RELATIVE_DIR_PATH}/append-security-sensitive-properties-to-gradle-config.sh"
+"${RELATIVE_DIR_PATH}/export-security-sensitive-properties.sh"
 
 ./gradlew -version
 
@@ -58,6 +58,7 @@ echo "Running tests with Java ${JAVA_VERSION}"
 # we force the driver to start `mongocryptd` instead of loading and using `crypt_shared`.
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
       ${GRADLE_EXTRA_VARS} \
+      -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
       --stacktrace --info --continue \
       driver-legacy:test \
           --tests "*.Client*Encryption*" \
