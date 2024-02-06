@@ -810,14 +810,14 @@ functions:
           GCP_PRIVATE_KEY: ${gcp_private_key}
           AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
           AZUREKMS_KEY_NAME: ${testazurekms_keyname}
+          AWS_TEMP_ACCESS_KEY_ID: ${CSFLE_AWS_TEMP_ACCESS_KEY_ID}
+          AWS_TEMP_SECRET_ACCESS_KEY: ${CSFLE_AWS_TEMP_SECRET_ACCESS_KEY}
+          AWS_TEMP_SESSION_TOKEN: ${CSFLE_AWS_TEMP_SESSION_TOKEN}
         script: |
           ${PREPARE_SHELL}
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
           
           MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" \
-          AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
-          AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
-          AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN \
           .evergreen/run-csfle-tests-with-mongocryptd.sh
 
   "publish snapshot":
