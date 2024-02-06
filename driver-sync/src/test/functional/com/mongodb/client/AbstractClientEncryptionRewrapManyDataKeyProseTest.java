@@ -78,18 +78,18 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
 
     private static final Map<String, Map<String, Object>> KMS_PROVIDERS = new HashMap<String, Map<String, Object>>() {{
         put("aws",  new HashMap<String, Object>() {{
-            put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
-            put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
+            put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
+            put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
         }});
         put("azure",  new HashMap<String, Object>() {{
-            put("tenantId", getEnv("org_mongodb_test_azureTenantId"));
-            put("clientId", getEnv("org_mongodb_test_azureClientId"));
-            put("clientSecret", getEnv("org_mongodb_test_azureClientSecret"));
+            put("tenantId", getEnv("AZURE_TENANT_ID"));
+            put("clientId", getEnv("AZURE_CLIENT_ID"));
+            put("clientSecret", getEnv("AZURE_CLIENT_SECRET"));
             put("identityPlatformEndpoint", "login.microsoftonline.com:443");
         }});
         put("gcp",  new HashMap<String, Object>() {{
-            put("email", getEnv("org_mongodb_test_gcpEmail"));
-            put("privateKey", getEnv("org_mongodb_test_gcpPrivateKey"));
+            put("email", getEnv("GCP_EMAIL"));
+            put("privateKey", getEnv("GCP_PRIVATE_KEY"));
             put("endpoint", "oauth2.googleapis.com:443");
         }});
         put("kmip", new HashMap<String, Object>() {{

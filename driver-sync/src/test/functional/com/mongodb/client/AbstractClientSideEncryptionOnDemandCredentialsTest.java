@@ -41,7 +41,7 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
     @Test
     @EnabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.success.enabled", matches = "true")
     public void testSuccess() {
-        String kmsProvider = getEnv("org_mongodb_test_fle_on_demand_credential_provider");
+        String kmsProvider = getEnv("PROVIDER");
         try (ClientEncryption clientEncryption = initClientEncryption(kmsProvider)) {
             clientEncryption.createDataKey(kmsProvider, getDataKeyOptions(kmsProvider));
         }
@@ -86,8 +86,8 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
                 return new DataKeyOptions().masterKey(BsonDocument.parse(
                         "{projectId: \"devprod-drivers\", location: \"global\", keyRing: \"key-ring-csfle\", keyName: \"key-name-csfle\"}"));
             case "azure":
-                String keyVaultEndpoint = getEnv("org_mongodb_test_fle_on_demand_credential_test_azure_keyVaultEndpoint");
-                String keyName = getEnv("org_mongodb_test_fle_on_demand_credential_test_azure_keyName");
+                String keyVaultEndpoint = getEnv("AZUREKMS_KEY_VAULT_ENDPOINT");
+                String keyName = getEnv("AZUREKMS_KEY_NAME");
                 return new DataKeyOptions().masterKey(new BsonDocument()
                                 .append("keyVaultEndpoint", new BsonString(keyVaultEndpoint))
                                 .append("keyName", new BsonString(keyName)));

@@ -131,8 +131,6 @@ fi
 
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
-"${RELATIVE_DIR_PATH}/export-security-sensitive-properties.sh"
-
 echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
 

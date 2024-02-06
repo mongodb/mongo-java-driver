@@ -551,7 +551,7 @@ public final class ClusterFixture {
     }
 
     public static boolean isClientSideEncryptionTest() {
-        return !getEnv("org_mongodb_test_awsAccessKeyId", "").isEmpty();
+        return !getEnv("AWS_ACCESS_KEY_ID", "").isEmpty();
     }
 
     public static boolean isAtlasSearchTest() {

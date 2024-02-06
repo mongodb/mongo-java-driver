@@ -60,26 +60,26 @@ public final class UnifiedClientEncryptionHelper {
             Map<String, Object> kmsProviderMap = new HashMap<>();
             switch (kmsProviderKey) {
                 case "aws":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "org_mongodb_test_awsAccessKeyId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "org_mongodb_test_awsSecretAccessKey");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_ACCESS_KEY_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_SECRET_ACCESS_KEY");
                     break;
                 case "awsTemporary":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "org_mongodb_test_tmpAwsAccessKeyId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "org_mongodb_test_tmpAwsSecretAccessKey");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "sessionToken", "org_mongodb_test_tmpAwsSessionToken");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_TEMP_ACCESS_KEY_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_TEMP_SECRET_ACCESS_KEY");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "sessionToken", "AWS_TEMP_SESSION_TOKEN");
                     break;
                 case "awsTemporaryNoSessionToken":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "org_mongodb_test_tmpAwsAccessKeyId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "org_mongodb_test_tmpAwsSecretAccessKey");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_TEMP_ACCESS_KEY_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_TEMP_SECRET_ACCESS_KEY");
                     break;
                 case "azure":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "tenantId", "org_mongodb_test_azureTenantId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientId", "org_mongodb_test_azureClientId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientSecret", "org_mongodb_test_azureClientSecret");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "tenantId", "AZURE_TENANT_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientId", "AZURE_CLIENT_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientSecret", "AZURE_CLIENT_SECRET");
                     break;
                 case "gcp":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "email", "org_mongodb_test_gcpEmail");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "privateKey", "org_mongodb_test_gcpPrivateKey");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "email", "GCP_EMAIL");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "privateKey", "GCP_PRIVATE_KEY");
                     break;
                 case "kmip":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "endpoint", () ->

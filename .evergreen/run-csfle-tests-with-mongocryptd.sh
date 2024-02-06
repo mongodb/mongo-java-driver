@@ -50,11 +50,9 @@ provision_ssl
 
 echo "Running tests with Java ${JAVA_VERSION}"
 
-"${RELATIVE_DIR_PATH}/export-security-sensitive-properties.sh"
-
 ./gradlew -version
 
-# By not specifying the path to the `crypt_shared` via the `org_mongodb_test_crypt_shared_lib_path` Java system property,
+# By not specifying the path to the `crypt_shared` via the `CRYPT_SHARED_LIB_PATH` Java system property,
 # we force the driver to start `mongocryptd` instead of loading and using `crypt_shared`.
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
       ${GRADLE_EXTRA_VARS} \

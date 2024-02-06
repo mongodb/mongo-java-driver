@@ -109,8 +109,8 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
 
         Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<String, Supplier<Map<String, Object>>>() {{
             put("aws", () -> new HashMap<String, Object>() {{
-                put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
-                put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
+                put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
+                put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
             }});
         }};
 
@@ -200,8 +200,8 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws", new HashMap<String, Object>() {{
-                put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
-                put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
+                put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
+                put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
             }});
         }};
 

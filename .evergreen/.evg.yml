@@ -1599,13 +1599,16 @@ tasks:
           params:
             working_dir: "src"
             shell: "bash"
+            env:
+              GCPKMS_GCLOUD: ${GCPKMS_GCLOUD}
+              GCPKMS_PROJECT: ${GCPKMS_PROJECT}
+              GCPKMS_ZONE: ${GCPKMS_ZONE}
+              GCPKMS_INSTANCENAME: ${GCPKMS_INSTANCENAME}
+              GCPKMS_CMD: "MONGODB_URI=mongodb://localhost:27017"
+              PROVIDER: gcp
             script: |
               ${PREPARE_SHELL}
-              export GCPKMS_GCLOUD=${GCPKMS_GCLOUD}
-              export GCPKMS_PROJECT=${GCPKMS_PROJECT}
-              export GCPKMS_ZONE=${GCPKMS_ZONE}
-              export GCPKMS_INSTANCENAME=${GCPKMS_INSTANCENAME}
-              GCPKMS_CMD="MONGODB_URI=mongodb://localhost:27017 PROVIDER=gcp ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
+              ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/gcpkms/run-command.sh
 
     - name: testazurekms-task
       commands:
@@ -1631,12 +1634,17 @@ tasks:
           params:
             working_dir: "src"
             shell: "bash"
+            env:
+              AZUREKMS_RESOURCEGROUP: ${testazurekms_resourcegroup}
+              AZUREKMS_VMNAME: ${AZUREKMS_VMNAME}
+              AZUREKMS_PRIVATEKEYPATH: /tmp/testazurekms_privatekey
+              AZUREKMS_CMD: "MONGODB_URI=mongodb://localhost:27017"
+              AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
+              AZUREKMS_KEY_NAME: ${testazurekms_keyname}
+              PROVIDER: azure
             script: |
               ${PREPARE_SHELL}
-              export AZUREKMS_RESOURCEGROUP=${testazurekms_resourcegroup}
-              export AZUREKMS_VMNAME=${AZUREKMS_VMNAME}
-              export AZUREKMS_PRIVATEKEYPATH=/tmp/testazurekms_privatekey
-              AZUREKMS_CMD="MONGODB_URI=mongodb://localhost:27017 PROVIDER=azure AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
+              ./.evergreen/run-fle-on-demand-credential-test.sh" $DRIVERS_TOOLS/.evergreen/csfle/azurekms/run-command.sh
     - name: test-socks5
       tags: []
       commands:

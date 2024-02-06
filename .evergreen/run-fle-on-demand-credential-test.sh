@@ -20,10 +20,6 @@ if ! which java ; then
     sudo apt install openjdk-17-jdk -y
 fi
 
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-"${RELATIVE_DIR_PATH}/export-security-sensitive-properties.sh"
-
-
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
  -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled=true \
  --stacktrace --debug --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
