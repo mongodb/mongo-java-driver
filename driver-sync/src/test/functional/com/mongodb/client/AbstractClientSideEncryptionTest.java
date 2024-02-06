@@ -222,26 +222,26 @@ public abstract class AbstractClientSideEncryptionTest {
             kmsProvidersMap.put(kmsProviderKey.startsWith("aws") ? "aws" : kmsProviderKey, kmsProviderMap);
             switch (kmsProviderKey) {
                 case "aws":
-                    kmsProviderMap.put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
+                    kmsProviderMap.put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
                     break;
                 case "awsTemporary":
-                    kmsProviderMap.put("accessKeyId", getEnv("org.mongodb.test.tmpAwsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", getEnv("org.mongodb.test.tmpAwsSecretAccessKey"));
-                    kmsProviderMap.put("sessionToken", getEnv("org.mongodb.test.tmpAwsSessionToken"));
+                    kmsProviderMap.put("accessKeyId", getEnv("org_mongodb_test_tmpAwsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("org_mongodb_test_tmpAwsSecretAccessKey"));
+                    kmsProviderMap.put("sessionToken", getEnv("org_mongodb_test_tmpAwsSessionToken"));
                     break;
                 case "awsTemporaryNoSessionToken":
-                    kmsProviderMap.put("accessKeyId", getEnv("org.mongodb.test.tmpAwsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", getEnv("org.mongodb.test.tmpAwsSecretAccessKey"));
+                    kmsProviderMap.put("accessKeyId", getEnv("org_mongodb_test_tmpAwsAccessKeyId"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("org_mongodb_test_tmpAwsSecretAccessKey"));
                     break;
                 case "azure":
-                    kmsProviderMap.put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
-                    kmsProviderMap.put("clientId", getEnv("org.mongodb.test.azureClientId"));
-                    kmsProviderMap.put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
+                    kmsProviderMap.put("tenantId", getEnv("org_mongodb_test_azureTenantId"));
+                    kmsProviderMap.put("clientId", getEnv("org_mongodb_test_azureClientId"));
+                    kmsProviderMap.put("clientSecret", getEnv("org_mongodb_test_azureClientSecret"));
                     break;
                 case "gcp":
-                    kmsProviderMap.put("email", getEnv("org.mongodb.test.gcpEmail"));
-                    kmsProviderMap.put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
+                    kmsProviderMap.put("email", getEnv("org_mongodb_test_gcpEmail"));
+                    kmsProviderMap.put("privateKey", getEnv("org_mongodb_test_gcpPrivateKey"));
                     break;
                 case "kmip":
                     kmsProviderMap.put("endpoint", getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
@@ -385,7 +385,7 @@ public abstract class AbstractClientSideEncryptionTest {
     }
 
     static Optional<String> cryptSharedLibPathSysPropValue() {
-        String value = getEnv("org.mongodb.test.crypt.shared.lib.path", "");
+        String value = getEnv("org_mongodb_test_crypt_shared_lib_path", "");
         return value.isEmpty() ? Optional.empty() : Optional.of(value);
     }
 }

@@ -59,16 +59,16 @@ class ClientSideEncryptionExternalKeyVaultSpecification extends FunctionalSpecif
     def setup() {
         assumeTrue(serverVersionAtLeast(4, 2))
         assumeTrue('Key vault tests disabled',
-                System.getProperty('org.mongodb.test.awsAccessKeyId') != null
-                        && !System.getProperty('org.mongodb.test.awsAccessKeyId').isEmpty())
+                System.getProperty('org_mongodb_test_awsAccessKeyId') != null
+                        && !System.getProperty('org_mongodb_test_awsAccessKeyId').isEmpty())
         dataKeyCollection.drop()
         dataCollection.drop()
 
         def providerProperties =
                 ['local': ['key': Base64.getDecoder().decode('Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN'
                         + '3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk')],
-                 'aws'  : ['accessKeyId'    : System.getProperty('org.mongodb.test.awsAccessKeyId'),
-                           'secretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey')]
+                 'aws'  : ['accessKeyId'    : System.getProperty('org_mongodb_test_awsAccessKeyId'),
+                           'secretAccessKey': System.getProperty('org_mongodb_test_awsSecretAccessKey')]
                 ]
 
         autoEncryptingClient = MongoClients.create(getMongoClientSettingsBuilder()

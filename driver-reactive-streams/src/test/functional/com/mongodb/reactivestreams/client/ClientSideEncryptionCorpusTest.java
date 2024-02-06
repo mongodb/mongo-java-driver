@@ -110,17 +110,17 @@ public class ClientSideEncryptionCorpusTest {
         // Step 4: Configure our objects
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws",  new HashMap<String, Object>() {{
-                put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
-                put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
+                put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
+                put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
             }});
             put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
-                put("clientId", getEnv("org.mongodb.test.azureClientId"));
-                put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
+                put("tenantId", getEnv("org_mongodb_test_azureTenantId"));
+                put("clientId", getEnv("org_mongodb_test_azureClientId"));
+                put("clientSecret", getEnv("org_mongodb_test_azureClientSecret"));
             }});
             put("gcp",  new HashMap<String, Object>() {{
-                put("email", getEnv("org.mongodb.test.gcpEmail"));
-                put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
+                put("email", getEnv("org_mongodb_test_gcpEmail"));
+                put("privateKey", getEnv("org_mongodb_test_gcpPrivateKey"));
             }});
             put("kmip",  new HashMap<String, Object>() {{
                 put("endpoint", getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));

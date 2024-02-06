@@ -54,7 +54,7 @@ echo "Running tests with Java ${JAVA_VERSION}"
 
 ./gradlew -version
 
-# By not specifying the path to the `crypt_shared` via the `org.mongodb.test.crypt.shared.lib.path` Java system property,
+# By not specifying the path to the `crypt_shared` via the `org_mongodb_test_crypt_shared_lib_path` Java system property,
 # we force the driver to start `mongocryptd` instead of loading and using `crypt_shared`.
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
       ${GRADLE_EXTRA_VARS} \

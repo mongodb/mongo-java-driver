@@ -53,7 +53,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
     def setup() {
         assumeTrue(serverVersionAtLeast(4, 2))
         assumeTrue('Key vault tests disabled',
-                !System.getProperty('org.mongodb.test.awsAccessKeyId', '').isEmpty())
+                !System.getProperty('org_mongodb_test_awsAccessKeyId', '').isEmpty())
         drop(keyVaultNamespace)
         drop(autoEncryptingCollectionNamespace)
 

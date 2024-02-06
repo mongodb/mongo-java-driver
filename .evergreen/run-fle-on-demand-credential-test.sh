@@ -20,20 +20,18 @@ if ! which java ; then
     sudo apt install openjdk-17-jdk -y
 fi
 
+RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
+"${RELATIVE_DIR_PATH}/export-security-sensitive-properties.sh"
+
+
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled="true" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyVaultEndpoint="${AZUREKMS_KEY_VAULT_ENDPOINT}" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyName="${AZUREKMS_KEY_NAME}" \
- -Dorg.mongodb.test.fle.on.demand.credential.provider="${PROVIDER}" \
+ -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled=true \
  --stacktrace --debug --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
 first=$?
 echo $first
 
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled="true" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyVaultEndpoint="${AZUREKMS_KEY_VAULT_ENDPOINT}" \
- -Dorg.mongodb.test.fle.on.demand.credential.test.azure.keyName="${AZUREKMS_KEY_NAME}" \
- -Dorg.mongodb.test.fle.on.demand.credential.provider="${PROVIDER}" \
+ -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled=true \
  --stacktrace --debug --info  driver-reactive-streams:test --tests ClientSideEncryptionOnDemandCredentialsTest
 second=$?
 echo $second

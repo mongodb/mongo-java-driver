@@ -83,18 +83,18 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws",  new HashMap<String, Object>() {{
-                put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
-                put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
+                put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
+                put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
             }});
             put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
-                put("clientId", getEnv("org.mongodb.test.azureClientId"));
-                put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
+                put("tenantId", getEnv("org_mongodb_test_azureTenantId"));
+                put("clientId", getEnv("org_mongodb_test_azureClientId"));
+                put("clientSecret", getEnv("org_mongodb_test_azureClientSecret"));
                 put("identityPlatformEndpoint", "login.microsoftonline.com:443");
             }});
             put("gcp",  new HashMap<String, Object>() {{
-                put("email", getEnv("org.mongodb.test.gcpEmail"));
-                put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
+                put("email", getEnv("org_mongodb_test_gcpEmail"));
+                put("privateKey", getEnv("org_mongodb_test_gcpPrivateKey"));
                 put("endpoint", "oauth2.googleapis.com:443");
             }});
             put("kmip", new HashMap<String, Object>() {{
@@ -109,14 +109,14 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
 
         Map<String, Map<String, Object>> invalidKmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
-                put("clientId", getEnv("org.mongodb.test.azureClientId"));
-                put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
+                put("tenantId", getEnv("org_mongodb_test_azureTenantId"));
+                put("clientId", getEnv("org_mongodb_test_azureClientId"));
+                put("clientSecret", getEnv("org_mongodb_test_azureClientSecret"));
                 put("identityPlatformEndpoint", "doesnotexist.invalid:443");
             }});
             put("gcp",  new HashMap<String, Object>() {{
-                put("email", getEnv("org.mongodb.test.gcpEmail"));
-                put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
+                put("email", getEnv("org_mongodb_test_gcpEmail"));
+                put("privateKey", getEnv("org_mongodb_test_gcpPrivateKey"));
                 put("endpoint", "doesnotexist.invalid:443");
             }});
             put("kmip",  new HashMap<String, Object>() {{

@@ -205,8 +205,8 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
         ),
         AWS("aws",
                 kmsProviderProperties -> {
-                    kmsProviderProperties.put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
-                    kmsProviderProperties.put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
+                    kmsProviderProperties.put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
+                    kmsProviderProperties.put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
                 },
                 createEncryptedCollectionParams -> createEncryptedCollectionParams.masterKey(BsonDocument.parse(
                         "{"
@@ -220,7 +220,7 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
         private final Supplier<CreateEncryptedCollectionParams> createEncryptedCollectionParamsSupplier;
 
         private static Set<KmsProvider> detect() {
-            String awsAccessKeyId = getEnv("org.mongodb.test.awsAccessKeyId");
+            String awsAccessKeyId = getEnv("org_mongodb_test_awsAccessKeyId");
             return awsAccessKeyId != null && !awsAccessKeyId.isEmpty()
                     ? EnumSet.allOf(KmsProvider.class)
                     : EnumSet.of(KmsProvider.LOCAL);

@@ -82,17 +82,17 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
         // Step 2: Create encrypted client and client encryption
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws",  new HashMap<String, Object>() {{
-                put("accessKeyId", getEnv("org.mongodb.test.awsAccessKeyId"));
-                put("secretAccessKey", getEnv("org.mongodb.test.awsSecretAccessKey"));
+                put("accessKeyId", getEnv("org_mongodb_test_awsAccessKeyId"));
+                put("secretAccessKey", getEnv("org_mongodb_test_awsSecretAccessKey"));
             }});
             put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", getEnv("org.mongodb.test.azureTenantId"));
-                put("clientId", getEnv("org.mongodb.test.azureClientId"));
-                put("clientSecret", getEnv("org.mongodb.test.azureClientSecret"));
+                put("tenantId", getEnv("org_mongodb_test_azureTenantId"));
+                put("clientId", getEnv("org_mongodb_test_azureClientId"));
+                put("clientSecret", getEnv("org_mongodb_test_azureClientSecret"));
             }});
             put("gcp",  new HashMap<String, Object>() {{
-                put("email", getEnv("org.mongodb.test.gcpEmail"));
-                put("privateKey", getEnv("org.mongodb.test.gcpPrivateKey"));
+                put("email", getEnv("org_mongodb_test_gcpEmail"));
+                put("privateKey", getEnv("org_mongodb_test_gcpPrivateKey"));
             }});
             put("local", new HashMap<String, Object>() {{
                 put("key", "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
