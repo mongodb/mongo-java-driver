@@ -20,6 +20,8 @@ if ! which java ; then
     sudo apt install openjdk-17-jdk -y
 fi
 
+export PROVIDER=${PROVIDER}
+
 ./gradlew -Dorg.mongodb.test.uri="${MONGODB_URI}" \
  -Dorg.mongodb.test.fle.on.demand.credential.test.success.enabled=true \
  --stacktrace --debug --info  driver-sync:test --tests ClientSideEncryptionOnDemandCredentialsTest
