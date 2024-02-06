@@ -244,9 +244,9 @@ functions:
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
           
           # these will be echoed. is that ok?
-          export AWS_TEMP_ACCESS_KEY_ID=${CSFLE_AWS_TEMP_ACCESS_KEY_ID}
-          export AWS_TEMP_SECRET_ACCESS_KEY=${CSFLE_AWS_TEMP_SECRET_ACCESS_KEY}
-          export AWS_TEMP_SESSION_TOKEN=${CSFLE_AWS_TEMP_SESSION_TOKEN}
+          export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
+          export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
+          export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
           export CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
 
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
@@ -819,9 +819,9 @@ functions:
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
           
           # These will be echoed: is that ok?
-          export AWS_TEMP_ACCESS_KEY_ID=${CSFLE_AWS_TEMP_ACCESS_KEY_ID}
-          export AWS_TEMP_SECRET_ACCESS_KEY=${CSFLE_AWS_TEMP_SECRET_ACCESS_KEY}
-          export AWS_TEMP_SESSION_TOKEN=${CSFLE_AWS_TEMP_SESSION_TOKEN}
+          export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
+          export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
+          export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
           
           MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-csfle-tests-with-mongocryptd.sh
 
