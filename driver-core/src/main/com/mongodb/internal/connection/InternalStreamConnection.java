@@ -202,10 +202,10 @@ public class InternalStreamConnection implements InternalConnection {
         try {
             stream.open(operationContext);
 
-            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this);
+            InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
             initAfterHandshakeStart(initializationDescription);
 
-            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription);
+            initializationDescription = connectionInitializer.finishHandshake(this, initializationDescription, operationContext);
             initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
@@ -226,7 +226,7 @@ public class InternalStreamConnection implements InternalConnection {
 
                 @Override
                 public void completed(@Nullable final Void aVoid) {
-                    connectionInitializer.startHandshakeAsync(InternalStreamConnection.this,
+                    connectionInitializer.startHandshakeAsync(InternalStreamConnection.this, operationContext,
                             (initialResult, initialException) -> {
                                     if (initialException != null) {
                                         close();
@@ -235,7 +235,7 @@ public class InternalStreamConnection implements InternalConnection {
                                         assertNotNull(initialResult);
                                         initAfterHandshakeStart(initialResult);
                                         connectionInitializer.finishHandshakeAsync(InternalStreamConnection.this,
-                                                initialResult, (completedResult, completedException) ->  {
+                                                initialResult, operationContext, (completedResult, completedException) ->  {
                                                         if (completedException != null) {
                                                             close();
                                                             callback.onResult(null, completedException);
