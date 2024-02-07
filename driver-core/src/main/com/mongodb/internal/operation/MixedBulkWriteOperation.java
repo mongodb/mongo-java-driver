@@ -209,7 +209,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                     BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                             connectionDescription, ordered, writeConcern,
-                            bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables), timeoutContext);
+                            bypassDocumentValidation, retryWrites, writeRequests, binding.getOperationContext(), comment, variables), timeoutContext);
                 }
                 return executeBulkWriteBatch(retryState, binding, connection);
             })
@@ -249,7 +249,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     if (!retryState.attachment(AttachmentKeys.bulkWriteTracker()).orElseThrow(Assertions::fail).batch().isPresent()) {
                         BulkWriteTracker.attachNew(retryState, BulkWriteBatch.createBulkWriteBatch(namespace,
                                 connectionDescription, ordered, writeConcern,
-                                bypassDocumentValidation, retryWrites, writeRequests, sessionContext, comment, variables), timeoutContext);
+                                bypassDocumentValidation, retryWrites, writeRequests, binding.getOperationContext(), comment, variables), timeoutContext);
                     }
                 } catch (Throwable t) {
                     releasingCallback.onResult(null, t);

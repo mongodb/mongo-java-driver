@@ -119,7 +119,7 @@ public class SocketStream implements Stream {
         final int serverPort = address.getPort();
 
         SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
-        configureSocket(socksProxy, settings);
+        configureSocket(socksProxy, operationContext, settings);
         InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
         socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
 
@@ -141,7 +141,7 @@ public class SocketStream implements Stream {
 
     private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {
         Socket createdSocket = socketFactory.createSocket();
-        configureSocket(createdSocket, settings);
+        configureSocket(createdSocket, operationContext, settings);
         /*
           Wrap the configured socket with SocksSocket to add extra functionality.
           Reason for separate steps: We can't directly extend Java 11 methods within 'SocksSocket'
@@ -171,16 +171,16 @@ public class SocketStream implements Stream {
 
     @Override
     public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
-        int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
-        if (readTimeoutMS > 0) {
-            socket.setSoTimeout(readTimeoutMS);
-        }
         try {
             ByteBuf buffer = bufferProvider.getBuffer(numBytes);
             try {
                 int totalBytesRead = 0;
                 byte[] bytes = buffer.array();
                 while (totalBytesRead < buffer.limit()) {
+                    int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
+                    if (readTimeoutMS > 0) {
+                        socket.setSoTimeout(readTimeoutMS);
+                    }
                     int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
                     if (bytesRead == -1) {
                         throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());

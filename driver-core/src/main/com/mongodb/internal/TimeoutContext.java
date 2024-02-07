@@ -54,7 +54,7 @@ public class TimeoutContext {
         if (cause instanceof MongoOperationTimeoutException) {
             return (MongoOperationTimeoutException) cause;
         }
-        return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage());
+        return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage(), cause);
     }
 
     public static TimeoutContext createMaintenanceTimeoutContext(final TimeoutSettings timeoutSettings) {
@@ -213,15 +213,19 @@ public class TimeoutContext {
 
     private long timeoutRemainingMS() {
         assertNotNull(timeout);
+        if (timeout.hasExpired()) {
+            throw createMongoTimeoutException("The operation timeout has expired.");
+        }
         return timeout.isInfinite() ? 0 : timeout.remaining(MILLISECONDS);
     }
 
     @Override
     public String toString() {
-        return "timeoutContext{"
-                + "timeoutContext=" + timeoutSettings
-                + ", minRoundTripTimeMS=" + minRoundTripTimeMS
+        return "TimeoutContext{"
+                + "isMaintenanceContext=" + isMaintenanceContext
+                + ", timeoutSettings=" + timeoutSettings
                 + ", timeout=" + timeout
+                + ", minRoundTripTimeMS=" + minRoundTripTimeMS
                 + '}';
     }
 
@@ -234,14 +238,15 @@ public class TimeoutContext {
             return false;
         }
         final TimeoutContext that = (TimeoutContext) o;
-        return minRoundTripTimeMS == that.minRoundTripTimeMS
+        return isMaintenanceContext == that.isMaintenanceContext
+                && minRoundTripTimeMS == that.minRoundTripTimeMS
                 && Objects.equals(timeoutSettings, that.timeoutSettings)
                 && Objects.equals(timeout, that.timeout);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeoutSettings, timeout, minRoundTripTimeMS);
+        return Objects.hash(isMaintenanceContext, timeoutSettings, timeout, minRoundTripTimeMS);
     }
 
     @Nullable

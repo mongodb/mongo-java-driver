@@ -52,6 +52,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
@@ -104,7 +105,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.mongodb.client.unified.UnifiedTestUtils.getAndRemoveTimeoutMS;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -433,6 +433,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         return iterable;
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeDistinct(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments");
@@ -454,6 +455,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
                     break;
+                case "maxTimeMS":
+                    iterable.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -463,6 +467,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 new BsonArray(iterable.into(new ArrayList<>())));
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeFindOneAndUpdate(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments");
@@ -506,6 +511,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "let":
                     options.let(cur.getValue().asDocument());
                     break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -527,6 +535,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
+    @SuppressWarnings("deprecation")
     OperationResult executeFindOneAndReplace(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments");
@@ -565,6 +574,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "let":
                     options.let(cur.getValue().asDocument());
                     break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -574,6 +586,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 collection.findOneAndReplace(filter, replacement, options));
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeFindOneAndDelete(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments");
@@ -597,6 +610,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "let":
                     options.let(cur.getValue().asDocument());
+                    break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1467,23 +1483,59 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         BsonDocument arguments = operation.getDocument("arguments");
         ClientSession session = getSession(arguments);
         String indexName = arguments.get("name").asString().getValue();
+
+        if (!arguments.containsKey("name")) {
+            throw new UnsupportedOperationException("Drop index without name is not supported");
+        }
+
+        DropIndexOptions options = getDropIndexOptions(arguments);
+        return resultOf(() -> {
+            if (session == null) {
+                collection.dropIndex(indexName, options);
+            } else {
+                collection.dropIndex(session, indexName, options);
+            }
+            return null;
+        });
+    }
+
+    public OperationResult executeDropIndexes(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
+
+        if (operation.containsKey("arguments")) {
+            BsonDocument arguments = operation.getDocument("arguments");
+            ClientSession session = getSession(arguments);
+            DropIndexOptions options = getDropIndexOptions(arguments);
+            return resultOf(() -> {
+                if (session == null) {
+                    collection.dropIndexes(options);
+                } else {
+                    collection.dropIndexes(session, options);
+                }
+                return null;
+            });
+        }
+        return resultOf(() -> {
+            collection.dropIndexes();
+            return null;
+        });
+    }
+
+    private static DropIndexOptions getDropIndexOptions(final BsonDocument arguments) {
+        DropIndexOptions options = new DropIndexOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "session":
                 case "name":
                     break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        return resultOf(() -> {
-            if (session == null) {
-                collection.dropIndex(indexName);
-            } else {
-                collection.dropIndex(session, indexName);
-            }
-            return null;
-        });
+        return options;
     }
 
     public OperationResult createChangeStreamCursor(final BsonDocument operation) {

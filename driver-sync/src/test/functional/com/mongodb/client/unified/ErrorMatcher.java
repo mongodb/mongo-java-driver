@@ -20,6 +20,7 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
@@ -66,9 +67,10 @@ final class ErrorMatcher {
         }
 
         if (expectedError.containsKey("isTimeoutError")) {
+            // TODO (CSOT) JAVA-5248 Should only be MongoOperationTimeoutException.
             assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
                     expectedError.getBoolean("isTimeoutError").getValue(),
-                    e instanceof MongoOperationTimeoutException);
+                    e instanceof MongoOperationTimeoutException || e instanceof MongoExecutionTimeoutException);
         }
 
         if (expectedError.containsKey("errorContains")) {

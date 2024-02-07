@@ -246,6 +246,7 @@ public final class ProtocolHelper {
         int errorCode = getErrorCode(response);
         String errorMessage = getErrorMessage(response, errorMessageFieldName);
         if (ErrorCategory.fromErrorCode(errorCode) == ErrorCategory.EXECUTION_TIMEOUT) {
+            // TODO (CSOT) JAVA-5248 when timeoutMS is set, MongoOperationTimeoutException should be thrown.
             return new MongoExecutionTimeoutException(errorCode, errorMessage, response);
         } else if (isNodeIsRecoveringError(errorCode, errorMessage)) {
             return new MongoNodeIsRecoveringException(response, serverAddress);
