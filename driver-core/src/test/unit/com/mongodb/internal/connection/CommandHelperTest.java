@@ -16,19 +16,15 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoException;
-import com.mongodb.MongoServerException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
-
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.junit.jupiter.api.Test;
