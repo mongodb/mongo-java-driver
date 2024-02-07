@@ -31,6 +31,8 @@ import javax.net.ssl.SSLSocketFactory
 import java.lang.reflect.Method
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -45,8 +47,10 @@ class SocketStreamHelperSpecification extends Specification {
                 .readTimeout(10, SECONDS)
                 .build()
 
+        def operationContext = createOperationContext(TIMEOUT_SETTINGS.withReadTimeoutMS(socketSettings.getReadTimeout(MILLISECONDS)))
+
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(operationContext, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
                 socketSettings, SslSettings.builder().build())
 
         then:
