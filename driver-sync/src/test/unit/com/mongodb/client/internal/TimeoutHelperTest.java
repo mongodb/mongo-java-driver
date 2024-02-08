@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.gridfs;
+package com.mongodb.client.internal;
 
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.internal.time.Timeout;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.gridfs.CollectionTimeoutHelper.collectionWithTimeout;
+import static com.mongodb.client.internal.TimeoutHelper.collectionWithTimeout;
+import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -37,12 +39,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unchecked")
-class CollectionTimeoutHelperTest {
+class TimeoutHelperTest {
 
     private static final String TIMEOUT_ERROR_MESSAGE = "message";
 
     @Test
-    void shouldNotSetRemainingTimeoutWhenTimeoutIsNull() {
+    void shouldNotSetRemainingTimeoutOnCollectionWhenTimeoutIsNull() {
         //given
         MongoCollection<Document> collection = mock(MongoCollection.class);
 
@@ -54,7 +56,19 @@ class CollectionTimeoutHelperTest {
     }
 
     @Test
-    void shouldNotSetRemainingTimeoutWhenTimeoutIsInfinite() {
+    void shouldNotSetRemainingTimeoutDatabaseWhenTimeoutIsNull() {
+        //given
+        MongoDatabase database = mock(MongoDatabase.class);
+
+        //when
+        MongoDatabase result = databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, null);
+
+        //then
+        assertEquals(database, result);
+    }
+
+    @Test
+    void shouldNotSetRemainingTimeoutOnCollectionWhenTimeoutIsInfinite() {
         //given
         MongoCollection<Document> collection = mock(MongoCollection.class);
 
@@ -66,7 +80,19 @@ class CollectionTimeoutHelperTest {
     }
 
     @Test
-    void shouldSetRemainingTimeoutWhenTimeout() {
+    void shouldNotSetRemainingTimeoutOnDatabaseWhenTimeoutIsInfinite() {
+        //given
+        MongoDatabase database = mock(MongoDatabase.class);
+
+        //when
+        MongoDatabase result = databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, Timeout.infinite());
+
+        //then
+        assertEquals(database, result);
+    }
+
+    @Test
+    void shouldSetRemainingTimeoutOnCollectionWhenTimeout() {
         //given
         MongoCollection<Document> collectionWithTimeout = mock(MongoCollection.class);
         MongoCollection<Document> collection = mock(MongoCollection.class, mongoCollection -> {
@@ -83,7 +109,24 @@ class CollectionTimeoutHelperTest {
     }
 
     @Test
-    void shouldThrowErrorWhenTimeoutHasExpired() {
+    void shouldSetRemainingTimeoutOnDatabaseWhenTimeout() {
+        //given
+        MongoDatabase databaseWithTimeout = mock(MongoDatabase.class);
+        MongoDatabase database = mock(MongoDatabase.class, mongoDatabase -> {
+            when(mongoDatabase.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(mongoDatabase);
+        });
+        Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS);
+
+        //when
+        MongoDatabase result = databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, timeout);
+
+        //then
+        verify(database).withTimeout(longThat(remaining -> remaining > 0), eq(TimeUnit.MILLISECONDS));
+        assertNotEquals(databaseWithTimeout, result);
+    }
+
+    @Test
+    void shouldThrowErrorWhenTimeoutHasExpiredOnCollection() {
         //given
         MongoCollection<Document> collection = mock(MongoCollection.class);
         Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS);
@@ -98,7 +141,22 @@ class CollectionTimeoutHelperTest {
     }
 
     @Test
-    void shouldThrowErrorWhenTimeoutHasExpiredWithZeroRemaining() {
+    void shouldThrowErrorWhenTimeoutHasExpiredOnDatabase() {
+        //given
+        MongoDatabase database = mock(MongoDatabase.class);
+        Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS);
+
+        //when
+        MongoOperationTimeoutException mongoExecutionTimeoutException =
+                assertThrows(MongoOperationTimeoutException.class, () -> databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, timeout));
+
+        //then
+        assertEquals(TIMEOUT_ERROR_MESSAGE, mongoExecutionTimeoutException.getMessage());
+        verifyNoInteractions(database);
+    }
+
+    @Test
+    void shouldThrowErrorWhenTimeoutHasExpiredWithZeroRemainingOnCollection() {
         //given
         MongoCollection<Document> collection = mock(MongoCollection.class);
         Timeout timeout = mock(Timeout.class, timeout1 -> {
@@ -111,6 +169,24 @@ class CollectionTimeoutHelperTest {
         assertThrows(MongoOperationTimeoutException.class, () -> collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, timeout));
 
         //then
-        verifyNoInteractions(collection);
+
     }
+
+    @Test
+    void shouldThrowErrorWhenTimeoutHasExpiredWithZeroRemainingOnDatabase() {
+        //given
+        MongoDatabase database = mock(MongoDatabase.class);
+        Timeout timeout = mock(Timeout.class, timeout1 -> {
+            when(timeout1.hasExpired()).thenReturn(true);
+            when(timeout1.isInfinite()).thenReturn(false);
+            when(timeout1.remaining(TimeUnit.MILLISECONDS)).thenReturn(0L);
+        });
+
+        //when
+        assertThrows(MongoOperationTimeoutException.class, () -> databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, timeout));
+
+        //then
+        verifyNoInteractions(database);
+    }
+
 }

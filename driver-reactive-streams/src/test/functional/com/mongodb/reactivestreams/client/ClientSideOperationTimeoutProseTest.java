@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
@@ -125,17 +126,17 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             List<Throwable> onErrorEvents = testSubscriber.getOnErrorEvents();
             assertEquals(1, onErrorEvents.size());
 
-            Throwable retryableError = onErrorEvents.get(0);
-            Throwable commandError = retryableError.getCause();
-            assertEquals(MongoOperationTimeoutException.class, retryableError.getClass());
-            assertEquals(MongoOperationTimeoutException.class, commandError.getClass());
+            Throwable operationTimeoutError = onErrorEvents.get(0);
+            Throwable operationTimeoutErrorCase = operationTimeoutError.getCause();
+            assertEquals(MongoOperationTimeoutException.class, operationTimeoutError.getClass());
+            assertEquals(MongoSocketReadTimeoutException.class, operationTimeoutErrorCase.getClass());
 
-            assertEquals("MongoDB operation timed out during a retry attempt", retryableError.getMessage());
-            assertEquals("Operation timed out: Timeout while receiving message", commandError.getMessage());
+            assertEquals("Operation timed out: Timeout while receiving message", operationTimeoutError.getMessage());
+            assertEquals("Timeout while receiving message", operationTimeoutErrorCase.getMessage());
 
             CommandFailedEvent chunkInsertFailedEvent = commandListener.getCommandFailedEvent("insert");
             assertNotNull(chunkInsertFailedEvent);
-            assertEquals(commandError, commandListener.getCommandFailedEvent("insert").getThrowable());
+            assertEquals(operationTimeoutError, commandListener.getCommandFailedEvent("insert").getThrowable());
         }
     }
 
@@ -183,17 +184,17 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
             //then
             Throwable droppedError = droppedErrorFuture.get(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
-            Throwable retryableError = droppedError.getCause();
-            Throwable commandError = retryableError.getCause();
-            assertEquals(MongoOperationTimeoutException.class, retryableError.getClass());
-            assertEquals(MongoOperationTimeoutException.class, commandError.getClass());
+            Throwable operationTimeoutError = droppedError.getCause();
+            Throwable operationTimeoutErrorCause = operationTimeoutError.getCause();
+            assertEquals(MongoOperationTimeoutException.class, operationTimeoutError.getClass());
+            assertEquals(MongoSocketReadTimeoutException.class, operationTimeoutErrorCause.getClass());
 
-            assertEquals("MongoDB operation timed out during a retry attempt", retryableError.getMessage());
-            assertEquals("Operation timed out: Timeout while receiving message", commandError.getMessage());
+            assertEquals("Operation timed out: Timeout while receiving message", operationTimeoutError.getMessage());
+            assertEquals("Timeout while receiving message", operationTimeoutErrorCause.getMessage());
 
             CommandFailedEvent deleteFailedEvent = commandListener.getCommandFailedEvent("delete");
             assertNotNull(deleteFailedEvent);
-            assertEquals(commandError, commandListener.getCommandFailedEvent("delete").getThrowable());
+            assertEquals(operationTimeoutError, commandListener.getCommandFailedEvent("delete").getThrowable());
             // When subscription is cancelled, we should not receive any more events.
             testSubscriber.assertNoTerminalEvent();
         }

@@ -26,6 +26,7 @@ import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
@@ -117,12 +118,15 @@ class CryptConnection implements AsyncConnection {
                     : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, createSplittablePayloadMessageSettings(), payload,
                                                       MAX_SPLITTABLE_DOCUMENT_SIZE);
 
+            Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
+
             getEncoder(command).encode(writer, command, EncoderContext.builder().build());
-            crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()))
+            crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout)
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
+                            //TODO JAVA-5322. timeoutMS can't be set at encryptedCommand here as not modification allowed to raw command.
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
                                     new RawBsonDocumentCodec(), operationContext, responseExpected, null, null, sinkToCallback(sink))))
-                    .flatMap(crypt::decrypt)
+                    .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, operationTimeout))
                     .map(decryptedResponse ->
                         commandResultDecoder.decode(new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO()),
                                                     DecoderContext.builder().build())

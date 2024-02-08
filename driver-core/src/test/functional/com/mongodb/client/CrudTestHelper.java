@@ -21,7 +21,10 @@ import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 
-import static org.junit.Assert.assertEquals;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
 
 public final class CrudTestHelper {
 
@@ -32,15 +35,12 @@ public final class CrudTestHelper {
                 BsonDocument valueDocument = value.asDocument();
                 BsonValue actualValue = actual.get(key);
                 if (valueDocument.size() == 1 && valueDocument.getFirstKey().equals("$$type")) {
-                    String type = valueDocument.getString("$$type").getValue();
-                    if (type.equals("binData")) {
-                        assertEquals(BsonType.BINARY, actualValue.getBsonType());
-                        expected.put(key, actualValue);
-                    } else if (type.equals("long")) {
-                        assertEquals(BsonType.INT64, actualValue.getBsonType());
+                    List<String> types = getExpectedTypes(valueDocument.get("$$type"));
+                    String actualType = asTypeString(actualValue.getBsonType());
+                    if (types.contains(actualType)) {
                         expected.put(key, actualValue);
                     } else {
-                        throw new UnsupportedOperationException("Unsupported type: " + type);
+                        throw new UnsupportedOperationException("Unsupported type: " + actualValue);
                     }
                 } else if (actualValue != null && actualValue.isDocument()) {
                     replaceTypeAssertionWithActual(valueDocument, actualValue.asDocument());
@@ -53,6 +53,31 @@ public final class CrudTestHelper {
         }
     }
 
+    private static String asTypeString(final BsonType bsonType) {
+        switch (bsonType) {
+            case BINARY:
+                return "binData";
+            case INT32:
+                return "int";
+            case INT64:
+                return "long";
+            default:
+                throw new UnsupportedOperationException("Unsupported bson type conversion to string: " + bsonType);
+        }
+    }
+
+    private static List<String> getExpectedTypes(final BsonValue expectedTypes) {
+        List<String> types;
+        if (expectedTypes.isString()) {
+            types = singletonList(expectedTypes.asString().getValue());
+        } else if (expectedTypes.isArray()) {
+            types = expectedTypes.asArray().stream().map(type -> type.asString().getValue()).collect(Collectors.toList());
+        } else {
+            throw new UnsupportedOperationException("Unsupported type for $$type value");
+        }
+        return types;
+    }
+
     private static void replaceTypeAssertionWithActual(final BsonArray expected, final BsonArray actual) {
         for (int i = 0; i < expected.size(); i++) {
             BsonValue value = expected.get(i);
@@ -63,6 +88,7 @@ public final class CrudTestHelper {
             }
         }
     }
+
     private CrudTestHelper() {
     }
 
