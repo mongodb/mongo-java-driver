@@ -79,12 +79,12 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 
     private TestCommandListener commandListener;
 
-    private static final String MASTER_KEY = "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5a" +
-            "XRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk";
+    private static final String MASTER_KEY = "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5a"
+            + "XRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk";
 
-    protected abstract ClientEncryption createClientEncryption(final ClientEncryptionSettings.Builder builder);
+    protected abstract ClientEncryption createClientEncryption(ClientEncryptionSettings.Builder builder);
 
-    protected abstract MongoClient createMongoClient(final MongoClientSettings.Builder builder);
+    protected abstract MongoClient createMongoClient(MongoClientSettings.Builder builder);
 
     @Test
     @Tag("setsFailPoint")
@@ -285,7 +285,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         return createClientEncryption(getClientEncryptionSettingsBuilds(timeout));
     }
 
-    protected ClientEncryptionSettings.Builder getClientEncryptionSettingsBuilds(long timeout) {
+    protected ClientEncryptionSettings.Builder getClientEncryptionSettingsBuilds(final long timeout) {
         return ClientEncryptionSettings
                 .builder()
                 .keyVaultNamespace(keyVaultNamespace.getFullName())

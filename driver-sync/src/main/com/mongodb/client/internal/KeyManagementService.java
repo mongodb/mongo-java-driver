@@ -54,7 +54,7 @@ class KeyManagementService {
         this.timeoutMillis = timeoutMillis;
     }
 
-    public InputStream stream(final String kmsProvider, final String host, final ByteBuffer message, @Nullable Timeout operationTimeout) throws IOException {
+    public InputStream stream(final String kmsProvider, final String host, final ByteBuffer message, @Nullable final Timeout operationTimeout) throws IOException {
         ServerAddress serverAddress = new ServerAddress(host);
 
         LOGGER.info("Connecting to KMS server at " + serverAddress);
@@ -123,7 +123,7 @@ class KeyManagementService {
          * @param socket - socket to set timeout on.
          * @param operationTimeout - non-infinite timeout.
          */
-        public OperationTimeoutAwareInputStream(final Socket socket, final Timeout operationTimeout) throws IOException {
+        OperationTimeoutAwareInputStream(final Socket socket, final Timeout operationTimeout) throws IOException {
             assertFalse(operationTimeout.isInfinite());
             this.socket = socket;
             this.operationTimeout = operationTimeout;

@@ -269,7 +269,7 @@ public abstract class AbstractClientSideEncryptionTest {
         MongoClientSettings.Builder mongoClientSettingsBuilder = Fixture.getMongoClientSettingsBuilder()
                         .addCommandListener(commandListener);
 
-        if(clientOptions.containsKey("timeoutMS")){
+        if (clientOptions.containsKey("timeoutMS")) {
             long timeoutMs = clientOptions.getInt32("timeoutMS").longValue();
             mongoClientSettingsBuilder.timeout(timeoutMs, TimeUnit.MILLISECONDS);
         }

@@ -30,8 +30,21 @@ import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.time.Timeout
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import org.bson.*
-import org.bson.codecs.*
+import org.bson.BsonArray
+import org.bson.BsonBinary
+import org.bson.BsonBinaryReader
+import org.bson.BsonBinaryWriter
+import org.bson.BsonDocument
+import org.bson.BsonDocumentWrapper
+import org.bson.BsonInt32
+import org.bson.BsonString
+import org.bson.Document
+import org.bson.RawBsonDocument
+import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.DocumentCodec
+import org.bson.codecs.EncoderContext
+import org.bson.codecs.RawBsonDocumentCodec
 import org.bson.io.BasicOutputBuffer
 import spock.lang.Specification
 

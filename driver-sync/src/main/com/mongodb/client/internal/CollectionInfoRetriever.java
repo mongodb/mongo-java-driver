@@ -34,7 +34,7 @@ class CollectionInfoRetriever {
     }
 
     @Nullable
-    public BsonDocument filter(final String databaseName, final BsonDocument filter, @Nullable Timeout operationTimeout) {
+    public BsonDocument filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
         return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE,
                 operationTimeout).listCollections(BsonDocument.class).filter(filter).first();
     }
