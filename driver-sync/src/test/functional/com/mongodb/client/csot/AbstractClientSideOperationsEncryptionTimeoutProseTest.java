@@ -177,7 +177,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
                     + "  data: {"
                     + "    failCommands: [\"find\"],"
                     + "    blockConnection: true,"
-                    + "    blockTimeMS: " + (rtt + 60)
+                    + "    blockTimeMS: " + (rtt + 65)
                     + "  }"
                     + "}");
             commandListener.reset();
