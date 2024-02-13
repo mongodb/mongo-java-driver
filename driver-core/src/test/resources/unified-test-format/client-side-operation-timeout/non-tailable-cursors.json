@@ -301,7 +301,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 150
               }
             }
           }
@@ -311,7 +311,8 @@
           "object": "collection",
           "arguments": {
             "filter": {},
-            "timeoutMode": "iteration"
+            "timeoutMode": "iteration",
+            "timeoutMS": 100
           },
           "expectError": {
             "isTimeoutError": true

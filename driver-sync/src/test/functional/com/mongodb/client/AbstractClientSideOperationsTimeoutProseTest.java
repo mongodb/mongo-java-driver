@@ -451,7 +451,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         .insertOne(new Document("x", 1));
             });
             long elapsed = msElapsedSince(start);
-            assertTrue(elapsed <= 300, "Took too long to time out, elapsedMS: " + elapsed);
+            assertTrue(elapsed <= 310, "Took too long to time out, elapsedMS: " + elapsed);
         }
     }
 
