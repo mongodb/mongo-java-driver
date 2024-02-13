@@ -58,7 +58,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection)
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         thrown(MongoCommandException)
@@ -77,7 +77,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection)
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         true
@@ -99,7 +99,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         when:
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection)
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         thrown(MongoSecurityException)
@@ -131,7 +131,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         def connection = createConnection(async, getMongoCredential(subject))
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection)
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         true
@@ -175,7 +175,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
         def connection = createConnection(async, getMongoCredential(saslClientProperties))
         openConnection(connection, async)
         executeCommand(getConnectionString().getDatabase(), new BsonDocument('count', new BsonString('test')),
-                getClusterConnectionMode(), null, connection)
+                getClusterConnectionMode(), null, connection, OPERATION_CONTEXT)
 
         then:
         true
