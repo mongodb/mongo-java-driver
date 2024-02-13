@@ -431,11 +431,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         collectionHelper = new CollectionHelper<>(new BsonDocumentCodec(), namespace);
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
-                + "  mode: { times: 1 },"
+                + "  mode: \"alwaysOn\","
                 + "  data: {"
                 + "    failCommands: [\"saslContinue\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: 150"
+                + "    blockTimeMS: 350"
                 + "  }"
                 + "}");
 
@@ -445,13 +445,13 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 .retryWrites(false))) {
 
             long start = System.nanoTime();
-            assertThrows(MongoTimeoutException.class, () -> {
+            assertThrows(MongoOperationTimeoutException.class, () -> {
                 mongoClient.getDatabase(namespace.getDatabaseName())
                         .getCollection(namespace.getCollectionName())
                         .insertOne(new Document("x", 1));
             });
             long elapsed = msElapsedSince(start);
-            assertTrue(elapsed <= 200, "Took too long to time out, elapsedMS: " + elapsed);
+            assertTrue(elapsed <= 300, "Took too long to time out, elapsedMS: " + elapsed);
         }
     }
 
@@ -471,8 +471,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     private static Stream<Arguments> test8ServerSelectionHandshakeArguments() {
         return Stream.of(
-                Arguments.of("timeoutMS honored for connection handshake commands if it's lower than serverSelectionTimeoutMS", 100, 200),
-                Arguments.of("serverSelectionTimeoutMS honored for connection handshake commands if it's lower than timeoutMS", 200, 100)
+                Arguments.of("timeoutMS honored for connection handshake commands if it's lower than serverSelectionTimeoutMS", 200, 300),
+                Arguments.of("serverSelectionTimeoutMS honored for connection handshake commands if it's lower than timeoutMS", 300, 200)
         );
     }
 
