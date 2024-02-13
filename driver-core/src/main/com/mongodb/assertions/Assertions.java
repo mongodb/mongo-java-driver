@@ -92,7 +92,7 @@ public final class Assertions {
     public static <T> T notNull(final String name, final T value, final SingleResultCallback<?> callback) {
         if (value == null) {
             IllegalArgumentException exception = new IllegalArgumentException(name + " can not be null");
-            callback.onResult(null, exception);
+            callback.completeExceptionally(exception);
             throw exception;
         }
         return value;
@@ -122,7 +122,7 @@ public final class Assertions {
     public static void isTrue(final String name, final boolean condition, final SingleResultCallback<?> callback) {
         if (!condition) {
             IllegalStateException exception = new IllegalStateException("state should be: " + name);
-            callback.onResult(null, exception);
+            callback.completeExceptionally(exception);
             throw exception;
         }
     }
