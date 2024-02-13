@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
-import static com.mongodb.MongoCredential.REQUEST_TOKEN_CALLBACK_KEY;
+import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
 
 // See https://github.com/mongodb/specifications/tree/master/source/auth/legacy/tests
 @RunWith(Parameterized.class)
@@ -118,7 +118,7 @@ public class AuthConnectionStringTest extends TestCase {
                     String string = ((BsonString) v).getValue();
                     if ("oidcRequest".equals(string)) {
                         credential = credential.withMechanismProperty(
-                                REQUEST_TOKEN_CALLBACK_KEY,
+                                OIDC_CALLBACK_KEY,
                                 (MongoCredential.OidcRequestCallback) (context) -> null);
                     } else {
                         fail("Unsupported callback: " + string);
@@ -175,7 +175,7 @@ public class AuthConnectionStringTest extends TestCase {
                 }
             } else if ((document.get(key).isBoolean())) {
                 boolean expectedValue = document.getBoolean(key).getValue();
-                if (REQUEST_TOKEN_CALLBACK_KEY.equals(key)) {
+                if (OIDC_CALLBACK_KEY.equals(key)) {
                     assertTrue(actualMechanismProperty instanceof MongoCredential.OidcRequestCallback);
                     return;
                 }

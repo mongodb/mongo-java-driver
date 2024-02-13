@@ -187,7 +187,7 @@ public final class MongoCredential {
      * The provider name. The value must be a string.
      * <p>
      * If this is provided,
-     * {@link MongoCredential#REQUEST_TOKEN_CALLBACK_KEY}
+     * {@link MongoCredential#OIDC_CALLBACK_KEY}
      * must not be provided.
      *
      * @see #createOidcCredential(String)
@@ -206,7 +206,7 @@ public final class MongoCredential {
      * @see #createOidcCredential(String)
      * @since 4.10
      */
-    public static final String REQUEST_TOKEN_CALLBACK_KEY = "REQUEST_TOKEN_CALLBACK";
+    public static final String OIDC_CALLBACK_KEY = "OIDC_CALLBACK";
 
     /**
      * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
@@ -364,7 +364,7 @@ public final class MongoCredential {
      * @since 4.10
      * @see #withMechanismProperty(String, Object)
      * @see #PROVIDER_NAME_KEY
-     * @see #REQUEST_TOKEN_CALLBACK_KEY
+     * @see #OIDC_CALLBACK_KEY
      * @mongodb.server.release 7.0
      */
     public static MongoCredential createOidcCredential(@Nullable final String userName) {
@@ -602,6 +602,11 @@ public final class MongoCredential {
          * @return The timeout that this callback must complete within.
          */
         Duration getTimeout();
+
+        /**
+         * @return The OIDC callback version.
+         */
+        int getVersion();
     }
 
     /**

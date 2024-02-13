@@ -34,7 +34,6 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.jetbrains.annotations.NotNull;
 
 import javax.security.sasl.SaslClient;
 import java.io.IOException;
@@ -45,14 +44,12 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.MongoCredential.OidcRequestCallback;
 import static com.mongodb.MongoCredential.OidcRequestContext;
 import static com.mongodb.MongoCredential.PROVIDER_NAME_KEY;
-import static com.mongodb.MongoCredential.REQUEST_TOKEN_CALLBACK_KEY;
+import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -70,6 +67,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final Duration CALLBACK_TIMEOUT = Duration.ofMinutes(5);
 
     private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
+    private static final int CALLBACK_API_VERSION_NUMBER = 1;
 
     @Nullable
     private String connectionLastAccessToken;
@@ -78,9 +76,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     @Nullable
     private BsonDocument speculativeAuthenticateResponse;
-
-    @Nullable
-    private Function<byte[], byte[]> evaluateChallengeFunction;
 
     public OidcAuthenticator(final MongoCredentialWithCache credential,
             final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
@@ -110,7 +105,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             if (isAutomaticAuthentication()) {
                 return wrapInSpeculative(prepareAwsTokenFromFileAsJwt());
             }
-            String cachedAccessToken = getValidCachedAccessToken();
+            String cachedAccessToken = getCachedAccessToken();
             if (cachedAccessToken != null) {
                 return wrapInSpeculative(prepareTokenAsJwt(cachedAccessToken));
             } else {
@@ -122,7 +117,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
-    @NotNull
     private BsonDocument wrapInSpeculative(final byte[] outToken) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken)
                 .append("db", new BsonString(getMongoCredential().getSource()));
@@ -151,32 +145,27 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private OidcRequestCallback getRequestCallback() {
         return getMongoCredentialWithCache()
                 .getCredential()
-                .getMechanismProperty(REQUEST_TOKEN_CALLBACK_KEY, null);
+                .getMechanismProperty(OIDC_CALLBACK_KEY, null);
     }
 
     @Override
     public void reauthenticate(final InternalConnection connection) {
         assertTrue(connection.opened());
-        authLock(connection, connection.getDescription());
+        authenticationLoop(connection, connection.getDescription());
     }
 
     @Override
     public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
             assertTrue(connection.opened());
-            authLockAsync(connection, connection.getDescription(), c);
+            authenticationLoopAsync(connection, connection.getDescription(), c);
         }).finish(callback);
     }
 
     @Override
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
         assertFalse(connection.opened());
-        String accessToken = getValidCachedAccessToken();
-        if (accessToken != null) {
-            authenticateOptimistically(connection, connectionDescription, accessToken);
-        } else {
-            authLock(connection, connectionDescription);
-        }
+        authenticationLoop(connection, connectionDescription);
     }
 
     @Override
@@ -184,35 +173,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
             assertFalse(connection.opened());
-            String accessToken = getValidCachedAccessToken();
-            if (accessToken != null) {
-                authenticateOptimisticallyAsync(connection, connectionDescription, accessToken, c);
-            } else {
-                authLockAsync(connection, connectionDescription, c);
-            }
-        }).finish(callback);
-    }
-
-    private void authenticateOptimistically(final InternalConnection connection,
-            final ConnectionDescription connectionDescription, final String accessToken) {
-        try {
-            authenticateUsingFunction(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken));
-        } catch (MongoSecurityException e) {
-            if (triggersRetry(e)) {
-                authLock(connection, connectionDescription);
-            } else {
-                throw e;
-            }
-        }
-    }
-
-    private void authenticateOptimisticallyAsync(final InternalConnection connection,
-            final ConnectionDescription connectionDescription, final String accessToken,
-            final SingleResultCallback<Void> callback) {
-        beginAsync().thenRun(c -> {
-            authenticateUsingFunctionAsync(connection, connectionDescription, (challenge) -> prepareTokenAsJwt(accessToken), c);
-        }).onErrorIf(e -> triggersRetry(e), c -> {
-            authLockAsync(connection, connectionDescription, c);
+            authenticationLoopAsync(connection, connectionDescription, c);
         }).finish(callback);
     }
 
@@ -228,57 +189,57 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return false;
     }
 
-    private void authenticateUsingFunctionAsync(final InternalConnection connection,
-            final ConnectionDescription connectionDescription, final Function<byte[], byte[]> evaluateChallengeFunction,
-            final SingleResultCallback<Void> callback) {
-        this.evaluateChallengeFunction = evaluateChallengeFunction;
-        super.authenticateAsync(connection, connectionDescription, callback);
-    }
-
-    private void authenticateUsingFunction(
-            final InternalConnection connection,
-            final ConnectionDescription connectionDescription,
-            final Function<byte[], byte[]> evaluateChallengeFunction) {
-        this.evaluateChallengeFunction = evaluateChallengeFunction;
-        super.authenticate(connection, connectionDescription);
-    }
-
-    private void authLock(final InternalConnection connection, final ConnectionDescription description) {
+    private void authenticationLoop(final InternalConnection connection, final ConnectionDescription description) {
         fallbackState = FallbackState.INITIAL;
-        Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
-            while (true) {
-                try {
-                    authenticateUsingFunction(connection, description, (challenge) -> evaluate(challenge));
-                    break;
-                } catch (MongoSecurityException e) {
-                    if (triggersRetry(e) && shouldRetryHandler()) {
-                        continue;
-                    }
-                    throw e;
+        while (true) {
+            try {
+                super.authenticate(connection, description);
+                break;
+            } catch (MongoSecurityException e) {
+                if (triggersRetry(e) && shouldRetryHandler()) {
+                    continue;
                 }
+                throw e;
             }
-        });
+        }
     }
 
-    private void authLockAsync(final InternalConnection connection, final ConnectionDescription description,
+    private void authenticationLoopAsync(final InternalConnection connection, final ConnectionDescription description,
             final SingleResultCallback<Void> callback) {
         fallbackState = FallbackState.INITIAL;
-        Locks.withLockAsync(getMongoCredentialWithCache().getOidcLock(),
-                beginAsync().thenRunRetryingWhile(
-                        c -> authenticateUsingFunctionAsync(connection, description, (challenge) -> evaluate(challenge), c),
-                        e -> triggersRetry(e) && shouldRetryHandler()
-                ), callback);
+        beginAsync().thenRunRetryingWhile(
+                c -> super.authenticateAsync(connection, description, c),
+                e -> triggersRetry(e) && shouldRetryHandler()
+        ).finish(callback);
     }
 
     private byte[] evaluate(final byte[] challenge) {
         if (isAutomaticAuthentication()) {
             return prepareAwsTokenFromFileAsJwt();
         }
+        byte[][] jwt = new byte[1][];
+        Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
+            String cachedAccessToken = validatedCachedAccessToken();
 
-        OidcRequestCallback requestCallback = assertNotNull(getRequestCallback());
+            if (cachedAccessToken != null) {
+                jwt[0] = prepareTokenAsJwt(cachedAccessToken);
+                fallbackState = FallbackState.PHASE_1_CACHED_TOKEN;
+            } else {
+                // cache is empty
+                OidcRequestCallback requestCallback = assertNotNull(getRequestCallback());
+                RequestCallbackResult result = requestCallback.onRequest(new OidcRequestContextImpl(CALLBACK_TIMEOUT));
+                jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(result);
+                fallbackState = FallbackState.PHASE_2_CALLBACK_TOKEN;
+            }
+        });
+        return jwt[0];
+    }
+
+    @Nullable
+    private String validatedCachedAccessToken() {
         MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
         OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
-        String cachedAccessToken = getValidCachedAccessToken();
+        String cachedAccessToken = getCachedAccessToken();
         String invalidConnectionAccessToken = connectionLastAccessToken;
 
         if (cachedAccessToken != null) {
@@ -288,15 +249,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 cachedAccessToken = null;
             }
         }
-        if (cachedAccessToken != null) {
-            fallbackState = FallbackState.PHASE_1_CACHED_TOKEN;
-            return prepareTokenAsJwt(cachedAccessToken);
-        } else {
-            // cache is empty
-            fallbackState = FallbackState.PHASE_2_REQUEST_CALLBACK_TOKEN;
-            RequestCallbackResult result = requestCallback.onRequest(new OidcRequestContextImpl(CALLBACK_TIMEOUT));
-            return populateCacheWithCallbackResultAndPrepareJwt(result);
-        }
+        return cachedAccessToken;
     }
 
     private boolean isAutomaticAuthentication() {
@@ -308,26 +261,17 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private boolean shouldRetryHandler() {
-        MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
-        OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
-        if (fallbackState == FallbackState.PHASE_1_CACHED_TOKEN) {
-            // a cached access token failed
-            mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
-                    .clearAccessToken());
-        } else {
-            // a clean-restart failed
-            mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
-                    .clearAccessToken());
-            return false;
-        }
-        return true;
+        Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
+            validatedCachedAccessToken();
+        });
+        return fallbackState == FallbackState.PHASE_1_CACHED_TOKEN;
     }
 
     @Nullable
-    private String getValidCachedAccessToken() {
+    private String getCachedAccessToken() {
         return getMongoCredentialWithCache()
                 .getOidcCacheEntry()
-                .getValidCachedAccessToken();
+                .getCachedAccessToken();
     }
 
     static final class OidcCacheEntry {
@@ -354,7 +298,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
 
         @Nullable
-        String getValidCachedAccessToken() {
+        String getCachedAccessToken() {
             return accessToken;
         }
 
@@ -371,7 +315,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
         @Override
         public byte[] evaluateChallenge(final byte[] challenge) {
-            return assertNotNull(evaluateChallengeFunction).apply(challenge);
+            return evaluate(challenge);
         }
 
         @Override
@@ -396,14 +340,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
-    private static byte[] prepareUsername(@Nullable final String username) {
-        BsonDocument document = new BsonDocument();
-        if (username != null) {
-            document = document.append("n", new BsonString(username));
-        }
-        return toBson(document);
-    }
-
     private byte[] populateCacheWithCallbackResultAndPrepareJwt(@Nullable final RequestCallbackResult requestCallbackResult) {
         if (requestCallbackResult == null) {
             throw new MongoConfigurationException("Result of callback must not be null");
@@ -411,18 +347,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         OidcCacheEntry newEntry = new OidcCacheEntry(requestCallbackResult);
         getMongoCredentialWithCache().setOidcCacheEntry(newEntry);
         return prepareTokenAsJwt(requestCallbackResult.getAccessToken());
-    }
-
-    @Nullable
-    private static List<String> getStringArray(final BsonDocument document, final String key) {
-        if (!document.isArray(key)) {
-            return null;
-        }
-        return document.getArray(key).stream()
-                // ignore non-string values from server, rather than error
-                .filter(v -> v.isString())
-                .map(v -> v.asString().getValue())
-                .collect(Collectors.toList());
     }
 
     private byte[] prepareTokenAsJwt(final String accessToken) {
@@ -473,12 +397,12 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         public static void validateBeforeUse(final MongoCredential credential) {
             String userName = credential.getUserName();
             Object providerName = credential.getMechanismProperty(PROVIDER_NAME_KEY, null);
-            Object requestCallback = credential.getMechanismProperty(REQUEST_TOKEN_CALLBACK_KEY, null);
+            Object requestCallback = credential.getMechanismProperty(OIDC_CALLBACK_KEY, null);
             if (providerName == null) {
                 // callback
                 if (requestCallback == null) {
                     throw new IllegalArgumentException("Either " + PROVIDER_NAME_KEY + " or "
-                            + REQUEST_TOKEN_CALLBACK_KEY + " must be specified");
+                            + OIDC_CALLBACK_KEY + " must be specified");
                 }
             } else {
                 // automatic
@@ -486,7 +410,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     throw new IllegalArgumentException("user name must not be specified when " + PROVIDER_NAME_KEY + " is specified");
                 }
                 if (requestCallback != null) {
-                    throw new IllegalArgumentException(REQUEST_TOKEN_CALLBACK_KEY + " must not be specified when " + PROVIDER_NAME_KEY + " is specified");
+                    throw new IllegalArgumentException(OIDC_CALLBACK_KEY + " must not be specified when " + PROVIDER_NAME_KEY + " is specified");
                 }
             }
         }
@@ -505,14 +429,19 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         public Duration getTimeout() {
             return timeout;
         }
+
+        @Override
+        public int getVersion() {
+            return CALLBACK_API_VERSION_NUMBER;
+        }
     }
 
     /**
-     * Represents what was sent in the last request to the MongoDB server.
+     * What was sent in the last request by this connection to the server.
      */
     private enum FallbackState {
         INITIAL,
         PHASE_1_CACHED_TOKEN,
-        PHASE_2_REQUEST_CALLBACK_TOKEN
+        PHASE_2_CALLBACK_TOKEN
     }
 }
