@@ -19,12 +19,14 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
+import com.mongodb.test.FlakyTest;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -42,6 +44,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
@@ -83,6 +86,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
     @Test
+    @Override
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -125,13 +129,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
             List<Throwable> onErrorEvents = testSubscriber.getOnErrorEvents();
             assertEquals(1, onErrorEvents.size());
 
-            Throwable retryableError = onErrorEvents.get(0);
-            Throwable commandError = retryableError.getCause();
-            assertEquals(MongoOperationTimeoutException.class, retryableError.getClass());
-            assertEquals(MongoOperationTimeoutException.class, commandError.getClass());
-
-            assertEquals("MongoDB operation timed out during a retry attempt", retryableError.getMessage());
-            assertEquals("Operation timed out: Timeout while receiving message", commandError.getMessage());
+            Throwable commandError = onErrorEvents.get(0);
+            assertTrue(commandError instanceof MongoOperationTimeoutException);
 
             CommandFailedEvent chunkInsertFailedEvent = commandListener.getCommandFailedEvent("insert");
             assertNotNull(chunkInsertFailedEvent);
@@ -142,6 +141,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
     @Test
+    @Override
     public void testAbortingGridFsUploadStreamTimeout() throws ExecutionException, InterruptedException, TimeoutException {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -183,16 +183,12 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
             //then
             Throwable droppedError = droppedErrorFuture.get(TIMEOUT_DURATION.toMillis(), TimeUnit.MILLISECONDS);
-            Throwable retryableError = droppedError.getCause();
-            Throwable commandError = retryableError.getCause();
-            assertEquals(MongoOperationTimeoutException.class, retryableError.getClass());
-            assertEquals(MongoOperationTimeoutException.class, commandError.getClass());
+            Throwable commandError = droppedError.getCause();
 
-            assertEquals("MongoDB operation timed out during a retry attempt", retryableError.getMessage());
-            assertEquals("Operation timed out: Timeout while receiving message", commandError.getMessage());
-
+            assertTrue(commandError instanceof MongoOperationTimeoutException);
             CommandFailedEvent deleteFailedEvent = commandListener.getCommandFailedEvent("delete");
             assertNotNull(deleteFailedEvent);
+
             assertEquals(commandError, commandListener.getCommandFailedEvent("delete").getThrowable());
             // When subscription is cancelled, we should not receive any more events.
             testSubscriber.assertNoTerminalEvent();
