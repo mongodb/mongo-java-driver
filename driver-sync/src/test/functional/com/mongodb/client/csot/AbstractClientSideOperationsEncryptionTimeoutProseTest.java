@@ -22,13 +22,16 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
@@ -47,6 +50,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 import java.util.Base64;
@@ -60,6 +65,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -97,7 +103,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         localProviderMap.put("key", Base64.getDecoder().decode(MASTER_KEY));
         kmsProviders.put("local", localProviderMap);
 
-        try (ClientEncryption clientEncryption = createClientEncryption(rtt + 40)) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 40))) {
 
             keyVaultCollectionHelper.runAdminCommand("{"
                     + "  configureFailPoint: \"failCommand\","
@@ -126,7 +132,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
 
-        try (ClientEncryption clientEncryption = createClientEncryption(rtt + 60)) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 60))) {
 
             clientEncryption.createDataKey("local");
 
@@ -162,7 +168,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         long rtt = ClusterFixture.getPrimaryRTT();
 
         BsonBinary encrypted;
-        try (ClientEncryption clientEncryption = createClientEncryption(rtt + 60)) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 65))) {
             clientEncryption.createDataKey("local");
             BsonBinary dataKey = clientEncryption.createDataKey("local");
             EncryptOptions encryptOptions = new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic");
@@ -170,7 +176,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
             encrypted = clientEncryption.encrypt(new BsonString("hello"), encryptOptions);
         }
 
-        try (ClientEncryption clientEncryption = createClientEncryption(rtt + 65)) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 65))) {
             keyVaultCollectionHelper.runAdminCommand("{"
                     + "  configureFailPoint: \"failCommand\","
                     + "  mode: { times: 1 },"
@@ -194,13 +200,15 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
-    @Disabled // TODO JAVA-5322. We have to reset timeoutMS for encrypted command.
+    @Disabled
+    // TODO JAVA-5322. We have to reset timeoutMS for encrypted command.
     void shouldDecreaseOperationTimeoutForSubsequentOperations() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
         long initialTimeoutMS = rtt + 900;
 
-        try (ClientEncryption clientEncryption = createClientEncryption(initialTimeoutMS)) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder()
+                .timeout(initialTimeoutMS, MILLISECONDS))) {
             BsonBinary dataKeyId = clientEncryption.createDataKey("local", new DataKeyOptions());
             String base64DataKeyId = Base64.getEncoder().encodeToString(dataKeyId.getData());
 
@@ -254,6 +262,58 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         }
     }
 
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"insert", "create"})
+    @Tag("setsFailPoint")
+    void shouldThrowTimeoutExceptionWhenCreateEncryptedCollection(final String commandToTimeout) {
+        assumeTrue(serverVersionAtLeast(7, 0));
+        //given
+        long rtt = ClusterFixture.getPrimaryRTT();
+        long initialTimeoutMS = rtt + 200;
+
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder()
+                .timeout(initialTimeoutMS, MILLISECONDS))) {
+            final String dbName = "test";
+            final String collName = "coll";
+
+            try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                    .timeout(initialTimeoutMS, MILLISECONDS))) {
+                CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions().encryptedFields(Document.parse(
+                        "{"
+                                + "  fields: [{"
+                                + "    path: 'ssn',"
+                                + "    bsonType: 'string',"
+                                + "    keyId: null"
+                                + "  }]"
+                                + "}"));
+
+                keyVaultCollectionHelper.runAdminCommand("{"
+                        + "  configureFailPoint: \"failCommand\","
+                        + "  mode: { times: 1 },"
+                        + "  data: {"
+                        + "    failCommands: [\"" + commandToTimeout + "\"],"
+                        + "    blockConnection: true,"
+                        + "    blockTimeMS: " + initialTimeoutMS
+                        + "  }"
+                        + "}");
+
+                MongoDatabase database = mongoClient.getDatabase(dbName);
+                database.getCollection(collName).drop();
+                commandListener.reset();
+
+                //when
+                MongoUpdatedEncryptedFieldsException encryptionException = assertThrows(MongoUpdatedEncryptedFieldsException.class, () ->
+                        clientEncryption.createEncryptedCollection(database, collName, createCollectionOptions,
+                                new CreateEncryptedCollectionParams("local")));
+                //then
+                assertInstanceOf(MongoOperationTimeoutException.class, encryptionException.getCause());
+            }
+        }
+    }
+
     private static void assertTimeoutIsDecreasingForCommands(final List<String> commandNames,
                                                              final List<CommandStartedEvent> commandStartedEvents,
                                                              final long initialTimeoutMs) {
@@ -280,17 +340,20 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         }
     }
 
-
-    protected ClientEncryption createClientEncryption(final long timeout) {
-        return createClientEncryption(getClientEncryptionSettingsBuilds(timeout));
-    }
-
-    protected ClientEncryptionSettings.Builder getClientEncryptionSettingsBuilds(final long timeout) {
+    protected ClientEncryptionSettings.Builder getClientEncryptionSettingsBuilder(final long vaultTimeout) {
         return ClientEncryptionSettings
                 .builder()
                 .keyVaultNamespace(keyVaultNamespace.getFullName())
                 .keyVaultMongoClientSettings(getMongoClientSettingsBuilder()
-                        .timeout(timeout, TimeUnit.MILLISECONDS).build())
+                        .timeout(vaultTimeout, TimeUnit.MILLISECONDS).build())
+                .kmsProviders(KMS_PROVIDERS);
+    }
+
+    protected ClientEncryptionSettings.Builder getClientEncryptionSettingsBuilder() {
+        return ClientEncryptionSettings
+                .builder()
+                .keyVaultNamespace(keyVaultNamespace.getFullName())
+                .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
                 .kmsProviders(KMS_PROVIDERS);
     }
 
