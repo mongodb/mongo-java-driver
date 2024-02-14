@@ -94,7 +94,7 @@ public final class TimeoutHelper {
 
     public static Mono<MongoDatabase> databaseWithTimeoutDeferred(final MongoDatabase database,
                                                                   @Nullable final Timeout timeout) {
-        return Mono.defer(() -> databaseWithTimeoutMono(database, DEFAULT_TIMEOUT_MESSAGE, timeout));
+        return databaseWithTimeoutDeferred(database, DEFAULT_TIMEOUT_MESSAGE, timeout);
     }
 
     public static Mono<MongoDatabase> databaseWithTimeoutDeferred(final MongoDatabase database,
