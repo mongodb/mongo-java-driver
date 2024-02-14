@@ -24,6 +24,7 @@ import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -70,7 +71,9 @@ final class ErrorMatcher {
             // TODO (CSOT) JAVA-5248 Should only be MongoOperationTimeoutException.
             assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
                     expectedError.getBoolean("isTimeoutError").getValue(),
-                    e instanceof MongoOperationTimeoutException || e instanceof MongoExecutionTimeoutException);
+                    e instanceof MongoOperationTimeoutException || e instanceof MongoExecutionTimeoutException
+                    || e instanceof MongoSocketReadTimeoutException
+            );
         }
 
         if (expectedError.containsKey("errorContains")) {

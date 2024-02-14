@@ -100,7 +100,7 @@
   "tests": [
     {
       "description": "timeoutMS applied to listCollections to get collection schema",
-      "comment": "Updated timeoutMS and blockTimeMS manually to address race conditions in tests with  SSL handshake.",
+      "comment": "Updated timeoutMS and blockTimeMS manually to address race conditions in tests with SSL handshake.",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {

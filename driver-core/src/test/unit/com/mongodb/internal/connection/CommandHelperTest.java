@@ -52,6 +52,7 @@ public class CommandHelperTest {
             new ServerId(new ClusterId("cluster"), new ServerAddress()));
 
     @Test
+    @SuppressWarnings("unchecked")
     void testExecuteCommand() {
         InternalConnection internalConnection = mock(InternalConnection.class);
         OperationContext operationContext = createOperationContext();
@@ -67,6 +68,7 @@ public class CommandHelperTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void testExecuteCommandWithoutCheckingForFailure() {
         InternalConnection internalConnection = mock(InternalConnection.class);
         OperationContext operationContext = createOperationContext();
@@ -84,6 +86,7 @@ public class CommandHelperTest {
 
 
     @Test
+    @SuppressWarnings("unchecked")
     void testExecuteCommandAsyncUsesTheOperationContext() {
         InternalConnection internalConnection = mock(InternalConnection.class);
         OperationContext operationContext = createOperationContext();
