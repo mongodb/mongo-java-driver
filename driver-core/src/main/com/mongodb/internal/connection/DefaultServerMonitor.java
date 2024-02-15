@@ -165,8 +165,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     logStateChange(previousServerDescription, currentServerDescription);
                     sdamProvider.get().update(currentServerDescription);
 
-                    if (((connection == null || shouldStreamResponses(currentServerDescription))
-                            && currentServerDescription.getTopologyVersion() != null && currentServerDescription.getType() != UNKNOWN)
+                    if ((shouldStreamResponses(currentServerDescription) && currentServerDescription.getType() != UNKNOWN)
                             || (connection != null && connection.hasMoreToCome())
                             || (currentServerDescription.getException() instanceof MongoSocketException
                             && previousServerDescription.getType() != UNKNOWN)) {
@@ -199,7 +198,8 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
                 }
-                serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(connection.getDescription().getConnectionId()));
+                serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
+                        connection.getDescription().getConnectionId(), shouldStreamResponses(currentServerDescription)));
 
                 long start = System.nanoTime();
                 try {
@@ -227,13 +227,13 @@ class DefaultServerMonitor implements ServerMonitor {
                     long elapsedTimeNanos = System.nanoTime() - start;
                     serverMonitorListener.serverHeartbeatSucceeded(
                             new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
-                                    elapsedTimeNanos, currentServerDescription.getTopologyVersion() != null));
+                                    elapsedTimeNanos, shouldStreamResponses(currentServerDescription)));
 
                     return createServerDescription(serverId.getAddress(), helloResult, averageRoundTripTime.getAverage());
                 } catch (Exception e) {
                     serverMonitorListener.serverHeartbeatFailed(
                             new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
-                                    currentServerDescription.getTopologyVersion() != null, e));
+                                    shouldStreamResponses(currentServerDescription), e));
                     throw e;
                 }
             } catch (Throwable t) {
