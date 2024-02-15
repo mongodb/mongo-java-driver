@@ -23,6 +23,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
+import com.mongodb.connection.ServerMonitoringMode;
+import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
@@ -120,6 +122,7 @@ public final class Entities {
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
+    private final Map<String, TestServerMonitorListener> serverMonitorListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
     private final Map<String, ClusterDescription> topologyDescriptions = new HashMap<>();
     private final Map<String, Long> successCounts = new HashMap<>();
@@ -284,6 +287,10 @@ public final class Entities {
         return getEntity(id + "-cluster-listener", clientClusterListeners, "cluster listener");
     }
 
+    public TestServerMonitorListener getServerMonitorListener(final String id) {
+        return getEntity(id + "-server-monitor-listener", serverMonitorListeners, "server monitor listener");
+    }
+
     private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
         T entity = entities.get(id);
         if (entity == null) {
@@ -376,23 +383,25 @@ public final class Entities {
         putEntity(id + "-cluster-listener", testClusterListener, clientClusterListeners);
 
         if (entity.containsKey("observeEvents")) {
+            List<String> observeEvents = entity.getArray("observeEvents").stream()
+                    .map(type -> type.asString().getValue()).collect(Collectors.toList());
             List<String> ignoreCommandMonitoringEvents = entity
                     .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
                     .map(type -> type.asString().getValue()).collect(Collectors.toList());
             ignoreCommandMonitoringEvents.add("configureFailPoint");
-            TestCommandListener testCommandListener = new TestCommandListener(
-                    entity.getArray("observeEvents").stream()
-                            .map(type -> type.asString().getValue()).collect(Collectors.toList()),
+            TestCommandListener testCommandListener = new TestCommandListener(observeEvents,
                     ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue());
             clientSettingsBuilder.addCommandListener(testCommandListener);
             putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
 
-            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(
-                    entity.getArray("observeEvents").stream()
-                            .map(type -> type.asString().getValue()).collect(Collectors.toList()));
+            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(observeEvents);
             clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
                     builder.addConnectionPoolListener(testConnectionPoolListener));
             putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
+
+            TestServerMonitorListener testServerMonitorListener = new TestServerMonitorListener(observeEvents);
+            clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerMonitorListener(testServerMonitorListener));
+            putEntity(id + "-server-monitor-listener", testServerMonitorListener, serverMonitorListeners);
         } else {
             // Regardless of whether events are observed, we still need to track some info about the pool in order to implement
             // the assertNumberConnectionsCheckedOut operation
@@ -497,6 +506,10 @@ public final class Entities {
                     case "appname":
                     case "appName":
                         clientSettingsBuilder.applicationName(value.asString().getValue());
+                        break;
+                    case "serverMonitoringMode":
+                        clientSettingsBuilder.applyToServerSettings(builder -> builder.serverMonitoringMode(
+                                ServerMonitoringMode.fromString(value.asString().getValue())));
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported uri option: " + key);
