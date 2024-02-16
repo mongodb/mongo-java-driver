@@ -24,18 +24,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.Assume.assumeFalse;
-
 public class WithTransactionHelperTransactionsTest extends UnifiedSyncTest {
     public WithTransactionHelperTransactionsTest(@SuppressWarnings("unused") final String fileDescription,
             @SuppressWarnings("unused") final String testDescription,
             final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
-        assumeFalse(testDescription.equals("commitTransaction is not retried after UnsatisfiableWriteConcern error"));
-        assumeFalse(testDescription.equals("commitTransaction is not retried after MaxTimeMSExpired error"));
-        assumeFalse(testDescription.equals("commitTransaction is not retried after UnknownReplWriteConcern error"));
-        assumeFalse(testDescription.equals("commit is not retried after MaxTimeMSExpired error"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
