@@ -25,6 +25,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
+import com.mongodb.internal.connection.OidcAuthenticator;
 import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
@@ -69,6 +70,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonNumber;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
@@ -510,16 +512,19 @@ public final class Entities {
                     case "authMechanism":
                         if (value.equals(new BsonString(AuthenticationMechanism.MONGODB_OIDC.getMechanismName()))) {
                             clientSettingsBuilder.credential(MongoCredential.createOidcCredential(null));
+                            break;
                         }
-                        break;
+                        throw new UnsupportedOperationException("Unsupported authMechanism: " + value);
                     case "authMechanismProperties":
                         MongoCredential credential = clientSettingsBuilder.build().getCredential();
-                        if (credential != null && credential.getAuthenticationMechanism() == AuthenticationMechanism.MONGODB_OIDC) {
-                            MongoCredential c = credential;
-                            clientSettingsBuilder.credential(c.withMechanismProperty(
+                        boolean isOidc = credential != null
+                                && credential.getAuthenticationMechanism() == AuthenticationMechanism.MONGODB_OIDC;
+                        boolean hasPlaceholder = value.equals(new BsonDocument("$$placeholder", new BsonInt32(1)));
+                        if (isOidc && hasPlaceholder) {
+                            clientSettingsBuilder.credential(credential.withMechanismProperty(
                                     MongoCredential.OIDC_CALLBACK_KEY,
                                     (MongoCredential.OidcRequestCallback) context -> {
-                                        Path path = Paths.get(getenv("AWS_WEB_IDENTITY_TOKEN_FILE"));
+                                        Path path = Paths.get(getenv(OidcAuthenticator.AWS_WEB_IDENTITY_TOKEN_FILE));
                                         String accessToken;
                                         try {
                                             accessToken = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
@@ -528,8 +533,9 @@ public final class Entities {
                                         }
                                         return new MongoCredential.RequestCallbackResult(accessToken);
                                     }));
+                            break;
                         }
-                        break;
+                        throw new UnsupportedOperationException("Failure to apply authMechanismProperties: " + value);
                     default:
                         throw new UnsupportedOperationException("Unsupported uri option: " + key);
                 }

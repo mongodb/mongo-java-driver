@@ -75,10 +75,10 @@ final class RunOnRequirementsMatcher {
                         }
                         break;
                     case "authMechanism":
-                        boolean containsOIDC = getServerParameters()
+                        boolean containsMechanism = getServerParameters()
                                 .getArray("authenticationMechanisms")
                                 .contains(curRequirement.getValue());
-                        if (!containsOIDC) {
+                        if (!containsMechanism) {
                             requirementMet = false;
                             break requirementLoop;
                         }

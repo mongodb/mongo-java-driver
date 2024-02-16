@@ -66,7 +66,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     private static final Duration CALLBACK_TIMEOUT = Duration.ofMinutes(5);
 
-    private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
+    public static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
     private static final int CALLBACK_API_VERSION_NUMBER = 1;
 
     @Nullable

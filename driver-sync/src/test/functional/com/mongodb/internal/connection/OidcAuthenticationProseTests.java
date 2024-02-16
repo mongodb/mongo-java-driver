@@ -78,8 +78,6 @@ public class OidcAuthenticationProseTests {
         return Boolean.parseBoolean(getenv().get("OIDC_TESTS_ENABLED"));
     }
 
-    private static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
-
     private String appName;
 
     protected static String getOidcUri() {
@@ -410,7 +408,7 @@ public class OidcAuthenticationProseTests {
             try {
                 invocations.incrementAndGet();
                 Path path = Paths.get(pathSupplier == null
-                        ? getenv(AWS_WEB_IDENTITY_TOKEN_FILE)
+                        ? getenv(OidcAuthenticator.AWS_WEB_IDENTITY_TOKEN_FILE)
                         : pathSupplier.get());
                 String accessToken;
                 try {
