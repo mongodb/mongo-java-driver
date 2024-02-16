@@ -167,7 +167,21 @@ public final class CollectionHelper<T> {
         if (validationOptions.getValidationAction() != null) {
             operation.validationAction(validationOptions.getValidationAction());
         }
-        operation.execute(getBinding());
+
+        boolean success = false;
+        while (!success) {
+            try {
+                operation.execute(getBinding());
+                success = true;
+            } catch (MongoCommandException e) {
+                if ("Interrupted".equals(e.getErrorCodeName())) {
+                    LOGGER.info("Retrying create collection after a write concern error: " + e);
+                    // repeat until success!
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     public void killCursor(final MongoNamespace namespace, final ServerCursor serverCursor) {
