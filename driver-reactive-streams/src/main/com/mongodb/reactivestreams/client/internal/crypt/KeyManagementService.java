@@ -17,6 +17,8 @@
 package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
@@ -150,7 +152,7 @@ class KeyManagementService implements Closeable {
     }
 
     private static void handleError(final Throwable t, final OperationContext operationContext, final MonoSink<Void> sink) {
-        if (t instanceof InterruptedByTimeoutException && operationContext.getTimeoutContext().hasTimeoutMS()) {
+        if (isTimeoutException(t) && operationContext.getTimeoutContext().hasTimeoutMS()) {
             sink.error(TimeoutContext.createMongoTimeoutException(TIMEOUT_ERROR_MESSAGE, t));
         } else {
             sink.error(t);
@@ -178,5 +180,11 @@ class KeyManagementService implements Closeable {
 
     private Throwable unWrapException(final Throwable t) {
         return t instanceof MongoSocketException ? t.getCause() : t;
+    }
+
+    private static boolean isTimeoutException(Throwable t) {
+        return t instanceof MongoSocketReadTimeoutException ||
+                t instanceof MongoSocketWriteTimeoutException ||
+                t instanceof InterruptedByTimeoutException;
     }
 }
