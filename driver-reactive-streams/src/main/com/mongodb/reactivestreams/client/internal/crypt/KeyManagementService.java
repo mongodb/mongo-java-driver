@@ -182,9 +182,9 @@ class KeyManagementService implements Closeable {
         return t instanceof MongoSocketException ? t.getCause() : t;
     }
 
-    private static boolean isTimeoutException(Throwable t) {
-        return t instanceof MongoSocketReadTimeoutException ||
-                t instanceof MongoSocketWriteTimeoutException ||
-                t instanceof InterruptedByTimeoutException;
+    private static boolean isTimeoutException(final Throwable t) {
+        return t instanceof MongoSocketReadTimeoutException
+                || t instanceof MongoSocketWriteTimeoutException
+                || t instanceof InterruptedByTimeoutException;
     }
 }
