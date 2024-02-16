@@ -27,7 +27,6 @@ import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
-import org.spockframework.util.Assert;
 
 import java.util.HashSet;
 import java.util.Locale;
