@@ -235,6 +235,9 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return jwt[0];
     }
 
+    /**
+     * Must be guarded by {@link MongoCredentialWithCache#getOidcLock()}.
+     */
     @Nullable
     private String validatedCachedAccessToken() {
         MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();

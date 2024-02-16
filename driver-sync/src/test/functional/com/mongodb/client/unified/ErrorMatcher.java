@@ -77,7 +77,7 @@ final class ErrorMatcher {
             if (e instanceof MongoSecurityException && e.getCause() instanceof MongoCommandException) {
                 errorCodeException = (Exception) e.getCause();
             }
-            assertTrue(context.getMessage("Exception must be of type MongoCommandException or MongoQueryException when checking"
+            assertTrue(context.getMessage("Exception must be of type MongoCommandException or MongoWriteException when checking"
                             + " for error codes, but was " + e.getClass().getSimpleName()),
                     errorCodeException instanceof MongoCommandException
                             || errorCodeException instanceof MongoWriteException);

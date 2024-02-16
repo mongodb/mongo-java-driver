@@ -604,7 +604,7 @@ public final class MongoCredential {
         Duration getTimeout();
 
         /**
-         * @return The OIDC callback version.
+         * @return The OIDC callback API version.
          */
         int getVersion();
     }
