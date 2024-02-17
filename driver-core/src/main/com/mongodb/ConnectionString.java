@@ -18,6 +18,8 @@ package com.mongodb;
 
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerMonitoringMode;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
@@ -111,6 +113,13 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code heartbeatFrequencyMS=ms}: The frequency that the driver will attempt to determine the current state of each server in the
  * cluster.</li>
+ * <li>{@code serverMonitoringMode=enum}: The server monitoring mode, which defines the monitoring protocol to use. Enumerated values:
+ *  <ul>
+ *      <li>{@code stream};</li>
+ *      <li>{@code poll};</li>
+ *      <li>{@code auto} - the default.</li>
+ *  </ul>
+ * </li>
  * </ul>
  * <p>Replica set configuration:</p>
  * <ul>
@@ -307,6 +316,7 @@ public class ConnectionString {
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
     private Integer heartbeatFrequency;
+    private ServerMonitoringMode serverMonitoringMode;
     private String applicationName;
     private List<MongoCompressor> compressorList;
     private UuidRepresentation uuidRepresentation;
@@ -529,6 +539,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("serverselectiontimeoutms");
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
         GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
+        GENERAL_OPTIONS_KEYS.add("servermonitoringmode");
         GENERAL_OPTIONS_KEYS.add("retrywrites");
         GENERAL_OPTIONS_KEYS.add("retryreads");
 
@@ -664,6 +675,9 @@ public class ConnectionString {
                     break;
                 case "heartbeatfrequencyms":
                     heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
+                    break;
+                case "servermonitoringmode":
+                    serverMonitoringMode = ServerMonitoringMode.fromString(value);
                     break;
                 case "appname":
                     applicationName = value;
@@ -1624,6 +1638,20 @@ public class ConnectionString {
     }
 
     /**
+     * The server monitoring mode, which defines the monitoring protocol to use.
+     * <p>
+     * Default is {@link ServerMonitoringMode#AUTO}.</p>
+     *
+     * @return The {@link ServerMonitoringMode}, or {@code null} if unset and the default is to be used.
+     * @see ServerSettings#getServerMonitoringMode()
+     * @since 5.1
+     */
+    @Nullable
+    public ServerMonitoringMode getServerMonitoringMode() {
+        return serverMonitoringMode;
+    }
+
+    /**
      * Gets the logical name of the application.  The application name may be used by the client to identify the application to the server,
      * for use in server logs, slow query logs, and profile collection.
      *
@@ -1704,6 +1732,7 @@ public class ConnectionString {
                 && Objects.equals(serverSelectionTimeout, that.serverSelectionTimeout)
                 && Objects.equals(localThreshold, that.localThreshold)
                 && Objects.equals(heartbeatFrequency, that.heartbeatFrequency)
+                && Objects.equals(serverMonitoringMode, that.serverMonitoringMode)
                 && Objects.equals(applicationName, that.applicationName)
                 && Objects.equals(compressorList, that.compressorList)
                 && Objects.equals(uuidRepresentation, that.uuidRepresentation)
@@ -1717,7 +1746,7 @@ public class ConnectionString {
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
-                applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost, proxyPort,
-                proxyUsername, proxyPassword);
+                serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,
+                proxyPort, proxyUsername, proxyPassword);
     }
 }
