@@ -107,6 +107,9 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     public Publisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        if (mongoOperationPublisher.getTimeoutSettings().getTimeoutMS() == null) {
+            throw new IllegalArgumentException("TimeoutMode requires timeoutMS to be set.");
+        }
         this.timeoutMode = timeoutMode;
         return this;
     }

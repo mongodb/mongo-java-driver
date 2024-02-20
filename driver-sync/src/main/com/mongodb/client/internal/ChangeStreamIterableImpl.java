@@ -24,7 +24,6 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoChangeStreamCursor;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
@@ -89,7 +88,6 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         this.codec = ChangeStreamDocument.createCodec(notNull("resultClass", resultClass), codecRegistry);
         this.changeStreamLevel = notNull("changeStreamLevel", changeStreamLevel);
         this.operations = new SyncOperations<>(namespace, resultClass, readPreference, codecRegistry, retryReads, timeoutSettings);
-        super.timeoutMode(TimeoutMode.ITERATION);
     }
 
     @Override

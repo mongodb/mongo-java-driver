@@ -53,7 +53,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
-import static com.mongodb.internal.operation.OperationHelper.validateTimeoutMode;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
@@ -79,7 +78,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private boolean nameOnly;
     private boolean authorizedCollections;
     private BsonValue comment;
-    private TimeoutMode timeoutMode;
+    private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
     public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
@@ -216,7 +215,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            validateTimeoutMode(operationContext, timeoutMode);
             BsonDocument commandDocument = new BsonDocument("listCollections", new BsonInt32(1))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             putIfNotNull(commandDocument, "filter", filter);

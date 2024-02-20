@@ -51,7 +51,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
-import static com.mongodb.internal.operation.OperationHelper.validateTimeoutMode;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
@@ -71,7 +70,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     private boolean retryReads;
     private int batchSize;
     private BsonValue comment;
-    private TimeoutMode timeoutMode;
+    private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
     public ListIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
@@ -166,7 +165,6 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            validateTimeoutMode(operationContext, timeoutMode);
             BsonDocument commandDocument = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
             addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);

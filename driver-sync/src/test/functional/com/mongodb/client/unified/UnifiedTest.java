@@ -304,6 +304,7 @@ public abstract class UnifiedTest {
     private void assertOperation(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex) {
         OperationResult result = executeOperation(context, operation, operationIndex);
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
+
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
                 assertNull(context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"),

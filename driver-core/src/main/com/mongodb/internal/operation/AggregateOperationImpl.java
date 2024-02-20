@@ -45,7 +45,6 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryab
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
-import static com.mongodb.internal.operation.OperationHelper.validateTimeoutMode;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -191,7 +190,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
-        validateTimeoutMode(operationContext, timeoutMode);
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
         appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());

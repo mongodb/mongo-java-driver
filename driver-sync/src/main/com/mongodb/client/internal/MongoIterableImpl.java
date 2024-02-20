@@ -102,6 +102,9 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     }
 
     public MongoIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        if (timeoutSettings.getTimeoutMS() == null) {
+            throw new IllegalArgumentException("TimeoutMode requires timeoutMS to be set.");
+        }
         this.timeoutMode = timeoutMode;
         return this;
     }

@@ -51,12 +51,6 @@ import static java.lang.String.format;
 final class OperationHelper {
     public static final Logger LOGGER = Loggers.getLogger("operation");
 
-    static void validateTimeoutMode(final OperationContext operationContext, @Nullable final TimeoutMode timeoutMode) {
-        if (timeoutMode != null && !operationContext.getTimeoutContext().hasTimeoutMS()) {
-            throw new MongoClientException("TimeoutMode requires timeoutMS to be set.");
-        }
-    }
-
     static void validateCollationAndWriteConcern(@Nullable final Collation collation, final WriteConcern writeConcern) {
         if (collation != null && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Specifying collation with an unacknowledged WriteConcern is not supported");
