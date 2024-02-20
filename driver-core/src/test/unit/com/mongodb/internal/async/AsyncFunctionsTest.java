@@ -16,6 +16,8 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.client.TestListener;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
@@ -36,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 final class AsyncFunctionsTest {
+    private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0L, 0));
     private final TestListener listener = new TestListener();
     private final InvocationTracker invocationTracker = new InvocationTracker();
     private boolean isTestingAbruptCompletion = false;
@@ -647,6 +650,7 @@ final class AsyncFunctionsTest {
                 },
                 (callback) -> {
                     beginAsync().thenRunRetryingWhile(
+                            TIMEOUT_CONTEXT,
                             c -> async(plainTest(0) ? 1 : 2, c),
                             e -> e.getMessage().equals("exception-1")
                     ).finish(callback);
