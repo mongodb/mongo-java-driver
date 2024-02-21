@@ -50,6 +50,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static com.mongodb.internal.Locks.checkedWithLock;
@@ -76,6 +77,7 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ClusterConnectionMode clusterConnectionMode;
     @Nullable
     private final ServerApi serverApi;
+    private final boolean faas;
     private final ServerSettings serverSettings;
     private final ServerMonitorRunnable monitor;
     private final Thread monitorThread;
@@ -90,6 +92,7 @@ class DefaultServerMonitor implements ServerMonitor {
             final InternalConnectionFactory internalConnectionFactory,
                          final ClusterConnectionMode clusterConnectionMode,
                          @Nullable final ServerApi serverApi,
+                         final boolean faas,
                          final Provider<SdamServerDescriptionManager> sdamProvider) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
@@ -97,6 +100,7 @@ class DefaultServerMonitor implements ServerMonitor {
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
+        this.faas = faas;
         this.sdamProvider = sdamProvider;
         monitor = new ServerMonitorRunnable();
         monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
@@ -251,7 +255,21 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private boolean shouldStreamResponses(final ServerDescription currentServerDescription) {
-            return currentServerDescription.getTopologyVersion() != null;
+            boolean serverSupportsStreaming = currentServerDescription.getTopologyVersion() != null;
+            switch (serverSettings.getServerMonitoringMode()) {
+                case STREAM: {
+                    return serverSupportsStreaming;
+                }
+                case POLL: {
+                    return false;
+                }
+                case AUTO: {
+                    return !faas && serverSupportsStreaming;
+                }
+                default: {
+                    throw fail();
+                }
+            }
         }
 
         private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,

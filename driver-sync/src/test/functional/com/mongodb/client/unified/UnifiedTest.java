@@ -176,6 +176,10 @@ public abstract class UnifiedTest {
                 testDocument};
     }
 
+    protected BsonDocument getDefinition() {
+        return definition;
+    }
+
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     protected abstract GridFSBucket createGridFSBucket(MongoDatabase database);
