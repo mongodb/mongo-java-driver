@@ -38,11 +38,21 @@ import java.util.concurrent.TimeUnit;
 public final class MongoOperationTimeoutException extends MongoTimeoutException {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     */
     public MongoOperationTimeoutException(final String message) {
         super(message);
     }
 
-    public MongoOperationTimeoutException(final String message, final Throwable t) {
-        super(message, t);
+    /**
+     * Construct a new instance
+     * @param message the message
+     * @param cause the cause
+     */
+    public MongoOperationTimeoutException(final String message, final Throwable cause) {
+        super(message, cause);
     }
 }
