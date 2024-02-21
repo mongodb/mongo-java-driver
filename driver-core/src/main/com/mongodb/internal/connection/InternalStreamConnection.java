@@ -383,7 +383,7 @@ public class InternalStreamConnection implements InternalConnection {
                 message, decoder, sessionContext, requestContext, operationContext, c);
         beginAsync().<T>thenSupply(c -> {
             sendAndReceiveAsyncInternal.getAsync(c);
-        }).onErrorIf(e -> reauthenticationIsTriggered(e), c -> {
+        }).onErrorIf(e -> reauthenticationIsTriggered(e), (t, c) -> {
             reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, c);
         }).finish(callback);
     }
