@@ -119,7 +119,7 @@ public class AuthConnectionStringTest extends TestCase {
                     if ("oidcRequest".equals(string)) {
                         credential = credential.withMechanismProperty(
                                 OIDC_CALLBACK_KEY,
-                                (MongoCredential.OidcRequestCallback) (context) -> null);
+                                (MongoCredential.OidcCallback) (context) -> null);
                     } else {
                         fail("Unsupported callback: " + string);
                     }
@@ -176,7 +176,7 @@ public class AuthConnectionStringTest extends TestCase {
             } else if ((document.get(key).isBoolean())) {
                 boolean expectedValue = document.getBoolean(key).getValue();
                 if (OIDC_CALLBACK_KEY.equals(key)) {
-                    assertTrue(actualMechanismProperty instanceof MongoCredential.OidcRequestCallback);
+                    assertTrue(actualMechanismProperty instanceof MongoCredential.OidcCallback);
                     return;
                 }
                 assertNotNull(actualMechanismProperty);

@@ -70,7 +70,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonNumber;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
@@ -523,7 +522,7 @@ public final class Entities {
                         if (isOidc && hasPlaceholder) {
                             clientSettingsBuilder.credential(credential.withMechanismProperty(
                                     MongoCredential.OIDC_CALLBACK_KEY,
-                                    (MongoCredential.OidcRequestCallback) context -> {
+                                    (MongoCredential.OidcCallback) context -> {
                                         Path path = Paths.get(getenv(OidcAuthenticator.AWS_WEB_IDENTITY_TOKEN_FILE));
                                         String accessToken;
                                         try {
@@ -531,7 +530,7 @@ public final class Entities {
                                         } catch (IOException e) {
                                             throw new RuntimeException(e);
                                         }
-                                        return new MongoCredential.RequestCallbackResult(accessToken);
+                                        return new MongoCredential.OidcCallbackResult(accessToken);
                                     }));
                             break;
                         }
