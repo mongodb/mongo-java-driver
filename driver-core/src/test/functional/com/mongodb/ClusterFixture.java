@@ -234,7 +234,7 @@ public final class ClusterFixture {
     }
 
     @Nullable
-    public static String getEnv(String name) {
+    public static String getEnv(final String name) {
         return System.getenv(name);
     }
 
