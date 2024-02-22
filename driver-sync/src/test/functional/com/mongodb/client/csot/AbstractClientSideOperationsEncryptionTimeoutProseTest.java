@@ -103,7 +103,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         localProviderMap.put("key", Base64.getDecoder().decode(MASTER_KEY));
         kmsProviders.put("local", localProviderMap);
 
-        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 40))) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 100))) {
 
             keyVaultCollectionHelper.runAdminCommand("{"
                     + "  configureFailPoint: \"failCommand\","
@@ -111,7 +111,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
                     + "  data: {"
                     + "    failCommands: [\"insert\"],"
                     + "    blockConnection: true,"
-                    + "    blockTimeMS: " + (rtt + 45)
+                    + "    blockTimeMS: " + (rtt + 100)
                     + "  }"
                     + "}");
 
@@ -132,7 +132,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
 
-        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 60))) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 150))) {
 
             clientEncryption.createDataKey("local");
 
@@ -142,7 +142,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
                     + "  data: {"
                     + "    failCommands: [\"find\"],"
                     + "    blockConnection: true,"
-                    + "    blockTimeMS: " + (rtt + 65)
+                    + "    blockTimeMS: " + (rtt + 150)
                     + "  }"
                     + "}");
 
@@ -168,7 +168,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         long rtt = ClusterFixture.getPrimaryRTT();
 
         BsonBinary encrypted;
-        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 65))) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 100))) {
             clientEncryption.createDataKey("local");
             BsonBinary dataKey = clientEncryption.createDataKey("local");
             EncryptOptions encryptOptions = new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic");
@@ -176,7 +176,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
             encrypted = clientEncryption.encrypt(new BsonString("hello"), encryptOptions);
         }
 
-        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 65))) {
+        try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 100))) {
             keyVaultCollectionHelper.runAdminCommand("{"
                     + "  configureFailPoint: \"failCommand\","
                     + "  mode: { times: 1 },"
