@@ -51,10 +51,14 @@ public class TimeoutContext {
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final Throwable cause) {
+        return createMongoTimeoutException("Operation timed out: " + cause.getMessage(), cause);
+    }
+
+    public static MongoOperationTimeoutException createMongoTimeoutException(final String message, final Throwable cause) {
         if (cause instanceof MongoOperationTimeoutException) {
             return (MongoOperationTimeoutException) cause;
         }
-        return new MongoOperationTimeoutException("Operation timed out: " + cause.getMessage(), cause);
+        return new MongoOperationTimeoutException(message, cause);
     }
 
     public static TimeoutContext createMaintenanceTimeoutContext(final TimeoutSettings timeoutSettings) {
@@ -63,6 +67,10 @@ public class TimeoutContext {
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(false, timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
+    }
+
+    public TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+        this(false, timeoutSettings, timeout);
     }
 
     TimeoutContext(final boolean isMaintenanceContext, final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
@@ -270,5 +278,10 @@ public class TimeoutContext {
 
     public int getConnectTimeoutMs() {
         return (int) getTimeoutSettings().getConnectTimeoutMS();
+    }
+
+    @Nullable
+    public Timeout getTimeout() {
+        return timeout;
     }
 }

@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -36,6 +37,7 @@ import org.bson.BsonString;
 import org.bson.BsonUndefined;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
@@ -93,6 +96,11 @@ public abstract class AbstractClientSideEncryptionTest {
         return definition;
     }
 
+
+    private boolean hasTimeoutError(@Nullable final BsonValue expectedResult) {
+        return hasErrorField(expectedResult, "isTimeoutError");
+    }
+
     private boolean hasErrorContainsField(@Nullable final BsonValue expectedResult) {
         return hasErrorField(expectedResult, "errorContains");
     }
@@ -127,7 +135,6 @@ public abstract class AbstractClientSideEncryptionTest {
         assumeTrue("Client side encryption tests disabled", hasEncryptionTestsEnabled());
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
-        assumeFalse("Skipping timeoutMS tests", filename.startsWith("timeoutMS."));
 
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
@@ -262,6 +269,11 @@ public abstract class AbstractClientSideEncryptionTest {
         MongoClientSettings.Builder mongoClientSettingsBuilder = Fixture.getMongoClientSettingsBuilder()
                         .addCommandListener(commandListener);
 
+        if (clientOptions.containsKey("timeoutMS")) {
+            long timeoutMs = clientOptions.getInt32("timeoutMS").longValue();
+            mongoClientSettingsBuilder.timeout(timeoutMs, TimeUnit.MILLISECONDS);
+        }
+
         if (!kmsProvidersMap.isEmpty()) {
             mongoClientSettingsBuilder.autoEncryptionSettings(AutoEncryptionSettings.builder()
                     .keyVaultNamespace(keyVaultNamespace)
@@ -276,6 +288,19 @@ public abstract class AbstractClientSideEncryptionTest {
         createMongoClient(mongoClientSettingsBuilder.build());
         database = getDatabase(databaseName);
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
+
+        if (definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
+        }
+    }
+
+    @After
+    public void cleanUp() {
+        if (collectionHelper != null && definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(new BsonDocument("configureFailPoint",
+                    definition.getDocument("failPoint").getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
+        }
     }
 
     protected abstract void createMongoClient(MongoClientSettings settings);
@@ -285,6 +310,7 @@ public abstract class AbstractClientSideEncryptionTest {
 
     @Test
     public void shouldPassAllOutcomes() {
+        assumeTrue("Skipping timeoutMS tests", filename.startsWith("timeoutMS."));
         for (BsonValue cur : definition.getArray("operations")) {
             BsonDocument operation = cur.asDocument();
             String operationName = operation.getString("name").getValue();
@@ -302,6 +328,9 @@ public abstract class AbstractClientSideEncryptionTest {
                         getErrorCodeNameField(expectedResult), operationName), hasErrorCodeNameField(expectedResult));
             } catch (Exception e) {
                 boolean passedAssertion = false;
+               if (hasTimeoutError(expectedResult) && e instanceof MongoOperationTimeoutException){
+                   passedAssertion = true;
+               }
                 if (hasErrorContainsField(expectedResult)) {
                     String expectedError = getErrorContainsField(expectedResult);
                     assertTrue(String.format("Expected '%s' but got '%s' for operation %s", expectedError, e.getMessage(),
@@ -325,7 +354,7 @@ public abstract class AbstractClientSideEncryptionTest {
         }
 
         if (definition.containsKey("expectations")) {
-            List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), "default", null);
+            List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), specDocument.getString("database_name").getValue(), null);
             List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
             assertEventsEquality(expectedEvents, events);
         }

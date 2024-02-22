@@ -24,6 +24,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.internal.TimeoutHelper;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -308,6 +309,6 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     private <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
                                                        @Nullable final Timeout timeout) {
-        return CollectionTimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
+        return TimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
     }
 }

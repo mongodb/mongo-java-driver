@@ -43,11 +43,6 @@ public class OperationContext {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverApi);
     }
 
-    public static OperationContext todoOperationContext() {
-        // TODO (CSOT) - JAVA-4055 : should be removed during crypt work
-        return simpleOperationContext(TimeoutSettings.DEFAULT, null);
-    }
-
     public static OperationContext simpleOperationContext(
             final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
         return new OperationContext(
@@ -55,6 +50,14 @@ public class OperationContext {
                 NoOpSessionContext.INSTANCE,
                 new TimeoutContext(timeoutSettings),
                 serverApi);
+    }
+
+    public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
+        return new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                NoOpSessionContext.INSTANCE,
+                timeoutContext,
+                null);
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {

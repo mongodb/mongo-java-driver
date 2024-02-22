@@ -20,6 +20,7 @@ import com.mongodb.MongoGridFSException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.internal.TimeoutHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -205,6 +206,6 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     private static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> collection,
                                                              @Nullable final Timeout timeout) {
-        return CollectionTimeoutHelper.collectionWithTimeout(collection, TIMEOUT_MESSAGE, timeout);
+        return TimeoutHelper.collectionWithTimeout(collection, TIMEOUT_MESSAGE, timeout);
     }
 }

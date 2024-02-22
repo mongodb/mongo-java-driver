@@ -29,6 +29,7 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -224,25 +225,33 @@ public final class CommandMonitoringTestHelper {
     private static CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent event,
                                                                         @Nullable final Map<String, BsonDocument> lsidMap,
                                                                         final CommandStartedEvent expectedCommandStartedEvent) {
-        BsonDocument command = getWritableCloneOfCommand(event.getCommand());
+        BsonDocument actualCommand = getWritableCloneOfCommand(event.getCommand());
+        BsonDocument expectedCommand = expectedCommandStartedEvent.getCommand();
 
-        massageCommand(event, command);
+        massageCommand(event, actualCommand);
 
-        if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
-            command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
+        if (actualCommand.containsKey("readConcern") && (actualCommand.getDocument("readConcern").containsKey("afterClusterTime"))) {
+            actualCommand.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
-        // Tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
-        if (command.containsKey("maxTimeMS")) {
-            command.put("maxTimeMS", new BsonInt32(command.getNumber("maxTimeMS").intValue()));
+        if (actualCommand.containsKey("maxTimeMS")  && !isExpectedMaxTimeMsLong(expectedCommand)) {
+            // Some tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
+            actualCommand.put("maxTimeMS", new BsonInt32(actualCommand.getNumber("maxTimeMS").intValue()));
         }
         // Tests do not expect the "ns" field in a result after running createIndex.
-        if (command.containsKey("createIndexes") && command.containsKey("indexes")) {
-            massageCommandIndexes(command.getArray("indexes"));
+        if (actualCommand.containsKey("createIndexes") && actualCommand.containsKey("indexes")) {
+            massageCommandIndexes(actualCommand.getArray("indexes"));
         }
-        massageActualCommand(command, expectedCommandStartedEvent.getCommand());
+        massageActualCommand(actualCommand, expectedCommand);
 
         return new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
-                event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(), command);
+                event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(), actualCommand);
+    }
+
+    private static boolean isExpectedMaxTimeMsLong(final BsonDocument expectedCommand) {
+        if (expectedCommand.containsKey("maxTimeMS")) {
+            return expectedCommand.get("maxTimeMS").getBsonType() == BsonType.INT64;
+        }
+        return false;
     }
 
     private static void massageCommandIndexes(final BsonArray indexes) {

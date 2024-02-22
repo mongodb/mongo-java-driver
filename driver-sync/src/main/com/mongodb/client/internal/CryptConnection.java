@@ -24,6 +24,7 @@ import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
@@ -104,9 +105,10 @@ class CryptConnection implements Connection {
 
         getEncoder(command).encode(writer, command, EncoderContext.builder().build());
 
+        Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
         RawBsonDocument encryptedCommand = crypt.encrypt(database,
-                new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()));
-
+                new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout);
+        //TODO JAVA-5322. timeoutMS can't be set at encryptedCommand here as not modification allowed to raw command.
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
                 new RawBsonDocumentCodec(), operationContext, responseExpected, null, null);
 
@@ -114,7 +116,7 @@ class CryptConnection implements Connection {
             return null;
         }
 
-        RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse);
+        RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse, operationTimeout);
 
         BsonBinaryReader reader = new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO());
 

@@ -17,11 +17,15 @@
 package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
 import com.mongodb.internal.connection.OperationContext;
@@ -30,7 +34,9 @@ import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.internal.TimeoutHelper;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import reactor.core.publisher.Mono;
@@ -39,6 +45,7 @@ import reactor.core.publisher.MonoSink;
 import javax.net.ssl.SSLContext;
 import java.io.Closeable;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +54,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class KeyManagementService implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("client");
+    private static final String TIMEOUT_ERROR_MESSAGE = "KMS key decryption exceeded the timeout limit.";
     private final Map<String, SSLContext> kmsProviderSslContextMap;
     private final int timeoutMillis;
     private final TlsChannelStreamFactoryFactory tlsChannelStreamFactoryFactory;
@@ -61,7 +69,7 @@ class KeyManagementService implements Closeable {
         tlsChannelStreamFactoryFactory.close();
     }
 
-    Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor) {
+    Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout) {
         SocketSettings socketSettings = SocketSettings.builder()
                 .connectTimeout(timeoutMillis, MILLISECONDS)
                 .readTimeout(timeoutMillis, MILLISECONDS)
@@ -75,45 +83,47 @@ class KeyManagementService implements Closeable {
 
         return Mono.<Void>create(sink -> {
             Stream stream = streamFactory.create(serverAddress);
-            OperationContext operationContext = OperationContext.todoOperationContext();
+            OperationContext operationContext = createOperationContext(operationTimeout, socketSettings);
             stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(@Nullable final Void ignored) {
-                    streamWrite(stream, keyDecryptor, sink);
+                    streamWrite(stream, keyDecryptor, operationContext, sink);
                 }
 
                 @Override
                 public void failed(final Throwable t) {
                     stream.close();
-                    sink.error(t);
+                    handleError(t, operationContext, sink);
                 }
             });
         }).onErrorMap(this::unWrapException);
     }
 
-    private void streamWrite(final Stream stream, final MongoKeyDecryptor keyDecryptor, final MonoSink<Void> sink) {
+    private void streamWrite(final Stream stream, final MongoKeyDecryptor keyDecryptor,
+                             final OperationContext operationContext, final MonoSink<Void> sink) {
         List<ByteBuf> byteBufs = singletonList(new ByteBufNIO(keyDecryptor.getMessage()));
-        // TODO (CSOT) - JAVA-4055
-        stream.writeAsync(byteBufs, OperationContext.todoOperationContext(), new AsyncCompletionHandler<Void>() {
+        stream.writeAsync(byteBufs, operationContext, new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(@Nullable final Void aVoid) {
-                streamRead(stream, keyDecryptor, sink);
+                streamRead(stream, keyDecryptor, operationContext, sink);
             }
 
             @Override
             public void failed(final Throwable t) {
                 stream.close();
-                sink.error(t);
+                handleError(t, operationContext, sink);
             }
         });
     }
 
-    private void streamRead(final Stream stream, final MongoKeyDecryptor keyDecryptor, final MonoSink<Void> sink) {
+    private void streamRead(final Stream stream, final MongoKeyDecryptor keyDecryptor,
+                            final OperationContext operationContext, final MonoSink<Void> sink) {
         int bytesNeeded = keyDecryptor.bytesNeeded();
         if (bytesNeeded > 0) {
             AsynchronousChannelStream asyncStream = (AsynchronousChannelStream) stream;
             ByteBuf buffer = asyncStream.getBuffer(bytesNeeded);
-            asyncStream.getChannel().read(buffer.asNIO(), asyncStream.getSettings().getReadTimeout(MILLISECONDS), MILLISECONDS, null,
+            long readTimeoutMS = operationContext.getTimeoutContext().getReadTimeoutMS();
+            asyncStream.getChannel().read(buffer.asNIO(), readTimeoutMS, MILLISECONDS, null,
                                           new CompletionHandler<Integer, Void>() {
 
                                               @Override
@@ -122,7 +132,7 @@ class KeyManagementService implements Closeable {
                                                   try {
                                                       keyDecryptor.feed(buffer.asNIO());
                                                       buffer.release();
-                                                      streamRead(stream, keyDecryptor, sink);
+                                                      streamRead(stream, keyDecryptor, operationContext, sink);
                                                   } catch (Throwable t) {
                                                       sink.error(t);
                                                   }
@@ -132,7 +142,7 @@ class KeyManagementService implements Closeable {
                                               public void failed(final Throwable t, final Void aVoid) {
                                                   buffer.release();
                                                   stream.close();
-                                                  sink.error(t);
+                                                  handleError(t, operationContext, sink);
                                               }
                                           });
         } else {
@@ -141,7 +151,40 @@ class KeyManagementService implements Closeable {
         }
     }
 
+    private static void handleError(final Throwable t, final OperationContext operationContext, final MonoSink<Void> sink) {
+        if (isTimeoutException(t) && operationContext.getTimeoutContext().hasTimeoutMS()) {
+            sink.error(TimeoutContext.createMongoTimeoutException(TIMEOUT_ERROR_MESSAGE, t));
+        } else {
+            sink.error(t);
+        }
+    }
+
+    private OperationContext createOperationContext(@Nullable final Timeout operationTimeout, final SocketSettings socketSettings) {
+        return OperationContext.simpleOperationContext(new TimeoutContext(
+                new TimeoutSettings(
+                        0,
+                        socketSettings.getConnectTimeout(MILLISECONDS),
+                        socketSettings.getReadTimeout(MILLISECONDS),
+                        getRemaining(operationTimeout),
+                        0))
+        );
+    }
+
+    @Nullable
+    private static Long getRemaining(@Nullable final Timeout operationTimeout) {
+        if (operationTimeout == null) {
+            return null;
+        }
+        return TimeoutHelper.getRemainingMs(TIMEOUT_ERROR_MESSAGE, operationTimeout);
+    }
+
     private Throwable unWrapException(final Throwable t) {
         return t instanceof MongoSocketException ? t.getCause() : t;
+    }
+
+    private static boolean isTimeoutException(final Throwable t) {
+        return t instanceof MongoSocketReadTimeoutException
+                || t instanceof MongoSocketWriteTimeoutException
+                || t instanceof InterruptedByTimeoutException;
     }
 }

@@ -274,7 +274,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
 
     @Tag("setsFailPoint")
-    @FlakyTest(maxAttempts = 3)
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
