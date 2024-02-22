@@ -89,7 +89,7 @@ class DefaultServerMonitorSpecification extends Specification {
 
         when:
         monitor.close()
-        monitor.monitorThread.join()
+        monitor.monitor.join()
 
         then:
         !stateChanged

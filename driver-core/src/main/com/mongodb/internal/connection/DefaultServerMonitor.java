@@ -79,11 +79,13 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ServerApi serverApi;
     private final boolean faas;
     private final ServerSettings serverSettings;
-    private final ServerMonitorRunnable monitor;
-    private final Thread monitorThread;
-    private final RoundTripTimeRunnable roundTripTimeMonitor;
+    private final ServerMonitor monitor;
+    /**
+     * Must be guarded by {@link #lock}.
+     */
+    @Nullable
+    private RoundTripTimeMonitor roundTripTimeMonitor;
     private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
-    private final Thread roundTripTimeMonitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile boolean isClosed;
@@ -102,20 +104,26 @@ class DefaultServerMonitor implements ServerMonitor {
         this.serverApi = serverApi;
         this.faas = faas;
         this.sdamProvider = sdamProvider;
-        monitor = new ServerMonitorRunnable();
-        monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
-        monitorThread.setDaemon(true);
-        roundTripTimeMonitor = new RoundTripTimeRunnable();
-        roundTripTimeMonitorThread = new Thread(roundTripTimeMonitor,
-                "cluster-rtt-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
-        roundTripTimeMonitorThread.setDaemon(true);
+        monitor = new ServerMonitor();
+        roundTripTimeMonitor = null;
         isClosed = false;
     }
 
     @Override
     public void start() {
-        monitorThread.start();
-        roundTripTimeMonitorThread.start();
+        monitor.start();
+    }
+
+    private void ensureRoundTripTimeMonitorStarted() {
+        lock.lock();
+        try {
+            if (roundTripTimeMonitor == null) {
+                roundTripTimeMonitor = new RoundTripTimeMonitor();
+                roundTripTimeMonitor.start();
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -124,12 +132,16 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     @Override
+    @SuppressWarnings("try")
     public void close() {
         isClosed = true;
-        monitor.close();
-        monitorThread.interrupt();
-        roundTripTimeMonitor.close();
-        roundTripTimeMonitorThread.interrupt();
+        withLock(lock, () -> {
+            //noinspection EmptyTryBlock
+            try (ServerMonitor ignoredAutoClosed = monitor;
+                RoundTripTimeMonitor ignoredAutoClose2 = roundTripTimeMonitor) {
+                // we are automatically closing resources here
+            }
+        });
     }
 
     @Override
@@ -137,11 +149,18 @@ class DefaultServerMonitor implements ServerMonitor {
         monitor.cancelCurrentCheck();
     }
 
-    class ServerMonitorRunnable implements Runnable {
+    class ServerMonitor extends Thread implements AutoCloseable {
         private volatile InternalConnection connection = null;
         private volatile boolean currentCheckCancelled;
 
-        void close() {
+        ServerMonitor() {
+            super("cluster-" + serverId.getClusterId() + "-" + serverId.getAddress());
+            setDaemon(true);
+        }
+
+        @Override
+        public void close() {
+            interrupt();
             InternalConnection connection = this.connection;
             if (connection != null) {
                 connection.close();
@@ -155,6 +174,10 @@ class DefaultServerMonitor implements ServerMonitor {
                 while (!isClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
                     currentServerDescription = lookupServerDescription(currentServerDescription);
+                    boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
+                    if (shouldStreamResponses) {
+                        ensureRoundTripTimeMonitorStarted();
+                    }
 
                     if (isClosed) {
                         continue;
@@ -169,7 +192,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     logStateChange(previousServerDescription, currentServerDescription);
                     sdamProvider.get().update(currentServerDescription);
 
-                    if ((shouldStreamResponses(currentServerDescription) && currentServerDescription.getType() != UNKNOWN)
+                    if ((shouldStreamResponses && currentServerDescription.getType() != UNKNOWN)
                             || (connection != null && connection.hasMoreToCome())
                             || (currentServerDescription.getException() instanceof MongoSocketException
                             && previousServerDescription.getType() != UNKNOWN)) {
@@ -202,8 +225,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
                 }
+                boolean shouldStreamResponses = shouldStreamResponses(currentServerDescription);
                 serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(
-                        connection.getDescription().getConnectionId(), shouldStreamResponses(currentServerDescription)));
+                        connection.getDescription().getConnectionId(), shouldStreamResponses));
 
                 long start = System.nanoTime();
                 try {
@@ -211,7 +235,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
-                        if (shouldStreamResponses(currentServerDescription)) {
+                        if (shouldStreamResponses) {
                             helloDocument.append("topologyVersion", assertNotNull(currentServerDescription.getTopologyVersion()).asDocument());
                             helloDocument.append("maxAwaitTimeMS", new BsonInt64(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                         }
@@ -221,7 +245,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
 
                     BsonDocument helloResult;
-                    if (shouldStreamResponses(currentServerDescription)) {
+                    if (shouldStreamResponses) {
                         helloResult = connection.receive(new BsonDocumentCodec(), sessionContext,
                                 Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
                     } else {
@@ -229,15 +253,18 @@ class DefaultServerMonitor implements ServerMonitor {
                     }
 
                     long elapsedTimeNanos = System.nanoTime() - start;
+                    if (!shouldStreamResponses) {
+                        averageRoundTripTime.addSample(elapsedTimeNanos);
+                    }
                     serverMonitorListener.serverHeartbeatSucceeded(
                             new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
-                                    elapsedTimeNanos, shouldStreamResponses(currentServerDescription)));
+                                    elapsedTimeNanos, shouldStreamResponses));
 
                     return createServerDescription(serverId.getAddress(), helloResult, averageRoundTripTime.getAverage());
                 } catch (Exception e) {
                     serverMonitorListener.serverHeartbeatFailed(
                             new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
-                                    shouldStreamResponses(currentServerDescription), e));
+                                    shouldStreamResponses, e));
                     throw e;
                 }
             } catch (Throwable t) {
@@ -399,10 +426,17 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
 
-    private class RoundTripTimeRunnable implements Runnable {
+    private class RoundTripTimeMonitor extends Thread implements AutoCloseable {
         private volatile InternalConnection connection = null;
 
-        void close() {
+        RoundTripTimeMonitor() {
+            super("cluster-rtt-" + serverId.getClusterId() + "-" + serverId.getAddress());
+            setDaemon(true);
+        }
+
+        @Override
+        public void close() {
+            interrupt();
             InternalConnection connection = this.connection;
             if (connection != null) {
                 connection.close();
