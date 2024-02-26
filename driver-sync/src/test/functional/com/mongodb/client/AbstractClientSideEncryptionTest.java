@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
@@ -221,29 +222,29 @@ public abstract class AbstractClientSideEncryptionTest {
             kmsProvidersMap.put(kmsProviderKey.startsWith("aws") ? "aws" : kmsProviderKey, kmsProviderMap);
             switch (kmsProviderKey) {
                 case "aws":
-                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.awsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.awsSecretAccessKey"));
+                    kmsProviderMap.put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
                     break;
                 case "awsTemporary":
-                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
-                    kmsProviderMap.put("sessionToken", System.getProperty("org.mongodb.test.tmpAwsSessionToken"));
+                    kmsProviderMap.put("accessKeyId", getEnv("AWS_TEMP_ACCESS_KEY_ID"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("AWS_TEMP_SECRET_ACCESS_KEY"));
+                    kmsProviderMap.put("sessionToken", getEnv("AWS_TEMP_SESSION_TOKEN"));
                     break;
                 case "awsTemporaryNoSessionToken":
-                    kmsProviderMap.put("accessKeyId", System.getProperty("org.mongodb.test.tmpAwsAccessKeyId"));
-                    kmsProviderMap.put("secretAccessKey", System.getProperty("org.mongodb.test.tmpAwsSecretAccessKey"));
+                    kmsProviderMap.put("accessKeyId", getEnv("AWS_TEMP_ACCESS_KEY_ID"));
+                    kmsProviderMap.put("secretAccessKey", getEnv("AWS_TEMP_SECRET_ACCESS_KEY"));
                     break;
                 case "azure":
-                    kmsProviderMap.put("tenantId", System.getProperty("org.mongodb.test.azureTenantId"));
-                    kmsProviderMap.put("clientId", System.getProperty("org.mongodb.test.azureClientId"));
-                    kmsProviderMap.put("clientSecret", System.getProperty("org.mongodb.test.azureClientSecret"));
+                    kmsProviderMap.put("tenantId", getEnv("AZURE_TENANT_ID"));
+                    kmsProviderMap.put("clientId", getEnv("AZURE_CLIENT_ID"));
+                    kmsProviderMap.put("clientSecret", getEnv("AZURE_CLIENT_SECRET"));
                     break;
                 case "gcp":
-                    kmsProviderMap.put("email", System.getProperty("org.mongodb.test.gcpEmail"));
-                    kmsProviderMap.put("privateKey", System.getProperty("org.mongodb.test.gcpPrivateKey"));
+                    kmsProviderMap.put("email", getEnv("GCP_EMAIL"));
+                    kmsProviderMap.put("privateKey", getEnv("GCP_PRIVATE_KEY"));
                     break;
                 case "kmip":
-                    kmsProviderMap.put("endpoint", System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
+                    kmsProviderMap.put("endpoint", getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
                     kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
@@ -384,7 +385,7 @@ public abstract class AbstractClientSideEncryptionTest {
     }
 
     static Optional<String> cryptSharedLibPathSysPropValue() {
-        String value = System.getProperty("org.mongodb.test.crypt.shared.lib.path", "");
+        String value = getEnv("CRYPT_SHARED_LIB_PATH", "");
         return value.isEmpty() ? Optional.empty() : Optional.of(value);
     }
 }
