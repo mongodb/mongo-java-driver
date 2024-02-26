@@ -308,7 +308,7 @@ public abstract class UnifiedTest {
     private void assertOperationAndThrow(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex) {
         OperationResult result = executeOperation(context, operation, operationIndex);
         assertOperationResult(context, operation, operationIndex, result);
-        
+
         if (result.getException() != null) {
             throw (RuntimeException) result.getException();
         }
