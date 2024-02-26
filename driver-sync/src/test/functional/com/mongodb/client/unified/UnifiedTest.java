@@ -308,7 +308,7 @@ public abstract class UnifiedTest {
     private void assertOperationAndThrow(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex) {
         OperationResult result = executeOperation(context, operation, operationIndex);
         assertOperationResult(context, operation, operationIndex, result);
-
+        
         if (result.getException() != null) {
             throw (RuntimeException) result.getException();
         }
@@ -853,7 +853,6 @@ public abstract class UnifiedTest {
         BsonDocument arguments = operation.getDocument("arguments");
         ClientSession session = entities.getSession(arguments.getString("session").getValue());
         String state = arguments.getString("state").getValue();
-        //noinspection SwitchStatementWithTooFewBranches
         switch (state) {
             case "starting":
             case "in_progress":
