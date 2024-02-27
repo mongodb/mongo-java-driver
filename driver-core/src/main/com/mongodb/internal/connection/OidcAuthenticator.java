@@ -157,11 +157,11 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private boolean isHumanCallback() {
-        return getMechanismProperty(OIDC_HUMAN_CALLBACK_KEY) != null;
+        return getOidcCallbackMechanismProperty(OIDC_HUMAN_CALLBACK_KEY) != null;
     }
 
     @Nullable
-    private OidcCallback getMechanismProperty(final String key) {
+    private OidcCallback getOidcCallbackMechanismProperty(final String key) {
         return getMongoCredentialWithCache()
                 .getCredential()
                 .getMechanismProperty(key, null);
@@ -169,8 +169,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     @Nullable
     private OidcCallback getRequestCallback() {
-        OidcCallback machine = getMechanismProperty(OIDC_CALLBACK_KEY);
-        return machine != null ? machine : getMechanismProperty(OIDC_HUMAN_CALLBACK_KEY);
+        OidcCallback machine = getOidcCallbackMechanismProperty(OIDC_CALLBACK_KEY);
+        return machine != null ? machine : getOidcCallbackMechanismProperty(OIDC_HUMAN_CALLBACK_KEY);
     }
 
     @Override
@@ -259,7 +259,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 // original IDP info will be present, if refresh token present
                 assertNotNull(cachedIdpInfo);
                 // Invoke Callback using cached Refresh Token
-                validateAllowedHosts(getMongoCredential());
                 fallbackState = FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN;
                 OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
                         CALLBACK_TIMEOUT, cachedIdpInfo, cachedRefreshToken));
@@ -335,26 +334,30 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private boolean shouldRetryHandler() {
-        MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
-        OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
-        if (fallbackState == FallbackState.PHASE_1_CACHED_TOKEN) {
-            // a cached access token failed
-            mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
-                    .clearAccessToken());
-            return true;
-        } else if (fallbackState == FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN) {
-            // a refresh token failed
-            mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
-                    .clearAccessToken()
-                    .clearRefreshToken());
-            return true;
-        } else {
-            // a clean-restart failed
-            mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
-                    .clearAccessToken()
-                    .clearRefreshToken());
-            return false;
-        }
+        boolean[] result = new boolean[1];
+        Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
+            MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
+            OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
+            if (fallbackState == FallbackState.PHASE_1_CACHED_TOKEN) {
+                // a cached access token failed
+                mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
+                        .clearAccessToken());
+                result[0] = true;
+            } else if (fallbackState == FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN) {
+                // a refresh token failed
+                mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
+                        .clearAccessToken()
+                        .clearRefreshToken());
+                result[0] = true;
+            } else {
+                // a clean-restart failed
+                mongoCredentialWithCache.setOidcCacheEntry(cacheEntry
+                        .clearAccessToken()
+                        .clearRefreshToken());
+                result[0] = false;
+            }
+        });
+        return result[0];
     }
 
     @Nullable
@@ -516,7 +519,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         });
         if (!permitted) {
             throw new MongoSecurityException(
-                    credential, "Host not permitted by " + ALLOWED_HOSTS_KEY + ": " + host);
+                    credential, "Host " + host + " not permitted by " + ALLOWED_HOSTS_KEY
+                    + ", values:  " + allowedHosts);
         }
     }
 
@@ -568,30 +572,29 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         public static void validateBeforeUse(final MongoCredential credential) {
             String userName = credential.getUserName();
             Object providerName = credential.getMechanismProperty(PROVIDER_NAME_KEY, null);
-            Object requestCallback = credential.getMechanismProperty(OIDC_CALLBACK_KEY, null);
-            Object refreshCallback = credential.getMechanismProperty(OIDC_HUMAN_CALLBACK_KEY, null);
+            Object machineCallback = credential.getMechanismProperty(OIDC_CALLBACK_KEY, null);
+            Object humanCallback = credential.getMechanismProperty(OIDC_HUMAN_CALLBACK_KEY, null);
             if (providerName == null) {
                 // callback
-                if (requestCallback == null && refreshCallback == null) {
+                if (machineCallback == null && humanCallback == null) {
                     throw new IllegalArgumentException("Either " + PROVIDER_NAME_KEY
                             + " or " + OIDC_CALLBACK_KEY
                             + " or " + OIDC_HUMAN_CALLBACK_KEY
                             + " must be specified");
                 }
-                if (requestCallback != null && refreshCallback != null) {
+                if (machineCallback != null && humanCallback != null) {
                     throw new IllegalArgumentException("Both " + OIDC_CALLBACK_KEY
                             + " and " + OIDC_HUMAN_CALLBACK_KEY
                             + " must not be specified");
                 }
             } else {
-                // automatic
                 if (userName != null) {
                     throw new IllegalArgumentException("user name must not be specified when " + PROVIDER_NAME_KEY + " is specified");
                 }
-                if (requestCallback != null) {
+                if (machineCallback != null) {
                     throw new IllegalArgumentException(OIDC_CALLBACK_KEY + " must not be specified when " + PROVIDER_NAME_KEY + " is specified");
                 }
-                if (refreshCallback != null) {
+                if (humanCallback != null) {
                     throw new IllegalArgumentException(OIDC_HUMAN_CALLBACK_KEY + " must not be specified when " + PROVIDER_NAME_KEY + " is specified");
                 }
             }

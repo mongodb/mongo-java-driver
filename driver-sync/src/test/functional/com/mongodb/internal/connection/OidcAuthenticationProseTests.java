@@ -201,7 +201,7 @@ public class OidcAuthenticationProseTests {
         //    conforming to the OIDCRequestTokenResult with missing field(s).
         OidcCallback onRequest = (context) -> {
             //noinspection ConstantConditions
-            return new OidcCallbackResult(null);
+            return new OidcCallbackResult(null, Duration.ZERO);
         };
         // we ensure that the error is propagated
         MongoClientSettings clientSettings = createSettings(getOidcUri(), onRequest, null);
@@ -268,7 +268,7 @@ public class OidcAuthenticationProseTests {
     @Test
     public void test3p2AuthFailsWithoutCachedToken() {
         MongoClientSettings clientSettings = createSettings(getOidcUri(),
-                (x) -> new OidcCallbackResult("invalid_token"), null);
+                (x) -> new OidcCallbackResult("invalid_token", Duration.ZERO), null);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             try {
                 performFind(mongoClient);
@@ -358,7 +358,7 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings settings1 = createSettings(
                 getOidcUri(),
                 createHumanCallback(), null, OIDC_HUMAN_CALLBACK_KEY, Collections.emptyList());
-        performFind(settings1, MongoSecurityException.class, "Host not permitted by ALLOWED_HOSTS");
+        performFind(settings1, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
 
         //- Create a client that uses the URL
         //  ``mongodb://localhost/?authMechanism=MONGODB-OIDC&ignored=example.com``, a
@@ -367,7 +367,16 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings settings2 = createSettings(
                 getOidcUri() + "&ignored=example.com",
                 createHumanCallback(), null, OIDC_HUMAN_CALLBACK_KEY, Arrays.asList("example.com"));
-        performFind(settings2, MongoSecurityException.class, "Host not permitted by ALLOWED_HOSTS");
+        performFind(settings2, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
+    }
+
+    // Not a prose test
+    @Test
+    public void testAllowedHostsDisallowedInConnectionString() {
+        String string = "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ALLOWED_HOSTS:localhost";
+        assertCause(IllegalArgumentException.class,
+                "connection string contains disallowed mechanism properties",
+                () ->  new ConnectionString(string));
     }
 
     @Test
@@ -397,13 +406,13 @@ public class OidcAuthenticationProseTests {
                 "Result of callback must not be null");
 
         //noinspection ConstantConditions
-        OidcCallback onRequest = (context) -> new OidcCallbackResult(null);
+        OidcCallback onRequest = (context) -> new OidcCallbackResult(null, Duration.ZERO);
         performFind(createHumanSettings(getOidcUri(), onRequest, null),
                 IllegalArgumentException.class,
                 "accessToken can not be null");
 
         // additionally, check validation for refresh in machine workflow:
-        OidcCallback onRequestMachineRefresh = (context) -> new OidcCallbackResult("access", "exists");
+        OidcCallback onRequestMachineRefresh = (context) -> new OidcCallbackResult("access", Duration.ZERO, "exists");
         performFind(createSettings(getOidcUri(), onRequestMachineRefresh, null),
                 MongoConfigurationException.class,
                 "Refresh token must only be provided in human workflow");
@@ -789,7 +798,7 @@ public class OidcAuthenticationProseTests {
                 if (testListener != null) {
                     testListener.add("read access token: " + path.getFileName());
                 }
-                return new OidcCallbackResult(accessToken, refreshToken);
+                return new OidcCallbackResult(accessToken, Duration.ZERO, refreshToken);
             } finally {
                 if (concurrentTracker != null) {
                     concurrentTracker.decrementAndGet();

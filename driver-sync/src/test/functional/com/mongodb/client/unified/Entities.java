@@ -530,7 +530,7 @@ public final class Entities {
                                         } catch (IOException e) {
                                             throw new RuntimeException(e);
                                         }
-                                        return new MongoCredential.OidcCallbackResult(accessToken);
+                                        return new MongoCredential.OidcCallbackResult(accessToken, null);
                                     }));
                             break;
                         }

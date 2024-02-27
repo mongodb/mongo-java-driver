@@ -245,13 +245,13 @@ public final class MongoCredential {
      * The list of allowed hosts that will be used if no
      * {@link MongoCredential#ALLOWED_HOSTS_KEY} value is supplied.
      * The default allowed hosts are:
-     * {@code "*.mongodb.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
+     * {@code "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
      *
      * @see #createOidcCredential(String)
      * @since 4.10
      */
     public static final List<String> DEFAULT_ALLOWED_HOSTS = Collections.unmodifiableList(Arrays.asList(
-            "*.mongodb.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
+            "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
 
     /**
      * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
@@ -708,28 +708,37 @@ public final class MongoCredential {
     /**
      * The response produced by an OIDC Identity Provider.
      */
-    @Evolving
     public static final class OidcCallbackResult {
 
         private final String accessToken;
 
         @Nullable
+        private final Duration expiresIn;
+
+        @Nullable
         private final String refreshToken;
 
         /**
-         * @param accessToken The OIDC access token
+         * @param accessToken The OIDC access token.
+         * @param expiresIn Time until the access token expires. 0 is an infinite duration.
          */
-        public OidcCallbackResult(final String accessToken) {
-            this(accessToken, null);
+        public OidcCallbackResult(final String accessToken, final Duration expiresIn) {
+            this(accessToken, expiresIn, null);
         }
 
         /**
-         * @param accessToken The OIDC access token
+         * @param accessToken The OIDC access token.
+         * @param expiresIn Time until the access token expires. 0 is an infinite duration.
          * @param refreshToken The refresh token. If null, refresh will not be attempted.
          */
-        public OidcCallbackResult(final String accessToken, @Nullable final String refreshToken) {
+        public OidcCallbackResult(final String accessToken, @Nullable final Duration expiresIn,
+                @Nullable final String refreshToken) {
             notNull("accessToken", accessToken);
+            if (expiresIn != null && expiresIn.isNegative()) {
+                throw new IllegalArgumentException("expiresIn must not be a negative value");
+            }
             this.accessToken = accessToken;
+            this.expiresIn = expiresIn;
             this.refreshToken = refreshToken;
         }
 
