@@ -25,8 +25,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -45,7 +43,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
         ListIndexesPublisher<Document> publisher = new ListIndexesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
         ListIndexesOperation<Document> expectedOperation =
-                new ListIndexesOperation<>(TIMEOUT_SETTINGS, NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class))
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
@@ -60,7 +58,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
                 .maxTime(100, MILLISECONDS);
 
         expectedOperation =
-                new ListIndexesOperation<>(TIMEOUT_SETTINGS_WITH_MAX_TIME, NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class))
                         .batchSize(100)
                         .retryReads(true);
 

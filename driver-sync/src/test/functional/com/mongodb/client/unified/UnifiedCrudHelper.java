@@ -242,29 +242,30 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         ListCollectionsIterable<BsonDocument> iterable = session == null
                 ? database.listCollections(BsonDocument.class)
                 : database.listCollections(session, BsonDocument.class);
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "session":
-                    break;
-                case "filter":
-                    iterable.filter(cur.getValue().asDocument());
-                    break;
-                case "batchSize":
-                    iterable.batchSize(cur.getValue().asNumber().intValue());
-                    break;
-                case "timeoutMode":
-                    setTimeoutMode(iterable, cur);
-                    break;
-                case "maxTimeMS":
-                    iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+        return resultOf(() -> {
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "session":
+                        break;
+                    case "filter":
+                        iterable.filter(cur.getValue().asDocument());
+                        break;
+                    case "batchSize":
+                        iterable.batchSize(cur.getValue().asNumber().intValue());
+                        break;
+                    case "timeoutMode":
+                        setTimeoutMode(iterable, cur);
+                        break;
+                    case "maxTimeMS":
+                        iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
             }
-        }
 
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+            return new BsonArray(iterable.into(new ArrayList<>()));
+        });
     }
 
     OperationResult executeListCollectionNames(final BsonDocument operation) {
@@ -298,17 +299,17 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     OperationResult executeListIndexes(final BsonDocument operation) {
-        ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
-
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+        return resultOf(() -> {
+            ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
+            return new BsonArray(iterable.into(new ArrayList<>()));
+        });
     }
 
     OperationResult executeListIndexNames(final BsonDocument operation) {
-        ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
-
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>()).stream().map(document -> document.getString("name")).collect(toList())));
+        return resultOf(() -> {
+            ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
+            return new BsonArray(iterable.into(new ArrayList<>()).stream().map(document -> document.getString("name")).collect(toList()));
+        });
     }
 
     private ListIndexesIterable<BsonDocument> createListIndexesIterable(final BsonDocument operation) {
@@ -339,19 +340,19 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     OperationResult executeFind(final BsonDocument operation) {
-        FindIterable<BsonDocument> iterable = createFindIterable(operation);
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+        return resultOf(() -> {
+            FindIterable<BsonDocument> iterable = createFindIterable(operation);
+            return new BsonArray(iterable.into(new ArrayList<>()));
+        });
     }
 
     OperationResult executeFindOne(final BsonDocument operation) {
-        FindIterable<BsonDocument> iterable = createFindIterable(operation);
-        return resultOf(iterable::first);
+        return resultOf(() ->  createFindIterable(operation).first());
     }
 
     OperationResult createFindCursor(final BsonDocument operation) {
-        FindIterable<BsonDocument> iterable = createFindIterable(operation);
         return resultOf(() -> {
+            FindIterable<BsonDocument> iterable = createFindIterable(operation);
             entities.addCursor(operation.getString("saveResultAsEntity", new BsonString(createRandomEntityId())).getValue(),
                     iterable.cursor());
             return null;
@@ -647,40 +648,40 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         } else {
             throw new UnsupportedOperationException("Unsupported entity type with name: " + entityName);
         }
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "pipeline":
-                case "session":
-                    break;
-                case "batchSize":
-                    iterable.batchSize(cur.getValue().asNumber().intValue());
-                    break;
-                case "allowDiskUse":
-                    iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
-                    break;
-                case "let":
-                    iterable.let(cur.getValue().asDocument());
-                    break;
-                case "comment":
-                    iterable.comment(cur.getValue());
-                    break;
-                case "timeoutMode":
-                    setTimeoutMode(iterable, cur);
-                    break;
-                case "maxTimeMS":
-                    iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
-                    break;
-                case "maxAwaitTimeMS":
-                    iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
-            }
-        }
-        String lastStageName = pipeline.isEmpty() ? null : pipeline.get(pipeline.size() - 1).getFirstKey();
-        boolean useToCollection = Objects.equals(lastStageName, "$out") || Objects.equals(lastStageName, "$merge");
 
         return resultOf(() -> {
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "pipeline":
+                    case "session":
+                        break;
+                    case "batchSize":
+                        iterable.batchSize(cur.getValue().asNumber().intValue());
+                        break;
+                    case "allowDiskUse":
+                        iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
+                        break;
+                    case "let":
+                        iterable.let(cur.getValue().asDocument());
+                        break;
+                    case "comment":
+                        iterable.comment(cur.getValue());
+                        break;
+                    case "timeoutMode":
+                        setTimeoutMode(iterable, cur);
+                        break;
+                    case "maxTimeMS":
+                        iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "maxAwaitTimeMS":
+                        iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
+            }
+            String lastStageName = pipeline.isEmpty() ? null : pipeline.get(pipeline.size() - 1).getFirstKey();
+            boolean useToCollection = Objects.equals(lastStageName, "$out") || Objects.equals(lastStageName, "$merge");
             if (!pipeline.isEmpty() && useToCollection) {
                 iterable.toCollection();
                 return null;
@@ -1834,8 +1835,14 @@ final class UnifiedCrudHelper extends UnifiedHelper {
             timeoutModeMethod.invoke(iterable, timeoutMode);
         } catch (NoSuchMethodException e) {
             throw new UnsupportedOperationException("Unsupported timeoutMode method for class: " + iterable.getClass(), e);
-        } catch (InvocationTargetException | IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             throw new UnsupportedOperationException("Unable to set timeoutMode method for class: " + iterable.getClass(), e);
+        } catch (InvocationTargetException e) {
+            Throwable targetException = e.getTargetException();
+            if (targetException instanceof IllegalArgumentException) {
+                throw (IllegalArgumentException) targetException;
+            }
+            throw new UnsupportedOperationException("Unable to set timeoutMode method for class: " + iterable.getClass(), targetException);
         }
     }
 }

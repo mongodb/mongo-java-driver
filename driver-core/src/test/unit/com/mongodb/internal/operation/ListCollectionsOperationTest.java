@@ -24,7 +24,6 @@ import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.Connection;
@@ -58,7 +57,7 @@ final class ListCollectionsOperationTest {
     @BeforeEach
     void beforeEach() {
         MongoNamespace namespace = new MongoNamespace("db", "coll");
-        operation = new ListCollectionsOperation<>(TimeoutSettings.DEFAULT, namespace.getDatabaseName(), new BsonDocumentCodec());
+        operation = new ListCollectionsOperation<>(namespace.getDatabaseName(), new BsonDocumentCodec());
         mocks = mocks(namespace);
     }
 

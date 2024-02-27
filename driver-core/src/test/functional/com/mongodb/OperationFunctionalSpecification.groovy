@@ -65,9 +65,7 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
-import static com.mongodb.ClusterFixture.createNewOperationContext
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
@@ -111,13 +109,13 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
-        new MixedBulkWriteOperation(TIMEOUT_SETTINGS, getNamespace(), [new InsertRequest(new BsonDocument())], true,
+        new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true,
                 ACKNOWLEDGED, false).execute(binding)
         binding.release()
     }
 
     void acknowledgeWrite(final AsyncSingleConnectionBinding binding) {
-        executeAsync(new MixedBulkWriteOperation(TIMEOUT_SETTINGS, getNamespace(), [new InsertRequest(new BsonDocument())],
+        executeAsync(new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())],
                 true, ACKNOWLEDGED, false), binding)
         binding.release()
     }
@@ -146,8 +144,8 @@ class OperationFunctionalSpecification extends Specification {
     def executeWithSession(operation, boolean async) {
         def executor = async ? ClusterFixture.&executeAsync : ClusterFixture.&executeSync
         def binding = async ?
-                new AsyncSessionBinding(getAsyncBinding(operation.getTimeoutSettings()))
-                : new SessionBinding(getBinding(operation.getTimeoutSettings()))
+                new AsyncSessionBinding(getAsyncBinding())
+                : new SessionBinding(getBinding())
         executor(operation, binding)
     }
 
@@ -275,7 +273,7 @@ class OperationFunctionalSpecification extends Specification {
                           BsonDocument expectedCommand=null, Boolean checkSecondaryOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
+        def operationContext = OPERATION_CONTEXT
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern
@@ -352,7 +350,7 @@ class OperationFunctionalSpecification extends Specification {
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSecondaryOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
                            ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = createNewOperationContext(operation.getTimeoutSettings())
+        def operationContext = OPERATION_CONTEXT
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern

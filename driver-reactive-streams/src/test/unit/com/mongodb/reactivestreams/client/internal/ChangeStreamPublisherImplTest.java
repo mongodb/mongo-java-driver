@@ -37,8 +37,6 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -59,7 +57,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                                                                                     Document.class, pipeline, ChangeStreamLevel.COLLECTION);
 
         ChangeStreamOperation<ChangeStreamDocument<Document>> expectedOperation =
-                new ChangeStreamOperation<>(TIMEOUT_SETTINGS, NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
+                new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
                         codec)
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
@@ -78,7 +76,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                 .maxAwaitTime(101, MILLISECONDS)
                 .fullDocument(FullDocument.UPDATE_LOOKUP);
 
-        expectedOperation = new ChangeStreamOperation<>(TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME, NAMESPACE, FullDocument.UPDATE_LOOKUP,
+        expectedOperation = new ChangeStreamOperation<>(NAMESPACE, FullDocument.UPDATE_LOOKUP,
                 FullDocumentBeforeChange.DEFAULT,
                 pipeline,
                                                         codec).retryReads(true);
@@ -106,7 +104,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                 .withDocumentClass(BsonDocument.class);
 
         ChangeStreamOperation<BsonDocument> expectedOperation =
-                new ChangeStreamOperation<>(TIMEOUT_SETTINGS, NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
+                new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
                                             getDefaultCodecRegistry().get(BsonDocument.class))
                         .batchSize(batchSize)
                         .comment(new BsonInt32(1))

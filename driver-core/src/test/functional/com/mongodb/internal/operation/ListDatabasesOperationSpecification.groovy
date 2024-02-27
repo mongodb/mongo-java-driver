@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.MongoExecutionTimeoutException
+
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.connection.ConnectionDescription
@@ -32,14 +32,8 @@ import org.bson.BsonRegularExpression
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.isSharded
 
 class ListDatabasesOperationSpecification extends OperationFunctionalSpecification {
     def codec = new DocumentCodec()
@@ -47,7 +41,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
     def 'should return a list of database names'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new ListDatabasesOperation(TIMEOUT_SETTINGS, codec)
+        def operation = new ListDatabasesOperation(codec)
 
         when:
         def names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
@@ -74,27 +68,6 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
-        def operation = new ListDatabasesOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, codec)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-
-        where:
-        async << [true, false]
-    }
-
     def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
@@ -108,7 +81,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadPreference() >> readPreference
             getOperationContext() >> OPERATION_CONTEXT
         }
-        def operation = new ListDatabasesOperation(TIMEOUT_SETTINGS, helper.decoder)
+        def operation = new ListDatabasesOperation(helper.decoder)
 
         when:
         operation.execute(readBinding)
@@ -133,7 +106,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadPreference() >> readPreference
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
-        def operation = new ListDatabasesOperation(TIMEOUT_SETTINGS, helper.decoder)
+        def operation = new ListDatabasesOperation(helper.decoder)
 
         when:
         operation.executeAsync(readBinding, Stub(SingleResultCallback))

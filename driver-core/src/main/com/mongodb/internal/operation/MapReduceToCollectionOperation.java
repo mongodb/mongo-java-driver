@@ -20,7 +20,6 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -59,7 +58,6 @@ import static java.util.Arrays.asList;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
     private final BsonJavaScript reduceFunction;
@@ -78,10 +76,8 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     private Collation collation;
     private static final List<String> VALID_ACTIONS = asList("replace", "merge", "reduce");
 
-    public MapReduceToCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, @Nullable final String collectionName,
-            @Nullable final WriteConcern writeConcern) {
-        this.timeoutSettings = timeoutSettings;
+    public MapReduceToCollectionOperation(final MongoNamespace namespace, final BsonJavaScript mapFunction,
+            final BsonJavaScript reduceFunction, @Nullable final String collectionName, @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -212,11 +208,6 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
-    }
-
-    @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
         return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), transformer());
     }
@@ -247,7 +238,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new CommandReadOperation<>(timeoutSettings, getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 (operationContext, serverDescription, connectionDescription) ->
                         asExplainCommand(getCommandCreator().create(operationContext, serverDescription, connectionDescription),
                                 explainVerbosity), new BsonDocumentCodec());

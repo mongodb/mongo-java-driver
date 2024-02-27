@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -48,13 +47,11 @@ import static java.util.Collections.singletonList;
  */
 public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private boolean retryReads;
     private BsonValue comment;
 
-    public EstimatedDocumentCountOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace) {
-        this.timeoutSettings = timeoutSettings;
+    public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
         this.namespace = notNull("namespace", namespace);
     }
 
@@ -71,11 +68,6 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     public EstimatedDocumentCountOperation comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

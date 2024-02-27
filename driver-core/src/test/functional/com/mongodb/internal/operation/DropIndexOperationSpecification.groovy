@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation
 
 import com.mongodb.MongoException
-import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -30,20 +29,15 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionLessThan
 
 class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should not error when dropping non-existent index on non-existent collection'() {
         when:
-        execute(new DropIndexOperation(TIMEOUT_SETTINGS, getNamespace(), 'made_up_index_1', null), async)
+        execute(new DropIndexOperation(getNamespace(), 'made_up_index_1', null), async)
 
         then:
         getIndexes().size() == 0
@@ -57,7 +51,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        execute(new DropIndexOperation(TIMEOUT_SETTINGS, getNamespace(), 'made_up_index_1', null), async)
+        execute(new DropIndexOperation(getNamespace(), 'made_up_index_1', null), async)
 
         then:
         thrown(MongoException)
@@ -71,7 +65,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
 
         when:
-        execute(new DropIndexOperation(TIMEOUT_SETTINGS, getNamespace(), 'theField_1', null), async)
+        execute(new DropIndexOperation(getNamespace(), 'theField_1', null), async)
         List<Document> indexes = getIndexes()
 
         then:
@@ -88,7 +82,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(keys)
 
         when:
-        execute(new DropIndexOperation(TIMEOUT_SETTINGS, getNamespace(), keys, null), async)
+        execute(new DropIndexOperation(getNamespace(), keys, null), async)
         List<Document> indexes = getIndexes()
 
         then:
@@ -106,35 +100,13 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        def keys = new BsonDocument('theField', new BsonInt32(1))
-        collectionHelper.createIndex(keys)
-        def operation = new DropIndexOperation(TIMEOUT_SETTINGS_WITH_MAX_TIME, getNamespace(), keys, null)
-
-        enableMaxTimeFailPoint()
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-
-        where:
-        async << [true, false]
-    }
-
     def 'should drop existing index by key when using BsonInt64'() {
         given:
         def keys = new BsonDocument('theField', new BsonInt32(1))
         collectionHelper.createIndex(keys)
 
         when:
-        execute(new DropIndexOperation(TIMEOUT_SETTINGS, getNamespace(), new BsonDocument('theField', new BsonInt64(1)), null),
+        execute(new DropIndexOperation(getNamespace(), new BsonDocument('theField', new BsonInt64(1)), null),
                 async)
         List<Document> indexes = getIndexes()
 
@@ -152,7 +124,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(new BsonDocument('theOtherField', new BsonInt32(1)))
 
         when:
-        execute(new DropIndexOperation(TIMEOUT_SETTINGS, getNamespace(), '*', null), async)
+        execute(new DropIndexOperation(getNamespace(), '*', null), async)
         List<Document> indexes = getIndexes()
 
         then:
@@ -167,7 +139,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw on write concern error'() {
         given:
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
-        def operation = new DropIndexOperation(TIMEOUT_SETTINGS, getNamespace(), 'theField_1', new WriteConcern(5))
+        def operation = new DropIndexOperation(getNamespace(), 'theField_1', new WriteConcern(5))
 
         when:
         execute(operation, async)
@@ -183,7 +155,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
     def getIndexes() {
         def indexes = []
-        def cursor = new ListIndexesOperation(TIMEOUT_SETTINGS, getNamespace(), new DocumentCodec()).execute(getBinding())
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())
         }

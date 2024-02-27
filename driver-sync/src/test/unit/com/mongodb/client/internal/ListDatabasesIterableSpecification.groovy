@@ -30,7 +30,6 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -57,7 +56,7 @@ class ListDatabasesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(TIMEOUT_SETTINGS, new DocumentCodec())
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec())
                 .retryReads(true))
         readPreference == secondary()
 
@@ -67,7 +66,7 @@ class ListDatabasesIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, new DocumentCodec())
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec())
                 .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).retryReads(true))
 
         when: 'overriding initial options'
@@ -76,7 +75,7 @@ class ListDatabasesIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(TIMEOUT_SETTINGS_WITH_MAX_TIME, new DocumentCodec())
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec())
                 .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).authorizedDatabasesOnly(true).retryReads(true))
     }
 

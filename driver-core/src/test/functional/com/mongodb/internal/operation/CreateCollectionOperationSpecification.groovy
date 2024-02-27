@@ -28,7 +28,6 @@ import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -116,7 +115,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         execute(operation, async)
 
         then:
-        new ListCollectionsOperation(TIMEOUT_SETTINGS, getDatabaseName(), new BsonDocumentCodec())
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
                 .execute(getBinding()).next().find { it -> it.getString('name').value == getCollectionName() }
                 .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
 
@@ -138,7 +137,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         execute(operation, async)
 
         then:
-        new ListCollectionsOperation(TIMEOUT_SETTINGS, getDatabaseName(), new BsonDocumentCodec())
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
                 .execute(getBinding()).next().find { it -> it.getString('name').value == getCollectionName() }
                 .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
         where:
@@ -279,7 +278,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
     def getCollectionInfo(String collectionName) {
-        new ListCollectionsOperation(TIMEOUT_SETTINGS, databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
+        new ListCollectionsOperation(databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
                 new BsonString(collectionName))).execute(getBinding()).tryNext()?.head()
     }
 
@@ -290,12 +289,12 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
 
     BsonDocument storageStats() {
         if (serverVersionLessThan(6, 2)) {
-            return new CommandReadOperation<>(TIMEOUT_SETTINGS, getDatabaseName(),
+            return new CommandReadOperation<>(getDatabaseName(),
                     new BsonDocument('collStats', new BsonString(getCollectionName())),
                     new BsonDocumentCodec()).execute(getBinding())
         }
         BatchCursor<BsonDocument> cursor = new AggregateOperation(
-                TIMEOUT_SETTINGS,
+
                 getNamespace(),
                 singletonList(new BsonDocument('$collStats', new BsonDocument('storageStats', new BsonDocument()))),
                 new BsonDocumentCodec()).execute(getBinding())
@@ -311,6 +310,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
     def createOperation(WriteConcern writeConcern) {
-        new CreateCollectionOperation(TIMEOUT_SETTINGS,  getDatabaseName(), getCollectionName(), writeConcern)
+        new CreateCollectionOperation(getDatabaseName(), getCollectionName(), writeConcern)
     }
 }

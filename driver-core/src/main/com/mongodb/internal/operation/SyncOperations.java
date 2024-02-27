@@ -60,11 +60,14 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class SyncOperations<TDocument> {
     private final Operations<TDocument> operations;
+    private final TimeoutSettings timeoutSettings;
 
     public SyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry, final boolean retryReads, final TimeoutSettings timeoutSettings) {
@@ -80,7 +83,56 @@ public final class SyncOperations<TDocument> {
                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
                           final boolean retryWrites, final boolean retryReads, final TimeoutSettings timeoutSettings) {
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                retryWrites, retryReads, timeoutSettings);
+                retryWrites, retryReads);
+        this.timeoutSettings = timeoutSettings;
+    }
+
+    public TimeoutSettings createTimeoutSettings(final long maxTimeMS) {
+        return timeoutSettings.withMaxTimeMS(maxTimeMS);
+    }
+
+    public TimeoutSettings createTimeoutSettings(final long maxTimeMS, final long maxAwaitTimeMS) {
+        return timeoutSettings.withMaxTimeAndMaxAwaitTimeMS(maxTimeMS, maxAwaitTimeMS);
+    }
+
+    @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final CountOptions options) {
+        return createTimeoutSettings(options.getMaxTime(MILLISECONDS));
+    }
+
+    @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final EstimatedDocumentCountOptions options) {
+        return createTimeoutSettings(options.getMaxTime(MILLISECONDS));
+    }
+
+    @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final FindOptions options) {
+        return timeoutSettings.withMaxTimeAndMaxAwaitTimeMS(options.getMaxTime(MILLISECONDS), options.getMaxAwaitTime(MILLISECONDS));
+    }
+
+    @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final FindOneAndDeleteOptions options) {
+        return createTimeoutSettings(options.getMaxTime(MILLISECONDS));
+    }
+
+    @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final FindOneAndReplaceOptions options) {
+        return createTimeoutSettings(options.getMaxTime(MILLISECONDS));
+    }
+
+    @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final FindOneAndUpdateOptions options) {
+        return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
+    }
+
+    // TODO (CSOT) @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final CreateIndexOptions options) {
+        return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
+    }
+
+    // TODO (CSOT) @SuppressWarnings("deprecation") // MaxTime
+    public TimeoutSettings createTimeoutSettings(final DropIndexOptions options) {
+        return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
     }
 
     public ReadOperation<Long> countDocuments(final Bson filter, final CountOptions options) {
@@ -97,7 +149,7 @@ public final class SyncOperations<TDocument> {
     }
 
     public <TResult> ExplainableReadOperation<BatchCursor<TResult>> find(final Bson filter, final Class<TResult> resultClass,
-                                                              final FindOptions options) {
+            final FindOptions options) {
         return operations.find(filter, resultClass, options);
     }
 
@@ -107,25 +159,25 @@ public final class SyncOperations<TDocument> {
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> distinct(final String fieldName, final Bson filter,
-                                                                  final Class<TResult> resultClass, final long maxTimeMS,
+                                                                  final Class<TResult> resultClass,
                                                                   final Collation collation, final BsonValue comment) {
-        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation, comment);
+        return operations.distinct(fieldName, filter, resultClass, collation, comment);
     }
 
     public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
-            final Class<TResult> resultClass, final long maxTimeMS, final long maxAwaitTimeMS,
+            final Class<TResult> resultClass,
             @Nullable final TimeoutMode timeoutMode, @Nullable final Integer batchSize,
             final Collation collation, final Bson hint, final String hintString, final BsonValue comment, final Bson variables,
             final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
-        return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, timeoutMode, batchSize, collation, hint, hintString,
+        return operations.aggregate(pipeline, resultClass, timeoutMode, batchSize, collation, hint, hintString,
                 comment, variables, allowDiskUse, aggregationLevel);
     }
 
-    public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
+    public AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline,
             @Nullable final TimeoutMode timeoutMode, final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString, final BsonValue comment,
             final Bson variables, final AggregationLevel aggregationLevel) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, timeoutMode, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
+        return operations.aggregateToCollection(pipeline, timeoutMode, allowDiskUse, bypassDocumentValidation, collation, hint, hintString,
                 comment, variables, aggregationLevel);
     }
 
@@ -133,21 +185,21 @@ public final class SyncOperations<TDocument> {
     public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,
                                                                      final String mapFunction, final String reduceFunction,
                                                                      final String finalizeFunction, final Bson filter, final int limit,
-                                                                     final long maxTimeMS, final boolean jsMode, final Bson scope,
+                                                                     final boolean jsMode, final Bson scope,
                                                                      final Bson sort, final boolean verbose,
                                                                      final com.mongodb.client.model.MapReduceAction action,
                                                                      final Boolean bypassDocumentValidation, final Collation collation) {
         return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter, limit,
-                maxTimeMS, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation);
+                jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation);
     }
 
     public <TResult> ReadOperation<MapReduceBatchCursor<TResult>> mapReduce(final String mapFunction, final String reduceFunction,
                                                                             final String finalizeFunction, final Class<TResult> resultClass,
                                                                             final Bson filter, final int limit,
-                                                                            final long maxTimeMS, final boolean jsMode, final Bson scope,
+                                                                            final boolean jsMode, final Bson scope,
                                                                             final Bson sort, final boolean verbose,
                                                                             final Collation collation) {
-        return operations.mapReduce(mapFunction, reduceFunction, finalizeFunction, resultClass, filter, limit, maxTimeMS, jsMode, scope,
+        return operations.mapReduce(mapFunction, reduceFunction, finalizeFunction, resultClass, filter, limit, jsMode, scope,
                 sort, verbose, collation);
     }
 
@@ -259,14 +311,9 @@ public final class SyncOperations<TDocument> {
 
 
     public <TResult> ExplainableReadOperation<BatchCursor<TResult>> listSearchIndexes(final Class<TResult> resultClass,
-                                                                           final long maxTimeMS,
-                                                                           @Nullable final String indexName,
-                                                                           @Nullable final Integer batchSize,
-                                                                           @Nullable final Collation collation,
-                                                                           @Nullable final BsonValue comment,
-                                                                           @Nullable final Boolean allowDiskUse) {
-        return operations.listSearchIndexes(resultClass, maxTimeMS, indexName, batchSize, collation,
-               comment, allowDiskUse);
+            @Nullable final String indexName, @Nullable final Integer batchSize, @Nullable final Collation collation,
+            @Nullable final BsonValue comment, @Nullable final Boolean allowDiskUse) {
+        return operations.listSearchIndexes(resultClass, indexName, batchSize, collation, comment, allowDiskUse);
     }
 
     public WriteOperation<Void> dropIndex(final String indexName, final DropIndexOptions options) {
@@ -280,30 +327,30 @@ public final class SyncOperations<TDocument> {
     public <TResult> ReadOperation<BatchCursor<TResult>> listCollections(final String databaseName, final Class<TResult> resultClass,
                                                                          final Bson filter, final boolean collectionNamesOnly,
                                                                          final boolean authorizedCollections,
-                                                                         @Nullable final Integer batchSize, final long maxTimeMS,
+                                                                         @Nullable final Integer batchSize,
                                                                          final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
         return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
-                batchSize, maxTimeMS, comment, timeoutMode);
+                batchSize, comment, timeoutMode);
 
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listDatabases(final Class<TResult> resultClass, final Bson filter,
-                                                                       final Boolean nameOnly, final long maxTimeMS,
+                                                                       final Boolean nameOnly,
                                                                        final Boolean authorizedDatabases, final BsonValue comment) {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabases, comment);
+        return operations.listDatabases(resultClass, filter, nameOnly, authorizedDatabases, comment);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> listIndexes(final Class<TResult> resultClass, @Nullable final Integer batchSize,
-            final long maxTimeMS, final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
-        return operations.listIndexes(resultClass, batchSize, maxTimeMS, comment, timeoutMode);
+            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
+        return operations.listIndexes(resultClass, batchSize, comment, timeoutMode);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> changeStream(final FullDocument fullDocument,
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<? extends Bson> pipeline, final Decoder<TResult> decoder,
             final ChangeStreamLevel changeStreamLevel, @Nullable final Integer batchSize, final Collation collation,
-            final BsonValue comment, final long maxAwaitTimeMS, final BsonDocument resumeToken, final BsonTimestamp startAtOperationTime,
+            final BsonValue comment, final BsonDocument resumeToken, final BsonTimestamp startAtOperationTime,
             final BsonDocument startAfter, final boolean showExpandedEvents) {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, decoder, changeStreamLevel, batchSize,
-                collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 }

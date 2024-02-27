@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -35,7 +34,6 @@ import org.bson.codecs.Decoder;
 
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
@@ -67,7 +65,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -75,8 +72,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     private BsonValue comment;
     private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
-    public ListIndexesOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace, final Decoder<T> decoder) {
-        this.timeoutSettings = timeoutSettings;
+    public ListIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -114,16 +110,10 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     public ListIndexesOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        isTrueArgument("timeoutMode requires timeoutMS.", timeoutMode == null || timeoutSettings.getTimeoutMS() != null);
         if (timeoutMode != null) {
             this.timeoutMode = timeoutMode;
         }
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

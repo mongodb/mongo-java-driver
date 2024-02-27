@@ -24,7 +24,6 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoChangeStreamCursor;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
@@ -89,7 +88,6 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         this.codec = ChangeStreamDocument.createCodec(notNull("resultClass", resultClass), codecRegistry);
         this.changeStreamLevel = notNull("changeStreamLevel", changeStreamLevel);
         this.operations = new SyncOperations<>(namespace, resultClass, readPreference, codecRegistry, retryReads, timeoutSettings);
-        super.timeoutMode(TimeoutMode.ITERATION);
     }
 
     @Override
@@ -146,6 +144,12 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
             @Override
             public ReadOperation<BatchCursor<TDocument>> asReadOperation() {
                 throw new UnsupportedOperationException();
+            }
+
+            @Override
+
+            protected OperationExecutor getExecutor() {
+                return ChangeStreamIterableImpl.this.getExecutor();
             }
         };
     }
@@ -207,9 +211,14 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         throw new UnsupportedOperationException();
     }
 
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(0, maxAwaitTimeMS));
+    }
+
     private ReadOperation<BatchCursor<RawBsonDocument>> createChangeStreamOperation() {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, new RawBsonDocumentCodec(), changeStreamLevel,
-                getBatchSize(), collation, comment, maxAwaitTimeMS, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                getBatchSize(), collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 
     private BatchCursor<RawBsonDocument> execute() {

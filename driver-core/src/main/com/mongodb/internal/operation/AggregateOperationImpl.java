@@ -19,7 +19,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -55,7 +54,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static final String CURSOR = "cursor";
     private static final String FIRST_BATCH = "firstBatch";
     private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final Decoder<T> decoder;
@@ -71,18 +69,17 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private BsonDocument variables;
     private TimeoutMode timeoutMode;
 
-    AggregateOperationImpl(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
+    AggregateOperationImpl(final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
-        this(timeoutSettings, namespace, pipeline, decoder,
+        this(namespace, pipeline, decoder,
                 defaultAggregateTarget(notNull("aggregationLevel", aggregationLevel),
                         notNull("namespace", namespace).getCollectionName()),
                 defaultPipelineCreator(pipeline));
     }
 
-    AggregateOperationImpl(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
+    AggregateOperationImpl(final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregateTarget aggregateTarget,
             final PipelineCreator pipelineCreator) {
-        this.timeoutSettings = timeoutSettings;
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
@@ -158,13 +155,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return hint;
     }
 
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
-    }
-
     public AggregateOperationImpl<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        isTrueArgument("timeoutMode requires timeoutMS.", timeoutMode == null || timeoutSettings.getTimeoutMS() != null);
         if (timeoutMode != null) {
             this.timeoutMode = timeoutMode;
         }
@@ -229,14 +220,14 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection) ->
-                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0, getMaxTimeForCursor(), decoder,
-                        comment, source, connection);
+                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
+                        getMaxTimeForCursor(source.getOperationContext()), decoder, comment, source, connection);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection) ->
-            new AsyncCommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0, getMaxTimeForCursor(), decoder,
-                    comment, source, connection);
+            new AsyncCommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
+                    getMaxTimeForCursor(source.getOperationContext()), decoder, comment, source, connection);
     }
 
     private TimeoutMode getTimeoutMode() {
@@ -247,8 +238,8 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return localTimeoutMode;
     }
 
-    private long getMaxTimeForCursor() {
-        return timeoutSettings.getMaxAwaitTimeMS();
+    private long getMaxTimeForCursor(final OperationContext operationContext) {
+        return operationContext.getTimeoutContext().getMaxAwaitTimeMS();
     }
 
     interface AggregateTarget {

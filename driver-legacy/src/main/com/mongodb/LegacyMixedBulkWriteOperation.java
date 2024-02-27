@@ -19,7 +19,6 @@ package com.mongodb;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.InsertRequest;
@@ -48,7 +47,6 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
  * Operation for bulk writes for the legacy API.
  */
 final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcernResult> {
-    private final TimeoutSettings timeoutSettings;
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final List<? extends WriteRequest> writeRequests;
@@ -57,41 +55,31 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     private final boolean retryWrites;
     private Boolean bypassDocumentValidation;
 
-    static LegacyMixedBulkWriteOperation createBulkWriteOperationForInsert(final TimeoutSettings timeoutSettings,
-            final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites,
-            final List<InsertRequest> insertRequests) {
-        return new LegacyMixedBulkWriteOperation(timeoutSettings, namespace, ordered, writeConcern, retryWrites, insertRequests,
-                INSERT);
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForInsert(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<InsertRequest> insertRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, insertRequests, INSERT);
     }
 
-    static LegacyMixedBulkWriteOperation createBulkWriteOperationForUpdate(final TimeoutSettings timeoutSettings,
-            final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites,
-            final List<UpdateRequest> updateRequests) {
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForUpdate(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> updateRequests) {
         assertTrue(updateRequests.stream().allMatch(updateRequest -> updateRequest.getType() == UPDATE));
-        return new LegacyMixedBulkWriteOperation(timeoutSettings, namespace, ordered, writeConcern, retryWrites, updateRequests,
-                UPDATE);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, updateRequests, UPDATE);
     }
 
-    static LegacyMixedBulkWriteOperation createBulkWriteOperationForReplace(final TimeoutSettings timeoutSettings,
-            final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites,
-            final List<UpdateRequest> replaceRequests) {
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForReplace(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> replaceRequests) {
         assertTrue(replaceRequests.stream().allMatch(updateRequest -> updateRequest.getType() == REPLACE));
-        return new LegacyMixedBulkWriteOperation(timeoutSettings, namespace, ordered, writeConcern, retryWrites, replaceRequests,
-                REPLACE);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, replaceRequests, REPLACE);
     }
 
-    static LegacyMixedBulkWriteOperation createBulkWriteOperationForDelete(final TimeoutSettings timeoutSettings,
-            final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites,
-            final List<DeleteRequest> deleteRequests) {
-        return new LegacyMixedBulkWriteOperation(timeoutSettings, namespace, ordered, writeConcern, retryWrites, deleteRequests,
-                DELETE);
+    static LegacyMixedBulkWriteOperation createBulkWriteOperationForDelete(final MongoNamespace namespace, final boolean ordered,
+            final WriteConcern writeConcern, final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, deleteRequests, DELETE);
     }
 
-    private LegacyMixedBulkWriteOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final boolean ordered, final WriteConcern writeConcern,
+    private LegacyMixedBulkWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
             final boolean retryWrites, final List<? extends WriteRequest> writeRequests, final WriteRequest.Type type) {
         isTrueArgument("writeRequests not empty", !writeRequests.isEmpty());
-        this.timeoutSettings = notNull("timeoutSettings", timeoutSettings);
         this.writeRequests = notNull("writeRequests", writeRequests);
         this.type = type;
         this.ordered = ordered;
@@ -110,15 +98,10 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     }
 
     @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
-    }
-
-    @Override
     public WriteConcernResult execute(final WriteBinding binding) {
         try {
-            BulkWriteResult result = new MixedBulkWriteOperation(timeoutSettings, namespace, writeRequests,
-                    ordered, writeConcern, retryWrites).bypassDocumentValidation(bypassDocumentValidation).execute(binding);
+            BulkWriteResult result = new MixedBulkWriteOperation(namespace, writeRequests, ordered, writeConcern, retryWrites)
+                    .bypassDocumentValidation(bypassDocumentValidation).execute(binding);
             if (result.wasAcknowledged()) {
                 return translateBulkWriteResult(result);
             } else {

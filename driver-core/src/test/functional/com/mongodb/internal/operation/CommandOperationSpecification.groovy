@@ -16,27 +16,20 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.MongoExecutionTimeoutException
+
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
-
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.isSharded
 
 class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute read command'() {
         given:
-        def operation = new CommandReadOperation<BsonDocument>(TIMEOUT_SETTINGS, getNamespace().databaseName,
+        def operation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
                 new BsonDocument('count', new BsonString(getCollectionName())),
                 new BsonDocumentCodec())
         when:
@@ -54,7 +47,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     @Slow
     def 'should execute command larger than 16MB'() {
         given:
-        def operation = new CommandReadOperation<>(TIMEOUT_SETTINGS, getNamespace().databaseName,
+        def operation = new CommandReadOperation<>(getNamespace().databaseName,
                 new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
                         .append('query', new BsonDocument('_id', new BsonInt32(42)))
                         .append('update',
@@ -72,27 +65,4 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         where:
         async << [true, false]
     }
-
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        def operation = new CommandReadOperation<BsonDocument>(TIMEOUT_SETTINGS_WITH_MAX_TIME, getNamespace().databaseName,
-                new BsonDocument('count', new BsonString(getCollectionName()))
-                        .append('maxTimeMS', new BsonInt32(99)), // TODO - JAVA-5098 determine the correct course of action here.
-                new BsonDocumentCodec())
-        enableMaxTimeFailPoint()
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-
-        where:
-        async << [true, false]
-    }
-
 }

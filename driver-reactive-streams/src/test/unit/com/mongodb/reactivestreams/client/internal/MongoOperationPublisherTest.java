@@ -32,17 +32,27 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 
 public class MongoOperationPublisherTest {
-    private static final OperationExecutor OPERATION_EXECUTOR = mock(OperationExecutor.class);
+
+    private static final OperationExecutor OPERATION_EXECUTOR;
+
+    static {
+        OPERATION_EXECUTOR = mock(OperationExecutor.class);
+        Mockito.lenient().doAnswer(invocation -> OPERATION_EXECUTOR)
+                .when(OPERATION_EXECUTOR)
+                .withTimeoutSettings(any());
+    }
     private static final MongoNamespace MONGO_NAMESPACE = new MongoNamespace("a.b");
 
     private static final MongoOperationPublisher<Document> DEFAULT_MOP = new MongoOperationPublisher<>(

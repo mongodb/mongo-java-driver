@@ -38,7 +38,6 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -68,7 +67,7 @@ class GridFSFindIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(TIMEOUT_SETTINGS, namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
                 .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
@@ -86,7 +85,7 @@ class GridFSFindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
                 .batchSize(99)
@@ -112,7 +111,7 @@ class GridFSFindIterableSpecification extends Specification {
         def operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(TIMEOUT_SETTINGS, namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)

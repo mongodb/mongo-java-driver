@@ -109,6 +109,11 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return operations.listDatabases(resultClass, filter, nameOnly, maxTimeMS, authorizedDatabasesOnly, comment);
+        return operations.listDatabases(resultClass, filter, nameOnly, authorizedDatabasesOnly, comment);
+    }
+
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
     }
 }

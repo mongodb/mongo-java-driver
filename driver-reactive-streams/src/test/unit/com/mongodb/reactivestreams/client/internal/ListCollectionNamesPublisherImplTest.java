@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.ListCollectionsOperation;
 import com.mongodb.reactivestreams.client.ListCollectionNamesPublisher;
 import org.bson.BsonDocument;
@@ -46,8 +45,8 @@ final class ListCollectionNamesPublisherImplTest extends TestHelper {
                         .withDocumentClass(Document.class), true))
                 .authorizedCollections(true);
 
-        ListCollectionsOperation<Document> expectedOperation = new ListCollectionsOperation<>(TimeoutSettings.DEFAULT, DATABASE_NAME,
-                                                                                            getDefaultCodecRegistry().get(Document.class))
+        ListCollectionsOperation<Document> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
+                                                                                              getDefaultCodecRegistry().get(Document.class))
                 .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true)
                 .authorizedCollections(true)
@@ -65,8 +64,8 @@ final class ListCollectionNamesPublisherImplTest extends TestHelper {
                 .maxTime(10, SECONDS)
                 .batchSize(100);
 
-        expectedOperation = new ListCollectionsOperation<>(TimeoutSettings.DEFAULT.withMaxTimeMS(10_000), DATABASE_NAME,
-                getDefaultCodecRegistry().get(Document.class))
+        expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
+                                                           getDefaultCodecRegistry().get(Document.class))
                 .nameOnly(true)
                 .authorizedCollections(true)
                 .retryReads(true)

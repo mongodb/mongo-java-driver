@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -45,7 +44,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-    private final TimeoutSettings timeoutSettings;
     private static final String DATABASES = "databases";
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -54,8 +52,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     private Boolean authorizedDatabasesOnly;
     private BsonValue comment;
 
-    public ListDatabasesOperation(final TimeoutSettings timeoutSettings, final Decoder<T> decoder) {
-        this.timeoutSettings = timeoutSettings;
+    public ListDatabasesOperation(final Decoder<T> decoder) {
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -103,11 +100,6 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     public ListDatabasesOperation<T> comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override

@@ -26,7 +26,6 @@ import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.session.SessionContext
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 
 class CommitTransactionOperationUnitSpecification extends OperationUnitSpecification {
     def 'should add UnknownTransactionCommitResult error label to MongoTimeoutException'() {
@@ -39,7 +38,7 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
             getWriteConnectionSource() >> { throw new MongoTimeoutException('Time out!') }
             getOperationContext() >> OPERATION_CONTEXT.withSessionContext(sessionContext)
         }
-        def operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
 
         when:
         operation.execute(writeBinding)
@@ -61,7 +60,7 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
             }
             getOperationContext() >> OPERATION_CONTEXT.withSessionContext(sessionContext)
         }
-        def operation = new CommitTransactionOperation(TIMEOUT_SETTINGS, WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
         def callback = new FutureResultCallback()
 
         when:

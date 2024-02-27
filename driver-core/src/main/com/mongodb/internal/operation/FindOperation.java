@@ -23,7 +23,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
@@ -41,7 +40,6 @@ import org.bson.codecs.Decoder;
 
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
@@ -71,7 +69,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
 public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String FIRST_BATCH = "firstBatch";
 
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
@@ -95,9 +92,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     private Boolean allowDiskUse;
     private TimeoutMode timeoutMode;
 
-    public FindOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final Decoder<T> decoder) {
-        this.timeoutSettings = timeoutSettings;
+    public FindOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -174,7 +169,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     public FindOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        isTrueArgument("timeoutMode requires timeoutMS.", timeoutMode == null || timeoutSettings.getTimeoutMS() != null);
         if (timeoutMode != null) {
             this.timeoutMode = timeoutMode;
         }
@@ -290,11 +284,6 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
-    }
-
-    @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         IllegalStateException invalidTimeoutModeException = invalidTimeoutModeException();
         if (invalidTimeoutModeException != null) {
@@ -374,7 +363,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
     }
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(timeoutSettings, getNamespace().getDatabaseName(),
+        return new CommandReadOperation<>(getNamespace().getDatabaseName(),
                 (operationContext, serverDescription, connectionDescription) ->
                         asExplainCommand(getCommand(operationContext, MIN_WIRE_VERSION), verbosity), resultDecoder);
     }
@@ -469,16 +458,18 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection) ->
-                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection);
+                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(source.getOperationContext()), decoder,
+                        comment, source, connection);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection) ->
-            new AsyncCommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(), decoder, comment, source, connection);
+            new AsyncCommandBatchCursor<>(getTimeoutMode(), result, batchSize, getMaxTimeForCursor(source.getOperationContext()), decoder,
+                    comment, source, connection);
     }
 
-    private long getMaxTimeForCursor() {
-        return cursorType == CursorType.TailableAwait ? timeoutSettings.getMaxAwaitTimeMS() : 0;
+    private long getMaxTimeForCursor(final OperationContext operationContext) {
+        return cursorType == CursorType.TailableAwait ? operationContext.getTimeoutContext().getMaxAwaitTimeMS() : 0;
     }
 
     @Nullable

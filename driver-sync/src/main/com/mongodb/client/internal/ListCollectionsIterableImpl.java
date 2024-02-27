@@ -106,6 +106,11 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
-                getBatchSize(), maxTimeMS, comment, getTimeoutMode());
+                getBatchSize(), comment, getTimeoutMode());
+    }
+
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
     }
 }

@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncOperations;
@@ -30,6 +31,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -54,6 +56,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     abstract AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(int initialBatchSize);
+    abstract Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings();
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
         return asAsyncReadOperation(1);
@@ -104,6 +107,9 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     public Publisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        if (mongoOperationPublisher.getTimeoutSettings().getTimeoutMS() == null) {
+            throw new IllegalArgumentException("TimeoutMode requires timeoutMS to be set.");
+        }
         this.timeoutMode = timeoutMode;
         return this;
     }
@@ -142,7 +148,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     Mono<BatchCursor<T>> batchCursor(final Supplier<AsyncReadOperation<AsyncBatchCursor<T>>> supplier) {
-        return mongoOperationPublisher.createReadOperationMono(supplier, clientSession).map(BatchCursor::new);
+        return mongoOperationPublisher.createReadOperationMono(getTimeoutSettings(), supplier, clientSession).map(BatchCursor::new);
     }
 
 }

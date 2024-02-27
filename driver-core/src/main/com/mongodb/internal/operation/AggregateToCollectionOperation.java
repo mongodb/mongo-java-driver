@@ -22,7 +22,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -57,7 +56,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConc
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class AggregateToCollectionOperation implements AsyncReadOperation<Void>, ReadOperation<Void> {
-    private final TimeoutSettings timeoutSettings;
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
@@ -71,15 +69,13 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     private BsonValue hint;
     private BsonDocument variables;
 
-    public AggregateToCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final List<BsonDocument> pipeline, final ReadConcern readConcern, final WriteConcern writeConcern) {
-        this(timeoutSettings, namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final ReadConcern readConcern,
+            final WriteConcern writeConcern) {
+        this(namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
     }
 
-    public AggregateToCollectionOperation(final TimeoutSettings timeoutSettings, final MongoNamespace namespace,
-            final List<BsonDocument> pipeline, @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern,
-            final AggregationLevel aggregationLevel) {
-        this.timeoutSettings = timeoutSettings;
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+            @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern, final AggregationLevel aggregationLevel) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
@@ -154,11 +150,6 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
     public AggregateToCollectionOperation timeoutMode(@Nullable final TimeoutMode timeoutMode) {
         isTrueArgument("timeoutMode cannot be ITERATION.", timeoutMode == null || timeoutMode.equals(TimeoutMode.CURSOR_LIFETIME));
         return this;
-    }
-
-    @Override
-    public TimeoutSettings getTimeoutSettings() {
-        return timeoutSettings;
     }
 
     @Override
