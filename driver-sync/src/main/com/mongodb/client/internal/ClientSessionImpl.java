@@ -21,11 +21,13 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.ReadOperation;
@@ -126,6 +128,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
         clearTransactionContext();
+        setTimeoutContext(createTimeoutContext());
     }
 
     @Override
@@ -144,15 +147,11 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 commitInProgress = true;
-                // TODO (CSOT) - JAVA-4067
-                // Long maxCommitTime = transactionOptions.getMaxCommitTime(MILLISECONDS);
-                delegate.getOperationExecutor().execute(
-                        new CommitTransactionOperation(
-                                // TODO (CSOT) - JAVA-4067
-                                assertNotNull(transactionOptions.getWriteConcern()),
-                        transactionState == TransactionState.COMMITTED)
-                                .recoveryToken(getRecoveryToken()),
-                        readConcern, this);
+                delegate.getOperationExecutor()
+                        .execute(new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()),
+                                transactionState == TransactionState.COMMITTED)
+                                .recoveryToken(getRecoveryToken()), readConcern, this);
+                setTimeoutContext(null);
             }
         } catch (MongoException e) {
             clearTransactionContextOnError(e);
@@ -180,11 +179,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
-                // TODO (CSOT) - JAVA-4067
-                // Long maxCommitTime = transactionOptions.getMaxCommitTime(MILLISECONDS);
-                delegate.getOperationExecutor().execute(new AbortTransactionOperation(
-                        // TODO (CSOT) - JAVA-4067
-                        assertNotNull(transactionOptions.getWriteConcern()))
+                delegate.getOperationExecutor()
+                        .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
                         .recoveryToken(getRecoveryToken()), readConcern, this);
             }
         } catch (RuntimeException e) {
@@ -218,9 +214,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 retVal = transactionBody.execute();
             } catch (Throwable e) {
                 if (transactionState == TransactionState.IN) {
+                    setTimeoutContext(createTimeoutContext());
                     abortTransaction();
                 }
-                if (e instanceof MongoException) {
+                if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
                     if (((MongoException) e).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
                             && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
                         continue;
@@ -235,7 +232,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         break;
                     } catch (MongoException e) {
                         clearTransactionContextOnError(e);
-                        if (ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                        if (!(e instanceof MongoOperationTimeoutException)
+                                && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
                             applyMajorityWriteConcernToTransactionOptions();
 
                             if (!(e instanceof MongoExecutionTimeoutException)
@@ -250,6 +248,18 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 }
             }
             return retVal;
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            if (transactionState == TransactionState.IN) {
+                abortTransaction();
+            }
+        } finally {
+            clearTransactionContext();
+            super.close();
         }
     }
 
@@ -269,21 +279,14 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-    @Override
-    public void close() {
-        try {
-            if (transactionState == TransactionState.IN) {
-                abortTransaction();
-            }
-        } finally {
-            clearTransactionContext();
-            super.close();
-        }
-    }
-
     private void cleanupTransaction(final TransactionState nextState) {
         messageSentInCurrentTransaction = false;
         transactionOptions = null;
         transactionState = nextState;
+        setTimeoutContext(null);
+    }
+
+    private TimeoutContext createTimeoutContext() {
+        return new TimeoutContext(getTimeoutSettings(transactionOptions, delegate.getTimeoutSettings()));
     }
 }

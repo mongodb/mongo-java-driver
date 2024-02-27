@@ -1105,6 +1105,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "writeConcern":
                     optionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
                     break;
+                case "timeoutMS":
+                    optionsBuilder.timeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());
             }

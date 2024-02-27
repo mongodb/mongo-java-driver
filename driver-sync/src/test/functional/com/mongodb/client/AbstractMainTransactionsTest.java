@@ -55,13 +55,6 @@ public abstract class AbstractMainTransactionsTest extends AbstractUnifiedTest {
                         || description.equals("distinct"))
                 && isSharded()
                 && serverVersionLessThan(4, 4));
-
-        // TODO (CSOT) - JAVA-4067
-        assumeFalse(description.equals("add UnknownTransactionCommitResult label to MaxTimeMSExpired"));
-        assumeFalse(description.equals("add UnknownTransactionCommitResult label to writeConcernError MaxTimeMSExpired"));
-        assumeFalse(description.equals("defaultTransactionOptions override client options"));
-        assumeFalse(description.equals("startTransaction options override defaults"));
-        assumeFalse(description.equals("transaction options inherited from defaultTransactionOptions"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

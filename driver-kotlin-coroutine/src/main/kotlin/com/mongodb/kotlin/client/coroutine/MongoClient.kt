@@ -24,6 +24,7 @@ import com.mongodb.lang.Nullable
 import com.mongodb.reactivestreams.client.MongoClient as JMongoClient
 import com.mongodb.reactivestreams.client.MongoClients as JMongoClients
 import java.io.Closeable
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
@@ -285,3 +286,12 @@ public class MongoClient(private val wrapped: JMongoClient) : Closeable {
         pipeline: List<Bson> = emptyList()
     ): ChangeStreamFlow<T> = watch(clientSession, pipeline, T::class.java)
 }
+
+/**
+ * ClientSessionOptions.Builder.defaultTimeout extension function
+ *
+ * @param defaultTimeout time in milliseconds
+ * @return the options
+ */
+public fun ClientSessionOptions.Builder.defaultTimeout(defaultTimeout: Long): ClientSessionOptions.Builder =
+    this.apply { defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS) }

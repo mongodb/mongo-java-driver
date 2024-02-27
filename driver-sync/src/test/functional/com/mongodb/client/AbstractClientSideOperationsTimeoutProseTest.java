@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientSessionOptions;
 import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.CursorType;
@@ -34,6 +35,8 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionClosedEvent;
@@ -49,6 +52,7 @@ import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -71,6 +75,7 @@ import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
@@ -88,7 +93,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.rst">Prose Tests</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.md">Prose Tests</a>.
  */
 @SuppressWarnings("checkstyle:VisibilityModifier")
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
@@ -111,6 +116,10 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
 
     protected abstract boolean isAsync();
+
+    protected int postSessionCloseSleep() {
+        return 0;
+    }
 
     @Tag("setsFailPoint")
     @SuppressWarnings("try")
@@ -455,6 +464,112 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
+    @Tag("setsFailPoint")
+    @DisplayName("9. End Session 1 / 2")
+    @Test
+    @SuppressWarnings("try")
+    public void test9EndSessionClientTimeout() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"abortTransaction\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 150
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder().retryWrites(false)
+                .timeout(100, TimeUnit.MILLISECONDS))) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession()) {
+                session.startTransaction();
+                collection.insertOne(session, new Document("x", 1));
+
+                long start = System.nanoTime();
+                session.close();
+                long elapsed = msElapsedSince(start) - postSessionCloseSleep();
+                assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
+            }
+        }
+        assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("abortTransaction"));
+    }
+
+    @Tag("setsFailPoint")
+    @DisplayName("9. End Session 2 / 2")
+    @Test
+    @SuppressWarnings("try")
+    public void test9EndSessionSessionTimeout() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"abortTransaction\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 150
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(100, TimeUnit.MILLISECONDS).build())) {
+                session.startTransaction();
+                collection.insertOne(session, new Document("x", 1));
+
+                long start = System.nanoTime();
+                session.close();
+                long elapsed = msElapsedSince(start) - postSessionCloseSleep();
+                assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
+            }
+        }
+
+        assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("abortTransaction"));
+    }
+
+    @Tag("setsFailPoint")
+    @DisplayName("10. Convenient Transactions")
+    @Test
+    public void test10ConvenientTransactions() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+        assumeFalse(isAsync());
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 2 },"
+                + "  data: {"
+                + "    failCommands: [\"insert\", \"abortTransaction\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 150
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder().timeout(100, TimeUnit.MILLISECONDS))) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession()) {
+                assertThrows(MongoOperationTimeoutException.class,
+                        () -> session.withTransaction(() -> collection.insertOne(session, new Document("x", 1))));
+            }
+
+            List<CommandEvent> events = commandListener.getEvents().stream()
+                    .filter(e -> e instanceof CommandFailedEvent)
+                    .collect(Collectors.toList());
+
+            assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("insert")).count());
+            assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("abortTransaction")).count());
+        }
+    }
+
     private static Stream<Arguments> test8ServerSelectionArguments() {
         return Stream.of(
                 Arguments.of(Named.of("serverSelectionTimeoutMS honored if timeoutMS is not set",
@@ -508,8 +623,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             if (info.getTags().contains("setsFailPoint") && serverVersionAtLeast(4, 4)) {
                 collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
             }
-            CollectionHelper.dropDatabase(getDefaultDatabaseName());
-
             collectionHelper.drop();
             filesCollectionHelper.drop();
             chunksCollectionHelper.drop();
@@ -519,6 +632,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 // ignore
             }
         }
+    }
+
+    @AfterAll
+    public static void finalTearDown() {
+        CollectionHelper.dropDatabase(getDefaultDatabaseName());
     }
 
     private MongoClient createMongoClient(final MongoClientSettings.Builder builder) {
