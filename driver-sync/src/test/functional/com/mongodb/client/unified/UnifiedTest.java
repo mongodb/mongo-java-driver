@@ -214,7 +214,7 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
-        startingClusterTime = addInitialData();
+        startingClusterTime = addInitialDataAndGetClusterTime();
         entities.init(entitiesArray, startingClusterTime,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
                 this::createMongoClient,
@@ -893,7 +893,7 @@ public abstract class UnifiedTest {
         return events.subList(events.size() - 2, events.size());
     }
 
-    private BsonDocument addInitialData() {
+    private BsonDocument addInitialDataAndGetClusterTime() {
         for (BsonValue cur : initialData.getValues()) {
             BsonDocument curDataSet = cur.asDocument();
             CollectionHelper<BsonDocument> helper = new CollectionHelper<>(new BsonDocumentCodec(),
