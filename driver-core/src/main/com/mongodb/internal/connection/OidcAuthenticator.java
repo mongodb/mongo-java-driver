@@ -104,7 +104,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient(final ServerAddress serverAddress) {
-        this.serverAddress = serverAddress;
+        this.serverAddress = assertNotNull(serverAddress);
         MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
         return new OidcSaslClient(mongoCredentialWithCache);
     }
@@ -153,7 +153,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private boolean isAutomaticAuthentication() {
-        return getRequestCallback() == null;
+        return getMechanismProperty(PROVIDER_NAME_KEY) == null;
     }
 
     private boolean isHumanCallback() {
@@ -602,7 +602,9 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     static class OidcCallbackContextImpl implements OidcCallbackContext {
         private final Duration timeout;
+        @Nullable
         private final IdpInfo idpInfo;
+        @Nullable
         private final String refreshToken;
 
         OidcCallbackContextImpl(final Duration timeout) {
@@ -613,7 +615,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
         OidcCallbackContextImpl(final Duration timeout, final IdpInfo idpInfo, @Nullable final String refreshToken) {
             this.timeout = assertNotNull(timeout);
-            this.idpInfo = idpInfo;
+            this.idpInfo = assertNotNull(idpInfo);
             this.refreshToken = refreshToken;
         }
 

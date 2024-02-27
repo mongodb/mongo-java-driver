@@ -200,8 +200,9 @@ public final class MongoCredential {
     /**
      * This callback is invoked when the OIDC-based authenticator requests
      * a token. The type of the value must be {@link OidcCallback}.
-     * {@link IdpInfo} will not be supplied to the callback, and a refresh
-     * token must not be returned by the callback.
+     * {@link IdpInfo} will not be supplied to the callback,
+     * and a {@linkplain OidcCallbackResult#getRefreshToken() refresh token}
+     * must not be returned by the callback.
      * <p>
      * If this is provided, {@link MongoCredential#PROVIDER_NAME_KEY}
      * and {@link MongoCredential#OIDC_HUMAN_CALLBACK_KEY}
@@ -719,9 +720,7 @@ public final class MongoCredential {
          * @param accessToken The OIDC access token
          */
         public OidcCallbackResult(final String accessToken) {
-            notNull("accessToken", accessToken);
-            this.accessToken = accessToken;
-            this.refreshToken = null;
+            this(accessToken, null);
         }
 
         /**
