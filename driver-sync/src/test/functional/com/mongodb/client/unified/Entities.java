@@ -23,8 +23,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.internal.connection.TestClusterListener;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
@@ -56,11 +54,13 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
+import com.mongodb.logging.TestLoggingInterceptor;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -300,6 +300,7 @@ public final class Entities {
     }
 
     public void init(final BsonArray entitiesArray,
+                     final BsonDocument startingClusterTime,
                      final boolean waitForPoolAsyncWorkManagerStart,
                      final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                      final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
@@ -324,7 +325,7 @@ public final class Entities {
                     break;
                 }
                 case "session": {
-                    initSession(entity, id);
+                    initSession(entity, id, startingClusterTime);
                     break;
                 }
                 case "bucket": {
@@ -596,7 +597,7 @@ public final class Entities {
         putEntity(id, collection, collections);
     }
 
-    private void initSession(final BsonDocument entity, final String id) {
+    private void initSession(final BsonDocument entity, final String id, final BsonDocument startingClusterTime) {
         MongoClient client = clients.get(entity.getString("client").getValue());
         ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
         if (entity.containsKey("sessionOptions")) {
@@ -614,6 +615,7 @@ public final class Entities {
             }
         }
         ClientSession session = client.startSession(optionsBuilder.build());
+        session.advanceClusterTime(startingClusterTime);
         putEntity(id, session, sessions);
         putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }
