@@ -93,7 +93,7 @@ public final class CollectionHelper<T> {
     }
 
     public static void drop(final MongoNamespace namespace, final WriteConcern writeConcern) {
-        // This loop is a workaround for unanticipated failures of the create command when run on a sharded cluster < 4.2.
+        // This loop is a workaround for unanticipated failures of the drop command when run on a sharded cluster < 4.2.
         // In practice the command tends to succeed on the first attempt after a failure
         boolean success = false;
         while (!success) {
