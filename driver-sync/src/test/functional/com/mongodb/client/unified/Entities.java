@@ -307,6 +307,7 @@ public final class Entities {
     }
 
     public void init(final BsonArray entitiesArray,
+                     final BsonDocument startingClusterTime,
                      final boolean waitForPoolAsyncWorkManagerStart,
                      final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                      final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
@@ -331,7 +332,7 @@ public final class Entities {
                     break;
                 }
                 case "session": {
-                    initSession(entity, id);
+                    initSession(entity, id, startingClusterTime);
                     break;
                 }
                 case "bucket": {
@@ -609,7 +610,7 @@ public final class Entities {
         putEntity(id, collection, collections);
     }
 
-    private void initSession(final BsonDocument entity, final String id) {
+    private void initSession(final BsonDocument entity, final String id, final BsonDocument startingClusterTime) {
         MongoClient client = clients.get(entity.getString("client").getValue());
         ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
         if (entity.containsKey("sessionOptions")) {
@@ -627,6 +628,7 @@ public final class Entities {
             }
         }
         ClientSession session = client.startSession(optionsBuilder.build());
+        session.advanceClusterTime(startingClusterTime);
         putEntity(id, session, sessions);
         putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }
