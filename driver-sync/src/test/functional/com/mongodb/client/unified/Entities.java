@@ -71,6 +71,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -252,6 +253,10 @@ public final class Entities {
         return getEntity(id, collections, "collection");
     }
 
+    public Collection<ClientSession> getSessions() {
+        return sessions.values();
+    }
+
     public ClientSession getSession(final String id) {
         return getEntity(id, sessions, "session");
     }
@@ -300,7 +305,6 @@ public final class Entities {
     }
 
     public void init(final BsonArray entitiesArray,
-                     final BsonDocument startingClusterTime,
                      final boolean waitForPoolAsyncWorkManagerStart,
                      final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                      final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
@@ -325,7 +329,7 @@ public final class Entities {
                     break;
                 }
                 case "session": {
-                    initSession(entity, id, startingClusterTime);
+                    initSession(entity, id);
                     break;
                 }
                 case "bucket": {
@@ -597,7 +601,7 @@ public final class Entities {
         putEntity(id, collection, collections);
     }
 
-    private void initSession(final BsonDocument entity, final String id, final BsonDocument startingClusterTime) {
+    private void initSession(final BsonDocument entity, final String id) {
         MongoClient client = clients.get(entity.getString("client").getValue());
         ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
         if (entity.containsKey("sessionOptions")) {
@@ -615,7 +619,6 @@ public final class Entities {
             }
         }
         ClientSession session = client.startSession(optionsBuilder.build());
-        session.advanceClusterTime(startingClusterTime);
         putEntity(id, session, sessions);
         putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }

@@ -106,7 +106,6 @@ public abstract class UnifiedTest {
     private final UnifiedClientEncryptionHelper clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
     private final List<FailPoint> failPoints = new ArrayList<>();
     private final UnifiedTestContext rootContext = new UnifiedTestContext();
-    private BsonDocument startingClusterTime;
 
     private class UnifiedTestContext {
         private final AssertionContext context = new AssertionContext();
@@ -214,12 +213,19 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
-        startingClusterTime = addInitialDataAndGetClusterTime();
-        entities.init(entitiesArray, startingClusterTime,
+
+        entities.init(entitiesArray,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
                 this::createMongoClient,
                 this::createGridFSBucket,
                 this::createClientEncryption);
+
+        BsonDocument startingClusterTime = addInitialDataAndGetClusterTime();
+
+        entities.getSessions().stream()
+                .forEach((ClientSession clientSession) -> {
+                    clientSession.advanceClusterTime(startingClusterTime);
+                });
     }
 
     @After
@@ -563,7 +569,6 @@ public abstract class UnifiedTest {
 
     private OperationResult executeCreateEntities(final BsonDocument operation) {
         entities.init(operation.getDocument("arguments").getArray("entities"),
-                startingClusterTime,
                 false,
                 this::createMongoClient,
                 this::createGridFSBucket,
