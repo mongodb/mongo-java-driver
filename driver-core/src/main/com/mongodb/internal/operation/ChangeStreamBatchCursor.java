@@ -222,14 +222,14 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     }
 
     private void resumeChangeStream() {
-            wrapped.close();
+        wrapped.close();
 
-            withReadConnectionSource(binding, source -> {
-                changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
-                return null;
-            });
-            wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
-            binding.release(); // release the new change stream batch cursor's reference to the binding
+        withReadConnectionSource(binding, source -> {
+            changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
+            return null;
+        });
+        wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
+        binding.release(); // release the new change stream batch cursor's reference to the binding
     }
 
     private void resumeAfterTimeout() {
