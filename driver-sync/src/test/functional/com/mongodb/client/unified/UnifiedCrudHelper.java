@@ -126,14 +126,27 @@ final class UnifiedCrudHelper {
     }
 
     static WriteConcern asWriteConcern(final BsonDocument writeConcernDocument) {
-        if (writeConcernDocument.size() > 1) {
-            throw new UnsupportedOperationException("Unsupported write concern properties");
+        WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+
+        for (Map.Entry<String, BsonValue> entry: writeConcernDocument.entrySet()) {
+            switch (entry.getKey()) {
+                case "w":
+                    writeConcern = writeConcernDocument.isString("w")
+                            ? writeConcern.withW(writeConcernDocument.getString("w").getValue())
+                            : writeConcern.withW(writeConcernDocument.getInt32("w").intValue());
+                    break;
+                case "journal":
+                    writeConcern = writeConcern.withJournal(entry.getValue().asBoolean().getValue());
+                    break;
+                case "wtimeoutMS":
+                    writeConcern = writeConcern.withWTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + entry.getKey());
+            }
         }
-        if (writeConcernDocument.isString("w")) {
-            return new WriteConcern(writeConcernDocument.getString("w").getValue());
-        } else {
-            return new WriteConcern(writeConcernDocument.getInt32("w").intValue());
-        }
+
+        return writeConcern;
     }
 
     public static ReadPreference asReadPreference(final BsonDocument readPreferenceDocument) {
@@ -272,7 +285,7 @@ final class UnifiedCrudHelper {
                 case "filter":
                     BsonDocument filter = cur.getValue().asDocument();
                     if (!filter.isEmpty()) {
-                       throw new UnsupportedOperationException("The driver does not support filtering of collection names");
+                        throw new UnsupportedOperationException("The driver does not support filtering of collection names");
                     }
                     break;
                 case "batchSize":
@@ -347,7 +360,7 @@ final class UnifiedCrudHelper {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
         ClientSession session = getSession(arguments);
-        BsonDocument filter = arguments.getDocument("filter");
+        BsonDocument filter = arguments.getDocument("filter", new BsonDocument());
         FindIterable<BsonDocument> iterable = session == null ? collection.find(filter) : collection.find(session, filter);
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
@@ -504,7 +517,7 @@ final class UnifiedCrudHelper {
     OperationResult executeFindOneAndReplace(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
-
+        ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter").asDocument();
         BsonDocument replacement = arguments.getDocument("replacement").asDocument();
         FindOneAndReplaceOptions options = new FindOneAndReplaceOptions();
@@ -513,6 +526,10 @@ final class UnifiedCrudHelper {
             switch (cur.getKey()) {
                 case "filter":
                 case "replacement":
+                case "session":
+                    break;
+                case "upsert":
+                    options.upsert(cur.getValue().asBoolean().getValue());
                     break;
                 case "returnDocument":
                     switch (cur.getValue().asString().getValue()) {
@@ -544,20 +561,26 @@ final class UnifiedCrudHelper {
             }
         }
 
-        return resultOf(() ->
-                collection.findOneAndReplace(filter, replacement, options));
+        return resultOf(() -> {
+            if (session == null) {
+                return collection.findOneAndReplace(filter, replacement, options);
+            } else {
+                return collection.findOneAndReplace(session, filter, replacement, options);
+            }
+        });
     }
 
     OperationResult executeFindOneAndDelete(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
-
+        ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter").asDocument();
         FindOneAndDeleteOptions options = new FindOneAndDeleteOptions();
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "filter":
+                case "session":
                     break;
                 case "hint":
                     if (cur.getValue().isString()) {
@@ -577,8 +600,13 @@ final class UnifiedCrudHelper {
             }
         }
 
-        return resultOf(() ->
-                collection.findOneAndDelete(filter, options));
+        return resultOf(() -> {
+            if (session == null) {
+                return collection.findOneAndDelete(filter, options);
+            } else {
+                return collection.findOneAndDelete(session, filter, options);
+            }
+        });
     }
 
     OperationResult executeAggregate(final BsonDocument operation) {
@@ -615,6 +643,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "comment":
                     iterable.comment(cur.getValue());
+                    break;
+                case "maxTimeMS":
+                    iterable.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -723,12 +754,18 @@ final class UnifiedCrudHelper {
     OperationResult executeReplaceOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter");
         BsonDocument replacement = arguments.getDocument("replacement");
         ReplaceOptions options = getReplaceOptions(arguments);
 
-        return resultOf(() ->
-                toExpected(collection.replaceOne(filter, replacement, options)));
+        return resultOf(() -> {
+            if (session == null) {
+                return toExpected(collection.replaceOne(filter, replacement, options));
+            } else {
+                return toExpected(collection.replaceOne(session, filter, replacement, options));
+            }
+        });
     }
 
     private BsonDocument toExpected(final UpdateResult result) {
@@ -825,12 +862,14 @@ final class UnifiedCrudHelper {
     OperationResult executeBulkWrite(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
         List<WriteModel<BsonDocument>> requests = arguments.getArray("requests").stream()
                 .map(value -> toWriteModel(value.asDocument())).collect(toList());
         BulkWriteOptions options = new BulkWriteOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "requests":
+                case "session":
                     break;
                 case "ordered":
                     options.ordered(cur.getValue().asBoolean().getValue());
@@ -846,8 +885,13 @@ final class UnifiedCrudHelper {
             }
         }
 
-        return resultOf(() ->
-                toExpected(collection.bulkWrite(requests, options)));
+        return resultOf(() -> {
+            if (session == null) {
+                return toExpected(collection.bulkWrite(requests, options));
+            } else {
+                return toExpected(collection.bulkWrite(session, requests, options));
+            }
+        });
     }
 
     private BsonDocument toExpected(final BulkWriteResult result) {
@@ -970,6 +1014,7 @@ final class UnifiedCrudHelper {
             switch (cur.getKey()) {
                 case "filter":
                 case "replacement":
+                case "session":
                     break;
                 case "upsert":
                     options.upsert(cur.getValue().asBoolean().getValue());
@@ -996,13 +1041,30 @@ final class UnifiedCrudHelper {
 
     OperationResult executeStartTransaction(final BsonDocument operation) {
         ClientSession session = entities.getSession(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        TransactionOptions.Builder optionsBuilder = TransactionOptions.builder();
 
-        if (operation.containsKey("arguments")) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "writeConcern":
+                    optionsBuilder.writeConcern(asWriteConcern(cur.getValue().asDocument()));
+                    break;
+                case "readPreference":
+                    optionsBuilder.readPreference(asReadPreference(cur.getValue().asDocument()));
+                    break;
+                case "readConcern":
+                    optionsBuilder.readConcern(asReadConcern(cur.getValue().asDocument()));
+                    break;
+                case "maxCommitTimeMS":
+                    optionsBuilder.maxCommitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
         }
 
         return resultOf(() -> {
-            session.startTransaction();
+            session.startTransaction(optionsBuilder.build());
             return null;
         });
     }
@@ -1046,6 +1108,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "writeConcern":
                     optionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                case "maxCommitTimeMS":
+                    optionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());
@@ -1181,7 +1246,7 @@ final class UnifiedCrudHelper {
             }
             return null;
         });
-        }
+    }
 
     public OperationResult executeRenameCollection(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
@@ -1368,7 +1433,7 @@ final class UnifiedCrudHelper {
     }
 
     private ListSearchIndexesIterable<BsonDocument> createListSearchIndexesIterable(final MongoCollection<BsonDocument> collection,
-                                                                                    final BsonDocument arguments) {
+            final BsonDocument arguments) {
         Optional<String> name = Optional.ofNullable(arguments.getOrDefault("name", null))
                 .map(BsonValue::asString).map(BsonString::getValue);
 

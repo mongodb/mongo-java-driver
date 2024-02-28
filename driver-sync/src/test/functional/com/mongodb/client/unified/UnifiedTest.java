@@ -75,6 +75,7 @@ import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
+import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -221,7 +222,11 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
+
+        killAllSessions();
+
         startingClusterTime = addInitialDataAndGetClusterTime();
+
         entities.init(entitiesArray, startingClusterTime,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
                 this::createMongoClient,
@@ -314,8 +319,22 @@ public abstract class UnifiedTest {
         }
     }
 
+    private void assertOperationAndThrow(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex) {
+        OperationResult result = executeOperation(context, operation, operationIndex);
+        assertOperationResult(context, operation, operationIndex, result);
+
+        if (result.getException() != null) {
+            throw (RuntimeException) result.getException();
+        }
+    }
+
     private void assertOperation(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex) {
         OperationResult result = executeOperation(context, operation, operationIndex);
+        assertOperationResult(context, operation, operationIndex, result);
+    }
+
+    private static void assertOperationResult(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex,
+            final OperationResult result) {
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
@@ -462,7 +481,7 @@ public abstract class UnifiedTest {
                 case "abortTransaction":
                     return crudHelper.executeAbortTransaction(operation);
                 case "withTransaction":
-                    return crudHelper.executeWithTransaction(operation, (op, idx) -> assertOperation(context, op, idx));
+                    return crudHelper.executeWithTransaction(operation, (op, idx) -> assertOperationAndThrow(context, op, idx));
                 case "createFindCursor":
                     return crudHelper.createFindCursor(operation);
                 case "createChangeStream":
@@ -861,9 +880,9 @@ public abstract class UnifiedTest {
         BsonDocument arguments = operation.getDocument("arguments");
         ClientSession session = entities.getSession(arguments.getString("session").getValue());
         String state = arguments.getString("state").getValue();
-        //noinspection SwitchStatementWithTooFewBranches
         switch (state) {
             case "starting":
+            case "in_progress":
                 assertTrue(session.hasActiveTransaction());
                 break;
             default:
