@@ -25,7 +25,7 @@ import static java.lang.String.format;
  */
 public enum ServerMonitoringMode {
     /**
-     * Use the streaming protocol whe the server supports it or fall back to the polling protocol otherwise.
+     * Use the streaming protocol when the server supports it or fall back to the polling protocol otherwise.
      */
     STREAM("stream"),
     /**
