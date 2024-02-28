@@ -67,6 +67,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     @Nullable
     private volatile ServerCursor serverCursor;
     private volatile boolean skipReleasingServerResourcesOnClose;
+    private boolean closeImmediately;
 
     CursorResourceManager(
             final TimeoutContext timeoutContext,
@@ -91,6 +92,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
         }
         this.skipReleasingServerResourcesOnClose = false;
         this.serverCursor = serverCursor;
+        this.closeImmediately = false;
     }
 
     /**
@@ -140,9 +142,13 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     }
 
     void resetTimeout() {
-        if (timeoutContext.hasTimeoutMS()) {
+        if (!closeImmediately && timeoutContext.hasTimeoutMS()) {
             timeoutContext.resetTimeout();
         }
+    }
+
+    void setCloseImmediately(final boolean closeImmediately) {
+        this.closeImmediately = closeImmediately;
     }
 
     /**

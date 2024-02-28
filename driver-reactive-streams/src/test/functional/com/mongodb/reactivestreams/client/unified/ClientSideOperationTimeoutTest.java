@@ -52,6 +52,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
+        assumeFalse("TODO (CSOT) - JAVA-4054", fileDescription.equals("timeoutMS behaves correctly for change streams"));
 
         // Time sensitive - cannot just create a cursor with publishers
         assumeFalse(testDescription.endsWith("createChangeStream on client"));

@@ -75,6 +75,9 @@ public sealed interface MongoCursor<T : Any> : Iterator<T>, Closeable {
  *      }
  *  }
  * ```
+ * If a [com.mongodb.MongoOperationTimeoutException] occurs before any events are received, it indicates that the server
+ * has timed out before it could finish processing the existing oplog. In such cases, it is recommended to close the current
+ * stream and recreate it with a higher timeout setting.
  *
  * @param T The type of documents the cursor contains
  */

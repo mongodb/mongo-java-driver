@@ -311,7 +311,7 @@
           "object": "collection",
           "arguments": {
             "pipeline": [],
-            "timeoutMS": 20
+            "timeoutMS": 100
           },
           "saveResultAsEntity": "changeStream"
         },
@@ -331,7 +331,7 @@
                   "aggregate"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 12,
+                "blockTimeMS": 40,
                 "errorCode": 7,
                 "errorLabels": [
                   "ResumableChangeStreamError"
@@ -535,7 +535,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 150
               }
             }
           }
@@ -545,7 +545,7 @@
           "object": "collection",
           "arguments": {
             "pipeline": [],
-            "timeoutMS": 10
+            "timeoutMS": 100
           },
           "saveResultAsEntity": "changeStream"
         },

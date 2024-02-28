@@ -16,9 +16,12 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -68,6 +71,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private BsonValue hint;
     private BsonDocument variables;
     private TimeoutMode timeoutMode;
+    private CursorType cursorType;
 
     AggregateOperationImpl(final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
@@ -146,6 +150,19 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
+    /**
+     * When {@link TimeoutContext#hasTimeoutMS()} then {@link TimeoutSettings#getMaxAwaitTimeMS()} usage in {@code getMore} commands
+     * depends on the type of cursor. For {@link CursorType#TailableAwait} it is used, for others it is not.
+     * {@link CursorType#TailableAwait} is used mainly used for change streams in {@link AggregateOperationImpl}.
+     *
+     * @param cursorType
+     * @return this
+     */
+    AggregateOperationImpl<T> cursorType(final CursorType cursorType) {
+        this.cursorType = cursorType;
+        return this;
+    }
+
     boolean getRetryReads() {
         return retryReads;
     }
@@ -221,13 +238,13 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection) ->
                 new CommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
-                        getMaxTimeForCursor(source.getOperationContext()), decoder, comment, source, connection);
+                        getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection) ->
             new AsyncCommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
-                    getMaxTimeForCursor(source.getOperationContext()), decoder, comment, source, connection);
+                    getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
     }
 
     private TimeoutMode getTimeoutMode() {
@@ -238,8 +255,12 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return localTimeoutMode;
     }
 
-    private long getMaxTimeForCursor(final OperationContext operationContext) {
-        return operationContext.getTimeoutContext().getMaxAwaitTimeMS();
+    private long getMaxTimeForCursor(final TimeoutContext timeoutContext) {
+        long maxAwaitTimeMS = timeoutContext.getMaxAwaitTimeMS();
+        if (timeoutContext.hasTimeoutMS()){
+           return CursorType.TailableAwait == cursorType ? maxAwaitTimeMS : 0;
+        }
+        return maxAwaitTimeMS;
     }
 
     interface AggregateTarget {

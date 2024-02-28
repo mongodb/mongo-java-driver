@@ -18,8 +18,10 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -41,22 +43,31 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     private final ReadBinding binding;
     private final ChangeStreamOperation<T> changeStreamOperation;
     private final int maxWireVersion;
-
+    private final TimeoutContext timeoutContext;
     private CommandBatchCursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
     private final AtomicBoolean closed;
+
+    /**
+     * This flag is used to manage change stream resumption logic after a timeout error.
+     * Indicates whether the last {@code next} call resulted in a {@link MongoOperationTimeoutException}. If {@code true},
+     * indicates a timeout occurred, prompting an attempt to resume the change stream on the next call.
+     */
+    private boolean lastOpTimeoutStatus;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final CommandBatchCursor<RawBsonDocument> wrapped,
                             final ReadBinding binding,
                             @Nullable final BsonDocument resumeToken,
                             final int maxWireVersion) {
+        this.timeoutContext = binding.getOperationContext().getTimeoutContext();
         this.changeStreamOperation = changeStreamOperation;
         this.binding = binding.retain();
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
         closed = new AtomicBoolean();
+        lastOpTimeoutStatus = false;
     }
 
     CommandBatchCursor<RawBsonDocument> getWrapped() {
@@ -107,6 +118,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     @Override
     public void close() {
         if (!closed.getAndSet(true)) {
+            resetTimeout();
             wrapped.close();
             binding.release();
         }
@@ -184,6 +196,19 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     }
 
     <R> R resumeableOperation(final Function<AggregateResponseBatchCursor<RawBsonDocument>, R> function) {
+        resetTimeout();
+        try {
+            resumeAfterTimeout();
+            R result = execute(function);
+            lastOpTimeoutStatus = false;
+            return result;
+        } catch (Throwable exception) {
+            lastOpTimeoutStatus = isTimeoutException(exception);
+            throw exception;
+        }
+    }
+
+    private <R> R execute(final Function<AggregateResponseBatchCursor<RawBsonDocument>, R> function) {
         while (true) {
             try {
                 return function.apply(wrapped);
@@ -192,6 +217,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                     throw MongoException.fromThrowableNonNull(t);
                 }
             }
+            resumeChangeStream();
+        }
+    }
+
+    private void resumeChangeStream() {
             wrapped.close();
 
             withReadConnectionSource(binding, source -> {
@@ -200,6 +230,21 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             });
             wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
             binding.release(); // release the new change stream batch cursor's reference to the binding
+    }
+
+    private void resumeAfterTimeout() {
+        if (lastOpTimeoutStatus && !closed.get()) {
+            resumeChangeStream();
         }
+    }
+
+    private void resetTimeout() {
+        if (timeoutContext.hasTimeoutMS()) {
+            timeoutContext.resetTimeout();
+        }
+    }
+
+    private static boolean isTimeoutException(final Throwable exception) {
+        return exception instanceof MongoOperationTimeoutException;
     }
 }
