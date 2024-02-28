@@ -77,7 +77,7 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ClusterConnectionMode clusterConnectionMode;
     @Nullable
     private final ServerApi serverApi;
-    private final boolean faas;
+    private final boolean isFunctionAsAServiceEnvironment;
     private final ServerSettings serverSettings;
     private final ServerMonitor monitor;
     /**
@@ -94,7 +94,7 @@ class DefaultServerMonitor implements ServerMonitor {
             final InternalConnectionFactory internalConnectionFactory,
                          final ClusterConnectionMode clusterConnectionMode,
                          @Nullable final ServerApi serverApi,
-                         final boolean faas,
+                         final boolean isFunctionAsAServiceEnvironment,
                          final Provider<SdamServerDescriptionManager> sdamProvider) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
@@ -102,7 +102,7 @@ class DefaultServerMonitor implements ServerMonitor {
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
-        this.faas = faas;
+        this.isFunctionAsAServiceEnvironment = isFunctionAsAServiceEnvironment;
         this.sdamProvider = sdamProvider;
         monitor = new ServerMonitor();
         roundTripTimeMonitor = null;
@@ -291,7 +291,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     return false;
                 }
                 case AUTO: {
-                    return !faas && serverSupportsStreaming;
+                    return !isFunctionAsAServiceEnvironment && serverSupportsStreaming;
                 }
                 default: {
                     throw fail();
