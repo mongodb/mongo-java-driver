@@ -215,14 +215,16 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
+
+        killAllSessions();
+
         startingClusterTime = addInitialDataAndGetClusterTime();
+
         entities.init(entitiesArray, startingClusterTime,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
                 this::createMongoClient,
                 this::createGridFSBucket,
                 this::createClientEncryption);
-
-        killAllSessions();
     }
 
     @After
