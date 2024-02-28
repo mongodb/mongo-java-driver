@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerMonitoringMode;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -66,6 +67,7 @@ public final class ServerHeartbeatStartedEvent {
      * Gets whether the heartbeat is for an awaitable `hello` / legacy hello.
      *
      * @return {@code true} if and only if the heartbeat is for an awaitable `hello` / legacy hello.
+     * @see ServerMonitoringMode#STREAM
      * @since 5.1
      */
     public boolean isAwaited() {

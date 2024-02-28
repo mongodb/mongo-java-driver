@@ -15,17 +15,32 @@
  */
 package com.mongodb.connection;
 
+import com.mongodb.event.ClusterListener;
+import com.mongodb.event.ServerHeartbeatFailedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.ServerListener;
+
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
 /**
  * The server monitoring mode, which defines the monitoring protocol to use.
  *
+ * @see <a href="https://www.mongodb.com/docs/drivers/java/sync/current/fundamentals/monitoring/#server-discovery-and-monitoring-events">
+ * server discovery and monitoring (SDAM)</a>
  * @since 5.1
  */
 public enum ServerMonitoringMode {
     /**
      * Use the streaming protocol when the server supports it or fall back to the polling protocol otherwise.
+     * When the streaming protocol comes into play,
+     * {@link ServerHeartbeatStartedEvent#isAwaited()}, {@link ServerHeartbeatSucceededEvent#isAwaited()},
+     * {@link ServerHeartbeatFailedEvent#isAwaited()} return {@code true} for new events.
+     * <p>
+     * The streaming protocol uses long polling for SDAM, and is intended to reduce the delay between a server change
+     * that warrants a new event for {@link ServerListener}/{@link ClusterListener},
+     * and that event being emitted, as well as the related housekeeping work being done.</p>
      */
     STREAM("stream"),
     /**
