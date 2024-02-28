@@ -24,12 +24,23 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedTransactionsTest extends UnifiedSyncTest {
     public UnifiedTransactionsTest(@SuppressWarnings("unused") final String fileDescription,
                                    @SuppressWarnings("unused") final String testDescription,
                                    final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
                                    final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+        assumeFalse(fileDescription.equals("count"));
+        if (serverVersionLessThan(4, 4) && isSharded()) {
+            assumeFalse(fileDescription.equals("pin-mongos") && testDescription.equals("distinct"));
+            assumeFalse(fileDescription.equals("read-concern") && testDescription.equals("only first distinct includes readConcern"));
+            assumeFalse(fileDescription.equals("read-concern") && testDescription.equals("distinct ignores collection readConcern"));
+            assumeFalse(fileDescription.equals("reads") && testDescription.equals("distinct"));
+        }
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
