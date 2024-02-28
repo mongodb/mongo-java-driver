@@ -13,31 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
+import com.mongodb.connection.ServerMonitoringMode;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-final class ServerMonitoringModeTest {
+final class ServerMonitoringModeUtilTest {
     @Test
     public void fromString() {
         assertAll(
-                () -> assertEquals(ServerMonitoringMode.STREAM, ServerMonitoringMode.fromString("stream")),
-                () -> assertEquals(ServerMonitoringMode.POLL, ServerMonitoringMode.fromString("poll")),
-                () -> assertEquals(ServerMonitoringMode.AUTO, ServerMonitoringMode.fromString("auto")),
-                () -> assertThrows(IllegalArgumentException.class, () -> ServerMonitoringMode.fromString("invalid"))
+                () -> assertEquals(ServerMonitoringMode.STREAM, ServerMonitoringModeUtil.fromString("stream")),
+                () -> assertEquals(ServerMonitoringMode.POLL, ServerMonitoringModeUtil.fromString("poll")),
+                () -> assertEquals(ServerMonitoringMode.AUTO, ServerMonitoringModeUtil.fromString("auto")),
+                () -> assertThrows(IllegalArgumentException.class, () -> ServerMonitoringModeUtil.fromString("invalid"))
         );
     }
 
     @Test
     public void getValue() {
         assertAll(
-                () -> assertEquals("stream", ServerMonitoringMode.STREAM.getValue()),
-                () -> assertEquals("poll", ServerMonitoringMode.POLL.getValue()),
-                () -> assertEquals("auto", ServerMonitoringMode.AUTO.getValue())
+                () -> assertEquals("stream", ServerMonitoringModeUtil.getValue(ServerMonitoringMode.STREAM)),
+                () -> assertEquals("poll", ServerMonitoringModeUtil.getValue(ServerMonitoringMode.POLL)),
+                () -> assertEquals("auto", ServerMonitoringModeUtil.getValue(ServerMonitoringMode.AUTO))
         );
     }
 }

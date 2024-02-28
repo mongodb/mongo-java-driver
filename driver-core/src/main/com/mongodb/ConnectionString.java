@@ -26,6 +26,7 @@ import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
@@ -677,7 +678,7 @@ public class ConnectionString {
                     heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
                     break;
                 case "servermonitoringmode":
-                    serverMonitoringMode = ServerMonitoringMode.fromString(value);
+                    serverMonitoringMode = ServerMonitoringModeUtil.fromString(value);
                     break;
                 case "appname":
                     applicationName = value;

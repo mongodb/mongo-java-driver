@@ -21,9 +21,6 @@ import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 
-import static com.mongodb.assertions.Assertions.notNull;
-import static java.lang.String.format;
-
 /**
  * The server monitoring mode, which defines the monitoring protocol to use.
  *
@@ -42,48 +39,14 @@ public enum ServerMonitoringMode {
      * that warrants a new event for {@link ServerListener}/{@link ClusterListener},
      * and that event being emitted, as well as the related housekeeping work being done.</p>
      */
-    STREAM("stream"),
+    STREAM(),
     /**
      * Use the polling protocol.
      */
-    POLL("poll"),
+    POLL(),
     /**
      * Behave the same as {@link #POLL} if running in a FaaS environment, otherwise behave as {@link #STREAM}.
      * This is the default.
      */
-    AUTO("auto");
-
-    private final String value;
-
-    ServerMonitoringMode(final String value) {
-        this.value = value;
-    }
-
-    /**
-     * Parses a string into {@link ServerMonitoringMode}.
-     *
-     * @param serverMonitoringMode A server monitoring mode string.
-     * @return The corresponding {@link ServerMonitoringMode} value.
-     * @see #getValue()
-     */
-    public static ServerMonitoringMode fromString(final String serverMonitoringMode) {
-        notNull("serverMonitoringMode", serverMonitoringMode);
-        for (ServerMonitoringMode mode : ServerMonitoringMode.values()) {
-            if (serverMonitoringMode.equalsIgnoreCase(mode.value)) {
-                return mode;
-            }
-        }
-        throw new IllegalArgumentException(format("'%s' is not a valid %s",
-                serverMonitoringMode, ServerMonitoringMode.class.getSimpleName()));
-    }
-
-    /**
-     * The string value.
-     *
-     * @return The string value.
-     * @see #fromString(String)
-     */
-    public String getValue() {
-        return value;
-    }
+    AUTO()
 }

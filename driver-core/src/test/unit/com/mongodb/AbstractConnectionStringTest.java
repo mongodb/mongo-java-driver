@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
 import com.mongodb.lang.Nullable;
 import junit.framework.TestCase;
 import org.bson.BsonArray;
@@ -141,7 +142,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
                 assertEquals(expected, connectionString.getHeartbeatFrequency().intValue());
             } else if (option.getKey().equalsIgnoreCase("servermonitoringmode")) {
                 String expected = option.getValue().asString().getValue();
-                assertEquals(expected, connectionString.getServerMonitoringMode().getValue());
+                assertEquals(expected, ServerMonitoringModeUtil.getValue(connectionString.getServerMonitoringMode()));
             } else if (option.getKey().equalsIgnoreCase("localthresholdms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getLocalThreshold().intValue());

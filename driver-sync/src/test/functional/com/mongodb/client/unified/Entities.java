@@ -23,8 +23,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.connection.ServerMonitoringMode;
 import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
 import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
@@ -510,7 +510,7 @@ public final class Entities {
                         break;
                     case "serverMonitoringMode":
                         clientSettingsBuilder.applyToServerSettings(builder -> builder.serverMonitoringMode(
-                                ServerMonitoringMode.fromString(value.asString().getValue())));
+                                ServerMonitoringModeUtil.fromString(value.asString().getValue())));
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported uri option: " + key);
