@@ -73,6 +73,7 @@ import java.util.stream.Collectors;
 import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
 import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.Collections.singletonList;
@@ -106,6 +107,7 @@ public abstract class UnifiedTest {
     private final UnifiedClientEncryptionHelper clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
     private final List<FailPoint> failPoints = new ArrayList<>();
     private final UnifiedTestContext rootContext = new UnifiedTestContext();
+    private BsonDocument startingClusterTime;
 
     private class UnifiedTestContext {
         private final AssertionContext context = new AssertionContext();
@@ -213,15 +215,14 @@ public abstract class UnifiedTest {
         if (definition.containsKey("skipReason")) {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
-        entities.init(entitiesArray,
+        startingClusterTime = addInitialDataAndGetClusterTime();
+        entities.init(entitiesArray, startingClusterTime,
                 fileDescription != null && PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS.contains(fileDescription),
                 this::createMongoClient,
                 this::createGridFSBucket,
                 this::createClientEncryption);
 
         killAllSessions();
-
-        addInitialData();
     }
 
     @After
@@ -579,6 +580,7 @@ public abstract class UnifiedTest {
 
     private OperationResult executeCreateEntities(final BsonDocument operation) {
         entities.init(operation.getDocument("arguments").getArray("entities"),
+                startingClusterTime,
                 false,
                 this::createMongoClient,
                 this::createGridFSBucket,
@@ -908,7 +910,7 @@ public abstract class UnifiedTest {
         return events.subList(events.size() - 2, events.size());
     }
 
-    private void addInitialData() {
+    private BsonDocument addInitialDataAndGetClusterTime() {
         for (BsonValue cur : initialData.getValues()) {
             BsonDocument curDataSet = cur.asDocument();
             CollectionHelper<BsonDocument> helper = new CollectionHelper<>(new BsonDocumentCodec(),
@@ -923,5 +925,6 @@ public abstract class UnifiedTest {
                         WriteConcern.MAJORITY);
             }
         }
+        return getCurrentClusterTime();
     }
 }

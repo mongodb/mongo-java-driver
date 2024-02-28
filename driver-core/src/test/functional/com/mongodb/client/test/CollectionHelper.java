@@ -124,6 +124,11 @@ public final class CollectionHelper<T> {
         }
     }
 
+    public static BsonDocument getCurrentClusterTime() {
+        return new CommandReadOperation<BsonDocument>("admin", new BsonDocument("ping", new BsonInt32(1)), new BsonDocumentCodec())
+                .execute(getBinding()).getDocument("$clusterTime", null);
+    }
+
     public MongoNamespace getNamespace() {
         return namespace;
     }
