@@ -115,15 +115,12 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     private void ensureRoundTripTimeMonitorStarted() {
-        lock.lock();
-        try {
-            if (roundTripTimeMonitor == null) {
+        withLock(lock, () -> {
+            if (!isClosed && roundTripTimeMonitor == null) {
                 roundTripTimeMonitor = new RoundTripTimeMonitor();
                 roundTripTimeMonitor.start();
             }
-        } finally {
-            lock.unlock();
-        }
+        });
     }
 
     @Override
@@ -134,8 +131,8 @@ class DefaultServerMonitor implements ServerMonitor {
     @Override
     @SuppressWarnings("try")
     public void close() {
-        isClosed = true;
         withLock(lock, () -> {
+            isClosed = true;
             //noinspection EmptyTryBlock
             try (ServerMonitor ignoredAutoClosed = monitor;
                 RoundTripTimeMonitor ignoredAutoClose2 = roundTripTimeMonitor) {
