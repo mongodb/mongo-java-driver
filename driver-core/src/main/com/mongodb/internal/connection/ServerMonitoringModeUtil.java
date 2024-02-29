@@ -19,6 +19,9 @@ import com.mongodb.connection.ServerMonitoringMode;
 
 import static java.lang.String.format;
 
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
 public final class ServerMonitoringModeUtil {
     /**
      * Returns the string value of the provided {@code serverMonitoringMode}.
