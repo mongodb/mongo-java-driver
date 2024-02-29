@@ -35,6 +35,9 @@ import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
+/**
+ * Update {@link ConnectionStringUnitTest} instead.
+ */
 class ConnectionStringSpecification extends Specification {
     static final LONG_STRING = new String((1..256).collect { (byte) 1 } as byte[])
 

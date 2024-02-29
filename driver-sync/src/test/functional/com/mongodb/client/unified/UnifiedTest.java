@@ -21,6 +21,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.UnixServerAddress;
+import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.WriteConcern;
@@ -178,6 +179,10 @@ public abstract class UnifiedTest {
                 testDocument};
     }
 
+    protected BsonDocument getDefinition() {
+        return definition;
+    }
+
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     protected abstract GridFSBucket createGridFSBucket(MongoDatabase database);
@@ -202,7 +207,9 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.12")
                         || schemaVersion.equals("1.13")
                         || schemaVersion.equals("1.14")
-                        || schemaVersion.equals("1.15"));
+                        || schemaVersion.equals("1.15")
+                        || schemaVersion.equals("1.16")
+                        || schemaVersion.equals("1.17"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
@@ -269,14 +276,18 @@ public abstract class UnifiedTest {
             String client = curClientEvents.getString("client").getValue();
             boolean ignoreExtraEvents = curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.FALSE).getValue();
             String eventType = curClientEvents.getString("eventType", new BsonString("command")).getValue();
+            BsonArray expectedEvents = curClientEvents.getArray("events");
             if (eventType.equals("command")) {
                 TestCommandListener listener = entities.getClientCommandListener(client);
-                context.getEventMatcher().assertCommandEventsEquality(client, ignoreExtraEvents, curClientEvents.getArray("events"),
+                context.getEventMatcher().assertCommandEventsEquality(client, ignoreExtraEvents, expectedEvents,
                         listener.getEvents());
             } else if (eventType.equals("cmap")) {
                 TestConnectionPoolListener listener = entities.getConnectionPoolListener(client);
-                context.getEventMatcher().assertConnectionPoolEventsEquality(client, ignoreExtraEvents, curClientEvents.getArray("events"),
+                context.getEventMatcher().assertConnectionPoolEventsEquality(client, ignoreExtraEvents, expectedEvents,
                         listener.getEvents());
+            } else if (eventType.equals("sdam")) {
+                TestServerMonitorListener listener = entities.getServerMonitorListener(client);
+                context.getEventMatcher().assertServerMonitorEventsEquality(client, ignoreExtraEvents, expectedEvents, listener.getEvents());
             } else {
                 throw new UnsupportedOperationException("Unexpected event type: " + eventType);
             }
@@ -621,6 +632,12 @@ public abstract class UnifiedTest {
             case "connectionReadyEvent":
                 context.getEventMatcher().waitForConnectionPoolEvents(clientId, event, count, entities.getConnectionPoolListener(clientId));
                 break;
+            case "serverHeartbeatStartedEvent":
+            case "serverHeartbeatSucceededEvent":
+            case "serverHeartbeatFailedEvent":
+                context.getEventMatcher().waitForServerMonitorEvents(clientId, TestServerMonitorListener.eventType(eventName), event, count,
+                        entities.getServerMonitorListener(clientId));
+                break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + eventName);
         }
@@ -648,6 +665,12 @@ public abstract class UnifiedTest {
             case "poolReadyEvent":
                 context.getEventMatcher().assertConnectionPoolEventCount(clientId, event, count,
                         entities.getConnectionPoolListener(clientId).getEvents());
+                break;
+            case "serverHeartbeatStartedEvent":
+            case "serverHeartbeatSucceededEvent":
+            case "serverHeartbeatFailedEvent":
+                context.getEventMatcher().assertServerMonitorEventCount(clientId, TestServerMonitorListener.eventType(eventName), event, count,
+                        entities.getServerMonitorListener(clientId));
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + eventName);

@@ -224,7 +224,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                         SocketSettings.builder().connectTimeout(500, TimeUnit.MILLISECONDS).build(), getSslSettings()),
                         getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null,
                         getServerApi()),
-                getClusterConnectionMode(), getServerApi(), SameObjectProvider.initialized(sdam))
+                getClusterConnectionMode(), getServerApi(), false, SameObjectProvider.initialized(sdam))
         serverMonitor.start()
         serverMonitor
     }
