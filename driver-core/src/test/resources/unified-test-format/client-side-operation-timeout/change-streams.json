@@ -311,7 +311,7 @@
           "object": "collection",
           "arguments": {
             "pipeline": [],
-            "timeoutMS": 90
+            "timeoutMS": 80
           },
           "saveResultAsEntity": "changeStream"
         },
