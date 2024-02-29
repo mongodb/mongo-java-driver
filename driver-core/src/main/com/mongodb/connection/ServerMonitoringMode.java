@@ -35,7 +35,7 @@ public enum ServerMonitoringMode {
      * {@link ServerHeartbeatStartedEvent#isAwaited()}, {@link ServerHeartbeatSucceededEvent#isAwaited()},
      * {@link ServerHeartbeatFailedEvent#isAwaited()} return {@code true} for new events.
      * <p>
-     * The streaming protocol uses long polling for SDAM, and is intended to reduce the delay between a server change
+     * The streaming protocol uses long polling for server monitoring, and is intended to reduce the delay between a server change
      * that warrants a new event for {@link ServerListener}/{@link ClusterListener},
      * and that event being emitted, as well as the related housekeeping work being done.</p>
      */
