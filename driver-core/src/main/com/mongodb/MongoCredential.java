@@ -712,7 +712,6 @@ public final class MongoCredential {
 
         private final String accessToken;
 
-        @Nullable
         private final Duration expiresIn;
 
         @Nullable
@@ -720,7 +719,9 @@ public final class MongoCredential {
 
         /**
          * @param accessToken The OIDC access token.
-         * @param expiresIn Time until the access token expires. 0 is an infinite duration.
+         * @param expiresIn Time until the access token expires.
+         *                  A {@linkplain Duration#isZero() zero-length} duration
+         *                  means that the access token does not expire.
          */
         public OidcCallbackResult(final String accessToken, final Duration expiresIn) {
             this(accessToken, expiresIn, null);
@@ -728,13 +729,16 @@ public final class MongoCredential {
 
         /**
          * @param accessToken The OIDC access token.
-         * @param expiresIn Time until the access token expires. 0 is an infinite duration.
+         * @param expiresIn Time until the access token expires.
+         *                  A {@linkplain Duration#isZero() zero-length} duration
+         *                  means that the access token does not expire.
          * @param refreshToken The refresh token. If null, refresh will not be attempted.
          */
-        public OidcCallbackResult(final String accessToken, @Nullable final Duration expiresIn,
+        public OidcCallbackResult(final String accessToken, final Duration expiresIn,
                 @Nullable final String refreshToken) {
             notNull("accessToken", accessToken);
-            if (expiresIn != null && expiresIn.isNegative()) {
+            notNull("expiresIn", expiresIn);
+            if (expiresIn.isNegative()) {
                 throw new IllegalArgumentException("expiresIn must not be a negative value");
             }
             this.accessToken = accessToken;

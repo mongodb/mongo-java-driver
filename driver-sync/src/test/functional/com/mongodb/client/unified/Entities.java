@@ -78,6 +78,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -530,7 +531,7 @@ public final class Entities {
                                         } catch (IOException e) {
                                             throw new RuntimeException(e);
                                         }
-                                        return new MongoCredential.OidcCallbackResult(accessToken, null);
+                                        return new MongoCredential.OidcCallbackResult(accessToken, Duration.ZERO);
                                     }));
                             break;
                         }
