@@ -468,6 +468,9 @@ final class UnifiedCrudHelper {
                 case "upsert":
                     options.upsert(cur.getValue().asBoolean().getValue());
                     break;
+                case "sort":
+                    options.sort(cur.getValue().asDocument());
+                    break;
                 case "returnDocument":
                     switch (cur.getValue().asString().getValue()) {
                         case "Before":
@@ -531,6 +534,9 @@ final class UnifiedCrudHelper {
                 case "upsert":
                     options.upsert(cur.getValue().asBoolean().getValue());
                     break;
+                case "sort":
+                    options.sort(cur.getValue().asDocument());
+                    break;
                 case "returnDocument":
                     switch (cur.getValue().asString().getValue()) {
                         case "Before":
@@ -581,6 +587,9 @@ final class UnifiedCrudHelper {
             switch (cur.getKey()) {
                 case "filter":
                 case "session":
+                    break;
+                case "sort":
+                    options.sort(cur.getValue().asDocument());
                     break;
                 case "hint":
                     if (cur.getValue().isString()) {

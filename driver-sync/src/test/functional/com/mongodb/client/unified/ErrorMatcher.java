@@ -120,10 +120,11 @@ final class ErrorMatcher {
             }
         }
         if (expectedError.containsKey("expectResult")) {
-            // MongoBulkWriteException does not include information about the successful writes, so this is the only check
-            // that can currently be done
-            assertTrue(context.getMessage("Exception must be of type MongoBulkWriteException when checking for results"),
-                    e instanceof MongoBulkWriteException);
+            // Neither MongoBulkWriteException nor MongoSocketException includes information about the successful writes, so this
+            // is the only check that can currently be done
+            assertTrue(context.getMessage("Exception must be of type MongoBulkWriteException or MongoSocketException "
+                            + "when checking for results, but actual type is " + e.getClass().getSimpleName()),
+                    e instanceof MongoBulkWriteException || e instanceof MongoSocketException);
         }
         context.pop();
     }
