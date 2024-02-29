@@ -24,12 +24,25 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedRetryableWritesTest extends UnifiedSyncTest {
     public UnifiedRetryableWritesTest(@SuppressWarnings("unused") final String fileDescription,
                                       @SuppressWarnings("unused") final String testDescription,
                                       final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
                                       final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+        customSkips(testDescription);
+    }
+
+    public static void customSkips(final String description) {
+        // Remove this as part of JAVA-5125
+        if (isSharded() && serverVersionLessThan(5, 0)) {
+            assumeFalse(description.contains("succeeds after WriteConcernError"));
+            assumeFalse(description.contains("succeeds after retryable writeConcernError"));
+        }
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
