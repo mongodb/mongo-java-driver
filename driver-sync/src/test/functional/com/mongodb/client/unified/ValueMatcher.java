@@ -18,6 +18,7 @@ package com.mongodb.client.unified;
 
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonNull;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 
@@ -44,9 +45,10 @@ final class ValueMatcher {
         assertValuesMatch(expected, actual, null, -1);
     }
 
-    private void assertValuesMatch(final BsonValue initialExpected, @Nullable final BsonValue actual,
+    private void assertValuesMatch(final BsonValue initialExpected, @Nullable final BsonValue initialActual,
                                    @Nullable final String keyContext, final int arrayPositionContext) {
         BsonValue expected = initialExpected;
+        BsonValue actual = initialActual == null ? BsonNull.VALUE : initialActual;
         context.push(ContextElement.ofValueMatcher(expected, actual, keyContext, arrayPositionContext));
 
         try {
@@ -81,8 +83,6 @@ final class ValueMatcher {
                         throw new UnsupportedOperationException("Unsupported special operator: " + expectedDocument.getFirstKey());
                 }
             }
-
-            assertNotNull(context.getMessage("Actual value must contain key " + keyContext), actual);
 
             if (expected.isDocument()) {
                 BsonDocument expectedDocument = expected.asDocument();

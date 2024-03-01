@@ -34,6 +34,13 @@ public class UnifiedCrudTest extends UnifiedSyncTest {
                            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                            final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        customSkips(fileDescription, testDescription);
+    }
+
+    public static void customSkips(final String fileDescription, final String testDescription) {
+        assumeFalse(fileDescription.equals("count"));
+        assumeFalse(fileDescription.equals("count-empty"));
+        assumeFalse(fileDescription.equals("count-collation"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint string on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint document on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint string on 4.4+ server"));
