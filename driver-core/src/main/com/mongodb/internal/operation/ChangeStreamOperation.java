@@ -211,6 +211,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                 callback.onResult(null, t);
             } else {
                 AsyncCommandBatchCursor<RawBsonDocument> cursor = (AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result);
+                cursor.setCloseImmediately(true);
 
                 callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                         setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),

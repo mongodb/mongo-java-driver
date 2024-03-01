@@ -52,9 +52,24 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
-        assumeFalse("TODO (CSOT) - JAVA-4054", fileDescription.equals("timeoutMS behaves correctly for change streams"));
-
         // Time sensitive - cannot just create a cursor with publishers
+
+        assumeFalse("No iterateOnce support. There is alternative prose test for it.",
+                testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set"));
+
+        assumeFalse("No iterateOnce support. There is alternative prose test for it.",
+                testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is set"));
+        /*
+           The Reactive Streams specification prevents us from allowing a subsequent next call (event in reactive terms) after a timeout error,
+           conflicting with the CSOT spec requirement not to invalidate the change stream and to try resuming and establishing a new change
+           stream on the server. We immediately let users know about a timeout error, which then closes the stream/publisher.
+         */
+        assumeFalse("It is not possible due to a conflict with the Reactive Streams specification .",
+                testDescription.equals("change stream can be iterated again if previous iteration times out"));
+
+        assumeFalse("Flaky and racy due to asynchronous behaviour. There is alternative prose test for it.",
+                testDescription.equals("timeoutMS applies to full resume attempt in a next call"));
+
         assumeFalse(testDescription.endsWith("createChangeStream on client"));
         assumeFalse(testDescription.endsWith("createChangeStream on database"));
         assumeFalse(testDescription.endsWith("createChangeStream on collection"));

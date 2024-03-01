@@ -96,7 +96,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
-    private MongoNamespace namespace;
+    protected MongoNamespace namespace;
     protected MongoNamespace gridFsFileNamespace;
     protected MongoNamespace gridFsChunksNamespace;
 
@@ -275,6 +275,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
+    @Test
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -475,7 +476,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         );
     }
 
-    private MongoNamespace generateNamespace() {
+    protected MongoNamespace generateNamespace() {
         return new MongoNamespace(getDefaultDatabaseName(),
                 getClass().getSimpleName() + "_" + COUNTER.incrementAndGet());
     }
