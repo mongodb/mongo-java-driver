@@ -17,8 +17,6 @@ package com.mongodb.internal.mockito;
 
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
@@ -31,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 final class InsufficientStubbingDetectorDemoTest {
-    private static final Logger LOGGER = Loggers.getLogger(InsufficientStubbingDetectorDemoTest.class.getSimpleName());
 
     private ListCollectionsOperation<BsonDocument> operation;
 
@@ -43,20 +40,20 @@ final class InsufficientStubbingDetectorDemoTest {
     @Test
     void mockObjectWithDefaultAnswer() {
         ReadBinding binding = Mockito.mock(ReadBinding.class);
-        LOGGER.trace("", assertThrows(NullPointerException.class, () -> operation.execute(binding)));
+        assertThrows(NullPointerException.class, () -> operation.execute(binding));
     }
 
     @Test
     void mockObjectWithThrowsException() {
         ReadBinding binding = Mockito.mock(ReadBinding.class,
                 new ThrowsException(new AssertionError("Insufficient stubbing for " + ReadBinding.class)));
-        LOGGER.trace("", assertThrows(AssertionError.class, () -> operation.execute(binding)));
+        assertThrows(AssertionError.class, () -> operation.execute(binding));
     }
 
     @Test
     void mockObjectWithInsufficientStubbingDetector() {
         ReadBinding binding = MongoMockito.mock(ReadBinding.class);
-        LOGGER.trace("", assertThrows(AssertionError.class, () -> operation.execute(binding)));
+        assertThrows(AssertionError.class, () -> operation.execute(binding));
     }
 
     @Test
