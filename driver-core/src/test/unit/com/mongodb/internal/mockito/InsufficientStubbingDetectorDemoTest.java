@@ -43,20 +43,20 @@ final class InsufficientStubbingDetectorDemoTest {
     @Test
     void mockObjectWithDefaultAnswer() {
         ReadBinding binding = Mockito.mock(ReadBinding.class);
-        LOGGER.info("", assertThrows(NullPointerException.class, () -> operation.execute(binding)));
+        LOGGER.trace("", assertThrows(NullPointerException.class, () -> operation.execute(binding)));
     }
 
     @Test
     void mockObjectWithThrowsException() {
         ReadBinding binding = Mockito.mock(ReadBinding.class,
                 new ThrowsException(new AssertionError("Insufficient stubbing for " + ReadBinding.class)));
-        LOGGER.info("", assertThrows(AssertionError.class, () -> operation.execute(binding)));
+        LOGGER.trace("", assertThrows(AssertionError.class, () -> operation.execute(binding)));
     }
 
     @Test
     void mockObjectWithInsufficientStubbingDetector() {
         ReadBinding binding = MongoMockito.mock(ReadBinding.class);
-        LOGGER.info("", assertThrows(AssertionError.class, () -> operation.execute(binding)));
+        LOGGER.trace("", assertThrows(AssertionError.class, () -> operation.execute(binding)));
     }
 
     @Test
