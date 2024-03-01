@@ -29,6 +29,7 @@ import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Operators;
+import reactor.util.context.Context;
 
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingDeque;
@@ -215,6 +216,11 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
                                        final CompletableFuture<BatchCursor> batchCursorCompletableFuture) {
             this.sub = sub;
             this.batchCursorCompletableFuture = batchCursorCompletableFuture;
+        }
+
+        @Override
+        public Context currentContext() {
+            return sub.currentContext();
         }
 
         @Override
