@@ -153,7 +153,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private boolean isAutomaticAuthentication() {
-        return getMechanismProperty(PROVIDER_NAME_KEY) == null;
+        return getOidcCallbackMechanismProperty(PROVIDER_NAME_KEY) == null;
     }
 
     private boolean isHumanCallback() {
