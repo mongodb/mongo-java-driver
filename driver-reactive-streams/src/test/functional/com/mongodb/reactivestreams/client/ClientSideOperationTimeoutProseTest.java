@@ -56,12 +56,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
@@ -225,6 +228,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Test
     public void testTimeoutMSAppliesToFullResumeAttemptInNextCall() {
         assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isDiscoverableReplicaSet());
+        assumeFalse(isServerlessTest());
 
         //given
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -279,6 +284,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Test
     public void testTimeoutMSAppliedToInitialAggregate() {
         assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isDiscoverableReplicaSet());
+        assumeFalse(isServerlessTest());
 
         //given
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -326,6 +333,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Test
     public void testTimeoutMsRefreshedForGetMoreWhenMaxAwaitTimeMsNotSet() {
         assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isDiscoverableReplicaSet());
+        assumeFalse(isServerlessTest());
 
         //given
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
@@ -387,6 +396,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Test
     public void testTimeoutMsRefreshedForGetMoreWhenMaxAwaitTimeMsSet() {
         assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isDiscoverableReplicaSet());
+        assumeFalse(isServerlessTest());
 
         //given
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
@@ -441,6 +452,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Test
     public void testTimeoutMsISHonoredForNnextOperationWhenSeveralGetMoreExecutedInternally() {
         assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isDiscoverableReplicaSet());
+        assumeFalse(isServerlessTest());
 
         //given
         long rtt = ClusterFixture.getPrimaryRTT();
