@@ -335,7 +335,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
         long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(1000, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + 1000, TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
@@ -395,7 +395,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
         long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(300, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
