@@ -183,6 +183,9 @@ public interface MongoDatabase {
     /**
      * Executes command in the context of the current database.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param command the command to be run
      * @return a publisher containing the command result
      */
@@ -190,6 +193,9 @@ public interface MongoDatabase {
 
     /**
      * Executes command in the context of the current database.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command        the command to be run
      * @param readPreference the {@link com.mongodb.ReadPreference} to be used when executing the command
@@ -200,6 +206,9 @@ public interface MongoDatabase {
     /**
      * Executes command in the context of the current database.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param command   the command to be run
      * @param clazz     the default class to cast any documents returned from the database into.
      * @param <TResult> the type of the class to use instead of {@code Document}.
@@ -209,6 +218,9 @@ public interface MongoDatabase {
 
     /**
      * Executes command in the context of the current database.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command        the command to be run
      * @param readPreference the {@link com.mongodb.ReadPreference} to be used when executing the command
@@ -221,6 +233,9 @@ public interface MongoDatabase {
     /**
      * Executes command in the context of the current database.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param command the command to be run
      * @return a publisher containing the command result
@@ -231,6 +246,9 @@ public interface MongoDatabase {
 
     /**
      * Executes command in the context of the current database.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param command        the command to be run
@@ -244,6 +262,9 @@ public interface MongoDatabase {
     /**
      * Executes command in the context of the current database.
      *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
+     *
      * @param clientSession the client session with which to associate this operation
      * @param command   the command to be run
      * @param clazz     the default class to cast any documents returned from the database into.
@@ -256,6 +277,9 @@ public interface MongoDatabase {
 
     /**
      * Executes command in the context of the current database.
+     *
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param command        the command to be run
