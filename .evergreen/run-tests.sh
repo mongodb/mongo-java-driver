@@ -144,5 +144,5 @@ else
               ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
               ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
               -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
-              --stacktrace --info --continue test integrationTest
+              --stacktrace --info --continue test
 fi
