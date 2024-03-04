@@ -54,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -353,7 +354,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     + "    configureFailPoint: \"failCommand\","
                     + "    mode: { times: 2},"
                     + "    data: {"
-                    + "        failCommands: [\"getMore\" ],"
+                    + "        failCommands: [\"getMore\", \"aggregate\"],"
                     + "        blockConnection: true,"
                     + "        blockTimeMS: " + (rtt + 800)
                     + "    }"
@@ -364,7 +365,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .startAtOperationTime(startTime);
             StepVerifier.create(documentChangeStreamPublisher, 2)
             //then
-                    .thenAwait(Duration.ofMillis(300))
+                    .thenAwait(Duration.ofMillis(1000))
                     .then(() -> collectionHelper.insertDocuments(WriteConcern.MAJORITY,
                             BsonDocument.parse("{x: 1}"),
                             BsonDocument.parse("{x: 2}"),
@@ -481,7 +482,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     private static void assertCommandStartedEventsInOder(final List<String> expectedCommandNames,
                                                          final List<CommandStartedEvent> commandStartedEvents) {
-        assertEquals(expectedCommandNames.size(), commandStartedEvents.size());
+        assertEquals(expectedCommandNames.size(), commandStartedEvents.size(), "Expected: " + expectedCommandNames + ". Actual: " +
+                commandStartedEvents.stream().map(CommandStartedEvent::getCommandName).collect(Collectors.toList()));
 
         for (int i = 0; i < expectedCommandNames.size(); i++) {
             CommandStartedEvent commandStartedEvent = commandStartedEvents.get(i);
