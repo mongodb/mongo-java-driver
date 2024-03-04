@@ -122,7 +122,7 @@ abstract class BaseCluster implements Cluster {
 
         ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
         boolean selectionWaitingLogged = false;
-        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computedServerSelectionTimeout();
+        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, description);
 
         while (true) {
@@ -156,7 +156,7 @@ abstract class BaseCluster implements Cluster {
     public void selectServerAsync(final ServerSelector serverSelector, final OperationContext operationContext,
             final SingleResultCallback<ServerTuple> callback) {
         isTrue("open", !isClosed());
-        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computedServerSelectionTimeout();
+        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(
                 serverSelector, getCompositeServerSelector(serverSelector), operationContext.getId(), computedServerSelectionTimeout,
                 callback);

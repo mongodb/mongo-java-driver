@@ -282,7 +282,7 @@ public class TimeoutContext {
      *
      * @return the timeout context
      */
-    public Timeout computedServerSelectionTimeout() {
+    public Timeout computeServerSelectionTimeout() {
         Timeout serverSelectionTimeout = StartTime.now()
                 .timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
 
