@@ -345,7 +345,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
         long rtt = ClusterFixture.getPrimaryRTT();
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 1000, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
@@ -356,7 +356,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     + "    data: {"
                     + "        failCommands: [\"getMore\", \"aggregate\"],"
                     + "        blockConnection: true,"
-                    + "        blockTimeMS: " + (rtt + 800)
+                    + "        blockTimeMS: " + (rtt + 200)
                     + "    }"
                     + "}");
 
@@ -365,17 +365,17 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .startAtOperationTime(startTime);
             StepVerifier.create(documentChangeStreamPublisher, 2)
             //then
-                    .thenAwait(Duration.ofMillis(1000))
+                    .thenAwait(Duration.ofMillis(300))
                     .then(() -> collectionHelper.insertDocuments(WriteConcern.MAJORITY,
                             BsonDocument.parse("{x: 1}"),
                             BsonDocument.parse("{x: 2}"),
                             BsonDocument.parse("{x: 3}"),
                             BsonDocument.parse("{x: 4}")))
                     .expectNextCount(2)
-                    .thenAwait(Duration.ofMillis(1000))
+                    .thenAwait(Duration.ofMillis(300))
                     .thenRequest(2)
                     .expectNextCount(2)
-                    .thenAwait(Duration.ofMillis(1000))
+                    .thenAwait(Duration.ofMillis(300))
                     .thenRequest(2)
                     .expectError(MongoOperationTimeoutException.class)
                     .verify();
@@ -483,7 +483,10 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     private static void assertCommandStartedEventsInOder(final List<String> expectedCommandNames,
                                                          final List<CommandStartedEvent> commandStartedEvents) {
         assertEquals(expectedCommandNames.size(), commandStartedEvents.size(), "Expected: " + expectedCommandNames + ". Actual: " +
-                commandStartedEvents.stream().map(CommandStartedEvent::getCommandName).collect(Collectors.toList()));
+                commandStartedEvents.stream()
+                        .map(CommandStartedEvent::getCommand)
+                        .map(BsonDocument::toJson)
+                        .collect(Collectors.toList()));
 
         for (int i = 0; i < expectedCommandNames.size(); i++) {
             CommandStartedEvent commandStartedEvent = commandStartedEvents.get(i);
