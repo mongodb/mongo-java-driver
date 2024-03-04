@@ -32,17 +32,4 @@ public interface AsyncCallbackRunnable {
      */
     void run(SingleResultCallback<Void> callback);
 
-    /**
-     * Converts this {@link AsyncCallbackSupplier} to {@link AsyncCallbackSupplier}{@code <Void>}.
-     */
-    default AsyncCallbackSupplier<Void> asSupplier() {
-        return this::run;
-    }
-
-    /**
-     * @see AsyncCallbackSupplier#whenComplete(Runnable)
-     */
-    default AsyncCallbackRunnable whenComplete(final Runnable after) {
-        return callback -> asSupplier().whenComplete(after).get(callback);
-    }
 }

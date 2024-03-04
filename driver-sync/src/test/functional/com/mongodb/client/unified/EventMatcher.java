@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ServerType;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.CommandEvent;
@@ -29,10 +30,15 @@ import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.event.ServerHeartbeatFailedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
@@ -284,9 +290,61 @@ final class EventMatcher {
         context.pop();
     }
 
+    public <T> void waitForServerMonitorEvents(final String client, final Class<T> expectedEventType, final BsonDocument expectedEvent,
+            final int count, final TestServerMonitorListener serverMonitorListener) {
+        context.push(ContextElement.ofWaitForServerMonitorEvents(client, expectedEvent, count));
+        BsonDocument expectedEventContents = getEventContents(expectedEvent);
+        try {
+            serverMonitorListener.waitForEvents(expectedEventType,
+                    event -> serverMonitorEventMatches(expectedEventContents, event, null), count, Duration.ofSeconds(10));
+            context.pop();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            fail(context.getMessage("Timed out waiting for server monitor events"));
+        }
+    }
+
+    public <T> void assertServerMonitorEventCount(final String client, final Class<T> expectedEventType, final BsonDocument expectedEvent,
+            final int count, final TestServerMonitorListener serverMonitorListener) {
+        BsonDocument expectedEventContents = getEventContents(expectedEvent);
+        context.push(ContextElement.ofServerMonitorEventCount(client, expectedEvent, count));
+        long matchCount = serverMonitorListener.countEvents(expectedEventType, event ->
+                serverMonitorEventMatches(expectedEventContents, event, null));
+        assertEquals(context.getMessage("Expected server monitor event counts to match"), count, matchCount);
+        context.pop();
+    }
+
+    public void assertServerMonitorEventsEquality(
+            final String client,
+            final boolean ignoreExtraEvents,
+            final BsonArray expectedEventDocuments,
+            final List<?> events) {
+        context.push(ContextElement.ofServerMonitorEvents(client, expectedEventDocuments, events));
+        if (ignoreExtraEvents) {
+            assertTrue(context.getMessage("Number of events must be greater than or equal to the expected number of events"),
+                    events.size() >= expectedEventDocuments.size());
+        } else {
+            assertEquals(context.getMessage("Number of events must be the same"), expectedEventDocuments.size(), events.size());
+        }
+        for (int i = 0; i < expectedEventDocuments.size(); i++) {
+            Object actualEvent = events.get(i);
+            BsonDocument expectedEventDocument = expectedEventDocuments.get(i).asDocument();
+            String expectedEventType = expectedEventDocument.getFirstKey();
+            context.push(ContextElement.ofServerMonitorEvent(expectedEventDocument, actualEvent, i));
+            assertEquals(context.getMessage("Expected event type to match"), expectedEventType, getEventType(actualEvent.getClass()));
+            BsonDocument expectedEventContents = expectedEventDocument.getDocument(expectedEventType);
+            serverMonitorEventMatches(expectedEventContents, actualEvent, context);
+            context.pop();
+        }
+        context.pop();
+    }
+
     @NonNull
     private BsonDocument getEventContents(final BsonDocument expectedEvent) {
-        HashSet<String> supportedEventTypes = new HashSet<>(asList("serverDescriptionChangedEvent", "topologyDescriptionChangedEvent"));
+        HashSet<String> supportedEventTypes = new HashSet<>(asList(
+                "serverDescriptionChangedEvent", "topologyDescriptionChangedEvent",
+                "serverHeartbeatStartedEvent", "serverHeartbeatSucceededEvent", "serverHeartbeatFailedEvent"));
         String expectedEventType = expectedEvent.getFirstKey();
         if (!supportedEventTypes.contains(expectedEventType)) {
             throw new UnsupportedOperationException("Unsupported event type " + expectedEventType);
@@ -333,12 +391,52 @@ final class EventMatcher {
         return true;
     }
 
-    private static String getEventType(final Class<?> eventClass) {
+    /**
+     * @param context Not {@code null} iff mismatch must result in an error, that is, this method works as an assertion.
+     */
+    private static <T> boolean serverMonitorEventMatches(
+            final BsonDocument expectedEventContents,
+            final T event,
+            @Nullable final AssertionContext context) {
+        if (expectedEventContents.size() > 1) {
+            throw new UnsupportedOperationException("Matching for the following event is not implemented " + expectedEventContents.toJson());
+        }
+        if (expectedEventContents.containsKey("awaited")) {
+            boolean expectedAwaited = expectedEventContents.getBoolean("awaited").getValue();
+            boolean actualAwaited = getAwaitedFromServerMonitorEvent(event);
+            boolean awaitedMatches = expectedAwaited == actualAwaited;
+            if (context != null) {
+                assertTrue(context.getMessage("Expected `awaited` to match"), awaitedMatches);
+            }
+            return awaitedMatches;
+        }
+        return true;
+    }
+
+    static boolean getAwaitedFromServerMonitorEvent(final Object event) {
+        if (event instanceof ServerHeartbeatStartedEvent) {
+            return ((ServerHeartbeatStartedEvent) event).isAwaited();
+        } else if (event instanceof ServerHeartbeatSucceededEvent) {
+            return ((ServerHeartbeatSucceededEvent) event).isAwaited();
+        } else if (event instanceof ServerHeartbeatFailedEvent) {
+            return ((ServerHeartbeatFailedEvent) event).isAwaited();
+        } else {
+            throw Assertions.fail(event.toString());
+        }
+    }
+
+    static String getEventType(final Class<?> eventClass) {
         String eventClassName = eventClass.getSimpleName();
         if (eventClassName.startsWith("ConnectionPool")) {
             return eventClassName.replace("ConnectionPool", "pool");
-        } else {
+        } else if (eventClassName.startsWith("Connection")) {
             return eventClassName.replace("Connection", "connection");
+        } else if (eventClassName.startsWith("ServerHeartbeat")) {
+            StringBuilder eventTypeBuilder = new StringBuilder(eventClassName);
+            eventTypeBuilder.setCharAt(0, Character.toLowerCase(eventTypeBuilder.charAt(0)));
+            return eventTypeBuilder.toString();
+        } else {
+            throw new UnsupportedOperationException(eventClassName);
         }
     }
 

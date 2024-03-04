@@ -21,8 +21,11 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
+import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
 import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
@@ -120,6 +123,7 @@ public final class Entities {
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
+    private final Map<String, TestServerMonitorListener> serverMonitorListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
     private final Map<String, ClusterDescription> topologyDescriptions = new HashMap<>();
     private final Map<String, Long> successCounts = new HashMap<>();
@@ -284,6 +288,10 @@ public final class Entities {
         return getEntity(id + "-cluster-listener", clientClusterListeners, "cluster listener");
     }
 
+    public TestServerMonitorListener getServerMonitorListener(final String id) {
+        return getEntity(id + "-server-monitor-listener", serverMonitorListeners, "server monitor listener");
+    }
+
     private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
         T entity = entities.get(id);
         if (entity == null) {
@@ -300,6 +308,7 @@ public final class Entities {
     }
 
     public void init(final BsonArray entitiesArray,
+                     final BsonDocument startingClusterTime,
                      final boolean waitForPoolAsyncWorkManagerStart,
                      final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                      final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
@@ -324,7 +333,7 @@ public final class Entities {
                     break;
                 }
                 case "session": {
-                    initSession(entity, id);
+                    initSession(entity, id, startingClusterTime);
                     break;
                 }
                 case "bucket": {
@@ -376,23 +385,25 @@ public final class Entities {
         putEntity(id + "-cluster-listener", testClusterListener, clientClusterListeners);
 
         if (entity.containsKey("observeEvents")) {
+            List<String> observeEvents = entity.getArray("observeEvents").stream()
+                    .map(type -> type.asString().getValue()).collect(Collectors.toList());
             List<String> ignoreCommandMonitoringEvents = entity
                     .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
                     .map(type -> type.asString().getValue()).collect(Collectors.toList());
             ignoreCommandMonitoringEvents.add("configureFailPoint");
-            TestCommandListener testCommandListener = new TestCommandListener(
-                    entity.getArray("observeEvents").stream()
-                            .map(type -> type.asString().getValue()).collect(Collectors.toList()),
+            TestCommandListener testCommandListener = new TestCommandListener(observeEvents,
                     ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue());
             clientSettingsBuilder.addCommandListener(testCommandListener);
             putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
 
-            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(
-                    entity.getArray("observeEvents").stream()
-                            .map(type -> type.asString().getValue()).collect(Collectors.toList()));
+            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(observeEvents);
             clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
                     builder.addConnectionPoolListener(testConnectionPoolListener));
             putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
+
+            TestServerMonitorListener testServerMonitorListener = new TestServerMonitorListener(observeEvents);
+            clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerMonitorListener(testServerMonitorListener));
+            putEntity(id + "-server-monitor-listener", testServerMonitorListener, serverMonitorListeners);
         } else {
             // Regardless of whether events are observed, we still need to track some info about the pool in order to implement
             // the assertNumberConnectionsCheckedOut operation
@@ -443,6 +454,9 @@ public final class Entities {
                         break;
                     case "retryWrites":
                         clientSettingsBuilder.retryWrites(value.asBoolean().getValue());
+                        break;
+                    case "readPreference":
+                        clientSettingsBuilder.readPreference(ReadPreference.valueOf(value.asString().getValue()));
                         break;
                     case "readConcernLevel":
                         clientSettingsBuilder.readConcern(
@@ -497,6 +511,10 @@ public final class Entities {
                     case "appname":
                     case "appName":
                         clientSettingsBuilder.applicationName(value.asString().getValue());
+                        break;
+                    case "serverMonitoringMode":
+                        clientSettingsBuilder.applyToServerSettings(builder -> builder.serverMonitoringMode(
+                                ServerMonitoringModeUtil.fromString(value.asString().getValue())));
                         break;
                     default:
                         throw new UnsupportedOperationException("Unsupported uri option: " + key);
@@ -596,7 +614,7 @@ public final class Entities {
         putEntity(id, collection, collections);
     }
 
-    private void initSession(final BsonDocument entity, final String id) {
+    private void initSession(final BsonDocument entity, final String id, final BsonDocument startingClusterTime) {
         MongoClient client = clients.get(entity.getString("client").getValue());
         ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
         if (entity.containsKey("sessionOptions")) {
@@ -608,12 +626,16 @@ public final class Entities {
                     case "snapshot":
                         optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
                         break;
+                    case "causalConsistency":
+                        optionsBuilder.causallyConsistent(entry.getValue().asBoolean().getValue());
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());
                 }
             }
         }
         ClientSession session = client.startSession(optionsBuilder.build());
+        session.advanceClusterTime(startingClusterTime);
         putEntity(id, session, sessions);
         putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }
@@ -669,6 +691,12 @@ public final class Entities {
                     break;
                 case "writeConcern":
                     transactionOptionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                case "readPreference":
+                    transactionOptionsBuilder.readPreference(asReadPreference(entry.getValue().asDocument()));
+                    break;
+                case "maxCommitTimeMS":
+                    transactionOptionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());

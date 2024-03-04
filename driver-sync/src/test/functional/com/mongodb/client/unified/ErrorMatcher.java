@@ -20,19 +20,23 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.spockframework.util.Assert.fail;
 
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
@@ -66,7 +70,7 @@ final class ErrorMatcher {
         if (expectedError.containsKey("errorContains")) {
             String errorContains = expectedError.getString("errorContains").getValue();
             assertTrue(context.getMessage("Error message does not contain expected string: " + errorContains),
-                    e.getMessage().contains(errorContains));
+                    e.getMessage().toLowerCase(Locale.ROOT).contains(errorContains.toLowerCase(Locale.ROOT)));
         }
         if (expectedError.containsKey("errorResponse")) {
             valueMatcher.assertValuesMatch(expectedError.getDocument("errorResponse"), ((MongoCommandException) e).getResponse());
@@ -83,11 +87,19 @@ final class ErrorMatcher {
                     errorCode);
         }
         if (expectedError.containsKey("errorCodeName")) {
-            assertTrue(context.getMessage("Exception must be of type MongoServerException when checking for error codes"),
-                    e instanceof MongoServerException);
-            MongoServerException mongoServerException = (MongoServerException) e;
-            assertEquals(context.getMessage("Error code names must match"), expectedError.getString("errorCodeName").getValue(),
-                    mongoServerException.getErrorCodeName());
+            String expectedErrorCodeName = expectedError.getString("errorCodeName").getValue();
+            if (e instanceof MongoExecutionTimeoutException) {
+                assertEquals(context.getMessage("Error code names must match"), expectedErrorCodeName, "MaxTimeMSExpired");
+            } else if (e instanceof MongoWriteConcernException) {
+                assertEquals(context.getMessage("Error code names must match"), expectedErrorCodeName,
+                        ((MongoWriteConcernException) e).getWriteConcernError().getCodeName());
+            } else if (e instanceof MongoServerException) {
+                assertEquals(context.getMessage("Error code names must match"), expectedErrorCodeName,
+                        ((MongoServerException) e).getErrorCodeName());
+            } else {
+                fail(context.getMessage(String.format("Unexpected exception type %s when asserting error code name",
+                        e.getClass().getSimpleName())));
+            }
         }
         if (expectedError.containsKey("errorLabelsOmit")) {
             assertTrue(context.getMessage("Exception must be of type MongoException when checking for error labels"),

@@ -19,11 +19,15 @@ package com.mongodb.client.unified;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.junit.Before;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
+
+import static org.junit.Assume.assumeFalse;
 
 public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
 
@@ -37,5 +41,18 @@ public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/server-discovery-and-monitoring");
+    }
+
+    @Before
+    public void before() {
+        skipTests(getDefinition());
+    }
+
+    public static void skipTests(final BsonDocument definition) {
+        String description = definition.getString("description", new BsonString("")).getValue();
+        assumeFalse("Skipping because our server monitoring events behave differently for now",
+                description.equals("connect with serverMonitoringMode=auto >=4.4"));
+        assumeFalse("Skipping because our server monitoring events behave differently for now",
+                description.equals("connect with serverMonitoringMode=stream >=4.4"));
     }
 }

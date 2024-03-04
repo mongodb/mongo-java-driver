@@ -24,6 +24,9 @@ import spock.lang.Specification
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
+/**
+ * Update {@link ServerSettingsTest} instead.
+ */
 class ServerSettingsSpecification extends Specification {
     def 'should have correct defaults'() {
         when:
