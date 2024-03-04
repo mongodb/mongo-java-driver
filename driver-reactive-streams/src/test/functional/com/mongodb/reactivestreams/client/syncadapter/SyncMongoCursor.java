@@ -99,6 +99,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
                 throw new MongoTimeoutException("Timeout waiting for subscription");
             }
             batchCursorCompletableFuture.get(TIMEOUT, TimeUnit.SECONDS);
+            Hooks.resetOnEachOperator();
             sleep(getSleepAfterCursorOpen());
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted waiting for asynchronous cursor establishment", e);
