@@ -47,7 +47,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -282,6 +285,9 @@ public class ConnectionString {
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
             new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
+    private static final List<String> MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING = Stream.of(ALLOWED_HOSTS_KEY)
+            .map(k -> k.toLowerCase())
+            .collect(Collectors.toList());
 
     private final MongoCredential credential;
     private final boolean isSrvProtocol;
@@ -917,6 +923,11 @@ public class ConnectionString {
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
+                if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
+                    throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
+                            + "'%s' must be set on the credential programmatically.", key));
+                }
+
                 if (key.equals("canonicalize_host_name")) {
                     credential = credential.withMechanismProperty(key, Boolean.valueOf(value));
                 } else {
