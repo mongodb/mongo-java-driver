@@ -3,6 +3,7 @@
 export JDK8="/opt/java/jdk8"
 export JDK11="/opt/java/jdk11"
 export JDK17="/opt/java/jdk17"
+export JDK21="/opt/java/jdk21"
 
 if [ -d "$JDK17" ]; then
   export JAVA_HOME=$JDK17

@@ -34,4 +34,5 @@ fi
 echo "Running scala tests with Scala $SCALA"
 
 ./gradlew -version
-./gradlew -PscalaVersion=$SCALA --stacktrace --info scalaCheck -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
+./gradlew -PjavaVersion=${JAVA_VERSION} -PscalaVersion=$SCALA --stacktrace --info scalaCheck \
+    -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
