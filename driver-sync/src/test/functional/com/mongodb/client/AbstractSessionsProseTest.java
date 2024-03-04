@@ -63,13 +63,17 @@ public abstract class AbstractSessionsProseTest {
 
     @BeforeAll
     public static void beforeAll() throws IOException {
-        mongocryptdProcess = startMongocryptdProcess();
+        if (serverVersionAtLeast(4, 2)) {
+            mongocryptdProcess = startMongocryptdProcess();
+        }
     }
 
     @AfterAll
     public static void afterAll() {
-        mongocryptdProcess.destroy();
-        mongocryptdProcess = null;
+        if (mongocryptdProcess != null) {
+            mongocryptdProcess.destroy();
+            mongocryptdProcess = null;
+        }
     }
 
     // Test 13 from #13-existing-sessions-are-not-checked-into-a-cleared-pool-after-forking
