@@ -218,6 +218,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'listListSimple': [[" + SIMPLE_MODEL_JSON + "]],"
                         + "'setSimple': [" + SIMPLE_MODEL_JSON + "],"
                         + "'setSetSimple': [[" + SIMPLE_MODEL_JSON + "]],"
+                        + "'sortedSetSimple': [" + SIMPLE_MODEL_JSON + "],"
                         + "'mapSimple': {'s': " + SIMPLE_MODEL_JSON + "},"
                         + "'mapMapSimple': {'ms': {'s': " + SIMPLE_MODEL_JSON + "}},"
                         + "'mapListSimple': {'ls': [" + SIMPLE_MODEL_JSON + "]},"
