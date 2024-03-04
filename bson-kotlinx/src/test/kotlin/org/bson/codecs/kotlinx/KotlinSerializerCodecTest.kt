@@ -84,6 +84,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithSequence
 import org.bson.codecs.kotlinx.samples.DataClassWithSimpleValues
 import org.bson.codecs.kotlinx.samples.DataClassWithTriple
 import org.bson.codecs.kotlinx.samples.Key
+import org.bson.codecs.kotlinx.samples.SealedInterface
 import org.bson.codecs.kotlinx.samples.ValueClass
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -91,13 +92,14 @@ import org.junit.jupiter.api.assertThrows
 @OptIn(ExperimentalSerializationApi::class)
 class KotlinSerializerCodecTest {
     private val numberLong = "\$numberLong"
+    private val oid = "\$oid"
     private val emptyDocument = "{}"
     private val altConfiguration =
         BsonConfiguration(encodeDefaults = false, classDiscriminator = "_t", explicitNulls = true)
 
     private val allBsonTypesJson =
         """{
-    | "id": {"${'$'}oid": "111111111111111111111111"},
+    | "id": {"$oid": "111111111111111111111111"},
     | "arrayEmpty": [],
     | "arraySimple": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
     | "arrayComplex": [{"a": {"${'$'}numberInt": "1"}}, {"a": {"${'$'}numberInt": "2"}}],
@@ -679,6 +681,17 @@ class KotlinSerializerCodecTest {
             val codec = KotlinSerializerCodec.create<DataClassWithFailingInit>()
             codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
         }
+
+        val exception =
+            assertThrows<SerializationException>("Missing discriminator") {
+                val data = BsonDocument.parse("""{"_id": {"$oid": "111111111111111111111111"}, "name": "string"}""")
+                val codec = KotlinSerializerCodec.create<SealedInterface>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals(
+            "Missing required discriminator field `_t` for polymorphic class: " +
+                "`org.bson.codecs.kotlinx.samples.SealedInterface`.",
+            exception.message)
     }
 
     @Test

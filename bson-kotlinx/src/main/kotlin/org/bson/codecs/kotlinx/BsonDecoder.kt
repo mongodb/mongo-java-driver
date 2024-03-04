@@ -31,6 +31,7 @@ import kotlinx.serialization.modules.SerializersModule
 import org.bson.AbstractBsonReader
 import org.bson.BsonInvalidOperationException
 import org.bson.BsonReader
+import org.bson.BsonReaderMark
 import org.bson.BsonType
 import org.bson.BsonValue
 import org.bson.codecs.BsonValueCodec
@@ -125,7 +126,6 @@ internal open class DefaultBsonDecoder(
                 return BsonArrayDecoder(reader, serializersModule, configuration)
             }
             is PolymorphicKind -> {
-                reader.readStartDocument()
                 return PolymorphicDecoder(reader, serializersModule, configuration)
             }
             is StructureKind.CLASS,
@@ -213,13 +213,37 @@ private class PolymorphicDecoder(
     configuration: BsonConfiguration
 ) : DefaultBsonDecoder(reader, serializersModule, configuration) {
     private var index = 0
+    private var mark: BsonReaderMark? = reader.mark
 
-    override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>): T =
-        deserializer.deserialize(DefaultBsonDecoder(reader, serializersModule, configuration))
+    override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>): T {
+        mark?.let {
+            it.reset()
+            mark = null
+        }
+        return deserializer.deserialize(DefaultBsonDecoder(reader, serializersModule, configuration))
+    }
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
+        var found = false
         return when (index) {
-            0 -> index++
+            0 -> {
+                reader.readStartDocument()
+                reader.readBsonType()
+                while (reader.state != AbstractBsonReader.State.END_OF_DOCUMENT) {
+                    if (reader.readName() == configuration.classDiscriminator) {
+                        found = true
+                        break
+                    }
+                    reader.skipValue()
+                    reader.readBsonType()
+                }
+                if (!found) {
+                    throw SerializationException(
+                        "Missing required discriminator field `${configuration.classDiscriminator}` " +
+                            "for polymorphic class: `${descriptor.serialName}`.")
+                }
+                index++
+            }
             1 -> index++
             else -> DECODE_DONE
         }
@@ -250,6 +274,8 @@ private class BsonDocumentDecoder(
             throw SerializationException(
                 "Invalid key type for ${descriptor.serialName}. Expected STRING or ENUM but found: `${keyKind}`")
         }
+
+        System.err.println(descriptor.serialName)
 
         if (!isKey) {
             isKey = true
