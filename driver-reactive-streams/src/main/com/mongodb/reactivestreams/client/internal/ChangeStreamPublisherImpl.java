@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStreamDocument<T>>
