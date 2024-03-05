@@ -42,7 +42,7 @@ import static java.util.Objects.requireNonNull;
 public class SyncMongoDatabase implements MongoDatabase {
     private final com.mongodb.reactivestreams.client.MongoDatabase wrapped;
 
-    SyncMongoDatabase(final com.mongodb.reactivestreams.client.MongoDatabase wrapped) {
+    public SyncMongoDatabase(final com.mongodb.reactivestreams.client.MongoDatabase wrapped) {
         this.wrapped = wrapped;
     }
 

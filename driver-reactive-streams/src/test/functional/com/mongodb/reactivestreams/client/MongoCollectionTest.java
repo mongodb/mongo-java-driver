@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
+import com.mongodb.client.AbstractMongoCollectionTest;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.junit.jupiter.api.AfterAll;
 
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 
 public class MongoCollectionTest extends AbstractMongoCollectionTest {
 
-    private static MongoClient mongoClient;
+    private static com.mongodb.client.MongoClient mongoClient;
 
     @Override
     protected MongoDatabase getDatabase(final String databaseName) {
         return createMongoClient().getDatabase(databaseName);
     }
 
-    private MongoClient createMongoClient() {
+    private com.mongodb.client.MongoClient createMongoClient() {
         if (mongoClient == null) {
-            mongoClient = MongoClients.create(getMongoClientSettingsBuilder().build());
+            mongoClient = new SyncMongoClient(MongoClients.create(getMongoClientSettingsBuilder().build()));
         }
         return mongoClient;
     }
@@ -39,9 +42,9 @@ public class MongoCollectionTest extends AbstractMongoCollectionTest {
 
     @AfterAll
     public static void closeClient() {
-       if (mongoClient != null)  {
-           mongoClient.close();
-           mongoClient = null;
-       }
+        if (mongoClient != null)  {
+            mongoClient.close();
+            mongoClient = null;
+        }
     }
 }
