@@ -56,7 +56,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
 
         assumeFalse("No iterateOnce support. There is alternative prose test for it.",
                 testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set"));
-
         assumeFalse("No iterateOnce support. There is alternative prose test for it.",
                 testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is set"));
         /*
@@ -66,9 +65,10 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
          */
         assumeFalse("It is not possible due to a conflict with the Reactive Streams specification .",
                 testDescription.equals("change stream can be iterated again if previous iteration times out"));
-
         assumeFalse("Flaky and racy due to asynchronous behaviour. There is alternative prose test for it.",
                 testDescription.equals("timeoutMS applies to full resume attempt in a next call"));
+        assumeFalse("No way to catch an error on BarchCursor creation. There is alternative prose test for it.",
+                testDescription.equals("timeoutMS applied to initial aggregate"));
 
         assumeFalse(testDescription.endsWith("createChangeStream on client"));
         assumeFalse(testDescription.endsWith("createChangeStream on database"));

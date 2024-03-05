@@ -94,8 +94,7 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
 
     @Override
     public AggregatePublisher<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+        this.maxAwaitTimeMS = validateMaxAwaitTime(maxAwaitTime, timeUnit);
         return this;
     }
 

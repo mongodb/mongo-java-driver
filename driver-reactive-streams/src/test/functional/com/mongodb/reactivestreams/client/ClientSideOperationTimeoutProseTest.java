@@ -494,8 +494,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     private static void assertCommandStartedEventsInOder(final List<String> expectedCommandNames,
                                                          final List<CommandStartedEvent> commandStartedEvents) {
-        assertEquals(expectedCommandNames.size(), commandStartedEvents.size(), "Expected: " + expectedCommandNames + ". Actual: " +
-                commandStartedEvents.stream()
+        assertEquals(expectedCommandNames.size(), commandStartedEvents.size(), "Expected: " + expectedCommandNames + ". Actual: "
+                + commandStartedEvents.stream()
                         .map(CommandStartedEvent::getCommand)
                         .map(BsonDocument::toJson)
                         .collect(Collectors.toList()));
