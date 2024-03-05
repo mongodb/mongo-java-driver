@@ -352,7 +352,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
             collectionHelper.runAdminCommand("{"
                     + "    configureFailPoint: \"failCommand\","
-                    + "    mode: { times: 2},"
+                    + "    mode: { times: 3},"
                     + "    data: {"
                     + "        failCommands: [\"getMore\", \"aggregate\"],"
                     + "        blockConnection: true,"
@@ -360,17 +360,24 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     + "    }"
                     + "}");
 
+            collectionHelper.insertDocuments(WriteConcern.MAJORITY,
+                    BsonDocument.parse("{x: 1}"),
+                    BsonDocument.parse("{x: 2}"),
+
+                    BsonDocument.parse("{x: 3}"),
+                    BsonDocument.parse("{x: 4}"),
+
+                    BsonDocument.parse("{x: 5}"),
+                    BsonDocument.parse("{x: 6}"));
+
             //when
             ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch()
                     .startAtOperationTime(startTime);
             StepVerifier.create(documentChangeStreamPublisher, 2)
             //then
+                    .expectNextCount(2)
                     .thenAwait(Duration.ofMillis(300))
-                    .then(() -> collectionHelper.insertDocuments(WriteConcern.MAJORITY,
-                            BsonDocument.parse("{x: 1}"),
-                            BsonDocument.parse("{x: 2}"),
-                            BsonDocument.parse("{x: 3}"),
-                            BsonDocument.parse("{x: 4}")))
+                    .thenRequest(2)
                     .expectNextCount(2)
                     .thenAwait(Duration.ofMillis(300))
                     .thenRequest(2)
@@ -380,7 +387,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .expectError(MongoOperationTimeoutException.class)
                     .verify();
 
-            sleep(200); //let publisher invalidate the cursor after the error.
+            sleep(500); //let publisher invalidate the cursor after the error.
 
             List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents();
             List<String> expectedCommandNames = Arrays.asList("aggregate", "getMore", "getMore", "getMore", "killCursors");
@@ -422,22 +429,27 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     + "    }"
                     + "}");
 
+
+            collectionHelper.insertDocuments(WriteConcern.MAJORITY,
+                    BsonDocument.parse("{x: 1}"),
+                    BsonDocument.parse("{x: 2}"),
+
+                    BsonDocument.parse("{x: 3}"),
+                    BsonDocument.parse("{x: 4}"));
+
             //when
             ChangeStreamPublisher<Document> documentChangeStreamPublisher = collection.watch()
                     .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                     .startAtOperationTime(startTime);
             StepVerifier.create(documentChangeStreamPublisher, 2)
             //then
-                    .thenAwait(Duration.ofMillis(300))
-                    .then(() -> collectionHelper.insertDocuments(WriteConcern.MAJORITY,
-                            BsonDocument.parse("{x: 1}"),
-                            BsonDocument.parse("{x: 2}")))
-                    .thenAwait(Duration.ofMillis(300))
+                    .expectNextCount(2)
+                    .thenAwait(Duration.ofMillis(600))
                     .thenRequest(2)
                     .thenCancel()
                     .verify();
 
-            sleep(200); //let publisher invalidate the cursor after the error.
+            sleep(500); //let publisher invalidate the cursor after the error.
 
             List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents();
             List<String> expectedCommandNames = Arrays.asList("aggregate", "getMore", "killCursors");
