@@ -64,11 +64,11 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
-public class SyncMongoCollection<T> implements MongoCollection<T> {
+class SyncMongoCollection<T> implements MongoCollection<T> {
 
     private final com.mongodb.reactivestreams.client.MongoCollection<T> wrapped;
 
-    public  SyncMongoCollection(final com.mongodb.reactivestreams.client.MongoCollection<T> wrapped) {
+    SyncMongoCollection(final com.mongodb.reactivestreams.client.MongoCollection<T> wrapped) {
         this.wrapped = wrapped;
     }
 
