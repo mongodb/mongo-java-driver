@@ -39,7 +39,6 @@ public class UnifiedRetryableWritesTest extends UnifiedSyncTest {
     }
 
     public static void customSkips(final String description) {
-        // Remove all this as part of JAVA-5125
         if (isSharded() && serverVersionLessThan(5, 0)) {
             assumeFalse(description.contains("succeeds after WriteConcernError"));
             assumeFalse(description.contains("succeeds after retryable writeConcernError"));
