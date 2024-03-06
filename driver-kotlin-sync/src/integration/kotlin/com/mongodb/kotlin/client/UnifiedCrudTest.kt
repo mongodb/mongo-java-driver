@@ -16,11 +16,11 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.unified.UnifiedCrudTest.customSkips
+import java.io.IOException
+import java.net.URISyntaxException
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.junit.runners.Parameterized
-import java.io.IOException
-import java.net.URISyntaxException
 
 internal class UnifiedCrudTest(
     fileDescription: String?,
