@@ -260,13 +260,15 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: bash
+        include_expansions_in_env:
+          - JAVA_VERSION
+          - SERVERLESS_URI
+          - SERVERLESS_ATLAS_USER
+          - SERVERLESS_ATLAS_PASSWORD
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION="${JAVA_VERSION}" \
-          SERVERLESS_URI="${SERVERLESS_URI}" \
-          SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}" \
-          SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}" \
-            .evergreen/run-serverless-tests.sh
+          .evergreen/run-serverless-tests.sh
 
   "run reactive streams tck tests":
     - command: shell.exec
