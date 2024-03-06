@@ -24,14 +24,14 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.client.unified.UnifiedRetryableReadsTest.customSkips;
 import static org.junit.Assume.assumeFalse;
 
 public class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
-    public UnifiedRetryableReadsTest(@SuppressWarnings("unused") final String fileDescription,
-                                      @SuppressWarnings("unused") final String testDescription,
-                                      final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
-                                      final BsonArray initialData, final BsonDocument definition) {
+    public UnifiedRetryableReadsTest(final String fileDescription, final String testDescription, final String schemaVersion,
+            final BsonArray runOnRequirements, final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+        customSkips(fileDescription, testDescription);
         assumeFalse(testDescription.contains("createChangeStream succeeds after retryable handshake"));
     }
 

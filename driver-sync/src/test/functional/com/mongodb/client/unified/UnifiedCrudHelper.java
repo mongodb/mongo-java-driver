@@ -477,6 +477,38 @@ final class UnifiedCrudHelper {
                 new BsonArray(iterable.into(new ArrayList<>())));
     }
 
+    @SuppressWarnings("deprecation")
+    OperationResult executeMapReduce(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
+
+        String mapFunction = arguments.get("map").asJavaScript().getCode();
+        String reduceFunction = arguments.get("reduce").asJavaScript().getCode();
+        com.mongodb.client.MapReduceIterable<BsonDocument> iterable = session == null
+                ? collection.mapReduce(mapFunction, reduceFunction)
+                : collection.mapReduce(session, mapFunction, reduceFunction);
+
+        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+            switch (cur.getKey()) {
+                case "map":
+                case "reduce":
+                case "session":
+                    break;
+                case "out":
+                    if (!cur.getValue().asDocument().equals(new BsonDocument("inline", new BsonInt32(1)))) {
+                        throw new UnsupportedOperationException("Unsupported value for out argument: " + cur.getValue());
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+            }
+        }
+
+        return resultOf(() ->
+                new BsonArray(iterable.into(new ArrayList<>())));
+    }
+
     OperationResult executeFindOneAndUpdate(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
