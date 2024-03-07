@@ -164,6 +164,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Executes command in the context of the current database using the primary server.
    *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
+   *
    * @param command  the command to be run
    * @tparam TResult the type of the class to use instead of [[Document]].
    * @return a Observable containing the command result
@@ -175,6 +178,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
 
   /**
    * Executes command in the context of the current database.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param command        the command to be run
    * @param readPreference the [[ReadPreference]] to be used when executing the command
@@ -189,6 +195,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
 
   /**
    * Executes command in the context of the current database using the primary server.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param clientSession the client session with which to associate this operation
    * @param command  the command to be run
@@ -205,6 +214,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
 
   /**
    * Executes command in the context of the current database.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param command        the command to be run
    * @param readPreference the [[ReadPreference]] to be used when executing the command
