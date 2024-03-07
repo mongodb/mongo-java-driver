@@ -24,13 +24,14 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -59,9 +60,6 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateC
 class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private final MongoNamespace namespace;
-    /**
-     * maxAwaitTimeMS
-     */
     private final long maxTimeMS;
     private final Decoder<T> decoder;
     @Nullable
@@ -261,9 +259,16 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return commandCursorResult;
     }
 
-    void setCloseImmediately(final boolean closeImmediately) {
-        this.resourceManager.setCloseImmediately(closeImmediately);
+    /**
+     * Configures the cursor's behavior to close without resetting its timeout. If {@code true}, the cursor attempts to close immediately
+     * without resetting its {@link TimeoutContext#getTimeout()} if present. This is useful when managing the cursor's close behavior externally.
+     *
+     * @param closeWithoutTimeoutReset
+     */
+    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
+        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
     }
+
     @ThreadSafe
     private static final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
 

@@ -39,6 +39,21 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
+/**
+ * A change stream cursor that wraps {@link CommandBatchCursor} with automatic resumption capabilities in the event
+ * of timeouts or transient errors.
+ * <p>
+ * Upon encountering a resumable error during {@code hasNext()}, {@code next()}, or {@code tryNext()} calls, the {@link ChangeStreamBatchCursor}
+ * attempts to establish a new change stream on the server.
+ * </p>
+ * If an error occurring during any of these method calls is not resumable, it is immediately propagated to the caller, and the {@link ChangeStreamBatchCursor}
+ * is closed and invalidated on the server. Server errors that occur during this invalidation process are not propagated to the caller.
+ * <p>
+ * A {@link MongoOperationTimeoutException} does not invalidate the {@link ChangeStreamBatchCursor}, but is immediately propagated to the caller.
+ * Subsequent method call will attempt to resume operation by establishing a new change stream on the server, without doing {@code getMore}
+ * request first.
+ * </p>
+ */
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final ReadBinding binding;
     private final ChangeStreamOperation<T> changeStreamOperation;
@@ -50,10 +65,10 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     /**
      * This flag is used to manage change stream resumption logic after a timeout error.
-     * Indicates whether the last {@code next} call resulted in a {@link MongoOperationTimeoutException}. If {@code true},
-     * indicates a timeout occurred, prompting an attempt to resume the change stream on the next call.
+     * Indicates whether the last {@code hasNext()}, {@code next()}, or {@code tryNext()} call resulted in a {@link MongoOperationTimeoutException}.
+     * If {@code true}, indicates a timeout occurred, prompting an attempt to resume the change stream on the subsequent call.
      */
-    private boolean lastOpTimeoutStatus;
+    private boolean lastOperationTimedOut;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final CommandBatchCursor<RawBsonDocument> wrapped,
@@ -67,7 +82,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
         closed = new AtomicBoolean();
-        lastOpTimeoutStatus = false;
+        lastOperationTimedOut = false;
     }
 
     CommandBatchCursor<RawBsonDocument> getWrapped() {
@@ -198,26 +213,29 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     <R> R resumeableOperation(final Function<AggregateResponseBatchCursor<RawBsonDocument>, R> function) {
         resetTimeout();
         try {
-            resumeAfterTimeout();
             R result = execute(function);
-            lastOpTimeoutStatus = false;
+            lastOperationTimedOut = false;
             return result;
         } catch (Throwable exception) {
-            lastOpTimeoutStatus = isTimeoutException(exception);
+            lastOperationTimedOut = isTimeoutException(exception);
             throw exception;
         }
     }
 
     private <R> R execute(final Function<AggregateResponseBatchCursor<RawBsonDocument>, R> function) {
+        boolean shouldBeResumed = hasPreviousNextTimedOut();
         while (true) {
+            if (shouldBeResumed) {
+                resumeChangeStream();
+            }
             try {
                 return function.apply(wrapped);
             } catch (Throwable t) {
                 if (!isResumableError(t, maxWireVersion)) {
                     throw MongoException.fromThrowableNonNull(t);
                 }
+                shouldBeResumed = true;
             }
-            resumeChangeStream();
         }
     }
 
@@ -232,10 +250,8 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         binding.release(); // release the new change stream batch cursor's reference to the binding
     }
 
-    private void resumeAfterTimeout() {
-        if (lastOpTimeoutStatus && !closed.get()) {
-            resumeChangeStream();
-        }
+    private boolean hasPreviousNextTimedOut() {
+        return lastOperationTimedOut && !closed.get();
     }
 
     private void resetTimeout() {

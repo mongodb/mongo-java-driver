@@ -30,13 +30,9 @@ import org.bson.BsonInt32;
 import org.bson.Document;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.DocumentCodec;
-import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,8 +57,6 @@ import static org.mockito.Mockito.when;
 final class ChangeStreamBatchCursorTest {
 
     private static final List<RawBsonDocument> RESULT_FROM_NEW_CURSOR = new ArrayList<>();
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
     private final int maxWireVersion = ServerVersionHelper.SIX_DOT_ZERO_WIRE_VERSION;
     private ServerDescription serverDescription;
     private TimeoutContext timeoutContext;
@@ -78,7 +72,7 @@ final class ChangeStreamBatchCursorTest {
 
     @Test
     @DisplayName("should return result on next")
-    public void shouldReturnResultOnNext() {
+    void shouldReturnResultOnNext() {
         when(commandBatchCursor.next()).thenReturn(RESULT_FROM_NEW_CURSOR);
         ChangeStreamBatchCursor<Document> cursor = createChangeStreamCursor();
 

@@ -212,8 +212,8 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         return commandCursorResult;
     }
 
-    void setCloseImmediately(final boolean closeImmediately) {
-        this.resourceManager.setCloseImmediately(closeImmediately);
+    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
+        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
     }
 
     @ThreadSafe

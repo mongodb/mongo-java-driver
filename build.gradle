@@ -257,8 +257,8 @@ configure(javaCodeCheckedProjects) {
         testImplementation platform('org.spockframework:spock-bom:2.1-groovy-3.0')
         testImplementation 'org.spockframework:spock-core'
         testImplementation 'org.spockframework:spock-junit4'
-        testImplementation("org.mockito:mockito-core:4.0.0")
-        testImplementation("org.mockito:mockito-inline:4.0.0")
+        testImplementation 'org.mockito:mockito-core:4.0.0'
+        testImplementation 'org.mockito:mockito-inline:4.0.0'
         testImplementation 'cglib:cglib-nodep:2.2.2'
         testImplementation 'org.objenesis:objenesis:1.3'
         testImplementation 'org.hamcrest:hamcrest-all:1.3'
