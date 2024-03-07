@@ -22,6 +22,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.logging.LogMessage;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -45,7 +46,8 @@ abstract class ContextElement {
         return new CompletedOperationContextElement(operation, result, index);
     }
 
-    static ContextElement ofValueMatcher(final BsonValue expected, final BsonValue actual, final String key, final int arrayPosition) {
+    static ContextElement ofValueMatcher(final BsonValue expected, @Nullable final BsonValue actual, final String key,
+            final int arrayPosition) {
         return new ValueMatchingContextElement(expected, actual, key, arrayPosition);
     }
 
@@ -256,7 +258,7 @@ abstract class ContextElement {
         private final String key;
         private final int arrayPosition;
 
-        ValueMatchingContextElement(final BsonValue expected, final BsonValue actual, final String key, final int arrayPosition) {
+        ValueMatchingContextElement(final BsonValue expected, @Nullable final BsonValue actual, final String key, final int arrayPosition) {
             this.expected = expected;
             this.actual = actual;
             this.key = key;
