@@ -29,7 +29,6 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 final class ValueMatcher {
@@ -57,17 +56,7 @@ final class ValueMatcher {
                 BsonDocument expectedDocument = initialExpected.asDocument();
 
                 switch (expectedDocument.getFirstKey()) {
-                    case "$$exists":
-                        if (expectedDocument.getBoolean("$$exists").getValue()) {
-                            assertNotNull(context.getMessage("Actual document must contain key " + keyContext), actual);
-                        } else {
-                            assertNull(context.getMessage("Actual document must not contain key " + keyContext), actual);
-                        }
-                        return;
                     case "$$unsetOrMatches":
-                        if (actual == null) {
-                            return;
-                        }
                         expected = expectedDocument.get("$$unsetOrMatches");
                         break;
                     case "$$type":
