@@ -201,7 +201,7 @@ final class LoadBalancedCluster implements Cluster {
     @Override
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
-        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computedServerSelectionTimeout();
+        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         waitForSrv(computedServerSelectionTimeout);
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
@@ -238,7 +238,7 @@ final class LoadBalancedCluster implements Cluster {
             callback.onResult(null, createShutdownException());
             return;
         }
-        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computedServerSelectionTimeout();
+        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(operationContext.getId(), serverSelector,
                 computedServerSelectionTimeout, callback);
         if (initializationCompleted) {

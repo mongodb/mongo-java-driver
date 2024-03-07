@@ -40,6 +40,8 @@ public class TimeoutContext {
 
     @Nullable
     private Timeout timeout;
+    @Nullable
+    private Timeout computedServerSelectionTimeout;
     private long minRoundTripTimeMS = 0;
 
     public static MongoOperationTimeoutException createMongoTimeoutException() {
@@ -191,6 +193,9 @@ public class TimeoutContext {
         return timeoutOrAlternative(0);
     }
 
+    public int getConnectTimeoutMs() {
+        return (int) calculateMin(getTimeoutSettings().getConnectTimeoutMS());
+    }
 
     public void resetTimeout() {
         assertNotNull(timeout);
@@ -198,7 +203,7 @@ public class TimeoutContext {
     }
 
     /**
-     * Resest the timeout if this timeout context is being used by pool maintenance
+     * Resets the timeout if this timeout context is being used by pool maintenance
      */
     public void resetMaintenanceTimeout() {
         if (isMaintenanceContext && timeout != null && !timeout.isInfinite()) {
@@ -265,10 +270,43 @@ public class TimeoutContext {
         return null;
     }
 
-    public Timeout computedServerSelectionTimeout() {
-        long ms = getTimeoutSettings().getServerSelectionTimeoutMS();
-        Timeout serverSelectionTimeout = StartTime.now().timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
-        return serverSelectionTimeout.orEarlier(timeout);
+    /**
+     * Returns the computed server selection timeout
+     *
+     * <p>Caches the computed server selection timeout if:
+     * <ul>
+     *     <li>not in a maintenance context</li>
+     *     <li>there is a timeoutMS, so to keep the same legacy behavior.</li>
+     *     <li>the server selection timeout is less than the remaining overall timeout.</li>
+     * </ul>
+     *
+     * @return the timeout context
+     */
+    public Timeout computeServerSelectionTimeout() {
+        Timeout serverSelectionTimeout = StartTime.now()
+                .timeoutAfterOrInfiniteIfNegative(getTimeoutSettings().getServerSelectionTimeoutMS(), MILLISECONDS);
+
+
+        if (isMaintenanceContext || !hasTimeoutMS()) {
+            return serverSelectionTimeout;
+        }
+
+        if (serverSelectionTimeout.orEarlier(timeout) == timeout) {
+            return timeout;
+        }
+
+        computedServerSelectionTimeout = serverSelectionTimeout;
+        return computedServerSelectionTimeout;
+    }
+
+    /**
+     * Returns the timeout context to use for the handshake process
+     *
+     * @return a new timeout context with the cached computed server selection timeout if available or this
+     */
+    public TimeoutContext withComputedServerSelectionTimeoutContext() {
+        return computedServerSelectionTimeout == null
+                ? this : new TimeoutContext(false, timeoutSettings, computedServerSelectionTimeout);
     }
 
     public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
@@ -276,12 +314,9 @@ public class TimeoutContext {
         return checkoutStart.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
-    public int getConnectTimeoutMs() {
-        return (int) getTimeoutSettings().getConnectTimeoutMS();
-    }
-
     @Nullable
     public Timeout getTimeout() {
         return timeout;
     }
+
 }
