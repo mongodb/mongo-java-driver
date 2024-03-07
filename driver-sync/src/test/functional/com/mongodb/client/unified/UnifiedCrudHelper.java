@@ -1706,6 +1706,9 @@ final class UnifiedCrudHelper {
                 case "comment":
                     options.comment(cur.getValue());
                     break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }

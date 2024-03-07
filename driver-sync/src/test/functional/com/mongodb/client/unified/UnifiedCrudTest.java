@@ -38,9 +38,11 @@ public class UnifiedCrudTest extends UnifiedSyncTest {
     }
 
     public static void customSkips(final String fileDescription, final String testDescription) {
-        assumeFalse(fileDescription.equals("count"));
-        assumeFalse(fileDescription.equals("count-empty"));
-        assumeFalse(fileDescription.equals("count-collation"));
+        assumeFalse(testDescription.equals("Deprecated count with empty collection"));
+        assumeFalse(testDescription.equals("Deprecated count with collation"));
+        assumeFalse(testDescription.equals("Deprecated count without a filter"));
+        assumeFalse(testDescription.equals("Deprecated count with a filter"));
+        assumeFalse(testDescription.equals("Deprecated count with skip and limit"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint string on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint document on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint string on 4.4+ server"));
