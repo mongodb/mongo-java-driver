@@ -45,6 +45,8 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
@@ -176,6 +178,25 @@ final class UnifiedCrudHelper {
                         .map(entry -> new Tag(entry.getKey(), entry.getValue().asString().getValue()))
                         .collect(toList())))
                 .collect(toList());
+    }
+
+    private static Collation asCollation(final BsonDocument collationDocument) {
+        Collation.Builder builder = Collation.builder();
+
+        for (Map.Entry<String, BsonValue> entry: collationDocument.entrySet()) {
+            switch (entry.getKey()) {
+                case "locale":
+                    builder.locale(entry.getValue().asString().getValue());
+                    break;
+                case "strength":
+                    builder.collationStrength(CollationStrength.fromInt(entry.getValue().asNumber().intValue()));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported argument: " + entry.getKey());
+            }
+        }
+
+        return builder.build();
     }
 
     private OperationResult resultOf(final Supplier<BsonValue> operationResult) {
@@ -395,6 +416,9 @@ final class UnifiedCrudHelper {
                         iterable.hint(cur.getValue().asDocument());
                     }
                     break;
+                case "collation":
+                    iterable.collation(asCollation(cur.getValue().asDocument()));
+                    break;
                 case "comment":
                     iterable.comment(cur.getValue());
                     break;
@@ -441,6 +465,9 @@ final class UnifiedCrudHelper {
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
                     break;
+                case "collation":
+                    iterable.collation(asCollation(cur.getValue().asDocument()));
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -483,6 +510,9 @@ final class UnifiedCrudHelper {
                             throw new UnsupportedOperationException("Can't happen");
                     }
                     break;
+                case "projection":
+                    options.projection(cur.getValue().asDocument());
+                    break;
                 case "hint":
                     if (cur.getValue().isString()) {
                         options.hintString(cur.getValue().asString().getValue());
@@ -495,6 +525,12 @@ final class UnifiedCrudHelper {
                     break;
                 case "let":
                     options.let(cur.getValue().asDocument());
+                    break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
+                    break;
+                case "arrayFilters":
+                    options.arrayFilters(cur.getValue().asArray().stream().map(BsonValue::asDocument).collect(toList()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -549,6 +585,9 @@ final class UnifiedCrudHelper {
                             throw new UnsupportedOperationException("Can't happen");
                     }
                     break;
+                case "projection":
+                    options.projection(cur.getValue().asDocument());
+                    break;
                 case "hint":
                     if (cur.getValue().isString()) {
                         options.hintString(cur.getValue().asString().getValue());
@@ -561,6 +600,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "let":
                     options.let(cur.getValue().asDocument());
+                    break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -588,6 +630,9 @@ final class UnifiedCrudHelper {
                 case "filter":
                 case "session":
                     break;
+                case "projection":
+                    options.projection(cur.getValue().asDocument());
+                    break;
                 case "sort":
                     options.sort(cur.getValue().asDocument());
                     break;
@@ -597,6 +642,9 @@ final class UnifiedCrudHelper {
                     } else {
                         options.hint(cur.getValue().asDocument());
                     }
+                    break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
                     break;
                 case "comment":
                     options.comment(cur.getValue());
@@ -655,6 +703,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "maxTimeMS":
                     iterable.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
+                    break;
+                case "collation":
+                    iterable.collation(asCollation(cur.getValue().asDocument()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -975,6 +1026,9 @@ final class UnifiedCrudHelper {
                 case "let":
                     options.let(cur.getValue().asDocument());
                     break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -1010,6 +1064,9 @@ final class UnifiedCrudHelper {
                 case "let":
                     options.let(cur.getValue().asDocument());
                     break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -1040,6 +1097,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "let":
                     options.let(cur.getValue().asDocument());
+                    break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -1637,8 +1697,17 @@ final class UnifiedCrudHelper {
                 case "filter":
                 case "session":
                     break;
+                case "skip":
+                    options.skip(cur.getValue().asNumber().intValue());
+                    break;
+                case "limit":
+                    options.limit(cur.getValue().asNumber().intValue());
+                    break;
                 case "comment":
                     options.comment(cur.getValue());
+                    break;
+                case "collation":
+                    options.collation(asCollation(cur.getValue().asDocument()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
