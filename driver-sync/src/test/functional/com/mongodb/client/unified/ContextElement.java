@@ -273,9 +273,9 @@ abstract class ContextElement {
                 builder.append("   Array position: ").append(arrayPosition).append("\n");
             }
             builder.append("   Expected value:\n      ");
-            builder.append(expected.toString()).append("\n");
+            builder.append(expected).append("\n");
             builder.append("   Actual value:\n      ");
-            builder.append(actual.toString()).append("\n");
+            builder.append(actual).append("\n");
             return builder.toString();
         }
     }

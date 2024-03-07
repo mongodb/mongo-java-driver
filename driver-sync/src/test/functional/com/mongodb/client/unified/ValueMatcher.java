@@ -18,7 +18,6 @@ package com.mongodb.client.unified;
 
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonNull;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 
@@ -29,6 +28,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 final class ValueMatcher {
@@ -44,10 +44,9 @@ final class ValueMatcher {
         assertValuesMatch(expected, actual, null, -1);
     }
 
-    private void assertValuesMatch(final BsonValue initialExpected, @Nullable final BsonValue initialActual,
+    private void assertValuesMatch(final BsonValue initialExpected, @Nullable final BsonValue actual,
                                    @Nullable final String keyContext, final int arrayPositionContext) {
         BsonValue expected = initialExpected;
-        BsonValue actual = initialActual == null ? BsonNull.VALUE : initialActual;
         context.push(ContextElement.ofValueMatcher(expected, actual, keyContext, arrayPositionContext));
 
         try {
@@ -56,7 +55,17 @@ final class ValueMatcher {
                 BsonDocument expectedDocument = initialExpected.asDocument();
 
                 switch (expectedDocument.getFirstKey()) {
+                    case "$$exists":
+                        if (expectedDocument.getBoolean("$$exists").getValue()) {
+                            assertNotNull(context.getMessage("Actual document must contain key " + keyContext), actual);
+                        } else {
+                            assertNull(context.getMessage("Actual document must not contain key " + keyContext), actual);
+                        }
+                        return;
                     case "$$unsetOrMatches":
+                        if (actual == null) {
+                            return;
+                        }
                         expected = expectedDocument.get("$$unsetOrMatches");
                         break;
                     case "$$type":
@@ -131,6 +140,8 @@ final class ValueMatcher {
                 assertTrue(context.getMessage("Expected a number"), actual.isNumber());
                 assertEquals(context.getMessage("Expected BSON numbers to be equal"),
                         expected.asNumber().doubleValue(), actual.asNumber().doubleValue(), 0.0);
+            } else if (expected.isNull()) {
+                assertTrue(context.getMessage("Expected BSON null"), actual == null || actual.isNull());
             } else {
                 assertEquals(context.getMessage("Expected BSON types to be equal"), expected.getBsonType(), actual.getBsonType());
                 assertEquals(context.getMessage("Expected BSON values to be equal"), expected, actual);
