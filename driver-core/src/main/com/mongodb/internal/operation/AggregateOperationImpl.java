@@ -153,7 +153,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     /**
      * When {@link TimeoutContext#hasTimeoutMS()} then {@link TimeoutSettings#getMaxAwaitTimeMS()} usage in {@code getMore} commands
      * depends on the type of cursor. For {@link CursorType#TailableAwait} it is used, for others it is not.
-     * {@link CursorType#TailableAwait} is used mainly used for change streams in {@link AggregateOperationImpl}.
+     * {@link CursorType#TailableAwait} is used mainly for change streams in {@link AggregateOperationImpl}.
      *
      * @param cursorType
      * @return this
