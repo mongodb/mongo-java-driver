@@ -467,7 +467,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @Tag("setsFailPoint")
     @DisplayName("9. End Session 1 / 2")
     @Test
-    @SuppressWarnings("try")
     public void test9EndSessionClientTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
@@ -502,7 +501,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @Tag("setsFailPoint")
     @DisplayName("9. End Session 2 / 2")
     @Test
-    @SuppressWarnings("try")
     public void test9EndSessionSessionTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
@@ -533,6 +531,72 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
 
         assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("abortTransaction"));
+    }
+
+    @Tag("setsFailPoint")
+    @DisplayName("9. End Session - Custom Test: Each operation has its own timeout with commit")
+    @Test
+    public void test9EndSessionCustomTesEachOperationHasItsOwnTimeoutWithCommit() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"insertOne\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 100
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                session.startTransaction();
+                sleep(100);
+                collection.insertOne(session, new Document("x", 1));
+                sleep(100);
+
+                assertDoesNotThrow(session::commitTransaction);
+            }
+        }
+        assertDoesNotThrow(() -> commandListener.getCommandSucceededEvent("commitTransaction"));
+    }
+
+    @Tag("setsFailPoint")
+    @DisplayName("9. End Session - Custom Test: Each operation has its own timeout with abort")
+    @Test
+    public void test9EndSessionCustomTesEachOperationHasItsOwnTimeoutWithAbort() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"insertOne\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 100
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                session.startTransaction();
+                sleep(100);
+                collection.insertOne(session, new Document("x", 1));
+                sleep(100);
+
+                assertDoesNotThrow(session::close);
+            }
+        }
+        assertDoesNotThrow(() -> commandListener.getCommandSucceededEvent("abortTransaction"));
     }
 
     @Tag("setsFailPoint")
@@ -568,6 +632,42 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("insert")).count());
             assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("abortTransaction")).count());
         }
+    }
+
+    @Tag("setsFailPoint")
+    @DisplayName("10. End Session - Custom Test: with transaction uses a single timeout")
+    @Test
+    public void test10CustomTestWithTransactionUsesASingleTimeout() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+        assumeFalse(isAsync());
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"insertOne\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 100
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                assertThrows(MongoOperationTimeoutException.class,
+                        () -> session.withTransaction(() -> {
+                            sleep(100);
+                            collection.insertOne(session, new Document("x", 1));
+                            sleep(100);
+                            return true;
+                        })
+                );
+            }
+        }
+        assertDoesNotThrow(() -> commandListener.getCommandSucceededEvent("commitTransaction"));
     }
 
     private static Stream<Arguments> test8ServerSelectionArguments() {

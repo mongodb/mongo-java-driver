@@ -145,7 +145,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             }
             boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
             commitInProgress = true;
-
+            resetTimeout();
             return executor
                     .execute(
                             new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()), alreadyCommitted)
@@ -179,6 +179,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 throw new MongoInternalException("Invariant violated. Transaction options read concern can not be null");
             }
 
+            resetTimeout();
             return executor
                     .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
                                     .recoveryToken(getRecoveryToken()), readConcern, this)

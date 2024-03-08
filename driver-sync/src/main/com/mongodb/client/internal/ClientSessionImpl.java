@@ -133,33 +133,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public void commitTransaction() {
-        if (transactionState == TransactionState.ABORTED) {
-            throw new IllegalStateException("Cannot call commitTransaction after calling abortTransaction");
-        }
-        if (transactionState == TransactionState.NONE) {
-            throw new IllegalStateException("There is no transaction started");
-        }
-
-        try {
-            if (messageSentInCurrentTransaction) {
-                ReadConcern readConcern = transactionOptions.getReadConcern();
-                if (readConcern == null) {
-                    throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
-                }
-                commitInProgress = true;
-                delegate.getOperationExecutor()
-                        .execute(new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()),
-                                transactionState == TransactionState.COMMITTED)
-                                .recoveryToken(getRecoveryToken()), readConcern, this);
-                setTimeoutContext(null);
-            }
-        } catch (MongoException e) {
-            clearTransactionContextOnError(e);
-            throw e;
-        } finally {
-            transactionState = TransactionState.COMMITTED;
-            commitInProgress = false;
-        }
+        commitTransaction(true);
     }
 
     @Override
@@ -179,6 +153,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
+                resetTimeout();
                 delegate.getOperationExecutor()
                         .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
                         .recoveryToken(getRecoveryToken()), readConcern, this);
@@ -188,6 +163,40 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         } finally {
             clearTransactionContext();
             cleanupTransaction(TransactionState.ABORTED);
+        }
+    }
+
+
+    private void commitTransaction(final boolean resetTimeout) {
+        if (transactionState == TransactionState.ABORTED) {
+            throw new IllegalStateException("Cannot call commitTransaction after calling abortTransaction");
+        }
+        if (transactionState == TransactionState.NONE) {
+            throw new IllegalStateException("There is no transaction started");
+        }
+
+        try {
+            if (messageSentInCurrentTransaction) {
+                ReadConcern readConcern = transactionOptions.getReadConcern();
+                if (readConcern == null) {
+                    throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
+                }
+                commitInProgress = true;
+                if (resetTimeout) {
+                    resetTimeout();
+                }
+                delegate.getOperationExecutor()
+                        .execute(new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()),
+                                transactionState == TransactionState.COMMITTED)
+                                .recoveryToken(getRecoveryToken()), readConcern, this);
+            }
+        } catch (MongoException e) {
+            clearTransactionContextOnError(e);
+            throw e;
+        } finally {
+            transactionState = TransactionState.COMMITTED;
+            commitInProgress = false;
+            setTimeoutContext(null);
         }
     }
 
@@ -214,7 +223,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 retVal = transactionBody.execute();
             } catch (Throwable e) {
                 if (transactionState == TransactionState.IN) {
-                    setTimeoutContext(createTimeoutContext());
                     abortTransaction();
                 }
                 if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
@@ -228,7 +236,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             if (transactionState == TransactionState.IN) {
                 while (true) {
                     try {
-                        commitTransaction();
+                        commitTransaction(false);
                         break;
                     } catch (MongoException e) {
                         clearTransactionContextOnError(e);

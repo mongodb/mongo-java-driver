@@ -210,6 +210,12 @@ public class BaseClientSessionImpl implements ClientSession {
         this.timeoutContext = timeoutContext;
     }
 
+    protected void resetTimeout() {
+        if (timeoutContext != null && timeoutContext.hasTimeoutMS()) {
+            timeoutContext.resetTimeout();
+        }
+    }
+
     protected TimeoutSettings getTimeoutSettings(final TransactionOptions transactionOptions, final TimeoutSettings timeoutSettings) {
         Long transactionTimeoutMS = transactionOptions.getTimeout(MILLISECONDS);
         Long defaultTimeoutMS = getOptions().getDefaultTimeout(MILLISECONDS);
