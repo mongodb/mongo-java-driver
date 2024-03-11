@@ -381,7 +381,7 @@ final class UnifiedCrudHelper {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
-        BsonDocument filter = arguments.getDocument("filter", new BsonDocument());
+        BsonDocument filter = arguments.getDocument("filter");
         FindIterable<BsonDocument> iterable = session == null ? collection.find(filter) : collection.find(session, filter);
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
