@@ -68,7 +68,6 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
-import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
@@ -170,16 +169,14 @@ public abstract class AbstractUnifiedTest {
 
         killAllSessions();
 
-        if (!isDataLakeTest()) {
-            try {
+        try {
+            collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+        } catch (MongoCommandException e) {
+            // Older sharded clusters sometimes reply with this error.  Work around it by retrying once.
+            if (e.getErrorCode() == 11601 && isSharded() && serverVersionLessThan(4, 2)) {
                 collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
-            } catch (MongoCommandException e) {
-                // Older sharded clusters sometimes reply with this error.  Work around it by retrying once.
-                if (e.getErrorCode() == 11601 && isSharded() && serverVersionLessThan(4, 2)) {
-                    collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
-                } else {
-                    throw e;
-                }
+            } else {
+                throw e;
             }
         }
 
