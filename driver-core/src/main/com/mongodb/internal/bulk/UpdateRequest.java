@@ -20,7 +20,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
-import org.bson.conversions.Bson;
 
 import java.util.List;
 
@@ -39,7 +38,7 @@ public final class UpdateRequest extends WriteRequest {
     private boolean isUpsert = false;
     private Collation collation;
     private List<BsonDocument> arrayFilters;
-    @Nullable private Bson hint;
+    @Nullable private BsonDocument hint;
     @Nullable private String hintString;
 
     public UpdateRequest(final BsonDocument filter, @Nullable final BsonValue update, final Type updateType) {
@@ -111,11 +110,11 @@ public final class UpdateRequest extends WriteRequest {
     }
 
     @Nullable
-    public Bson getHint() {
+    public BsonDocument getHint() {
         return hint;
     }
 
-    public UpdateRequest hint(@Nullable final Bson hint) {
+    public UpdateRequest hint(@Nullable final BsonDocument hint) {
         this.hint = hint;
         return this;
     }

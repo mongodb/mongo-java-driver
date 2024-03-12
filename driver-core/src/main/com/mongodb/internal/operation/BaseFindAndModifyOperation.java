@@ -31,7 +31,6 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
@@ -62,7 +61,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     private BsonDocument sort;
     private long maxTimeMS;
     private Collation collation;
-    private Bson hint;
+    private BsonDocument hint;
     private String hintString;
     private BsonValue comment;
     private BsonDocument variables;
@@ -151,11 +150,11 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     }
 
     @Nullable
-    public Bson getHint() {
+    public BsonDocument getHint() {
         return hint;
     }
 
-    public BaseFindAndModifyOperation<T> hint(@Nullable final Bson hint) {
+    public BaseFindAndModifyOperation<T> hint(@Nullable final BsonDocument hint) {
         this.hint = hint;
         return this;
     }
@@ -216,7 +215,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
             if (getHint() != null || getHintString() != null) {
                 validateHintForFindAndModify(connectionDescription, getWriteConcern());
                 if (getHint() != null) {
-                    commandDocument.put("hint", getHint().toBsonDocument(BsonDocument.class, null));
+                    commandDocument.put("hint", getHint());
                 } else {
                     commandDocument.put("hint", new BsonString(getHintString()));
                 }
