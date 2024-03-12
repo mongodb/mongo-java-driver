@@ -246,8 +246,8 @@ public final class SplittablePayload {
                 }
                 if (update.getHint() != null) {
                     writer.writeName("hint");
-                    BsonDocument hint = assertNotNull(update.getHint()).toBsonDocument(BsonDocument.class, null);
-                    getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
+                    getCodec(assertNotNull(update.getHint())).encode(writer, assertNotNull(update.getHint()),
+                            EncoderContext.builder().build());
                 } else if (update.getHintString() != null) {
                     writer.writeString("hint", update.getHintString());
                 }
@@ -265,7 +265,7 @@ public final class SplittablePayload {
                 }
                 if (deleteRequest.getHint() != null) {
                     writer.writeName("hint");
-                    BsonDocument hint = assertNotNull(deleteRequest.getHint()).toBsonDocument(BsonDocument.class, null);
+                    BsonDocument hint = assertNotNull(deleteRequest.getHint());
                     getCodec(hint).encode(writer, hint, EncoderContext.builder().build());
                 } else if (deleteRequest.getHintString() != null) {
                     writer.writeString("hint", deleteRequest.getHintString());
