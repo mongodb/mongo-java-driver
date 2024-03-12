@@ -16,13 +16,16 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.session.ClientSession;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_COMMIT;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
@@ -113,9 +116,7 @@ final class TimeoutContextTest {
     @Test
     @DisplayName("All deprecated options set")
     void testAllDeprecatedOptionsSet() {
-        TimeoutContext timeoutContext =
-                new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME
-                        .withMaxCommitMS(999L));
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS);
 
         assertFalse(timeoutContext.hasTimeoutMS());
         assertEquals(101, timeoutContext.getMaxTimeMS());
@@ -226,6 +227,45 @@ final class TimeoutContextTest {
         assertTrue(supplier.get().minRoundTripTimeMS(10).getMaxTimeMS() <= 90);
         assertThrows(MongoOperationTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(101).getMaxTimeMS());
         assertThrows(MongoOperationTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(100).getMaxTimeMS());
+    }
+
+    @Test
+    @DisplayName("Test createTimeoutContext handles legacy settings")
+    void testCreateTimeoutContextLegacy() {
+        TimeoutContext sessionTimeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS);
+
+        ClientSession clientSession = Mockito.mock(ClientSession.class);
+        Mockito.when(clientSession.getTimeoutContext()).thenReturn(sessionTimeoutContext);
+
+        TimeoutContext actualTimeoutContext = TimeoutContext.createTimeoutContext(clientSession, timeoutContext.getTimeoutSettings());
+        assertEquals(timeoutContext, actualTimeoutContext);
+    }
+
+    @Test
+    @DisplayName("Test createTimeoutContext with timeout legacy settings")
+    void testCreateTimeoutContextWithTimeoutLegacy() {
+        TimeoutContext sessionTimeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT);
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS);
+
+        ClientSession clientSession = Mockito.mock(ClientSession.class);
+        Mockito.when(clientSession.getTimeoutContext()).thenReturn(sessionTimeoutContext);
+
+        TimeoutContext actualTimeoutContext = TimeoutContext.createTimeoutContext(clientSession, timeoutContext.getTimeoutSettings());
+        assertEquals(sessionTimeoutContext, actualTimeoutContext);
+    }
+
+    @Test
+    @DisplayName("Test createTimeoutContext with timeout")
+    void testCreateTimeoutContextWithTimeout() {
+        TimeoutContext sessionTimeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT);
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT.withMaxAwaitTimeMS(123));
+
+        ClientSession clientSession = Mockito.mock(ClientSession.class);
+        Mockito.when(clientSession.getTimeoutContext()).thenReturn(sessionTimeoutContext);
+
+        TimeoutContext actualTimeoutContext = TimeoutContext.createTimeoutContext(clientSession, timeoutContext.getTimeoutSettings());
+        assertEquals(sessionTimeoutContext, actualTimeoutContext);
     }
 
     private TimeoutContextTest() {

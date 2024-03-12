@@ -71,12 +71,19 @@ public class TimeoutSettings {
 
     public TimeoutSettings(final long serverSelectionTimeoutMS, final long connectTimeoutMS, final long readTimeoutMS,
             @Nullable final Long timeoutMS, final long maxWaitTimeMS) {
-        this(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, 0, 0, null, null, maxWaitTimeMS);
+        this(-1, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, 0, 0, null, null, maxWaitTimeMS);
     }
 
     TimeoutSettings(@Nullable final Long timeoutMS, final long serverSelectionTimeoutMS, final long connectTimeoutMS,
             final long readTimeoutMS, final long maxAwaitTimeMS, final long maxTimeMS, @Nullable final Long maxCommitTimeMS,
             @Nullable final Long wTimeoutMS, final long maxWaitTimeMS) {
+        this(timeoutMS != null ? NEXT_ID.incrementAndGet() : -1, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS,
+                maxAwaitTimeMS, maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
+    }
+
+    private TimeoutSettings(final long generationId, @Nullable final Long timeoutMS, final long serverSelectionTimeoutMS,
+            final long connectTimeoutMS, final long readTimeoutMS, final long maxAwaitTimeMS, final long maxTimeMS,
+            @Nullable final Long maxCommitTimeMS, @Nullable final Long wTimeoutMS, final long maxWaitTimeMS) {
 
         isTrueArgument("timeoutMS must be >= 0", timeoutMS == null || timeoutMS >= 0);
         isTrueArgument("maxAwaitTimeMS must be >= 0", maxAwaitTimeMS >= 0);
@@ -85,7 +92,7 @@ public class TimeoutSettings {
                 || timeoutMS > maxAwaitTimeMS);
         isTrueArgument("maxCommitTimeMS must be >= 0", maxCommitTimeMS == null || maxCommitTimeMS >= 0);
 
-        this.generationId = timeoutMS != null ? NEXT_ID.incrementAndGet() : -1;
+        this.generationId = generationId;
         this.serverSelectionTimeoutMS = serverSelectionTimeoutMS;
         this.connectTimeoutMS = connectTimeoutMS;
         this.timeoutMS = timeoutMS;
@@ -107,22 +114,22 @@ public class TimeoutSettings {
     }
 
     public TimeoutSettings withMaxTimeMS(final long maxTimeMS) {
-        return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+        return new TimeoutSettings(generationId, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
     public TimeoutSettings withMaxAwaitTimeMS(final long maxAwaitTimeMS) {
-        return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+        return new TimeoutSettings(generationId, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
     public TimeoutSettings withMaxTimeAndMaxAwaitTimeMS(final long maxTimeMS, final long maxAwaitTimeMS) {
-        return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+        return new TimeoutSettings(generationId, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
     public TimeoutSettings withMaxCommitMS(@Nullable final Long maxCommitTimeMS) {
-        return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+        return new TimeoutSettings(generationId, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
@@ -131,12 +138,12 @@ public class TimeoutSettings {
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
-    public TimeoutSettings withServerSelectionTimeoutMS(final long serverSelectionTimeoutMS) {
-        return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
+    public TimeoutSettings withReadTimeoutMS(final long readTimeoutMS) {
+        return new TimeoutSettings(generationId, timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }
 
-    public TimeoutSettings withReadTimeoutMS(final long readTimeoutMS) {
+    public TimeoutSettings withServerSelectionTimeoutMS(final long serverSelectionTimeoutMS) {
         return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }

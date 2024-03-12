@@ -135,6 +135,9 @@ public final class ClusterFixture {
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME = TIMEOUT_SETTINGS.withMaxAwaitTimeMS(101);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME =
             TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001);
+
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS =
+            TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001).withMaxCommitMS(999L);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_COMMIT = TIMEOUT_SETTINGS.withMaxCommitMS(999L);
 
     public static final String LEGACY_HELLO = "isMaster";

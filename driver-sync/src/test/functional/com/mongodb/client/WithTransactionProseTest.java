@@ -16,17 +16,24 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
+import com.mongodb.TransactionOptions;
 import com.mongodb.client.internal.ClientSessionClock;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -159,6 +166,39 @@ public class WithTransactionProseTest extends DatabaseTestCase {
             assertTrue(((MongoException) e).getErrorLabels().contains(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
+        }
+    }
+
+    //
+    // Ensure cannot override timeout in transaction
+    //
+    @Test
+    public void testTimeoutMS() {
+        try (ClientSession session = client.startSession(ClientSessionOptions.builder()
+                .defaultTransactionOptions(TransactionOptions.builder().timeout(TIMEOUT, TimeUnit.SECONDS).build())
+                .build())) {
+            assertThrows(MongoClientException.class, () -> session.withTransaction(() -> {
+                collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                collection.withTimeout(2, TimeUnit.MINUTES).find(session).first();
+                return -1;
+            }));
+        }
+    }
+
+    //
+    // Ensure legacy settings don't cause issues in sessions
+    //
+    @Test
+    public void testTimeoutMSAndLegacySettings() {
+        collection.drop();
+        try (ClientSession session = client.startSession(ClientSessionOptions.builder()
+                .defaultTransactionOptions(TransactionOptions.builder().timeout(TIMEOUT, TimeUnit.SECONDS).build())
+                .build())) {
+            Integer returnValueFromCallback = session.withTransaction(() -> {
+                collection.insertOne(session, Document.parse("{ _id : 1 }"));
+                return collection.find(session).maxAwaitTime(1, TimeUnit.MINUTES).first().get("_id", -1);
+            });
+            assertEquals(1, returnValueFromCallback);
         }
     }
 
