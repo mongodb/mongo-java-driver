@@ -27,7 +27,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
@@ -68,7 +67,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndDeleteOperation<T> hint(@Nullable final Bson hint) {
+    public FindAndDeleteOperation<T> hint(@Nullable final BsonDocument hint) {
         super.hint(hint);
         return this;
     }
