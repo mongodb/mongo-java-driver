@@ -275,8 +275,6 @@ private class BsonDocumentDecoder(
                 "Invalid key type for ${descriptor.serialName}. Expected STRING or ENUM but found: `${keyKind}`")
         }
 
-        System.err.println(descriptor.serialName)
-
         if (!isKey) {
             isKey = true
             val nextType = reader.readBsonType()
