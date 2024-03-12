@@ -48,16 +48,16 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     private static final int MAX_RETRY_TIME_LIMIT_MS = 120000;
 
-    private final MongoClientDelegate delegate;
+    private final OperationExecutor operationExecutor;
     private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
     private TransactionOptions transactionOptions;
 
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options,
-                      final MongoClientDelegate delegate) {
+                      final OperationExecutor operationExecutor) {
         super(serverSessionPool, originator, options);
-        this.delegate = delegate;
+        this.operationExecutor = operationExecutor;
     }
 
     @Override
@@ -146,7 +146,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 commitInProgress = true;
                 // TODO (CSOT) - JAVA-4067
                 // Long maxCommitTime = transactionOptions.getMaxCommitTime(MILLISECONDS);
-                delegate.getOperationExecutor().execute(
+                operationExecutor.execute(
                         new CommitTransactionOperation(
                                 // TODO (CSOT) - JAVA-4067
                                 assertNotNull(transactionOptions.getWriteConcern()),
@@ -182,7 +182,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 }
                 // TODO (CSOT) - JAVA-4067
                 // Long maxCommitTime = transactionOptions.getMaxCommitTime(MILLISECONDS);
-                delegate.getOperationExecutor().execute(new AbortTransactionOperation(
+                operationExecutor.execute(new AbortTransactionOperation(
                         // TODO (CSOT) - JAVA-4067
                         assertNotNull(transactionOptions.getWriteConcern()))
                         .recoveryToken(getRecoveryToken()), readConcern, this);

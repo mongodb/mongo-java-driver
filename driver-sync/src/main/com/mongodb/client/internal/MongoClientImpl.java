@@ -20,12 +20,14 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClientOperations;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
@@ -33,7 +35,6 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
@@ -49,8 +50,9 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.internal.Crypts.createCrypt;
@@ -69,7 +71,8 @@ public final class MongoClientImpl implements MongoClient {
 
     private final MongoClientSettings settings;
     private final MongoDriverInformation mongoDriverInformation;
-    private final MongoClientDelegate delegate;
+    private final MongoClientOperationsImpl delegate;
+    private final AtomicBoolean closed;
 
     public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
         this(createCluster(settings, mongoDriverInformation), mongoDriverInformation, settings, null);
@@ -85,116 +88,31 @@ public final class MongoClientImpl implements MongoClient {
             throw new IllegalArgumentException("The contextProvider must be an instance of "
                     + SynchronousContextProvider.class.getName() + " when using the synchronous driver");
         }
-        this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
-                withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()), this, operationExecutor,
-                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), settings.getServerApi(),
-                (SynchronousContextProvider) settings.getContextProvider(), TimeoutSettings.create(settings));
+
+        this.delegate = new MongoClientOperationsImpl(autoEncryptionSettings, cluster,
+                withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()),
+                (SynchronousContextProvider) settings.getContextProvider(),
+                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), this,
+                operationExecutor, settings.getReadConcern(), settings.getReadPreference(), settings.getRetryReads(),
+                settings.getRetryWrites(), settings.getServerApi(),
+                new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),
+                TimeoutSettings.create(settings), settings.getUuidRepresentation(), settings.getWriteConcern());
+        this.closed = new AtomicBoolean();
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
 
         LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 
     @Override
-    public MongoDatabase getDatabase(final String databaseName) {
-        return new MongoDatabaseImpl(databaseName, delegate.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
-                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(), settings.getUuidRepresentation(),
-                settings.getAutoEncryptionSettings(), delegate.getTimeoutSettings(), delegate.getOperationExecutor());
-    }
-
-    @Override
-    public MongoIterable<String> listDatabaseNames() {
-        return createListDatabaseNamesIterable(null);
-    }
-
-    @Override
-    public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
-        notNull("clientSession", clientSession);
-        return createListDatabaseNamesIterable(clientSession);
-    }
-
-    @Override
-    public ListDatabasesIterable<Document> listDatabases() {
-        return listDatabases(Document.class);
-    }
-
-    @Override
-    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
-        return createListDatabasesIterable(null, clazz);
-    }
-
-    @Override
-    public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
-        return listDatabases(clientSession, Document.class);
-    }
-
-    @Override
-    public <T> ListDatabasesIterable<T> listDatabases(final ClientSession clientSession, final Class<T> clazz) {
-        notNull("clientSession", clientSession);
-        return createListDatabasesIterable(clientSession, clazz);
-    }
-
-    @Override
-    public ClientSession startSession() {
-        return startSession(ClientSessionOptions
-                .builder()
-                .defaultTransactionOptions(TransactionOptions.builder()
-                        .readConcern(settings.getReadConcern())
-                        .writeConcern(settings.getWriteConcern())
-                        .build())
-                .build());
-    }
-
-    @Override
-    public ClientSession startSession(final ClientSessionOptions options) {
-        return delegate.createClientSession(notNull("options", options),
-                settings.getReadConcern(), settings.getWriteConcern(), settings.getReadPreference());
-    }
-
-    @Override
     public void close() {
-        delegate.close();
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch() {
-        return watch(Collections.emptyList());
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        return watch(Collections.emptyList(), resultClass);
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
-        return watch(pipeline, Document.class);
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return createChangeStreamIterable(null, pipeline, resultClass);
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
-        return watch(clientSession, Collections.emptyList(), Document.class);
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return watch(clientSession, Collections.emptyList(), resultClass);
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        return watch(clientSession, pipeline, Document.class);
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
-                                                         final Class<TResult> resultClass) {
-        notNull("clientSession", clientSession);
-        return createChangeStreamIterable(clientSession, pipeline, resultClass);
+        if (!closed.getAndSet(true)) {
+            Crypt crypt = delegate.getCrypt();
+            if (crypt != null) {
+                crypt.close();
+            }
+            delegate.getServerSessionPool().close();
+            delegate.getCluster().close();
+        }
     }
 
     @Override
@@ -202,20 +120,140 @@ public final class MongoClientImpl implements MongoClient {
         return delegate.getCluster().getCurrentDescription();
     }
 
-    private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
-                                                                               final List<? extends Bson> pipeline,
-                                                                               final Class<TResult> resultClass) {
-        return new ChangeStreamIterableImpl<>(clientSession, "admin", delegate.getCodecRegistry(), settings.getReadPreference(),
-                settings.getReadConcern(), delegate.getOperationExecutor(), pipeline, resultClass, ChangeStreamLevel.CLIENT,
-                settings.getRetryReads(), delegate.getTimeoutSettings());
-    }
-
-    public Cluster getCluster() {
-        return delegate.getCluster();
-    }
-
+    @Override
     public CodecRegistry getCodecRegistry() {
         return delegate.getCodecRegistry();
+    }
+
+    @Override
+    public ReadPreference getReadPreference() {
+        return delegate.getReadPreference();
+    }
+
+    @Override
+    public WriteConcern getWriteConcern() {
+        return delegate.getWriteConcern();
+    }
+
+    @Override
+    public ReadConcern getReadConcern() {
+        return delegate.getReadConcern();
+    }
+
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return delegate.getTimeout(timeUnit);
+    }
+
+    @Override
+    public MongoClientOperations withCodecRegistry(final CodecRegistry codecRegistry) {
+        return delegate.withCodecRegistry(codecRegistry);
+    }
+
+    @Override
+    public MongoClientOperations withReadPreference(final ReadPreference readPreference) {
+        return delegate.withReadPreference(readPreference);
+    }
+
+    @Override
+    public MongoClientOperations withWriteConcern(final WriteConcern writeConcern) {
+        return delegate.withWriteConcern(writeConcern);
+    }
+
+    @Override
+    public MongoClientOperations withReadConcern(final ReadConcern readConcern) {
+        return delegate.withReadConcern(readConcern);
+    }
+
+    @Override
+    public MongoClientOperations withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return delegate.withTimeout(timeout, timeUnit);
+    }
+
+    @Override
+    public MongoDatabase getDatabase(final String databaseName) {
+        return delegate.getDatabase(databaseName);
+    }
+
+    @Override
+    public ClientSession startSession() {
+        return delegate.startSession();
+    }
+
+    @Override
+    public ClientSession startSession(final ClientSessionOptions options) {
+        return delegate.startSession(options);
+    }
+
+    @Override
+    public MongoIterable<String> listDatabaseNames() {
+        return delegate.listDatabaseNames();
+    }
+
+    @Override
+    public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
+        return delegate.listDatabaseNames(clientSession);
+    }
+
+    @Override
+    public ListDatabasesIterable<Document> listDatabases() {
+        return delegate.listDatabases();
+    }
+
+    @Override
+    public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
+        return delegate.listDatabases(clientSession);
+    }
+
+    @Override
+    public <TResult> ListDatabasesIterable<TResult> listDatabases(final Class<TResult> resultClass) {
+        return delegate.listDatabases(resultClass);
+    }
+
+    @Override
+    public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return delegate.listDatabases(clientSession, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch() {
+        return delegate.watch();
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
+        return delegate.watch(resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
+        return delegate.watch(pipeline);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return delegate.watch(pipeline, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
+        return delegate.watch(clientSession);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return delegate.watch(clientSession, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return delegate.watch(clientSession, pipeline);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(
+            final ClientSession clientSession, final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return delegate.watch(clientSession, pipeline, resultClass);
     }
 
     private static Cluster createCluster(final MongoClientSettings settings,
@@ -242,13 +280,8 @@ public final class MongoClientImpl implements MongoClient {
         }
     }
 
-    private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
-                delegate.getOperationExecutor(), settings.getRetryReads(), delegate.getTimeoutSettings());
-    }
-
-    private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
-        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(result -> result.getString("name").getValue());
+    public Cluster getCluster() {
+        return delegate.getCluster();
     }
 
     public ServerSessionPool getServerSessionPool() {
