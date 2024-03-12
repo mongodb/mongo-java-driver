@@ -136,37 +136,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         commitTransaction(true);
     }
 
-    @Override
-    public void abortTransaction() {
-        if (transactionState == TransactionState.ABORTED) {
-            throw new IllegalStateException("Cannot call abortTransaction twice");
-        }
-        if (transactionState == TransactionState.COMMITTED) {
-            throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
-        }
-        if (transactionState == TransactionState.NONE) {
-            throw new IllegalStateException("There is no transaction started");
-        }
-        try {
-            if (messageSentInCurrentTransaction) {
-                ReadConcern readConcern = transactionOptions.getReadConcern();
-                if (readConcern == null) {
-                    throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
-                }
-                resetTimeout();
-                delegate.getOperationExecutor()
-                        .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
-                        .recoveryToken(getRecoveryToken()), readConcern, this);
-            }
-        } catch (RuntimeException e) {
-            // ignore exceptions from abort
-        } finally {
-            clearTransactionContext();
-            cleanupTransaction(TransactionState.ABORTED);
-        }
-    }
-
-
     private void commitTransaction(final boolean resetTimeout) {
         if (transactionState == TransactionState.ABORTED) {
             throw new IllegalStateException("Cannot call commitTransaction after calling abortTransaction");
@@ -189,6 +158,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         .execute(new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()),
                                 transactionState == TransactionState.COMMITTED)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
+                setTimeoutContext(null);
             }
         } catch (MongoException e) {
             clearTransactionContextOnError(e);
@@ -196,7 +166,36 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         } finally {
             transactionState = TransactionState.COMMITTED;
             commitInProgress = false;
-            setTimeoutContext(null);
+        }
+    }
+
+    @Override
+    public void abortTransaction() {
+        if (transactionState == TransactionState.ABORTED) {
+            throw new IllegalStateException("Cannot call abortTransaction twice");
+        }
+        if (transactionState == TransactionState.COMMITTED) {
+            throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
+        }
+        if (transactionState == TransactionState.NONE) {
+            throw new IllegalStateException("There is no transaction started");
+        }
+        try {
+            if (messageSentInCurrentTransaction) {
+                ReadConcern readConcern = transactionOptions.getReadConcern();
+                if (readConcern == null) {
+                    throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
+                }
+                resetTimeout();
+                delegate.getOperationExecutor()
+                        .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
+                                .recoveryToken(getRecoveryToken()), readConcern, this);
+            }
+        } catch (RuntimeException e) {
+            // ignore exceptions from abort
+        } finally {
+            clearTransactionContext();
+            cleanupTransaction(TransactionState.ABORTED);
         }
     }
 
