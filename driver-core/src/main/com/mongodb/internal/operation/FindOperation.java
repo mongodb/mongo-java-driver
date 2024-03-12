@@ -395,7 +395,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (isTailableCursor()) {
             commandDocument.put("tailable", BsonBoolean.TRUE);
         } else {
-            addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
+            addMaxTimeMSToNonTailableCursor(timeoutMode, operationContext);
         }
         if (isAwaitData()) {
             commandDocument.put("awaitData", BsonBoolean.TRUE);

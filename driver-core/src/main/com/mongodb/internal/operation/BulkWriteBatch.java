@@ -65,7 +65,6 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
-import static com.mongodb.internal.operation.CommandOperationHelper.appendMaxTimeMs;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
@@ -227,7 +226,7 @@ public final class BulkWriteBatch {
     }
 
     BsonDocument getCommand() {
-        return appendMaxTimeMs(operationContext.getTimeoutContext(), command);
+        return command;
     }
 
     SplittablePayload getPayload() {

@@ -139,7 +139,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
             putIfNotZero(document, "limit", limit);
             putIfNotZero(document, "skip", skip);
             putIfNotNull(document, "hint", hint);
-            putIfNotZero(document, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            // putIfNotZero.*maxTimeMs".*;
 
             if (collation != null) {
                 document.put("collation", collation.asDocument());

@@ -186,7 +186,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
             BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
             commandDocument.put("pipeline", new BsonArray(pipeline));
-            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
+            addMaxTimeMSToNonTailableCursor(operationContext);
             if (allowDiskUse != null) {
                 commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
             }

@@ -220,7 +220,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
             putIfNotNull(commandDocument, "filter", filter);
             putIfTrue(commandDocument, "nameOnly", nameOnly);
             putIfTrue(commandDocument, "authorizedCollections", authorizedCollections);
-            addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
+            addMaxTimeMSToNonTailableCursor(timeoutMode, operationContext);
             putIfNotNull(commandDocument, "comment", comment);
             return commandDocument;
         };

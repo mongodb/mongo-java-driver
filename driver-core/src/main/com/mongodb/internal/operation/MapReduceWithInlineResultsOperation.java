@@ -223,7 +223,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             putIfTrue(commandDocument, "verbose", isVerbose());
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), commandDocument);
             putIfNotZero(commandDocument, "limit", getLimit());
-            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
+            addMaxTimeMSToNonTailableCursor(operationContext);
             putIfTrue(commandDocument, "jsMode", isJsMode());
             if (collation != null) {
                 commandDocument.put("collation", collation.asDocument());

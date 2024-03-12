@@ -193,7 +193,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
         appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
-        addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
+        addMaxTimeMSToNonTailableCursor(timeoutMode, operationContext);
         BsonDocument cursor = new BsonDocument();
         if (batchSize != null) {
             cursor.put("batchSize", new BsonInt32(batchSize));

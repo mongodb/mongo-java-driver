@@ -164,7 +164,7 @@ class TestInternalConnection implements InternalConnection {
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             sendMessage(bsonOutput.getByteBuffers(), message.getId(), operationContext);
         }
         try (ResponseBuffers responseBuffers = receiveMessage(message.getId(), operationContext)) {

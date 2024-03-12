@@ -108,6 +108,7 @@ public final class CommandHelper {
                          // which means OP_MSG will not be used
                         .maxWireVersion(internalConnection.getDescription().getMaxWireVersion())
                         .serverType(internalConnection.getDescription().getServerType())
+                        .cryptd(internalConnection.getInitialServerDescription().isCryptd())
                         .build(),
                 clusterConnectionMode, serverApi);
     }

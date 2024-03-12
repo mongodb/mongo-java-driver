@@ -27,6 +27,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
@@ -90,6 +91,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeSupplier(() -> maxTimeMS);
 
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
         resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
@@ -235,8 +237,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 this.commandCursorResult = toCommandCursorResult(connection.getDescription().getServerAddress(), NEXT_BATCH,
                         assertNotNull(
                             connection.command(namespace.getDatabaseName(),
-                                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize,
-                                         maxTimeMS, comment),
+                                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
                                  NO_OP_FIELD_NAME_VALIDATOR,
                                  ReadPreference.primary(),
                                  CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
@@ -354,8 +355,10 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final Connection localConnection) {
             OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
-            localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor,
-                            operationContext.getTimeoutContext().getMaxTimeMS()),
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.setMaxTimeSupplier(timeoutContext::getMaxTimeMS);
+
+            localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
         }
     }

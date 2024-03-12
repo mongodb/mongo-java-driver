@@ -278,7 +278,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
             putIfNotNull(commandDocument, "scope", getScope());
             putIfTrue(commandDocument, "verbose", isVerbose());
             putIfNotZero(commandDocument, "limit", getLimit());
-            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
+            addMaxTimeMSToNonTailableCursor(operationContext);
             putIfTrue(commandDocument, "jsMode", isJsMode());
             if (bypassDocumentValidation != null) {
                 commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));

@@ -173,7 +173,6 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
 
     private BsonDocument dropCollectionCommand(final TimeoutContext timeoutContext) {
         BsonDocument commandDocument = new BsonDocument("drop", new BsonString(namespace.getCollectionName()));
-        appendMaxTimeMs(timeoutContext, commandDocument);
         appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;
     }

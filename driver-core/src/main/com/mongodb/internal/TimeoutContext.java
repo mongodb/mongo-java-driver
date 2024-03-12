@@ -19,9 +19,13 @@ import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonElement;
+import org.bson.BsonInt64;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
@@ -43,6 +47,8 @@ public class TimeoutContext {
     @Nullable
     private Timeout computedServerSelectionTimeout;
     private long minRoundTripTimeMS = 0;
+
+    private MaxTimeSupplier maxTimeSupplier = this::getMaxTimeMS;
 
     public static MongoOperationTimeoutException createMongoTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
@@ -69,10 +75,6 @@ public class TimeoutContext {
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(false, timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
-    }
-
-    public TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
-        this(false, timeoutSettings, timeout);
     }
 
     TimeoutContext(final boolean isMaintenanceContext, final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
@@ -165,7 +167,6 @@ public class TimeoutContext {
     public TimeoutSettings getTimeoutSettings() {
         return timeoutSettings;
     }
-
     public long getMaxAwaitTimeMS() {
         return hasTimeoutMS() ? 0 : timeoutSettings.getMaxAwaitTimeMS();
     }
@@ -179,6 +180,10 @@ public class TimeoutContext {
             throw createMongoTimeoutException();
         }
         return maxTimeMS - minRoundTripTimeMS;
+    }
+
+    public void setMaxTimeSupplier(final MaxTimeSupplier maxTimeSupplier) {
+        this.maxTimeSupplier = maxTimeSupplier;
     }
 
     public long getMaxCommitTimeMS() {
@@ -319,4 +324,15 @@ public class TimeoutContext {
         return timeout;
     }
 
+    public void addExtraElements(final List<BsonElement> extraElements) {
+        long maxTimeMS = maxTimeSupplier.get();
+        if (maxTimeMS > 0) {
+            extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)));
+        }
+    }
+
+    public interface MaxTimeSupplier extends Supplier<Long> {
+        @Override
+        Long get();
+    }
 }

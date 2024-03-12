@@ -70,6 +70,10 @@ public class ServerDescription {
     private final ServerAddress address;
 
     private final ServerType type;
+    /**
+     * Identifies whether the server is a mongocryptd.
+     */
+    private final boolean cryptd;
     private final String canonicalAddress;
     private final Set<String> hosts;
     private final Set<String> passives;
@@ -160,6 +164,7 @@ public class ServerDescription {
     public static class Builder {
         private ServerAddress address;
         private ServerType type = UNKNOWN;
+        private boolean cryptd = false;
         private String canonicalAddress;
         private Set<String> hosts = Collections.emptySet();
         private Set<String> passives = Collections.emptySet();
@@ -190,6 +195,7 @@ public class ServerDescription {
         Builder(final ServerDescription serverDescription) {
             this.address = serverDescription.address;
             this.type = serverDescription.type;
+            this.cryptd = serverDescription.cryptd;
             this.canonicalAddress = serverDescription.canonicalAddress;
             this.hosts = serverDescription.hosts;
             this.passives = serverDescription.passives;
@@ -244,6 +250,16 @@ public class ServerDescription {
          */
         public Builder type(final ServerType type) {
             this.type = notNull("type", type);
+            return this;
+        }
+
+        /**
+         * Sets whether this server is a mongocryptd.
+         * @param cryptd true if this server is a mongocryptd.
+         * @return this
+         */
+        public Builder cryptd(final boolean cryptd) {
+            this.cryptd = cryptd;
             return this;
         }
 
@@ -642,6 +658,14 @@ public class ServerDescription {
      */
     public boolean isSecondary() {
         return ok && (type == REPLICA_SET_SECONDARY || type == SHARD_ROUTER || type == STANDALONE || type == LOAD_BALANCER);
+    }
+
+    /**
+     * Returns whether this server is mongocrpytd.
+     * @return true if this server is a mongocryptd.
+     */
+    public boolean isCryptd() {
+        return cryptd;
     }
 
     /**
@@ -1074,6 +1098,7 @@ public class ServerDescription {
     ServerDescription(final Builder builder) {
         address = notNull("address", builder.address);
         type = notNull("type", builder.type);
+        cryptd = builder.cryptd;
         state = notNull("state", builder.state);
         canonicalAddress = builder.canonicalAddress;
         hosts = builder.hosts;

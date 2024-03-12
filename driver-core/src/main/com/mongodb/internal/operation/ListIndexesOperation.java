@@ -167,7 +167,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument commandDocument = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
-            addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
+            addMaxTimeMSToNonTailableCursor(timeoutMode, operationContext);
             putIfNotNull(commandDocument, "comment", comment);
             return commandDocument;
         };

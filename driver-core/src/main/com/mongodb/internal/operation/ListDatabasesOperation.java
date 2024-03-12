@@ -120,7 +120,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
             putIfNotNull(commandDocument, "filter", filter);
             putIfNotNull(commandDocument, "nameOnly", nameOnly);
             putIfNotNull(commandDocument, "authorizedDatabases", authorizedDatabasesOnly);
-            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
+            addMaxTimeMSToNonTailableCursor(operationContext);
             putIfNotNull(commandDocument, "comment", comment);
             return commandDocument;
         };

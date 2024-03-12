@@ -46,7 +46,6 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -200,8 +199,6 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
-    @Disabled
-    // TODO JAVA-5322. We have to reset timeoutMS for encrypted command.
     void shouldDecreaseOperationTimeoutForSubsequentOperations() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
