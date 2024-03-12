@@ -19,7 +19,6 @@ package com.mongodb.internal.bulk;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -32,7 +31,7 @@ public final class DeleteRequest extends WriteRequest {
     private final BsonDocument filter;
     private boolean isMulti = true;
     private Collation collation;
-    private Bson hint;
+    private BsonDocument hint;
     private String hintString;
 
     public DeleteRequest(final BsonDocument filter) {
@@ -63,11 +62,11 @@ public final class DeleteRequest extends WriteRequest {
     }
 
     @Nullable
-    public Bson getHint() {
+    public BsonDocument getHint() {
         return hint;
     }
 
-    public DeleteRequest hint(@Nullable final Bson hint) {
+    public DeleteRequest hint(@Nullable final BsonDocument hint) {
         this.hint = hint;
         return this;
     }
