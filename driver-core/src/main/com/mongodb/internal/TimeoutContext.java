@@ -83,6 +83,9 @@ public class TimeoutContext {
                 if (timeoutSettings.getMaxTimeMS() != 0) {
                     sessionTimeoutSettings = sessionTimeoutSettings.withMaxTimeMS(timeoutSettings.getMaxTimeMS());
                 }
+                if (timeoutSettings.getMaxAwaitTimeMS() != 0) {
+                    sessionTimeoutSettings = sessionTimeoutSettings.withMaxAwaitTimeMS(timeoutSettings.getMaxAwaitTimeMS());
+                }
                 if (timeoutSettings.getMaxCommitTimeMS() != null) {
                     sessionTimeoutSettings = sessionTimeoutSettings.withMaxCommitMS(timeoutSettings.getMaxCommitTimeMS());
                 }
