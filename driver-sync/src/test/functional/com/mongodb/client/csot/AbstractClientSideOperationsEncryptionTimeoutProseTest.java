@@ -202,7 +202,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
     void shouldDecreaseOperationTimeoutForSubsequentOperations() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
-        long initialTimeoutMS = rtt + 900;
+        long initialTimeoutMS = rtt + 2500;
 
         try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder()
                 .timeout(initialTimeoutMS, MILLISECONDS))) {
