@@ -21,6 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.internal.ClientSessionClock;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -190,15 +191,19 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     //
     @Test
     public void testTimeoutMSAndLegacySettings() {
-        collection.drop();
         try (ClientSession session = client.startSession(ClientSessionOptions.builder()
                 .defaultTransactionOptions(TransactionOptions.builder().timeout(TIMEOUT, TimeUnit.SECONDS).build())
                 .build())) {
-            Integer returnValueFromCallback = session.withTransaction(() -> {
-                collection.insertOne(session, Document.parse("{ _id : 1 }"));
-                return collection.find(session).maxAwaitTime(1, TimeUnit.MINUTES).first().get("_id", -1);
+            Document document = Document.parse("{ _id : 1 }");
+            Document returnValueFromCallback = session.withTransaction(() -> {
+                collection.insertOne(session, document);
+                Document found = collection.find(session)
+                        .maxAwaitTime(1, TimeUnit.MINUTES)
+                        .sort(Sorts.descending("_id"))
+                        .first();
+                return found != null ? found : new Document();
             });
-            assertEquals(1, returnValueFromCallback);
+            assertEquals(document, returnValueFromCallback);
         }
     }
 
