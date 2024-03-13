@@ -105,6 +105,45 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public void startTransaction(final TransactionOptions transactionOptions) {
+        startTransaction(transactionOptions, createTimeoutContext(transactionOptions));
+    }
+
+    @Override
+    public void commitTransaction() {
+        commitTransaction(true);
+    }
+
+    @Override
+    public void abortTransaction() {
+        if (transactionState == TransactionState.ABORTED) {
+            throw new IllegalStateException("Cannot call abortTransaction twice");
+        }
+        if (transactionState == TransactionState.COMMITTED) {
+            throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
+        }
+        if (transactionState == TransactionState.NONE) {
+            throw new IllegalStateException("There is no transaction started");
+        }
+        try {
+            if (messageSentInCurrentTransaction) {
+                ReadConcern readConcern = transactionOptions.getReadConcern();
+                if (readConcern == null) {
+                    throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
+                }
+                resetTimeout();
+                delegate.getOperationExecutor()
+                        .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
+                                .recoveryToken(getRecoveryToken()), readConcern, this);
+            }
+        } catch (RuntimeException e) {
+            // ignore exceptions from abort
+        } finally {
+            clearTransactionContext();
+            cleanupTransaction(TransactionState.ABORTED);
+        }
+    }
+
+    private void startTransaction(final TransactionOptions transactionOptions, final TimeoutContext timeoutContext) {
         Boolean snapshot = getOptions().isSnapshot();
         if (snapshot != null && snapshot) {
             throw new IllegalArgumentException("Transactions are not supported in snapshot sessions");
@@ -128,12 +167,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
         clearTransactionContext();
-        setTimeoutContext(createTimeoutContext());
-    }
-
-    @Override
-    public void commitTransaction() {
-        commitTransaction(true);
+        setTimeoutContext(timeoutContext);
     }
 
     private void commitTransaction(final boolean resetTimeout) {
@@ -169,36 +203,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-    @Override
-    public void abortTransaction() {
-        if (transactionState == TransactionState.ABORTED) {
-            throw new IllegalStateException("Cannot call abortTransaction twice");
-        }
-        if (transactionState == TransactionState.COMMITTED) {
-            throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
-        }
-        if (transactionState == TransactionState.NONE) {
-            throw new IllegalStateException("There is no transaction started");
-        }
-        try {
-            if (messageSentInCurrentTransaction) {
-                ReadConcern readConcern = transactionOptions.getReadConcern();
-                if (readConcern == null) {
-                    throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
-                }
-                resetTimeout();
-                delegate.getOperationExecutor()
-                        .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
-                                .recoveryToken(getRecoveryToken()), readConcern, this);
-            }
-        } catch (RuntimeException e) {
-            // ignore exceptions from abort
-        } finally {
-            clearTransactionContext();
-            cleanupTransaction(TransactionState.ABORTED);
-        }
-    }
-
     private void clearTransactionContextOnError(final MongoException e) {
         if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL) || e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
             clearTransactionContext();
@@ -214,11 +218,13 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         notNull("transactionBody", transactionBody);
         long startTime = ClientSessionClock.INSTANCE.now();
+        TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
+
         outer:
         while (true) {
             T retVal;
             try {
-                startTransaction(options);
+                startTransaction(options, copyTimeoutContext(withTransactionTimeoutContext));
                 retVal = transactionBody.execute();
             } catch (Throwable e) {
                 if (transactionState == TransactionState.IN) {
@@ -293,7 +299,12 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         setTimeoutContext(null);
     }
 
-    private TimeoutContext createTimeoutContext() {
-        return new TimeoutContext(getTimeoutSettings(transactionOptions, delegate.getTimeoutSettings()));
+    private TimeoutContext createTimeoutContext(final TransactionOptions transactionOptions) {
+        return new TimeoutContext(getTimeoutSettings(TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions()), delegate.getTimeoutSettings()));
+    }
+
+    // Creates a copy of the timeout context that can be reset without resetting the original.
+    private TimeoutContext copyTimeoutContext(final TimeoutContext timeoutContext) {
+        return new TimeoutContext(timeoutContext.getTimeoutSettings(), timeoutContext.getTimeout());
     }
 }

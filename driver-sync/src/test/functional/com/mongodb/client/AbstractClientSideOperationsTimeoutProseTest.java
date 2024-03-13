@@ -543,9 +543,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: { times: 1 },"
                 + "  data: {"
-                + "    failCommands: [\"insertOne\"],"
+                + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 100
+                + "    blockTimeMS: " + 25
                 + "  }"
                 + "}");
 
@@ -556,9 +556,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
                     .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
-                sleep(100);
                 collection.insertOne(session, new Document("x", 1));
-                sleep(100);
+                sleep(200);
 
                 assertDoesNotThrow(session::commitTransaction);
             }
@@ -576,9 +575,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: { times: 1 },"
                 + "  data: {"
-                + "    failCommands: [\"insertOne\"],"
+                + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 100
+                + "    blockTimeMS: " + 25
                 + "  }"
                 + "}");
 
@@ -589,9 +588,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
                     .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
-                sleep(100);
                 collection.insertOne(session, new Document("x", 1));
-                sleep(100);
+                sleep(200);
 
                 assertDoesNotThrow(session::close);
             }
@@ -625,17 +623,17 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         () -> session.withTransaction(() -> collection.insertOne(session, new Document("x", 1))));
             }
 
-            List<CommandEvent> events = commandListener.getEvents().stream()
+            List<CommandEvent> failedEvents = commandListener.getEvents().stream()
                     .filter(e -> e instanceof CommandFailedEvent)
                     .collect(Collectors.toList());
 
-            assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("insert")).count());
-            assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("abortTransaction")).count());
+            assertEquals(1, failedEvents.stream().filter(e -> e.getCommandName().equals("insert")).count());
+            assertEquals(1, failedEvents.stream().filter(e -> e.getCommandName().equals("abortTransaction")).count());
         }
     }
 
     @Tag("setsFailPoint")
-    @DisplayName("10. End Session - Custom Test: with transaction uses a single timeout")
+    @DisplayName("10. Convenient Transactions - Custom Test: with transaction uses a single timeout")
     @Test
     public void test10CustomTestWithTransactionUsesASingleTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -645,9 +643,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: { times: 1 },"
                 + "  data: {"
-                + "    failCommands: [\"insertOne\"],"
+                + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 100
+                + "    blockTimeMS: " + 25
                 + "  }"
                 + "}");
 
@@ -659,15 +657,49 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
                 assertThrows(MongoOperationTimeoutException.class,
                         () -> session.withTransaction(() -> {
-                            sleep(100);
                             collection.insertOne(session, new Document("x", 1));
-                            sleep(100);
+                            sleep(200);
                             return true;
                         })
                 );
             }
         }
-        assertDoesNotThrow(() -> commandListener.getCommandSucceededEvent("commitTransaction"));
+    }
+
+    @Tag("setsFailPoint")
+    @DisplayName("10. Convenient Transactions - Custom Test: with transaction uses a single timeout - lock")
+    @Test
+    public void test10CustomTestWithTransactionUsesASingleTimeoutWithLock() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+        assumeFalse(isAsync());
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: \"alwaysOn\","
+                + "  data: {"
+                + "    failCommands: [\"insert\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 25
+                + "    errorCode: " + 24
+                + "    errorLabels: [\"TransientTransactionError\"]"
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                assertThrows(MongoOperationTimeoutException.class,
+                        () -> session.withTransaction(() -> {
+                            collection.insertOne(session, new Document("x", 1));
+                            sleep(200);
+                            return true;
+                        })
+                );
+            }
+        }
     }
 
     private static Stream<Arguments> test8ServerSelectionArguments() {
