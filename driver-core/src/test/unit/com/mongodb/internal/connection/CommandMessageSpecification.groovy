@@ -68,7 +68,6 @@ class CommandMessageSpecification extends Specification {
         message.encode(output, operationContext)
 
         then:
-        0 * operationContext.getTimeoutContext()._
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         def messageHeader = new MessageHeader(byteBuf, 512)
         def replyHeader = new ReplyHeader(byteBuf, messageHeader)

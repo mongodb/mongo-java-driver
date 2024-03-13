@@ -17,8 +17,10 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
@@ -101,7 +103,8 @@ class TestInternalConnection implements InternalConnection {
 
     @Override
     public ServerDescription getInitialServerDescription() {
-        throw new UnsupportedOperationException();
+        return ServerDescription.builder().address(new ServerAddress())
+                .state(ServerConnectionState.CONNECTED).build();
     }
 
     public void open(final OperationContext operationContext) {

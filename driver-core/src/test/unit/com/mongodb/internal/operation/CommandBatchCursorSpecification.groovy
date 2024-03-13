@@ -21,6 +21,7 @@ import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
+import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
 import com.mongodb.client.cursor.TimeoutMode
@@ -29,8 +30,12 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -41,6 +46,7 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CONCURRENT_OPERATION
@@ -53,20 +59,23 @@ class CommandBatchCursorSpecification extends Specification {
         def initialConnection = referenceCountedConnection()
         def connection = referenceCountedConnection()
         def connectionSource = getConnectionSource(connection)
+        def timeoutContext = connectionSource.getOperationContext().getTimeoutContext()
 
         def firstBatch = createCommandResult([])
-        def cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, firstBatch, batchSize, maxTimeMS, CODEC,
-                null, connectionSource, initialConnection)
         def expectedCommand = new BsonDocument('getMore': new BsonInt64(CURSOR_ID))
                 .append('collection', new BsonString(NAMESPACE.getCollectionName()))
         if (batchSize != 0) {
             expectedCommand.append('batchSize', new BsonInt32(batchSize))
         }
-        if (expectedMaxTimeFieldValue != null) {
-            expectedCommand.append('maxTimeMS', new BsonInt64(expectedMaxTimeFieldValue))
-        }
 
         def reply =  getMoreResponse([], 0)
+
+        when:
+        def cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, firstBatch, batchSize, maxTimeMS, CODEC,
+                null, connectionSource, initialConnection)
+
+        then:
+        1 * timeoutContext.setMaxTimeSupplier(*_)
 
         when:
         cursor.hasNext()
@@ -565,7 +574,9 @@ class CommandBatchCursorSpecification extends Specification {
                     .state(ServerConnectionState.CONNECTED)
                     .build()
         }
-        mock.getOperationContext() >> OPERATION_CONTEXT
+        OperationContext operationContext = Mock(OperationContext)
+        operationContext.getTimeoutContext() >> Mock(TimeoutContext)
+        mock.getOperationContext() >> operationContext
         mock.getConnection() >> {
             if (counter == 0) {
                 throw new IllegalStateException('Tried to use released ConnectionSource')

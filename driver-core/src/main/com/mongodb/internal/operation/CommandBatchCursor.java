@@ -60,7 +60,6 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateC
 class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private final MongoNamespace namespace;
-    private final long maxTimeMS;
     private final Decoder<T> decoder;
     @Nullable
     private final BsonValue comment;
@@ -85,7 +84,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.commandCursorResult = toCommandCursorResult(connectionDescription.getServerAddress(), FIRST_BATCH, commandCursorDocument);
         this.namespace = commandCursorResult.getNamespace();
         this.batchSize = batchSize;
-        this.maxTimeMS = maxTimeMS;
         this.decoder = decoder;
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
