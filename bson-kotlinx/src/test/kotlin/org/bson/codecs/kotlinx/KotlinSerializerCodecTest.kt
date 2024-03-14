@@ -90,6 +90,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 @OptIn(ExperimentalSerializationApi::class)
+@Suppress("LargeClass")
 class KotlinSerializerCodecTest {
     private val numberLong = "\$numberLong"
     private val oid = "\$oid"
@@ -670,19 +671,40 @@ class KotlinSerializerCodecTest {
             codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
         }
 
-        assertThrows<MissingFieldException>("Invalid complex types") {
-            val data = BsonDocument.parse("""{"_id": "myId", "embedded": 123}""")
-            val codec = KotlinSerializerCodec.create<DataClassWithEmbedded>()
-            codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
-        }
-
         assertThrows<IllegalArgumentException>("Failing init") {
             val data = BsonDocument.parse("""{"id": "myId"}""")
             val codec = KotlinSerializerCodec.create<DataClassWithFailingInit>()
             codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
         }
 
-        val exception =
+        var exception =
+            assertThrows<SerializationException>("Invalid complex types - document") {
+                val data = BsonDocument.parse("""{"_id": "myId", "embedded": 123}""")
+                val codec = KotlinSerializerCodec.create<DataClassWithEmbedded>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals(
+            "Invalid data for `org.bson.codecs.kotlinx.samples.DataClassEmbedded` " +
+                "expected a bson document found: INT32",
+            exception.message)
+
+        exception =
+            assertThrows<SerializationException>("Invalid complex types - list") {
+                val data = BsonDocument.parse("""{"_id": "myId", "nested": 123}""")
+                val codec = KotlinSerializerCodec.create<DataClassListOfDataClasses>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals("Invalid data for `LIST` expected a bson array found: INT32", exception.message)
+
+        exception =
+            assertThrows<SerializationException>("Invalid complex types - map") {
+                val data = BsonDocument.parse("""{"_id": "myId", "nested": 123}""")
+                val codec = KotlinSerializerCodec.create<DataClassMapOfDataClasses>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals("Invalid data for `MAP` expected a bson document found: INT32", exception.message)
+
+        exception =
             assertThrows<SerializationException>("Missing discriminator") {
                 val data = BsonDocument.parse("""{"_id": {"$oid": "111111111111111111111111"}, "name": "string"}""")
                 val codec = KotlinSerializerCodec.create<SealedInterface>()
