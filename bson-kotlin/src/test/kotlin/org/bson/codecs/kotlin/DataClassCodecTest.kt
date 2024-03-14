@@ -236,7 +236,8 @@ class DataClassCodecTest {
             DataClassWithNestedParameterizedDataClass(
                 "myId",
                 DataClassWithNestedParameterized(
-                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))), "myOtherString",
+                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))),
+                    "myOtherString",
                     "myOptionalOtherString"))
 
         assertRoundTrips(expected, dataClass)

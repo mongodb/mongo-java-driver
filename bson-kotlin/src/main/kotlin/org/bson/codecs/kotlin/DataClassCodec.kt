@@ -18,6 +18,7 @@ package org.bson.codecs.kotlin
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
@@ -47,7 +48,6 @@ import org.bson.codecs.pojo.annotations.BsonIgnore
 import org.bson.codecs.pojo.annotations.BsonProperty
 import org.bson.codecs.pojo.annotations.BsonRepresentation
 import org.bson.diagnostics.Loggers
-import kotlin.reflect.KClassifier
 
 internal data class DataClassCodec<T : Any>(
     private val kClass: KClass<T>,
@@ -142,7 +142,9 @@ internal data class DataClassCodec<T : Any>(
                 val primaryConstructor =
                     kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
                 val typeMap =
-                    types.mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType().classifier!! to k }.toMap()
+                    types
+                        .mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType().classifier!! to k }
+                        .toMap()
 
                 val propertyModels =
                     primaryConstructor.parameters.map { kParameter ->
@@ -201,7 +203,9 @@ internal data class DataClassCodec<T : Any>(
                     codecRegistry.getCodec(
                         kParameter,
                         (kParameter.type.classifier as KClass<Any>).javaObjectType,
-                        kParameter.type.arguments.mapNotNull { typeMap[it.type?.classifier] ?: computeJavaType(it) }.toList())
+                        kParameter.type.arguments
+                            .mapNotNull { typeMap[it.type?.classifier] ?: computeJavaType(it) }
+                            .toList())
                 }
                 is KTypeParameter -> {
                     when (val pType = typeMap[kParameter.type.classifier] ?: kParameter.type.javaType) {
