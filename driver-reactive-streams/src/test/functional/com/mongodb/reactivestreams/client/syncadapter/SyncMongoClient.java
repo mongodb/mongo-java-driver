@@ -24,7 +24,7 @@ import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClientOperations;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterDescription;
@@ -43,7 +43,7 @@ public class SyncMongoClient implements MongoClient {
      * can set this to a positive value.  A value of 256 ms has been shown to work well. The default value is 0.
      */
     public static void enableSleepAfterCursorOpen(final long sleepMS) {
-        SyncMongoClientOperations.enableSleepAfterCursorOpen(sleepMS);
+        SyncMongoCluster.enableSleepAfterCursorOpen(sleepMS);
     }
 
     /**
@@ -53,7 +53,7 @@ public class SyncMongoClient implements MongoClient {
      * value is 0.
      */
     public static void enableSleepAfterCursorError(final long sleepMS) {
-        SyncMongoClientOperations.enableSleepAfterCursorError(sleepMS);
+        SyncMongoCluster.enableSleepAfterCursorError(sleepMS);
     }
 
     /**
@@ -63,7 +63,7 @@ public class SyncMongoClient implements MongoClient {
      * value is 0.
      */
     public static void enableSleepAfterCursorClose(final long sleepMS) {
-        SyncMongoClientOperations.enableSleepAfterCursorClose(sleepMS);
+        SyncMongoCluster.enableSleepAfterCursorClose(sleepMS);
     }
 
     /**
@@ -72,35 +72,35 @@ public class SyncMongoClient implements MongoClient {
      * the attempt is racy and incorrect, but good enough for tests given that no other approach is available.
      */
     public static void enableSleepAfterSessionClose(final long sleepMS) {
-        SyncMongoClientOperations.enableSleepAfterSessionClose(sleepMS);
+        SyncMongoCluster.enableSleepAfterSessionClose(sleepMS);
     }
 
     public static void disableSleep() {
-        SyncMongoClientOperations.disableSleep();
+        SyncMongoCluster.disableSleep();
     }
 
     public static long getSleepAfterCursorOpen() {
-        return SyncMongoClientOperations.getSleepAfterCursorOpen();
+        return SyncMongoCluster.getSleepAfterCursorOpen();
     }
 
     public static long getSleepAfterCursorError() {
-        return SyncMongoClientOperations.getSleepAfterCursorError();
+        return SyncMongoCluster.getSleepAfterCursorError();
     }
 
     public static long getSleepAfterCursorClose() {
-        return SyncMongoClientOperations.getSleepAfterCursorClose();
+        return SyncMongoCluster.getSleepAfterCursorClose();
     }
 
     public static long getSleepAfterSessionClose() {
-        return SyncMongoClientOperations.getSleepAfterSessionClose();
+        return SyncMongoCluster.getSleepAfterSessionClose();
     }
 
     private final com.mongodb.reactivestreams.client.MongoClient wrapped;
-    private final SyncMongoClientOperations delegate;
+    private final SyncMongoCluster delegate;
 
     public SyncMongoClient(final com.mongodb.reactivestreams.client.MongoClient wrapped) {
         this.wrapped = wrapped;
-        this.delegate = new SyncMongoClientOperations(wrapped);
+        this.delegate = new SyncMongoCluster(wrapped);
     }
 
     public com.mongodb.reactivestreams.client.MongoClient getWrapped() {
@@ -133,27 +133,27 @@ public class SyncMongoClient implements MongoClient {
     }
 
     @Override
-    public MongoClientOperations withCodecRegistry(final CodecRegistry codecRegistry) {
+    public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return delegate.withCodecRegistry(codecRegistry);
     }
 
     @Override
-    public MongoClientOperations withReadPreference(final ReadPreference readPreference) {
+    public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return delegate.withReadPreference(readPreference);
     }
 
     @Override
-    public MongoClientOperations withWriteConcern(final WriteConcern writeConcern) {
+    public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return delegate.withWriteConcern(writeConcern);
     }
 
     @Override
-    public MongoClientOperations withReadConcern(final ReadConcern readConcern) {
+    public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return delegate.withReadConcern(readConcern);
     }
 
     @Override
-    public MongoClientOperations withTimeout(final long timeout, final TimeUnit timeUnit) {
+    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return delegate.withTimeout(timeout, timeUnit);
     }
 

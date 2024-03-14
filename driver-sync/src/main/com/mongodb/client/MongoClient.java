@@ -37,7 +37,7 @@ import java.io.Closeable;
  * @since 3.7
  */
 @Immutable
-public interface MongoClient extends MongoClientOperations, Closeable {
+public interface MongoClient extends MongoCluster, Closeable {
 
     /**
      * Close the client, which will close all underlying cached resources, including, for example,

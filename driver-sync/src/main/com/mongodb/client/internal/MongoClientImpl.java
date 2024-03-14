@@ -27,7 +27,7 @@ import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClientOperations;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
@@ -71,7 +71,7 @@ public final class MongoClientImpl implements MongoClient {
 
     private final MongoClientSettings settings;
     private final MongoDriverInformation mongoDriverInformation;
-    private final MongoClientOperationsImpl delegate;
+    private final MongoClusterImpl delegate;
     private final AtomicBoolean closed;
 
     public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
@@ -89,14 +89,14 @@ public final class MongoClientImpl implements MongoClient {
                     + SynchronousContextProvider.class.getName() + " when using the synchronous driver");
         }
 
-        this.delegate = new MongoClientOperationsImpl(autoEncryptionSettings, cluster,
-                withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()),
-                (SynchronousContextProvider) settings.getContextProvider(),
-                autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), this,
-                operationExecutor, settings.getReadConcern(), settings.getReadPreference(), settings.getRetryReads(),
-                settings.getRetryWrites(), settings.getServerApi(),
-                new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),
-                TimeoutSettings.create(settings), settings.getUuidRepresentation(), settings.getWriteConcern());
+        this.delegate = new MongoClusterImpl(autoEncryptionSettings, cluster,
+                                             withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()),
+                                             (SynchronousContextProvider) settings.getContextProvider(),
+                                             autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), this,
+                                             operationExecutor, settings.getReadConcern(), settings.getReadPreference(), settings.getRetryReads(),
+                                             settings.getRetryWrites(), settings.getServerApi(),
+                                             new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),
+                                             TimeoutSettings.create(settings), settings.getUuidRepresentation(), settings.getWriteConcern());
         this.closed = new AtomicBoolean();
         BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
 
@@ -146,27 +146,27 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public MongoClientOperations withCodecRegistry(final CodecRegistry codecRegistry) {
+    public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return delegate.withCodecRegistry(codecRegistry);
     }
 
     @Override
-    public MongoClientOperations withReadPreference(final ReadPreference readPreference) {
+    public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return delegate.withReadPreference(readPreference);
     }
 
     @Override
-    public MongoClientOperations withWriteConcern(final WriteConcern writeConcern) {
+    public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return delegate.withWriteConcern(writeConcern);
     }
 
     @Override
-    public MongoClientOperations withReadConcern(final ReadConcern readConcern) {
+    public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return delegate.withReadConcern(readConcern);
     }
 
     @Override
-    public MongoClientOperations withTimeout(final long timeout, final TimeUnit timeUnit) {
+    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return delegate.withTimeout(timeout, timeUnit);
     }
 

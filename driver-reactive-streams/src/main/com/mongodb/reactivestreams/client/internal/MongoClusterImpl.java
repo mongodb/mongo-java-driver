@@ -28,7 +28,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
-import com.mongodb.reactivestreams.client.MongoClientOperations;
+import com.mongodb.reactivestreams.client.MongoCluster;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
 import org.bson.Document;
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class MongoClientOperationsImpl implements MongoClientOperations {
+final class MongoClusterImpl implements MongoCluster {
 
     private final Cluster cluster;
     private final Crypt crypt;
@@ -54,7 +54,7 @@ final class MongoClientOperationsImpl implements MongoClientOperations {
     private final ClientSessionHelper clientSessionHelper;
     private final MongoOperationPublisher<Document> mongoOperationPublisher;
 
-    MongoClientOperationsImpl(final Cluster cluster, @Nullable final Crypt crypt, final OperationExecutor operationExecutor,
+    MongoClusterImpl(final Cluster cluster, @Nullable final Crypt crypt, final OperationExecutor operationExecutor,
             final ServerSessionPool serverSessionPool, final ClientSessionHelper clientSessionHelper,
             final MongoOperationPublisher<Document> mongoOperationPublisher) {
 
@@ -93,32 +93,32 @@ final class MongoClientOperationsImpl implements MongoClientOperations {
     }
 
     @Override
-    public MongoClientOperations withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoClientOperationsImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
+    public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher.withCodecRegistry(codecRegistry));
     }
 
     @Override
-    public MongoClientOperations withReadPreference(final ReadPreference readPreference) {
-        return new MongoClientOperationsImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
+    public MongoCluster withReadPreference(final ReadPreference readPreference) {
+        return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher.withReadPreference(readPreference));
     }
 
     @Override
-    public MongoClientOperations withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoClientOperationsImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
+    public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher.withWriteConcern(writeConcern));
     }
 
     @Override
-    public MongoClientOperations withReadConcern(final ReadConcern readConcern) {
-        return new MongoClientOperationsImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
+    public MongoCluster withReadConcern(final ReadConcern readConcern) {
+        return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher.withReadConcern(readConcern));
     }
 
     @Override
-    public MongoClientOperations withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoClientOperationsImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
+    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher.withTimeout(timeout, timeUnit));
     }
 

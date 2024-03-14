@@ -33,7 +33,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
-import com.mongodb.client.MongoClientOperations;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
@@ -70,7 +70,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class MongoClientOperationsImpl implements MongoClientOperations {
+final class MongoClusterImpl implements MongoCluster {
     @Nullable
     private final AutoEncryptionSettings autoEncryptionSettings;
     private final Cluster cluster;
@@ -92,7 +92,7 @@ final class MongoClientOperationsImpl implements MongoClientOperations {
     private final UuidRepresentation uuidRepresentation;
     private final WriteConcern writeConcern;
 
-    MongoClientOperationsImpl(
+    MongoClusterImpl(
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
             @Nullable final SynchronousContextProvider contextProvider, @Nullable final Crypt crypt, final Object originator,
             @Nullable final OperationExecutor operationExecutor, final ReadConcern readConcern, final ReadPreference readPreference,
@@ -144,36 +144,36 @@ final class MongoClientOperationsImpl implements MongoClientOperations {
     }
 
     @Override
-    public MongoClientOperations withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoClientOperationsImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
+    public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern);
     }
 
     @Override
-    public MongoClientOperations withReadPreference(final ReadPreference readPreference) {
-        return new MongoClientOperationsImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
+    public MongoCluster withReadPreference(final ReadPreference readPreference) {
+        return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern);
     }
 
     @Override
-    public MongoClientOperations withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoClientOperationsImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
+    public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern);
     }
 
     @Override
-    public MongoClientOperations withReadConcern(final ReadConcern readConcern) {
-        return new MongoClientOperationsImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
+    public MongoCluster withReadConcern(final ReadConcern readConcern) {
+        return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool, timeoutSettings,
                 uuidRepresentation, writeConcern);
     }
 
     @Override
-    public MongoClientOperations withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoClientOperationsImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
+    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool,
                 timeoutSettings.withTimeoutMS(timeUnit.toMillis(timeout)), uuidRepresentation, writeConcern);
     }

@@ -17,7 +17,7 @@
 package org.mongodb.scala
 
 import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
-import com.mongodb.reactivestreams.client.{ MongoClientOperations => JMongoClientOperations }
+import com.mongodb.reactivestreams.client.{ MongoCluster => JMongoCluster }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
@@ -27,19 +27,19 @@ import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 /**
- * Companion object for creating new [[MongoClientOperations]] instances
+ * Companion object for creating new [[MongoCluster]] instances
  *
  * @since 1.0
  */
-object MongoClientOperations {
+object MongoCluster {
 
   /**
-   * Create a new `MongoClientOperations` wrapper
+   * Create a new `MongoCluster` wrapper
    *
-   * @param wrapped the java `MongoClientOperations` instance
-   * @return MongoClientOperations
+   * @param wrapped the java `MongoCluster` instance
+   * @return MongoCluster
    */
-  def apply(wrapped: JMongoClientOperations): MongoClientOperations = new MongoClientOperations(wrapped)
+  def apply(wrapped: JMongoCluster): MongoCluster = new MongoCluster(wrapped)
 }
 
 /**
@@ -51,7 +51,7 @@ object MongoClientOperations {
  * @see MongoClient
  * @since CSOT
  */
-class MongoClientOperations(private val wrapped: JMongoClientOperations) {
+class MongoCluster(private val wrapped: JMongoCluster) {
 
   /**
    * Get the codec registry for the MongoDatabase.
@@ -112,39 +112,39 @@ class MongoClientOperations(private val wrapped: JMongoClientOperations) {
    * { @link CodecRegistries}.
    *
    * @param codecRegistry the new { @link org.bson.codecs.configuration.CodecRegistry} for the collection
-   * @return a new MongoClientOperations instance with the different codec registry
+   * @return a new MongoCluster instance with the different codec registry
    * @see CodecRegistries
    */
-  def withCodecRegistry(codecRegistry: CodecRegistry): MongoClientOperations =
-    MongoClientOperations(wrapped.withCodecRegistry(codecRegistry))
+  def withCodecRegistry(codecRegistry: CodecRegistry): MongoCluster =
+    MongoCluster(wrapped.withCodecRegistry(codecRegistry))
 
   /**
    * Create a new MongoDatabase instance with a different read preference.
    *
    * @param readPreference the new { @link com.mongodb.ReadPreference} for the collection
-   * @return a new MongoClientOperations instance with the different readPreference
+   * @return a new MongoCluster instance with the different readPreference
    */
-  def withReadPreference(readPreference: ReadPreference): MongoClientOperations =
-    MongoClientOperations(wrapped.withReadPreference(readPreference))
+  def withReadPreference(readPreference: ReadPreference): MongoCluster =
+    MongoCluster(wrapped.withReadPreference(readPreference))
 
   /**
    * Create a new MongoDatabase instance with a different write concern.
    *
    * @param writeConcern the new { @link com.mongodb.WriteConcern} for the collection
-   * @return a new MongoClientOperations instance with the different writeConcern
+   * @return a new MongoCluster instance with the different writeConcern
    */
-  def withWriteConcern(writeConcern: WriteConcern): MongoClientOperations =
-    MongoClientOperations(wrapped.withWriteConcern(writeConcern))
+  def withWriteConcern(writeConcern: WriteConcern): MongoCluster =
+    MongoCluster(wrapped.withWriteConcern(writeConcern))
 
   /**
    * Create a new MongoDatabase instance with a different read concern.
    *
    * @param readConcern the new [[ReadConcern]] for the collection
-   * @return a new MongoClientOperations instance with the different ReadConcern
+   * @return a new MongoCluster instance with the different ReadConcern
    * @since 1.1
    */
-  def withReadConcern(readConcern: ReadConcern): MongoClientOperations =
-    MongoClientOperations(wrapped.withReadConcern(readConcern))
+  def withReadConcern(readConcern: ReadConcern): MongoCluster =
+    MongoCluster(wrapped.withReadConcern(readConcern))
 
   /**
    * Sets the time limit for the full execution of an operation.
@@ -153,11 +153,11 @@ class MongoClientOperations(private val wrapped: JMongoClientOperations) {
    * - `> 0` The time limit to use for the full execution of an operation.
    *
    * @param timeout the timeout, which must be greater than or equal to 0
-   * @return a new MongoClientOperations instance with the set time limit for operations
+   * @return a new MongoCluster instance with the set time limit for operations
    * @since CSOT
    */
-  def withTimeout(timeout: Duration): MongoClientOperations =
-    MongoClientOperations(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
+  def withTimeout(timeout: Duration): MongoCluster =
+    MongoCluster(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
 
   /**
    * Creates a client session.

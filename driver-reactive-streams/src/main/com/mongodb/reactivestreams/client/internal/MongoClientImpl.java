@@ -35,7 +35,7 @@ import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
-import com.mongodb.reactivestreams.client.MongoClientOperations;
+import com.mongodb.reactivestreams.client.MongoCluster;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import com.mongodb.reactivestreams.client.ReactiveContextProvider;
 import com.mongodb.reactivestreams.client.internal.crypt.Crypt;
@@ -67,7 +67,7 @@ public final class MongoClientImpl implements MongoClient {
     private final MongoClientSettings settings;
     private final AutoCloseable externalResourceCloser;
 
-    private final MongoClientOperationsImpl delegate;
+    private final MongoClusterImpl delegate;
     private final AtomicBoolean closed;
 
     public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
@@ -109,7 +109,7 @@ public final class MongoClientImpl implements MongoClient {
                 timeoutSettings,
                 operationExecutor);
 
-        this.delegate = new MongoClientOperationsImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
+        this.delegate = new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher);
         this.externalResourceCloser = externalResourceCloser;
         this.settings = settings;
@@ -265,27 +265,27 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public MongoClientOperations withCodecRegistry(final CodecRegistry codecRegistry) {
+    public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return delegate.withCodecRegistry(codecRegistry);
     }
 
     @Override
-    public MongoClientOperations withReadPreference(final ReadPreference readPreference) {
+    public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return delegate.withReadPreference(readPreference);
     }
 
     @Override
-    public MongoClientOperations withWriteConcern(final WriteConcern writeConcern) {
+    public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return delegate.withWriteConcern(writeConcern);
     }
 
     @Override
-    public MongoClientOperations withReadConcern(final ReadConcern readConcern) {
+    public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return delegate.withReadConcern(readConcern);
     }
 
     @Override
-    public MongoClientOperations withTimeout(final long timeout, final TimeUnit timeUnit) {
+    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return delegate.withTimeout(timeout, timeUnit);
     }
 

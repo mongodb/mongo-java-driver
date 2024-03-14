@@ -36,7 +36,7 @@ import java.io.Closeable
  *
  * @see MongoClient.create
  */
-public class MongoClient(private val wrapped: JMongoClient) : MongoClientOperations(wrapped), Closeable {
+public class MongoClient(private val wrapped: JMongoClient) : MongoCluster(wrapped), Closeable {
 
     /**
      * A factory for [MongoClient] instances.

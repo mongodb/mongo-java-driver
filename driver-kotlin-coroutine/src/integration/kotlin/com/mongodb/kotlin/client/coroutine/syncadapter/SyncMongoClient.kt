@@ -19,7 +19,7 @@ import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.kotlin.client.coroutine.MongoClient
 
-internal class SyncMongoClient(override val wrapped: MongoClient) : SyncMongoClientOperations(wrapped), JMongoClient {
+internal class SyncMongoClient(override val wrapped: MongoClient) : SyncMongoCluster(wrapped), JMongoClient {
     override fun close(): Unit = wrapped.close()
 
     override fun getClusterDescription(): ClusterDescription = wrapped.getClusterDescription()

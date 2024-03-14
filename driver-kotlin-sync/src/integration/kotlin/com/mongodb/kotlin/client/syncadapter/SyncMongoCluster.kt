@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.kotlin.client.coroutine.syncadapter
+package com.mongodb.kotlin.client.syncadapter
 
 import com.mongodb.ClientSessionOptions
 import com.mongodb.ReadConcern
@@ -22,17 +22,16 @@ import com.mongodb.WriteConcern
 import com.mongodb.client.ChangeStreamIterable
 import com.mongodb.client.ClientSession
 import com.mongodb.client.ListDatabasesIterable
-import com.mongodb.client.MongoClientOperations as JMongoClientOperations
+import com.mongodb.client.MongoCluster as JMongoCluster
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.MongoIterable
-import com.mongodb.kotlin.client.coroutine.MongoClientOperations
+import com.mongodb.kotlin.client.MongoCluster
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.runBlocking
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
 
-internal open class SyncMongoClientOperations(open val wrapped: MongoClientOperations) : JMongoClientOperations {
+internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoCluster {
     override fun getCodecRegistry(): CodecRegistry = wrapped.codecRegistry
 
     override fun getReadPreference(): ReadPreference = wrapped.readPreference
@@ -43,27 +42,27 @@ internal open class SyncMongoClientOperations(open val wrapped: MongoClientOpera
 
     override fun getTimeout(timeUnit: TimeUnit): Long? = wrapped.timeout(timeUnit)
 
-    override fun withCodecRegistry(codecRegistry: CodecRegistry): SyncMongoClientOperations =
-        SyncMongoClientOperations(wrapped.withCodecRegistry(codecRegistry))
+    override fun withCodecRegistry(codecRegistry: CodecRegistry): SyncMongoCluster =
+        SyncMongoCluster(wrapped.withCodecRegistry(codecRegistry))
 
-    override fun withReadPreference(readPreference: ReadPreference): SyncMongoClientOperations =
-        SyncMongoClientOperations(wrapped.withReadPreference(readPreference))
+    override fun withReadPreference(readPreference: ReadPreference): SyncMongoCluster =
+        SyncMongoCluster(wrapped.withReadPreference(readPreference))
 
-    override fun withReadConcern(readConcern: ReadConcern): SyncMongoClientOperations =
-        SyncMongoClientOperations(wrapped.withReadConcern(readConcern))
+    override fun withReadConcern(readConcern: ReadConcern): SyncMongoCluster =
+        SyncMongoCluster(wrapped.withReadConcern(readConcern))
 
-    override fun withWriteConcern(writeConcern: WriteConcern): SyncMongoClientOperations =
-        SyncMongoClientOperations(wrapped.withWriteConcern(writeConcern))
+    override fun withWriteConcern(writeConcern: WriteConcern): SyncMongoCluster =
+        SyncMongoCluster(wrapped.withWriteConcern(writeConcern))
 
-    override fun withTimeout(timeout: Long, timeUnit: TimeUnit): SyncMongoClientOperations =
-        SyncMongoClientOperations(wrapped.withTimeout(timeout, timeUnit))
+    override fun withTimeout(timeout: Long, timeUnit: TimeUnit): SyncMongoCluster =
+        SyncMongoCluster(wrapped.withTimeout(timeout, timeUnit))
 
     override fun getDatabase(databaseName: String): MongoDatabase = SyncMongoDatabase(wrapped.getDatabase(databaseName))
 
-    override fun startSession(): ClientSession = SyncClientSession(runBlocking { wrapped.startSession() }, this)
+    override fun startSession(): ClientSession = SyncClientSession(wrapped.startSession(), this)
 
     override fun startSession(options: ClientSessionOptions): ClientSession =
-        SyncClientSession(runBlocking { wrapped.startSession(options) }, this)
+        SyncClientSession(wrapped.startSession(options), this)
 
     override fun listDatabaseNames(): MongoIterable<String> = SyncMongoIterable(wrapped.listDatabaseNames())
 

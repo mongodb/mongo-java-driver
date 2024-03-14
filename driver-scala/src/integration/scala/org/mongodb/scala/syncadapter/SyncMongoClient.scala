@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.reflect.ClassTag
 
-case class SyncMongoClient(wrapped: MongoClient) extends SyncMongoClientOperations(wrapped) with JMongoClient {
+case class SyncMongoClient(wrapped: MongoClient) extends SyncMongoCluster(wrapped) with JMongoClient {
 
   override def close(): Unit = wrapped.close()
 

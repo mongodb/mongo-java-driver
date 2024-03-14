@@ -23,7 +23,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
-import com.mongodb.client.MongoClientOperations;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import org.bson.BsonDocument;
@@ -39,7 +39,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static java.util.Objects.requireNonNull;
 
-public class SyncMongoClientOperations implements MongoClientOperations {
+public class SyncMongoCluster implements MongoCluster {
 
     private static long sleepAfterCursorOpenMS;
     private static long sleepAfterCursorErrorMS;
@@ -132,13 +132,13 @@ public class SyncMongoClientOperations implements MongoClientOperations {
         return sleepAfterSessionCloseMS;
     }
 
-    private final com.mongodb.reactivestreams.client.MongoClientOperations wrapped;
+    private final com.mongodb.reactivestreams.client.MongoCluster wrapped;
 
-    public SyncMongoClientOperations(final com.mongodb.reactivestreams.client.MongoClientOperations wrapped) {
+    public SyncMongoCluster(final com.mongodb.reactivestreams.client.MongoCluster wrapped) {
         this.wrapped = wrapped;
     }
 
-    public com.mongodb.reactivestreams.client.MongoClientOperations getWrapped() {
+    public com.mongodb.reactivestreams.client.MongoCluster getWrapped() {
         return wrapped;
     }
 
@@ -168,28 +168,28 @@ public class SyncMongoClientOperations implements MongoClientOperations {
     }
 
     @Override
-    public MongoClientOperations withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new SyncMongoClientOperations(wrapped.withCodecRegistry(codecRegistry));
+    public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new SyncMongoCluster(wrapped.withCodecRegistry(codecRegistry));
     }
 
     @Override
-    public MongoClientOperations withReadPreference(final ReadPreference readPreference) {
-        return new SyncMongoClientOperations(wrapped.withReadPreference(readPreference));
+    public MongoCluster withReadPreference(final ReadPreference readPreference) {
+        return new SyncMongoCluster(wrapped.withReadPreference(readPreference));
     }
 
     @Override
-    public MongoClientOperations withWriteConcern(final WriteConcern writeConcern) {
-        return new SyncMongoClientOperations(wrapped.withWriteConcern(writeConcern));
+    public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
+        return new SyncMongoCluster(wrapped.withWriteConcern(writeConcern));
     }
 
     @Override
-    public MongoClientOperations withReadConcern(final ReadConcern readConcern) {
-        return new SyncMongoClientOperations(wrapped.withReadConcern(readConcern));
+    public MongoCluster withReadConcern(final ReadConcern readConcern) {
+        return new SyncMongoCluster(wrapped.withReadConcern(readConcern));
     }
 
     @Override
-    public MongoClientOperations withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new SyncMongoClientOperations(wrapped.withTimeout(timeout, timeUnit));
+    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new SyncMongoCluster(wrapped.withTimeout(timeout, timeUnit));
     }
 
     @Override

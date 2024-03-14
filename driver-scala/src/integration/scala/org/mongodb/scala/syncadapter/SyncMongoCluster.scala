@@ -1,15 +1,11 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
-import com.mongodb.client.{
-  ClientSession,
-  MongoClientOperations => JMongoClientOperations,
-  MongoDatabase => JMongoDatabase
-}
+import com.mongodb.client.{ ClientSession, MongoCluster => JMongoCluster, MongoDatabase => JMongoDatabase }
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.mongodb.scala.MongoClientOperations
+import org.mongodb.scala.MongoCluster
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
 import java.util.concurrent.TimeUnit
@@ -18,12 +14,12 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
-object SyncMongoClientOperations {
+object SyncMongoCluster {
 
-  def apply(wrapped: MongoClientOperations): SyncMongoClientOperations = new SyncMongoClientOperations(wrapped)
+  def apply(wrapped: MongoCluster): SyncMongoCluster = new SyncMongoCluster(wrapped)
 }
 
-class SyncMongoClientOperations(wrapped: MongoClientOperations) extends JMongoClientOperations {
+class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
 
   override def getCodecRegistry: CodecRegistry = wrapped.codecRegistry
 
@@ -38,20 +34,20 @@ class SyncMongoClientOperations(wrapped: MongoClientOperations) extends JMongoCl
     if (timeout.isDefined) timeout.get else null
   }
 
-  override def withCodecRegistry(codecRegistry: CodecRegistry): JMongoClientOperations =
-    SyncMongoClientOperations(wrapped.withCodecRegistry(codecRegistry))
+  override def withCodecRegistry(codecRegistry: CodecRegistry): JMongoCluster =
+    SyncMongoCluster(wrapped.withCodecRegistry(codecRegistry))
 
-  override def withReadPreference(readPreference: ReadPreference): JMongoClientOperations =
-    SyncMongoClientOperations(wrapped.withReadPreference(readPreference))
+  override def withReadPreference(readPreference: ReadPreference): JMongoCluster =
+    SyncMongoCluster(wrapped.withReadPreference(readPreference))
 
-  override def withWriteConcern(writeConcern: WriteConcern): JMongoClientOperations =
-    SyncMongoClientOperations(wrapped.withWriteConcern(writeConcern))
+  override def withWriteConcern(writeConcern: WriteConcern): JMongoCluster =
+    SyncMongoCluster(wrapped.withWriteConcern(writeConcern))
 
-  override def withReadConcern(readConcern: ReadConcern): JMongoClientOperations =
-    SyncMongoClientOperations(wrapped.withReadConcern(readConcern))
+  override def withReadConcern(readConcern: ReadConcern): JMongoCluster =
+    SyncMongoCluster(wrapped.withReadConcern(readConcern))
 
-  override def withTimeout(timeout: Long, timeUnit: TimeUnit): JMongoClientOperations =
-    SyncMongoClientOperations(wrapped.withTimeout(Duration(timeout, timeUnit)))
+  override def withTimeout(timeout: Long, timeUnit: TimeUnit): JMongoCluster =
+    SyncMongoCluster(wrapped.withTimeout(Duration(timeout, timeUnit)))
 
   override def getDatabase(databaseName: String): JMongoDatabase =
     SyncMongoDatabase(wrapped.getDatabase(databaseName))

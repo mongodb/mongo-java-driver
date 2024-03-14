@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  * @since CSOT
  */
 @Immutable
-public interface MongoClientOperations {
+public interface MongoCluster {
 
     /**
      * Get the codec registry for the MongoClientClusterOperations.
@@ -121,7 +121,7 @@ public interface MongoClientOperations {
      * @see org.bson.codecs.configuration.CodecRegistries
      * @since CSOT
      */
-    MongoClientOperations withCodecRegistry(CodecRegistry codecRegistry);
+    MongoCluster withCodecRegistry(CodecRegistry codecRegistry);
 
     /**
      * Create a new MongoClientClusterOperations instance with a different read preference.
@@ -130,7 +130,7 @@ public interface MongoClientOperations {
      * @return a new MongoDatabase instance with the different readPreference
      * @since CSOT
      */
-    MongoClientOperations withReadPreference(ReadPreference readPreference);
+    MongoCluster withReadPreference(ReadPreference readPreference);
 
     /**
      * Create a new MongoClientClusterOperations instance with a different write concern.
@@ -139,7 +139,7 @@ public interface MongoClientOperations {
      * @return a new MongoDatabase instance with the different writeConcern
      * @since CSOT
      */
-    MongoClientOperations withWriteConcern(WriteConcern writeConcern);
+    MongoCluster withWriteConcern(WriteConcern writeConcern);
 
     /**
      * Create a new MongoClientClusterOperations instance with a different read concern.
@@ -149,7 +149,7 @@ public interface MongoClientOperations {
      * @since CSOT
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
-    MongoClientOperations withReadConcern(ReadConcern readConcern);
+    MongoCluster withReadConcern(ReadConcern readConcern);
 
     /**
      * Create a new MongoClientClusterOperations instance with the set time limit for the full execution of an operation.
@@ -165,7 +165,7 @@ public interface MongoClientOperations {
      * @since CSOT
      * @see #getTimeout
      */
-    MongoClientOperations withTimeout(long timeout, TimeUnit timeUnit);
+    MongoCluster withTimeout(long timeout, TimeUnit timeUnit);
 
     /**
      * Gets a {@link MongoDatabase} instance for the given database name.

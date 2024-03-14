@@ -19,7 +19,7 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.reactivestreams.client.MongoClientOperations as JMongoClientOperations
+import com.mongodb.reactivestreams.client.MongoCluster as JMongoCluster
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
@@ -37,7 +37,7 @@ import org.bson.conversions.Bson
  * @see MongoClient
  * @since CSOT
  */
-public open class MongoClientOperations protected constructor(private val wrapped: JMongoClientOperations) {
+public open class MongoCluster protected constructor(private val wrapped: JMongoCluster) {
 
     /** The codec registry. */
     public val codecRegistry: CodecRegistry
@@ -87,8 +87,8 @@ public open class MongoClientOperations protected constructor(private val wrappe
      * @return a new MongoDatabase instance with the different codec registry
      * @see org.bson.codecs.configuration.CodecRegistries
      */
-    public fun withCodecRegistry(newCodecRegistry: CodecRegistry): MongoClientOperations =
-        MongoClientOperations(wrapped.withCodecRegistry(newCodecRegistry))
+    public fun withCodecRegistry(newCodecRegistry: CodecRegistry): MongoCluster =
+        MongoCluster(wrapped.withCodecRegistry(newCodecRegistry))
 
     /**
      * Create a new MongoDatabase instance with a different read preference.
@@ -96,8 +96,8 @@ public open class MongoClientOperations protected constructor(private val wrappe
      * @param newReadPreference the new [ReadPreference] for the database
      * @return a new MongoDatabase instance with the different readPreference
      */
-    public fun withReadPreference(newReadPreference: ReadPreference): MongoClientOperations =
-        MongoClientOperations(wrapped.withReadPreference(newReadPreference))
+    public fun withReadPreference(newReadPreference: ReadPreference): MongoCluster =
+        MongoCluster(wrapped.withReadPreference(newReadPreference))
 
     /**
      * Create a new MongoDatabase instance with a different read concern.
@@ -106,8 +106,8 @@ public open class MongoClientOperations protected constructor(private val wrappe
      * @return a new MongoDatabase instance with the different ReadConcern
      * @see [Read Concern](https://www.mongodb.com/docs/manual/reference/readConcern/)
      */
-    public fun withReadConcern(newReadConcern: ReadConcern): MongoClientOperations =
-        MongoClientOperations(wrapped.withReadConcern(newReadConcern))
+    public fun withReadConcern(newReadConcern: ReadConcern): MongoCluster =
+        MongoCluster(wrapped.withReadConcern(newReadConcern))
 
     /**
      * Create a new MongoDatabase instance with a different write concern.
@@ -115,8 +115,8 @@ public open class MongoClientOperations protected constructor(private val wrappe
      * @param newWriteConcern the new [WriteConcern] for the database
      * @return a new MongoDatabase instance with the different writeConcern
      */
-    public fun withWriteConcern(newWriteConcern: WriteConcern): MongoClientOperations =
-        MongoClientOperations(wrapped.withWriteConcern(newWriteConcern))
+    public fun withWriteConcern(newWriteConcern: WriteConcern): MongoCluster =
+        MongoCluster(wrapped.withWriteConcern(newWriteConcern))
 
     /**
      * Create a new MongoDatabase instance with the set time limit for the full execution of an operation.
@@ -129,8 +129,8 @@ public open class MongoClientOperations protected constructor(private val wrappe
      * @see [MongoDatabase.timeout]
      * @since CSOT
      */
-    public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoClientOperations =
-        MongoClientOperations(wrapped.withTimeout(timeout, timeUnit))
+    public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCluster =
+        MongoCluster(wrapped.withTimeout(timeout, timeUnit))
 
     /**
      * Gets a [MongoDatabase] instance for the given database name.
