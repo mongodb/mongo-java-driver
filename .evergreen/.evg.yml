@@ -181,12 +181,8 @@ functions:
         shell: "bash"
         script: |
           ${PREPARE_SHELL}
-          set +o xtrace
-          SERVERLESS_DRIVERS_GROUP=${SERVERLESS_DRIVERS_GROUP} \
-          SERVERLESS_API_PUBLIC_KEY=${SERVERLESS_API_PUBLIC_KEY} \
-          SERVERLESS_API_PRIVATE_KEY=${SERVERLESS_API_PRIVATE_KEY} \
-          LOADBALANCED=ON \
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
+          bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh ${VAULT_NAME}
+          bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
     - command: expansions.update
       params:
         file: serverless-expansion.yml
@@ -203,12 +199,7 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          set +o xtrace
-          SERVERLESS_DRIVERS_GROUP=${SERVERLESS_DRIVERS_GROUP} \
-          SERVERLESS_API_PUBLIC_KEY=${SERVERLESS_API_PUBLIC_KEY} \
-          SERVERLESS_API_PRIVATE_KEY=${SERVERLESS_API_PRIVATE_KEY} \
-          SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} \
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
+          bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
 
   "teardown_aws":
     - command: shell.exec
@@ -269,13 +260,15 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: bash
+        include_expansions_in_env:
+          - JAVA_VERSION
+          - SERVERLESS_URI
+          - SERVERLESS_ATLAS_USER
+          - SERVERLESS_ATLAS_PASSWORD
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION="${JAVA_VERSION}" \
-          SERVERLESS_URI="${SERVERLESS_URI}" \
-          SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}" \
-          SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}" \
-            .evergreen/run-serverless-tests.sh
+          .evergreen/run-serverless-tests.sh
 
   "run reactive streams tck tests":
     - command: shell.exec
@@ -1867,6 +1860,20 @@ axes:
         variables:
           AWS_CREDENTIAL_PROVIDER: "builtIn"
 
+  - id: serverless
+    display_name: "Serverless"
+    values:
+      - id: "passthrough"
+        display_name: "Serverless Passthrough Proxy"
+        variables:
+          VAULT_NAME: "serverless"
+        batchtime: 10080  # 7 days
+      - id: "terminating"
+        display_name: "Serverless Terminating Proxy"
+        variables:
+          VAULT_NAME: "serverless_next"
+        batchtime: 10080  # 7 days
+
 task_groups:
   - name: test_atlas_task_group_search_indexes
     setup_group:
@@ -2072,8 +2079,8 @@ buildvariants:
     - name: "load-balancer-test"
 
 - matrix_name: "tests-serverless"
-  matrix_spec: { jdk: ["jdk21"], os: "ubuntu" }
-  display_name: "Serverless"
+  matrix_spec: { serverless: "*", jdk: ["jdk21"], os: "ubuntu" }
+  display_name: "${serverless} ${jdk} ${os}"
   tasks:
     - name: "serverless-test"
 
