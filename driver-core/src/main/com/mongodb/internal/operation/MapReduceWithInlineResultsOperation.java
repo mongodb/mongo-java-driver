@@ -231,7 +231,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
-        BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
+        BsonDocument commandDocument = new BsonDocument("mapReduce", new BsonString(namespace.getCollectionName()))
                                            .append("map", getMapFunction())
                                            .append("reduce", getReduceFunction())
                                            .append("out", new BsonDocument("inline", new BsonInt32(1)));

@@ -300,7 +300,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         if (getDatabaseName() != null) {
             outputDocument.put("db", new BsonString(getDatabaseName()));
         }
-        BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
+        BsonDocument commandDocument = new BsonDocument("mapReduce", new BsonString(namespace.getCollectionName()))
                                            .append("map", getMapFunction())
                                            .append("reduce", getReduceFunction())
                                            .append("out", outputDocument);
