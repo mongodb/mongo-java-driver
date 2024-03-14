@@ -58,12 +58,14 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
                put("key", localMasterKey);
            }});
         }};
-
+        MongoClientSettings commonClientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
+                .build();
         String keyVaultNamespace = "encryption.__keyVault";
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://localhost"))
-                        .build())
+                .keyVaultMongoClientSettings(commonClientSettings)
                 .keyVaultNamespace(keyVaultNamespace)
                 .kmsProviders(kmsProviders)
                 .build();
@@ -99,7 +101,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
                                     + "}"));
                 }}).build();
 
-        MongoClientSettings clientSettings = MongoClientSettings.builder()
+        MongoClientSettings clientSettings = MongoClientSettings.builder(commonClientSettings)
                 .autoEncryptionSettings(autoEncryptionSettings)
                 .build();
 
