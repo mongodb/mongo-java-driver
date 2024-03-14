@@ -228,7 +228,7 @@ class DataClassCodecTest {
             |"nestedParameterized": {
             |  "parameterizedDataClass":
             |  {"number": 4.2, "string": "myString", "parameterizedList": [{"name": "embedded1"}]},
-            |  "other": "myOtherString"
+            |  "other": "myOtherString", "optionalOther": "myOptionalOtherString"
             | }
             |}"""
                 .trimMargin()
@@ -236,7 +236,8 @@ class DataClassCodecTest {
             DataClassWithNestedParameterizedDataClass(
                 "myId",
                 DataClassWithNestedParameterized(
-                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))), "myOtherString"))
+                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))), "myOtherString",
+                    "myOptionalOtherString"))
 
         assertRoundTrips(expected, dataClass)
     }
