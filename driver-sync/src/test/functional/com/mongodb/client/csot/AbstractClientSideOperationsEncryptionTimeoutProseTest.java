@@ -199,10 +199,21 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
+    @Tag("setsFailPoint")
     void shouldDecreaseOperationTimeoutForSubsequentOperations() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
         long initialTimeoutMS = rtt + 2500;
+
+        keyVaultCollectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: \"alwaysOn\","
+                + "  data: {"
+                + "    failCommands: [\"insert\", \"find\", \"listCollections\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + (rtt + 10)
+                + "  }"
+                + "}");
 
         try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder()
                 .timeout(initialTimeoutMS, MILLISECONDS))) {
