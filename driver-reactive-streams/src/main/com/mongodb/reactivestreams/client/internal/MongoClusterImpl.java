@@ -131,6 +131,10 @@ final class MongoClusterImpl implements MongoCluster {
         return crypt;
     }
 
+    public ClientSessionHelper getClientSessionHelper() {
+        return clientSessionHelper;
+    }
+
     public ServerSessionPool getServerSessionPool() {
         return serverSessionPool;
     }
