@@ -245,6 +245,15 @@ data class DataClassOptionalBsonValues(
 
 @Serializable @SerialName("C") data class DataClassSealedC(val c: String) : DataClassSealed()
 
+@Serializable
+sealed interface SealedInterface {
+    val name: String
+}
+
+@Serializable
+data class DataClassSealedInterface(@Contextual @SerialName("_id") val id: ObjectId, override val name: String) :
+    SealedInterface
+
 @Serializable data class DataClassListOfSealed(val items: List<DataClassSealed>)
 
 interface DataClassOpen
