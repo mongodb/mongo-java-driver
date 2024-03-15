@@ -55,7 +55,7 @@ final class TimeoutContextTest {
     @Test
     @DisplayName("Uses timeoutMS if set")
     void testUsesTimeoutMSIfSet() {
-        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT.withMaxAwaitTimeMS(9));
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT);
 
         assertTrue(timeoutContext.hasTimeoutMS());
         assertTrue(timeoutContext.getMaxTimeMS() > 0);
