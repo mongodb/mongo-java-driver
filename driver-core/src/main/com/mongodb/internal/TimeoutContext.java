@@ -324,7 +324,7 @@ public class TimeoutContext {
     }
 
     public void addExtraElements(final List<BsonElement> extraElements) {
-        long maxTimeMS = maxTimeSupplier.get();
+        Long maxTimeMS = maxTimeSupplier.get();
         if (maxTimeMS > 0) {
             extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)));
         }

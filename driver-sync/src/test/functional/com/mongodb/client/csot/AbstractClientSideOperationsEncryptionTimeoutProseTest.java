@@ -214,8 +214,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 
             AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
                     .keyVaultNamespace(keyVaultNamespace.getFullName())
-                    .keyVaultMongoClientSettings(MongoClientSettings.builder()
-                            .addCommandListener(commandListener)
+                    .keyVaultMongoClientSettings(getMongoClientSettingsBuilder()
                             .build())
                     .kmsProviders(KMS_PROVIDERS)
                     .build();
