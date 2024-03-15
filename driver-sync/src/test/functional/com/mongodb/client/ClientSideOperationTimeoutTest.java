@@ -81,6 +81,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("No count command helper", testDescription.endsWith("count on collection"));
         assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS can be overridden for an operation"));
+
         assumeFalse("No operation session based overrides",
                 fileDescription.equals("timeoutMS can be overridden for individual session operations"));
         assumeFalse("No operation session based overrides",

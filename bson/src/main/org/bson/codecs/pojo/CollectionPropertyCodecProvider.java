@@ -15,6 +15,8 @@
  */
 package org.bson.codecs.pojo;
 
+import java.util.TreeSet;
+
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
@@ -89,6 +91,8 @@ final class CollectionPropertyCodecProvider implements PropertyCodecProvider {
                     return new ArrayList<>();
                 } else if (encoderClass.isAssignableFrom(HashSet.class)) {
                     return new HashSet<>();
+                } else if (encoderClass.isAssignableFrom(TreeSet.class)) {
+                    return new TreeSet<>();
                 } else {
                     throw new CodecConfigurationException(format("Unsupported Collection interface of %s!", encoderClass.getName()));
                 }

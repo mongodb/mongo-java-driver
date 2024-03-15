@@ -85,13 +85,14 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
-                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, SameObjectProvider.initialized(sdam),
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, false, SameObjectProvider.initialized(sdam),
                 OPERATION_CONTEXT_FACTORY)
+
         monitor.start()
 
         when:
         monitor.close()
-        monitor.monitorThread.join()
+        monitor.monitor.join()
 
         then:
         !stateChanged
@@ -169,7 +170,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, false, mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
 
         when:
         monitor.start()
@@ -248,7 +249,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.SECONDS).addServerMonitorListener(serverMonitorListener).build(),
-                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
+                internalConnectionFactory, ClusterConnectionMode.SINGLE, null, false, mockSdamProvider(), OPERATION_CONTEXT_FACTORY)
 
         when:
         monitor.start()

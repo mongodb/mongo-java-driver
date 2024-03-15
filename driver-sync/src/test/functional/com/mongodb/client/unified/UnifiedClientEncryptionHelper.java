@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static java.lang.Math.toIntExact;
 
 public final class UnifiedClientEncryptionHelper {
@@ -59,30 +60,30 @@ public final class UnifiedClientEncryptionHelper {
             Map<String, Object> kmsProviderMap = new HashMap<>();
             switch (kmsProviderKey) {
                 case "aws":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "org.mongodb.test.awsAccessKeyId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "org.mongodb.test.awsSecretAccessKey");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_ACCESS_KEY_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_SECRET_ACCESS_KEY");
                     break;
                 case "awsTemporary":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "org.mongodb.test.tmpAwsAccessKeyId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "org.mongodb.test.tmpAwsSecretAccessKey");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "sessionToken", "org.mongodb.test.tmpAwsSessionToken");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_TEMP_ACCESS_KEY_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_TEMP_SECRET_ACCESS_KEY");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "sessionToken", "AWS_TEMP_SESSION_TOKEN");
                     break;
                 case "awsTemporaryNoSessionToken":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "org.mongodb.test.tmpAwsAccessKeyId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "org.mongodb.test.tmpAwsSecretAccessKey");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_TEMP_ACCESS_KEY_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_TEMP_SECRET_ACCESS_KEY");
                     break;
                 case "azure":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "tenantId", "org.mongodb.test.azureTenantId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientId", "org.mongodb.test.azureClientId");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientSecret", "org.mongodb.test.azureClientSecret");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "tenantId", "AZURE_TENANT_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientId", "AZURE_CLIENT_ID");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientSecret", "AZURE_CLIENT_SECRET");
                     break;
                 case "gcp":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "email", "org.mongodb.test.gcpEmail");
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "privateKey", "org.mongodb.test.gcpPrivateKey");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "email", "GCP_EMAIL");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "privateKey", "GCP_PRIVATE_KEY");
                     break;
                 case "kmip":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "endpoint", () ->
-                            System.getProperty("org.mongodb.test.kmipEndpoint", "localhost:5698"));
+                            getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "key", UnifiedClientEncryptionHelper::localKmsProviderKey);
@@ -104,8 +105,8 @@ public final class UnifiedClientEncryptionHelper {
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
             final BsonDocument kmsProviderOptions, final String key, final String propertyName) {
         setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, key, () -> {
-            if (System.getProperties().containsKey(propertyName)) {
-                return System.getProperty(propertyName);
+            if (getEnv(propertyName) != null) {
+                return getEnv(propertyName);
             }
             throw new UnsupportedOperationException("Missing system property for: " + key);
         });

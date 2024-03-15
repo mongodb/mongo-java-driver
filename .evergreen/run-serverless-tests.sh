@@ -19,6 +19,8 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 
 echo "Running serverless tests with Java ${JAVA_VERSION}"
 
+source ${DRIVERS_TOOLS}/.evergreen/serverless/secrets-export.sh
+
 # Assume "mongodb+srv" protocol
 MONGODB_URI="mongodb+srv://${SERVERLESS_ATLAS_USER}:${SERVERLESS_ATLAS_PASSWORD}@${SERVERLESS_URI:14}"
 

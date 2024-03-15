@@ -60,10 +60,18 @@ class SocketStreamHelperSpecification extends Specification {
 
         // If the Java 11+ extended socket options for keep alive probes are available, check those values.
         if (Arrays.stream(ExtendedSocketOptions.getDeclaredFields()).anyMatch{ f -> f.getName().equals('TCP_KEEPCOUNT') }) {
-            Method getOptionMethod = Socket.getMethod('getOption', SocketOption)
-            getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPCOUNT').get(null)) == 9
-            getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPIDLE').get(null)) == 120
-            getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPINTERVAL').get(null)) == 10
+            Method getOptionMethod
+            try {
+                getOptionMethod = Socket.getMethod('getOption', SocketOption)
+            } catch (NoSuchMethodException e) {
+                // ignore, the `Socket.getOption` method was added in Java SE 9 and does not exist in Java SE 8
+                getOptionMethod = null
+            }
+            if (getOptionMethod != null) {
+                getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPCOUNT').get(null)) == 9
+                getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPIDLE').get(null)) == 120
+                getOptionMethod.invoke(socket, ExtendedSocketOptions.getDeclaredField('TCP_KEEPINTERVAL').get(null)) == 10
+            }
         }
 
         cleanup:

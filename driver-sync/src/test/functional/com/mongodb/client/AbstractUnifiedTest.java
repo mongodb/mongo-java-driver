@@ -77,6 +77,7 @@ import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEqualit
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static java.lang.Math.toIntExact;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -167,7 +168,7 @@ public abstract class AbstractUnifiedTest {
 
         collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
-        collectionHelper.killAllSessions();
+        killAllSessions();
 
         if (!isDataLakeTest()) {
             try {

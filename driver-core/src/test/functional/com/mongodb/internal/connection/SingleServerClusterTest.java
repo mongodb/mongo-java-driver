@@ -68,7 +68,7 @@ public class SingleServerClusterTest {
                         ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
                         OPERATION_CONTEXT_FACTORY, streamFactory, OPERATION_CONTEXT_FACTORY, streamFactory, getCredential(),
                         LoggerSettings.builder().build(), null, null, null,
-                        Collections.emptyList(), getServerApi()));
+                        Collections.emptyList(), getServerApi(), false));
     }
 
     @After

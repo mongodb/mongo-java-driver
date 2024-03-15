@@ -311,7 +311,7 @@ final class Operations<TDocument> {
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
                 .collation(options.getCollation())
-                .hint(options.getHint())
+                .hint(toBsonDocument(options.getHint()))
                 .hintString(options.getHintString())
                 .comment(options.getComment())
                 .let(toBsonDocument(options.getLet()));
@@ -328,7 +328,7 @@ final class Operations<TDocument> {
                 .upsert(options.isUpsert())
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .collation(options.getCollation())
-                .hint(options.getHint())
+                .hint(toBsonDocument(options.getHint()))
                 .hintString(options.getHintString())
                 .comment(options.getComment())
                 .let(toBsonDocument(options.getLet()));
@@ -345,7 +345,7 @@ final class Operations<TDocument> {
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .collation(options.getCollation())
                 .arrayFilters(toBsonDocumentList(options.getArrayFilters()))
-                .hint(options.getHint())
+                .hint(toBsonDocument(options.getHint()))
                 .hintString(options.getHintString())
                 .comment(options.getComment())
                 .let(toBsonDocument(options.getLet()));
@@ -363,7 +363,7 @@ final class Operations<TDocument> {
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .collation(options.getCollation())
                 .arrayFilters(toBsonDocumentList(options.getArrayFilters()))
-                .hint(options.getHint())
+                .hint(toBsonDocument(options.getHint()))
                 .hintString(options.getHintString())
                 .comment(options.getComment())
                 .let(toBsonDocument(options.getLet()));
@@ -455,7 +455,7 @@ final class Operations<TDocument> {
                         documentToBsonDocument(replaceOneModel.getReplacement()), WriteRequest.Type.REPLACE)
                         .upsert(replaceOneModel.getReplaceOptions().isUpsert())
                         .collation(replaceOneModel.getReplaceOptions().getCollation())
-                        .hint(replaceOneModel.getReplaceOptions().getHint())
+                        .hint(toBsonDocument(replaceOneModel.getReplaceOptions().getHint()))
                         .hintString(replaceOneModel.getReplaceOptions().getHintString());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
@@ -466,7 +466,7 @@ final class Operations<TDocument> {
                         .upsert(updateOneModel.getOptions().isUpsert())
                         .collation(updateOneModel.getOptions().getCollation())
                         .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()))
-                        .hint(updateOneModel.getOptions().getHint())
+                        .hint(toBsonDocument(updateOneModel.getOptions().getHint()))
                         .hintString(updateOneModel.getOptions().getHintString());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
@@ -477,19 +477,19 @@ final class Operations<TDocument> {
                         .upsert(updateManyModel.getOptions().isUpsert())
                         .collation(updateManyModel.getOptions().getCollation())
                         .arrayFilters(toBsonDocumentList(updateManyModel.getOptions().getArrayFilters()))
-                        .hint(updateManyModel.getOptions().getHint())
+                        .hint(toBsonDocument(updateManyModel.getOptions().getHint()))
                         .hintString(updateManyModel.getOptions().getHintString());
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
                 writeRequest = new DeleteRequest(assertNotNull(toBsonDocument(deleteOneModel.getFilter()))).multi(false)
                         .collation(deleteOneModel.getOptions().getCollation())
-                        .hint(deleteOneModel.getOptions().getHint())
+                        .hint(toBsonDocument(deleteOneModel.getOptions().getHint()))
                         .hintString(deleteOneModel.getOptions().getHintString());
             } else if (writeModel instanceof DeleteManyModel) {
                 DeleteManyModel<TDocument> deleteManyModel = (DeleteManyModel<TDocument>) writeModel;
                 writeRequest = new DeleteRequest(assertNotNull(toBsonDocument(deleteManyModel.getFilter()))).multi(true)
                         .collation(deleteManyModel.getOptions().getCollation())
-                        .hint(deleteManyModel.getOptions().getHint())
+                        .hint(toBsonDocument(deleteManyModel.getOptions().getHint()))
                         .hintString(deleteManyModel.getOptions().getHintString());
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
