@@ -185,8 +185,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
-     * `timeoutMS` setting has been set.
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
      *
      * @param T the class to decode each document into
      * @param command the command to be run
@@ -204,8 +204,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
-     * `timeoutMS` setting has been set.
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
      *
      * @param T the class to decode each document into
      * @param clientSession the client session with which to associate this operation
@@ -225,8 +225,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
-     * `timeoutMS` setting has been set.
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
      *
      * @param T the class to decode each document into
      * @param command the command to be run
@@ -242,8 +242,8 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
-     * `timeoutMS` setting has been set.
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
      *
      * @param T the class to decode each document into
      * @param clientSession the client session with which to associate this operation
