@@ -284,7 +284,8 @@ public abstract class AbstractMongoCollectionTest {
 
             @Override
             public void encode(final BsonWriter writer, final ShapeModelCircle value, final EncoderContext encoderContext) {
-                throw new UnsupportedOperationException("Not supported");
+                throw new UnsupportedOperationException("If this method is called it means this codec was used directly, "
+                        + "even though its not the MongoCollection document class.");
             }
 
             @Override
@@ -294,7 +295,8 @@ public abstract class AbstractMongoCollectionTest {
 
             @Override
             public ShapeModelCircle decode(final BsonReader reader, final DecoderContext decoderContext) {
-                throw new UnsupportedOperationException("Not supported");
+                throw new UnsupportedOperationException("If this method is called it means this codec was used directly, "
+                        + "even though its not the MongoCollection document class.");
             }
         };
 
