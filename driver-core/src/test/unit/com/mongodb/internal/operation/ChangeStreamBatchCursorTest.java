@@ -285,6 +285,7 @@ final class ChangeStreamBatchCursorTest {
     }
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     void setUp() {
         resumeToken = new BsonDocument("_id", new BsonInt32(1));
         serverDescription = mock(ServerDescription.class);

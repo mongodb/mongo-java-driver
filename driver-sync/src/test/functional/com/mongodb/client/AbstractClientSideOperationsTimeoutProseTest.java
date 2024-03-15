@@ -465,6 +465,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @Tag("setsFailPoint")
+    @SuppressWarnings("try")
     @DisplayName("9. End Session 1 / 2")
     @Test
     public void test9EndSessionClientTimeout() {
@@ -499,6 +500,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @Tag("setsFailPoint")
+    @SuppressWarnings("try")
     @DisplayName("9. End Session 2 / 2")
     @Test
     public void test9EndSessionSessionTimeout() {
