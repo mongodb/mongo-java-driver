@@ -69,15 +69,17 @@ internal open class DefaultBsonDecoder(
         val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
         val bsonValueCodec = BsonValueCodec()
         const val UNKNOWN_INDEX = -10
-        fun validateCurrentBsonType(reader: AbstractBsonReader,
-                                    expectedType: BsonType,
-                                    descriptor: SerialDescriptor,
-                                    actualType: (descriptor: SerialDescriptor) -> String = { it.kind.toString() }) {
+        fun validateCurrentBsonType(
+            reader: AbstractBsonReader,
+            expectedType: BsonType,
+            descriptor: SerialDescriptor,
+            actualType: (descriptor: SerialDescriptor) -> String = { it.kind.toString() }
+        ) {
             reader.currentBsonType?.let {
                 if (it != expectedType) {
                     throw SerializationException(
-                        "Invalid data for `${actualType(descriptor)}` expected a bson ${expectedType.name.lowercase()} found: " +
-                                "${reader.currentBsonType}")
+                        "Invalid data for `${actualType(descriptor)}` expected a bson " +
+                            "${expectedType.name.lowercase()} found: ${reader.currentBsonType}")
                 }
             }
         }
