@@ -394,6 +394,11 @@ final class MongoClusterImpl implements MongoCluster {
             return new OperationExecutorImpl(newTimeoutSettings);
         }
 
+        @Override
+        public TimeoutSettings getTimeoutSettings() {
+            return executorTimeoutSettings;
+        }
+
         WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
             return getReadWriteBinding(primary(), readConcern, session, ownsSession);
         }

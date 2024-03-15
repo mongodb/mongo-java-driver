@@ -176,6 +176,10 @@ public final class CollectionHelper<T> {
         insertDocuments(asList(documents));
     }
 
+    public void insertDocuments(final WriteConcern writeConcern, final BsonDocument... documents) {
+        insertDocuments(asList(documents), writeConcern);
+    }
+
     public void insertDocuments(final List<BsonDocument> documents) {
         insertDocuments(documents, getBinding());
     }

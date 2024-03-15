@@ -31,10 +31,12 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
@@ -151,4 +153,15 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
         return mongoOperationPublisher.createReadOperationMono(getTimeoutSettings(), supplier, clientSession).map(BatchCursor::new);
     }
 
+
+    protected long validateMaxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        Long timeoutMS = mongoOperationPublisher.getTimeoutSettings().getTimeoutMS();
+        long maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+
+        isTrueArgument("maxAwaitTimeMS must be less than timeoutMS", timeoutMS == null || timeoutMS == 0
+                || timeoutMS > maxAwaitTimeMS);
+
+        return maxAwaitTimeMS;
+    }
 }

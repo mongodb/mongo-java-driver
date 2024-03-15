@@ -468,6 +468,8 @@ public abstract class UnifiedTest {
                     return crudHelper.close(operation);
                 case "iterateUntilDocumentOrError":
                     return crudHelper.executeIterateUntilDocumentOrError(operation);
+                case "iterateOnce":
+                    return crudHelper.executeIterateOnce(operation);
                 case "delete":
                     return gridFSHelper.executeDelete(operation);
                 case "drop":

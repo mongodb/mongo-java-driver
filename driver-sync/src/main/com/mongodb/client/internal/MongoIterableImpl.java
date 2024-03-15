@@ -29,8 +29,10 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -152,5 +154,17 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
 
     private BatchCursor<TResult> execute() {
         return getExecutor().execute(asReadOperation(), readPreference, readConcern, clientSession);
+    }
+
+
+    protected long validateMaxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        Long timeoutMS = timeoutSettings.getTimeoutMS();
+        long maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+
+        isTrueArgument("maxAwaitTimeMS must be less than timeoutMS", timeoutMS == null || timeoutMS == 0
+                || timeoutMS > maxAwaitTimeMS);
+
+        return maxAwaitTimeMS;
     }
 }

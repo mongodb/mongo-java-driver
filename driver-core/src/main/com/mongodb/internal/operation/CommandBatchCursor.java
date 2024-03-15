@@ -27,6 +27,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
@@ -256,6 +257,16 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         logCommandCursorResult(commandCursorResult);
         this.nextBatch = commandCursorResult.getResults().isEmpty() ? null : commandCursorResult.getResults();
         return commandCursorResult;
+    }
+
+    /**
+     * Configures the cursor's behavior to close without resetting its timeout. If {@code true}, the cursor attempts to close immediately
+     * without resetting its {@link TimeoutContext#getTimeout()} if present. This is useful when managing the cursor's close behavior externally.
+     *
+     * @param closeWithoutTimeoutReset
+     */
+    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
+        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
     }
 
     @ThreadSafe

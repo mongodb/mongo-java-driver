@@ -144,6 +144,10 @@ public class TestCommandListener implements CommandListener {
                 .orElseThrow(() -> new IllegalArgumentException(commandName + " not found in command failed event list"));
     }
 
+    public List<CommandFailedEvent> getCommandFailedEvents() {
+        return getEvents(CommandFailedEvent.class, Integer.MAX_VALUE);
+    }
+
     public List<CommandStartedEvent> getCommandStartedEvents() {
         return getEvents(CommandStartedEvent.class, Integer.MAX_VALUE);
     }

@@ -79,7 +79,7 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     @Override
     public FindPublisher<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
+        validateMaxAwaitTime(maxAwaitTime, timeUnit);
         findOptions.maxAwaitTime(maxAwaitTime, timeUnit);
         return this;
     }

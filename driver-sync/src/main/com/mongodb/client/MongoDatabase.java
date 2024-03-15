@@ -188,7 +188,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command the command to be run
      * @return the command result
@@ -198,7 +199,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command
@@ -209,7 +211,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command     the command to be run
      * @param resultClass the class to decode each document into
@@ -221,7 +224,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command
@@ -234,7 +238,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param command the command to be run
@@ -247,7 +252,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param command        the command to be run
@@ -261,7 +267,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param command     the command to be run
@@ -276,7 +283,8 @@ public interface MongoDatabase {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
-     * <p>Note: If set the {@link #getTimeout} value will overwrite any {@code maxTimeMS} value in the command.</p>
+     * <p>Note: The behavior of {@code runCommand} is undefined if the provided command document includes a {@code maxTimeMS} field and the
+     * {@code timeoutMS} setting has been set.</p>
      *
      * @param clientSession  the client session with which to associate this operation
      * @param command        the command to be run

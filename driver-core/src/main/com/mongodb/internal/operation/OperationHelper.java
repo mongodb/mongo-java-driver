@@ -201,7 +201,7 @@ final class OperationHelper {
         addMaxTimeMSToNonTailableCursor(commandDocument, TimeoutMode.CURSOR_LIFETIME, operationContext);
     }
 
-    static void addMaxTimeMSToNonTailableCursor(final BsonDocument commandDocument, @Nullable final TimeoutMode timeoutMode,
+    static void addMaxTimeMSToNonTailableCursor(final BsonDocument commandDocument, final TimeoutMode timeoutMode,
             final OperationContext operationContext) {
         long maxTimeMS = timeoutMode == TimeoutMode.ITERATION ? 0 : operationContext.getTimeoutContext().getMaxTimeMS();
         if (maxTimeMS > 0) {

@@ -636,6 +636,9 @@ public final class Entities {
                     case "snapshot":
                         optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
                         break;
+                    case "defaultTimeoutMS":
+                        optionsBuilder.defaultTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());
                 }

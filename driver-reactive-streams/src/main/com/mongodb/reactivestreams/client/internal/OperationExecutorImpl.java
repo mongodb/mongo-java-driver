@@ -26,7 +26,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.internal.IgnorableRequestContext;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncClusterBinding;
@@ -49,6 +48,7 @@ import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 
 /**
@@ -84,7 +84,6 @@ public class OperationExecutorImpl implements OperationExecutor {
         return (ReactiveContextProvider) contextProvider;
     }
 
-
     @Override
     public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
@@ -99,7 +98,8 @@ public class OperationExecutorImpl implements OperationExecutor {
         return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, this)
                         .map(clientSession -> getReadWriteBinding(getContext(subscriber),
-                                readPreference, readConcern, clientSession, session == null && clientSession != null))
+                                readPreference, readConcern, clientSession, session == null))
+                        // TODO (CSOT) - does this get called - can the above return empty?
                         .switchIfEmpty(Mono.fromCallable(() ->
                                 getReadWriteBinding(getContext(subscriber),
                                         readPreference, readConcern, session, false)))
@@ -136,7 +136,8 @@ public class OperationExecutorImpl implements OperationExecutor {
         return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, this)
                         .map(clientSession -> getReadWriteBinding(getContext(subscriber),
-                                primary(), readConcern, clientSession, session == null && clientSession != null))
+                                primary(), readConcern, clientSession, session == null))
+                        // TODO (CSOT) - does this get called - can the above return empty?
                         .switchIfEmpty(Mono.fromCallable(() ->
                                 getReadWriteBinding(getContext(subscriber), primary(),
                                         readConcern, session, false)))
@@ -161,6 +162,11 @@ public class OperationExecutorImpl implements OperationExecutor {
             return this;
         }
         return new OperationExecutorImpl(mongoClient, clientSessionHelper, newTimeoutSettings, contextProvider);
+    }
+
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
     }
 
     private <T> RequestContext getContext(final Subscriber<T> subscriber) {
@@ -189,15 +195,13 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     private AsyncReadWriteBinding getReadWriteBinding(final RequestContext requestContext,
-            final ReadPreference readPreference, final ReadConcern readConcern, @Nullable final ClientSession session,
+            final ReadPreference readPreference, final ReadConcern readConcern, final ClientSession session,
             final boolean ownsSession) {
         notNull("readPreference", readPreference);
         AsyncClusterAwareReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
                 getReadPreferenceForBinding(readPreference, session), readConcern,
-                new OperationContext(requestContext,
-                        new ReadConcernAwareNoOpSessionContext(readConcern),
-                        new TimeoutContext(timeoutSettings),
-                        mongoClient.getSettings().getServerApi()));
+                getOperationContext(requestContext, session, readConcern));
+
         Crypt crypt = mongoClient.getCrypt();
         if (crypt != null) {
             readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -209,6 +213,15 @@ public class OperationExecutorImpl implements OperationExecutor {
         } else {
             return asyncReadWriteBinding;
         }
+    }
+
+    private OperationContext getOperationContext(final RequestContext requestContext, final ClientSession session,
+            final ReadConcern readConcern) {
+        return new OperationContext(
+                requestContext,
+                new ReadConcernAwareNoOpSessionContext(readConcern),
+                createTimeoutContext(session, timeoutSettings),
+                mongoClient.getSettings().getServerApi());
     }
 
     private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {

@@ -130,11 +130,14 @@ public final class ClusterFixture {
 
     public static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(5));
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(TIMEOUT_DURATION.toMillis());
-    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(0);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(0L);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME = TIMEOUT_SETTINGS.withMaxTimeMS(100);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME = TIMEOUT_SETTINGS.withMaxAwaitTimeMS(101);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME =
             TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001);
+
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS =
+            TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001).withMaxCommitMS(999L);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_COMMIT = TIMEOUT_SETTINGS.withMaxCommitMS(999L);
 
     public static final String LEGACY_HELLO = "isMaster";
