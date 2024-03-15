@@ -24,6 +24,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoIterable
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.session.ServerSessionPool
@@ -248,6 +249,6 @@ class MongoClusterSpecification extends Specification {
     MongoClusterImpl createMongoCluster(final MongoClientSettings settings, final OperationExecutor operationExecutor) {
         new MongoClusterImpl(null, cluster, settings.codecRegistry, null, null,
                 originator, operationExecutor, settings.readConcern, settings.readPreference, settings.retryReads, settings.retryWrites,
-                null, serverSessionPool, TIMEOUT_SETTINGS, settings.uuidRepresentation, settings.writeConcern)
+                null, serverSessionPool, TimeoutSettings.create(settings), settings.uuidRepresentation, settings.writeConcern)
     }
 }
