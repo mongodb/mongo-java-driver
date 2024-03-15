@@ -23,6 +23,7 @@ import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.client.MongoClients as JMongoClients
 import com.mongodb.connection.ClusterDescription
 import java.io.Closeable
+import java.util.concurrent.TimeUnit
 import org.bson.Document
 import org.bson.conversions.Bson
 
@@ -280,3 +281,12 @@ public class MongoClient(private val wrapped: JMongoClient) : Closeable {
         pipeline: List<Bson> = emptyList()
     ): ChangeStreamIterable<T> = watch(clientSession, pipeline, T::class.java)
 }
+
+/**
+ * ClientSessionOptions.Builder.defaultTimeout extension function
+ *
+ * @param defaultTimeout time in milliseconds
+ * @return the options
+ */
+public fun ClientSessionOptions.Builder.defaultTimeout(defaultTimeout: Long): ClientSessionOptions.Builder =
+    this.apply { defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS) }

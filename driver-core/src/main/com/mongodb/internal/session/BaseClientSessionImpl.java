@@ -19,6 +19,9 @@ package com.mongodb.internal.session;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
+import com.mongodb.TransactionOptions;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
@@ -30,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -48,6 +52,8 @@ public class BaseClientSessionImpl implements ClientSession {
     private ServerAddress pinnedServerAddress;
     private BsonDocument recoveryToken;
     private ReferenceCounted transactionContext;
+    @Nullable
+    private TimeoutContext timeoutContext;
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
@@ -192,5 +198,34 @@ public class BaseClientSessionImpl implements ClientSession {
             }
             clearTransactionContext();
         }
+    }
+
+    @Override
+    @Nullable
+    public TimeoutContext getTimeoutContext() {
+        return timeoutContext;
+    }
+
+    protected void setTimeoutContext(@Nullable final TimeoutContext timeoutContext) {
+        this.timeoutContext = timeoutContext;
+    }
+
+    protected void resetTimeout() {
+        if (timeoutContext != null && timeoutContext.hasTimeoutMS()) {
+            timeoutContext.resetTimeout();
+        }
+    }
+
+    protected TimeoutSettings getTimeoutSettings(final TransactionOptions transactionOptions, final TimeoutSettings timeoutSettings) {
+        Long transactionTimeoutMS = transactionOptions.getTimeout(MILLISECONDS);
+        Long defaultTimeoutMS = getOptions().getDefaultTimeout(MILLISECONDS);
+        Long clientTimeoutMS =  timeoutSettings.getTimeoutMS();
+
+        Long timeoutMS = transactionTimeoutMS != null ? transactionTimeoutMS
+                : defaultTimeoutMS != null ? defaultTimeoutMS : clientTimeoutMS;
+
+        return timeoutSettings
+                .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS))
+                .withTimeoutMS(timeoutMS);
     }
 }

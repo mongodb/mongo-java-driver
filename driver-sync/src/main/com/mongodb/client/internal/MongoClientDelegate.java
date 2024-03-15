@@ -32,7 +32,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.internal.IgnorableRequestContext;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
@@ -56,6 +55,7 @@ import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
 
 final class MongoClientDelegate {
     private final Cluster cluster;
@@ -163,7 +163,6 @@ final class MongoClientDelegate {
 
             ClientSession actualClientSession = getClientSession(session);
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession, session == null);
-
             try {
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
@@ -207,6 +206,11 @@ final class MongoClientDelegate {
             return new DelegateOperationExecutor(newTimeoutSettings);
         }
 
+        @Override
+        public TimeoutSettings getTimeoutSettings() {
+            return timeoutSettings;
+        }
+
         WriteBinding getWriteBinding(final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
             return getReadWriteBinding(primary(), readConcern, session, ownsSession);
         }
@@ -220,7 +224,7 @@ final class MongoClientDelegate {
                 final ReadConcern readConcern, final ClientSession session, final boolean ownsSession) {
 
             ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
-                    getReadPreferenceForBinding(readPreference, session), readConcern, getOperationContext(readConcern));
+                    getReadPreferenceForBinding(readPreference, session), readConcern, getOperationContext(session, readConcern));
 
             if (crypt != null) {
                 readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -229,11 +233,11 @@ final class MongoClientDelegate {
             return new ClientSessionBinding(session, ownsSession, readWriteBinding);
         }
 
-        private OperationContext getOperationContext(final ReadConcern readConcern) {
+        private OperationContext getOperationContext(final ClientSession session, final ReadConcern readConcern) {
             return new OperationContext(
                     getRequestContext(),
                     new ReadConcernAwareNoOpSessionContext(readConcern),
-                    new TimeoutContext(getTimeoutSettings()),
+                    createTimeoutContext(session, timeoutSettings),
                     serverApi);
         }
 
@@ -243,10 +247,6 @@ final class MongoClientDelegate {
                 context = contextProvider.getContext();
             }
             return context == null ? IgnorableRequestContext.INSTANCE : context;
-        }
-
-        private TimeoutSettings getTimeoutSettings() {
-            return timeoutSettings;
         }
 
         private void labelException(final ClientSession session, final MongoException e) {

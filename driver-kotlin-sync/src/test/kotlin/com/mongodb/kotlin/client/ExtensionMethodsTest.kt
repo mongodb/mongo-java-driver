@@ -29,6 +29,7 @@ class ExtensionMethodsTest {
                 "CountOptions",
                 "CreateCollectionOptions",
                 "CreateIndexOptions",
+                "ClientSessionOptions",
                 "DropIndexOptions",
                 "EstimatedDocumentCountOptions",
                 "FindOneAndDeleteOptions",

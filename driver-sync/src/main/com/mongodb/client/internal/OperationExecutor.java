@@ -76,11 +76,19 @@ public interface OperationExecutor {
     <T> T execute(WriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
 
     /**
-     * Create a new OperationExecutor with a specific TimeoutContext
+     * Create a new OperationExecutor with a specific timeout settings
      *
      * @param timeoutSettings the TimeoutContext to use for the operations
      * @return the new operation executor with the set timeout context
      * @since CSOT
      */
     OperationExecutor withTimeoutSettings(TimeoutSettings timeoutSettings);
+
+    /**
+     * Returns the current timeout settings
+     *
+     * @return the timeout settings
+     * @since CSOT
+     */
+    TimeoutSettings getTimeoutSettings();
 }

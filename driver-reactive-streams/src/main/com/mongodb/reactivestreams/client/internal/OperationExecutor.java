@@ -63,4 +63,11 @@ public interface OperationExecutor {
      */
     OperationExecutor withTimeoutSettings(TimeoutSettings timeoutSettings);
 
+    /**
+     * Returns the current timeout settings
+     *
+     * @return the timeout settings
+     * @since CSOT
+     */
+    TimeoutSettings getTimeoutSettings();
 }

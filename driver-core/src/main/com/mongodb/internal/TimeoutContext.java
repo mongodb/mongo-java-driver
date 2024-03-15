@@ -15,10 +15,12 @@
  */
 package com.mongodb.internal;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import com.mongodb.session.ClientSession;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -65,6 +67,33 @@ public class TimeoutContext {
 
     public static TimeoutContext createMaintenanceTimeoutContext(final TimeoutSettings timeoutSettings) {
         return new TimeoutContext(true, timeoutSettings, calculateTimeout(timeoutSettings.getTimeoutMS()));
+    }
+
+    public static TimeoutContext createTimeoutContext(final ClientSession session, final TimeoutSettings timeoutSettings) {
+        TimeoutContext sessionTimeoutContext = session.getTimeoutContext();
+
+        if (sessionTimeoutContext != null) {
+            TimeoutSettings sessionTimeoutSettings = sessionTimeoutContext.timeoutSettings;
+            if (timeoutSettings.getGenerationId() > sessionTimeoutSettings.getGenerationId()) {
+                throw new MongoClientException("Cannot change the timeoutMS during a transaction.");
+            }
+
+            // Check for any legacy operation timeouts
+            if (sessionTimeoutSettings.getTimeoutMS() == null) {
+                if (timeoutSettings.getMaxTimeMS() != 0) {
+                    sessionTimeoutSettings = sessionTimeoutSettings.withMaxTimeMS(timeoutSettings.getMaxTimeMS());
+                }
+                if (timeoutSettings.getMaxAwaitTimeMS() != 0) {
+                    sessionTimeoutSettings = sessionTimeoutSettings.withMaxAwaitTimeMS(timeoutSettings.getMaxAwaitTimeMS());
+                }
+                if (timeoutSettings.getMaxCommitTimeMS() != null) {
+                    sessionTimeoutSettings = sessionTimeoutSettings.withMaxCommitMS(timeoutSettings.getMaxCommitTimeMS());
+                }
+                return new TimeoutContext(sessionTimeoutSettings);
+            }
+            return sessionTimeoutContext;
+        }
+       return new TimeoutContext(timeoutSettings);
     }
 
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
@@ -181,8 +210,9 @@ public class TimeoutContext {
         return maxTimeMS - minRoundTripTimeMS;
     }
 
-    public long getMaxCommitTimeMS() {
-        return timeoutOrAlternative(timeoutSettings.getMaxCommitTimeMS());
+    public Long getMaxCommitTimeMS() {
+        Long maxCommitTimeMS = timeoutSettings.getMaxCommitTimeMS();
+        return timeoutOrAlternative(maxCommitTimeMS != null ? maxCommitTimeMS : 0);
     }
 
     public long getReadTimeoutMS() {
