@@ -16,6 +16,10 @@
 package org.bson.codecs.kotlinx
 
 import com.mongodb.MongoClientSettings
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.kotlinx.samples.DataClassParameterized
 import org.bson.codecs.kotlinx.samples.DataClassSealedInterface
@@ -25,10 +29,6 @@ import org.bson.conversions.Bson
 import org.bson.json.JsonReader
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class KotlinSerializerCodecProviderTest {
 
