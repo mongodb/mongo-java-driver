@@ -138,11 +138,8 @@ public class TimeoutContext {
         Long timeoutMS = timeoutSettings.getTimeoutMS();
         if (timeoutMS == null) {
             return alternativeTimeoutMS;
-        } else if (timeoutMS == 0) {
-            return timeoutMS;
-        } else {
-            return timeoutRemainingMS();
         }
+        return timeoutRemainingMS();
     }
 
     /**
@@ -310,8 +307,10 @@ public class TimeoutContext {
      * @return a new timeout context with the cached computed server selection timeout if available or this
      */
     public TimeoutContext withComputedServerSelectionTimeoutContext() {
-        return computedServerSelectionTimeout == null
-                ? this : new TimeoutContext(false, timeoutSettings, computedServerSelectionTimeout);
+        if (this.hasTimeoutMS() && computedServerSelectionTimeout != null) {
+            return new TimeoutContext(false, timeoutSettings, computedServerSelectionTimeout);
+        }
+        return this;
     }
 
     public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
