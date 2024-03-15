@@ -257,6 +257,16 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return commandCursorResult;
     }
 
+    /**
+     * Configures the cursor's behavior to close without resetting its timeout. If {@code true}, the cursor attempts to close immediately
+     * without resetting its {@link TimeoutContext#getTimeout()} if present. This is useful when managing the cursor's close behavior externally.
+     *
+     * @param closeWithoutTimeoutReset
+     */
+    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
+        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
+    }
+
     @ThreadSafe
     private static final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
 

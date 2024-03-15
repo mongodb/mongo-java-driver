@@ -199,7 +199,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public MongoCollection<TDocument> withTimeout(final long timeout, final TimeUnit timeUnit) {
         isTrueArgument("timeout >= 0", timeout >= 0);
         notNull("timeUnit", timeUnit);
-        TimeoutSettings newTimeoutSettings = timeoutSettings.withTimeoutMS(timeUnit.convert(timeout, TimeUnit.MILLISECONDS));
+        TimeoutSettings newTimeoutSettings = timeoutSettings.withTimeoutMS(TimeUnit.MILLISECONDS.convert(timeout, timeUnit));
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
                 retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, newTimeoutSettings, executor);
     }

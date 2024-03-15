@@ -215,6 +215,10 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         return commandCursorResult;
     }
 
+    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
+        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
+    }
+
     @ThreadSafe
     private static final class ResourceManager extends CursorResourceManager<AsyncConnectionSource, AsyncConnection> {
 

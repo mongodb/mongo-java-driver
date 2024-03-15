@@ -165,7 +165,7 @@ public class TimeoutContext {
         return timeoutSettings;
     }
     public long getMaxAwaitTimeMS() {
-        return hasTimeoutMS() ? 0 : timeoutSettings.getMaxAwaitTimeMS();
+        return timeoutSettings.getMaxAwaitTimeMS();
     }
 
     public long getMaxTimeMS() {

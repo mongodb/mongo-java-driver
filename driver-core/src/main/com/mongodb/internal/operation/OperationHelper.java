@@ -36,6 +36,7 @@ import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.conversions.Bson;
 
 import java.util.List;

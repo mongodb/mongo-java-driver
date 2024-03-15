@@ -1556,34 +1556,33 @@ final class UnifiedCrudHelper extends UnifiedHelper {
             throw new UnsupportedOperationException("No entity found for id: " + entityName);
         }
 
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "batchSize":
-                    iterable.batchSize(cur.getValue().asNumber().intValue());
-                    break;
-                case "pipeline":
-                    break;
-                case "comment":
-                    iterable.comment(cur.getValue());
-                    break;
-                case "fullDocument":
-                    iterable.fullDocument(FullDocument.fromString(cur.getValue().asString().getValue()));
-                    break;
-                case "fullDocumentBeforeChange":
-                    iterable.fullDocumentBeforeChange(FullDocumentBeforeChange.fromString(cur.getValue().asString().getValue()));
-                    break;
-                case "maxAwaitTimeMS":
-                    iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
-                    break;
-                case "showExpandedEvents":
-                    iterable.showExpandedEvents(cur.getValue().asBoolean().getValue());
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
-            }
-        }
-
         return resultOf(() -> {
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "batchSize":
+                        iterable.batchSize(cur.getValue().asNumber().intValue());
+                        break;
+                    case "pipeline":
+                        break;
+                    case "comment":
+                        iterable.comment(cur.getValue());
+                        break;
+                    case "fullDocument":
+                        iterable.fullDocument(FullDocument.fromString(cur.getValue().asString().getValue()));
+                        break;
+                    case "fullDocumentBeforeChange":
+                        iterable.fullDocumentBeforeChange(FullDocumentBeforeChange.fromString(cur.getValue().asString().getValue()));
+                        break;
+                    case "maxAwaitTimeMS":
+                        iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "showExpandedEvents":
+                        iterable.showExpandedEvents(cur.getValue().asBoolean().getValue());
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
+            }
             MongoCursor<BsonDocument> changeStreamWrappingCursor = createChangeStreamWrappingCursor(iterable);
             entities.addCursor(operation.getString("saveResultAsEntity",
                     new BsonString(createRandomEntityId())).getValue(), changeStreamWrappingCursor);
@@ -1600,6 +1599,18 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         }
 
         return resultOf(cursor::next);
+    }
+
+
+    public OperationResult executeIterateOnce(final BsonDocument operation) {
+        String id = operation.getString("object").getValue();
+        MongoCursor<BsonDocument> cursor = entities.getCursor(id);
+
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
+        }
+
+        return resultOf(cursor::tryNext);
     }
 
     public OperationResult close(final BsonDocument operation) {

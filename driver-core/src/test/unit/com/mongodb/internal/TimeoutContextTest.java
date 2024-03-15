@@ -65,7 +65,6 @@ final class TimeoutContextTest {
                     assertAll(
                             () -> assertTrue(timeoutContext.hasTimeoutMS()),
                             () -> assertTrue(timeoutContext.getMaxTimeMS() > 0),
-                            () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
                             () -> assertTrue(timeoutContext.getMaxCommitTimeMS() > 0)
                     );
                 }),
@@ -93,6 +92,13 @@ final class TimeoutContextTest {
                             () -> assertEquals(0, timeoutContext.getMaxTimeMS()),
                             () -> assertEquals(101, timeoutContext.getMaxAwaitTimeMS()),
                             () -> assertEquals(0, timeoutContext.getMaxCommitTimeMS())
+                    );
+                }),
+                dynamicTest("MaxAwaitTimeMS set with timeoutMS", () -> {
+                    TimeoutContext timeoutContext =
+                            new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME.withWTimeoutMS(1L));
+                    assertAll(
+                            () -> assertEquals(101, timeoutContext.getMaxAwaitTimeMS())
                     );
                 }),
                 dynamicTest("MaxTimeMS and MaxAwaitTimeMS set", () -> {

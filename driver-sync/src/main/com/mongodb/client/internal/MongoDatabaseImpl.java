@@ -152,7 +152,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
         isTrueArgument("timeout >= 0", timeout >= 0);
         notNull("timeUnit", timeUnit);
-        TimeoutSettings newTimeoutSettings = timeoutSettings.withTimeoutMS(timeUnit.convert(timeout, TimeUnit.MILLISECONDS));
+        TimeoutSettings newTimeoutSettings = timeoutSettings.withTimeoutMS(TimeUnit.MILLISECONDS.convert(timeout, timeUnit));
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
                 uuidRepresentation, autoEncryptionSettings, newTimeoutSettings, executor);
     }
