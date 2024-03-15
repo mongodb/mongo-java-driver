@@ -35,8 +35,12 @@ import org.bson.codecs.kotlinx.samples.DataClassOpen
 import org.bson.codecs.kotlinx.samples.DataClassOpenA
 import org.bson.codecs.kotlinx.samples.DataClassOpenB
 import org.bson.codecs.kotlinx.samples.DataClassParameterized
+import org.bson.codecs.kotlinx.samples.DataClassSealedInterface
 import org.bson.codecs.kotlinx.samples.DataClassWithSimpleValues
+import org.bson.codecs.kotlinx.samples.SealedInterface
 import org.bson.conversions.Bson
+import org.bson.json.JsonReader
+import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 
 class KotlinSerializerCodecProviderTest {
@@ -73,6 +77,41 @@ class KotlinSerializerCodecProviderTest {
         assertNotNull(codec)
         assertTrue { codec is KotlinSerializerCodec }
         assertEquals(DataClassWithSimpleValues::class.java, codec.encoderClass)
+    }
+
+    @Test
+    fun testDataClassWithSimpleValuesFieldOrdering() {
+        val codec = MongoClientSettings.getDefaultCodecRegistry().get(DataClassWithSimpleValues::class.java)
+        val expected = DataClassWithSimpleValues('c', 0, 1, 22, 42L, 4.0f, 4.2, true, "String")
+
+        val numberLong = "\$numberLong"
+        val actual =
+            codec.decode(
+                JsonReader(
+                    """{"boolean": true, "byte": 0, "char": "c", "double": 4.2, "float": 4.0, "int": 22,
+                        |"long": {"$numberLong": "42"}, "short": 1, "string": "String"}"""
+                        .trimMargin()),
+                DecoderContext.builder().build())
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun testDataClassSealedFieldOrdering() {
+        val codec = MongoClientSettings.getDefaultCodecRegistry().get(SealedInterface::class.java)
+
+        val objectId = ObjectId("111111111111111111111111")
+        val oid = "\$oid"
+        val expected = DataClassSealedInterface(objectId, "string")
+        val actual =
+            codec.decode(
+                JsonReader(
+                    """{"name": "string", "_id": {$oid: "${objectId.toHexString()}"},
+                            |"_t": "org.bson.codecs.kotlinx.samples.DataClassSealedInterface"}"""
+                        .trimMargin()),
+                DecoderContext.builder().build())
+
+        assertEquals(expected, actual)
     }
 
     @OptIn(ExperimentalSerializationApi::class)
