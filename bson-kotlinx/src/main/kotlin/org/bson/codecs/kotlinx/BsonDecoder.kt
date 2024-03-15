@@ -69,6 +69,18 @@ internal open class DefaultBsonDecoder(
         val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
         val bsonValueCodec = BsonValueCodec()
         const val UNKNOWN_INDEX = -10
+        fun validateCurrentBsonType(reader: AbstractBsonReader,
+                                    expectedType: BsonType,
+                                    descriptor: SerialDescriptor,
+                                    actualType: (descriptor: SerialDescriptor) -> String = { it.kind.toString() }) {
+            reader.currentBsonType?.let {
+                if (it != expectedType) {
+                    throw SerializationException(
+                        "Invalid data for `${actualType(descriptor)}` expected a bson ${expectedType.name.lowercase()} found: " +
+                                "${reader.currentBsonType}")
+                }
+            }
+        }
     }
 
     private fun initElementMetadata(descriptor: SerialDescriptor) {
@@ -187,13 +199,7 @@ private class BsonArrayDecoder(
 ) : DefaultBsonDecoder(reader, serializersModule, configuration) {
 
     init {
-        reader.currentBsonType?.let {
-            if (it != BsonType.ARRAY) {
-                throw SerializationException(
-                    "Invalid data for `${descriptor.kind}` expected a bson array found: " + "${reader.currentBsonType}")
-            }
-        }
-
+        validateCurrentBsonType(reader, BsonType.ARRAY, descriptor)
         reader.readStartArray()
     }
 
@@ -217,13 +223,7 @@ private class PolymorphicDecoder(
 
     init {
         mark = reader.mark
-        reader.currentBsonType?.let {
-            if (it != BsonType.DOCUMENT) {
-                throw SerializationException(
-                    "Invalid data for `${descriptor.serialName}` expected a bson document found: " +
-                        "${reader.currentBsonType}")
-            }
-        }
+        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor) { it.serialName }
         reader.readStartDocument()
     }
 
@@ -267,13 +267,7 @@ private class BsonDocumentDecoder(
     configuration: BsonConfiguration
 ) : DefaultBsonDecoder(reader, serializersModule, configuration) {
     init {
-        reader.currentBsonType?.let {
-            if (it != BsonType.DOCUMENT) {
-                throw SerializationException(
-                    "Invalid data for `${descriptor.serialName}` expected a bson document found: " +
-                        "${reader.currentBsonType}")
-            }
-        }
+        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor) { it.serialName }
         reader.readStartDocument()
     }
 }
@@ -290,13 +284,7 @@ private class MapDecoder(
     private var isKey = false
 
     init {
-        reader.currentBsonType?.let {
-            if (it != BsonType.DOCUMENT) {
-                throw SerializationException(
-                    "Invalid data for `${descriptor.kind}` expected a bson document found: " +
-                        "${reader.currentBsonType}")
-            }
-        }
+        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor)
         reader.readStartDocument()
     }
 
