@@ -21,7 +21,6 @@ import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
-import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
 import com.mongodb.client.cursor.TimeoutMode
@@ -30,12 +29,10 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.OperationContext
-import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -45,8 +42,6 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CONCURRENT_OPERATION

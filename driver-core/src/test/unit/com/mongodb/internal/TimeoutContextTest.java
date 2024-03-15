@@ -238,7 +238,7 @@ final class TimeoutContextTest {
                 dynamicTest("should add maxTimeMS to extra elements when timeoutMS is set", () -> {
                     List<BsonElement> extraElements = new ArrayList<>();
                     TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100));
-                    timeoutContext.addExtraElements(extraElements);
+                    timeoutContext.addTimeoutElements(extraElements);
                     BsonElement maxTimeMsExtraElement = extraElements.get(0);
                     assertAll(
                             () -> assertEquals(1, extraElements.size()),
@@ -249,12 +249,12 @@ final class TimeoutContextTest {
                 dynamicTest("MaxTimeSupplier should throw when timeoutMS expires", () -> {
                     List<BsonElement> extraElements = new ArrayList<>();
                     TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(1));
-                    assertThrows(MongoOperationTimeoutException.class, () -> timeoutContext.addExtraElements(extraElements));
+                    assertThrows(MongoOperationTimeoutException.class, () -> timeoutContext.addTimeoutElements(extraElements));
                 }),
                 dynamicTest("should add maxTimeMS to extra elements when timeoutMS is not set", () -> {
                     List<BsonElement> extraElements = new ArrayList<>();
                     TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withMaxTimeMS(1));
-                    timeoutContext.addExtraElements(extraElements);
+                    timeoutContext.addTimeoutElements(extraElements);
                     BsonElement maxTimeMsExtraElement = extraElements.get(0);
                     assertAll(
                             () -> assertEquals(1, extraElements.size()),
@@ -267,7 +267,7 @@ final class TimeoutContextTest {
                     extraElements.add(extraElement);
 
                     TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100).withMaxTimeMS(1));
-                    timeoutContext.addExtraElements(extraElements);
+                    timeoutContext.addTimeoutElements(extraElements);
                     assertAll(
                             () -> assertEquals(2, extraElements.size()),
                             () -> assertTrue(extraElements.contains(extraElement)));
@@ -277,7 +277,7 @@ final class TimeoutContextTest {
 
                     TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100).withMaxTimeMS(1));
                     timeoutContext.setMaxTimeSupplier(() -> 2L);
-                    timeoutContext.addExtraElements(extraElements);
+                    timeoutContext.addTimeoutElements(extraElements);
                     assertAll(
                             () -> assertEquals(1, extraElements.size()),
                             () -> assertEquals(new BsonElement("maxTimeMS", new BsonInt64(2)), extraElements.get(0)));
@@ -289,7 +289,7 @@ final class TimeoutContextTest {
                     timeoutContext.setMaxTimeSupplier(() -> {
                         throw new MongoOperationTimeoutException("test");
                     });
-                    assertThrows(MongoOperationTimeoutException.class, () -> timeoutContext.addExtraElements(extraElements));
+                    assertThrows(MongoOperationTimeoutException.class, () -> timeoutContext.addTimeoutElements(extraElements));
                 })
         );
     }
