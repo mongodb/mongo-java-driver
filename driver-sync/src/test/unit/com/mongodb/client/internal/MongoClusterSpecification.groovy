@@ -37,7 +37,6 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
@@ -50,8 +49,9 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoClusterSpecification extends Specification {
 
     private static final CodecRegistry CODEC_REGISTRY = fromProviders(new ValueCodecProvider())
+    private static final MongoClientSettings CLIENT_SETTINGS = MongoClientSettings.builder().build()
+    private static final TimeoutSettings TIMEOUT_SETTINGS = TimeoutSettings.create(CLIENT_SETTINGS)
     private final Cluster cluster = Stub(Cluster)
-    private final MongoClientSettings settings = MongoClientSettings.builder().build()
     private final MongoClient originator =  Stub(MongoClient)
     private final ServerSessionPool serverSessionPool = Stub(ServerSessionPool)
     private final OperationExecutor operationExecutor = Stub(OperationExecutor)
@@ -89,7 +89,8 @@ class MongoClusterSpecification extends Specification {
 
         then:
         (mongoCluster.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == UNSPECIFIED
-        expect mongoCluster, isTheSameAs(createMongoCluster(MongoClientSettings.builder(settings).codecRegistry(newCodecRegistry).build()))
+        expect mongoCluster, isTheSameAs(createMongoCluster(
+                MongoClientSettings.builder(CLIENT_SETTINGS).codecRegistry(newCodecRegistry).build()))
     }
 
     def 'should behave correctly when using withReadPreference'() {
@@ -102,7 +103,7 @@ class MongoClusterSpecification extends Specification {
         then:
         mongoCluster.getReadPreference() == newReadPreference
         expect mongoCluster, isTheSameAs(
-                createMongoCluster(MongoClientSettings.builder(settings).readPreference(newReadPreference).build()))
+                createMongoCluster(MongoClientSettings.builder(CLIENT_SETTINGS).readPreference(newReadPreference).build()))
     }
 
     def 'should behave correctly when using withWriteConcern'() {
@@ -114,7 +115,8 @@ class MongoClusterSpecification extends Specification {
 
         then:
         mongoCluster.getWriteConcern() == newWriteConcern
-        expect mongoCluster, isTheSameAs(createMongoCluster(MongoClientSettings.builder(settings).writeConcern(newWriteConcern).build()))
+        expect mongoCluster, isTheSameAs(createMongoCluster(
+                MongoClientSettings.builder(CLIENT_SETTINGS).writeConcern(newWriteConcern).build()))
     }
 
     def 'should behave correctly when using withReadConcern'() {
@@ -126,7 +128,8 @@ class MongoClusterSpecification extends Specification {
 
         then:
         mongoCluster.getReadConcern() == newReadConcern
-        expect mongoCluster, isTheSameAs(createMongoCluster(MongoClientSettings.builder(settings).readConcern(newReadConcern).build()))
+        expect mongoCluster, isTheSameAs(createMongoCluster(
+                MongoClientSettings.builder(CLIENT_SETTINGS).readConcern(newReadConcern).build()))
     }
 
     def 'should behave correctly when using withTimeout'() {
@@ -135,7 +138,7 @@ class MongoClusterSpecification extends Specification {
 
         then:
         mongoCluster.getTimeout(TimeUnit.MILLISECONDS) == 10_000
-        expect mongoCluster, isTheSameAs(createMongoCluster(MongoClientSettings.builder(settings)
+        expect mongoCluster, isTheSameAs(createMongoCluster(MongoClientSettings.builder(CLIENT_SETTINGS)
                 .timeout(10_000, TimeUnit.MILLISECONDS).build()))
     }
 
@@ -152,14 +155,14 @@ class MongoClusterSpecification extends Specification {
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, Document,
-                settings.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS))
+                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                settings.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS))
+                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS))
 
         when:
         def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session) as MongoIterable<String>
@@ -167,7 +170,7 @@ class MongoClusterSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                settings.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS)
+                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS)
                 .nameOnly(true))
 
         where:
@@ -235,7 +238,7 @@ class MongoClusterSpecification extends Specification {
     }
 
     MongoClusterImpl createMongoCluster() {
-        createMongoCluster(settings)
+        createMongoCluster(CLIENT_SETTINGS)
     }
 
     MongoClusterImpl createMongoCluster(final MongoClientSettings settings) {
@@ -243,7 +246,7 @@ class MongoClusterSpecification extends Specification {
     }
 
     MongoClusterImpl createMongoCluster(final OperationExecutor operationExecutor) {
-        createMongoCluster(settings, operationExecutor)
+        createMongoCluster(CLIENT_SETTINGS, operationExecutor)
     }
 
     MongoClusterImpl createMongoCluster(final MongoClientSettings settings, final OperationExecutor operationExecutor) {
