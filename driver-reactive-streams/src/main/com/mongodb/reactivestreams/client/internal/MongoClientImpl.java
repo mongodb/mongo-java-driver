@@ -97,7 +97,7 @@ public final class MongoClientImpl implements MongoClient {
                     + ReactiveContextProvider.class.getName() + " when using the Reactive Streams driver");
         }
         OperationExecutor operationExecutor = executor != null ? executor
-                : new OperationExecutorImpl(this, clientSessionHelper, timeoutSettings, settings.getContextProvider());
+                : new OperationExecutorImpl(this, clientSessionHelper, timeoutSettings, (ReactiveContextProvider) contextProvider);
         MongoOperationPublisher<Document> mongoOperationPublisher = new MongoOperationPublisher<>(Document.class,
                 withUuidRepresentation(settings.getCodecRegistry(),
                         settings.getUuidRepresentation()),

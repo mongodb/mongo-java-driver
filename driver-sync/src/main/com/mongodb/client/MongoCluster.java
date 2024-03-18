@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 public interface MongoCluster {
 
     /**
-     * Get the codec registry for the MongoClientClusterOperations.
+     * Get the codec registry for the MongoCluster.
      *
      * @return the {@link org.bson.codecs.configuration.CodecRegistry}
      * @since CSOT
@@ -53,7 +53,7 @@ public interface MongoCluster {
     CodecRegistry getCodecRegistry();
 
     /**
-     * Get the read preference for the MongoClientClusterOperations.
+     * Get the read preference for the MongoCluster.
      *
      * @return the {@link com.mongodb.ReadPreference}
      * @since CSOT
@@ -61,7 +61,7 @@ public interface MongoCluster {
     ReadPreference getReadPreference();
 
     /**
-     * Get the write concern for the MongoClientClusterOperations.
+     * Get the write concern for the MongoCluster.
      *
      * @return the {@link com.mongodb.WriteConcern}
      * @since CSOT
@@ -69,7 +69,7 @@ public interface MongoCluster {
     WriteConcern getWriteConcern();
 
     /**
-     * Get the read concern for the MongoClientClusterOperations.
+     * Get the read concern for the MongoCluster.
      *
      * @return the {@link com.mongodb.ReadConcern}
      * @since CSOT
@@ -108,7 +108,7 @@ public interface MongoCluster {
     Long getTimeout(TimeUnit timeUnit);
 
     /**
-     * Create a new MongoClientClusterOperations instance with a different codec registry.
+     * Create a new MongoCluster instance with a different codec registry.
      *
      * <p>The {@link CodecRegistry} configured by this method is effectively treated by the driver as an instance of
      * {@link org.bson.codecs.configuration.CodecProvider}, which {@link CodecRegistry} extends. So there is no benefit to defining
@@ -116,42 +116,42 @@ public interface MongoCluster {
      * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
      *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the database
-     * @return a new MongoDatabase instance with the different codec registry
+     *  @return a new MongoCluster instance with the different codec registry
      * @see org.bson.codecs.configuration.CodecRegistries
      * @since CSOT
      */
     MongoCluster withCodecRegistry(CodecRegistry codecRegistry);
 
     /**
-     * Create a new MongoClientClusterOperations instance with a different read preference.
+     * Create a new MongoCluster instance with a different read preference.
      *
      * @param readPreference the new {@link ReadPreference} for the database
-     * @return a new MongoDatabase instance with the different readPreference
+     *  @return a new MongoCluster instance with the different readPreference
      * @since CSOT
      */
     MongoCluster withReadPreference(ReadPreference readPreference);
 
     /**
-     * Create a new MongoClientClusterOperations instance with a different write concern.
+     * Create a new MongoCluster instance with a different write concern.
      *
      * @param writeConcern the new {@link WriteConcern} for the database
-     * @return a new MongoDatabase instance with the different writeConcern
+     *  @return a new MongoCluster instance with the different writeConcern
      * @since CSOT
      */
     MongoCluster withWriteConcern(WriteConcern writeConcern);
 
     /**
-     * Create a new MongoClientClusterOperations instance with a different read concern.
+     * Create a new MongoCluster instance with a different read concern.
      *
      * @param readConcern the new {@link ReadConcern} for the database
-     * @return a new MongoDatabase instance with the different ReadConcern
+     *  @return a new MongoCluster instance with the different ReadConcern
      * @since CSOT
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     MongoCluster withReadConcern(ReadConcern readConcern);
 
     /**
-     * Create a new MongoClientClusterOperations instance with the set time limit for the full execution of an operation.
+     * Create a new MongoCluster instance with the set time limit for the full execution of an operation.
      *
      * <ul>
      *   <li>{@code 0} means infinite timeout.</li>
@@ -160,7 +160,7 @@ public interface MongoCluster {
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
-     * @return a new MongoDatabase instance with the set time limit for the full execution of an operation.
+     * @return a new MongoCluster instance with the set time limit for the full execution of an operation.
      * @since CSOT
      * @see #getTimeout
      */

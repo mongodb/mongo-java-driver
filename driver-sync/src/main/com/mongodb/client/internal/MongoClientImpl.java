@@ -92,7 +92,7 @@ public final class MongoClientImpl implements MongoClient {
         this.delegate = new MongoClusterImpl(autoEncryptionSettings, cluster,
                                              withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()),
                                              (SynchronousContextProvider) settings.getContextProvider(),
-                                             autoEncryptionSettings == null ? null : createCrypt(this, autoEncryptionSettings), this,
+                                             autoEncryptionSettings == null ? null : createCrypt(settings, autoEncryptionSettings), this,
                                              operationExecutor, settings.getReadConcern(), settings.getReadPreference(), settings.getRetryReads(),
                                              settings.getRetryWrites(), settings.getServerApi(),
                                              new ServerSessionPool(cluster, TimeoutSettings.create(settings), settings.getServerApi()),

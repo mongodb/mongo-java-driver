@@ -103,7 +103,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
     Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
 
   /**
-   * Create a new MongoDatabase instance with a different codec registry.
+   * Create a new MongoCluster instance with a different codec registry.
    *
    * The { @link CodecRegistry} configured by this method is effectively treated by the driver as an
    * instance of { @link CodecProvider}, which { @link CodecRegistry} extends.
@@ -119,7 +119,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
     MongoCluster(wrapped.withCodecRegistry(codecRegistry))
 
   /**
-   * Create a new MongoDatabase instance with a different read preference.
+   * Create a new MongoCluster instance with a different read preference.
    *
    * @param readPreference the new { @link com.mongodb.ReadPreference} for the collection
    * @return a new MongoCluster instance with the different readPreference
@@ -128,7 +128,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
     MongoCluster(wrapped.withReadPreference(readPreference))
 
   /**
-   * Create a new MongoDatabase instance with a different write concern.
+   * Create a new MongoCluster instance with a different write concern.
    *
    * @param writeConcern the new { @link com.mongodb.WriteConcern} for the collection
    * @return a new MongoCluster instance with the different writeConcern
@@ -137,7 +137,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
     MongoCluster(wrapped.withWriteConcern(writeConcern))
 
   /**
-   * Create a new MongoDatabase instance with a different read concern.
+   * Create a new MongoCluster instance with a different read concern.
    *
    * @param readConcern the new [[ReadConcern]] for the collection
    * @return a new MongoCluster instance with the different ReadConcern
@@ -147,7 +147,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
     MongoCluster(wrapped.withReadConcern(readConcern))
 
   /**
-   * Sets the time limit for the full execution of an operation.
+   * Create a new MongoCluster instance with the set time limit for the full execution of an operation.
    *
    * - `0` means infinite timeout.
    * - `> 0` The time limit to use for the full execution of an operation.

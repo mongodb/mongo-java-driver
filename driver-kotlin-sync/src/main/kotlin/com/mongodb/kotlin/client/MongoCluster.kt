@@ -73,7 +73,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
     /**
-     * Create a new MongoDatabase instance with a different codec registry.
+     * Create a new MongoCluster instance with a different codec registry.
      *
      * The [CodecRegistry] configured by this method is effectively treated by the driver as an instance of
      * [org.bson.codecs.configuration.CodecProvider], which [CodecRegistry] extends. So there is no benefit to defining
@@ -81,48 +81,48 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * using the factory methods in [org.bson.codecs.configuration.CodecRegistries].
      *
      * @param newCodecRegistry the new [org.bson.codecs.configuration.CodecRegistry] for the database
-     * @return a new MongoDatabase instance with the different codec registry
+     * @return a new MongoCluster instance with the different codec registry
      * @see org.bson.codecs.configuration.CodecRegistries
      */
     public fun withCodecRegistry(newCodecRegistry: CodecRegistry): MongoCluster =
         MongoCluster(wrapped.withCodecRegistry(newCodecRegistry))
 
     /**
-     * Create a new MongoDatabase instance with a different read preference.
+     * Create a new MongoCluster instance with a different read preference.
      *
      * @param newReadPreference the new [ReadPreference] for the database
-     * @return a new MongoDatabase instance with the different readPreference
+     * @return a new MongoCluster instance with the different readPreference
      */
     public fun withReadPreference(newReadPreference: ReadPreference): MongoCluster =
         MongoCluster(wrapped.withReadPreference(newReadPreference))
 
     /**
-     * Create a new MongoDatabase instance with a different read concern.
+     * Create a new MongoCluster instance with a different read concern.
      *
      * @param newReadConcern the new [ReadConcern] for the database
-     * @return a new MongoDatabase instance with the different ReadConcern
+     * @return a new MongoCluster instance with the different ReadConcern
      * @see [Read Concern](https://www.mongodb.com/docs/manual/reference/readConcern/)
      */
     public fun withReadConcern(newReadConcern: ReadConcern): MongoCluster =
         MongoCluster(wrapped.withReadConcern(newReadConcern))
 
     /**
-     * Create a new MongoDatabase instance with a different write concern.
+     * Create a new MongoCluster instance with a different write concern.
      *
      * @param newWriteConcern the new [WriteConcern] for the database
-     * @return a new MongoDatabase instance with the different writeConcern
+     * @return a new MongoCluster instance with the different writeConcern
      */
     public fun withWriteConcern(newWriteConcern: WriteConcern): MongoCluster =
         MongoCluster(wrapped.withWriteConcern(newWriteConcern))
 
     /**
-     * Create a new MongoDatabase instance with the set time limit for the full execution of an operation.
+     * Create a new MongoCluster instance with the set time limit for the full execution of an operation.
      * - `0` means an infinite timeout
      * - `> 0` The time limit to use for the full execution of an operation.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit, defaults to Milliseconds
-     * @return a new MongoDatabase instance with the set time limit for operations
+     * @return a new MongoCluster instance with the set time limit for operations
      * @see [MongoDatabase.timeout]
      * @since CSOT
      */
