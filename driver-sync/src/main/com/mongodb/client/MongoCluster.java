@@ -116,7 +116,7 @@ public interface MongoCluster {
      * using the factory methods in {@link org.bson.codecs.configuration.CodecRegistries}.</p>
      *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the database
-     *  @return a new MongoCluster instance with the different codec registry
+     * @return a new MongoCluster instance with the different codec registry
      * @see org.bson.codecs.configuration.CodecRegistries
      * @since CSOT
      */
@@ -126,7 +126,7 @@ public interface MongoCluster {
      * Create a new MongoCluster instance with a different read preference.
      *
      * @param readPreference the new {@link ReadPreference} for the database
-     *  @return a new MongoCluster instance with the different readPreference
+     * @return a new MongoCluster instance with the different readPreference
      * @since CSOT
      */
     MongoCluster withReadPreference(ReadPreference readPreference);
@@ -135,7 +135,7 @@ public interface MongoCluster {
      * Create a new MongoCluster instance with a different write concern.
      *
      * @param writeConcern the new {@link WriteConcern} for the database
-     *  @return a new MongoCluster instance with the different writeConcern
+     * @return a new MongoCluster instance with the different writeConcern
      * @since CSOT
      */
     MongoCluster withWriteConcern(WriteConcern writeConcern);
@@ -144,7 +144,7 @@ public interface MongoCluster {
      * Create a new MongoCluster instance with a different read concern.
      *
      * @param readConcern the new {@link ReadConcern} for the database
-     *  @return a new MongoCluster instance with the different ReadConcern
+     * @return a new MongoCluster instance with the different ReadConcern
      * @since CSOT
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
