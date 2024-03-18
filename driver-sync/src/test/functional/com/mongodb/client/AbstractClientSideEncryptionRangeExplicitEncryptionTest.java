@@ -60,6 +60,7 @@ import java.util.Map;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
@@ -91,6 +92,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
 
     @BeforeEach
     public void setUp(final Type type) {
+        assumeTrue(serverVersionLessThan(8, 0));
         assumeTrue(serverVersionAtLeast(6, 2));
         assumeFalse(isStandalone());
         assumeFalse(isServerlessTest());
