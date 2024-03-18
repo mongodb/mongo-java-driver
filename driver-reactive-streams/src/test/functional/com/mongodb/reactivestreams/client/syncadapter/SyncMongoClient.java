@@ -41,6 +41,7 @@ public class SyncMongoClient implements MongoClient {
 
     private static long sleepAfterCursorCloseMS;
     private static long sleepAfterSessionCloseMS;
+    private static boolean waitForBatchCursorCreation;
 
     /**
      * Unfortunately this is the only way to wait for a query to be initiated, since Reactive Streams is asynchronous
@@ -86,6 +87,18 @@ public class SyncMongoClient implements MongoClient {
             throw new IllegalArgumentException("sleepMS must be a positive value");
         }
         sleepAfterSessionCloseMS = sleepMS;
+    }
+
+    public static void enableWaitForBatchCursorCreation() {
+        waitForBatchCursorCreation = true;
+    }
+
+    public static boolean isWaitForBatchCursorCreationEnabled() {
+        return waitForBatchCursorCreation;
+    }
+
+    public static void disableWaitForBatchCursorCreation() {
+        waitForBatchCursorCreation = false;
     }
 
     public static void disableSleep() {
