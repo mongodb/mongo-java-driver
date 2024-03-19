@@ -113,7 +113,7 @@ functions:
   "upload mo artifacts":
     - command: ec2.assume_role
       params:
-        role_arn: ${ASSUME_ROLE_ARN}
+        role_arn: ${UPLOAD_MO_ARTIFACTS_ROLE_ARN}
     - command: shell.exec
       params:
         shell: bash
