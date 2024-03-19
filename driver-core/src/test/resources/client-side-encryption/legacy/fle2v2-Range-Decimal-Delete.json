@@ -2,10 +2,10 @@
   "runOn": [
     {
       "minServerVersion": "7.0.0",
-      "serverless": "forbid",
       "topology": [
         "replicaset"
-      ]
+      ],
+      "maxServerVersion": "7.99.99"
     }
   ],
   "database_name": "default",
