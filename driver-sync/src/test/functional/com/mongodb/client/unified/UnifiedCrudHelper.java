@@ -267,7 +267,7 @@ final class UnifiedCrudHelper {
     OperationResult executeListCollections(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
 
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         ListCollectionsIterable<BsonDocument> iterable = session == null
                 ? database.listCollections(BsonDocument.class)
@@ -294,7 +294,7 @@ final class UnifiedCrudHelper {
     OperationResult executeListCollectionNames(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
 
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         MongoIterable<String> iterable = session == null
                 ? database.listCollectionNames()
@@ -379,9 +379,9 @@ final class UnifiedCrudHelper {
     @NonNull
     private FindIterable<BsonDocument> createFindIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
-        BsonDocument filter = arguments.getDocument("filter", new BsonDocument());
+        BsonDocument filter = arguments.getDocument("filter");
         FindIterable<BsonDocument> iterable = session == null ? collection.find(filter) : collection.find(session, filter);
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
@@ -446,7 +446,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeDistinct(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
 
         BsonString fieldName = arguments.getString("fieldName");
@@ -479,7 +479,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeFindOneAndUpdate(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 
         BsonDocument filter = arguments.getDocument("filter").asDocument();
         BsonValue update = arguments.get("update");
@@ -555,7 +555,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeFindOneAndReplace(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter").asDocument();
         BsonDocument replacement = arguments.getDocument("replacement").asDocument();
@@ -620,7 +620,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeFindOneAndDelete(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter").asDocument();
         FindOneAndDeleteOptions options = new FindOneAndDeleteOptions();
@@ -669,7 +669,7 @@ final class UnifiedCrudHelper {
     OperationResult executeAggregate(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
 
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         AggregateIterable<BsonDocument> iterable;
@@ -726,7 +726,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeDeleteOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         ClientSession session = getSession(arguments);
         DeleteOptions options = getDeleteOptions(arguments);
@@ -742,7 +742,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeDeleteMany(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         ClientSession session = getSession(arguments);
         DeleteOptions options = getDeleteOptions(arguments);
@@ -766,7 +766,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeUpdateOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter");
         BsonValue update = arguments.get("update");
@@ -790,7 +790,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeUpdateMany(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         BsonValue update = arguments.get("update");
         ClientSession session = getSession(arguments);
@@ -813,7 +813,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeReplaceOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter");
         BsonDocument replacement = arguments.getDocument("replacement");
@@ -846,7 +846,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeInsertOne(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument document = arguments.getDocument("document").asDocument();
         InsertOneOptions options = new InsertOneOptions();
@@ -880,7 +880,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeInsertMany(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         List<BsonDocument> documents = arguments.getArray("documents").stream().map(BsonValue::asDocument).collect(toList());
         ClientSession session = getSession(arguments);
         InsertManyOptions options = new InsertManyOptions();
@@ -921,7 +921,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeBulkWrite(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         List<WriteModel<BsonDocument>> requests = arguments.getArray("requests").stream()
                 .map(value -> toWriteModel(value.asDocument())).collect(toList());
@@ -1166,9 +1166,9 @@ final class UnifiedCrudHelper {
 
     OperationResult executeWithTransaction(final BsonDocument operation, final OperationAsserter operationAsserter) {
         ClientSession session = entities.getSession(operation.getString("object").getValue());
-        BsonArray callback = operation.getDocument("arguments").getArray("callback");
+        BsonArray callback = operation.getDocument("arguments", new BsonDocument()).getArray("callback");
         TransactionOptions.Builder optionsBuilder = TransactionOptions.builder();
-        for (Map.Entry<String, BsonValue> entry : operation.getDocument("arguments").entrySet()) {
+        for (Map.Entry<String, BsonValue> entry : operation.getDocument("arguments", new BsonDocument()).entrySet()) {
             switch (entry.getKey()) {
                 case "callback":
                     break;
@@ -1201,10 +1201,10 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeDropCollection(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.getString("collection").getValue();
 
-        if (operation.getDocument("arguments").size() > 1) {
+        if (operation.getDocument("arguments", new BsonDocument()).size() > 1) {
             throw new UnsupportedOperationException("Unexpected arguments");
         }
 
@@ -1216,7 +1216,7 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeCreateCollection(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
 
@@ -1286,7 +1286,7 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeModifyCollection(final BsonDocument operation) {
         MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
 
@@ -1319,7 +1319,7 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeRenameCollection(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String newCollectionName = arguments.getString("to").getValue();
         ClientSession session = getSession(arguments);
         RenameCollectionOptions options = new RenameCollectionOptions();
@@ -1417,7 +1417,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeCreateSearchIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument model = arguments.getDocument("model");
         BsonDocument definition = model.getDocument("definition");
 
@@ -1434,7 +1434,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeCreateSearchIndexes(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonArray models = arguments.getArray("models");
 
         List<SearchIndexModel> searchIndexModels = models.stream()
@@ -1449,7 +1449,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeUpdateSearchIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument definition = arguments.getDocument("definition");
         String name = arguments.getString("name").getValue();
 
@@ -1461,7 +1461,7 @@ final class UnifiedCrudHelper {
 
     OperationResult executeDropSearchIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String name = arguments.getString("name").getValue();
 
         return resultOf(() -> {
@@ -1524,7 +1524,7 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeCreateIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument keys = arguments.getDocument("keys").asDocument();
         ClientSession session = getSession(arguments);
         IndexOptions options = new IndexOptions();
@@ -1557,7 +1557,7 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeDropIndex(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         String indexName = arguments.get("name").asString().getValue();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
@@ -1687,7 +1687,7 @@ final class UnifiedCrudHelper {
 
     public OperationResult executeCountDocuments(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         ClientSession session = getSession(arguments);
         CountOptions options = new CountOptions();
