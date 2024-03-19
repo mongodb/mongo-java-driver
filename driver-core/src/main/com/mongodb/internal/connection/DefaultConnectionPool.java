@@ -207,6 +207,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
+    @SuppressWarnings("deprecation") //maxWaitTime
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
         Timeout maxWaitTimeout = checkoutStart.timeoutAfterOrInfiniteIfNegative(settings.getMaxWaitTime(NANOSECONDS), NANOSECONDS);

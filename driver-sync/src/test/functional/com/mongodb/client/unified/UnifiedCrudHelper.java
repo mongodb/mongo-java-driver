@@ -235,6 +235,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 new BsonArray(iterable.into(new ArrayList<>()).stream().map(BsonString::new).collect(toList())));
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeListCollections(final BsonDocument operation) {
         MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments");

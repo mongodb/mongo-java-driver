@@ -754,6 +754,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         try {
+            @SuppressWarnings("deprecation")
             WriteResult res = collection.insert(new BasicDBObject(), new WriteConcern(5).withWTimeout(1, MILLISECONDS));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
@@ -767,6 +768,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         ObjectId id = new ObjectId();
         collection.insert(new BasicDBObject("_id", id));
         try {
+            @SuppressWarnings("deprecation")
             WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
                                                 false, false, new WriteConcern(5).withWTimeout(1, MILLISECONDS));
             fail("Write should have failed but succeeded with result " + res);

@@ -33,7 +33,18 @@ private[scala] trait WriteConcernImplicits {
      *
      * @param wTimeout the wTimeout, which must be &gt;= 0 and &lt;= Integer.MAX_VALUE after conversion to milliseconds
      * @return the WriteConcern with the given wTimeout
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     *             - [[org.mongodb.scala.MongoClientSettings.Builder timeout(long, TimeUnit)]]
+     *             - [[org.mongodb.scala.MongoDatabase.withTimeout withTimeout(long, TimeUnit)]]
+     *             - [[org.mongodb.scala.MongoCollection.withTimeout withTimeout(long, TimeUnit)]]
+     *             - [[org.mongodb.scala.ClientSessionOptions]]
+     *             - [[org.mongodb.scala.TransactionOptions]]
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this wTimeout
+     * irrelevant. If no timeout is specified at these levels, the wTimeout will be used.
      */
+    @deprecated
     def withWTimeout(wTimeout: Duration): WriteConcern =
       jWriteConcern.withWTimeout(wTimeout.toMillis, TimeUnit.MILLISECONDS)
   }
