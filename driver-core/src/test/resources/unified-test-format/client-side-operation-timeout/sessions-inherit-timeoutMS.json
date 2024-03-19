@@ -1,5 +1,6 @@
 {
   "description": "sessions inherit timeoutMS from their parent MongoClient",
+  "comment": "Manually added ignoreExtraElements: true (withTransaction test)",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -282,6 +283,7 @@
       "expectEvents": [
         {
           "client": "client",
+          "ignoreExtraEvents": true,
           "events": [
             {
               "commandStartedEvent": {
