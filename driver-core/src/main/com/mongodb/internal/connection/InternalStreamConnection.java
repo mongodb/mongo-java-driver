@@ -48,6 +48,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -87,6 +88,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -348,8 +350,8 @@ public class InternalStreamConnection implements InternalConnection {
         CommandEventSender commandEventSender;
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-                throw e;
+            Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+                throw TimeoutContext.createMongoRoundTripTimeoutException();
             });
             message.encode(bsonOutput, operationContext.getSessionContext());
             commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
@@ -417,8 +419,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-            throw e;
+        Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            throw TimeoutContext.createMongoRoundTripTimeoutException();
         });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
@@ -431,7 +433,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
-        validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> {
+        Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            MongoOperationTimeoutException e = createMongoOperationTimeoutExceptionAndClose(commandEventSender);
             throw e;
         });
 
@@ -518,9 +521,15 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
             } else {
-                Optional<MongoOperationTimeoutException> e = validateHasTimedOutAndClose(commandEventSender, operationContext);
-                if (e.isPresent()) {
-                    callback.onResult(null, e.get());
+                boolean shouldReturn = Timeout.run(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), NANOSECONDS,
+                        () -> false,
+                        (ns) -> false,
+                        () -> {
+                            callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
+                            return true;
+                        },
+                        () -> false);
+                if (shouldReturn) {
                     return;
                 }
 
@@ -557,13 +566,11 @@ public class InternalStreamConnection implements InternalConnection {
         });
     }
 
-    private Optional<MongoOperationTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
-            final OperationContext operationContext) {
-        return operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().map(e -> {
-            close();
-            commandEventSender.sendFailedEvent(e);
-            return e;
-        });
+    private MongoOperationTimeoutException createMongoOperationTimeoutExceptionAndClose(final CommandEventSender commandEventSender) {
+        MongoOperationTimeoutException e = TimeoutContext.createMongoRoundTripTimeoutException();
+        close();
+        commandEventSender.sendFailedEvent(e);
+        return e;
     }
 
     private <T> T getCommandResult(final Decoder<T> decoder, final ResponseBuffers responseBuffers, final int messageId) {

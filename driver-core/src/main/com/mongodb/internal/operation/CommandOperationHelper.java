@@ -35,12 +35,12 @@ import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalEx
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 
 import java.util.List;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -229,9 +229,8 @@ final class CommandOperationHelper {
     static BsonDocument appendMaxTimeMs(final TimeoutContext timeoutContext, final BsonDocument command) {
         if (timeoutContext.hasTimeoutMS()) {
             long maxTimeMS = timeoutContext.getMaxTimeMS();
-            if (maxTimeMS > 0) {
-                command.append("maxTimeMS", new BsonInt64(maxTimeMS));
-            }
+            putIfNotZero(command, "maxTimeMS", maxTimeMS);
+            // TODO-CSOT append changed to put
         }
         return command;
     }

@@ -26,9 +26,9 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -274,14 +274,11 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                    final Timeout timeout) throws InterruptedException {
         Set<Class<?>> encountered = new HashSet<>();
         while (true) {
-            Object element;
-            if (timeout.hasExpired()) {
-                element = queue.poll();
-            } else if (timeout.isInfinite()) {
-                element = queue.take();
-            } else {
-                element = queue.poll(timeout.remaining(NANOSECONDS), NANOSECONDS);
-            }
+            Object element = timeout.checkedRunNullable(MILLISECONDS,
+                    () -> queue.take(),
+                    (ms) -> queue.poll(timeout.remaining(NANOSECONDS), NANOSECONDS),
+                    () -> queue.poll());
+            // TODO-CSOT too easy to accidentally remove this "always-true" null check; needs "Nullable" above
             if (element != null) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Polled " + element);

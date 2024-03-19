@@ -44,6 +44,7 @@ public final class MongoOperationTimeoutException extends MongoTimeoutException 
      * @param message the message
      */
     public MongoOperationTimeoutException(final String message) {
+        // TODO-CSOT move all messages here as constants, to ensure consistency?
         super(message);
     }
 

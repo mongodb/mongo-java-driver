@@ -318,8 +318,8 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
             OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
-            localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor,
-                            operationContext.getTimeoutContext().getMaxTimeMS()),
+            BsonDocument killCursorsCommand = getKillCursorsCommand(namespace, localServerCursor, operationContext);
+            localConnection.commandAsync(namespace.getDatabaseName(), killCursorsCommand,
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
                     operationContext, (r, t) -> callback.onResult(null, null));
         }

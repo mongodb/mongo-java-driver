@@ -93,8 +93,9 @@ class GridFSUploadPublisherTest {
 
             Throwable throwable = onErrorEvents.get(0);
             assertEquals(MongoOperationTimeoutException.class, throwable.getClass());
-            assertEquals("GridFS timeout out waiting for data"
-                    + " from provided source Publisher", throwable.getMessage());
+            assertEquals(
+                    // TODO-CSOT move all messages to fields?
+                    "GridFS timed out waiting for data from provided source Publisher", throwable.getMessage());
 
             //assert no chunk has been inserted as we have not sent any data from source publisher.
             for (CommandEvent event : commandListener.getEvents()) {

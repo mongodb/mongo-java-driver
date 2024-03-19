@@ -36,7 +36,6 @@ import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -44,6 +43,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static java.lang.String.format;
@@ -204,9 +204,7 @@ final class OperationHelper {
     static void addMaxTimeMSToNonTailableCursor(final BsonDocument commandDocument, final TimeoutMode timeoutMode,
             final OperationContext operationContext) {
         long maxTimeMS = timeoutMode == TimeoutMode.ITERATION ? 0 : operationContext.getTimeoutContext().getMaxTimeMS();
-        if (maxTimeMS > 0) {
-            commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
+        putIfNotZero(commandDocument, "maxTimeMS", maxTimeMS);
     }
 
     /**

@@ -44,6 +44,7 @@ import static com.mongodb.internal.connection.SocksSocket.AddressType.DOMAIN_NAM
 import static com.mongodb.internal.connection.SocksSocket.AddressType.IP_V4;
 import static com.mongodb.internal.connection.SocksSocket.AddressType.IP_V6;
 import static com.mongodb.internal.connection.SocksSocket.ServerReply.REPLY_SUCCEEDED;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -90,11 +91,12 @@ public final class SocksSocket extends Socket {
             this.remoteAddress = unresolvedAddress;
 
             InetSocketAddress proxyAddress = new InetSocketAddress(assertNotNull(proxySettings.getHost()), proxySettings.getPort());
-            if (socket != null) {
-                socket.connect(proxyAddress, remainingMillis(timeout));
-            } else {
-                super.connect(proxyAddress, remainingMillis(timeout));
-            }
+
+            timeout.checkedRun(MILLISECONDS,
+                    () -> socketConnect(proxyAddress, 0),
+                    (ms) -> socketConnect(proxyAddress, Math.toIntExact(ms)),
+                    () -> throwSocketConnectionTimeout());
+
             SocksAuthenticationMethod authenticationMethod = performNegotiation(timeout);
             authenticate(authenticationMethod, timeout);
             sendConnect(timeout);
@@ -111,6 +113,14 @@ public final class SocksSocket extends Socket {
                 socketException.addSuppressed(closeException);
             }
             throw socketException;
+        }
+    }
+
+    private void socketConnect(final InetSocketAddress proxyAddress, final int rem) throws IOException {
+        if (socket != null) {
+            socket.connect(proxyAddress, rem);
+        } else {
+            super.connect(proxyAddress, rem);
         }
     }
 
@@ -299,19 +309,6 @@ public final class SocksSocket extends Socket {
         return Timeout.expiresIn(timeoutMs, TimeUnit.MILLISECONDS);
     }
 
-    private static int remainingMillis(final Timeout timeout) throws IOException {
-        if (timeout.isInfinite()) {
-            return 0;
-        }
-
-        final int remaining = Math.toIntExact(timeout.remaining(TimeUnit.MILLISECONDS));
-        if (remaining > 0) {
-            return remaining;
-        }
-
-        throw new SocketTimeoutException("Socket connection timed out");
-    }
-
     private byte[] readSocksReply(final int length, final Timeout timeout) throws IOException {
         InputStream inputStream = getInputStream();
         byte[] data = new byte[length];
@@ -320,8 +317,14 @@ public final class SocksSocket extends Socket {
         try {
             while (received < length) {
                 int count;
-                int remaining = remainingMillis(timeout);
-                setSoTimeout(remaining);
+                timeout.checkedRun(MILLISECONDS, () -> {
+                    setSoTimeout(0);
+                }, (remainingMs) -> {
+                    setSoTimeout(Math.toIntExact(remainingMs));
+                }, () -> {
+                    throwSocketConnectionTimeout();
+                });
+
                 count = inputStream.read(data, received, length - received);
                 if (count < 0) {
                     throw new ConnectException("Malformed reply from SOCKS proxy server");
@@ -332,6 +335,10 @@ public final class SocksSocket extends Socket {
             setSoTimeout(originalTimeout);
         }
         return data;
+    }
+
+    private static void throwSocketConnectionTimeout() throws SocketTimeoutException {
+        throw new SocketTimeoutException("Socket connection timed out");
     }
 
     enum SocksCommand {

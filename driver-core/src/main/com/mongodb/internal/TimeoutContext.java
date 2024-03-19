@@ -23,12 +23,12 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Timeout Context.
@@ -46,7 +46,7 @@ public class TimeoutContext {
     private Timeout computedServerSelectionTimeout;
     private long minRoundTripTimeMS = 0;
 
-    public static MongoOperationTimeoutException createMongoTimeoutException() {
+    public static MongoOperationTimeoutException createMongoRoundTripTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
     }
 
@@ -125,8 +125,8 @@ public class TimeoutContext {
      * @return true if the timeout has been set and it has expired
      */
     public boolean hasExpired() {
-        // Use timeout.remaining instead of timeout.hasExpired that measures in nanoseconds.
-        return timeout != null && !timeout.isInfinite() && timeout.remaining(MILLISECONDS) <= 0;
+        // TODO-CSOT remove this method (do not inline, but use lambdas)
+        return Timeout.run(timeout, NANOSECONDS, () -> false, (ns) -> false, () -> true, () -> false);
     }
 
     /**
@@ -140,19 +140,9 @@ public class TimeoutContext {
         return this;
     }
 
-    public Optional<MongoOperationTimeoutException> validateHasTimedOutForCommandExecution() {
-        if (hasTimedOutForCommandExecution()) {
-            return Optional.of(createMongoTimeoutException());
-        }
-        return Optional.empty();
-    }
-
-    private boolean hasTimedOutForCommandExecution() {
-        if (timeout == null || timeout.isInfinite()) {
-            return false;
-        }
-        long remaining = timeout.remaining(MILLISECONDS);
-        return remaining <= 0 || minRoundTripTimeMS > remaining;
+    @Nullable
+    public Timeout timeoutIncludingRoundTrip() {
+        return timeout == null ? null : timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS);
     }
 
     /**
@@ -166,9 +156,17 @@ public class TimeoutContext {
         if (timeoutMS == null) {
             return alternativeTimeoutMS;
         } else if (timeoutMS == 0) {
+            // TODO-CSOT is this correct? shouldn't this check/return the remaining timeout ms?
             return timeoutMS;
         } else {
-            return timeoutRemainingMS();
+            assertNotNull(timeout);
+            // TODO-CSOT refactor once above addressed? Unclear how to avoid extracting numbers.
+            return timeout.run(MILLISECONDS,
+                    () -> 0L,
+                    (ms) -> ms,
+                    () -> {
+                        throw createMongoTimeoutException("The operation timeout has expired.");
+                    });
         }
     }
 
@@ -182,12 +180,23 @@ public class TimeoutContext {
         Long timeoutMS = timeoutSettings.getTimeoutMS();
         if (timeoutMS == null) {
             return alternativeTimeoutMS;
-        } else if (timeoutMS == 0) {
+        } else if (timeoutMS == 0) { // infinite
+            // TODO-CSOT is this correct? alt might be 0=infinite here, but later is min'd against remaining?
             return alternativeTimeoutMS;
-        } else if (alternativeTimeoutMS == 0) {
-            return timeoutRemainingMS();
         } else {
-            return Math.min(timeoutRemainingMS(), alternativeTimeoutMS);
+            assertNotNull(timeout);
+            // TODO-CSOT refactor once above addressed? Unclear how to avoid extracting numbers.
+            long remaining = timeout.run(MILLISECONDS,
+                    () -> 0L,
+                    (ms) -> ms,
+                    () -> {
+                        throw createMongoTimeoutException("The operation timeout has expired.");
+                    });
+            if (alternativeTimeoutMS == 0) {
+                return remaining;
+            } else {
+                return Math.min(remaining, alternativeTimeoutMS);
+            }
         }
     }
 
@@ -201,11 +210,18 @@ public class TimeoutContext {
 
     public long getMaxTimeMS() {
         long maxTimeMS = timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
-        if (timeout == null || timeout.isInfinite()) {
-            return maxTimeMS;
-        }
+        return Timeout.run(timeout, MILLISECONDS,
+                // TODO-CSOT why does infinite translate to getMaxTime?
+                () -> maxTimeMS,
+                // TODO-CSOT why is timeout's ms not used anywhere?
+                (ms) -> calculateMaxTimeMs(maxTimeMS),
+                () -> calculateMaxTimeMs(maxTimeMS),
+                () -> maxTimeMS);
+    }
+
+    private long calculateMaxTimeMs(final long maxTimeMS) {
         if (minRoundTripTimeMS >= maxTimeMS) {
-            throw createMongoTimeoutException();
+            throw createMongoRoundTripTimeoutException();
         }
         return maxTimeMS - minRoundTripTimeMS;
     }
@@ -224,7 +240,7 @@ public class TimeoutContext {
     }
 
     public int getConnectTimeoutMs() {
-        return (int) calculateMin(getTimeoutSettings().getConnectTimeoutMS());
+        return Math.toIntExact(calculateMin(getTimeoutSettings().getConnectTimeoutMS()));
     }
 
     public void resetTimeout() {
@@ -236,9 +252,14 @@ public class TimeoutContext {
      * Resets the timeout if this timeout context is being used by pool maintenance
      */
     public void resetMaintenanceTimeout() {
-        if (isMaintenanceContext && timeout != null && !timeout.isInfinite()) {
-            timeout = calculateTimeout(timeoutSettings.getTimeoutMS());
+        if (!isMaintenanceContext) {
+            return;
         }
+        timeout = Timeout.run(timeout, NANOSECONDS,
+                () -> timeout,
+                (ms) -> calculateTimeout(timeoutSettings.getTimeoutMS()),
+                () -> calculateTimeout(timeoutSettings.getTimeoutMS()),
+                () -> timeout);
     }
 
     public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {
@@ -252,14 +273,6 @@ public class TimeoutContext {
 
         long newReadTimeout = getReadTimeoutMS() + additionalReadTimeout;
         return new TimeoutContext(timeoutSettings.withReadTimeoutMS(newReadTimeout > 0 ? newReadTimeout : Long.MAX_VALUE));
-    }
-
-    private long timeoutRemainingMS() {
-        assertNotNull(timeout);
-        if (timeout.hasExpired()) {
-            throw createMongoTimeoutException("The operation timeout has expired.");
-        }
-        return timeout.isInfinite() ? 0 : timeout.remaining(MILLISECONDS);
     }
 
     @Override
@@ -294,6 +307,7 @@ public class TimeoutContext {
 
     @Nullable
     public static Timeout calculateTimeout(@Nullable final Long timeoutMS) {
+        // TODO-CSOT rename to startTimeout?
         if (timeoutMS != null) {
             return timeoutMS == 0 ? Timeout.infinite() : Timeout.expiresIn(timeoutMS, MILLISECONDS);
         }

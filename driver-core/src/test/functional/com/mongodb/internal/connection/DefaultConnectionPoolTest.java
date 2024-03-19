@@ -533,7 +533,11 @@ public class DefaultConnectionPoolTest {
         for (int i = 0; i < concurrentUsersCount; i++) {
             if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously and check in
                 tasks.add(executor.submit(() -> {
-                    while (!(timeout.hasExpired() || Thread.currentThread().isInterrupted())) {
+                    // TODO-CSOT this and below seem like they cannot be refactored into a typical "timeout.run"
+                    while (!Thread.currentThread().isInterrupted()) {
+                        if (timeout.hasExpired()) {
+                            break;
+                        }
                         spontaneouslyInvalidateReady.run();
                         InternalConnection conn = null;
                         try {
@@ -549,7 +553,10 @@ public class DefaultConnectionPoolTest {
                 }));
             } else if (checkoutAsync) {//check out asynchronously and check in
                 tasks.add(executor.submit(() -> {
-                    while (!(timeout.hasExpired() || Thread.currentThread().isInterrupted())) {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        if (timeout.hasExpired()) {
+                            break;
+                        }
                         spontaneouslyInvalidateReady.run();
                         CompletableFuture<InternalConnection> futureCheckOutCheckIn = new CompletableFuture<>();
                         pool.getAsync(createOperationContext(timeoutSettings), (conn, t) -> {

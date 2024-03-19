@@ -138,9 +138,9 @@ abstract class BaseCluster implements Cluster {
                         serverSelector, currentDescription);
                 return serverTuple;
             }
-            if (computedServerSelectionTimeout.hasExpired()) {
+            Timeout.ifExistsAndExpired(computedServerSelectionTimeout, () -> {
                 throw createAndLogTimeoutException(operationContext.getId(), serverSelector, currentDescription);
-            }
+            });
             if (!selectionWaitingLogged) {
                 logServerSelectionWaiting(clusterId, operationContext.getId(), computedServerSelectionTimeout, serverSelector, currentDescription);
                 selectionWaitingLogged = true;
@@ -266,13 +266,13 @@ abstract class BaseCluster implements Cluster {
                 }
             }
 
-            if (request.getTimeout().hasExpired()) {
+            boolean[] result = {false};
+            Timeout.ifExistsAndExpired(request.getTimeout(), () -> {
                 request.onResult(null, createAndLogTimeoutException(request.getOperationId(),
                         request.originalSelector, description));
-                return true;
-            }
-
-            return false;
+                result[0] = true;
+            });
+            return result[0];
         } catch (Exception e) {
             request.onResult(null, e);
             return true;
@@ -448,20 +448,21 @@ abstract class BaseCluster implements Cluster {
                 ClusterDescription curDescription = description;
 
                 Timeout timeout = Timeout.infinite();
-
+                boolean someWaitersNotSatisfied = false;
                 for (Iterator<ServerSelectionRequest> iter = waitQueue.iterator(); iter.hasNext();) {
                     ServerSelectionRequest currentRequest = iter.next();
                     if (handleServerSelectionRequest(currentRequest, currentPhase, curDescription)) {
                         iter.remove();
                     } else {
+                        someWaitersNotSatisfied = true;
                         timeout = timeout
                                 .orEarlier(currentRequest.getTimeout())
                                 .orEarlier(startMinWaitHeartbeatTimeout());
                     }
                 }
 
-                // if there are any waiters that were not satisfied, connect
-                if (!timeout.isInfinite()) {
+                // TODO-CSOT because min heartbeat cannot be infinite, infinite is being used to mark the second branch
+                if (someWaitersNotSatisfied) {
                     connect();
                 }
 
@@ -508,7 +509,8 @@ abstract class BaseCluster implements Cluster {
                     asList(
                             new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationId),
-                            new Entry(REMAINING_TIME_MS, timeout.remainingOrNegativeForInfinite(MILLISECONDS)),
+                            new Entry(REMAINING_TIME_MS, timeout.run(MILLISECONDS, () -> "infinite", (ms) -> ms, () -> 0L)),
+                            // TODO-CSOT the above extracts values, but the alternative seems worse
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Waiting for server to become available for operation[ {}] with ID {}.[ Remaining time: {} ms.]"

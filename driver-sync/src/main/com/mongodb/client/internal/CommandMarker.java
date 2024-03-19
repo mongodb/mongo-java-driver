@@ -43,6 +43,7 @@ import static com.mongodb.internal.capi.MongoCryptHelper.startProcess;
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
+    // TODO-CSOT what is difference? Is a Command Marker part of an operation? (creates an extra method)
     private static final String TIMEOUT_ERROR_MESSAGE = "Command marking exceeded the timeout limit.";
     @Nullable
     private final MongoClient client;
@@ -63,7 +64,6 @@ class CommandMarker implements Closeable {
      *  <li>The extraOptions.cryptSharedLibRequired option is false.</li>
      * </ul>
      *  Then mongocryptd MUST be spawned by the driver.
-     * </p>
      */
     CommandMarker(
             final MongoCrypt mongoCrypt,

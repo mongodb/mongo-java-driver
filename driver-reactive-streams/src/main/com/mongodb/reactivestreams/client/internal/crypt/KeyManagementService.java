@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteTimeoutException;
@@ -36,9 +37,9 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.internal.TimeoutHelper;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
@@ -161,21 +162,27 @@ class KeyManagementService implements Closeable {
 
     private OperationContext createOperationContext(@Nullable final Timeout operationTimeout, final SocketSettings socketSettings) {
         return OperationContext.simpleOperationContext(new TimeoutContext(
-                new TimeoutSettings(
-                        0,
-                        socketSettings.getConnectTimeout(MILLISECONDS),
-                        socketSettings.getReadTimeout(MILLISECONDS),
-                        getRemaining(operationTimeout),
-                        0))
-        );
+                Timeout.run(operationTimeout, MILLISECONDS,
+                        // TODO-CSOT correct that cannot be infinite? Possibly a path here from: Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
+                        () -> {
+                            throw new AssertionError("operationTimeout cannot be infinite");
+                        },
+                        (ms) -> createTimeoutSettings(socketSettings, ms),
+                        () -> {
+                            throw new MongoOperationTimeoutException(TIMEOUT_ERROR_MESSAGE);
+                        },
+                        () -> createTimeoutSettings(socketSettings, null))));
     }
 
-    @Nullable
-    private static Long getRemaining(@Nullable final Timeout operationTimeout) {
-        if (operationTimeout == null) {
-            return null;
-        }
-        return TimeoutHelper.getRemainingMs(TIMEOUT_ERROR_MESSAGE, operationTimeout);
+    @NotNull
+    private static TimeoutSettings createTimeoutSettings(final SocketSettings socketSettings,
+            @Nullable final Long ms) {
+        return new TimeoutSettings(
+                0,
+                socketSettings.getConnectTimeout(MILLISECONDS),
+                socketSettings.getReadTimeout(MILLISECONDS),
+                ms,
+                0);
     }
 
     private Throwable unWrapException(final Throwable t) {

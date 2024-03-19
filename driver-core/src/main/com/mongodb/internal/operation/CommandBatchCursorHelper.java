@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ServerCursor;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -76,10 +77,11 @@ final class CommandBatchCursorHelper {
         return commandCursorResult;
     }
 
-    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor, final long maxTimeMS) {
+    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor,
+            final OperationContext operationContext) {
         BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                 .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
-        putIfNotZero(command, "maxTimeMS", maxTimeMS);
+        putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
         return command;
     }
 

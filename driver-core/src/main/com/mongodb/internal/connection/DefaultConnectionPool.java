@@ -333,10 +333,16 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     private PooledConnection getPooledConnection(final Timeout waitQueueTimeout, final StartTime startTime) throws MongoTimeoutException {
         try {
-            UsageTrackingInternalConnection internalConnection = pool.get(waitQueueTimeout.remainingOrNegativeForInfinite(NANOSECONDS), NANOSECONDS);
+            UsageTrackingInternalConnection internalConnection = waitQueueTimeout.run(NANOSECONDS,
+                    (Supplier<UsageTrackingInternalConnection>) () -> pool.get(-1L, NANOSECONDS),
+                    (t) -> pool.get(t, NANOSECONDS),
+                    () -> pool.get(0L, NANOSECONDS));
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
-                internalConnection = pool.get(waitQueueTimeout.remainingOrNegativeForInfinite(NANOSECONDS), NANOSECONDS);
+                internalConnection = waitQueueTimeout.run(NANOSECONDS,
+                        (Supplier<UsageTrackingInternalConnection>) () -> pool.get(-1L, NANOSECONDS),
+                        (t) -> pool.get(t, NANOSECONDS),
+                        () -> pool.get(0L, NANOSECONDS));
             }
             return new PooledConnection(internalConnection);
         } catch (MongoTimeoutException e) {
@@ -1063,9 +1069,10 @@ final class DefaultConnectionPool implements ConnectionPool {
                         // the absence of short-circuiting is of importance
                         & !stateAndGeneration.throwIfClosedOrPaused()
                         & (availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null) == null) {
-                    if (waitQueueTimeout.hasExpired()) {
+
+                    Timeout.ifExistsAndExpired(waitQueueTimeout, () -> {
                         throw createTimeoutException(startTime);
-                    }
+                    });
                     waitQueueTimeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition,
                             () -> "acquiring permit or getting available opened connection");
                 }
@@ -1334,11 +1341,11 @@ final class DefaultConnectionPool implements ConnectionPool {
             while (state != State.CLOSED) {
                 try {
                     Task task = tasks.take();
-                    if (task.timeout().hasExpired()) {
-                        task.failAsTimedOut();
-                    } else {
-                        task.execute();
-                    }
+
+                    task.timeout().run(NANOSECONDS,
+                            () -> task.execute(),
+                            (ms) -> task.execute(),
+                            () -> task.failAsTimedOut());
                 } catch (InterruptedException closed) {
                     // fail the rest of the tasks and stop
                 } catch (Exception e) {
