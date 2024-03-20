@@ -322,7 +322,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
             OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            timeoutContext.setMaxTimeSupplier(timeoutContext::getMaxTimeMS);
+            timeoutContext.resetToDefaultMaxTimeSupplier();
 
             localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
