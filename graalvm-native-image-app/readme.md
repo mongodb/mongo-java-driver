@@ -36,6 +36,12 @@ export JDK17="/Users/valentin.kovalenko/.sdkman/candidates/java/17.0.10-librca/"
 export JDK21_GRAALVM="/Users/valentin.kovalenko/.sdkman/candidates/java/21.0.2-graalce/"
 ```
 
+##### Informing Gradle on JDK locations it does not know about
+
+If `JDK21_GRAALVM` points to a
+[location the Gradle auto-detection mechanism is not aware of](https://docs.gradle.org/current/userguide/toolchains.html#sec:auto_detection),
+you need to inform Gradle about that location as specified in https://docs.gradle.org/current/userguide/toolchains.html#sec:custom_loc.
+
 ### Build-related commands
 
 Assuming that your MongoDB deployment is accessible at `mongodb://localhost:27017`,
