@@ -31,8 +31,7 @@ tasks.matching { it.name == 'run' }.configureEach {
 // see https://graalvm.github.io/native-build-tools/latest/gradle-plugin.html
 graalvmNative {
     metadataRepository {
-        enabled = true
-        version = '0.3.6'
+        enabled = false
     }
     agent {
         // Executing the `run` Gradle task with the tracing agent
