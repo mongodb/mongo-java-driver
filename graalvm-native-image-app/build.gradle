@@ -23,6 +23,11 @@ application {
     mainClass = 'com.mongodb.internal.graalvm.NativeImageApp'
 }
 
+def systemPropertiesForRunningNativeApp = System.getProperties().findAll { it.key.toString().startsWith("org.mongodb.") }
+tasks.matching { it.name == 'run' }.configureEach {
+    systemProperties(systemPropertiesForRunningNativeApp)
+}
+
 // see https://graalvm.github.io/native-build-tools/latest/gradle-plugin.html
 graalvmNative {
     metadataRepository {
@@ -46,6 +51,7 @@ graalvmNative {
     binaries {
         configureEach {
             buildArgs.add('--strict-image-heap')
+            buildArgs.add('-H:+UnlockExperimentalVMOptions')
             // see class initialization report is generated at `graalvm/build/native/nativeCompile/reports`,
             // informing us on the kind of initialization for each Java class
             buildArgs.add('-H:+PrintClassInitialization')
@@ -57,6 +63,10 @@ graalvmNative {
             sharedLibrary = false
             def mainClassName = application.mainClass.get()
             imageName = mainClassName.substring(mainClassName.lastIndexOf('.') + 1, mainClassName.length())
+            runtimeArgs.addAll(systemPropertiesForRunningNativeApp.entrySet()
+                    .stream()
+                    .map {"-D${it.getKey()}=${it.getValue()}" }
+                    .toList())
             quickBuild = true
             // See the "Apply" entries in the `native-image` built-time output, informing us on
             // the build configuration files (https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildConfiguration/)

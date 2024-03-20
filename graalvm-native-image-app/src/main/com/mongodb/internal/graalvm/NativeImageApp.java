@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -31,6 +32,7 @@ final class NativeImageApp {
         LOGGER.info("java.vendor={}, java.vm.name={}, java.version={}",
                 System.getProperty("java.vendor"), System.getProperty("java.vm.name"), System.getProperty("java.version"));
         String[] arguments = new String[] {getConnectionStringSystemPropertyOrDefault()};
+        LOGGER.info("proper args={}, tour/example arguments={}", Arrays.toString(args), Arrays.toString(arguments));
         List<Throwable> errors = Stream.<ThrowingRunnable>of(
                 new ThrowingRunnable.Named(gridfs.GridFSTour.class,
                         () -> gridfs.GridFSTour.main(arguments)),
