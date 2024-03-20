@@ -119,7 +119,7 @@ public final class DefaultClusterFactory {
                     clusterOperationContextFactory, streamFactory, heartBeatOperationContextFactory, heartbeatStreamFactory, credential,
                     loggerSettings, commandListener, applicationName,
                     mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
-                    serverApi);
+                    serverApi, FaasEnvironment.getFaasEnvironment() != FaasEnvironment.UNKNOWN);
 
             if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
                 return new SingleServerCluster(clusterId, clusterSettings, serverFactory);

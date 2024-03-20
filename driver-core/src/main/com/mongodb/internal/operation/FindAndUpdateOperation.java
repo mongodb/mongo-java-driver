@@ -30,7 +30,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.bson.conversions.Bson;
 
 import java.util.HashMap;
 import java.util.List;
@@ -132,7 +131,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndUpdateOperation<T> hint(@Nullable final Bson hint) {
+    public FindAndUpdateOperation<T> hint(@Nullable final BsonDocument hint) {
         super.hint(hint);
         return this;
     }

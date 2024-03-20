@@ -19,6 +19,7 @@ package com.mongodb.client.test;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
@@ -34,6 +35,8 @@ import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
@@ -70,6 +73,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public final class CollectionHelper<T> {
+    private static final Logger LOGGER = Loggers.getLogger("test");
 
     private final Codec<T> codec;
     private final CodecRegistry registry = MongoClientSettings.getDefaultCodecRegistry();
@@ -90,7 +94,25 @@ public final class CollectionHelper<T> {
     }
 
     public static void drop(final MongoNamespace namespace, final WriteConcern writeConcern) {
-        new DropCollectionOperation(namespace, writeConcern).execute(getBinding());
+        // This loop is a workaround for unanticipated failures of the drop command when run on a sharded cluster < 4.2.
+        // In practice the command tends to succeed on the first attempt after a failure
+        boolean success = false;
+        while (!success) {
+            try {
+                new DropCollectionOperation(namespace, writeConcern).execute(getBinding());
+                success = true;
+            } catch (MongoWriteConcernException e) {
+                LOGGER.info("Retrying drop collection after a write concern error: " + e);
+                // repeat until success!
+            } catch (MongoCommandException e) {
+                if ("Interrupted".equals(e.getErrorCodeName())) {
+                    LOGGER.info("Retrying drop collection after an Interrupted error: " + e);
+                    // repeat until success!
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     public static void dropDatabase(final String name) {
@@ -108,6 +130,11 @@ public final class CollectionHelper<T> {
                 throw e;
             }
         }
+    }
+
+    public static BsonDocument getCurrentClusterTime() {
+        return new CommandReadOperation<BsonDocument>("admin", new BsonDocument("ping", new BsonInt32(1)), new BsonDocumentCodec())
+                .execute(getBinding()).getDocument("$clusterTime", null);
     }
 
     public MongoNamespace getNamespace() {
@@ -156,7 +183,23 @@ public final class CollectionHelper<T> {
         if (validationOptions.getValidationAction() != null) {
             operation.validationAction(validationOptions.getValidationAction());
         }
-        operation.execute(getBinding());
+
+        // This loop is a workaround for unanticipated failures of the create command when run on a sharded cluster < 4.2
+        // In practice the command tends to succeed on the first attempt after a failure
+        boolean success = false;
+        while (!success) {
+            try {
+                operation.execute(getBinding());
+                success = true;
+            } catch (MongoCommandException e) {
+                if ("Interrupted".equals(e.getErrorCodeName())) {
+                    LOGGER.info("Retrying create collection after a write concern error: " + e);
+                    // repeat until success!
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     public void killCursor(final MongoNamespace namespace, final ServerCursor serverCursor) {
@@ -405,7 +448,7 @@ public final class CollectionHelper<T> {
         return indexes;
     }
 
-    public void killAllSessions() {
+    public static void killAllSessions() {
         try {
             new CommandReadOperation<>("admin",
                                        new BsonDocument("killAllSessions", new BsonArray()), new BsonDocumentCodec()).execute(getBinding());

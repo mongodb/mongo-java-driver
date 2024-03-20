@@ -37,10 +37,13 @@ import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
@@ -70,7 +73,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
 /**
- * See https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.rst#prose-tests
+ * See https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.md#prose-tests
  */
 public final class ClientSideOperationTimeoutProseTest extends AbstractClientSideOperationsTimeoutProseTest {
     private MongoClient wrapped;
@@ -514,5 +517,24 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         CommandFailedEvent failedAggregateCommandEvent = commandFailedEvents.get(0);
         assertEquals(command, commandFailedEvents.get(0).getCommandName());
         assertInstanceOf(MongoOperationTimeoutException.class, failedAggregateCommandEvent.getThrowable());
+    }
+
+    @Override
+    @BeforeEach
+    public void setUp() {
+        super.setUp();
+        SyncMongoClient.enableSleepAfterSessionClose(postSessionCloseSleep());
+    }
+
+    @Override
+    @AfterEach
+    public void tearDown(final TestInfo info) {
+        super.tearDown(info);
+        SyncMongoClient.disableSleep();
+    }
+
+    @Override
+    protected int postSessionCloseSleep() {
+        return 256;
     }
 }

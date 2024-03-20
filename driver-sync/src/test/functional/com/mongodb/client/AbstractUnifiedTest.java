@@ -77,6 +77,7 @@ import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEqualit
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static java.lang.Math.toIntExact;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -167,7 +168,7 @@ public abstract class AbstractUnifiedTest {
 
         collectionHelper = new CollectionHelper<>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
-        collectionHelper.killAllSessions();
+        killAllSessions();
 
         if (!isDataLakeTest()) {
             try {
@@ -730,17 +731,26 @@ public abstract class AbstractUnifiedTest {
 
     private TransactionOptions createTransactionOptions(final BsonDocument options) {
         TransactionOptions.Builder builder = TransactionOptions.builder();
-        if (options.containsKey("writeConcern")) {
-            builder.writeConcern(helper.getWriteConcern(options));
-        }
-        if (options.containsKey("readConcern")) {
-            builder.readConcern(helper.getReadConcern(options));
-        }
-        if (options.containsKey("readPreference")) {
-            builder.readPreference(helper.getReadPreference(options));
-        }
-        if (options.containsKey("maxCommitTimeMS")) {
-            builder.maxCommitTime(options.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
+        for (String option : options.keySet()) {
+            switch (option) {
+                case "writeConcern":
+                    builder.writeConcern(helper.getWriteConcern(options));
+                    break;
+                case "readConcern":
+                    builder.readConcern(helper.getReadConcern(options));
+                    break;
+                case "readPreference":
+                    builder.readPreference(helper.getReadPreference(options));
+                    break;
+                case "maxCommitTimeMS":
+                    builder.maxCommitTime(options.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
+                    break;
+                case "timeoutMS":
+                    builder.timeout(options.getNumber("timeoutMS").longValue(), MILLISECONDS);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported transaction option: " + option);
+            }
         }
         return builder.build();
     }

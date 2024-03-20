@@ -181,12 +181,8 @@ functions:
         shell: "bash"
         script: |
           ${PREPARE_SHELL}
-          set +o xtrace
-          SERVERLESS_DRIVERS_GROUP=${SERVERLESS_DRIVERS_GROUP} \
-          SERVERLESS_API_PUBLIC_KEY=${SERVERLESS_API_PUBLIC_KEY} \
-          SERVERLESS_API_PRIVATE_KEY=${SERVERLESS_API_PRIVATE_KEY} \
-          LOADBALANCED=ON \
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
+          bash ${DRIVERS_TOOLS}/.evergreen/serverless/setup-secrets.sh ${VAULT_NAME}
+          bash ${DRIVERS_TOOLS}/.evergreen/serverless/create-instance.sh
     - command: expansions.update
       params:
         file: serverless-expansion.yml
@@ -203,12 +199,7 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          set +o xtrace
-          SERVERLESS_DRIVERS_GROUP=${SERVERLESS_DRIVERS_GROUP} \
-          SERVERLESS_API_PUBLIC_KEY=${SERVERLESS_API_PUBLIC_KEY} \
-          SERVERLESS_API_PRIVATE_KEY=${SERVERLESS_API_PRIVATE_KEY} \
-          SERVERLESS_INSTANCE_NAME=${SERVERLESS_INSTANCE_NAME} \
-            bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
+          bash ${DRIVERS_TOOLS}/.evergreen/serverless/delete-instance.sh
 
   "teardown_aws":
     - command: shell.exec
@@ -227,24 +218,29 @@ functions:
       type: test
       params:
         working_dir: "src"
+        env:
+          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
+          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_DEFAULT_REGION: us-east-1
+          AZURE_TENANT_ID: ${azure_tenant_id}
+          AZURE_CLIENT_ID: ${azure_client_id}
+          AZURE_CLIENT_SECRET: ${azure_client_secret}
+          GCP_EMAIL: ${gcp_email}
+          GCP_PRIVATE_KEY: ${gcp_private_key}
+          AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
+          AZUREKMS_KEY_NAME: ${testazurekms_keyname}
         script: |
           ${PREPARE_SHELL}
-          export AWS_ACCESS_KEY_ID=${aws_access_key_id}
-          export AWS_SECRET_ACCESS_KEY=${aws_secret_access_key}
-          export AWS_DEFAULT_REGION=us-east-1
+          
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
+          
+          export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
+          export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
+          export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
+          export CRYPT_SHARED_LIB_PATH=${CRYPT_SHARED_LIB_PATH}
+
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
-          COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" \
-          AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
-          AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
-          AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
-          AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN \
-          AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
-          GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
-          AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} \
-          AZUREKMS_KEY_NAME=${testazurekms_keyname} \
-          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
-          CRYPT_SHARED_LIB_PATH="${CRYPT_SHARED_LIB_PATH}" \
+          COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
           .evergreen/run-tests.sh
 
   "run load-balancer tests":
@@ -264,13 +260,15 @@ functions:
       type: test
       params:
         working_dir: "src"
+        shell: bash
+        include_expansions_in_env:
+          - JAVA_VERSION
+          - SERVERLESS_URI
+          - SERVERLESS_ATLAS_USER
+          - SERVERLESS_ATLAS_PASSWORD
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION="${JAVA_VERSION}" \
-          SERVERLESS_URI="${SERVERLESS_URI}" \
-          SERVERLESS_ATLAS_USER="${SERVERLESS_ATLAS_USER}" \
-          SERVERLESS_ATLAS_PASSWORD="${SERVERLESS_ATLAS_PASSWORD}" \
-            .evergreen/run-serverless-tests.sh
+          .evergreen/run-serverless-tests.sh
 
   "run reactive streams tck tests":
     - command: shell.exec
@@ -784,52 +782,65 @@ functions:
       type: test
       params:
         working_dir: "src"
+        env:
+          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
+          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
         script: |
           ${PREPARE_SHELL}
           set +o xtrace
-          MONGODB_URI="${MONGODB_URI}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
-          .evergreen/run-csfle-aws-from-environment.sh
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-csfle-aws-from-environment.sh
 
   "run csfle tests with mongocryptd":
     - command: shell.exec
       type: test
       params:
         working_dir: "src"
+        env:
+          AWS_ACCESS_KEY_ID: ${aws_access_key_id}
+          AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_DEFAULT_REGION: us-east-1
+          AZURE_TENANT_ID: ${azure_tenant_id}
+          AZURE_CLIENT_ID: ${azure_client_id}
+          AZURE_CLIENT_SECRET: ${azure_client_secret}
+          GCP_EMAIL: ${gcp_email}
+          GCP_PRIVATE_KEY: ${gcp_private_key}
+          AZUREKMS_KEY_VAULT_ENDPOINT: ${testazurekms_keyvaultendpoint}
+          AZUREKMS_KEY_NAME: ${testazurekms_keyname}
         script: |
           ${PREPARE_SHELL}
-          export AWS_ACCESS_KEY_ID=${aws_access_key_id}
-          export AWS_SECRET_ACCESS_KEY=${aws_secret_access_key}
-          export AWS_DEFAULT_REGION=us-east-1
           . ${DRIVERS_TOOLS}/.evergreen/csfle/set-temp-creds.sh
-          MONGODB_URI="${MONGODB_URI}" \
-          JAVA_VERSION="${JAVA_VERSION}" \
-          AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} \
-          AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID \
-          AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY \
-          AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN \
-          AZURE_TENANT_ID=${azure_tenant_id} AZURE_CLIENT_ID=${azure_client_id} AZURE_CLIENT_SECRET=${azure_client_secret} \
-          GCP_EMAIL=${gcp_email} GCP_PRIVATE_KEY=${gcp_private_key} \
-          AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} \
-          AZUREKMS_KEY_NAME=${testazurekms_keyname} \
-          .evergreen/run-csfle-tests-with-mongocryptd.sh
+          
+          export AWS_TEMP_ACCESS_KEY_ID=$CSFLE_AWS_TEMP_ACCESS_KEY_ID
+          export AWS_TEMP_SECRET_ACCESS_KEY=$CSFLE_AWS_TEMP_SECRET_ACCESS_KEY
+          export AWS_TEMP_SESSION_TOKEN=$CSFLE_AWS_TEMP_SESSION_TOKEN
+          
+          MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-csfle-tests-with-mongocryptd.sh
 
   "publish snapshot":
     - command: shell.exec
       type: test
       params:
         working_dir: "src"
+        env:
+          NEXUS_USERNAME: ${nexus_username}
+          NEXUS_PASSWORD: ${nexus_password}
+          SIGNING_PASSWORD: ${signing_password}
+          SIGNING_KEY: ${gpg_ascii_armored}
         script: |
-          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          RELEASE=false PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY="${gpg_ascii_armored}" .evergreen/publish.sh
+          RELEASE=false PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/publish.sh
 
   "publish release":
     - command: shell.exec
       type: test
       params:
         working_dir: "src"
+        env:
+          NEXUS_USERNAME: ${nexus_username}
+          NEXUS_PASSWORD: ${nexus_password}
+          SIGNING_PASSWORD: ${signing_password}
+          SIGNING_KEY: ${gpg_ascii_armored}
         script: |
-          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          RELEASE=true PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY="${gpg_ascii_armored}" .evergreen/publish.sh
+          RELEASE=true PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/publish.sh
 
   "cleanup":
     - command: shell.exec
@@ -1771,6 +1782,10 @@ axes:
   - id: jdk
     display_name: JDK
     values:
+      - id: "jdk21"
+        display_name: JDK21
+        variables:
+          JAVA_VERSION: "21"
       - id: "jdk17"
         display_name: JDK17
         variables:
@@ -1844,6 +1859,20 @@ axes:
         display_name: Built-In
         variables:
           AWS_CREDENTIAL_PROVIDER: "builtIn"
+
+  - id: serverless
+    display_name: "Serverless"
+    values:
+      - id: "passthrough"
+        display_name: "Serverless Passthrough Proxy"
+        variables:
+          VAULT_NAME: "serverless"
+        batchtime: 10080  # 7 days
+      - id: "terminating"
+        display_name: "Serverless Terminating Proxy"
+        variables:
+          VAULT_NAME: "serverless_next"
+        batchtime: 10080  # 7 days
 
 task_groups:
   - name: test_atlas_task_group_search_indexes
@@ -2019,7 +2048,8 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-jdk-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17" ], version: [ "3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "latest" ],
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17", "jdk21"],
+                 version: [ "3.6", "4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "latest" ],
                  topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -2034,26 +2064,28 @@ buildvariants:
     - name: "test"
 
 - matrix_name: "tests-require-api-version"
-  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk17"], version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "latest"],
+                 topology: "standalone", os: "linux" }
   display_name: "${version} ${topology} ${api-version} "
   tags: ["tests-variant"]
   tasks:
     - name: "test"
 
 - matrix_name: "tests-load-balancer-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk17"], version: ["5.0", "6.0", "7.0", "latest"], topology: "sharded-cluster", os: "ubuntu" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "latest"], topology: "sharded-cluster",
+                 os: "ubuntu" }
   display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
   tasks:
     - name: "load-balancer-test"
 
 - matrix_name: "tests-serverless"
-  matrix_spec: { jdk: ["jdk17"], os: "ubuntu" }
-  display_name: "Serverless"
+  matrix_spec: { serverless: "*", jdk: ["jdk21"], os: "ubuntu" }
+  display_name: "${serverless} ${jdk} ${os}"
   tasks:
     - name: "serverless-test"
 
 - matrix_name: "tests-slow"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["7.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk21", version: ["7.0"], topology: "standalone", os: "linux" }
   display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-slow-variant"]
   tasks:
@@ -2095,7 +2127,7 @@ buildvariants:
      - name: "socket-test"
 
 - matrix_name: "test-gssapi"
-  matrix_spec: { jdk: ["jdk8", "jdk17"], os: "linux", gssapi-login-context-name: "*"}
+  matrix_spec: { jdk: ["jdk8", "jdk17", "jdk21"], os: "linux", gssapi-login-context-name: "*"}
   display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} ${gssapi-login-context-name}"
   tags: ["test-gssapi-variant"]
   tasks:
@@ -2127,7 +2159,7 @@ buildvariants:
     - name: "test_atlas_task_group_search_indexes"
 
 - matrix_name: "aws-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",
+  matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",
                  aws-credential-provider: "*" }
   display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu2004-small
@@ -2135,7 +2167,7 @@ buildvariants:
     - name: "aws-auth-test-with-regular-aws-credentials"
 
 - matrix_name: "aws-ec2-auth-test"
-  matrix_spec: { ssl: "nossl", jdk: ["jdk17"], version: ["7.0"], os: "ubuntu", aws-credential-provider: "*" }
+  matrix_spec: { ssl: "nossl", jdk: ["jdk21"], version: ["7.0"], os: "ubuntu", aws-credential-provider: "*" }
   display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider}"
   run_on: ubuntu2004-small
   tasks:
@@ -2146,14 +2178,14 @@ buildvariants:
     - name: "aws-auth-test-with-web-identity-credentials"
 
 - matrix_name: "accept-api-version-2-test"
-  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk17", version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk21", version: ["5.0", "6.0", "7.0", "latest"], topology: "standalone", os: "linux" }
   display_name: "Accept API Version 2 ${version}"
   run_on: ubuntu2004-small
   tasks:
     - name: "accept-api-version-2-test"
 
 - matrix_name: "ocsp-test"
-  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk17", version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk21", version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu" }
   display_name: "OCSP test ${version} ${os}"
   tasks:
     - name: ".ocsp"
@@ -2183,14 +2215,15 @@ buildvariants:
     - name: "reactive-streams-tck-test"
 
 - matrix_name: "scala-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk17", version: ["7.0"], topology: "replicaset", scala: "*", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["7.0"], topology: "replicaset",
+                 scala: "*", os: "ubuntu" }
   display_name: "${scala} ${version} ${topology} ${os}"
   tags: ["test-scala-variant"]
   tasks:
     - name: "scala-tests"
 
 - matrix_name: "kotlin-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17"], version: ["7.0"], topology: "replicaset", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["7.0"], topology: "replicaset", os: "ubuntu" }
   display_name: "Kotlin: ${jdk} ${version} ${topology} ${os}"
   tags: ["test-kotlin-variant"]
   tasks:

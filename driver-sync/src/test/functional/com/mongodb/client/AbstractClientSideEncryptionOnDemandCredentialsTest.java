@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -40,7 +41,7 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
     @Test
     @EnabledIfSystemProperty(named = "org.mongodb.test.fle.on.demand.credential.test.success.enabled", matches = "true")
     public void testSuccess() {
-        String kmsProvider = System.getProperty("org.mongodb.test.fle.on.demand.credential.provider");
+        String kmsProvider = getEnv("PROVIDER");
         try (ClientEncryption clientEncryption = initClientEncryption(kmsProvider)) {
             clientEncryption.createDataKey(kmsProvider, getDataKeyOptions(kmsProvider));
         }
@@ -85,8 +86,8 @@ public abstract class AbstractClientSideEncryptionOnDemandCredentialsTest {
                 return new DataKeyOptions().masterKey(BsonDocument.parse(
                         "{projectId: \"devprod-drivers\", location: \"global\", keyRing: \"key-ring-csfle\", keyName: \"key-name-csfle\"}"));
             case "azure":
-                String keyVaultEndpoint = System.getProperty("org.mongodb.test.fle.on.demand.credential.test.azure.keyVaultEndpoint");
-                String keyName = System.getProperty("org.mongodb.test.fle.on.demand.credential.test.azure.keyName");
+                String keyVaultEndpoint = getEnv("AZUREKMS_KEY_VAULT_ENDPOINT");
+                String keyName = getEnv("AZUREKMS_KEY_NAME");
                 return new DataKeyOptions().masterKey(new BsonDocument()
                                 .append("keyVaultEndpoint", new BsonString(keyVaultEndpoint))
                                 .append("keyName", new BsonString(keyName)));

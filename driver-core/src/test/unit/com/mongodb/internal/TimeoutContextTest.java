@@ -16,246 +16,288 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoOperationTimeoutException;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
+import com.mongodb.session.ClientSession;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
-import java.util.Collection;
 import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_COMMIT;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT;
 import static com.mongodb.ClusterFixture.sleep;
-import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.DynamicTest.dynamicTest;
-
 
 final class TimeoutContextTest {
 
-    @SuppressWarnings("checkstyle:methodLength")
-    @TestFactory
-    Collection<DynamicTest> timeoutContextTest() {
-        return asList(
-                dynamicTest("test defaults", () -> {
-                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
-                    assertAll(
-                            () -> assertFalse(timeoutContext.hasTimeoutMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxCommitTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getReadTimeoutMS())
-                    );
-                }),
-                dynamicTest("Uses timeoutMS if set", () -> {
-                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT.withMaxAwaitTimeMS(9));
-                    assertAll(
-                            () -> assertTrue(timeoutContext.hasTimeoutMS()),
-                            () -> assertTrue(timeoutContext.getMaxTimeMS() > 0),
-                            () -> assertTrue(timeoutContext.getMaxCommitTimeMS() > 0)
-                    );
-                }),
-                dynamicTest("test infinite timeoutMS", () -> {
-                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT);
-                    assertAll(
-                            () -> assertTrue(timeoutContext.hasTimeoutMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxCommitTimeMS())
-                    );
-                }),
-                dynamicTest("MaxTimeMS set", () -> {
-                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_TIME);
-                    assertAll(
-                            () -> assertEquals(100, timeoutContext.getMaxTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxCommitTimeMS())
-                    );
-                }),
-                dynamicTest("MaxAwaitTimeMS set", () -> {
-                    TimeoutContext timeoutContext =
-                            new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME);
-                    assertAll(
-                            () -> assertEquals(0, timeoutContext.getMaxTimeMS()),
-                            () -> assertEquals(101, timeoutContext.getMaxAwaitTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxCommitTimeMS())
-                    );
-                }),
-                dynamicTest("MaxAwaitTimeMS set with timeoutMS", () -> {
-                    TimeoutContext timeoutContext =
-                            new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME.withWTimeoutMS(1L));
-                    assertAll(
-                            () -> assertEquals(101, timeoutContext.getMaxAwaitTimeMS())
-                    );
-                }),
-                dynamicTest("MaxTimeMS and MaxAwaitTimeMS set", () -> {
-                    TimeoutContext timeoutContext =
-                            new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME);
-                    assertAll(
-                            () -> assertEquals(101, timeoutContext.getMaxTimeMS()),
-                            () -> assertEquals(1001, timeoutContext.getMaxAwaitTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxCommitTimeMS())
-                    );
-                }),
-                dynamicTest("MaxCommitTimeMS set", () -> {
-                    TimeoutContext timeoutContext =
-                            new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_COMMIT);
-                    assertAll(
-                            () -> assertEquals(0, timeoutContext.getMaxTimeMS()),
-                            () -> assertEquals(0, timeoutContext.getMaxAwaitTimeMS()),
-                            () -> assertEquals(999L, timeoutContext.getMaxCommitTimeMS())
-                    );
-                }),
-                dynamicTest("All deprecated options set", () -> {
-                    TimeoutContext timeoutContext =
-                            new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME
-                                    .withMaxCommitMS(999L));
-                    assertAll(
-                            () -> assertEquals(101, timeoutContext.getMaxTimeMS()),
-                            () -> assertEquals(1001, timeoutContext.getMaxAwaitTimeMS()),
-                            () -> assertEquals(999, timeoutContext.getMaxCommitTimeMS())
-                    );
-                }),
-                dynamicTest("Use timeout if available or the alternative", () -> assertAll(
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS);
-                            assertEquals(99L, timeoutContext.timeoutOrAlternative(99));
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0));
-                            assertEquals(0L, timeoutContext.timeoutOrAlternative(99));
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999));
-                            assertTrue(timeoutContext.timeoutOrAlternative(0) <= 999);
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999));
-                            assertTrue(timeoutContext.timeoutOrAlternative(999999) <= 999);
-                        }
-                )),
-                dynamicTest("Calculate min works as expected", () -> assertAll(
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS);
-                            assertEquals(99L, timeoutContext.calculateMin(99));
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0));
-                            assertEquals(99L, timeoutContext.calculateMin(99));
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999));
-                            assertTrue(timeoutContext.calculateMin(0) <= 999);
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext =
-                                    new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999));
-                            assertTrue(timeoutContext.calculateMin(999999) <= 999);
-                        }
-                )),
-                dynamicTest("withAdditionalReadTimeout works as expected", () -> assertAll(
-                        () -> {
-                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(0));
-                            assertEquals(0L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(10_000L));
-                            assertEquals(10_101L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
-                        },
-                        () -> {
-                            long originalValue = Long.MAX_VALUE - 100;
-                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(originalValue));
-                            assertEquals(Long.MAX_VALUE, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L));
-                            assertThrows(AssertionError.class, () -> timeoutContext.withAdditionalReadTimeout(1));
-                        },
-                        () -> {
-                            TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(10_000L));
-                            assertThrows(AssertionError.class, () -> timeoutContext.withAdditionalReadTimeout(1));
-                        }
-                )),
-                dynamicTest("Expired works as expected", () -> {
-                    TimeoutContext smallTimeout = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(1));
-                    TimeoutContext longTimeout =
-                            new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(9999999));
-                    TimeoutContext noTimeout = new TimeoutContext(TIMEOUT_SETTINGS);
-                    sleep(100);
-                    assertAll(
-                            () -> assertFalse(noTimeout.hasExpired()),
-                            () -> assertFalse(longTimeout.hasExpired()),
-                            () -> assertTrue(smallTimeout.hasExpired())
-                    );
-                }),
-                dynamicTest("throws when calculating timeout if expired", () -> {
-                    TimeoutContext smallTimeout = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(1));
-                    TimeoutContext longTimeout =
-                            new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(9999999));
-                    TimeoutContext noTimeout = new TimeoutContext(TIMEOUT_SETTINGS);
-                    sleep(100);
-                    assertAll(
-                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getReadTimeoutMS),
-                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getWriteTimeoutMS),
-                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxTimeMS),
-                            () -> assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxCommitTimeMS),
-                            () -> assertThrows(MongoOperationTimeoutException.class, () -> smallTimeout.timeoutOrAlternative(1)),
-                            () -> assertDoesNotThrow(longTimeout::getReadTimeoutMS),
-                            () -> assertDoesNotThrow(longTimeout::getWriteTimeoutMS),
-                            () -> assertDoesNotThrow(longTimeout::getMaxTimeMS),
-                            () -> assertDoesNotThrow(longTimeout::getMaxCommitTimeMS),
-                            () -> assertDoesNotThrow(() -> longTimeout.timeoutOrAlternative(1)),
-                            () -> assertDoesNotThrow(noTimeout::getReadTimeoutMS),
-                            () -> assertDoesNotThrow(noTimeout::getWriteTimeoutMS),
-                            () -> assertDoesNotThrow(noTimeout::getMaxTimeMS),
-                            () -> assertDoesNotThrow(noTimeout::getMaxCommitTimeMS),
-                            () -> assertDoesNotThrow(() -> noTimeout.timeoutOrAlternative(1))
-                    );
-                }),
-                dynamicTest("validates minRoundTripTime for maxTimeMS", () -> {
-                    Supplier<TimeoutContext> supplier = () -> new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100));
-                    assertAll(
-                            () -> assertTrue(supplier.get().getMaxTimeMS() <= 100),
-                            () -> assertTrue(supplier.get().minRoundTripTimeMS(10).getMaxTimeMS() <= 90),
-                            () -> assertThrows(MongoOperationTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(101).getMaxTimeMS()),
-                            () -> assertThrows(MongoOperationTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(100).getMaxTimeMS())
-                    );
-                }),
-                dynamicTest("should override maxTimeMS when MaxTimeSupplier is set", () -> {
-                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100).withMaxTimeMS(1));
-                    timeoutContext.setMaxTimeSupplier(() -> 2L);
-                    assertEquals(2, timeoutContext.getMaxTimeMS());
-                }),
-                dynamicTest("should reset maxTimeMS to default behaviour", () -> {
-                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100).withMaxTimeMS(1));
-                    timeoutContext.setMaxTimeSupplier(() -> 1L);
-                    timeoutContext.resetToDefaultMaxTimeSupplier();
-                    assertTrue(timeoutContext.getMaxTimeMS() > 1);
-                }),
-                dynamicTest("should propagate exception from MaxTimeSupplier", () -> {
-                    TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100).withMaxTimeMS(1));
-                    timeoutContext.setMaxTimeSupplier(() -> {
-                        throw new MongoOperationTimeoutException("test");
-                    });
-                    assertThrows(MongoOperationTimeoutException.class, timeoutContext::getMaxTimeMS);
-                })
-        );
+    @Test
+    @DisplayName("test defaults")
+    void testDefaults() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+
+        assertFalse(timeoutContext.hasTimeoutMS());
+        assertEquals(0, timeoutContext.getMaxTimeMS());
+        assertEquals(0, timeoutContext.getMaxAwaitTimeMS());
+        assertEquals(0, timeoutContext.getMaxCommitTimeMS());
+        assertEquals(0, timeoutContext.getReadTimeoutMS());
+    }
+
+    @Test
+    @DisplayName("Uses timeoutMS if set")
+    void testUsesTimeoutMSIfSet() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT);
+
+        assertTrue(timeoutContext.hasTimeoutMS());
+        assertTrue(timeoutContext.getMaxTimeMS() > 0);
+        assertEquals(0, timeoutContext.getMaxAwaitTimeMS());
+    }
+
+    @Test
+    @DisplayName("infinite timeoutMS")
+    void testInfiniteTimeoutMS() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT);
+
+        assertTrue(timeoutContext.hasTimeoutMS());
+        assertEquals(0, timeoutContext.getMaxTimeMS());
+        assertEquals(0, timeoutContext.getMaxAwaitTimeMS());
+    }
+
+    @Test
+    @DisplayName("MaxTimeMS set")
+    void testMaxTimeMSSet() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_TIME);
+
+        assertFalse(timeoutContext.hasTimeoutMS());
+        assertEquals(100, timeoutContext.getMaxTimeMS());
+        assertEquals(0, timeoutContext.getMaxAwaitTimeMS());
+    }
+
+    @Test
+    @DisplayName("MaxAwaitTimeMS set")
+    void testMaxAwaitTimeMSSet() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME);
+
+        assertFalse(timeoutContext.hasTimeoutMS());
+        assertEquals(0, timeoutContext.getMaxTimeMS());
+        assertEquals(101, timeoutContext.getMaxAwaitTimeMS());
+    }
+
+    @Test
+    @DisplayName("MaxTimeMS and MaxAwaitTimeMS set")
+    void testMaxTimeMSAndMaxAwaitTimeMSSet() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME);
+
+        assertFalse(timeoutContext.hasTimeoutMS());
+        assertEquals(101, timeoutContext.getMaxTimeMS());
+        assertEquals(1001, timeoutContext.getMaxAwaitTimeMS());
+    }
+
+    @Test
+    @DisplayName("MaxCommitTimeMS set")
+    void testMaxCommitTimeMSSet() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_MAX_COMMIT);
+
+        assertFalse(timeoutContext.hasTimeoutMS());
+        assertEquals(0, timeoutContext.getMaxTimeMS());
+        assertEquals(0, timeoutContext.getMaxAwaitTimeMS());
+        assertEquals(999L, timeoutContext.getMaxCommitTimeMS());
+    }
+
+    @Test
+    @DisplayName("All deprecated options set")
+    void testAllDeprecatedOptionsSet() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS);
+
+        assertFalse(timeoutContext.hasTimeoutMS());
+        assertEquals(101, timeoutContext.getMaxTimeMS());
+        assertEquals(1001, timeoutContext.getMaxAwaitTimeMS());
+        assertEquals(999, timeoutContext.getMaxCommitTimeMS());
+    }
+
+    @Test
+    @DisplayName("Use timeout if available or the alternative")
+    void testUseTimeoutIfAvailableOrTheAlternative() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+        assertEquals(99L, timeoutContext.timeoutOrAlternative(99));
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L));
+        assertEquals(0L, timeoutContext.timeoutOrAlternative(99));
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
+        assertTrue(timeoutContext.timeoutOrAlternative(0) <= 999);
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
+        assertTrue(timeoutContext.timeoutOrAlternative(999999) <= 999);
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+        assertEquals(0, timeoutContext.getMaxCommitTimeMS());
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
+        assertTrue(timeoutContext.getMaxCommitTimeMS() <= 999);
+    }
+
+    @Test
+    @DisplayName("Calculate min works as expected")
+    void testCalculateMin() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+        assertEquals(99L, timeoutContext.calculateMin(99));
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L));
+        assertEquals(99L, timeoutContext.calculateMin(99));
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
+        assertTrue(timeoutContext.calculateMin(0) <= 999);
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
+        assertTrue(timeoutContext.calculateMin(999999) <= 999);
+    }
+
+    @Test
+    @DisplayName("withAdditionalReadTimeout works as expected")
+    void testWithAdditionalReadTimeout() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(0));
+        assertEquals(0L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
+
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(10_000L));
+        assertEquals(10_101L, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
+
+        long originalValue = Long.MAX_VALUE - 100;
+        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withReadTimeoutMS(originalValue));
+        assertEquals(Long.MAX_VALUE, timeoutContext.withAdditionalReadTimeout(101).getReadTimeoutMS());
+
+        assertThrows(AssertionError.class, () -> new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L)).withAdditionalReadTimeout(1));
+
+        assertThrows(AssertionError.class, () -> new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(10_000L)).withAdditionalReadTimeout(1));
+    }
+
+    @Test
+    @DisplayName("Expired works as expected")
+    void testExpired() {
+        TimeoutContext smallTimeout = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(1L));
+        TimeoutContext longTimeout =
+                new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(9999999L));
+        TimeoutContext noTimeout = new TimeoutContext(TIMEOUT_SETTINGS);
+        sleep(100);
+        assertFalse(noTimeout.hasExpired());
+        assertFalse(longTimeout.hasExpired());
+        assertTrue(smallTimeout.hasExpired());
+    }
+
+    @Test
+    @DisplayName("throws when calculating timeout if expired")
+    void testThrowsWhenExpired() {
+        TimeoutContext smallTimeout = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(1L));
+        TimeoutContext longTimeout = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(9999999L));
+        TimeoutContext noTimeout = new TimeoutContext(TIMEOUT_SETTINGS);
+        sleep(100);
+
+        assertThrows(MongoOperationTimeoutException.class, smallTimeout::getReadTimeoutMS);
+        assertThrows(MongoOperationTimeoutException.class, smallTimeout::getWriteTimeoutMS);
+        assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxTimeMS);
+        assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxCommitTimeMS);
+        assertThrows(MongoOperationTimeoutException.class, () -> smallTimeout.timeoutOrAlternative(1));
+        assertDoesNotThrow(longTimeout::getReadTimeoutMS);
+        assertDoesNotThrow(longTimeout::getWriteTimeoutMS);
+        assertDoesNotThrow(longTimeout::getMaxTimeMS);
+        assertDoesNotThrow(longTimeout::getMaxCommitTimeMS);
+        assertDoesNotThrow(() -> longTimeout.timeoutOrAlternative(1));
+        assertDoesNotThrow(noTimeout::getReadTimeoutMS);
+        assertDoesNotThrow(noTimeout::getWriteTimeoutMS);
+        assertDoesNotThrow(noTimeout::getMaxTimeMS);
+        assertDoesNotThrow(noTimeout::getMaxCommitTimeMS);
+        assertDoesNotThrow(() -> noTimeout.timeoutOrAlternative(1));
+    }
+
+    @Test
+    @DisplayName("validates minRoundTripTime for maxTimeMS")
+    void testValidatedMinRoundTripTime() {
+        Supplier<TimeoutContext> supplier = () -> new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L));
+
+        assertTrue(supplier.get().getMaxTimeMS() <= 100);
+        assertTrue(supplier.get().minRoundTripTimeMS(10).getMaxTimeMS() <= 90);
+        assertThrows(MongoOperationTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(101).getMaxTimeMS());
+        assertThrows(MongoOperationTimeoutException.class, () -> supplier.get().minRoundTripTimeMS(100).getMaxTimeMS());
+    }
+
+    @Test
+    @DisplayName("Test createTimeoutContext handles legacy settings")
+    void testCreateTimeoutContextLegacy() {
+        TimeoutContext sessionTimeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS);
+
+        ClientSession clientSession = Mockito.mock(ClientSession.class);
+        Mockito.when(clientSession.getTimeoutContext()).thenReturn(sessionTimeoutContext);
+
+        TimeoutContext actualTimeoutContext = TimeoutContext.createTimeoutContext(clientSession, timeoutContext.getTimeoutSettings());
+        assertEquals(timeoutContext, actualTimeoutContext);
+    }
+
+    @Test
+    @DisplayName("Test createTimeoutContext with timeout legacy settings")
+    void testCreateTimeoutContextWithTimeoutLegacy() {
+        TimeoutContext sessionTimeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT);
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS);
+
+        ClientSession clientSession = Mockito.mock(ClientSession.class);
+        Mockito.when(clientSession.getTimeoutContext()).thenReturn(sessionTimeoutContext);
+
+        TimeoutContext actualTimeoutContext = TimeoutContext.createTimeoutContext(clientSession, timeoutContext.getTimeoutSettings());
+        assertEquals(sessionTimeoutContext, actualTimeoutContext);
+    }
+
+    @Test
+    @DisplayName("Test createTimeoutContext with timeout")
+    void testCreateTimeoutContextWithTimeout() {
+        TimeoutContext sessionTimeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT);
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS_WITH_TIMEOUT.withMaxAwaitTimeMS(123));
+
+        ClientSession clientSession = Mockito.mock(ClientSession.class);
+        Mockito.when(clientSession.getTimeoutContext()).thenReturn(sessionTimeoutContext);
+
+        TimeoutContext actualTimeoutContext = TimeoutContext.createTimeoutContext(clientSession, timeoutContext.getTimeoutSettings());
+        assertEquals(sessionTimeoutContext, actualTimeoutContext);
+    }
+
+    @Test
+    @DisplayName("should override maxTimeMS when MaxTimeSupplier is set")
+    void shouldOverrideMaximeMS() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
+
+        timeoutContext.setMaxTimeSupplier(() -> 2L);
+
+        assertEquals(2, timeoutContext.getMaxTimeMS());
+    }
+
+    @Test
+    @DisplayName("should reset maxTimeMS to default behaviour")
+    void shouldResetMaximeMS() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
+        timeoutContext.setMaxTimeSupplier(() -> 1L);
+
+        timeoutContext.resetToDefaultMaxTimeSupplier();
+
+        assertTrue(timeoutContext.getMaxTimeMS() > 1);
+    }
+
+    @Test
+    @DisplayName("should propagate exception from MaxTimeSupplier")
+    void shouldPropagateException() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
+        timeoutContext.setMaxTimeSupplier(() -> {
+            throw new MongoOperationTimeoutException("test");
+        });
+
+        assertThrows(MongoOperationTimeoutException.class, timeoutContext::getMaxTimeMS);
     }
 
     private TimeoutContextTest() {

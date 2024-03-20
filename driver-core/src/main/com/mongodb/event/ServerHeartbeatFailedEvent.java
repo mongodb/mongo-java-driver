@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerMonitoringMode;
 
 import java.util.concurrent.TimeUnit;
 
@@ -77,6 +78,7 @@ public final class ServerHeartbeatFailedEvent {
      * to the server and the time that the server waited before sending a response.
      *
      * @return whether the response was awaited
+     * @see ServerMonitoringMode#STREAM
      * @since 4.1
      * @mongodb.server.release 4.4
      */

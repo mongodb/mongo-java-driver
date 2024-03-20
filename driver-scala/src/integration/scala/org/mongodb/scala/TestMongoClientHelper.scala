@@ -29,7 +29,7 @@ object TestMongoClientHelper {
 
   val mongoClientURI: String = {
     val uri = Properties.propOrElse(MONGODB_URI_SYSTEM_PROPERTY_NAME, DEFAULT_URI)
-    if (!uri.isBlank) uri else DEFAULT_URI
+    if (!uri.codePoints().allMatch((cp: Int) => Character.isWhitespace(cp))) uri else DEFAULT_URI
   }
   val connectionString: ConnectionString = ConnectionString(mongoClientURI)
 

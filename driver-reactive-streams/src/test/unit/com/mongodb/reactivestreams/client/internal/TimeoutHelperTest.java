@@ -42,6 +42,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unchecked")
 class TimeoutHelperTest {
 
     private static final String TIMEOUT_ERROR_MESSAGE = "message";

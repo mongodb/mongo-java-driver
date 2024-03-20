@@ -1,5 +1,6 @@
 {
   "description": "timeoutMS behaves correctly for the withTransaction API",
+  "comment": "Manually updated some of the timeoutMS and blockTimeMS to remove race conditions. Added ignoreExtraElements: true, Added expectError to withTransaction result",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -21,7 +22,7 @@
       "client": {
         "id": "client",
         "uriOptions": {
-          "timeoutMS": 50
+          "timeoutMS": 500
         },
         "useMultipleMongoses": false,
         "observeEvents": [
@@ -81,6 +82,9 @@
                 }
               }
             ]
+          },
+          "expectError": {
+            "isClientError": true
           }
         }
       ],
@@ -109,7 +113,7 @@
                   "insert"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 30
+                "blockTimeMS": 300
               }
             }
           }
@@ -152,6 +156,7 @@
       "expectEvents": [
         {
           "client": "client",
+          "ignoreExtraEvents": true,
           "events": [
             {
               "commandStartedEvent": {

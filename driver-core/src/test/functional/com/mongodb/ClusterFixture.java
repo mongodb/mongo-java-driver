@@ -130,11 +130,14 @@ public final class ClusterFixture {
 
     public static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(5));
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(TIMEOUT_DURATION.toMillis());
-    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(0);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(0L);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME = TIMEOUT_SETTINGS.withMaxTimeMS(100);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME = TIMEOUT_SETTINGS.withMaxAwaitTimeMS(101);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME =
             TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001);
+
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS =
+            TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001).withMaxCommitMS(999L);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_COMMIT = TIMEOUT_SETTINGS.withMaxCommitMS(999L);
 
     public static final String LEGACY_HELLO = "isMaster";
@@ -232,10 +235,11 @@ public final class ClusterFixture {
     }
 
     public static boolean hasEncryptionTestsEnabled() {
-        List<String> requiredSystemProperties = asList("awsAccessKeyId", "awsSecretAccessKey", "azureTenantId", "azureClientId",
-                "azureClientSecret", "gcpEmail", "gcpPrivateKey", "tmpAwsAccessKeyId", "tmpAwsSecretAccessKey", "tmpAwsSessionToken");
+        List<String> requiredSystemProperties = asList("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AZURE_TENANT_ID", "AZURE_CLIENT_ID",
+                "AZURE_CLIENT_SECRET", "GCP_EMAIL", "GCP_PRIVATE_KEY", "AWS_TEMP_ACCESS_KEY_ID", "AWS_TEMP_SECRET_ACCESS_KEY",
+                "AWS_TEMP_SESSION_TOKEN");
         return requiredSystemProperties.stream()
-                        .map(name -> System.getProperty("org.mongodb.test." + name, ""))
+                        .map(name -> getEnv(name, ""))
                         .filter(s -> !s.isEmpty())
                         .count() == requiredSystemProperties.size();
     }
@@ -261,6 +265,16 @@ public final class ClusterFixture {
                 cluster.close();
             }
         }
+    }
+
+    public static String getEnv(final String name, final String defaultValue) {
+        String value = getEnv(name);
+        return value == null ? defaultValue : value;
+    }
+
+    @Nullable
+    public static String getEnv(final String name) {
+        return System.getenv(name);
     }
 
     public static boolean getOcspShouldSucceed() {
@@ -611,7 +625,7 @@ public final class ClusterFixture {
     }
 
     public static boolean isClientSideEncryptionTest() {
-        return !System.getProperty("org.mongodb.test.awsAccessKeyId", "").isEmpty();
+        return !getEnv("AWS_ACCESS_KEY_ID", "").isEmpty();
     }
 
     public static boolean isAtlasSearchTest() {
