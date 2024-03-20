@@ -22,13 +22,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import org.bson.BsonDocument;
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.jupiter.api.Test;
@@ -63,8 +58,8 @@ public class MongoOperationPublisherTest {
     @Test
     public void withCodecRegistry() {
         // Cannot do equality test as registries are wrapped
-        CodecRegistry codecRegistry = DEFAULT_MOP.withCodecRegistry(CodecRegistries.fromCodecs(new MyLongCodec())).getCodecRegistry();
-        assertTrue(codecRegistry.get(Long.class) instanceof MyLongCodec);
+        CodecRegistry codecRegistry = DEFAULT_MOP.withCodecRegistry(CodecRegistries.fromCodecs(new TestHelper.MyLongCodec())).getCodecRegistry();
+        assertTrue(codecRegistry.get(Long.class) instanceof TestHelper.MyLongCodec);
     }
 
     @Test
@@ -127,20 +122,4 @@ public class MongoOperationPublisherTest {
         assertEquals(WriteConcern.MAJORITY, DEFAULT_MOP.withWriteConcern(WriteConcern.MAJORITY).getWriteConcern());
     }
 
-    private static class MyLongCodec implements Codec<Long> {
-
-        @Override
-        public Long decode(final BsonReader reader, final DecoderContext decoderContext) {
-            return 42L;
-        }
-
-        @Override
-        public void encode(final BsonWriter writer, final Long value, final EncoderContext encoderContext) {
-        }
-
-        @Override
-        public Class<Long> getEncoderClass() {
-            return Long.class;
-        }
-    }
 }

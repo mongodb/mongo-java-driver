@@ -87,6 +87,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "AggregatePrimer",
       "RemovePrimer",
       "SyncMongoClient",
+      "SyncMongoCluster",
       "SyncGridFSBucket",
       "SyncMongoDatabase",
       "SyncClientEncryption"

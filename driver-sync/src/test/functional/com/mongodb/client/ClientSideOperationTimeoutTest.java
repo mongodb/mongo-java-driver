@@ -81,6 +81,14 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("No count command helper", testDescription.endsWith("count on collection"));
         assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS can be overridden for an operation"));
+        assumeFalse("No operation session based overrides",
+                fileDescription.equals("timeoutMS can be overridden for individual session operations"));
+        assumeFalse("No operation session based overrides",
+                fileDescription.equals("operations ignore deprected timeout options if timeoutMS is set")
+                        && (testDescription.equals("abortTransaction ignores socketTimeoutMS if timeoutMS is set")
+                        || testDescription.equals("commitTransaction ignores socketTimeoutMS if timeoutMS is set")
+                        || testDescription.equals("commitTransaction ignores maxCommitTimeMS if timeoutMS is set")
+                ));
 
         assumeFalse("No operation session based overrides",
                 fileDescription.equals("timeoutMS can be overridden for individual session operations"));

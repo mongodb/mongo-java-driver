@@ -28,6 +28,7 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -256,11 +257,8 @@ public final class Entities {
         return getEntity(id, collections, "collection");
     }
 
-    public MongoClient getClientWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
-        if (timeoutMS != null) {
-            throw new UnsupportedOperationException("Client doesn't have a withTimeout helper");
-        }
-        return getClient(id);
+    public MongoCluster getMongoClusterWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
+        return timeoutMS != null ? getClient(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getClient(id);
     }
 
     public MongoDatabase getDatabaseWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {

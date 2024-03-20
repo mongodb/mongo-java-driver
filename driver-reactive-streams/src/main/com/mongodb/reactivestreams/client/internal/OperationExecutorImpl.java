@@ -15,7 +15,6 @@
  */
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.ContextProvider;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -58,13 +57,9 @@ public class OperationExecutorImpl implements OperationExecutor {
 
     private final MongoClientImpl mongoClient;
     private final ClientSessionHelper clientSessionHelper;
+    @Nullable
     private final ReactiveContextProvider contextProvider;
     private final TimeoutSettings timeoutSettings;
-
-    OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper,
-            final TimeoutSettings timeoutSettings) {
-        this(mongoClient, clientSessionHelper, timeoutSettings, getReactiveContextProvider(mongoClient));
-    }
 
     OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper,
             final TimeoutSettings timeoutSettings, @Nullable final ReactiveContextProvider contextProvider) {
@@ -72,16 +67,6 @@ public class OperationExecutorImpl implements OperationExecutor {
         this.clientSessionHelper = clientSessionHelper;
         this.timeoutSettings = timeoutSettings;
         this.contextProvider = contextProvider;
-    }
-
-    @Nullable
-    private static ReactiveContextProvider getReactiveContextProvider(final MongoClientImpl mongoClient) {
-        ContextProvider contextProvider = mongoClient.getSettings().getContextProvider();
-        if (contextProvider != null && !(contextProvider instanceof ReactiveContextProvider)) {
-            throw new IllegalArgumentException("The contextProvider must be an instance of "
-                    + ReactiveContextProvider.class.getName() + " when using the Reactive Streams driver");
-        }
-        return (ReactiveContextProvider) contextProvider;
     }
 
     @Override

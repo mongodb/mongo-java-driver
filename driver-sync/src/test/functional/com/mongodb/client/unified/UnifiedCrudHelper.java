@@ -38,7 +38,7 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoChangeStreamCursor;
-import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -223,13 +223,13 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
 
     OperationResult executeListDatabases(final BsonDocument operation) {
-        MongoClient client = entities.getClient(operation.getString("object").getValue());
+        MongoCluster mongoCluster = getMongoCluster(operation);
 
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         ListDatabasesIterable<BsonDocument> iterable = session == null
-                ? client.listDatabases(BsonDocument.class)
-                : client.listDatabases(session, BsonDocument.class);
+                ? mongoCluster.listDatabases(BsonDocument.class)
+                : mongoCluster.listDatabases(session, BsonDocument.class);
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
@@ -248,13 +248,13 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     OperationResult executeListDatabaseNames(final BsonDocument operation) {
-        MongoClient client = entities.getClient(operation.getString("object").getValue());
+        MongoCluster mongoCluster = getMongoCluster(operation);
 
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         MongoIterable<String> iterable = session == null
-                ? client.listDatabaseNames()
-                : client.listDatabaseNames(session);
+                ? mongoCluster.listDatabaseNames()
+                : mongoCluster.listDatabaseNames(session);
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             //noinspection SwitchStatementWithTooFewBranches
@@ -1685,7 +1685,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         } else if (entities.hasDatabase(entityName)) {
             iterable = entities.getDatabaseWithTimeoutMS(entityName, timeoutMS).watch(pipeline, BsonDocument.class);
         } else if (entities.hasClient(entityName)) {
-            iterable = entities.getClientWithTimeoutMS(entityName, timeoutMS).watch(pipeline, BsonDocument.class);
+            iterable = entities.getMongoClusterWithTimeoutMS(entityName, timeoutMS).watch(pipeline, BsonDocument.class);
         } else {
             throw new UnsupportedOperationException("No entity found for id: " + entityName);
         }
@@ -1951,6 +1951,19 @@ final class UnifiedCrudHelper extends UnifiedHelper {
             }
         }
         return database;
+    }
+
+    private MongoCluster getMongoCluster(final BsonDocument operation) {
+        MongoCluster mongoCluster = entities.getClient(operation.getString("object").getValue());
+        if (operation.containsKey("arguments")) {
+            BsonDocument arguments = operation.getDocument("arguments");
+            Long timeoutMS = getAndRemoveTimeoutMS(arguments);
+            if (timeoutMS != null) {
+                mongoCluster = mongoCluster.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
+                arguments.remove("timeoutMS");
+            }
+        }
+        return mongoCluster;
     }
 
     private static void setCursorType(final FindIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {

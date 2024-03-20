@@ -218,6 +218,6 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     }
 
     private TimeoutContext createTimeoutContext() {
-        return new TimeoutContext(getTimeoutSettings(transactionOptions, mongoClient.getTimeoutSettings()));
+        return new TimeoutContext(getTimeoutSettings(transactionOptions, executor.getTimeoutSettings()));
     }
 }

@@ -50,16 +50,16 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     private static final int MAX_RETRY_TIME_LIMIT_MS = 120000;
 
-    private final MongoClientDelegate delegate;
+    private final OperationExecutor operationExecutor;
     private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
     private TransactionOptions transactionOptions;
 
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options,
-                      final MongoClientDelegate delegate) {
+                      final OperationExecutor operationExecutor) {
         super(serverSessionPool, originator, options);
-        this.delegate = delegate;
+        this.operationExecutor = operationExecutor;
     }
 
     @Override
@@ -131,7 +131,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 resetTimeout();
-                delegate.getOperationExecutor()
+                operationExecutor
                         .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
             }
@@ -188,7 +188,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (resetTimeout) {
                     resetTimeout();
                 }
-                delegate.getOperationExecutor()
+                operationExecutor
                         .execute(new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()),
                                 transactionState == TransactionState.COMMITTED)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
@@ -300,7 +300,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     }
 
     private TimeoutContext createTimeoutContext(final TransactionOptions transactionOptions) {
-        return new TimeoutContext(getTimeoutSettings(TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions()), delegate.getTimeoutSettings()));
+        return new TimeoutContext(getTimeoutSettings(
+                TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions()),
+                operationExecutor.getTimeoutSettings()));
     }
 
     // Creates a copy of the timeout context that can be reset without resetting the original.

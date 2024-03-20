@@ -24,7 +24,6 @@ import org.bson.conversions.Bson
 import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
-import java.lang
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.MILLISECONDS
