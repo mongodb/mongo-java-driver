@@ -33,7 +33,6 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryab
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCursorTransformer;
 
@@ -120,7 +119,6 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
             putIfNotNull(commandDocument, "filter", filter);
             putIfNotNull(commandDocument, "nameOnly", nameOnly);
             putIfNotNull(commandDocument, "authorizedDatabases", authorizedDatabasesOnly);
-            addMaxTimeMSToNonTailableCursor(operationContext);
             putIfNotNull(commandDocument, "comment", comment);
             return commandDocument;
         };

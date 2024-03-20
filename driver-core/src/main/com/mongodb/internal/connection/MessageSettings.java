@@ -49,9 +49,6 @@ public final class MessageSettings {
     private final int maxWireVersion;
     private final ServerType serverType;
     private final boolean sessionSupported;
-    /**
-     * Identifies whether the server is a mongocryptd.
-     */
     private final boolean cryptd;
 
     /**
@@ -133,6 +130,12 @@ public final class MessageSettings {
             return this;
         }
 
+        /**
+         * Set whether the server is a mongocryptd.
+         *
+         * @param cryptd true if the server is a mongocryptd.
+         * @return this
+         */
         public Builder cryptd(final boolean cryptd) {
             this.cryptd = cryptd;
             return this;

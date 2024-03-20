@@ -49,7 +49,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNot
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
+import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
@@ -167,7 +167,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument commandDocument = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
                     .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
-            addMaxTimeMSToNonTailableCursor(timeoutMode, operationContext);
+            setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
             putIfNotNull(commandDocument, "comment", comment);
             return commandDocument;
         };

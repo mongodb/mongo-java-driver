@@ -20,14 +20,12 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.AsyncConnection;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -45,7 +43,6 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommand
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.appendMaxTimeMs;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -93,7 +90,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     public Void execute(final WriteBinding binding) {
         BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding);
         return withConnection(binding, connection -> {
-            getCommands(localEncryptedFields, binding.getOperationContext()).forEach(command -> {
+            getCommands(localEncryptedFields).forEach(command -> {
                 try {
                     executeCommand(binding, namespace.getDatabaseName(), command.get(),
                             connection, writeConcernErrorTransformer());
@@ -116,7 +113,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
                     if (t1 != null) {
                         errHandlingCallback.onResult(null, t1);
                     } else {
-                        new ProcessCommandsCallback(binding, connection, getCommands(result, binding.getOperationContext()), releasingCallback(errHandlingCallback,
+                        new ProcessCommandsCallback(binding, connection, getCommands(result), releasingCallback(errHandlingCallback,
                                 connection))
                                 .onResult(null, null);
                     }
@@ -152,26 +149,24 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
      *
      * @return the list of commands to run to create the collection
      */
-    private List<Supplier<BsonDocument>> getCommands(final BsonDocument encryptedFields, final OperationContext operationContext) {
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+    private List<Supplier<BsonDocument>> getCommands(final BsonDocument encryptedFields) {
         if (encryptedFields == null) {
-            return singletonList(() -> dropCollectionCommand(timeoutContext));
+            return singletonList(this::dropCollectionCommand);
         } else  {
             return asList(
-                    () -> getDropEncryptedFieldsCollectionCommand(timeoutContext, encryptedFields, "esc"),
-                    () -> getDropEncryptedFieldsCollectionCommand(timeoutContext, encryptedFields, "ecoc"),
-                    () -> dropCollectionCommand(timeoutContext)
+                    () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "esc"),
+                    () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecoc"),
+                    this::dropCollectionCommand
             );
         }
     }
 
-    private BsonDocument getDropEncryptedFieldsCollectionCommand(final TimeoutContext timeoutContext, final BsonDocument encryptedFields, final String collectionSuffix) {
+    private BsonDocument getDropEncryptedFieldsCollectionCommand(final BsonDocument encryptedFields, final String collectionSuffix) {
         BsonString defaultCollectionName = new BsonString(ENCRYPT_PREFIX + namespace.getCollectionName() + "." + collectionSuffix);
-        BsonDocument commandDocument = new BsonDocument("drop", encryptedFields.getOrDefault(collectionSuffix + "Collection", defaultCollectionName));
-        return appendMaxTimeMs(timeoutContext, commandDocument);
+        return new BsonDocument("drop", encryptedFields.getOrDefault(collectionSuffix + "Collection", defaultCollectionName));
     }
 
-    private BsonDocument dropCollectionCommand(final TimeoutContext timeoutContext) {
+    private BsonDocument dropCollectionCommand() {
         BsonDocument commandDocument = new BsonDocument("drop", new BsonString(namespace.getCollectionName()));
         appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;

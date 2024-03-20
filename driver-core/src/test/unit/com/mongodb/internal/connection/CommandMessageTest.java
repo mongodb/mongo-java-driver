@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -60,7 +59,7 @@ class CommandMessageTest {
         BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
         SessionContext sessionContext = mock(SessionContext.class);
         TimeoutContext timeoutContext = mock(TimeoutContext.class, mock -> {
-            doThrow(new MongoOperationTimeoutException("test")).when(mock).addTimeoutElements(anyList());
+            doThrow(new MongoOperationTimeoutException("test")).when(mock).getMaxTimeMS();
         });
         OperationContext operationContext = mock(OperationContext.class, mock -> {
             when(mock.getSessionContext()).thenReturn(sessionContext);

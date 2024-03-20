@@ -222,7 +222,10 @@ public final class CommandMessage extends RequestMessage {
 
         List<BsonElement> extraElements = new ArrayList<>();
         if (!getSettings().isCryptd()) {
-            timeoutContext.addTimeoutElements(extraElements);
+            long maxTimeMS = timeoutContext.getMaxTimeMS();
+            if (maxTimeMS > 0) {
+                extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)));
+            }
         }
         extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
         if (sessionContext.getClusterTime() != null) {

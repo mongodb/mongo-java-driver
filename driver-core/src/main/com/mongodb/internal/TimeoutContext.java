@@ -19,10 +19,7 @@ import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonElement;
-import org.bson.BsonInt64;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -30,6 +27,7 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -48,7 +46,7 @@ public class TimeoutContext {
     private Timeout computedServerSelectionTimeout;
     private long minRoundTripTimeMS = 0;
 
-    private MaxTimeSupplier maxTimeSupplier = this::getMaxTimeMS;
+    private MaxTimeSupplier maxTimeSupplier = this::calculateMaxTimeMS;
 
     public static MongoOperationTimeoutException createMongoTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
@@ -169,6 +167,10 @@ public class TimeoutContext {
     }
 
     public long getMaxTimeMS() {
+        return notNull("Should never be null", maxTimeSupplier.get());
+    }
+
+    private long calculateMaxTimeMS() {
         long maxTimeMS = timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
         if (timeout == null || timeout.isInfinite()) {
             return maxTimeMS;
@@ -181,6 +183,10 @@ public class TimeoutContext {
 
     public void setMaxTimeSupplier(final MaxTimeSupplier maxTimeSupplier) {
         this.maxTimeSupplier = maxTimeSupplier;
+    }
+
+    public void resetToDefaultMaxTimeSupplier() {
+        this.maxTimeSupplier = this::calculateMaxTimeMS;
     }
 
     public long getMaxCommitTimeMS() {
@@ -321,13 +327,6 @@ public class TimeoutContext {
     @Nullable
     public Timeout getTimeout() {
         return timeout;
-    }
-
-    public void addTimeoutElements(final List<BsonElement> extraElements) {
-        Long maxTimeMS = maxTimeSupplier.get();
-        if (maxTimeMS > 0) {
-            extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)));
-        }
     }
 
     public interface MaxTimeSupplier extends Supplier<Long> {

@@ -40,7 +40,6 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
-import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -186,7 +185,6 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
 
             BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
             commandDocument.put("pipeline", new BsonArray(pipeline));
-            addMaxTimeMSToNonTailableCursor(operationContext);
             if (allowDiskUse != null) {
                 commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
             }
