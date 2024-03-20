@@ -889,7 +889,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-graalvm-native-image-app.sh
+          MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-graalvm-native-image-app.sh
 
 # Anchors
 
