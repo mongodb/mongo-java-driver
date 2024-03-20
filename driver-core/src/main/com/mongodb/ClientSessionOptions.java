@@ -224,8 +224,9 @@ public final class ClientSessionOptions {
          * @see #getDefaultTimeout
          */
         public Builder defaultTimeout(final long defaultTimeout, final TimeUnit timeUnit) {
-            isTrueArgument("timeoutMS must be >= 0", defaultTimeout >= 0);
-            this.defaultTimeoutMS = MILLISECONDS.convert(defaultTimeout, timeUnit);
+            this.defaultTimeoutMS = isTrueArgument("timeoutMS must be >= 0",
+                    () -> MILLISECONDS.convert(defaultTimeout, timeUnit),
+                    (timeoutMS) -> defaultTimeout == 0 && timeoutMS == 0 || timeoutMS > 0);
             return this;
         }
 

@@ -160,8 +160,9 @@ public final class ClientEncryptionSettings {
          * @see #getTimeout
          */
         public ClientEncryptionSettings.Builder timeout(final long timeout, final TimeUnit timeUnit) {
-            isTrueArgument("timeoutMS must be >= 0", timeout >= 0);
-            this.timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
+            this.timeoutMS = isTrueArgument("timeoutMS must be >= 0",
+                    () -> MILLISECONDS.convert(timeout, timeUnit),
+                    (timeoutMS) -> timeout == 0 && timeoutMS == 0 || timeoutMS > 0);
             return this;
         }
 
@@ -336,7 +337,7 @@ public final class ClientEncryptionSettings {
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
-        timeoutMS = builder.timeoutMS;
+        this.timeoutMS = builder.timeoutMS;
     }
 
 }

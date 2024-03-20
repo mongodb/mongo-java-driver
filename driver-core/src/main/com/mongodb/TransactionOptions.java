@@ -308,13 +308,9 @@ public final class TransactionOptions {
          * @since CSOT
          */
         public Builder timeout(@Nullable final Long timeout, final TimeUnit timeUnit) {
-            if (timeout == null) {
-                this.timeoutMS = null;
-            } else {
-                notNull("timeUnit", timeUnit);
-                isTrueArgument("timeout > 0", timeout > 0);
-                this.timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
-            }
+            this.timeoutMS = isTrueArgument("timeoutMS must be >= 0",
+                    () -> timeout == null ? null : MILLISECONDS.convert(timeout, timeUnit),
+                    (timeoutMS) -> timeout == null ||  timeout == 0 && timeoutMS == 0 || timeoutMS > 0);
             return this;
         }
 

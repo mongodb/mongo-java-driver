@@ -704,11 +704,11 @@ public final class MongoClientSettings {
          * @see #getTimeout
          */
         public Builder timeout(final long timeout, final TimeUnit timeUnit) {
-            isTrueArgument("timeoutMS must be >= 0", timeout >= 0);
-            this.timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
+            this.timeoutMS = isTrueArgument("timeoutMS must be >= 0",
+                    () -> MILLISECONDS.convert(timeout, timeUnit),
+                    (timeoutMS) ->  timeout == 0 && timeoutMS == 0 || timeoutMS > 0);
             return this;
         }
-
 
         // Package-private to provide interop with MongoClientOptions
         Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
