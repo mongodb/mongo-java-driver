@@ -195,11 +195,7 @@ class TimeoutHelperTest {
     void shouldThrowErrorWhenTimeoutHasExpiredWithZeroRemainingOnCollection() {
         //given
         MongoCollection<Document> collection = mock(MongoCollection.class);
-        Timeout timeout = mock(Timeout.class, timeout1 -> {
-            when(timeout1.hasExpired()).thenReturn(true);
-            when(timeout1.isInfinite()).thenReturn(false);
-            when(timeout1.remaining(TimeUnit.MILLISECONDS)).thenReturn(0L);
-        });
+        Timeout timeout = Timeout.expiresIn(0, TimeUnit.NANOSECONDS);
 
         //when
         assertThrows(MongoOperationTimeoutException.class, () -> collectionWithTimeout(collection, timeout));
@@ -214,11 +210,7 @@ class TimeoutHelperTest {
     void shouldThrowErrorWhenTimeoutHasExpiredWithZeroRemainingOnDatabase() {
         //given
         MongoDatabase database = mock(MongoDatabase.class);
-        Timeout timeout = mock(Timeout.class, timeout1 -> {
-            when(timeout1.hasExpired()).thenReturn(true);
-            when(timeout1.isInfinite()).thenReturn(false);
-            when(timeout1.remaining(TimeUnit.MILLISECONDS)).thenReturn(0L);
-        });
+        Timeout timeout = Timeout.expiresIn(0, TimeUnit.NANOSECONDS);
 
         //when
         assertThrows(MongoOperationTimeoutException.class, () -> databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, timeout));
