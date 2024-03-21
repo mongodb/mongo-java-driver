@@ -25,12 +25,24 @@ import kotlinx.serialization.descriptors.SerialKind
 import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeEncoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.long
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.BsonValue
 import org.bson.BsonWriter
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.EncoderContext
+import org.bson.types.Decimal128
 import org.bson.types.ObjectId
+import java.math.BigDecimal
 
 /**
  * The BsonEncoder interface
@@ -62,17 +74,29 @@ internal class DefaultBsonEncoder(
     private val writer: BsonWriter,
     override val serializersModule: SerializersModule,
     private val configuration: BsonConfiguration
-) : BsonEncoder, AbstractEncoder() {
+) : BsonEncoder, JsonEncoder, AbstractEncoder() {
 
     companion object {
         val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
         val bsonValueCodec = BsonValueCodec()
+        private val DOUBLE_MIN_VALUE = BigDecimal.valueOf(Double.MIN_VALUE)
+        private val DOUBLE_MAX_VALUE = BigDecimal.valueOf(Double.MAX_VALUE)
+        private val INT_MIN_VALUE = BigDecimal.valueOf(Int.MIN_VALUE.toLong())
+        private val INT_MAX_VALUE = BigDecimal.valueOf(Int.MAX_VALUE.toLong())
+        private val LONG_MIN_VALUE = BigDecimal.valueOf(Long.MIN_VALUE)
+        private val LONG_MAX_VALUE = BigDecimal.valueOf(Long.MAX_VALUE)
     }
 
     private var isPolymorphic = false
     private var state = STATE.VALUE
     private var mapState = MapState()
     private var deferredElementName: String? = null
+    override val json = Json {
+        explicitNulls = configuration.explicitNulls
+        encodeDefaults = configuration.encodeDefaults
+        classDiscriminator = configuration.classDiscriminator
+        serializersModule = this@DefaultBsonEncoder.serializersModule
+    }
 
     override fun shouldEncodeElementDefault(descriptor: SerialDescriptor, index: Int): Boolean =
         configuration.encodeDefaults
@@ -143,10 +167,10 @@ internal class DefaultBsonEncoder(
         deferredElementName?.let {
             if (value != null || configuration.explicitNulls) {
                 encodeName(it)
-                super.encodeNullableSerializableValue(serializer, value)
+                super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value)
             }
         }
-            ?: super.encodeNullableSerializableValue(serializer, value)
+            ?: super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value)
     }
 
     override fun encodeByte(value: Byte) = encodeInt(value.toInt())
@@ -183,7 +207,54 @@ internal class DefaultBsonEncoder(
         bsonValueCodec.encode(writer, value, EncoderContext.builder().build())
     }
 
+    override fun encodeJsonElement(element: JsonElement) = when(element) {
+        is JsonNull -> encodeNull()
+        is JsonPrimitive -> encodeJsonPrimitive(element)
+        is JsonObject -> encodeJsonObject(element)
+        is JsonArray -> encodeJsonArray(element)
+    }
+
     override fun writer(): BsonWriter = writer
+
+    private fun encodeJsonPrimitive(primitive: JsonPrimitive) {
+        val content = primitive.content
+        when {
+            primitive.isString -> encodeString(content)
+            content == "true" || content == "false" ->
+                encodeBoolean(content.toBooleanStrict())
+            else -> {
+                val decimal = BigDecimal(content)
+                when  {
+                    decimal.stripTrailingZeros().scale() > 0 ->
+                        if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
+                            encodeDouble(primitive.double)
+                        } else {
+                            writer.writeDecimal128(Decimal128(decimal))
+                        }
+                    INT_MIN_VALUE <= decimal && decimal <= INT_MAX_VALUE ->
+                        encodeInt(primitive.int)
+                    LONG_MIN_VALUE <= decimal && decimal <= LONG_MAX_VALUE ->
+                        encodeLong(primitive.long)
+                    else -> writer.writeDecimal128(Decimal128(decimal))
+                }
+            }
+        }
+    }
+
+    private fun encodeJsonObject(obj: JsonObject) {
+        writer.writeStartDocument()
+        obj.forEach { k, v ->
+            writer.writeName(k)
+            encodeJsonElement(v)
+        }
+        writer.writeEndDocument()
+    }
+
+    private fun encodeJsonArray(array: JsonArray) {
+        writer.writeStartArray()
+        array.forEach(::encodeJsonElement)
+        writer.writeEndArray()
+    }
 
     private fun encodeName(value: Any) {
         writer.writeName(value.toString())

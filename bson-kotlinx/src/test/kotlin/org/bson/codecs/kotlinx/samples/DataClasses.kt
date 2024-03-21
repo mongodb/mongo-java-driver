@@ -21,6 +21,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
@@ -49,6 +50,11 @@ import org.bson.codecs.pojo.annotations.BsonIgnore
 import org.bson.codecs.pojo.annotations.BsonProperty
 import org.bson.codecs.pojo.annotations.BsonRepresentation
 import org.bson.types.ObjectId
+
+@Serializable
+data class DataClassWithJsonElement(
+    val value: JsonElement
+)
 
 @Serializable
 data class DataClassWithSimpleValues(
