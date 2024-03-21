@@ -25,14 +25,16 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.mongodb.client.unified.UnifiedRetryableReadsTest.customSkips;
-import static org.junit.Assume.assumeFalse;
 
 public class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
     public UnifiedRetryableReadsTest(final String fileDescription, final String testDescription, final String schemaVersion,
             final BsonArray runOnRequirements, final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
         customSkips(fileDescription, testDescription);
-        assumeFalse(testDescription.contains("createChangeStream succeeds after retryable handshake"));
+        // The reactive driver will execute extra getMore commands for change streams.  Ignore them.
+        if (fileDescription.startsWith("changeStreams") || testDescription.contains("ChangeStream")) {
+            ignoreExtraEvents();
+        }
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
