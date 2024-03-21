@@ -299,7 +299,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 40
+                "blockTimeMS": 50
               }
             }
           }
