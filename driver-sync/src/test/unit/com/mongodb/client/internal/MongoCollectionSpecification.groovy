@@ -204,6 +204,27 @@ class MongoCollectionSpecification extends Specification {
                 true, true, newReadConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor))
     }
 
+    def 'should behave correctly when using withTimeout'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
+                true, true, readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
+
+        when:
+        def newCollection = collection.withTimeout(10_000, MILLISECONDS)
+
+        then:
+        newCollection.getTimeout(MILLISECONDS) == 10_000
+        expect newCollection, isTheSameAs(new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
+                true, true, readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS.withTimeout(10_000, MILLISECONDS), executor))
+
+        when:
+        collection.withTimeout(500, TimeUnit.NANOSECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should use CountOperation correctly with documentCount'() {
         given:
         def executor = new TestOperationExecutor([1L, 2L, 3L, 4L])

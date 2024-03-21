@@ -43,7 +43,6 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisherCreator.createDeletePublisher;
 import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisherCreator.createDropPublisher;
@@ -154,11 +153,8 @@ public final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
-        isTrueArgument("timeout >= 0", timeout >= 0);
-        notNull("timeUnit", timeUnit);
-        long timeoutMs = MILLISECONDS.convert(timeout, timeUnit);
-        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withTimeout(timeoutMs, MILLISECONDS),
-                chunksCollection.withTimeout(timeoutMs, MILLISECONDS));
+        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withTimeout(timeout, timeUnit),
+                chunksCollection.withTimeout(timeout, timeUnit));
     }
 
     @Override

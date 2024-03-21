@@ -24,8 +24,8 @@ import com.mongodb.session.ClientSession;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -224,9 +224,7 @@ public final class ClientSessionOptions {
          * @see #getDefaultTimeout
          */
         public Builder defaultTimeout(final long defaultTimeout, final TimeUnit timeUnit) {
-            this.defaultTimeoutMS = isTrueArgument("timeoutMS must be >= 0",
-                    () -> MILLISECONDS.convert(defaultTimeout, timeUnit),
-                    (timeoutMS) -> defaultTimeout == 0 && timeoutMS == 0 || timeoutMS > 0);
+            this.defaultTimeoutMS = convertAndValidateTimeout(defaultTimeout, timeUnit, "defaultTimeout");
             return this;
         }
 

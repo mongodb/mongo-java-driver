@@ -227,7 +227,7 @@ public final class MongoOperationPublisher<T> {
     }
 
     MongoOperationPublisher<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
-        TimeoutSettings timeoutSettings = getTimeoutSettings().withTimeoutMS(notNull("timeUnit", timeUnit).toMillis(timeout));
+        TimeoutSettings timeoutSettings = getTimeoutSettings().withTimeout(timeout, timeUnit);
         if (Objects.equals(getTimeoutSettings(), timeoutSettings)) {
             return this;
         }

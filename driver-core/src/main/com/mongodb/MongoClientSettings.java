@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -704,9 +705,7 @@ public final class MongoClientSettings {
          * @see #getTimeout
          */
         public Builder timeout(final long timeout, final TimeUnit timeUnit) {
-            this.timeoutMS = isTrueArgument("timeoutMS must be >= 0",
-                    () -> MILLISECONDS.convert(timeout, timeUnit),
-                    (timeoutMS) ->  timeout == 0 && timeoutMS == 0 || timeoutMS > 0);
+            this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
             return this;
         }
 

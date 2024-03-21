@@ -20,6 +20,7 @@ import spock.lang.Specification
 
 import javax.net.ssl.SSLContext
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 class ClientEncryptionSettingsSpecification extends Specification {
 
@@ -28,7 +29,7 @@ class ClientEncryptionSettingsSpecification extends Specification {
         def mongoClientSettings = MongoClientSettings.builder().build()
         def keyVaultNamespace = "keyVaultNamespace"
         def kmsProvider = ["provider": ["test" : "test"]]
-        def kmsProviderSupplier = ["provider": () -> ["test" : "test"]]
+        def kmsProviderSupplier = ["provider": { ["test" : "test"] } as Supplier]
         def kmsProviderSslContextMap = ["provider": SSLContext.getDefault()]
 
         when:
