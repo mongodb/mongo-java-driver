@@ -17,9 +17,12 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.internal.async.AsyncRunnable;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -33,6 +36,37 @@ public final class Locks {
             action.run();
             return null;
         });
+    }
+
+    public static void withLockAsync(final StampedLock lock, final AsyncRunnable runnable,
+            final SingleResultCallback<Void> callback) {
+        long stamp;
+        try {
+            stamp = lock.writeLockInterruptibly();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            callback.onResult(null, new MongoInterruptedException("Interrupted waiting for lock", e));
+            return;
+        }
+
+        runnable.thenAlwaysRunAndFinish(() -> {
+            lock.unlockWrite(stamp);
+        }, callback);
+    }
+
+    public static void withLock(final StampedLock lock, final Runnable runnable) {
+        long stamp;
+        try {
+            stamp = lock.writeLockInterruptibly();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MongoInterruptedException("Interrupted waiting for lock", e);
+        }
+        try {
+            runnable.run();
+        } finally {
+            lock.unlockWrite(stamp);
+        }
     }
 
     public static <V> V withLock(final Lock lock, final Supplier<V> supplier) {

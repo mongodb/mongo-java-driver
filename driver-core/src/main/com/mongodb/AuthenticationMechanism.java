@@ -38,6 +38,13 @@ public enum AuthenticationMechanism {
     MONGODB_AWS("MONGODB-AWS"),
 
     /**
+     * The MONGODB-OIDC mechanism.
+     * @since 4.10
+     * @mongodb.server.release 7.0
+     */
+    MONGODB_OIDC("MONGODB-OIDC"),
+
+    /**
      * The MongoDB X.509 mechanism. This mechanism is available only with client certificates over SSL.
      */
     MONGODB_X509("MONGODB-X509"),

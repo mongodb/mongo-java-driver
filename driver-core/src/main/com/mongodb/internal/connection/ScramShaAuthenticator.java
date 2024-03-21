@@ -92,7 +92,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         if (speculativeSaslClient != null) {
             return speculativeSaslClient;
         }
-        return new ScramShaSaslClient(getMongoCredentialWithCache(), randomStringGenerator, authenticationHashGenerator);
+        return new ScramShaSaslClient(getMongoCredentialWithCache().getCredential(), randomStringGenerator, authenticationHashGenerator);
     }
 
     @Override
@@ -122,9 +122,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
     }
 
-    class ScramShaSaslClient implements SaslClient {
-
-        private final MongoCredentialWithCache credential;
+    class ScramShaSaslClient extends SaslClientImpl {
         private final RandomStringGenerator randomStringGenerator;
         private final AuthenticationHashGenerator authenticationHashGenerator;
         private final String hAlgorithm;
@@ -136,9 +134,11 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         private byte[] serverSignature;
         private int step = -1;
 
-        ScramShaSaslClient(final MongoCredentialWithCache credential, final RandomStringGenerator randomStringGenerator,
-                           final AuthenticationHashGenerator authenticationHashGenerator) {
-            this.credential = credential;
+        ScramShaSaslClient(
+                final MongoCredential credential,
+                final RandomStringGenerator randomStringGenerator,
+               final AuthenticationHashGenerator authenticationHashGenerator) {
+            super(credential);
             this.randomStringGenerator = randomStringGenerator;
             this.authenticationHashGenerator = authenticationHashGenerator;
             if (assertNotNull(credential.getAuthenticationMechanism()).equals(SCRAM_SHA_1)) {
@@ -150,14 +150,6 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             }
         }
 
-        public String getMechanismName() {
-            return assertNotNull(credential.getAuthenticationMechanism()).getMechanismName();
-        }
-
-        public boolean hasInitialResponse() {
-            return true;
-        }
-
         public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
             step++;
             if (step == 0) {
@@ -167,7 +159,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             } else if (step == 2) {
                 return validateServerSignature(challenge);
             } else {
-                throw new SaslException(format("Too many steps involved in the %s negotiation.", getMechanismName()));
+                throw new SaslException(format("Too many steps involved in the %s negotiation.",
+                        super.getMechanismName()));
             }
         }
 
@@ -182,22 +175,6 @@ class ScramShaAuthenticator extends SaslAuthenticator {
 
         public boolean isComplete() {
             return step == 2;
-        }
-
-        public byte[] unwrap(final byte[] incoming, final int offset, final int len) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        public byte[] wrap(final byte[] outgoing, final int offset, final int len) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        public Object getNegotiatedProperty(final String propName) {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        public void dispose() {
-            // nothing to do
         }
 
         private byte[] computeClientFirstMessage() {
@@ -318,9 +295,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             return map;
         }
 
-
         private String getUserName() {
-            String userName = credential.getCredential().getUserName();
+            String userName = getCredential().getUserName();
             if (userName == null) {
                 throw new IllegalArgumentException("Username can not be null");
             }
@@ -328,8 +304,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
 
         private String getAuthenicationHash() {
-            String password = authenticationHashGenerator.generate(credential.getCredential());
-            if (credential.getAuthenticationMechanism() == SCRAM_SHA_256) {
+            String password = authenticationHashGenerator.generate(getCredential());
+            if (getCredential().getAuthenticationMechanism() == SCRAM_SHA_256) {
                 password = SaslPrep.saslPrepStored(password);
             }
             return password;

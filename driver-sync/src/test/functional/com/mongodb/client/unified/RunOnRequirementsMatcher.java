@@ -74,6 +74,15 @@ final class RunOnRequirementsMatcher {
                             break requirementLoop;
                         }
                         break;
+                    case "authMechanism":
+                        boolean containsMechanism = getServerParameters()
+                                .getArray("authenticationMechanisms")
+                                .contains(curRequirement.getValue());
+                        if (!containsMechanism) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
+                        break;
                     case "serverParameters":
                         BsonDocument serverParameters = getServerParameters();
                         for (Map.Entry<String, BsonValue> curParameter: curRequirement.getValue().asDocument().entrySet()) {
