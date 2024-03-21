@@ -36,6 +36,9 @@ public final class TimeoutHelper {
     }
 
     public static long getRemainingMs(final String message, final Timeout timeout) {
+        if (timeout.isInfinite()) {
+            return 0;
+        }
         long remainingMs = timeout.remaining(MILLISECONDS);
         if (remainingMs <= 0) {
             throw new MongoOperationTimeoutException(message);
@@ -45,7 +48,7 @@ public final class TimeoutHelper {
 
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
+        if (timeout != null) {
             long remainingMs = getRemainingMs(DEFAULT_TIMEOUT_MESSAGE, timeout);
             return collection.withTimeout(remainingMs, MILLISECONDS);
         }
@@ -75,7 +78,7 @@ public final class TimeoutHelper {
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
+        if (timeout != null) {
             long remainingMs = getRemainingMs(message, timeout);
             return database.withTimeout(remainingMs, MILLISECONDS);
         }
@@ -101,9 +104,5 @@ public final class TimeoutHelper {
                                                                   final String message,
                                                                   @Nullable final Timeout timeout) {
         return Mono.defer(() -> databaseWithTimeoutMono(database, message, timeout));
-    }
-
-    private static boolean shouldOverrideTimeout(@Nullable final Timeout timeout) {
-        return timeout != null && !timeout.isInfinite();
     }
 }
