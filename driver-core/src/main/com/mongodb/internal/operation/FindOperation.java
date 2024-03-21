@@ -50,6 +50,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreat
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
@@ -392,14 +393,16 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (limit < 0 || batchSize < 0) {
             commandDocument.put("singleBatch", BsonBoolean.TRUE);
         }
-        if (isTailableCursor()) {
+        if (isAwaitData()) {
+            commandDocument.put("tailable", BsonBoolean.TRUE);
+            commandDocument.put("awaitData", BsonBoolean.TRUE);
+            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+        } else if (isTailableCursor()) {
             commandDocument.put("tailable", BsonBoolean.TRUE);
         } else {
             setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
         }
-        if (isAwaitData()) {
-            commandDocument.put("awaitData", BsonBoolean.TRUE);
-        }
+
         if (noCursorTimeout) {
             commandDocument.put("noCursorTimeout", BsonBoolean.TRUE);
         }
