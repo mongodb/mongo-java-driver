@@ -101,7 +101,7 @@ internal data class DataClassCodec<T : Any>(
         reader.readEndDocument()
 
         try {
-            return primaryConstructor.callBy(args)
+            return primaryConstructor.callBy(args.filterNot(::isRequiredParameterWithNullValue))
         } catch (e: Exception) {
             throw CodecConfigurationException(
                 "Unable to invoke primary constructor of ${kClass.simpleName} data class", e)
@@ -251,6 +251,10 @@ internal data class DataClassCodec<T : Any>(
             if (!value) {
                 throw CodecConfigurationException(lazyMessage.invoke())
             }
+        }
+
+        private fun isRequiredParameterWithNullValue(keyValuePair: Map.Entry<KParameter, Any?>): Boolean {
+            return !keyValuePair.key.type.isMarkedNullable && keyValuePair.value == null
         }
     }
 }
