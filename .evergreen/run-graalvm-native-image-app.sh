@@ -6,7 +6,7 @@
 
 set -o errexit
 
-RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
+readonly RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 source "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 echo "MONGODB_URI: ${MONGODB_URI}"

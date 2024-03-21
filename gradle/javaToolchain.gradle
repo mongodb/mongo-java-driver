@@ -39,7 +39,7 @@ allprojects {
         if (javaVersion >= minRequiredGraalVMJavaVersion) {
             def javaLanguageVersion = JavaLanguageVersion.of(javaVersion)
             // `JvmVendorSpec.GRAAL_VM` matches only GraalVM Community (https://github.com/graalvm/graalvm-ce-builds/releases),
-            // and does not match any other Graal distribution.
+            // and does not match any other GraalVM distribution.
             // That is, Gradle fails to locate any other installed distribution of GraalVM.
             // Furthermore, there is no other way to express via the Gradle toolchain functionality
             // that GraalVM must be used. The documentation of the `org.graalvm.buildtools.native` plugin
