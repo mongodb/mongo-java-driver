@@ -293,11 +293,12 @@ final class TimeoutContextTest {
     @DisplayName("should propagate exception from MaxTimeSupplier")
     void shouldPropagateException() {
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
+        MongoOperationTimeoutException expectedException = new MongoOperationTimeoutException("test");
         timeoutContext.setMaxTimeSupplier(() -> {
-            throw new MongoOperationTimeoutException("test");
+            throw expectedException;
         });
 
-        assertThrows(MongoOperationTimeoutException.class, timeoutContext::getMaxTimeMS);
+        assertSame(expectedException, assertThrows(expectedException.getClass(), timeoutContext::getMaxTimeMS));
     }
 
     private TimeoutContextTest() {
