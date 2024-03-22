@@ -434,8 +434,7 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
         Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
-            MongoOperationTimeoutException e = createMongoOperationTimeoutExceptionAndClose(commandEventSender);
-            throw e;
+            throw createMongoOperationTimeoutExceptionAndClose(commandEventSender);
         });
 
         boolean commandSuccessful = false;

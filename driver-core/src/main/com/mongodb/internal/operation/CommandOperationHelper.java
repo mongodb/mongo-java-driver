@@ -228,9 +228,7 @@ final class CommandOperationHelper {
 
     static BsonDocument appendMaxTimeMs(final TimeoutContext timeoutContext, final BsonDocument command) {
         if (timeoutContext.hasTimeoutMS()) {
-            long maxTimeMS = timeoutContext.getMaxTimeMS();
-            putIfNotZero(command, "maxTimeMS", maxTimeMS);
-            // TODO-CSOT append changed to put
+            putIfNotZero(command, "maxTimeMS", timeoutContext.getMaxTimeMS());
         }
         return command;
     }
