@@ -95,7 +95,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         assertExpectedHosts(connectionString.getHosts());
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "deprecation"})
     protected void testValidOptions() {
         ConnectionString connectionString = null;
 

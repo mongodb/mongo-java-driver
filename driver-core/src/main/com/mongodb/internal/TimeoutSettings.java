@@ -51,6 +51,7 @@ public class TimeoutSettings {
 
     public static final TimeoutSettings DEFAULT = create(MongoClientSettings.builder().build());
 
+    @SuppressWarnings("deprecation")
     public static TimeoutSettings create(final MongoClientSettings settings) {
         return new TimeoutSettings(
                 settings.getClusterSettings().getServerSelectionTimeout(TimeUnit.MILLISECONDS),
@@ -60,6 +61,7 @@ public class TimeoutSettings {
                 settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
     }
 
+    @SuppressWarnings("deprecation")
     public static TimeoutSettings createHeartbeatSettings(final MongoClientSettings settings) {
         return new TimeoutSettings(
                 settings.getClusterSettings().getServerSelectionTimeout(TimeUnit.MILLISECONDS),

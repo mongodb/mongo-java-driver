@@ -27,6 +27,9 @@ internal class SyncListIndexesIterable<T : Any>(val wrapped: ListIndexesIterable
     override fun timeoutMode(timeoutMode: TimeoutMode): SyncListIndexesIterable<T> = apply {
         wrapped.timeoutMode(timeoutMode)
     }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListIndexesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
