@@ -93,6 +93,7 @@ public class ServerDescriptionTest {
         assertNull(serverDescription.getSetName());
         assertEquals(0, serverDescription.getMinWireVersion());
         assertEquals(0, serverDescription.getMaxWireVersion());
+        assertFalse(serverDescription.isCryptd());
         assertNull(serverDescription.getElectionId());
         assertNull(serverDescription.getSetVersion());
         assertNull(serverDescription.getTopologyVersion());
@@ -133,6 +134,7 @@ public class ServerDescriptionTest {
                                               .lastUpdateTimeNanos(40000L)
                                               .logicalSessionTimeoutMinutes(30)
                                               .exception(exception)
+                                              .cryptd(true)
                                               .build();
 
 
@@ -171,6 +173,7 @@ public class ServerDescriptionTest {
         assertEquals((Integer) 30, serverDescription.getLogicalSessionTimeoutMinutes());
         assertEquals(exception, serverDescription.getException());
         assertEquals(serverDescription, builder(serverDescription).build());
+        assertTrue(serverDescription.isCryptd());
     }
 
     @Test
@@ -236,6 +239,9 @@ public class ServerDescriptionTest {
         assertNotEquals(builder.build(), otherDescription);
 
         otherDescription = createBuilder().topologyVersion(new TopologyVersion(new ObjectId(), 44)).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().cryptd(true).build();
         assertNotEquals(builder.build(), otherDescription);
 
         // test exception state changes

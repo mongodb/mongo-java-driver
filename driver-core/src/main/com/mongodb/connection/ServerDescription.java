@@ -254,7 +254,8 @@ public class ServerDescription {
         }
 
         /**
-         * Sets whether this server is a mongocryptd.
+         * Sets whether this server is a <a href="https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/">mongocryptd</a>.
+         *
          * @param cryptd true if this server is a mongocryptd.
          * @return this
          */
@@ -661,7 +662,8 @@ public class ServerDescription {
     }
 
     /**
-     * Returns whether this server is mongocrpytd.
+     * Returns whether this server is <a href="https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/">mongocryptd</a>.
+     *
      * @return true if this server is a mongocryptd.
      */
     public boolean isCryptd() {
@@ -893,12 +895,6 @@ public class ServerDescription {
         return exception;
     }
 
-    /**
-     * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the round trip time.
-     *
-     * @param o the object to compare to
-     * @return true if this instance is equals to @code{o}
-     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -907,7 +903,6 @@ public class ServerDescription {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ServerDescription that = (ServerDescription) o;
 
         if (maxDocumentSize != that.maxDocumentSize) {
@@ -978,6 +973,10 @@ public class ServerDescription {
             return false;
         }
 
+        if (cryptd != that.cryptd) {
+            return false;
+        }
+
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
@@ -996,30 +995,9 @@ public class ServerDescription {
 
     @Override
     public int hashCode() {
-        int result = address.hashCode();
-        result = 31 * result + type.hashCode();
-        result = 31 * result + (canonicalAddress != null ? canonicalAddress.hashCode() : 0);
-        result = 31 * result + hosts.hashCode();
-        result = 31 * result + passives.hashCode();
-        result = 31 * result + arbiters.hashCode();
-        result = 31 * result + (primary != null ? primary.hashCode() : 0);
-        result = 31 * result + maxDocumentSize;
-        result = 31 * result + tagSet.hashCode();
-        result = 31 * result + (setName != null ? setName.hashCode() : 0);
-        result = 31 * result + (electionId != null ? electionId.hashCode() : 0);
-        result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
-        result = 31 * result + (topologyVersion != null ? topologyVersion.hashCode() : 0);
-        result = 31 * result + (lastWriteDate != null ? lastWriteDate.hashCode() : 0);
-        result = 31 * result + (int) (lastUpdateTimeNanos ^ (lastUpdateTimeNanos >>> 32));
-        result = 31 * result + (ok ? 1 : 0);
-        result = 31 * result + state.hashCode();
-        result = 31 * result + minWireVersion;
-        result = 31 * result + maxWireVersion;
-        result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
-        result = 31 * result + (helloOk ? 1 : 0);
-        result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
-        result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
-        return result;
+        return Objects.hash(address, type, cryptd, canonicalAddress, hosts, passives, arbiters, primary, maxDocumentSize, tagSet, setName,
+                roundTripTimeNanos, minRoundTripTimeNanos, ok, state, minWireVersion, maxWireVersion, electionId, setVersion,
+                topologyVersion, lastWriteDate, lastUpdateTimeNanos, logicalSessionTimeoutMinutes, exception, helloOk);
     }
 
     @Override
@@ -1027,6 +1005,7 @@ public class ServerDescription {
         return "ServerDescription{"
                + "address=" + address
                + ", type=" + type
+               + ", cryptd=" + cryptd
                + ", state=" + state
                + (state == CONNECTED
                   ?
