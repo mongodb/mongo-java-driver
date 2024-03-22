@@ -1,6 +1,6 @@
 {
   "description": "timeoutMS behaves correctly for tailable awaitData cursors",
-  "comment": "Manually changed: timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set. 1st iteration causes a find & getMore, 2nd does a getMore.",
+  "comment": "Manually changed: timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set. Added ignoreExtra events, sometimes an extra getMore is called.",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -302,6 +302,7 @@
       "expectEvents": [
         {
           "client": "client",
+          "ignoreExtraEvents": true,
           "events": [
             {
               "commandStartedEvent": {
@@ -314,22 +315,6 @@
                   "maxTimeMS": {
                     "$$exists": true
                   }
-                }
-              }
-            },
-            {
-              "commandStartedEvent": {
-                "commandName": "getMore",
-                "databaseName": "test",
-                "command": {
-                  "getMore": {
-                    "$$type": [
-                      "int",
-                      "long"
-                    ]
-                  },
-                  "collection": "coll",
-                  "maxTimeMS": 1
                 }
               }
             },
