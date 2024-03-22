@@ -73,7 +73,7 @@ class CommandMessageTest {
     }
 
     @Test
-    void shouldNotAddExtraElementsFromTimeoutContextWhenConnectedToMongoCrypt() {
+    void encodeShouldNotAddExtraElementsFromTimeoutContextWhenConnectedToMongoCrypt() {
         //given
         CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 MessageSettings.builder()
