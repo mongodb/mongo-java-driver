@@ -20,9 +20,9 @@ import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.RequestContext
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.WriteRequestWithIndex
@@ -100,7 +100,7 @@ class CommandMessageSpecification extends Specification {
                 [ClusterConnectionMode.SINGLE, ClusterConnectionMode.MULTIPLE],
                 [
                         new OperationContext(
-                                Stub(RequestContext),
+                                IgnorableRequestContext.INSTANCE,
                                 Stub(SessionContext) {
                                     hasSession() >> false
                                     getClusterTime() >> null
@@ -108,14 +108,14 @@ class CommandMessageSpecification extends Specification {
                                     getReadConcern() >> ReadConcern.DEFAULT
                                 }, Stub(TimeoutContext), null),
                         new OperationContext(
-                                Stub(RequestContext),
+                                IgnorableRequestContext.INSTANCE,
                                 Stub(SessionContext) {
                                     hasSession() >> false
                                     getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
                                     getReadConcern() >> ReadConcern.DEFAULT
                                 }, Stub(TimeoutContext), null),
                         new OperationContext(
-                                Stub(RequestContext),
+                                IgnorableRequestContext.INSTANCE,
                                 Stub(SessionContext) {
                                     hasSession() >> true
                                     getClusterTime() >> null
@@ -123,7 +123,7 @@ class CommandMessageSpecification extends Specification {
                                     getReadConcern() >> ReadConcern.DEFAULT
                                 }, Stub(TimeoutContext), null),
                         new OperationContext(
-                                Stub(RequestContext),
+                                IgnorableRequestContext.INSTANCE,
                                 Stub(SessionContext) {
                                     hasSession() >> true
                                     getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
@@ -152,7 +152,8 @@ class CommandMessageSpecification extends Specification {
                 MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true, payload, new NoOpFieldNameValidator(),
                 ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
-        message.encode(output, new OperationContext(Stub(RequestContext), NoOpSessionContext.INSTANCE, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                Stub(TimeoutContext), null))
 
         when:
         def commandDocument = message.getCommandDocument(output)
@@ -203,7 +204,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         def messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -221,7 +223,7 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext, Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -239,7 +241,7 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext, Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -257,7 +259,10 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE,
+                sessionContext,
+                Stub(TimeoutContext),
+                null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -286,7 +291,9 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext),
+                null))
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         def messageHeader = new MessageHeader(byteBuf, 2048)
 
@@ -304,7 +311,8 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, 1024)
 
@@ -331,7 +339,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
 
         then:
         thrown(BsonMaximumSizeExceededException)
@@ -350,7 +359,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
 
         then:
         thrown(MongoClientException)
@@ -370,7 +380,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, new OperationContext(Stub(RequestContext), sessionContext, Stub(TimeoutContext), null))
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
 
         then:
         thrown(MongoClientException)
