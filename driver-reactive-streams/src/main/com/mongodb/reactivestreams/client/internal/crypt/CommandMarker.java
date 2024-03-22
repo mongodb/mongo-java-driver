@@ -43,7 +43,6 @@ import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.database
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
-    // TODO-CSOT what is difference? Is a Command Marker part of an operation? (creates an extra method)
     private static final String TIMEOUT_ERROR_MESSAGE = "Command marker exceeded the timeout limit.";
     @Nullable
     private final MongoClient client;

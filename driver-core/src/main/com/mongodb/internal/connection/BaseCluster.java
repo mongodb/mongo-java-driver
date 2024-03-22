@@ -131,15 +131,15 @@ abstract class BaseCluster implements Cluster {
             ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, computedServerSelectionTimeout);
 
             if (!currentDescription.isCompatibleWithDriver()) {
-                throw createAndLogIncompatibleException(operationContext.getId(), serverSelector, currentDescription);
+                logAndThrowIncompatibleException(operationContext.getId(), serverSelector, currentDescription);
             }
             if (serverTuple != null) {
                 logServerSelectionSucceeded(clusterId, operationContext.getId(), serverTuple.getServerDescription().getAddress(),
                         serverSelector, currentDescription);
                 return serverTuple;
             }
-            Timeout.ifExistsAndExpired(computedServerSelectionTimeout, () -> {
-                throw createAndLogTimeoutException(operationContext.getId(), serverSelector, currentDescription);
+            computedServerSelectionTimeout.ifExpired(() -> {
+                logAndThrowTimeoutException(operationContext.getId(), serverSelector, currentDescription);
             });
             if (!selectionWaitingLogged) {
                 logServerSelectionWaiting(clusterId, operationContext.getId(), computedServerSelectionTimeout, serverSelector, currentDescription);
@@ -249,8 +249,7 @@ abstract class BaseCluster implements Cluster {
                 CountDownLatch prevPhase = request.phase;
                 request.phase = currentPhase;
                 if (!description.isCompatibleWithDriver()) {
-                    request.onResult(null, createAndLogIncompatibleException(request.getOperationId(), request.originalSelector, description));
-                    return true;
+                    logAndThrowIncompatibleException(request.getOperationId(), request.originalSelector, description);
                 }
 
                 ServerTuple serverTuple = selectServer(request.compositeSelector, description, request.getTimeout());
@@ -266,13 +265,10 @@ abstract class BaseCluster implements Cluster {
                 }
             }
 
-            boolean[] result = {false};
             Timeout.ifExistsAndExpired(request.getTimeout(), () -> {
-                request.onResult(null, createAndLogTimeoutException(request.getOperationId(),
-                        request.originalSelector, description));
-                result[0] = true;
+                logAndThrowTimeoutException(request.getOperationId(), request.originalSelector, description);
             });
-            return result[0];
+            return false;
         } catch (Exception e) {
             request.onResult(null, e);
             return true;
@@ -338,13 +334,13 @@ abstract class BaseCluster implements Cluster {
         return serverFactory.create(this, serverAddress);
     }
 
-    private MongoIncompatibleDriverException createAndLogIncompatibleException(
+    private void logAndThrowIncompatibleException(
             final long operationId,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         MongoIncompatibleDriverException exception = createIncompatibleException(clusterDescription);
         logServerSelectionFailed(clusterId, operationId, exception, serverSelector, clusterDescription);
-        return exception;
+        throw exception;
     }
 
     private MongoIncompatibleDriverException createIncompatibleException(final ClusterDescription curDescription) {
@@ -366,7 +362,7 @@ abstract class BaseCluster implements Cluster {
         return new MongoIncompatibleDriverException(message, curDescription);
     }
 
-    private MongoException createAndLogTimeoutException(
+    private void logAndThrowTimeoutException(
             final long operationId,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
@@ -374,7 +370,7 @@ abstract class BaseCluster implements Cluster {
                 "Timed out while waiting for a server that matches %s. Client view of cluster state is %s",
                 serverSelector, clusterDescription.getShortDescription()));
         logServerSelectionFailed(clusterId, operationId, exception, serverSelector, clusterDescription);
-        return exception;
+        throw exception;
     }
 
     private static final class ServerSelectionRequest {

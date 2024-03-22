@@ -47,7 +47,7 @@ public class TimeoutContext {
     private long minRoundTripTimeMS = 0;
 
     public static MongoOperationTimeoutException createMongoRoundTripTimeoutException() {
-        return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
+        return createMongoTimeoutException("Remaining timeoutMS is less than the server's minimum round trip time.");
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final String message) {

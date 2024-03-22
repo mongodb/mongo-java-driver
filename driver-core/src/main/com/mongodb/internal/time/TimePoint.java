@@ -16,8 +16,8 @@
 package com.mongodb.internal.time;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.internal.CheckedFunction;
-import com.mongodb.internal.CheckedSupplier;
+import com.mongodb.internal.function.CheckedFunction;
+import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 

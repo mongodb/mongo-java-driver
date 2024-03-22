@@ -520,15 +520,12 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
             } else {
-                boolean shouldReturn = Timeout.run(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), NANOSECONDS,
-                        () -> false,
-                        (ns) -> false,
-                        () -> {
-                            callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
-                            return true;
-                        },
-                        () -> false);
-                if (shouldReturn) {
+                boolean[] shouldReturn = {false};
+                Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+                    callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
+                    shouldReturn[0] = true;
+                });
+                if (shouldReturn[0]) {
                     return;
                 }
 

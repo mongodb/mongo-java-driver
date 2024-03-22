@@ -278,7 +278,6 @@ public class ServerDiscoveryAndMonitoringProseTests {
                     () -> queue.take(),
                     (ms) -> queue.poll(timeout.remaining(NANOSECONDS), NANOSECONDS),
                     () -> queue.poll());
-            // TODO-CSOT too easy to accidentally remove this "always-true" null check; needs "Nullable" above
             if (element != null) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Polled " + element);

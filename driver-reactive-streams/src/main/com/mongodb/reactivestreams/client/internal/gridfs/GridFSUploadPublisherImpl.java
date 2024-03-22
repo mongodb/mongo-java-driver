@@ -50,6 +50,7 @@ import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collecti
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeoutDeferred;
 import static java.time.Duration.ofMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 
 /**
@@ -265,8 +266,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
      * @return Mono that emits a {@link MongoOperationTimeoutException}.
      */
     private static Mono<MongoOperationTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
-        // TODO-CSOT why not nanos?
-        return Timeout.run(timeout, MILLISECONDS,
+        return Timeout.run(timeout, NANOSECONDS,
                 () -> Mono.never(),
                 (ms) -> Mono.delay(ofMillis(ms)).then(createTimeoutMonoError()),
                 () -> createTimeoutMonoError(),

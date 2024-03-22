@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal;
-
 /**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@FunctionalInterface
-public interface CheckedConsumer<T, E extends Exception> {
 
-    /**
-     * Performs this operation on the given argument.
-     *
-     * @param t the input argument
-     * @throws E the checked exception to throw
-     */
-    void accept(T t) throws E;
-}
+@NonNullApi
+package com.mongodb.internal.function;
+
+import com.mongodb.lang.NonNullApi;

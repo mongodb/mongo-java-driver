@@ -16,10 +16,10 @@
 package com.mongodb.internal.time;
 
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.internal.CheckedConsumer;
-import com.mongodb.internal.CheckedFunction;
-import com.mongodb.internal.CheckedRunnable;
-import com.mongodb.internal.CheckedSupplier;
+import com.mongodb.internal.function.CheckedConsumer;
+import com.mongodb.internal.function.CheckedFunction;
+import com.mongodb.internal.function.CheckedRunnable;
+import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.CountDownLatch;
@@ -258,6 +258,10 @@ public interface Timeout {
             final CheckedSupplier<T, E> onInfinite, final CheckedFunction<Long, T, E> onHasRemaining,
             final CheckedSupplier<T, E> onExpired) throws E {
         return checkedRun(timeUnit, onInfinite, onHasRemaining, onExpired);
+    }
+
+    default void ifExpired(final Runnable onExpired) {
+        ifExistsAndExpired(this, onExpired);
     }
 
     static void ifExistsAndExpired(@Nullable final Timeout t, final Runnable onExpired) {

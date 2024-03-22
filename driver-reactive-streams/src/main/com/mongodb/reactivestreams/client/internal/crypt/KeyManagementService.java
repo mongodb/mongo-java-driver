@@ -163,7 +163,7 @@ class KeyManagementService implements Closeable {
     private OperationContext createOperationContext(@Nullable final Timeout operationTimeout, final SocketSettings socketSettings) {
         return OperationContext.simpleOperationContext(new TimeoutContext(
                 Timeout.run(operationTimeout, MILLISECONDS,
-                        // TODO-CSOT correct that cannot be infinite? Possibly a path here from: Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
+                        // TODO (CSOT) JAVA-5104 correct that cannot be infinite? Possibly a path here from: Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
                         () -> {
                             throw new AssertionError("operationTimeout cannot be infinite");
                         },
