@@ -1,5 +1,6 @@
 {
   "description": "timeoutMS behaves correctly for tailable awaitData cursors",
+  "comment": "Manually changed: timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set. Added ignoreExtra events, sometimes an extra getMore is called.",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -301,6 +302,7 @@
       "expectEvents": [
         {
           "client": "client",
+          "ignoreExtraEvents": true,
           "events": [
             {
               "commandStartedEvent": {

@@ -81,6 +81,9 @@
                 }
               }
             ]
+          },
+          "expectError": {
+            "isClientError": true
           }
         }
       ],
@@ -196,11 +199,6 @@
                     ]
                   }
                 }
-              }
-            },
-            {
-              "commandFailedEvent": {
-                "commandName": "abortTransaction"
               }
             }
           ]

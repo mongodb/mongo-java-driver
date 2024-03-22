@@ -1,5 +1,6 @@
 {
   "description": "operations ignore deprecated timeout options if timeoutMS is set",
+  "comment": "Manually changed session to use defaultTimeoutMS when testing socket / maxCommit overrides",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -66,7 +67,10 @@
               {
                 "session": {
                   "id": "session",
-                  "client": "client"
+                  "client": "client",
+                  "sessionOptions": {
+                    "defaultTimeoutMS": 10000
+                  }
                 }
               }
             ]
@@ -106,10 +110,7 @@
         },
         {
           "name": "commitTransaction",
-          "object": "session",
-          "arguments": {
-            "timeoutMS": 10000
-          }
+          "object": "session"
         }
       ],
       "expectEvents": [
@@ -268,6 +269,7 @@
                   "id": "session",
                   "client": "client",
                   "sessionOptions": {
+                    "defaultTimeoutMS": 1000,
                     "defaultTransactionOptions": {
                       "maxCommitTimeMS": 5000
                     }
@@ -291,10 +293,7 @@
         },
         {
           "name": "commitTransaction",
-          "object": "session",
-          "arguments": {
-            "timeoutMS": 1000
-          }
+          "object": "session"
         }
       ],
       "expectEvents": [
@@ -357,7 +356,10 @@
               {
                 "session": {
                   "id": "session",
-                  "client": "client"
+                  "client": "client",
+                  "sessionOptions": {
+                    "defaultTimeoutMS": 10000
+                  }
                 }
               }
             ]
@@ -397,10 +399,7 @@
         },
         {
           "name": "abortTransaction",
-          "object": "session",
-          "arguments": {
-            "timeoutMS": 10000
-          }
+          "object": "session"
         }
       ],
       "expectEvents": [
