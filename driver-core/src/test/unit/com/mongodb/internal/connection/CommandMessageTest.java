@@ -46,7 +46,7 @@ class CommandMessageTest {
     private static final FieldNameValidator FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
 
     @Test
-    void shouldThrowTimeoutExceptionWhenTimeoutContextIsCalled() {
+    void encodeShouldThrowTimeoutExceptionWhenTimeoutContextIsCalled() {
         //given
         CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 MessageSettings.builder()
