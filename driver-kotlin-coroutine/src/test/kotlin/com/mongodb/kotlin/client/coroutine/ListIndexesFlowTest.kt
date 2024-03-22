@@ -38,6 +38,7 @@ class ListIndexesFlowTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: ListIndexesPublisher<Document> = mock()
         val flow = ListIndexesFlow(wrapped)
@@ -49,15 +50,15 @@ class ListIndexesFlowTest {
         flow.batchSize(batchSize)
         flow.comment(bsonComment)
         flow.comment(comment)
-        @Suppress("DEPRECATION") flow.maxTime(1)
-        @Suppress("DEPRECATION") flow.maxTime(1, TimeUnit.SECONDS)
+        flow.maxTime(1)
+        flow.maxTime(1, TimeUnit.SECONDS)
         flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)

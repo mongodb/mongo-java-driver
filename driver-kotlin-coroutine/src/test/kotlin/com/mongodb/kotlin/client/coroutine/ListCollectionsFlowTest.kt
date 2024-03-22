@@ -28,6 +28,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 
+@Suppress("DEPRECATION") // maxTime
 class ListCollectionsFlowTest {
     @Test
     fun shouldHaveTheSameMethods() {
@@ -53,8 +54,8 @@ class ListCollectionsFlowTest {
         flow.comment(bsonComment)
         flow.comment(comment)
         flow.filter(filter)
-        @Suppress("DEPRECATION") flow.maxTime(1)
-        @Suppress("DEPRECATION") flow.maxTime(1, TimeUnit.SECONDS)
+        flow.maxTime(1)
+        flow.maxTime(1, TimeUnit.SECONDS)
         flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)

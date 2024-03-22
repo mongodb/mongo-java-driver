@@ -780,6 +780,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation") //writeConcern
     public void testWriteConcernExceptionOnFindAndModify() throws UnknownHostException {
         assumeThat(serverVersionAtLeast(3, 2), is(true));
         assumeThat(isDiscoverableReplicaSet(), is(true));
@@ -837,6 +838,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation") //writeConcern
     public void testWriteConcernExceptionOnUpsert() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         ObjectId id = new ObjectId();
@@ -865,6 +867,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation") //writeConcern
     public void testBulkWriteConcernException() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         try {

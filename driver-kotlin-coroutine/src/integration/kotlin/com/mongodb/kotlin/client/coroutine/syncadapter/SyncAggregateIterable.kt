@@ -35,8 +35,10 @@ data class SyncAggregateIterable<T : Any>(val wrapped: AggregateFlow<T>) :
         wrapped.allowDiskUse(allowDiskUse)
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncAggregateIterable<T> = apply {
-        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
+        wrapped.maxTime(maxTime, timeUnit)
     }
 
     override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): SyncAggregateIterable<T> = apply {

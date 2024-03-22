@@ -176,6 +176,7 @@ public final class SocketSettings {
          * @see com.mongodb.ConnectionString#getConnectTimeout()
          * @see com.mongodb.ConnectionString#getSocketTimeout()
          */
+        @SuppressWarnings("deprecation") // connectionString.getSocketTimeout
         public Builder applyConnectionString(final ConnectionString connectionString) {
             Integer connectTimeout = connectionString.getConnectTimeout();
             if (connectTimeout != null) {

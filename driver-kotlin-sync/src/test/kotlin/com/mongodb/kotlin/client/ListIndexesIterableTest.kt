@@ -38,6 +38,7 @@ class ListIndexesIterableTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JListIndexesIterable<Document> = mock()
         val iterable = ListIndexesIterable(wrapped)
@@ -49,15 +50,15 @@ class ListIndexesIterableTest {
         iterable.batchSize(batchSize)
         iterable.comment(bsonComment)
         iterable.comment(comment)
-        @Suppress("DEPRECATION") iterable.maxTime(1)
-        @Suppress("DEPRECATION") iterable.maxTime(1, TimeUnit.SECONDS)
+        iterable.maxTime(1)
+        iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)

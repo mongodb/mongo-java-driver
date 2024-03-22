@@ -1527,6 +1527,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
+    @SuppressWarnings("deprecation") //options.maxTime
     private static DropIndexOptions getDropIndexOptions(final BsonDocument arguments) {
         DropIndexOptions options = new DropIndexOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
