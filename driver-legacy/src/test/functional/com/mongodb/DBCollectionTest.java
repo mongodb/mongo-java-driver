@@ -852,6 +852,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         try {

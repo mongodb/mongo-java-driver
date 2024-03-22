@@ -25,7 +25,7 @@ data class SyncListIndexesIterable<T : Any>(val wrapped: ListIndexesFlow<T>) :
     JListIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncListIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListIndexesIterable<T> = apply {
-        wrapped.maxTime(maxTime, timeUnit)
+        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
     }
     override fun comment(comment: String?): SyncListIndexesIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncListIndexesIterable<T> = apply { wrapped.comment(comment) }

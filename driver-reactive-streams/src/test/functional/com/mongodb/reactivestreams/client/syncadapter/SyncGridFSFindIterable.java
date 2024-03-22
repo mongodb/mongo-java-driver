@@ -52,6 +52,7 @@ class SyncGridFSFindIterable extends SyncMongoIterable<GridFSFile> implements Gr
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public GridFSFindIterable maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

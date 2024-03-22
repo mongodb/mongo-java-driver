@@ -53,8 +53,8 @@ class ListDatabasesIterableTest {
         iterable.comment(bsonComment)
         iterable.comment(comment)
         iterable.filter(filter)
-        iterable.maxTime(1)
-        iterable.maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") iterable.maxTime(1)
+        @Suppress("DEPRECATION") iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.nameOnly(true)
         iterable.timeoutMode(TimeoutMode.ITERATION)
 
@@ -63,8 +63,8 @@ class ListDatabasesIterableTest {
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).filter(filter)
-        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).nameOnly(true)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 

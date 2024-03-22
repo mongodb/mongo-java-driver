@@ -37,7 +37,7 @@ internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchInd
     }
 
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListSearchIndexesIterable<T> = apply {
-        wrapped.maxTime(maxTime, timeUnit)
+        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
     }
 
     override fun collation(collation: Collation?): SyncListSearchIndexesIterable<T> = apply {

@@ -313,6 +313,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     private ListIndexesIterable<BsonDocument> createListIndexesIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());

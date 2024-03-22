@@ -1444,7 +1444,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
  * @return the options
  */
 public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
-    this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
+    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
  *

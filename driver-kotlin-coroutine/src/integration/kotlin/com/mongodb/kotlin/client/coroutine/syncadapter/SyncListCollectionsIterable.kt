@@ -27,7 +27,7 @@ data class SyncListCollectionsIterable<T : Any>(val wrapped: ListCollectionsFlow
 
     override fun batchSize(batchSize: Int): SyncListCollectionsIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListCollectionsIterable<T> = apply {
-        wrapped.maxTime(maxTime, timeUnit)
+        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
     }
 
     override fun filter(filter: Bson?): SyncListCollectionsIterable<T> = apply { wrapped.filter(filter) }

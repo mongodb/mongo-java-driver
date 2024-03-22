@@ -53,8 +53,8 @@ class ListDatabasesFlowTest {
         flow.comment(bsonComment)
         flow.comment(comment)
         flow.filter(filter)
-        flow.maxTime(1)
-        flow.maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") flow.maxTime(1)
+        @Suppress("DEPRECATION") flow.maxTime(1, TimeUnit.SECONDS)
         flow.nameOnly(true)
         flow.timeoutMode(TimeoutMode.ITERATION)
 
