@@ -49,6 +49,7 @@ import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -161,17 +162,21 @@ class KeyManagementService implements Closeable {
     }
 
     private OperationContext createOperationContext(@Nullable final Timeout operationTimeout, final SocketSettings socketSettings) {
-        return OperationContext.simpleOperationContext(new TimeoutContext(
-                Timeout.run(operationTimeout, MILLISECONDS,
-                        // TODO (CSOT) JAVA-5104 correct that cannot be infinite? Possibly a path here from: Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
-                        () -> {
-                            throw new AssertionError("operationTimeout cannot be infinite");
-                        },
-                        (ms) -> createTimeoutSettings(socketSettings, ms),
-                        () -> {
-                            throw new MongoOperationTimeoutException(TIMEOUT_ERROR_MESSAGE);
-                        },
-                        () -> createTimeoutSettings(socketSettings, null))));
+        TimeoutSettings timeoutSettings;
+        if (operationTimeout == null) {
+            timeoutSettings = createTimeoutSettings(socketSettings, null);
+        } else {
+            timeoutSettings = operationTimeout.run(MILLISECONDS,
+                    // TODO (CSOT) JAVA-5104 correct that cannot be infinite? Possibly a path here from: Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
+                    (Supplier<TimeoutSettings>) () -> {
+                        throw new AssertionError("operationTimeout cannot be infinite");
+                    },
+                    (ms) -> createTimeoutSettings(socketSettings, ms),
+                    () -> {
+                        throw new MongoOperationTimeoutException(TIMEOUT_ERROR_MESSAGE);
+                    });
+        }
+        return OperationContext.simpleOperationContext(new TimeoutContext(timeoutSettings));
     }
 
     @NotNull

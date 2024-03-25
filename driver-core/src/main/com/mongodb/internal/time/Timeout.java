@@ -98,6 +98,14 @@ public interface Timeout {
     }
 
     /**
+     * @param timeout the timeout
+     * @return the provided timeout, or an infinite timeout if provided null.
+     */
+    static Timeout nullAsInfinite(@Nullable final Timeout timeout) {
+        return timeout == null ? infinite() : timeout;
+    }
+
+    /**
      * @param duration the positive duration, in the specified time unit.
      * @param unit the time unit.
      * @return a timeout that expires in the specified duration after now.
@@ -182,32 +190,6 @@ public interface Timeout {
     <T> T run(TimeUnit timeUnit,
             Supplier<T> onInfinite, Function<Long, T> onHasRemaining,
             Supplier<T> onExpired);
-
-    /**
-     * Run, but with a branch for a null timeout
-     * @see #run(TimeUnit, Supplier, Function, Supplier)
-     */
-    static <T> T run(@Nullable final Timeout t, final TimeUnit timeUnit,
-            final Supplier<T> onInfinite, final Function<Long, T> onHasRemaining,
-            final Supplier<T> onExpired, final Supplier<T> onNull) {
-        if (t == null) {
-            return onNull.get();
-        }
-        return t.run(timeUnit, onInfinite, onHasRemaining, onExpired);
-    }
-
-    /**
-     * Checked run, but with a branch for a null timeout
-     * @see #run(TimeUnit, Supplier, Function, Supplier)
-     */
-    static <T, E extends Exception> T checkedRun(@Nullable final Timeout t, final TimeUnit timeUnit,
-            final CheckedSupplier<T, E> onInfinite, final CheckedFunction<Long, T, E> onHasRemaining,
-            final CheckedSupplier<T, E> onExpired, final CheckedSupplier<T, E> onNull) throws E {
-        if (t == null) {
-            return onNull.get();
-        }
-        return t.checkedRun(timeUnit, onInfinite, onHasRemaining, onExpired);
-    }
 
     default void run(final TimeUnit timeUnit,
             final Runnable onInfinite, final Consumer<Long> onHasRemaining,

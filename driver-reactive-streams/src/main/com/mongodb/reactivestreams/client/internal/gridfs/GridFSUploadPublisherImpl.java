@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -266,11 +267,10 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
      * @return Mono that emits a {@link MongoOperationTimeoutException}.
      */
     private static Mono<MongoOperationTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
-        return Timeout.run(timeout, NANOSECONDS,
-                () -> Mono.never(),
+        return Timeout.nullAsInfinite(timeout).run(NANOSECONDS,
+                (Supplier<Mono<MongoOperationTimeoutException>>) () -> Mono.never(),
                 (ms) -> Mono.delay(ofMillis(ms)).then(createTimeoutMonoError()),
-                () -> createTimeoutMonoError(),
-                () -> Mono.never());
+                () -> createTimeoutMonoError());
     }
 
     private static Mono<MongoOperationTimeoutException> createTimeoutMonoError() {

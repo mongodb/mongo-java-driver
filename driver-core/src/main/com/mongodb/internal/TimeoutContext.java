@@ -126,7 +126,7 @@ public class TimeoutContext {
      */
     public boolean hasExpired() {
         // TODO-CSOT remove this method (do not inline, but use lambdas)
-        return Timeout.run(timeout, NANOSECONDS, () -> false, (ns) -> false, () -> true, () -> false);
+        return Timeout.nullAsInfinite(timeout).run(NANOSECONDS, () -> false, (ns) -> false, () -> true);
     }
 
     /**
@@ -210,13 +210,12 @@ public class TimeoutContext {
 
     public long getMaxTimeMS() {
         long maxTimeMS = timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
-        return Timeout.run(timeout, MILLISECONDS,
+        return Timeout.nullAsInfinite(timeout).run(MILLISECONDS,
                 // TODO-CSOT why does infinite translate to getMaxTime?
                 () -> maxTimeMS,
                 // TODO-CSOT why is timeout's ms not used anywhere?
                 (ms) -> calculateMaxTimeMs(maxTimeMS),
-                () -> calculateMaxTimeMs(maxTimeMS),
-                () -> maxTimeMS);
+                () -> calculateMaxTimeMs(maxTimeMS));
     }
 
     private long calculateMaxTimeMs(final long maxTimeMS) {
@@ -255,11 +254,10 @@ public class TimeoutContext {
         if (!isMaintenanceContext) {
             return;
         }
-        timeout = Timeout.run(timeout, NANOSECONDS,
+        timeout = Timeout.nullAsInfinite(timeout).run(NANOSECONDS,
                 () -> timeout,
                 (ms) -> calculateTimeout(timeoutSettings.getTimeoutMS()),
-                () -> calculateTimeout(timeoutSettings.getTimeoutMS()),
-                () -> timeout);
+                () -> calculateTimeout(timeoutSettings.getTimeoutMS()));
     }
 
     public TimeoutContext withAdditionalReadTimeout(final int additionalReadTimeout) {

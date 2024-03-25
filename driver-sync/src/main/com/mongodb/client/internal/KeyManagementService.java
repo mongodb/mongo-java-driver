@@ -21,6 +21,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.SslHelper;
+import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -127,11 +128,10 @@ class KeyManagementService {
         }
 
         public static InputStream wrapIfNeeded(@Nullable final Timeout operationTimeout, final SSLSocket socket) throws IOException {
-            return Timeout.checkedRun(operationTimeout, NANOSECONDS,
-                    () -> socket.getInputStream(),
+            return Timeout.nullAsInfinite(operationTimeout).checkedRun(NANOSECONDS,
+                    (CheckedSupplier<InputStream, IOException>) () -> socket.getInputStream(),
                     (ns) -> new OperationTimeoutAwareInputStream(socket, assertNotNull(operationTimeout)),
-                    () -> new OperationTimeoutAwareInputStream(socket, assertNotNull(operationTimeout)),
-                    () -> socket.getInputStream());
+                    () -> new OperationTimeoutAwareInputStream(socket, assertNotNull(operationTimeout)));
         }
 
         private void setSocketSoTimeoutToOperationTimeout() throws SocketException {

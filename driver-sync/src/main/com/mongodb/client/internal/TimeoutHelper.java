@@ -38,13 +38,12 @@ public final class TimeoutHelper {
                                                                final String message,
                                                                @Nullable final Timeout timeout) {
         // TODO-CSOT why not nanoseconds here, and below?
-        return Timeout.run(timeout, MILLISECONDS,
+        return Timeout.nullAsInfinite(timeout).run(MILLISECONDS,
                 () -> collection,
                 (ms) -> collection.withTimeout(ms, MILLISECONDS),
                 () -> {
                     throw TimeoutContext.createMongoTimeoutException(message);
-                },
-                () -> collection);
+                });
     }
 
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
@@ -55,13 +54,12 @@ public final class TimeoutHelper {
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
-        return Timeout.run(timeout, MILLISECONDS,
+        return Timeout.nullAsInfinite(timeout).run(MILLISECONDS,
                 () -> database,
                 (ms) -> database.withTimeout(ms, MILLISECONDS),
                 () -> {
                     throw TimeoutContext.createMongoTimeoutException(message);
-                },
-                () -> database);
+                });
     }
 
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
