@@ -21,6 +21,8 @@ import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
+import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 
 import java.util.Objects;
 
@@ -52,6 +54,10 @@ public class TimeoutContext {
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final String message) {
         return new MongoOperationTimeoutException(message);
+    }
+
+    public static void throwMongoTimeoutException(final String message) {
+        throw new MongoOperationTimeoutException(message);
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final Throwable cause) {
@@ -152,22 +158,13 @@ public class TimeoutContext {
      * @return timeout to use.
      */
     public long timeoutOrAlternative(final long alternativeTimeoutMS) {
-        Long timeoutMS = timeoutSettings.getTimeoutMS();
-        if (timeoutMS == null) {
-            return alternativeTimeoutMS;
-        } else if (timeoutMS == 0) {
-            // TODO-CSOT is this correct? shouldn't this check/return the remaining timeout ms?
-            return timeoutMS;
-        } else {
-            assertNotNull(timeout);
-            // TODO-CSOT refactor once above addressed? Unclear how to avoid extracting numbers.
-            return timeout.run(MILLISECONDS,
-                    () -> 0L,
-                    (ms) -> ms,
-                    () -> {
-                        throw createMongoTimeoutException("The operation timeout has expired.");
-                    });
-        }
+        Timeout t = timeout != null ? timeout : Timeout.expiresIn(alternativeTimeoutMS, MILLISECONDS);
+        return t.run(MILLISECONDS,
+                () -> 0L,
+                (ms) -> ms,
+                () -> {
+                    throw createMongoTimeoutException("The operation timeout has expired.");
+                });
     }
 
     /**
@@ -176,28 +173,17 @@ public class TimeoutContext {
      * @param alternativeTimeoutMS the alternative timeout
      * @return the minimum value to use.
      */
+    // TODO (CSOT) JAVA-5385 used only by tests?
     public long calculateMin(final long alternativeTimeoutMS) {
-        Long timeoutMS = timeoutSettings.getTimeoutMS();
-        if (timeoutMS == null) {
-            return alternativeTimeoutMS;
-        } else if (timeoutMS == 0) { // infinite
-            // TODO-CSOT is this correct? alt might be 0=infinite here, but later is min'd against remaining?
-            return alternativeTimeoutMS;
-        } else {
-            assertNotNull(timeout);
-            // TODO-CSOT refactor once above addressed? Unclear how to avoid extracting numbers.
-            long remaining = timeout.run(MILLISECONDS,
-                    () -> 0L,
-                    (ms) -> ms,
-                    () -> {
-                        throw createMongoTimeoutException("The operation timeout has expired.");
-                    });
-            if (alternativeTimeoutMS == 0) {
-                return remaining;
-            } else {
-                return Math.min(remaining, alternativeTimeoutMS);
-            }
-        }
+        Timeout minimum = Timeout.expiresIn(alternativeTimeoutMS, MILLISECONDS)
+                .orEarlier(Timeout.nullAsInfinite(timeout));
+
+        return minimum.run(MILLISECONDS,
+                () -> 0L,
+                (ms) -> ms,
+                () -> {
+                    throw createMongoTimeoutException("The operation timeout has expired.");
+                });
     }
 
     public TimeoutSettings getTimeoutSettings() {
@@ -208,21 +194,31 @@ public class TimeoutContext {
         return timeoutSettings.getMaxAwaitTimeMS();
     }
 
+    // TODO (CSOT) JAVA-5385 used only by tests?
     public long getMaxTimeMS() {
-        long maxTimeMS = timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
-        return Timeout.nullAsInfinite(timeout).run(MILLISECONDS,
-                // TODO-CSOT why does infinite translate to getMaxTime?
-                () -> maxTimeMS,
-                // TODO-CSOT why is timeout's ms not used anywhere?
-                (ms) -> calculateMaxTimeMs(maxTimeMS),
-                () -> calculateMaxTimeMs(maxTimeMS));
+        return getMaxTimeTimeout().run(MILLISECONDS,
+                () -> 0L,
+                (ms) -> ms,
+                () -> {
+                    throw createMongoRoundTripTimeoutException();
+                });
     }
 
-    private long calculateMaxTimeMs(final long maxTimeMS) {
-        if (minRoundTripTimeMS >= maxTimeMS) {
-            throw createMongoRoundTripTimeoutException();
-        }
-        return maxTimeMS - minRoundTripTimeMS;
+    private Timeout getMaxTimeTimeout() {
+        Timeout t = timeout != null
+                ? timeout
+                : Timeout.expiresIn(timeoutSettings.getMaxTimeMS(), MILLISECONDS);
+        t = t.shortenBy(minRoundTripTimeMS, MILLISECONDS);
+        return t;
+    }
+
+    public void putMaxTimeMS(final BsonDocument command) {
+        getMaxTimeTimeout().run(MILLISECONDS,
+                () -> {},
+                (ms) -> command.put("maxTimeMS", new BsonInt64(ms)),
+                () -> {
+                    throw createMongoRoundTripTimeoutException();
+                });
     }
 
     public Long getMaxCommitTimeMS() {
@@ -238,8 +234,10 @@ public class TimeoutContext {
         return timeoutOrAlternative(0);
     }
 
-    public int getConnectTimeoutMs() {
-        return Math.toIntExact(calculateMin(getTimeoutSettings().getConnectTimeoutMS()));
+    public Timeout createConnectTimeoutMs() {
+        // null timeout treated as infinite will be later than the other
+        return Timeout.expiresIn(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS)
+                .orEarlier(Timeout.nullAsInfinite(timeout));
     }
 
     public void resetTimeout() {

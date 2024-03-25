@@ -81,7 +81,7 @@ final class CommandBatchCursorHelper {
             final OperationContext operationContext) {
         BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                 .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
-        putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+        operationContext.getTimeoutContext().putMaxTimeMS(command);
         return command;
     }
 

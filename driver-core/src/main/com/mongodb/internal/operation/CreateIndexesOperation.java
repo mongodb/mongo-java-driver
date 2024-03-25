@@ -194,7 +194,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 values.add(getIndex(request));
             }
             command.put("indexes", new BsonArray(values));
-            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            operationContext.getTimeoutContext().putMaxTimeMS(command);
             appendWriteConcernToCommand(writeConcern, command);
             if (commitQuorum != null) {
                 if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {

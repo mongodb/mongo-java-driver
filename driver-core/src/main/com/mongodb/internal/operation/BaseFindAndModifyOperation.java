@@ -192,7 +192,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
 
             specializeCommand(commandDocument, connectionDescription);
 
-            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
+            operationContext.getTimeoutContext().putMaxTimeMS(commandDocument);
             if (getWriteConcern().isAcknowledged() && !getWriteConcern().isServerDefault()
                     && !sessionContext.hasActiveTransaction()) {
                 commandDocument.put("writeConcern", getWriteConcern().asDocument());
