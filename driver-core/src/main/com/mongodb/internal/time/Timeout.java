@@ -25,8 +25,8 @@ import com.mongodb.lang.Nullable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.LongConsumer;
+import java.util.function.LongFunction;
 import java.util.function.Supplier;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -188,11 +188,11 @@ public interface Timeout {
      * @param <T> the type of the result
      */
     <T> T run(TimeUnit timeUnit,
-            Supplier<T> onInfinite, Function<Long, T> onHasRemaining,
+            Supplier<T> onInfinite, LongFunction<T> onHasRemaining,
             Supplier<T> onExpired);
 
     default void run(final TimeUnit timeUnit,
-            final Runnable onInfinite, final Consumer<Long> onHasRemaining,
+            final Runnable onInfinite, final LongConsumer onHasRemaining,
             final Runnable onExpired) {
         this.run(timeUnit, () -> {
             onInfinite.run();
@@ -223,7 +223,7 @@ public interface Timeout {
 
     /**
      * Run, but throwing a checked exception.
-     * @see #run(TimeUnit, Supplier, Function, Supplier)
+     * @see #run(TimeUnit, Supplier, LongFunction, Supplier)
      * @param <E> the checked exception type
      * @throws E the checked exception
      */
