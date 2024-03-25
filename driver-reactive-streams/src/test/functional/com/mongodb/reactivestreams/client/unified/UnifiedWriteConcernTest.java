@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.client.unified.UnifiedSyncTest;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.runners.Parameterized;
