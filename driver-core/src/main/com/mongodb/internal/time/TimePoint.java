@@ -25,7 +25,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.LongFunction;
 import java.util.function.Supplier;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
@@ -88,7 +88,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     }
 
     @Override
-    public <T> T run(final TimeUnit timeUnit, final Supplier<T> onInfinite, final Function<Long, T> onHasRemaining,
+    public <T> T run(final TimeUnit timeUnit, final Supplier<T> onInfinite, final LongFunction<T> onHasRemaining,
             final Supplier<T> onExpired) {
         return checkedRun(timeUnit, onInfinite::get, onHasRemaining::apply, onExpired::get);
     }
