@@ -32,8 +32,8 @@ Assuming that the JDK you are using for running Gradle is for Java SE 17, export
 (your values may differ):
 
 ```bash
-export JDK17="/Users/valentin.kovalenko/.sdkman/candidates/java/17.0.10-librca/"
-export JDK21_GRAALVM="/Users/valentin.kovalenko/.sdkman/candidates/java/21.0.2-graalce/"
+export JDK17=$(realpath ~/".sdkman/candidates/java/17.0.10-librca/")
+export JDK21_GRAALVM=$(realpath ~/".sdkman/candidates/java/21.0.2-graalce/")
 ```
 
 ##### Informing Gradle on JDK locations it does not know about
