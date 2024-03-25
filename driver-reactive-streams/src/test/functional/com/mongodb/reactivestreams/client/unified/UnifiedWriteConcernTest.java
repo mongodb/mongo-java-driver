@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class UnifiedWriteConcernTest extends UnifiedSyncTest {
+public class UnifiedWriteConcernTest extends UnifiedReactiveStreamsTest {
     public UnifiedWriteConcernTest(@SuppressWarnings("unused") final String fileDescription,
             @SuppressWarnings("unused") final String testDescription, final String schemaVersion, final BsonArray runOnRequirements,
             final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
