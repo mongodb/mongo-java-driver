@@ -433,6 +433,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeFindOne(operation);
                 case "distinct":
                     return crudHelper.executeDistinct(operation);
+                case "mapReduce":
+                    return crudHelper.executeMapReduce(operation);
                 case "countDocuments":
                     return crudHelper.executeCountDocuments(operation);
                 case "estimatedDocumentCount":
