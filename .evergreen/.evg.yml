@@ -887,6 +887,15 @@ functions:
       params:
         file: src/results.json
 
+  "run graalvm native image app":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-graalvm-native-image-app.sh
+
 # Anchors
 
 pre:
@@ -1646,6 +1655,10 @@ tasks:
             VERSION: latest
             TOPOLOGY: replica_set
         - func: run socks5 tests
+    - name: "graalvm-native-image-app"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run graalvm native image app"
 axes:
   - id: version
     display_name: MongoDB Version
@@ -2291,3 +2304,10 @@ buildvariants:
   tasks:
     - name: testazurekms_task_group
       batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+- matrix_name: "graalvm-native-image-app"
+  matrix_spec: { version: [ "7.0" ], topology: [ "replicaset" ], auth: [ "noauth" ], ssl: [ "nossl" ],
+                   jdk: [ "jdk21" ], os: [ "linux" ] }
+  display_name: "GraalVM native image app: ${version} ${topology} ${auth} ${ssl} ${jdk} ${os}"
+  tasks:
+    - name: "graalvm-native-image-app"
