@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
