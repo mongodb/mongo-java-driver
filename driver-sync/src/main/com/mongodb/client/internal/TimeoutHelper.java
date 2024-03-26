@@ -37,7 +37,7 @@ public final class TimeoutHelper {
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                final String message,
                                                                @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
+        if (timeout != null) {
             long remainingMs = getRemainingMs(timeout, message);
             return collection.withTimeout(remainingMs, MILLISECONDS);
         }
@@ -52,7 +52,7 @@ public final class TimeoutHelper {
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
+        if (timeout != null) {
             long remainingMs = getRemainingMs(timeout, message);
             return database.withTimeout(remainingMs, MILLISECONDS);
         }
@@ -65,14 +65,13 @@ public final class TimeoutHelper {
     }
 
     private static long getRemainingMs(final Timeout timeout, final String message) {
+        if (timeout.isInfinite()) {
+            return 0;
+        }
         long remainingMs = timeout.remaining(MILLISECONDS);
         if (remainingMs <= 0) {
             throw TimeoutContext.createMongoTimeoutException(message);
         }
         return remainingMs;
-    }
-
-    private static boolean shouldOverrideTimeout(@Nullable final Timeout timeout) {
-        return timeout != null && !timeout.isInfinite();
     }
 }

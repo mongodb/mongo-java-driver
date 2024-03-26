@@ -29,7 +29,6 @@ import static com.mongodb.client.internal.TimeoutHelper.collectionWithTimeout;
 import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -68,27 +67,35 @@ class TimeoutHelperTest {
     }
 
     @Test
-    void shouldNotSetRemainingTimeoutOnCollectionWhenTimeoutIsInfinite() {
+    void shouldSetRemainingTimeoutOnCollectionWhenTimeoutIsInfinite() {
         //given
-        MongoCollection<Document> collection = mock(MongoCollection.class);
+        MongoCollection<Document> collectionWithTimeout = mock(MongoCollection.class);
+        MongoCollection<Document> collection = mock(MongoCollection.class, mongoCollection -> {
+            when(mongoCollection.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(collectionWithTimeout);
+        });
 
         //when
         MongoCollection<Document> result = collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, Timeout.infinite());
 
         //then
-        assertEquals(collection, result);
+        assertEquals(collectionWithTimeout, result);
+        verify(collection).withTimeout(0L, TimeUnit.MILLISECONDS);
     }
 
     @Test
     void shouldNotSetRemainingTimeoutOnDatabaseWhenTimeoutIsInfinite() {
         //given
-        MongoDatabase database = mock(MongoDatabase.class);
+        MongoDatabase databaseWithTimeout = mock(MongoDatabase.class);
+        MongoDatabase database = mock(MongoDatabase.class, mongoDatabase -> {
+            when(mongoDatabase.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(databaseWithTimeout);
+        });
 
         //when
         MongoDatabase result = databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, Timeout.infinite());
 
         //then
-        assertEquals(database, result);
+        assertEquals(databaseWithTimeout, result);
+        verify(database).withTimeout(0L, TimeUnit.MILLISECONDS);
     }
 
     @Test
@@ -96,7 +103,7 @@ class TimeoutHelperTest {
         //given
         MongoCollection<Document> collectionWithTimeout = mock(MongoCollection.class);
         MongoCollection<Document> collection = mock(MongoCollection.class, mongoCollection -> {
-            when(mongoCollection.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(mongoCollection);
+            when(mongoCollection.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(collectionWithTimeout);
         });
         Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS);
 
@@ -105,7 +112,7 @@ class TimeoutHelperTest {
 
         //then
         verify(collection).withTimeout(longThat(remaining -> remaining > 0), eq(TimeUnit.MILLISECONDS));
-        assertNotEquals(collectionWithTimeout, result);
+        assertEquals(collectionWithTimeout, result);
     }
 
     @Test
@@ -113,7 +120,7 @@ class TimeoutHelperTest {
         //given
         MongoDatabase databaseWithTimeout = mock(MongoDatabase.class);
         MongoDatabase database = mock(MongoDatabase.class, mongoDatabase -> {
-            when(mongoDatabase.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(mongoDatabase);
+            when(mongoDatabase.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(databaseWithTimeout);
         });
         Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS);
 
@@ -122,7 +129,7 @@ class TimeoutHelperTest {
 
         //then
         verify(database).withTimeout(longThat(remaining -> remaining > 0), eq(TimeUnit.MILLISECONDS));
-        assertNotEquals(databaseWithTimeout, result);
+        assertEquals(databaseWithTimeout, result);
     }
 
     @Test
