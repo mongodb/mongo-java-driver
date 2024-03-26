@@ -54,21 +54,21 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
 
     @Override
     public Void execute(final WriteBinding binding) {
-        isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
+        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
         return executeRetryableWrite(binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
+                                     new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
+        isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
         executeRetryableWriteAsync(binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
-                errorHandlingCallback(callback, LOGGER));
+                                   new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
+                                   errorHandlingCallback(callback, LOGGER));
     }
 
     CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> {
+        return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
             if (!writeConcern.isServerDefault()) {
                 command.put("writeConcern", writeConcern.asDocument());

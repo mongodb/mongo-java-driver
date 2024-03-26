@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.ListSearchIndexesIterable as JListSearchIndexesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.ListSearchIndexesIterable
 import java.util.concurrent.TimeUnit
@@ -26,12 +27,17 @@ import org.bson.Document
 internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchIndexesIterable<T>) :
     JListSearchIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncListSearchIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncListSearchIndexesIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
     override fun name(indexName: String): SyncListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
 
     override fun allowDiskUse(allowDiskUse: Boolean?): com.mongodb.client.ListSearchIndexesIterable<T> = apply {
         wrapped.allowDiskUse(allowDiskUse)
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListSearchIndexesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

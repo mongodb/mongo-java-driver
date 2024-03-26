@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeoutNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -42,6 +43,7 @@ public final class TransactionOptions {
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
     private final Long maxCommitTimeMS;
+    private final Long timeoutMS;
 
     /**
      * Gets the read concern.
@@ -92,6 +94,33 @@ public final class TransactionOptions {
     }
 
     /**
+     * The time limit for the full execution of the transaction.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using
+     *   {@link ClientSessionOptions#getDefaultTimeout(TimeUnit)} or {@link MongoClientSettings#getTimeout(TimeUnit)}
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since CSOT
+     */
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        if (timeoutMS == null) {
+            return null;
+        }
+        return timeUnit.convert(timeoutMS, MILLISECONDS);
+    }
+
+    /**
      * Gets an instance of a builder
      *
      * @return a builder instance
@@ -120,6 +149,9 @@ public final class TransactionOptions {
                 .maxCommitTime(options.getMaxCommitTime(MILLISECONDS) == null
                                 ? defaultOptions.getMaxCommitTime(MILLISECONDS) : options.getMaxCommitTime(MILLISECONDS),
                         MILLISECONDS)
+                .timeout(options.getTimeout(MILLISECONDS) == null
+                                ? defaultOptions.getTimeout(MILLISECONDS) : options.getTimeout(MILLISECONDS),
+                        MILLISECONDS)
                 .build();
     }
 
@@ -134,6 +166,9 @@ public final class TransactionOptions {
 
         TransactionOptions that = (TransactionOptions) o;
 
+        if (!Objects.equals(timeoutMS, that.timeoutMS)) {
+            return false;
+        }
         if (!Objects.equals(maxCommitTimeMS, that.maxCommitTimeMS)) {
             return false;
         }
@@ -156,6 +191,7 @@ public final class TransactionOptions {
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
         result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
         result = 31 * result + (maxCommitTimeMS != null ? maxCommitTimeMS.hashCode() : 0);
+        result = 31 * result + (timeoutMS != null ? timeoutMS.hashCode() : 0);
         return result;
     }
 
@@ -165,7 +201,8 @@ public final class TransactionOptions {
                 + "readConcern=" + readConcern
                 + ", writeConcern=" + writeConcern
                 + ", readPreference=" + readPreference
-                + ", maxCommitTimeMS" + maxCommitTimeMS
+                + ", maxCommitTimeMS=" + maxCommitTimeMS
+                + ", timeoutMS=" + timeoutMS
                 + '}';
     }
 
@@ -177,6 +214,8 @@ public final class TransactionOptions {
         private WriteConcern writeConcern;
         private ReadPreference readPreference;
         private Long maxCommitTimeMS;
+        @Nullable
+        private Long timeoutMS;
 
         /**
          * Sets the read concern.
@@ -219,7 +258,21 @@ public final class TransactionOptions {
          * @return this
          * @mongodb.server.release 4.2
          * @since 3.11
+         *
+         * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+         *
+         * <ul>
+         *     <li>{@code MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+         *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
+         *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
+         *     <li>{@code ClientSession}</li>
+         *     <li>{@code TransactionOptions.Builder#timeout(long, TimeUnit)}</li>
+         * </ul>
+         *
+         * When executing a commit transaction operation, any explicitly set timeout at these levels takes precedence, rendering this
+         * commit time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
          */
+        @Deprecated
         public Builder maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
             if (maxCommitTime == null) {
                 this.maxCommitTimeMS = null;
@@ -228,6 +281,35 @@ public final class TransactionOptions {
                 isTrueArgument("maxCommitTime > 0", maxCommitTime > 0);
                 this.maxCommitTimeMS = MILLISECONDS.convert(maxCommitTime, timeUnit);
             }
+            return this;
+        }
+
+        /**
+         * Sets the time limit for the full execution of the operations for this transaction.
+         *
+         * <ul>
+         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+         *    <ul>
+         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+         *        available</li>
+         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.</li>
+         *   </ul>
+         *   </li>
+         *   <li>{@code 0} means infinite timeout.</li>
+         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+         * </ul>
+         *
+         * @param timeout the timeout
+         * @param timeUnit the time unit
+         * @return this
+         * @since CSOT
+         */
+        public Builder timeout(@Nullable final Long timeout, final TimeUnit timeUnit) {
+            this.timeoutMS = convertAndValidateTimeoutNullable(timeout, timeUnit);
             return this;
         }
 
@@ -250,5 +332,6 @@ public final class TransactionOptions {
         writeConcern = builder.writeConcern;
         readPreference = builder.readPreference;
         maxCommitTimeMS = builder.maxCommitTimeMS;
+        timeoutMS = builder.timeoutMS;
     }
 }

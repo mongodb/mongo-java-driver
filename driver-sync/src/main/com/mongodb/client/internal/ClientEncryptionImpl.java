@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -38,7 +39,10 @@ import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -54,11 +58,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.internal.TimeoutHelper.collectionWithTimeout;
+import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.internal.BsonUtil.mutableDeepCopy;
 
 /**
@@ -80,10 +87,22 @@ public class ClientEncryptionImpl implements ClientEncryption {
         this.crypt = Crypts.create(keyVaultClient, options);
         this.options = options;
         MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
-        this.collection = keyVaultClient.getDatabase(namespace.getDatabaseName())
+        this.collection = getVaultCollection(keyVaultClient, options, namespace);
+    }
+
+    private static MongoCollection<BsonDocument> getVaultCollection(final MongoClient keyVaultClient,
+                                                                    final ClientEncryptionSettings options,
+                                                                    final MongoNamespace namespace) {
+        MongoCollection<BsonDocument> vaultCollection = keyVaultClient.getDatabase(namespace.getDatabaseName())
                 .getCollection(namespace.getCollectionName(), BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY)
                 .withReadConcern(ReadConcern.MAJORITY);
+
+        Long timeoutMs = options.getTimeout(MILLISECONDS);
+        if (timeoutMs != null){
+            vaultCollection = vaultCollection.withTimeout(timeoutMs, MILLISECONDS);
+        }
+        return vaultCollection;
     }
 
     @Override
@@ -93,39 +112,48 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public BsonBinary createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions) {
-        BsonDocument dataKeyDocument = crypt.createDataKey(kmsProvider, dataKeyOptions);
-        collection.insertOne(dataKeyDocument);
+        Timeout operationTimeout = startTimeout();
+       return createDataKey(kmsProvider, dataKeyOptions, operationTimeout);
+    }
+
+    public BsonBinary createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions, @Nullable final Timeout operationTimeout) {
+        BsonDocument dataKeyDocument = crypt.createDataKey(kmsProvider, dataKeyOptions, operationTimeout);
+        collectionWithTimeout(collection, "Data key insertion exceeded the timeout limit.", operationTimeout).insertOne(dataKeyDocument);
         return dataKeyDocument.getBinary("_id");
     }
 
     @Override
     public BsonBinary encrypt(final BsonValue value, final EncryptOptions options) {
-        return crypt.encryptExplicitly(value, options);
+        Timeout operationTimeout = startTimeout();
+        return crypt.encryptExplicitly(value, options, operationTimeout);
     }
 
     @Override
     public BsonDocument encryptExpression(final Bson expression, final EncryptOptions options) {
-        return crypt.encryptExpression(expression.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options);
+        Timeout operationTimeout = startTimeout();
+        return crypt.encryptExpression(expression.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options,
+                operationTimeout);
     }
 
     @Override
     public BsonValue decrypt(final BsonBinary value) {
-        return crypt.decryptExplicitly(value);
+        Timeout operationTimeout = startTimeout();
+        return crypt.decryptExplicitly(value, operationTimeout);
     }
 
     @Override
     public DeleteResult deleteKey(final BsonBinary id) {
-        return collection.deleteOne(Filters.eq("_id", id));
+        return collectionWithTimeout(collection, startTimeout()).deleteOne(Filters.eq("_id", id));
     }
 
     @Override
     public BsonDocument getKey(final BsonBinary id) {
-        return collection.find(Filters.eq("_id", id)).first();
+        return collectionWithTimeout(collection, startTimeout()).find(Filters.eq("_id", id)).first();
     }
 
     @Override
     public FindIterable<BsonDocument> getKeys() {
-        return collection.find();
+        return collectionWithTimeout(collection, startTimeout()).find();
     }
 
     @Override
@@ -170,7 +198,9 @@ public class ClientEncryptionImpl implements ClientEncryption {
     @Override
     public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
         validateRewrapManyDataKeyOptions(options);
-        BsonDocument results = crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options);
+        Timeout operationTimeout = startTimeout();
+        BsonDocument results = crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()),
+                options, operationTimeout);
         if (results.isEmpty()) {
             return new RewrapManyDataKeyResult();
         }
@@ -183,7 +213,8 @@ public class ClientEncryptionImpl implements ClientEncryption {
                                     Updates.currentDate("updateDate"))
                     );
         }).collect(Collectors.toList());
-        return new RewrapManyDataKeyResult(collection.bulkWrite(updateModels));
+        BulkWriteResult bulkWriteResult = collectionWithTimeout(collection, operationTimeout).bulkWrite(updateModels);
+        return new RewrapManyDataKeyResult(bulkWriteResult);
     }
 
     @Override
@@ -192,6 +223,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
         notNull("collectionName", collectionName);
         notNull("createCollectionOptions", createCollectionOptions);
         notNull("createEncryptedCollectionParams", createEncryptedCollectionParams);
+        Timeout operationTimeout = startTimeout();
         MongoNamespace namespace = new MongoNamespace(database.getName(), collectionName);
         Bson rawEncryptedFields = createCollectionOptions.getEncryptedFields();
         if (rawEncryptedFields == null) {
@@ -222,10 +254,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
                             // It is crucial to set the `dataKeyMightBeCreated` flag either immediately before calling `createDataKey`,
                             // or after that in a `finally` block.
                             dataKeyMightBeCreated.set(true);
-                            BsonBinary dataKeyId = createDataKey(kmsProvider, dataKeyOptions);
+                            BsonBinary dataKeyId = createDataKey(kmsProvider, dataKeyOptions, operationTimeout);
                             field.put(keyIdBsonKey, dataKeyId);
                         });
-                database.createCollection(collectionName,
+                databaseWithTimeout(database, operationTimeout).createCollection(collectionName,
                         new CreateCollectionOptions(createCollectionOptions).encryptedFields(maybeUpdatedEncryptedFields));
                 return maybeUpdatedEncryptedFields;
             } catch (Exception e) {
@@ -236,7 +268,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 }
             }
         } else {
-            database.createCollection(collectionName, createCollectionOptions);
+            databaseWithTimeout(database, operationTimeout).createCollection(collectionName, createCollectionOptions);
             return encryptedFields;
         }
     }
@@ -245,5 +277,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
     public void close() {
         crypt.close();
         keyVaultClient.close();
+    }
+
+    @Nullable
+    private Timeout startTimeout() {
+        return TimeoutContext.calculateTimeout(options.getTimeout(MILLISECONDS));
     }
 }

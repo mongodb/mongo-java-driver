@@ -19,8 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.BindingContext;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -59,31 +57,32 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context) {
-        return executeEnqueuedCommandBasedProtocol(context.getSessionContext());
+                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                         final OperationContext operationContext) {
+        return executeEnqueuedCommandBasedProtocol(operationContext);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
             final boolean responseExpected, @Nullable final SplittablePayload payload,
             @Nullable final FieldNameValidator payloadFieldNameValidator) {
-        return executeEnqueuedCommandBasedProtocol(context.getSessionContext());
+        return executeEnqueuedCommandBasedProtocol(operationContext);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
             final SingleResultCallback<T> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(context.getSessionContext(), callback);
+        executeEnqueuedCommandBasedProtocolAsync(operationContext, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
             final boolean responseExpected, @Nullable final SplittablePayload payload,
             @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(context.getSessionContext(), callback);
+        executeEnqueuedCommandBasedProtocolAsync(operationContext, callback);
     }
 
     @Override
@@ -92,13 +91,14 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T executeEnqueuedCommandBasedProtocol(final SessionContext sessionContext) {
-        return (T) executor.execute(enqueuedCommandProtocol, internalConnection, sessionContext);
+    private <T> T executeEnqueuedCommandBasedProtocol(final OperationContext operationContext) {
+        return (T) executor.execute(enqueuedCommandProtocol, internalConnection, operationContext.getSessionContext());
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void executeEnqueuedCommandBasedProtocolAsync(final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-        executor.executeAsync(enqueuedCommandProtocol, internalConnection, sessionContext, callback);
+    private <T> void executeEnqueuedCommandBasedProtocolAsync(final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
+        executor.executeAsync(enqueuedCommandProtocol, internalConnection, operationContext.getSessionContext(), callback);
     }
 
     void enqueueProtocol(final CommandProtocol protocol) {

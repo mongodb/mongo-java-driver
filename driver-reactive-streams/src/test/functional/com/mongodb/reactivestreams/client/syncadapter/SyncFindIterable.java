@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.FindPublisher;
@@ -60,6 +61,7 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public FindIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
@@ -171,6 +173,12 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     @Override
     public FindIterable<T> allowDiskUse(@Nullable final java.lang.Boolean allowDiskUse) {
         wrapped.allowDiskUse(allowDiskUse);
+        return this;
+    }
+
+    @Override
+    public FindIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 

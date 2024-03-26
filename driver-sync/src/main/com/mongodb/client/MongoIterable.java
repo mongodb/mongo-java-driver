@@ -74,4 +74,5 @@ public interface MongoIterable<TResult> extends Iterable<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     MongoIterable<TResult> batchSize(int batchSize);
+
 }

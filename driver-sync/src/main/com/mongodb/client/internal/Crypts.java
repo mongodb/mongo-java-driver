@@ -35,11 +35,11 @@ import static com.mongodb.internal.capi.MongoCryptHelper.createMongoCryptOptions
  */
 public final class Crypts {
 
-    public static Crypt createCrypt(final MongoClientImpl client, final AutoEncryptionSettings settings) {
+    public static Crypt createCrypt(final MongoClientSettings mongoClientSettings, final AutoEncryptionSettings settings) {
         MongoClient sharedInternalClient = null;
         MongoClientSettings keyVaultMongoClientSettings = settings.getKeyVaultMongoClientSettings();
         if (keyVaultMongoClientSettings == null || !settings.isBypassAutoEncryption()) {
-            MongoClientSettings defaultInternalMongoClientSettings = MongoClientSettings.builder(client.getSettings())
+            MongoClientSettings defaultInternalMongoClientSettings = MongoClientSettings.builder(mongoClientSettings)
                     .applyToConnectionPoolSettings(builder -> builder.minSize(0))
                     .autoEncryptionSettings(null)
                     .build();

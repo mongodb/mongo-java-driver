@@ -37,7 +37,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        new DropCollectionOperation(getNamespace()).execute(getBinding())
+        new DropCollectionOperation(getNamespace(), WriteConcern.ACKNOWLEDGED).execute(getBinding())
 
         then:
         !collectionNameExists(getCollectionName())
@@ -50,7 +50,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        executeAsync(new DropCollectionOperation(getNamespace()))
+        executeAsync(new DropCollectionOperation(getNamespace(), WriteConcern.ACKNOWLEDGED))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -61,7 +61,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        new DropCollectionOperation(namespace).execute(getBinding())
+        new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding())
 
         then:
         !collectionNameExists('nonExistingCollection')
@@ -73,7 +73,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        executeAsync(new DropCollectionOperation(namespace))
+        executeAsync(new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED))
 
         then:
         !collectionNameExists('nonExistingCollection')

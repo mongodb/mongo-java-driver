@@ -89,8 +89,9 @@ public abstract class Authenticator {
 
     }
 
-    abstract void authenticate(InternalConnection connection, ConnectionDescription connectionDescription);
+    abstract void authenticate(InternalConnection connection, ConnectionDescription connectionDescription,
+            OperationContext operationContext);
 
     abstract void authenticateAsync(InternalConnection connection, ConnectionDescription connectionDescription,
-                                    SingleResultCallback<Void> callback);
+            OperationContext operationContext, SingleResultCallback<Void> callback);
 }

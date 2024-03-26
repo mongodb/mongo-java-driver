@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.TimeoutSettings
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -47,11 +48,13 @@ import static com.mongodb.internal.connection.ClientMetadataHelperProseTest.crea
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.internal.connection.MessageHelper.decodeCommand
+import static com.mongodb.internal.connection.OperationContext.simpleOperationContext
 
 class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
     def internalConnection = new TestInternalConnection(serverId, ServerType.STANDALONE)
+    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT, null)
 
     def 'should create correct description'() {
         given:
@@ -59,8 +62,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulReplies(false, null)
-        def description = initializer.startHandshake(internalConnection)
-        description = initializer.finishHandshake(internalConnection, description)
+        def description = initializer.startHandshake(internalConnection, operationContext)
+        description = initializer.finishHandshake(internalConnection, description, operationContext)
         def connectionDescription = description.connectionDescription
         def serverDescription = description.serverDescription
 
@@ -76,10 +79,10 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        initializer.startHandshakeAsync(internalConnection, operationContext, futureCallback)
         def description = futureCallback.get()
         futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        initializer.finishHandshakeAsync(internalConnection, description, operationContext, futureCallback)
         description = futureCallback.get()
         def connectionDescription = description.connectionDescription
         def serverDescription = description.serverDescription
@@ -95,8 +98,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulReplies(false, 123)
-        def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection, operationContext)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription, operationContext)
+                .connectionDescription
 
         then:
         connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
@@ -108,8 +112,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulRepliesWithConnectionIdIsHelloResponse(false, 123)
-        def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection, operationContext)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription, operationContext)
+                .connectionDescription
 
         then:
         connectionDescription == getExpectedConnectionDescription(connectionDescription.connectionId.localValue, 123)
@@ -122,10 +127,10 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, 123)
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        initializer.startHandshakeAsync(internalConnection, operationContext, futureCallback)
         def description = futureCallback.get()
         futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        initializer.finishHandshakeAsync(internalConnection, description, operationContext, futureCallback)
         def connectionDescription = futureCallback.get().connectionDescription
 
         then:
@@ -139,10 +144,10 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulRepliesWithConnectionIdIsHelloResponse(false, 123)
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        initializer.startHandshakeAsync(internalConnection, operationContext, futureCallback)
         def description = futureCallback.get()
         futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        initializer.finishHandshakeAsync(internalConnection, description, operationContext, futureCallback)
         description = futureCallback.get()
         def connectionDescription = description.connectionDescription
 
@@ -158,12 +163,13 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
 
-        def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection, operationContext)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription, operationContext)
+                .connectionDescription
 
         then:
         connectionDescription
-        1 * firstAuthenticator.authenticate(internalConnection, _)
+        1 * firstAuthenticator.authenticate(internalConnection, _, _)
     }
 
     def 'should authenticate asynchronously'() {
@@ -175,15 +181,15 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         enqueueSuccessfulReplies(false, null)
 
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        initializer.startHandshakeAsync(internalConnection, operationContext, futureCallback)
         def description = futureCallback.get()
         futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        initializer.finishHandshakeAsync(internalConnection, description, operationContext, futureCallback)
         def connectionDescription = futureCallback.get().connectionDescription
 
         then:
         connectionDescription
-        1 * authenticator.authenticateAsync(internalConnection, _, _) >> { it[2].onResult(null, null) }
+        1 * authenticator.authenticateAsync(internalConnection, _, _, _) >> { it[3].onResult(null, null) }
     }
 
     def 'should not authenticate if server is an arbiter'() {
@@ -194,12 +200,13 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(true, null)
 
-        def internalDescription = initializer.startHandshake(internalConnection)
-        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription).connectionDescription
+        def internalDescription = initializer.startHandshake(internalConnection, operationContext)
+        def connectionDescription = initializer.finishHandshake(internalConnection, internalDescription, operationContext)
+                .connectionDescription
 
         then:
         connectionDescription
-        0 * authenticator.authenticate(internalConnection, _)
+        0 * authenticator.authenticate(internalConnection, _, _)
     }
 
     def 'should not authenticate asynchronously if server is an arbiter asynchronously'() {
@@ -211,10 +218,10 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         enqueueSuccessfulReplies(true, null)
 
         def futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.startHandshakeAsync(internalConnection, futureCallback)
+        initializer.startHandshakeAsync(internalConnection, operationContext, futureCallback)
         def description = futureCallback.get()
         futureCallback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-        initializer.finishHandshakeAsync(internalConnection, description, futureCallback)
+        initializer.finishHandshakeAsync(internalConnection, description, operationContext, futureCallback)
         def connectionDescription = futureCallback.get().connectionDescription
 
         then:
@@ -236,14 +243,14 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         enqueueSuccessfulReplies(false, null)
         if (async) {
             def callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-            initializer.startHandshakeAsync(internalConnection, callback)
+            initializer.startHandshakeAsync(internalConnection, operationContext, callback)
             def description = callback.get()
             callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-            initializer.finishHandshakeAsync(internalConnection, description, callback)
+            initializer.finishHandshakeAsync(internalConnection, description, operationContext, callback)
             callback.get()
         } else {
-            def internalDescription = initializer.startHandshake(internalConnection)
-            initializer.finishHandshake(internalConnection, internalDescription)
+            def internalDescription = initializer.startHandshake(internalConnection, operationContext)
+            initializer.finishHandshake(internalConnection, internalDescription, operationContext)
         }
 
         then:
@@ -273,14 +280,14 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         enqueueSuccessfulReplies(false, null)
         if (async) {
             def callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-            initializer.startHandshakeAsync(internalConnection, callback)
+            initializer.startHandshakeAsync(internalConnection, operationContext, callback)
             def description = callback.get()
             callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-            initializer.finishHandshakeAsync(internalConnection, description, callback)
+            initializer.finishHandshakeAsync(internalConnection, description, operationContext, callback)
             callback.get()
         } else {
-            def internalDescription = initializer.startHandshake(internalConnection)
-            initializer.finishHandshake(internalConnection, internalDescription)
+            def internalDescription = initializer.startHandshake(internalConnection, operationContext)
+            initializer.finishHandshake(internalConnection, internalDescription, operationContext)
         }
 
         then:
@@ -312,9 +319,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         then:
         description
         if (async) {
-            1 * scramShaAuthenticator.authenticateAsync(internalConnection, _, _)
+            1 * scramShaAuthenticator.authenticateAsync(internalConnection, _, _, _)
         } else {
-            1 * scramShaAuthenticator.authenticate(internalConnection, _)
+            1 * scramShaAuthenticator.authenticate(internalConnection, _, _)
         }
         1 * ((SpeculativeAuthenticator) scramShaAuthenticator).createSpeculativeAuthenticateCommand(_)
         ((SpeculativeAuthenticator) scramShaAuthenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
@@ -343,9 +350,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         then:
         description
         if (async) {
-            1 * authenticator.authenticateAsync(internalConnection, _, _)
+            1 * authenticator.authenticateAsync(internalConnection, _, _, _)
         } else {
-            1 * authenticator.authenticate(internalConnection, _)
+            1 * authenticator.authenticate(internalConnection, _, _)
         }
         1 * ((SpeculativeAuthenticator) authenticator).createSpeculativeAuthenticateCommand(_)
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
@@ -374,9 +381,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         then:
         description
         if (async) {
-            1 * authenticator.authenticateAsync(internalConnection, _, _)
+            1 * authenticator.authenticateAsync(internalConnection, _, _, _)
         } else {
-            1 * authenticator.authenticate(internalConnection, _)
+            1 * authenticator.authenticate(internalConnection, _, _)
         }
         1 * ((SpeculativeAuthenticator) authenticator).createSpeculativeAuthenticateCommand(_)
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
@@ -402,9 +409,9 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         then:
         description
         if (async) {
-            1 * authenticator.authenticateAsync(internalConnection, _, _)
+            1 * authenticator.authenticateAsync(internalConnection, _, _, _)
         } else {
-            1 * authenticator.authenticate(internalConnection, _)
+            1 * authenticator.authenticate(internalConnection, _, _)
         }
         1 * ((SpeculativeAuthenticator) authenticator).createSpeculativeAuthenticateCommand(_)
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == speculativeAuthenticateResponse
@@ -444,14 +451,14 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                              final TestInternalConnection connection) {
         if (async) {
             def callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-            initializer.startHandshakeAsync(internalConnection, callback)
+            initializer.startHandshakeAsync(internalConnection, operationContext, callback)
             def description = callback.get()
             callback = new FutureResultCallback<InternalConnectionInitializationDescription>()
-            initializer.finishHandshakeAsync(internalConnection, description, callback)
+            initializer.finishHandshakeAsync(internalConnection, description, operationContext, callback)
             callback.get()
         } else {
-            def internalDescription = initializer.startHandshake(connection)
-            initializer.finishHandshake(connection, internalDescription)
+            def internalDescription = initializer.startHandshake(connection, operationContext)
+            initializer.finishHandshake(connection, internalDescription, operationContext)
         }
     }
 

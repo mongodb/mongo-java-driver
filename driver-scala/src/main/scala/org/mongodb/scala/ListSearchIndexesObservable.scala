@@ -62,10 +62,22 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * @param duration the duration.
-   * @return this.
-   * @see [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
+   *
+   * @param duration the duration
+   * @return this
+   * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+   *
+   *             - [[org.mongodb.scala.MongoClientSettings.Builder timeout(long, TimeUnit)]]
+   *             - [[org.mongodb.scala.MongoDatabase.withTimeout withTimeout(long, TimeUnit)]]
+   *             - [[org.mongodb.scala.MongoCollection.withTimeout withTimeout(long, TimeUnit)]]
+   *             - [[org.mongodb.scala.ClientSessionOptions]]
+   *             - [[org.mongodb.scala.TransactionOptions]]
+   *
+   * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
+   *             execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
    */
+  @deprecated
   def maxTime(duration: Duration): ListSearchIndexesObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this
@@ -119,6 +131,27 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    */
   def batchSize(batchSize: Int): ListSearchIndexesObservable[TResult] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   * to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since CSOT
+   */
+  def timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

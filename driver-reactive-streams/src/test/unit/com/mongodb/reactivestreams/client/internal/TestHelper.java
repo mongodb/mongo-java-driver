@@ -30,9 +30,14 @@ import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -52,8 +57,10 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -81,6 +88,9 @@ public class TestHelper {
 
     static {
         OperationExecutor executor = mock(OperationExecutor.class);
+        Mockito.lenient().doAnswer(invocation -> executor)
+                .when(executor).withTimeoutSettings(any());
+
         Mockito.lenient().doAnswer(invocation -> Mono.empty())
                 .when(executor)
                 .execute(any(), any(), any());
@@ -97,7 +107,7 @@ public class TestHelper {
         return new MongoOperationPublisher<>(NAMESPACE, Document.class,
                                              getDefaultCodecRegistry(), ReadPreference.primary(), ReadConcern.DEFAULT,
                                              WriteConcern.ACKNOWLEDGED, true, true,
-                                             UuidRepresentation.STANDARD, null, executor);
+                                             UuidRepresentation.STANDARD, null, TIMEOUT_SETTINGS, executor);
     }
 
 
@@ -148,7 +158,10 @@ public class TestHelper {
     }
 
 
-    private static Map<String, Optional<Object>> getClassPrivateFieldValues(final Object instance) {
+    private static Map<String, Optional<Object>> getClassPrivateFieldValues(@Nullable final Object instance) {
+        if (instance == null) {
+            return emptyMap();
+        }
         return Arrays.stream(instance.getClass().getDeclaredFields())
                 .filter(field -> Modifier.isPrivate(field.getModifiers()))
                 .collect(toMap(Field::getName, field -> {
@@ -263,5 +276,22 @@ public class TestHelper {
 
     public AsyncBatchCursor<Document> getBatchCursor() {
         return batchCursor;
+    }
+
+    public static class MyLongCodec implements Codec<Long> {
+
+        @Override
+        public Long decode(final BsonReader reader, final DecoderContext decoderContext) {
+            return 42L;
+        }
+
+        @Override
+        public void encode(final BsonWriter writer, final Long value, final EncoderContext encoderContext) {
+        }
+
+        @Override
+        public Class<Long> getEncoderClass() {
+            return Long.class;
+        }
     }
 }

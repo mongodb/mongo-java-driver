@@ -17,6 +17,7 @@
 
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
@@ -37,6 +38,7 @@ import org.bson.conversions.Bson
  */
 @Deprecated("Map Reduce has been deprecated. Use Aggregation instead", replaceWith = ReplaceWith(""))
 public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) : Flow<T> by wrapped.asFlow() {
+
     /**
      * Sets the number of documents to return per batch.
      *
@@ -45,6 +47,18 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
     public fun batchSize(batchSize: Int): MapReduceFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since CSOT
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): MapReduceFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which
@@ -138,10 +152,19 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
     /**
      * Sets the maximum execution time on the server for this operation.
      *
+     * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
+     * configuration options available at the following levels:
+     * - [com.mongodb.MongoClientSettings.Builder.timeout]
+     * - [MongoDatabase.withTimeout]
+     * - [MongoCollection.withTimeout]
+     * - [ClientSession]
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
+     * execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
+     *
      * @param maxTime the max time
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return this
-     * @see [Max Time](https://www.mongodb.com/docs/manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS)
      */
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MapReduceFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)

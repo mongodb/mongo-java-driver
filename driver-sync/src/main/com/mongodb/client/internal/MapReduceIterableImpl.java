@@ -21,7 +21,9 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
@@ -41,8 +43,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
-class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
-        implements com.mongodb.client.MapReduceIterable<TResult> {
+class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements com.mongodb.client.MapReduceIterable<TResult> {
     private final SyncOperations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TResult> resultClass;
@@ -67,10 +68,10 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     MapReduceIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final String mapFunction, final String reduceFunction) {
-        super(clientSession, executor, readConcern, readPreference, false);
+                          final String mapFunction, final String reduceFunction, final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, readConcern, readPreference, false, timeoutSettings);
         this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                false, false);
+                false, false, timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.mapFunction = notNull("mapFunction", mapFunction);
@@ -161,6 +162,12 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
+    public com.mongodb.client.MapReduceIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
     public com.mongodb.client.MapReduceIterable<TResult> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
@@ -181,11 +188,16 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
     }
 
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(maxTimeMS));
+    }
+
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         if (inline) {
             ReadOperation<MapReduceBatchCursor<TResult>> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
-                    resultClass, filter, limit, maxTimeMS, jsMode, scope, sort, verbose, collation);
+                    resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
             return new WrappedMapReduceReadOperation<>(operation);
         } else {
             getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
@@ -204,7 +216,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     private WriteOperation<MapReduceStatistics> createMapReduceToCollectionOperation() {
         return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
-                limit, maxTimeMS, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation
+                limit, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation
         );
     }
 

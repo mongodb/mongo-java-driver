@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.client.ListDatabasesIterable as JListDatabasesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.kotlin.client.coroutine.ListDatabasesFlow
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -26,6 +27,8 @@ data class SyncListDatabasesIterable<T : Any>(val wrapped: ListDatabasesFlow<T>)
 
     override fun batchSize(batchSize: Int): SyncListDatabasesIterable<T> = apply { wrapped.batchSize(batchSize) }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListDatabasesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
@@ -41,4 +44,7 @@ data class SyncListDatabasesIterable<T : Any>(val wrapped: ListDatabasesFlow<T>)
     override fun comment(comment: String?): SyncListDatabasesIterable<T> = apply { wrapped.comment(comment) }
 
     override fun comment(comment: BsonValue?): SyncListDatabasesIterable<T> = apply { wrapped.comment(comment) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncListDatabasesIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
 }

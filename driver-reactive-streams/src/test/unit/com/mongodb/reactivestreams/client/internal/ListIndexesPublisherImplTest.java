@@ -27,7 +27,7 @@ import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ListIndexesPublisherImplTest extends TestHelper {
@@ -36,6 +36,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected ListIndexesOperation")
     @Test
+    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperation() {
         configureBatchCursor();
 
@@ -54,13 +55,13 @@ public class ListIndexesPublisherImplTest extends TestHelper {
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
 
         // Should apply settings
-        publisher
-                .batchSize(100)
-                .maxTime(10, SECONDS);
+        publisher.batchSize(100)
+                .maxTime(100, MILLISECONDS);
 
-        expectedOperation
-                .batchSize(100)
-                .maxTime(10, SECONDS);
+        expectedOperation =
+                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                        .batchSize(100)
+                        .retryReads(true);
 
         configureBatchCursor();
         Flux.from(publisher).blockFirst();

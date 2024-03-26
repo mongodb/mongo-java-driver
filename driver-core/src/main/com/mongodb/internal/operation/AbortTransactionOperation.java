@@ -22,6 +22,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 
 /**
  * An operation that aborts a transaction.
@@ -47,11 +48,12 @@ public class AbortTransactionOperation extends TransactionOperation {
 
     @Override
     CommandCreator getCommandCreator() {
-        CommandCreator creator = super.getCommandCreator();
-        if (recoveryToken != null) {
-            return (serverDescription, connectionDescription) -> creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);
-        }
-        return creator;
+        return (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument command = AbortTransactionOperation.super.getCommandCreator()
+                    .create(operationContext, serverDescription, connectionDescription);
+            putIfNotNull(command, "recoveryToken", recoveryToken);
+            return command;
+        };
     }
 
     @Override

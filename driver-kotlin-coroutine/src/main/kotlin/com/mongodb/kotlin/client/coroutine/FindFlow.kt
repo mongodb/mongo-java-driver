@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.FindPublisher
 import java.util.concurrent.TimeUnit
@@ -44,6 +45,23 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
     public fun batchSize(batchSize: Int): FindFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * If the `timeout` is set then:
+     * * For non-tailable cursors, the default value of timeoutMode is [TimeoutMode.CURSOR_LIFETIME]
+     * * For tailable cursors, the default value of timeoutMode is [TimeoutMode.ITERATION] and its an error to configure
+     *   it as: [TimeoutMode.CURSOR_LIFETIME]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since CSOT
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): FindFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Sets the query filter to apply to the query.
@@ -75,10 +93,22 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
     /**
      * Sets the maximum execution time on the server for this operation.
      *
+     * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
+     * configuration options available at the following levels:
+     * - [com.mongodb.MongoClientSettings.Builder.timeout]
+     * - [MongoDatabase.withTimeout]
+     * - [MongoCollection.withTimeout]
+     * - [ClientSession]
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
+     * execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
+     *
      * @param maxTime the max time
      * @param timeUnit the time unit, which defaults to Milliseconds
      * @return this
      */
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): FindFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
@@ -250,7 +280,6 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
     /**
      * Explain the execution plan for this operation with the given verbosity level
      *
-     * @param R the type of the document class
      * @param verbosity the verbosity of the explanation
      * @return the execution plan
      * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)

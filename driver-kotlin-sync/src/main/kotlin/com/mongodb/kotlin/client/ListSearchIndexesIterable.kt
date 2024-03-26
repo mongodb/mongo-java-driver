@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.ListSearchIndexesIterable as JListSearchIndexesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -31,6 +32,26 @@ import org.bson.Document
 public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearchIndexesIterable<T>) :
     MongoIterable<T>(wrapped) {
 
+    public override fun batchSize(batchSize: Int): ListSearchIndexesIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since CSOT
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
+
     /**
      * Sets an Atlas Search index name for this operation.
      *
@@ -38,15 +59,6 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
      * @return this.
      */
     public fun name(indexName: String): ListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size.
-     * @return this.
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public override fun batchSize(batchSize: Int): ListSearchIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.
@@ -62,11 +74,22 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
     /**
      * Sets the maximum execution time on the server for this operation.
      *
+     * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
+     * configuration options available at the following levels:
+     * - [com.mongodb.MongoClientSettings.Builder.timeout]
+     * - [MongoDatabase.withTimeout]
+     * - [MongoCollection.withTimeout]
+     * - [ClientSession]
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
+     * execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
+     *
      * @param maxTime the max time.
      * @param timeUnit the time unit, defaults to Milliseconds.
      * @return this.
-     * @see [Max Time](https://www.mongodb.com/docs/manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS)
      */
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListSearchIndexesIterable<T> =
         apply {
             wrapped.maxTime(maxTime, timeUnit)

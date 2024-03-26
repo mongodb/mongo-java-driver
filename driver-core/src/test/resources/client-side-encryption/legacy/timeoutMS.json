@@ -100,6 +100,7 @@
   "tests": [
     {
       "description": "timeoutMS applied to listCollections to get collection schema",
+      "comment": "Updated timeoutMS and blockTimeMS manually to address race conditions in tests with SSL handshake.",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -110,7 +111,7 @@
             "listCollections"
           ],
           "blockConnection": true,
-          "blockTimeMS": 60
+          "blockTimeMS": 100
         }
       },
       "clientOptions": {
@@ -119,7 +120,7 @@
             "aws": {}
           }
         },
-        "timeoutMS": 50
+        "timeoutMS": 90
       },
       "operations": [
         {

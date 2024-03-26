@@ -17,7 +17,6 @@
 package org.mongodb.scala.gridfs
 
 import java.nio.ByteBuffer
-
 import com.mongodb.reactivestreams.client.gridfs.{ GridFSBucket => JGridFSBucket, GridFSBuckets }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{ BsonObjectId, BsonValue, ObjectId }
@@ -30,6 +29,8 @@ import org.mongodb.scala.{
   SingleObservable,
   WriteConcern
 }
+
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 
 /**
  * A factory for GridFSBucket instances.
@@ -103,6 +104,28 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
   lazy val readConcern: ReadConcern = wrapped.getReadConcern
 
   /**
+   * The time limit for the full execution of an operation.
+   *
+   * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+   * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
+   *
+   *   - `null` means that the timeout mechanism for operations will defer to using:
+   *      - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to become available
+   *      - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+   *      - `wTimeoutMS`: How long the server will wait for  the write concern to be fulfilled before timing out.
+   *      - `maxTimeMS`: The time limit for processing operations on a cursor.
+   *        See: [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+   *      - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+   *   - `0` means infinite timeout.
+   *   - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @return the optional timeout duration
+   * @since 4.x
+   */
+  lazy val timeout: Option[Duration] =
+    Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
+
+  /**
    * Create a new GridFSBucket instance with a new chunk size in bytes.
    *
    * @param chunkSizeBytes the new chunk size in bytes.
@@ -138,11 +161,27 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
   def withReadConcern(readConcern: ReadConcern): GridFSBucket = GridFSBucket(wrapped.withReadConcern(readConcern))
 
   /**
+   * Sets the time limit for the full execution of an operation.
+   *
+   * - `0` means infinite timeout.
+   * - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @param timeout the timeout, which must be greater than or equal to 0
+   * @return a new GridFSBucket instance with the set time limit for operations
+   * @since 4.x
+   */
+  def withTimeout(timeout: Duration): GridFSBucket =
+    GridFSBucket(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
+
+  /**
    * Uploads the contents of the given `Observable` to a GridFS bucket.
    *
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param filename the filename for the stream
    * @param source   the Publisher providing the file data
@@ -158,6 +197,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param filename the filename for the stream
    * @param source   the Publisher providing the file data
@@ -178,6 +220,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param id       the custom id value of the file
    * @param filename the filename for the stream
@@ -198,6 +243,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param id       the custom id value of the file
    * @param filename the filename for the stream
@@ -220,6 +268,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
    * @param filename      the filename for the stream
@@ -240,6 +291,10 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
+   *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
    * @param filename      the filename for the stream
@@ -263,6 +318,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
    *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
    * @param id            the custom id value of the file
@@ -285,6 +343,10 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * Reads the contents of the user file from the `source` and uploads it as chunks in the chunks collection. After all the
    * chunks have been uploaded, it creates a files collection document for `filename` in the files collection.
+   *
+   * Note: When this [[GridFSBucket]] is set with a operation timeout (via timeout inherited from [[MongoDatabase]]
+   * settings or [[GridFSBucket#withTimeout()]]), timeout breaches may occur due to the [[Observable]]
+   * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.
    *
    * @param clientSession the client session with which to associate this operation
    * @param id            the custom id value of the file

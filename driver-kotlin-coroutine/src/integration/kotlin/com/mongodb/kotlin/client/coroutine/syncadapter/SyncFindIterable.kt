@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client.coroutine.syncadapter
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.FindIterable as JFindIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.coroutine.FindFlow
 import java.util.concurrent.TimeUnit
@@ -38,6 +39,8 @@ data class SyncFindIterable<T : Any>(val wrapped: FindFlow<T>) : JFindIterable<T
         wrapped.allowDiskUse(allowDiskUse)
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncFindIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
@@ -76,6 +79,7 @@ data class SyncFindIterable<T : Any>(val wrapped: FindFlow<T>) : JFindIterable<T
     override fun returnKey(returnKey: Boolean): SyncFindIterable<T> = apply { wrapped.returnKey(returnKey) }
 
     override fun showRecordId(showRecordId: Boolean): SyncFindIterable<T> = apply { wrapped.showRecordId(showRecordId) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncFindIterable<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     override fun explain(): Document = runBlocking { wrapped.explain() }
 

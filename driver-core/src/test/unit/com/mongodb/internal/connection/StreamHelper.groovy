@@ -16,9 +16,12 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
@@ -168,7 +171,10 @@ class StreamHelper {
                 new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
                 MessageSettings.builder().build(), SINGLE, null)
         OutputBuffer outputBuffer = new BasicOutputBuffer()
-        command.encode(outputBuffer, NoOpSessionContext.INSTANCE)
+        command.encode(outputBuffer, new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                NoOpSessionContext.INSTANCE,
+                new TimeoutContext(ClusterFixture.TIMEOUT_SETTINGS), null))
         nextMessageId++
         [outputBuffer.byteBuffers, nextMessageId]
     }

@@ -19,7 +19,6 @@ package com.mongodb.client.internal
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.client.ClientSession
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.ClusterBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadWriteBinding
@@ -27,15 +26,19 @@ import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.session.ClientSessionContext
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Stub(ClusterBinding)
+        def wrappedBinding = Stub(ClusterBinding) {
+            getOperationContext() >> OPERATION_CONTEXT
+        }
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
-        def context = binding.getSessionContext()
+        def context = binding.getOperationContext().getSessionContext()
 
         then:
         (context as ClientSessionContext).getClientSession() == session
@@ -44,12 +47,14 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Mock(ClusterBinding)
+        def wrappedBinding = Mock(ClusterBinding) {
+            getOperationContext() >> OPERATION_CONTEXT
+        }
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
         def readConnectionSource = binding.getReadConnectionSource()
-        def context = readConnectionSource.getSessionContext()
+        def context = readConnectionSource.getOperationContext().getSessionContext()
 
         then:
         (context as ClientSessionContext).getClientSession() == session
@@ -59,7 +64,7 @@ class ClientSessionBindingSpecification extends Specification {
 
         when:
         def writeConnectionSource = binding.getWriteConnectionSource()
-        context = writeConnectionSource.getSessionContext()
+        context = writeConnectionSource.getOperationContext().getSessionContext()
 
         then:
         (context as ClientSessionContext).getClientSession() == session
@@ -144,7 +149,7 @@ class ClientSessionBindingSpecification extends Specification {
         def binding = new ClientSessionBinding(session, ownsSession, wrappedBinding)
 
         then:
-        binding.getSessionContext().isImplicitSession() == ownsSession
+        binding.getOperationContext().getSessionContext().isImplicitSession() == ownsSession
 
         where:
         ownsSession << [true, false]
@@ -152,6 +157,6 @@ class ClientSessionBindingSpecification extends Specification {
 
     private ReadWriteBinding createStubBinding() {
         def cluster = Stub(Cluster)
-        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
+        new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, OPERATION_CONTEXT)
     }
 }

@@ -43,7 +43,7 @@ public class ConnectionPoolTest extends AbstractConnectionPoolTest {
         if (name.equals("checkOut")) {
             return () -> {
                 try {
-                    InternalConnection connection = getPool().get(new OperationContext());
+                    InternalConnection connection = getPool().get(createOperationContext());
                     if (operation.containsKey("label")) {
                         getConnectionMap().put(operation.getString("label").getValue(), connection);
                     }

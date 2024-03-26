@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.ListSearchIndexesIterable as JListSearchIndexesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.coroutine.ListSearchIndexesFlow
 import java.util.concurrent.TimeUnit
@@ -35,6 +36,8 @@ internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchInd
         wrapped.allowDiskUse(allowDiskUse)
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListSearchIndexesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
@@ -45,6 +48,9 @@ internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchInd
 
     override fun comment(comment: String?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncListSearchIndexesIterable<T> = apply { wrapped.comment(comment) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncListSearchIndexesIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
     override fun explain(): Document = runBlocking { wrapped.explain() }
 
     override fun explain(verbosity: ExplainVerbosity): Document = runBlocking { wrapped.explain(verbosity) }

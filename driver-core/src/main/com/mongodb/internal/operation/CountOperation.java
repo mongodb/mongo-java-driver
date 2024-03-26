@@ -18,19 +18,15 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
@@ -53,7 +49,6 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     private BsonValue hint;
     private long skip;
     private long limit;
-    private long maxTimeMS;
     private Collation collation;
 
     public CountOperation(final MongoNamespace namespace) {
@@ -105,17 +100,6 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         return this;
     }
 
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public CountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
     public Collation getCollation() {
         return collation;
     }
@@ -128,13 +112,13 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     @Override
     public Long execute(final ReadBinding binding) {
         return executeRetryableRead(binding, namespace.getDatabaseName(),
-                getCommandCreator(binding.getSessionContext()), DECODER, transformer(), retryReads);
+                                    getCommandCreator(), DECODER, transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()), DECODER,
-                asyncTransformer(), retryReads, callback);
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+                                  getCommandCreator(), DECODER, asyncTransformer(), retryReads, callback);
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
@@ -145,24 +129,21 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         return (result, source, connection) -> (result.getNumber("n")).longValue();
     }
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription);
-    }
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
 
-    private BsonDocument getCommand(final SessionContext sessionContext, final ConnectionDescription connectionDescription) {
-        BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
+            appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), document);
 
-        appendReadConcernToCommand(sessionContext, connectionDescription.getMaxWireVersion(), document);
+            putIfNotNull(document, "query", filter);
+            putIfNotZero(document, "limit", limit);
+            putIfNotZero(document, "skip", skip);
+            putIfNotNull(document, "hint", hint);
 
-        putIfNotNull(document, "query", filter);
-        putIfNotZero(document, "limit", limit);
-        putIfNotZero(document, "skip", skip);
-        putIfNotNull(document, "hint", hint);
-        putIfNotZero(document, "maxTimeMS", maxTimeMS);
-
-        if (collation != null) {
-            document.put("collation", collation.asDocument());
-        }
-        return document;
+            if (collation != null) {
+                document.put("collation", collation.asDocument());
+            }
+            return document;
+        };
     }
 }

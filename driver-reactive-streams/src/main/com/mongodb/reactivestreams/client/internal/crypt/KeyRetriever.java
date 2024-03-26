@@ -18,7 +18,10 @@ package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoCollection;
 import org.bson.BsonDocument;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,6 +29,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
 
 class KeyRetriever {
     private final MongoClient client;
@@ -36,11 +40,14 @@ class KeyRetriever {
         this.namespace = notNull("namespace", namespace);
     }
 
-    public Mono<List<BsonDocument>> find(final BsonDocument keyFilter) {
-        return Flux.from(
-                client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
-                        .withReadConcern(ReadConcern.MAJORITY)
-                        .find(keyFilter)
-        ).collectList();
+    public Mono<List<BsonDocument>> find(final BsonDocument keyFilter, @Nullable final Timeout operationTimeout) {
+        return Flux.defer(() -> {
+            MongoCollection<BsonDocument> collection = client.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName(), BsonDocument.class);
+
+          return collectionWithTimeout(collection, operationTimeout)
+                    .withReadConcern(ReadConcern.MAJORITY)
+                    .find(keyFilter);
+        }).collectList();
     }
 }

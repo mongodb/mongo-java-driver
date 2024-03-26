@@ -19,11 +19,14 @@ package com.mongodb.internal.binding
 import com.mongodb.internal.async.SingleResultCallback
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+
 class AsyncSessionBindingSpecification extends Specification {
 
     def 'should wrap the passed in async binding'() {
         given:
         def wrapped = Mock(AsyncReadWriteBinding)
+        wrapped.getOperationContext() >> OPERATION_CONTEXT
         def binding = new AsyncSessionBinding(wrapped)
 
         when:
@@ -63,10 +66,10 @@ class AsyncSessionBindingSpecification extends Specification {
         1 * wrapped.getWriteConnectionSource(_)
 
         when:
-        def context = binding.getSessionContext()
+        def context = binding.getOperationContext().getSessionContext()
 
         then:
-        0 * wrapped.getSessionContext()
+        0 * wrapped.getOperationContext().getSessionContext()
         context instanceof SimpleSessionContext
     }
 

@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.Block;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Immutable;
 
 import java.util.Objects;
@@ -113,7 +114,21 @@ public final class SocketSettings {
          * @param timeUnit the time unit
          * @return this
          * @see #getReadTimeout(TimeUnit)
+         *
+         * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+         *
+         * <ul>
+         *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+         *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
+         *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
+         *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+         *     <li>{@link com.mongodb.TransactionOptions}</li>
+         * </ul>
+         *
+         * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this read timeout irrelevant.
+         * If no timeout is specified at these levels, the read timeout will be used.
          */
+        @Deprecated
         public Builder readTimeout(final long readTimeout, final TimeUnit timeUnit) {
             this.readTimeoutMS = timeoutArgumentToMillis(readTimeout, timeUnit);
             return this;
@@ -161,6 +176,7 @@ public final class SocketSettings {
          * @see com.mongodb.ConnectionString#getConnectTimeout()
          * @see com.mongodb.ConnectionString#getSocketTimeout()
          */
+        @SuppressWarnings("deprecation") // connectionString.getSocketTimeout
         public Builder applyConnectionString(final ConnectionString connectionString) {
             Integer connectTimeout = connectionString.getConnectTimeout();
             if (connectTimeout != null) {
@@ -202,7 +218,21 @@ public final class SocketSettings {
      * @param timeUnit the time unit to get the timeout in
      * @return the read timeout in the requested time unit, or 0 if there is no timeout
      * @see Builder#readTimeout(long, TimeUnit)
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#getTimeout(TimeUnit)}</li>
+     *     <li>{@code MongoDatabase#getTimeout(TimeUnit)}</li>
+     *     <li>{@code MongoCollection#getTimeout(TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this read timeout irrelevant.
+     * If no timeout is specified at these levels, the read timeout will be used.
      */
+    @Deprecated
     public int getReadTimeout(final TimeUnit timeUnit) {
         return (int) timeUnit.convert(readTimeoutMS, MILLISECONDS);
     }

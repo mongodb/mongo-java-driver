@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
@@ -38,6 +39,7 @@ import com.mongodb.internal.Locks;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -60,12 +62,9 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionStarted;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionSucceeded;
 import static com.mongodb.internal.event.EventListenerHelper.singleClusterListener;
-import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @ThreadSafe
 final class LoadBalancedCluster implements Cluster {
@@ -181,9 +180,9 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ClusterableServer getServer(final ServerAddress serverAddress, final Timeout serverSelectionTimeout) {
         isTrue("open", !isClosed());
-        waitForSrv();
+        waitForSrv(serverSelectionTimeout);
         return assertNotNull(server);
     }
 
@@ -202,36 +201,32 @@ final class LoadBalancedCluster implements Cluster {
     @Override
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
-        waitForSrv();
+        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
+        waitForSrv(computedServerSelectionTimeout);
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
         ClusterDescription curDescription = description;
-        logServerSelectionStarted(clusterId, operationContext, serverSelector, curDescription);
+        logServerSelectionStarted(clusterId, operationContext.getId(), serverSelector, curDescription);
         ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-        logServerSelectionSucceeded(clusterId, operationContext, serverTuple.getServerDescription().getAddress(), serverSelector, curDescription);
+        logServerSelectionSucceeded(clusterId, operationContext.getId(), serverTuple.getServerDescription().getAddress(),
+                serverSelector, curDescription);
         return serverTuple;
     }
 
-
-    private void waitForSrv() {
+    private void waitForSrv(final Timeout serverSelectionTimeout) {
         if (initializationCompleted) {
             return;
         }
         Locks.withLock(lock, () -> {
-            long remainingTimeNanos = getMaxWaitTimeNanos();
             while (!initializationCompleted) {
                 if (isClosed()) {
                     throw createShutdownException();
                 }
-                if (remainingTimeNanos <= 0) {
+                if (serverSelectionTimeout.hasExpired()) {
                     throw createTimeoutException();
                 }
-                try {
-                    remainingTimeNanos = condition.awaitNanos(remainingTimeNanos);
-                } catch (InterruptedException e) {
-                    throw interruptAndCreateMongoInterruptedException(format("Interrupted while resolving SRV records for %s", settings.getSrvHost()), e);
-                }
+                serverSelectionTimeout.awaitOn(condition, () -> format("resolving SRV records for %s", settings.getSrvHost()));
             }
         });
     }
@@ -243,9 +238,9 @@ final class LoadBalancedCluster implements Cluster {
             callback.onResult(null, createShutdownException());
             return;
         }
-
-        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(
-                operationContext, serverSelector, getMaxWaitTimeNanos(), callback);
+        Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
+        ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(operationContext.getId(), serverSelector,
+                computedServerSelectionTimeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
         } else {
@@ -297,9 +292,9 @@ final class LoadBalancedCluster implements Cluster {
         } else {
             ClusterDescription curDescription = description;
             logServerSelectionStarted(
-                    clusterId, serverSelectionRequest.operationContext, serverSelectionRequest.serverSelector, curDescription);
+                    clusterId, serverSelectionRequest.operationId, serverSelectionRequest.serverSelector, curDescription);
             ServerTuple serverTuple = new ServerTuple(assertNotNull(server), curDescription.getServerDescriptions().get(0));
-            logServerSelectionSucceeded(clusterId, serverSelectionRequest.operationContext,
+            logServerSelectionSucceeded(clusterId, serverSelectionRequest.operationId,
                     serverTuple.getServerDescription().getAddress(), serverSelectionRequest.serverSelector, curDescription);
             serverSelectionRequest.onSuccess(serverTuple);
         }
@@ -313,20 +308,13 @@ final class LoadBalancedCluster implements Cluster {
     private MongoTimeoutException createTimeoutException() {
         MongoException localSrvResolutionException = srvResolutionException;
         if (localSrvResolutionException == null) {
-            return new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s.",
-                    settings.getServerSelectionTimeout(MILLISECONDS), settings.getSrvHost()));
+            return new MongoTimeoutException(format("Timed out while waiting to resolve SRV records for %s.",
+                    settings.getSrvHost()));
         } else {
-            return new MongoTimeoutException(format("Timed out after %d ms while waiting to resolve SRV records for %s. "
+            return new MongoTimeoutException(format("Timed out while waiting to resolve SRV records for %s. "
                             + "Resolution exception was '%s'",
-                    settings.getServerSelectionTimeout(MILLISECONDS), settings.getSrvHost(), localSrvResolutionException));
+                    settings.getSrvHost(), localSrvResolutionException));
         }
-    }
-
-    private long getMaxWaitTimeNanos() {
-        if (settings.getServerSelectionTimeout(NANOSECONDS) < 0) {
-            return Long.MAX_VALUE;
-        }
-        return settings.getServerSelectionTimeout(NANOSECONDS);
     }
 
     private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
@@ -361,31 +349,29 @@ final class LoadBalancedCluster implements Cluster {
                     if (isClosed() || initializationCompleted) {
                         break;
                     }
-                    long waitTimeNanos = Long.MAX_VALUE;
-                    long curTimeNanos = System.nanoTime();
+                    Timeout waitTimeNanos = Timeout.infinite();
 
                     for (Iterator<ServerSelectionRequest> iterator = waitQueue.iterator(); iterator.hasNext();) {
                         ServerSelectionRequest next = iterator.next();
-                        long remainingTime = next.getRemainingTime(curTimeNanos);
-                        if (remainingTime <= 0) {
+
+                        Timeout nextTimeout = next.getTimeout();
+                        if (nextTimeout.hasExpired()) {
                             timeoutList.add(next);
                             iterator.remove();
                         } else {
-                            waitTimeNanos = Math.min(remainingTime, waitTimeNanos);
+                            waitTimeNanos = waitTimeNanos.orEarlier(nextTimeout);
                         }
                     }
                     if (timeoutList.isEmpty()) {
                         try {
-                            //noinspection ResultOfMethodCallIgnored
-                            condition.await(waitTimeNanos, NANOSECONDS);
-                        } catch (InterruptedException unexpected) {
+                            waitTimeNanos.awaitOn(condition, () -> "ignored");
+                        } catch (MongoInterruptedException unexpected) {
                             fail();
                         }
                     }
                 } finally {
                     lock.unlock();
                 }
-
                 timeoutList.forEach(request -> request.onError(createTimeoutException()));
                 timeoutList.clear();
             }
@@ -404,24 +390,21 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     private static final class ServerSelectionRequest {
-        private final OperationContext operationContext;
+        private final long operationId;
         private final ServerSelector serverSelector;
-        private final long maxWaitTimeNanos;
-        private final long startTimeNanos = System.nanoTime();
         private final SingleResultCallback<ServerTuple> callback;
+        private final Timeout timeout;
 
-        private ServerSelectionRequest(
-                final OperationContext operationContext,
-                final ServerSelector serverSelector,
-                final long maxWaitTimeNanos, final SingleResultCallback<ServerTuple> callback) {
-            this.operationContext = operationContext;
+        private ServerSelectionRequest(final long operationId, final ServerSelector serverSelector, final Timeout timeout,
+                final SingleResultCallback<ServerTuple> callback) {
+            this.operationId = operationId;
             this.serverSelector = serverSelector;
-            this.maxWaitTimeNanos = maxWaitTimeNanos;
+            this.timeout = timeout;
             this.callback = callback;
         }
 
-        long getRemainingTime(final long curTimeNanos) {
-            return startTimeNanos + maxWaitTimeNanos - curTimeNanos;
+        Timeout getTimeout() {
+            return timeout;
         }
 
         public void onSuccess(final ServerTuple serverTuple) {

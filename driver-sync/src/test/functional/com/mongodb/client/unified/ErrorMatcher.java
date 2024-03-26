@@ -21,8 +21,10 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
@@ -41,7 +43,7 @@ import static org.spockframework.util.Assert.fail;
 final class ErrorMatcher {
     private static final Set<String> EXPECTED_ERROR_FIELDS = new HashSet<>(
             asList("isError", "expectError", "isClientError", "errorCode", "errorCodeName", "errorContains", "errorResponse",
-                    "isClientError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
+                    "isClientError", "isTimeoutError", "errorLabelsOmit", "errorLabelsContain", "expectResult"));
 
     private final AssertionContext context;
     private final ValueMatcher valueMatcher;
@@ -67,6 +69,16 @@ final class ErrorMatcher {
                     e instanceof MongoClientException || e instanceof IllegalArgumentException || e instanceof IllegalStateException
                             || e instanceof MongoSocketException);
         }
+
+        if (expectedError.containsKey("isTimeoutError")) {
+            // TODO (CSOT) JAVA-5248 Should only be MongoOperationTimeoutException.
+            assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
+                    expectedError.getBoolean("isTimeoutError").getValue(),
+                    e instanceof MongoOperationTimeoutException || e instanceof MongoExecutionTimeoutException
+                    || e instanceof MongoSocketReadTimeoutException
+            );
+        }
+
         if (expectedError.containsKey("errorContains")) {
             String errorContains = expectedError.getString("errorContains").getValue();
             assertTrue(context.getMessage("Error message does not contain expected string: " + errorContains),

@@ -62,6 +62,7 @@ import org.reactivestreams.Publisher;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -105,6 +106,12 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
         return mongoOperationPublisher.getReadConcern();
     }
 
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        Long timeoutMS = mongoOperationPublisher.getTimeoutMS();
+        return (timeoutMS != null) ? notNull("timeUnit", timeUnit).convert(timeoutMS, TimeUnit.MILLISECONDS) : null;
+    }
+
     MongoOperationPublisher<T> getPublisherHelper() {
         return mongoOperationPublisher;
     }
@@ -132,6 +139,11 @@ final class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public MongoCollection<T> withReadConcern(final ReadConcern readConcern) {
         return new MongoCollectionImpl<>(mongoOperationPublisher.withReadConcern(readConcern));
+    }
+
+    @Override
+    public MongoCollection<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new MongoCollectionImpl<>(mongoOperationPublisher.withTimeout(timeout, timeUnit));
     }
 
     @Override

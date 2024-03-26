@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.ListDatabasesIterable as JListDatabasesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
@@ -30,13 +31,15 @@ import org.mockito.kotlin.verifyNoMoreInteractions
 class ListDatabasesIterableTest {
     @Test
     fun shouldHaveTheSameMethods() {
-        val jListDatabasesIterableFunctions = JListDatabasesIterable::class.declaredFunctions.map { it.name }.toSet()
+        val jListDatabasesIterableFunctions =
+            JListDatabasesIterable::class.declaredFunctions.map { it.name }.toSet() + "timeoutMode"
         val kListDatabasesIterableFunctions = ListDatabasesIterable::class.declaredFunctions.map { it.name }.toSet()
 
         assertEquals(jListDatabasesIterableFunctions, kListDatabasesIterableFunctions)
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JListDatabasesIterable<Document> = mock()
         val iterable = ListDatabasesIterable(wrapped)
@@ -54,6 +57,7 @@ class ListDatabasesIterableTest {
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.nameOnly(true)
+        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).authorizedDatabasesOnly(true)
         verify(wrapped).batchSize(batchSize)
@@ -63,6 +67,7 @@ class ListDatabasesIterableTest {
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).nameOnly(true)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

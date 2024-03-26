@@ -23,8 +23,7 @@ import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.client.MongoClients as JMongoClients
 import com.mongodb.connection.ClusterDescription
 import java.io.Closeable
-import org.bson.Document
-import org.bson.conversions.Bson
+import java.util.concurrent.TimeUnit
 
 /**
  * A client-side representation of a MongoDB cluster.
@@ -38,7 +37,7 @@ import org.bson.conversions.Bson
  *
  * @see MongoClient.create
  */
-public class MongoClient(private val wrapped: JMongoClient) : Closeable {
+public class MongoClient(private val wrapped: JMongoClient) : MongoCluster(wrapped), Closeable {
 
     /**
      * A factory for [MongoClient] instances.
@@ -108,175 +107,13 @@ public class MongoClient(private val wrapped: JMongoClient) : Closeable {
      */
     public val clusterDescription: ClusterDescription
         get() = wrapped.clusterDescription
-
-    /**
-     * Gets a [MongoDatabase] instance for the given database name.
-     *
-     * @param databaseName the name of the database to retrieve
-     * @return a `MongoDatabase` representing the specified database
-     * @throws IllegalArgumentException if databaseName is invalid
-     * @see com.mongodb.MongoNamespace.checkDatabaseNameValidity
-     */
-    public fun getDatabase(databaseName: String): MongoDatabase = MongoDatabase(wrapped.getDatabase(databaseName))
-
-    /**
-     * Creates a client session.
-     *
-     * Note: A ClientSession instance can not be used concurrently in multiple operations.
-     *
-     * @param options the options for the client session
-     * @return the client session
-     */
-    public fun startSession(options: ClientSessionOptions = ClientSessionOptions.builder().build()): ClientSession =
-        ClientSession(wrapped.startSession(options))
-
-    /**
-     * Get a list of the database names
-     *
-     * @return an iterable containing all the names of all the databases
-     * @see [List Databases](https://www.mongodb.com/docs/manual/reference/command/listDatabases)
-     */
-    public fun listDatabaseNames(): MongoIterable<String> = MongoIterable(wrapped.listDatabaseNames())
-
-    /**
-     * Gets the list of databases
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @return the list databases iterable interface
-     * @see [List Databases](https://www.mongodb.com/docs/manual/reference/command/listDatabases)
-     */
-    public fun listDatabaseNames(clientSession: ClientSession): MongoIterable<String> =
-        MongoIterable(wrapped.listDatabaseNames(clientSession.wrapped))
-
-    /**
-     * Gets the list of databases
-     *
-     * @return the list databases iterable interface
-     */
-    @JvmName("listDatabasesAsDocument")
-    public fun listDatabases(): ListDatabasesIterable<Document> = listDatabases<Document>()
-
-    /**
-     * Gets the list of databases
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @return the list databases iterable interface
-     */
-    @JvmName("listDatabasesAsDocumentWithSession")
-    public fun listDatabases(clientSession: ClientSession): ListDatabasesIterable<Document> =
-        listDatabases<Document>(clientSession)
-
-    /**
-     * Gets the list of databases
-     *
-     * @param T the type of the class to use
-     * @param resultClass the target document type of the iterable.
-     * @return the list databases iterable interface
-     */
-    public fun <T : Any> listDatabases(resultClass: Class<T>): ListDatabasesIterable<T> =
-        ListDatabasesIterable(wrapped.listDatabases(resultClass))
-
-    /**
-     * Gets the list of databases
-     *
-     * @param T the type of the class to use
-     * @param clientSession the client session with which to associate this operation
-     * @param resultClass the target document type of the iterable.
-     * @return the list databases iterable interface
-     */
-    public fun <T : Any> listDatabases(clientSession: ClientSession, resultClass: Class<T>): ListDatabasesIterable<T> =
-        ListDatabasesIterable(wrapped.listDatabases(clientSession.wrapped, resultClass))
-
-    /**
-     * Gets the list of databases
-     *
-     * @param T the type of the class to use
-     * @return the list databases iterable interface
-     */
-    public inline fun <reified T : Any> listDatabases(): ListDatabasesIterable<T> = listDatabases(T::class.java)
-
-    /**
-     * Gets the list of databases
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param T the type of the class to use
-     * @return the list databases iterable interface
-     */
-    public inline fun <reified T : Any> listDatabases(clientSession: ClientSession): ListDatabasesIterable<T> =
-        listDatabases(clientSession, T::class.java)
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param pipeline the aggregation pipeline to apply to the change stream, defaults to an empty pipeline.
-     * @return the change stream iterable
-     * @see [Change Streams](https://dochub.mongodb.org/changestreams]
-     */
-    @JvmName("watchAsDocument")
-    public fun watch(pipeline: List<Bson> = emptyList()): ChangeStreamIterable<Document> = watch<Document>(pipeline)
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param pipeline the aggregation pipeline to apply to the change stream, defaults to an empty pipeline.
-     * @return the change stream iterable
-     * @see [Change Streams](https://dochub.mongodb.org/changestreams]
-     */
-    @JvmName("watchAsDocumentWithSession")
-    public fun watch(clientSession: ClientSession, pipeline: List<Bson> = emptyList()): ChangeStreamIterable<Document> =
-        watch<Document>(clientSession, pipeline)
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param T the target document type of the iterable.
-     * @param pipeline the aggregation pipeline to apply to the change stream, defaults to an empty pipeline.
-     * @param resultClass the target document type of the iterable.
-     * @return the change stream iterable
-     * @see [Change Streams](https://dochub.mongodb.org/changestreams]
-     */
-    public fun <T : Any> watch(pipeline: List<Bson> = emptyList(), resultClass: Class<T>): ChangeStreamIterable<T> =
-        ChangeStreamIterable(wrapped.watch(pipeline, resultClass))
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param T the target document type of the iterable.
-     * @param clientSession the client session with which to associate this operation
-     * @param pipeline the aggregation pipeline to apply to the change stream, defaults to an empty pipeline.
-     * @param resultClass the target document type of the iterable.
-     * @return the change stream iterable
-     * @see [Change Streams](https://dochub.mongodb.org/changestreams]
-     */
-    public fun <T : Any> watch(
-        clientSession: ClientSession,
-        pipeline: List<Bson> = emptyList(),
-        resultClass: Class<T>
-    ): ChangeStreamIterable<T> = ChangeStreamIterable(wrapped.watch(clientSession.wrapped, pipeline, resultClass))
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param T the target document type of the iterable.
-     * @param pipeline the aggregation pipeline to apply to the change stream, defaults to an empty pipeline.
-     * @return the change stream iterable
-     * @see [Change Streams](https://dochub.mongodb.org/changestreams]
-     */
-    public inline fun <reified T : Any> watch(pipeline: List<Bson> = emptyList()): ChangeStreamIterable<T> =
-        watch(pipeline, T::class.java)
-
-    /**
-     * Creates a change stream for this client.
-     *
-     * @param T the target document type of the iterable.
-     * @param clientSession the client session with which to associate this operation
-     * @param pipeline the aggregation pipeline to apply to the change stream, defaults to an empty pipeline.
-     * @return the change stream iterable
-     * @see [Change Streams](https://dochub.mongodb.org/changestreams]
-     */
-    public inline fun <reified T : Any> watch(
-        clientSession: ClientSession,
-        pipeline: List<Bson> = emptyList()
-    ): ChangeStreamIterable<T> = watch(clientSession, pipeline, T::class.java)
 }
+
+/**
+ * ClientSessionOptions.Builder.defaultTimeout extension function
+ *
+ * @param defaultTimeout time in milliseconds
+ * @return the options
+ */
+public fun ClientSessionOptions.Builder.defaultTimeout(defaultTimeout: Long): ClientSessionOptions.Builder =
+    this.apply { defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS) }

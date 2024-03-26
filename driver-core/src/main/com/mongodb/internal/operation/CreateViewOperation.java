@@ -55,7 +55,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     private Collation collation;
 
     public CreateViewOperation(final String databaseName, final String viewName, final String viewOn, final List<BsonDocument> pipeline,
-                               final WriteConcern writeConcern) {
+            final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.viewName = notNull("viewName", viewName);
         this.viewOn = notNull("viewOn", viewOn);

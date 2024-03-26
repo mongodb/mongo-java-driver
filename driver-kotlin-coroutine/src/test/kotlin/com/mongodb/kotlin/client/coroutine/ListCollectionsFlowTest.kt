@@ -15,6 +15,7 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
@@ -27,6 +28,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 
+@Suppress("DEPRECATION") // maxTime
 class ListCollectionsFlowTest {
     @Test
     fun shouldHaveTheSameMethods() {
@@ -54,6 +56,7 @@ class ListCollectionsFlowTest {
         flow.filter(filter)
         flow.maxTime(1)
         flow.maxTime(1, TimeUnit.SECONDS)
+        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).comment(bsonComment)
@@ -61,6 +64,7 @@ class ListCollectionsFlowTest {
         verify(wrapped).filter(filter)
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

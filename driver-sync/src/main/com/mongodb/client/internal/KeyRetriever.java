@@ -19,14 +19,19 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.internal.TimeoutHelper.collectionWithTimeout;
 
 class KeyRetriever {
+    private static final String TIMEOUT_ERROR_MESSAGE = "Key retrieval exceeded the timeout limit.";
     private final MongoClient client;
     private final MongoNamespace namespace;
 
@@ -35,8 +40,11 @@ class KeyRetriever {
         this.namespace = notNull("namespace", namespace);
     }
 
-    public List<BsonDocument> find(final BsonDocument keyFilter) {
-        return client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
+    public List<BsonDocument> find(final BsonDocument keyFilter, @Nullable final Timeout operationTimeout) {
+        MongoCollection<BsonDocument> collection = client.getDatabase(namespace.getDatabaseName())
+                .getCollection(namespace.getCollectionName(), BsonDocument.class);
+
+        return collectionWithTimeout(collection, TIMEOUT_ERROR_MESSAGE, operationTimeout)
                 .withReadConcern(ReadConcern.MAJORITY)
                 .find(keyFilter).into(new ArrayList<>());
     }

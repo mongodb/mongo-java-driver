@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
@@ -56,7 +57,8 @@ public class X509AuthenticatorNoUserNameTest {
     public void testSuccessfulAuthentication() {
         enqueueSuccessfulAuthenticationReply();
 
-        new X509Authenticator(getCredentialWithCache(), MULTIPLE, getServerApi()).authenticate(connection, connectionDescriptionThreeSix);
+        new X509Authenticator(getCredentialWithCache(), MULTIPLE, getServerApi())
+                .authenticate(connection, connectionDescriptionThreeSix, OPERATION_CONTEXT);
 
         validateMessages();
     }
@@ -67,7 +69,7 @@ public class X509AuthenticatorNoUserNameTest {
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<>();
         new X509Authenticator(getCredentialWithCache(), MULTIPLE, getServerApi()).authenticateAsync(connection,
-                connectionDescriptionThreeSix, futureCallback);
+                connectionDescriptionThreeSix, OPERATION_CONTEXT, futureCallback);
 
         futureCallback.get();
 

@@ -17,7 +17,9 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Evolving;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -65,11 +67,25 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
     /**
      * Sets the maximum execution time on the server for this operation.
      *
-     * @param maxTime  the max time.
-     * @param timeUnit the time unit, which may not be null.
-     * @return this.
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
+    @Deprecated
     ListSearchIndexesIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
@@ -97,6 +113,19 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
      * @return this.
      */
     ListSearchIndexesIterable<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since CSOT
+     */
+    ListSearchIndexesIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Explain the execution plan for this operation with the server's default verbosity level.

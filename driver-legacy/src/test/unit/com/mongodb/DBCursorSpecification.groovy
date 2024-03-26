@@ -122,10 +122,11 @@ class DBCursorSpecification extends Specification {
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                                                                .filter(new BsonDocument())
-                                                                .projection(new BsonDocument())
-                                                                .retryReads(true))
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(),
+                collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .projection(new BsonDocument())
+                .retryReads(true))
     }
 
 
@@ -140,11 +141,13 @@ class DBCursorSpecification extends Specification {
         cursor.one()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                                                                .limit(-1)
-                                                                .filter(new BsonDocument())
-                                                                .projection(new BsonDocument())
-                                                                .retryReads(true))
+        expect executor.getReadOperation(), isTheSameAs(
+                new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                        .limit(-1)
+                        .filter(new BsonDocument())
+                        .projection(new BsonDocument())
+                        .retryReads(true)
+        )
     }
 
     def 'DBCursor methods should be used to create the expected operation'() {
@@ -167,7 +170,7 @@ class DBCursorSpecification extends Specification {
                 .batchSize(1)
                 .cursorType(cursorType)
                 .limit(1)
-                .maxTime(1, TimeUnit.MILLISECONDS)
+                .maxTime(100, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
                 .partial(true)
                 .skip(1)
@@ -177,13 +180,13 @@ class DBCursorSpecification extends Specification {
         cursor.toArray()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+        expect executor.getReadOperation(), isTheSameAs(
+                new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .batchSize(1)
                 .collation(collation)
                 .cursorType(cursorType)
                 .filter(bsonFilter)
                 .limit(1)
-                .maxTime(1, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
                 .partial(true)
                 .skip(1)
@@ -221,8 +224,8 @@ class DBCursorSpecification extends Specification {
                 .collation(collation)
                 .cursorType(cursorType)
                 .limit(1)
-                .maxAwaitTime(1, TimeUnit.MILLISECONDS)
-                .maxTime(1, TimeUnit.MILLISECONDS)
+                .maxAwaitTime(1001, TimeUnit.MILLISECONDS)
+                .maxTime(101, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
                 .partial(true)
                 .projection(projection)
@@ -249,8 +252,6 @@ class DBCursorSpecification extends Specification {
                 .cursorType(cursorType)
                 .filter(bsonFilter)
                 .limit(1)
-                .maxAwaitTime(1, TimeUnit.MILLISECONDS)
-                .maxTime(1, TimeUnit.MILLISECONDS)
                 .noCursorTimeout(true)
                 .partial(true)
                 .projection(bsonProjection)

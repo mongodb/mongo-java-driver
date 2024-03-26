@@ -42,47 +42,28 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         assert databaseNameExists(databaseName)
 
         when:
-        new DropDatabaseOperation(databaseName).execute(getBinding())
+        execute(new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(databaseName)
+
+        where:
+        async << [true, false]
     }
 
-
-    @IgnoreIf({ isSharded() })
-    def 'should drop a database that exists asynchronously'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
-        assert databaseNameExists(databaseName)
-
-        when:
-        executeAsync(new DropDatabaseOperation(databaseName))
-
-        then:
-        !databaseNameExists(databaseName)
-    }
 
     def 'should not error when dropping a collection that does not exist'() {
         given:
         def dbName = 'nonExistingDatabase'
 
         when:
-        new DropDatabaseOperation(dbName).execute(getBinding())
+        execute(new DropDatabaseOperation(dbName, WriteConcern.ACKNOWLEDGED), async)
 
         then:
         !databaseNameExists(dbName)
-    }
 
-
-    def 'should not error when dropping a collection that does not exist asynchronously'() {
-        given:
-        def dbName = 'nonExistingDatabase'
-
-        when:
-        executeAsync(new DropDatabaseOperation(dbName))
-
-        then:
-        !databaseNameExists(dbName)
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ serverVersionLessThan(3, 4) || !isDiscoverableReplicaSet() })

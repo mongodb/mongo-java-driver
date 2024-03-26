@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
@@ -55,12 +56,13 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         super(credential, clusterConnectionMode, serverApi);
     }
 
-    public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+    public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext) {
         doAsSubject(() -> {
             SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
             throwIfSaslClientIsNull(saslClient);
             try {
-                BsonDocument responseDocument = getNextSaslResponse(saslClient, connection);
+                BsonDocument responseDocument = getNextSaslResponse(saslClient, connection, operationContext);
                 BsonInt32 conversationId = responseDocument.getInt32("conversationId");
 
                 while (!(responseDocument.getBoolean("done")).getValue()) {
@@ -72,7 +74,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                                         + getMongoCredential());
                     }
 
-                    responseDocument = sendSaslContinue(conversationId, response, connection);
+                    responseDocument = sendSaslContinue(conversationId, response, connection, operationContext);
+                    operationContext.getTimeoutContext().resetMaintenanceTimeout();
                 }
                 if (!saslClient.isComplete()) {
                     saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
@@ -93,12 +96,12 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
-                           final SingleResultCallback<Void> callback) {
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         try {
             doAsSubject(() -> {
                 SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
                 throwIfSaslClientIsNull(saslClient);
-                getNextSaslResponseAsync(saslClient, connection, callback);
+                getNextSaslResponseAsync(saslClient, connection, operationContext, callback);
                 return null;
             });
         } catch (Throwable t) {
@@ -120,7 +123,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         }
     }
 
-    private BsonDocument getNextSaslResponse(final SaslClient saslClient, final InternalConnection connection) {
+    private BsonDocument getNextSaslResponse(final SaslClient saslClient, final InternalConnection connection,
+            final OperationContext operationContext) {
         BsonDocument response = getSpeculativeAuthenticateResponse();
         if (response != null) {
             return response;
@@ -128,20 +132,20 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
         try {
             byte[] serverResponse = saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null;
-            return sendSaslStart(serverResponse, connection);
+            return sendSaslStart(serverResponse, connection, operationContext);
         } catch (Exception e) {
             throw wrapException(e);
         }
     }
 
     private void getNextSaslResponseAsync(final SaslClient saslClient, final InternalConnection connection,
-                                          final SingleResultCallback<Void> callback) {
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         BsonDocument response = getSpeculativeAuthenticateResponse();
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
             if (response == null) {
                 byte[] serverResponse = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
-                sendSaslStartAsync(serverResponse, connection, (result, t) -> {
+                sendSaslStartAsync(serverResponse, connection, operationContext, (result, t) -> {
                     if (t != null) {
                         errHandlingCallback.onResult(null, wrapException(t));
                         return;
@@ -150,13 +154,13 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                     if (result.getBoolean("done").getValue()) {
                         verifySaslClientComplete(saslClient, result, errHandlingCallback);
                     } else {
-                        new Continuator(saslClient, result, connection, errHandlingCallback).start();
+                        new Continuator(saslClient, result, connection, operationContext, errHandlingCallback).start();
                     }
                 });
             } else if (response.getBoolean("done").getValue()) {
                 verifySaslClientComplete(saslClient, response, errHandlingCallback);
             } else {
-                new Continuator(saslClient, response, connection, errHandlingCallback).start();
+                new Continuator(saslClient, response, connection, operationContext, errHandlingCallback).start();
             }
         } catch (Exception e) {
             callback.onResult(null, wrapException(e));
@@ -218,29 +222,47 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         return () -> null;
     }
 
-    private BsonDocument sendSaslStart(@Nullable final byte[] outToken, final InternalConnection connection) {
+    private BsonDocument sendSaslStart(@Nullable final byte[] outToken, final InternalConnection connection,
+            final OperationContext operationContext) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
-        return executeCommand(getMongoCredential().getSource(), startDocument, getClusterConnectionMode(), getServerApi(), connection);
+        try {
+            return executeCommand(getMongoCredential().getSource(), startDocument, getClusterConnectionMode(), getServerApi(), connection,
+                    operationContext);
+        } finally {
+            operationContext.getTimeoutContext().resetMaintenanceTimeout();
+        }
     }
 
-    private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection) {
-        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken),
-                getClusterConnectionMode(), getServerApi(), connection);
+    private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection,
+            final OperationContext operationContext) {
+        try {
+            return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken),
+                    getClusterConnectionMode(), getServerApi(), connection, operationContext);
+        } finally {
+            operationContext.getTimeoutContext().resetMaintenanceTimeout();
+        }
     }
 
     private void sendSaslStartAsync(@Nullable final byte[] outToken, final InternalConnection connection,
-                                    final SingleResultCallback<BsonDocument> callback) {
+            final OperationContext operationContext, final SingleResultCallback<BsonDocument> callback) {
         BsonDocument startDocument = createSaslStartCommandDocument(outToken);
         appendSaslStartOptions(startDocument);
+
         executeCommandAsync(getMongoCredential().getSource(), startDocument, getClusterConnectionMode(), getServerApi(), connection,
-                callback);
+                operationContext, (r, t) -> {
+                    operationContext.getTimeoutContext().resetMaintenanceTimeout();
+                    callback.onResult(r, t);
+                });
     }
 
     private void sendSaslContinueAsync(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection,
-                                       final SingleResultCallback<BsonDocument> callback) {
+            final OperationContext operationContext, final SingleResultCallback<BsonDocument> callback) {
         executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken),
-                getClusterConnectionMode(), getServerApi(), connection, callback);
+                getClusterConnectionMode(), getServerApi(), connection, operationContext, (r, t) -> {
+                    operationContext.getTimeoutContext().resetMaintenanceTimeout();
+                    callback.onResult(r, t);
+                });
     }
 
     protected BsonDocument createSaslStartCommandDocument(@Nullable final byte[] outToken) {
@@ -264,6 +286,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     protected MongoException wrapException(final Throwable t) {
         if (t instanceof MongoInterruptedException) {
             return (MongoInterruptedException) t;
+        } else if (t instanceof MongoOperationTimeoutException) {
+            return (MongoOperationTimeoutException) t;
         } else if (t instanceof MongoSecurityException) {
             return (MongoSecurityException) t;
         } else {
@@ -284,13 +308,15 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         private final SaslClient saslClient;
         private final BsonDocument saslStartDocument;
         private final InternalConnection connection;
+        private final OperationContext operationContext;
         private final SingleResultCallback<Void> callback;
 
         Continuator(final SaslClient saslClient, final BsonDocument saslStartDocument, final InternalConnection connection,
-                    final SingleResultCallback<Void> callback) {
+                    final OperationContext operationContext,                 final SingleResultCallback<Void> callback) {
             this.saslClient = saslClient;
             this.saslStartDocument = saslStartDocument;
             this.connection = connection;
+            this.operationContext = operationContext;
             this.callback = callback;
         }
 
@@ -319,13 +345,13 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 doAsSubject(() -> {
                     try {
                         sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
-                                saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection, Continuator.this);
+                                saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection,
+                                operationContext, Continuator.this);
                     } catch (SaslException e) {
                         throw wrapException(e);
                     }
                     return null;
                 });
-
             } catch (Throwable t) {
                 callback.onResult(null, t);
                 disposeOfSaslClient(saslClient);

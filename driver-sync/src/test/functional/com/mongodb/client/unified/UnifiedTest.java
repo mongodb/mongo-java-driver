@@ -339,6 +339,7 @@ public abstract class UnifiedTest {
     private static void assertOperationResult(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex,
             final OperationResult result) {
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
+
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
                 assertNull(context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"),
@@ -359,6 +360,7 @@ public abstract class UnifiedTest {
     private OperationResult executeOperation(final UnifiedTestContext context, final BsonDocument operation, final int operationNum) {
         context.getAssertionContext().push(ContextElement.ofStartedOperation(operation, operationNum));
         String name = operation.getString("name").getValue();
+        String object = operation.getString("object").getValue();
         try {
             switch (name) {
                 case "createEntities":
@@ -428,6 +430,9 @@ public abstract class UnifiedTest {
                 case "aggregate":
                     return crudHelper.executeAggregate(operation);
                 case "find":
+                    if ("bucket".equals(object)){
+                        return gridFSHelper.executeFind(operation);
+                    }
                     return crudHelper.executeFind(operation);
                 case "findOne":
                     return crudHelper.executeFindOne(operation);
@@ -464,6 +469,9 @@ public abstract class UnifiedTest {
                 case "modifyCollection":
                     return crudHelper.executeModifyCollection(operation);
                 case "rename":
+                    if ("bucket".equals(object)){
+                        return gridFSHelper.executeRename(operation);
+                    }
                     return crudHelper.executeRenameCollection(operation);
                 case "createSearchIndex":
                     return crudHelper.executeCreateSearchIndex(operation);
@@ -479,6 +487,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeCreateIndex(operation);
                 case "dropIndex":
                     return crudHelper.executeDropIndex(operation);
+                case "dropIndexes":
+                    return crudHelper.executeDropIndexes(operation);
                 case "startTransaction":
                     return crudHelper.executeStartTransaction(operation);
                 case "commitTransaction":
@@ -495,8 +505,12 @@ public abstract class UnifiedTest {
                     return crudHelper.close(operation);
                 case "iterateUntilDocumentOrError":
                     return crudHelper.executeIterateUntilDocumentOrError(operation);
+                case "iterateOnce":
+                    return crudHelper.executeIterateOnce(operation);
                 case "delete":
                     return gridFSHelper.executeDelete(operation);
+                case "drop":
+                    return gridFSHelper.executeDrop(operation);
                 case "download":
                     return gridFSHelper.executeDownload(operation);
                 case "downloadByName":
@@ -869,7 +883,7 @@ public abstract class UnifiedTest {
                 operation.getDocument("arguments").getString("client").getValue());
         List<CommandEvent> events = lastTwoCommandEvents(listener);
         String eventsJson = listener.getCommandStartedEvents().stream()
-                .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                .map(e -> e.getCommand().toJson())
                 .collect(Collectors.joining(", "));
         BsonDocument expected = ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid");
         BsonDocument actual = ((CommandStartedEvent) events.get(1)).getCommand().getDocument("lsid");
@@ -935,9 +949,9 @@ public abstract class UnifiedTest {
     }
 
     private List<CommandEvent> lastTwoCommandEvents(final TestCommandListener listener) {
-        List<CommandEvent> events = listener.getCommandStartedEvents();
+        List<CommandStartedEvent> events = listener.getCommandStartedEvents();
         assertTrue(events.size() >= 2);
-        return events.subList(events.size() - 2, events.size());
+        return new ArrayList<>(events.subList(events.size() - 2, events.size()));
     }
 
     private BsonDocument addInitialDataAndGetClusterTime() {

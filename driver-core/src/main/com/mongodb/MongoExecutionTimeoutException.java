@@ -29,6 +29,17 @@ public class MongoExecutionTimeoutException extends MongoException {
     /**
      * Construct a new instance.
      *
+     * @param message the error message
+     * @since CSOT
+     */
+    public MongoExecutionTimeoutException(final String message) {
+        super(message);
+
+    }
+
+    /**
+     * Construct a new instance.
+     *
      * @param code the error code
      * @param message the error message
      */

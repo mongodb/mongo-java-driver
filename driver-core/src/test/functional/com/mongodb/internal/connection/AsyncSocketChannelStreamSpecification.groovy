@@ -13,6 +13,7 @@ import util.spock.annotations.Slow
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getSslSettings
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
@@ -39,7 +40,7 @@ class AsyncSocketChannelStreamSpecification extends Specification {
         def stream = factory.create(new ServerAddress('host1'))
 
         when:
-        stream.open()
+        stream.open(OPERATION_CONTEXT)
 
         then:
         !stream.isClosed()
@@ -65,7 +66,7 @@ class AsyncSocketChannelStreamSpecification extends Specification {
         def stream = factory.create(new ServerAddress())
 
         when:
-        stream.open()
+        stream.open(OPERATION_CONTEXT)
 
         then:
         thrown(MongoSocketOpenException)
@@ -89,7 +90,7 @@ class AsyncSocketChannelStreamSpecification extends Specification {
         def callback = new CallbackErrorHolder()
 
         when:
-        stream.openAsync(callback)
+        stream.openAsync(OPERATION_CONTEXT, callback)
 
         then:
         callback.getError().is(exception)

@@ -30,6 +30,7 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.json.JsonObject
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.MongoCredential.createMongoX509Credential
@@ -340,7 +341,7 @@ class MongoClientSpecification extends Specification {
         then:
         expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getCodecRegistry(), secondary(),
                 WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD, null,
-                client.getOperationExecutor()))
+                TIMEOUT_SETTINGS.withMaxWaitTimeMS(120_000), client.getOperationExecutor()))
     }
 
     def 'should create registry reflecting UuidRepresentation'() {

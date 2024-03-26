@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.syncadapter
 
 import com.mongodb.client.ListIndexesIterable as JListIndexesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.kotlin.client.ListIndexesIterable
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -23,6 +24,12 @@ import org.bson.BsonValue
 internal class SyncListIndexesIterable<T : Any>(val wrapped: ListIndexesIterable<T>) :
     JListIndexesIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncListIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncListIndexesIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListIndexesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

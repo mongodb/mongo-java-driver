@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.AggregatePublisher
 import java.util.concurrent.TimeUnit
@@ -46,6 +47,18 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     public fun batchSize(batchSize: Int): AggregateFlow<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since CSOT
+     */
+    public fun timeoutMode(timeoutMode: TimeoutMode): AggregateFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
+
+    /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
      *
      * @throws IllegalStateException if the pipeline does not end with a $out or $merge stage
@@ -68,11 +81,23 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     /**
      * Sets the maximum execution time on the server for this operation.
      *
+     * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
+     * configuration options available at the following levels:
+     * - [com.mongodb.MongoClientSettings.Builder.timeout]
+     * - [MongoDatabase.withTimeout]
+     * - [MongoCollection.withTimeout]
+     * - [ClientSession]
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
+     * execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
+     *
      * @param maxTime the max time
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return this
      * @see [Max Time](https://www.mongodb.com/docs/manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS)
      */
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): AggregateFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
@@ -167,7 +192,6 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     /**
      * Explain the execution plan for this operation with the given verbosity level
      *
-     * @param R the type of the document class
      * @param verbosity the verbosity of the explanation
      * @return the execution plan
      * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)

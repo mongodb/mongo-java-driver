@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.DistinctIterable as JDistinctIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -28,14 +29,26 @@ import org.bson.conversions.Bson
  * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
  */
 public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>) : MongoIterable<T>(wrapped) {
+
+    public override fun batchSize(batchSize: Int): DistinctIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
     /**
-     * Sets the number of documents to return per batch.
+     * Sets the timeoutMode for the cursor.
      *
-     * @param batchSize the batch size
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
      * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     * @since CSOT
      */
-    public override fun batchSize(batchSize: Int): DistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
+    public fun timeoutMode(timeoutMode: TimeoutMode): DistinctIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
 
     /**
      * Sets the query filter to apply to the query.
@@ -49,10 +62,22 @@ public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>
     /**
      * Sets the maximum execution time on the server for this operation.
      *
+     * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
+     * configuration options available at the following levels:
+     * - [com.mongodb.MongoClientSettings.Builder.timeout]
+     * - [MongoDatabase.withTimeout]
+     * - [MongoCollection.withTimeout]
+     * - [ClientSession]
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
+     * execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
+     *
      * @param maxTime the max time
      * @param timeUnit the time unit, which defaults to Milliseconds
      * @return this
      */
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
+    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): DistinctIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

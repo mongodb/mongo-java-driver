@@ -18,6 +18,8 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.Projections;
 import com.mongodb.lang.Nullable;
@@ -76,7 +78,21 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
+    @Deprecated
     FindPublisher<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
@@ -268,6 +284,26 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 4.4
      */
     FindPublisher<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * <p>
+     *     If the {@code timeout} is set then:
+     *     <ul>
+     *      <li>For non-tailable cursors, the default value of timeoutMode is {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *      <li>For tailable cursors, the default value of timeoutMode is {@link TimeoutMode#ITERATION} and its an error
+     *      to configure it as: {@link TimeoutMode#CURSOR_LIFETIME}</li>
+     *     </ul>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since CSOT
+     */
+    FindPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Explain the execution plan for this operation with the server's default verbosity level

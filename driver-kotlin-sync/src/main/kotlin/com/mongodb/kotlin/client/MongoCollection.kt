@@ -85,6 +85,27 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
         get() = wrapped.writeConcern
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+     * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
+     * - `null` means that the timeout mechanism for operations will defer to using:
+     *     - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to
+     *       become available
+     *     - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+     *     - `wTimeoutMS`: How long the server will wait for the write concern to be fulfilled before timing out.
+     *     - `maxTimeMS`: The time limit for processing operations on a cursor. See:
+     *       [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+     *     - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+     * - `0` means infinite timeout.
+     * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * @return the optional timeout duration
+     * @since CSOT
+     */
+    public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
+
+    /**
      * Create a new collection instance with a different default class to cast any documents returned from the database
      * into.
      *
@@ -146,6 +167,20 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      */
     public fun withWriteConcern(newWriteConcern: WriteConcern): MongoCollection<T> =
         MongoCollection(wrapped.withWriteConcern(newWriteConcern))
+
+    /**
+     * Create a new MongoCollection instance with the set time limit for the full execution of an operation.
+     * - `0` means an infinite timeout
+     * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit, defaults to Milliseconds
+     * @return a new MongoCollection instance with the set time limit for operations
+     * @see [MongoCollection.timeout]
+     * @since CSOT
+     */
+    public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCollection<T> =
+        MongoCollection(wrapped.withTimeout(timeout, timeUnit))
 
     /**
      * Counts the number of documents in the collection.
@@ -1408,6 +1443,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
  * @param maxTime time in milliseconds
  * @return the options
  */
+@Suppress("DEPRECATION")
 public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1416,6 +1452,7 @@ public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
+@Suppress("DEPRECATION")
 public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
@@ -1423,6 +1460,7 @@ public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply { maxT
  * @param maxTime time in milliseconds
  * @return the options
  */
+@Suppress("DEPRECATION")
 public fun DropIndexOptions.maxTime(maxTime: Long): DropIndexOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1431,6 +1469,7 @@ public fun DropIndexOptions.maxTime(maxTime: Long): DropIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
+@Suppress("DEPRECATION")
 public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocumentCountOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1439,6 +1478,7 @@ public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocume
  * @param maxTime time in milliseconds
  * @return the options
  */
+@Suppress("DEPRECATION")
 public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1447,6 +1487,7 @@ public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptio
  * @param maxTime time in milliseconds
  * @return the options
  */
+@Suppress("DEPRECATION")
 public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1455,6 +1496,7 @@ public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOpt
  * @param maxTime time in milliseconds
  * @return the options
  */
+@Suppress("DEPRECATION")
 public fun FindOneAndUpdateOptions.maxTime(maxTime: Long): FindOneAndUpdateOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**

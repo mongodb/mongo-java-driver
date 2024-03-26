@@ -30,11 +30,12 @@ import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -48,12 +49,11 @@ class ListCollectionsIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null, null, null])
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry,
-                readPreference, executor, true)
+                readPreference, executor, true, TIMEOUT_SETTINGS)
                 .filter(new Document('filter', 1))
                 .batchSize(100)
-                .maxTime(1000, MILLISECONDS)
         def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
-                readPreference, executor, true)
+                readPreference, executor, true, TIMEOUT_SETTINGS)
 
         when: 'default input should be as expected'
         listCollectionIterable.iterator()
@@ -63,19 +63,19 @@ class ListCollectionsIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100).maxTime(1000, MILLISECONDS)
+                .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100)
                 .retryReads(true)
                 .authorizedCollections(false))
         readPreference == secondary()
 
         when: 'overriding initial options'
-        listCollectionIterable.filter(new Document('filter', 2)).batchSize(99).maxTime(999, MILLISECONDS).iterator()
+        listCollectionIterable.filter(new Document('filter', 2)).batchSize(99).maxTime(100, TimeUnit.MILLISECONDS).iterator()
 
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS)
+                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99)
                 .retryReads(true))
 
         when: 'requesting collection names only'
@@ -105,7 +105,7 @@ class ListCollectionsIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(clientSession, 'db', false, Document, codecRegistry,
-                readPreference, executor, true)
+                readPreference, executor, true, TIMEOUT_SETTINGS)
 
         when:
         listCollectionIterable.first()
@@ -145,7 +145,7 @@ class ListCollectionsIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                executor, true)
+                executor, true, TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -189,7 +189,7 @@ class ListCollectionsIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor), true)
+                Stub(OperationExecutor), true, TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null

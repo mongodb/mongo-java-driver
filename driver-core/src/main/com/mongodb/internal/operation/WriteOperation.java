@@ -24,6 +24,7 @@ import com.mongodb.internal.binding.WriteBinding;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface WriteOperation<T> {
+
     /**
      * General execute which can return anything of type T
      *

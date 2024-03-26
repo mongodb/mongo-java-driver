@@ -53,12 +53,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private final WriteConcern writeConcern;
     private boolean dropTarget;
 
-    public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace) {
-        this(originalNamespace, newNamespace, null);
-    }
-
     public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace,
-                                     @Nullable final WriteConcern writeConcern) {
+            @Nullable final WriteConcern writeConcern) {
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
         this.newNamespace = notNull("newNamespace", newNamespace);
         this.writeConcern = writeConcern;

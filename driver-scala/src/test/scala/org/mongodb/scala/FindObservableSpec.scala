@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.FindPublisher
 import com.mongodb.{ CursorType, ExplainVerbosity }
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
@@ -75,6 +76,7 @@ class FindObservableSpec extends BaseSpec with MockitoSugar {
     observable.allowDiskUse(true)
     observable.explain[Document]()
     observable.explain[Document](verbosity)
+    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).collation(collation)
     verify(wrapper).cursorType(CursorType.NonTailable)
@@ -93,6 +95,8 @@ class FindObservableSpec extends BaseSpec with MockitoSugar {
     verify(wrapper).allowDiskUse(true)
     verify(wrapper).explain(ct)
     verify(wrapper).explain(ct, verbosity)
+    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
+
     verifyNoMoreInteractions(wrapper)
   }
 }

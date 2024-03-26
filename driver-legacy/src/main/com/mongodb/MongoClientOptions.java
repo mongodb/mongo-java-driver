@@ -196,6 +196,7 @@ public class MongoClientOptions {
      *
      * @return the maximum wait time.
      */
+    @SuppressWarnings("deprecation")
     public int getMaxWaitTime() {
         return toIntExact(wrapped.getConnectionPoolSettings().getMaxWaitTime(MILLISECONDS));
     }
@@ -288,6 +289,7 @@ public class MongoClientOptions {
      *
      * @return the socket timeout, in milliseconds
      */
+    @SuppressWarnings("deprecation")
     public int getSocketTimeout() {
         return wrapped.getSocketSettings().getReadTimeout(MILLISECONDS);
     }
@@ -338,6 +340,7 @@ public class MongoClientOptions {
      * @return the heartbeat socket timeout, in milliseconds
      * @since 2.12
      */
+    @SuppressWarnings("deprecation")
     public int getHeartbeatSocketTimeout() {
         return wrapped.getHeartbeatSocketSettings().getReadTimeout(MILLISECONDS);
     }
@@ -548,6 +551,37 @@ public class MongoClientOptions {
     @Nullable
     public ServerApi getServerApi() {
         return wrapped.getServerApi();
+    }
+
+    /**
+     * The time limit for the full execution of an operation in Milliseconds.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @return the timeout in milliseconds
+     * @since CSOT
+     */
+    @Nullable
+    public Long getTimeout() {
+        return wrapped.getTimeout(MILLISECONDS);
     }
 
     /**
@@ -824,6 +858,7 @@ public class MongoClientOptions {
          * @return {@code this}
          * @see MongoClientOptions#getMaxWaitTime()
          */
+        @SuppressWarnings("deprecation")
         public Builder maxWaitTime(final int maxWaitTime) {
             wrapped.applyToConnectionPoolSettings(builder -> builder.maxWaitTime(maxWaitTime, MILLISECONDS));
             return this;
@@ -918,6 +953,7 @@ public class MongoClientOptions {
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getSocketTimeout()
          */
+        @SuppressWarnings("deprecation")
         public Builder socketTimeout(final int socketTimeout) {
             wrapped.applyToSocketSettings(builder -> builder.readTimeout(socketTimeout, MILLISECONDS));
             return this;
@@ -1313,6 +1349,36 @@ public class MongoClientOptions {
          */
         public Builder srvServiceName(final String srvServiceName) {
             wrapped.applyToClusterSettings(builder -> builder.srvServiceName(srvServiceName));
+            return this;
+        }
+
+        /**
+         * Sets the time limit, in milliseconds for the full execution of an operation.
+         *
+         * <ul>
+         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+         *    <ul>
+         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+         *        available</li>
+         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+         *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+         *   </ul>
+         *   </li>
+         *   <li>{@code 0} means infinite timeout.</li>
+         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+         * </ul>
+         *
+         * @param timeoutMS the timeout in milliseconds
+         * @return this
+         * @since CSOT
+         * @see #getTimeout
+         */
+        public Builder timeout(final long timeoutMS) {
+            wrapped.timeout(timeoutMS, MILLISECONDS);
             return this;
         }
 

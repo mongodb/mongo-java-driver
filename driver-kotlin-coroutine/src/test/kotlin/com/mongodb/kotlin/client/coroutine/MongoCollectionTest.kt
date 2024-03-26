@@ -72,7 +72,16 @@ class MongoCollectionTest {
     fun shouldHaveTheSameMethods() {
         val jMongoCollectionFunctions = JMongoCollection::class.declaredFunctions.map { it.name }.toSet()
         val kMongoCollectionFunctions =
-            MongoCollection::class.declaredFunctions.map { it.name }.toSet() +
+            MongoCollection::class
+                .declaredFunctions
+                .map {
+                    if (it.name == "timeout") {
+                        "getTimeout"
+                    } else {
+                        it.name
+                    }
+                }
+                .toSet() +
                 MongoCollection::class
                     .declaredMemberProperties
                     .filterNot { it.name == "wrapped" }
@@ -903,6 +912,7 @@ class MongoCollectionTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingDropIndex() {
         val mongoCollection = MongoCollection(wrapped)
         val indexName = "index"
@@ -943,6 +953,7 @@ class MongoCollectionTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxtime
     fun shouldCallTheUnderlyingDropIndexes() {
         val mongoCollection = MongoCollection(wrapped)
         val defaultOptions = DropIndexOptions()
@@ -996,6 +1007,7 @@ class MongoCollectionTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun shouldProvideExtensionFunctionsForTimeBasedOptions() {
         val oneThousand = 1000L
 

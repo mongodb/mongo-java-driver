@@ -16,8 +16,7 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.bson.BsonTimestamp
@@ -26,6 +25,7 @@ import org.mongodb.scala.model.changestream.FullDocument
 import org.reactivestreams.Publisher
 import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.util.Success
 

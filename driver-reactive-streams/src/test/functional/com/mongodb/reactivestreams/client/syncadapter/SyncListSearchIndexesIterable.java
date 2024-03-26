@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.ListSearchIndexesIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher;
 import org.bson.BsonValue;
@@ -39,6 +40,7 @@ final class SyncListSearchIndexesIterable<T> extends SyncMongoIterable<T> implem
     }
 
     @Override
+    @Deprecated
     public ListSearchIndexesIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
@@ -77,6 +79,12 @@ final class SyncListSearchIndexesIterable<T> extends SyncMongoIterable<T> implem
     @Override
     public ListSearchIndexesIterable<T> comment(final BsonValue comment) {
         wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ListSearchIndexesIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 

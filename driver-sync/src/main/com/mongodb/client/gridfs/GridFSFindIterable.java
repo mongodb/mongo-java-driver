@@ -16,6 +16,9 @@
 
 package com.mongodb.client.gridfs;
 
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
@@ -92,7 +95,21 @@ public interface GridFSFindIterable extends MongoIterable<GridFSFile> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
+    @Deprecated
     GridFSFindIterable maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

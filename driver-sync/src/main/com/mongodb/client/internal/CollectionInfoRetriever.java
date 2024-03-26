@@ -17,13 +17,16 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.client.MongoClient;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 
 class CollectionInfoRetriever {
 
+    private static final String TIMEOUT_ERROR_MESSAGE = "Collection information retrieval exceeded the timeout limit.";
     private final MongoClient client;
 
     CollectionInfoRetriever(final MongoClient client) {
@@ -31,7 +34,8 @@ class CollectionInfoRetriever {
     }
 
     @Nullable
-    public BsonDocument filter(final String databaseName, final BsonDocument filter) {
-        return client.getDatabase(databaseName).listCollections(BsonDocument.class).filter(filter).first();
+    public BsonDocument filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
+        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE,
+                operationTimeout).listCollections(BsonDocument.class).filter(filter).first();
     }
 }

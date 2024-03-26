@@ -47,14 +47,15 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
     }
 
     @Override
-    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext) {
         if (serverIsLessThanVersionFourDotZero(connectionDescription)) {
             new ScramShaAuthenticator(getMongoCredentialWithCache().withMechanism(SCRAM_SHA_1), getClusterConnectionMode(), getServerApi())
-                    .authenticate(connection, connectionDescription);
+                    .authenticate(connection, connectionDescription, operationContext);
         } else {
             try {
                 setDelegate(connectionDescription);
-                delegate.authenticate(connection, connectionDescription);
+                delegate.authenticate(connection, connectionDescription, operationContext);
             } catch (Exception e) {
                 throw wrapException(e);
             }
@@ -63,13 +64,13 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
-                           final SingleResultCallback<Void> callback) {
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         if (serverIsLessThanVersionFourDotZero(connectionDescription)) {
             new ScramShaAuthenticator(getMongoCredentialWithCache().withMechanism(SCRAM_SHA_1), getClusterConnectionMode(), getServerApi())
-                    .authenticateAsync(connection, connectionDescription, callback);
+                    .authenticateAsync(connection, connectionDescription, operationContext, callback);
         } else {
             setDelegate(connectionDescription);
-            delegate.authenticateAsync(connection, connectionDescription, callback);
+            delegate.authenticateAsync(connection, connectionDescription, operationContext, callback);
         }
     }
 

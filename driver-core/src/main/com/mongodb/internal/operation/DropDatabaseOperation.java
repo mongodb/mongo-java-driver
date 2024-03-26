@@ -46,10 +46,6 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     private final String databaseName;
     private final WriteConcern writeConcern;
 
-    public DropDatabaseOperation(final String databaseName) {
-        this(databaseName, null);
-    }
-
     public DropDatabaseOperation(final String databaseName, @Nullable final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.writeConcern = writeConcern;

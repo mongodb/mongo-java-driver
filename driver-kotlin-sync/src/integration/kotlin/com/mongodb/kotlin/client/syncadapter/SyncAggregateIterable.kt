@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.AggregateIterable as JAggregateIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.AggregateIterable
 import java.util.concurrent.TimeUnit
@@ -27,6 +28,9 @@ import org.bson.conversions.Bson
 internal class SyncAggregateIterable<T : Any>(val wrapped: AggregateIterable<T>) :
     JAggregateIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncAggregateIterable<T> = apply { wrapped.batchSize(batchSize) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncAggregateIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
 
     override fun toCollection() = wrapped.toCollection()
 
@@ -34,6 +38,8 @@ internal class SyncAggregateIterable<T : Any>(val wrapped: AggregateIterable<T>)
         wrapped.allowDiskUse(allowDiskUse)
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncAggregateIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

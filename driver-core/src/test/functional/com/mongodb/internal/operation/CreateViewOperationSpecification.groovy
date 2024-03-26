@@ -51,7 +51,8 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         getCollectionHelper().insertDocuments([trueXDocument, falseXDocument])
 
         def pipeline = [new BsonDocument('$match', trueXDocument)]
-        def operation = new CreateViewOperation(getDatabaseName(), viewName, viewOn, pipeline, WriteConcern.ACKNOWLEDGED)
+        def operation = new CreateViewOperation(getDatabaseName(), viewName, viewOn, pipeline,
+                WriteConcern.ACKNOWLEDGED)
 
         when:
         execute(operation, async)
@@ -79,7 +80,8 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         assert !collectionNameExists(viewOn)
         assert !collectionNameExists(viewName)
 
-        def operation = new CreateViewOperation(getDatabaseName(), viewName, viewOn, [], WriteConcern.ACKNOWLEDGED)
+        def operation = new CreateViewOperation(getDatabaseName(), viewName, viewOn, [],
+                WriteConcern.ACKNOWLEDGED)
                 .collation(defaultCollation)
 
         when:
@@ -120,7 +122,8 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
         assert !collectionNameExists(viewName)
 
-        def operation = new CreateViewOperation(getDatabaseName(), viewName, getCollectionName(), [], new WriteConcern(5))
+        def operation = new CreateViewOperation(getDatabaseName(), viewName, getCollectionName(), [],
+                new WriteConcern(5))
 
         when:
         execute(operation, async)

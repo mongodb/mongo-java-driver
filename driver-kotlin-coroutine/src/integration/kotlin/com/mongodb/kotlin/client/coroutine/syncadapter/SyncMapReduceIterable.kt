@@ -18,6 +18,7 @@
 package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.client.MapReduceIterable as JMapReduceIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.kotlin.client.coroutine.MapReduceFlow
@@ -57,4 +58,7 @@ data class SyncMapReduceIterable<T : Any>(val wrapped: MapReduceFlow<T>) :
     }
 
     override fun collation(collation: Collation?): SyncMapReduceIterable<T> = apply { wrapped.collation(collation) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncMapReduceIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
 }

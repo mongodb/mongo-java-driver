@@ -17,6 +17,7 @@ package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
@@ -58,6 +59,7 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public AggregateIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
@@ -108,6 +110,12 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     @Override
     public AggregateIterable<T> let(final Bson variables) {
         wrapped.let(variables);
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 

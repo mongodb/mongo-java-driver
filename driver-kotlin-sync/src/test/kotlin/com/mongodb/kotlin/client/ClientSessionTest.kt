@@ -45,6 +45,7 @@ class ClientSessionTest {
                 "getServerSession",
                 "getSnapshotTimestamp",
                 "getTransactionContext",
+                "getTimeoutContext",
                 "notifyMessageSent",
                 "notifyOperationInitiated",
                 "setRecoveryToken",

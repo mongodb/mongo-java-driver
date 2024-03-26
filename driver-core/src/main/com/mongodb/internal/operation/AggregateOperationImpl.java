@@ -16,27 +16,29 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
-import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -45,6 +47,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTra
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
+import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -54,7 +57,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static final String CURSOR = "cursor";
     private static final String FIRST_BATCH = "firstBatch";
     private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
-
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final Decoder<T> decoder;
@@ -67,18 +69,21 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private Collation collation;
     private BsonValue comment;
     private BsonValue hint;
-    private long maxAwaitTimeMS;
-    private long maxTimeMS;
     private BsonDocument variables;
+    private TimeoutMode timeoutMode;
+    private CursorType cursorType;
 
-    AggregateOperationImpl(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-                           final AggregationLevel aggregationLevel) {
-        this(namespace, pipeline, decoder, defaultAggregateTarget(notNull("aggregationLevel", aggregationLevel),
-                notNull("namespace", namespace).getCollectionName()), defaultPipelineCreator(pipeline));
+    AggregateOperationImpl(final MongoNamespace namespace,
+            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
+        this(namespace, pipeline, decoder,
+                defaultAggregateTarget(notNull("aggregationLevel", aggregationLevel),
+                        notNull("namespace", namespace).getCollectionName()),
+                defaultPipelineCreator(pipeline));
     }
 
-    AggregateOperationImpl(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-                           final AggregateTarget aggregateTarget, final PipelineCreator pipelineCreator) {
+    AggregateOperationImpl(final MongoNamespace namespace,
+            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregateTarget aggregateTarget,
+            final PipelineCreator pipelineCreator) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
@@ -116,30 +121,6 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
-    long getMaxAwaitTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    AggregateOperationImpl<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxAwaitTime >= 0", maxAwaitTime >= 0);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
-        return this;
-    }
-
-    long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    AggregateOperationImpl<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxTime >= 0", maxTime >= 0);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
     Collation getCollation() {
         return collation;
     }
@@ -169,6 +150,19 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return this;
     }
 
+    /**
+     * When {@link TimeoutContext#hasTimeoutMS()} then {@link TimeoutSettings#getMaxAwaitTimeMS()} usage in {@code getMore} commands
+     * depends on the type of cursor. For {@link CursorType#TailableAwait} it is used, for others it is not.
+     * {@link CursorType#TailableAwait} is used mainly for change streams in {@link AggregateOperationImpl}.
+     *
+     * @param cursorType
+     * @return this
+     */
+    AggregateOperationImpl<T> cursorType(final CursorType cursorType) {
+        this.cursorType = cursorType;
+        return this;
+    }
+
     boolean getRetryReads() {
         return retryReads;
     }
@@ -176,6 +170,13 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     @Nullable
     BsonValue getHint() {
         return hint;
+    }
+
+    public AggregateOperationImpl<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
+        if (timeoutMode != null) {
+            this.timeoutMode = timeoutMode;
+        }
+        return this;
     }
 
     AggregateOperationImpl<T> hint(@Nullable final BsonValue hint) {
@@ -186,31 +187,30 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT), transformer(), retryReads);
+        return executeRetryableRead(binding, namespace.getDatabaseName(),
+                getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
+                transformer(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-       executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-               CommandResultDocumentCodec.create(this.decoder, FIELD_NAMES_WITH_RESULT), asyncTransformer(), retryReads,
-               errHandlingCallback);
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+                getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
+                asyncTransformer(), retryReads,
+                errHandlingCallback);
     }
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) ->
+                getCommand(operationContext, connectionDescription.getMaxWireVersion());
     }
 
-    BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
+    BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
-
-        appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
+        appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
-        if (maxTimeMS > 0) {
-            commandDocument.put("maxTimeMS", maxTimeMS > Integer.MAX_VALUE
-                    ? new BsonInt64(maxTimeMS) : new BsonInt32((int) maxTimeMS));
-        }
+        setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
         BsonDocument cursor = new BsonDocument();
         if (batchSize != null) {
             cursor.put("batchSize", new BsonInt32(batchSize));
@@ -237,14 +237,30 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection) ->
-                new CommandBatchCursor<>(result, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
-                        comment, source, connection);
+                new CommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
+                        getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection) ->
-                new AsyncCommandBatchCursor<>(result, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
-                        comment, source, connection);
+            new AsyncCommandBatchCursor<>(getTimeoutMode(), result, batchSize != null ? batchSize : 0,
+                    getMaxTimeForCursor(source.getOperationContext().getTimeoutContext()), decoder, comment, source, connection);
+    }
+
+    private TimeoutMode getTimeoutMode() {
+        TimeoutMode localTimeoutMode = timeoutMode;
+        if (localTimeoutMode == null) {
+            localTimeoutMode = TimeoutMode.CURSOR_LIFETIME;
+        }
+        return localTimeoutMode;
+    }
+
+    private long getMaxTimeForCursor(final TimeoutContext timeoutContext) {
+        long maxAwaitTimeMS = timeoutContext.getMaxAwaitTimeMS();
+        if (timeoutContext.hasTimeoutMS()){
+           return CursorType.TailableAwait == cursorType ? maxAwaitTimeMS : 0;
+        }
+        return maxAwaitTimeMS;
     }
 
     interface AggregateTarget {

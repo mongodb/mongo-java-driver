@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.client.ListCollectionsIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.BsonValue;
@@ -39,6 +40,7 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public ListCollectionsIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
@@ -60,6 +62,12 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     @Override
     public ListCollectionsIterable<T> comment(final BsonValue comment) {
         wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ListCollectionsIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 }

@@ -17,7 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoNamespace;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -26,15 +26,12 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -46,6 +43,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocument
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
+import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
@@ -54,6 +52,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
+import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
@@ -76,10 +75,10 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private boolean retryReads;
     private BsonDocument filter;
     private int batchSize;
-    private long maxTimeMS;
     private boolean nameOnly;
     private boolean authorizedCollections;
     private BsonValue comment;
+    private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
     public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
@@ -110,17 +109,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     public ListCollectionsOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
-        return this;
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public ListCollectionsOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
@@ -157,15 +145,27 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return authorizedCollections;
     }
 
+
+    public TimeoutMode getTimeoutMode() {
+        return timeoutMode;
+    }
+
+    public ListCollectionsOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
+        if (timeoutMode != null) {
+            this.timeoutMode = timeoutMode;
+        }
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        RetryState retryState = initialRetryState(retryReads);
+        RetryState retryState = initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
         Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, binding.getOperationContext(), () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, (source, connection) -> {
-                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getSessionContext()));
+                retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(source.getServerDescription(), binding.getOperationContext()));
                 try {
-                    return createReadCommandAndExecute(retryState, binding, source, databaseName, getCommandCreator(),
-                            createCommandDecoder(), commandTransformer(), connection);
+                    return createReadCommandAndExecute(retryState, binding.getOperationContext(), source, databaseName,
+                                                       getCommandCreator(), createCommandDecoder(), transformer(), connection);
                 } catch (MongoCommandException e) {
                     return rethrowIfNotNamespaceError(e,
                             createEmptySingleBatchCursor(source.getServerDescription().getAddress(), batchSize));
@@ -177,18 +177,19 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        RetryState retryState = initialRetryState(retryReads);
+        RetryState retryState = initialRetryState(retryReads, binding.getOperationContext().getTimeoutContext());
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
                 retryState, binding.getOperationContext(), (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, funcCallback,
                             (source, connection, releasingCallback) -> {
                                 if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(source.getServerDescription(),
-                                        binding.getSessionContext()), releasingCallback)) {
+                                        binding.getOperationContext()), releasingCallback)) {
                                     return;
                                 }
-                                createReadCommandAndExecuteAsync(retryState, binding, source, databaseName, getCommandCreator(), createCommandDecoder(),
-                                        asyncTransformer(), connection, (result, t) -> {
+                                createReadCommandAndExecuteAsync(retryState, binding.getOperationContext(), source, databaseName,
+                                                                 getCommandCreator(), createCommandDecoder(), asyncTransformer(), connection,
+                                        (result, t) -> {
                                             if (t != null && !isNamespaceError(t)) {
                                                 releasingCallback.onResult(null, t);
                                             } else {
@@ -201,37 +202,28 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         asyncRead.get(errorHandlingCallback(callback, LOGGER));
     }
 
-    private MongoNamespace createNamespace() {
-        return new MongoNamespace(databaseName, "$cmd.listCollections");
+    private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
+        return (result, source, connection) ->
+                cursorDocumentToBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
-        return (result, source, connection) -> cursorDocumentToAsyncBatchCursor(result, decoder, comment, source, connection, batchSize);
+        return (result, source, connection) ->
+                cursorDocumentToAsyncBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection);
     }
 
-    private CommandReadTransformer<BsonDocument, BatchCursor<T>> commandTransformer() {
-        return (result, source, connection) -> cursorDocumentToBatchCursor(result, decoder, comment, source, connection, batchSize);
-    }
 
-    private CommandOperationHelper.CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> getCommand();
-    }
-
-    private BsonDocument getCommand() {
-        BsonDocument command = new BsonDocument("listCollections", new BsonInt32(1))
-                .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
-        if (filter != null) {
-            command.append("filter", filter);
-        }
-        if (nameOnly) {
-            command.append("nameOnly", BsonBoolean.TRUE);
-        }
-        putIfTrue(command, "authorizedCollections", authorizedCollections);
-        if (maxTimeMS > 0) {
-            command.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        putIfNotNull(command, "comment", comment);
-        return command;
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument commandDocument = new BsonDocument("listCollections", new BsonInt32(1))
+                    .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
+            putIfNotNull(commandDocument, "filter", filter);
+            putIfTrue(commandDocument, "nameOnly", nameOnly);
+            putIfTrue(commandDocument, "authorizedCollections", authorizedCollections);
+            setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
+            putIfNotNull(commandDocument, "comment", comment);
+            return commandDocument;
+        };
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.client.DistinctIterable as JDistinctIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.coroutine.DistinctFlow
 import java.util.concurrent.TimeUnit
@@ -26,10 +27,15 @@ data class SyncDistinctIterable<T : Any>(val wrapped: DistinctFlow<T>) :
     JDistinctIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncDistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun filter(filter: Bson?): SyncDistinctIterable<T> = apply { wrapped.filter(filter) }
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncDistinctIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
     override fun collation(collation: Collation?): SyncDistinctIterable<T> = apply { wrapped.collation(collation) }
     override fun comment(comment: String?): SyncDistinctIterable<T> = apply { wrapped.comment(comment) }
     override fun comment(comment: BsonValue?): SyncDistinctIterable<T> = apply { wrapped.comment(comment) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncDistinctIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
 }
