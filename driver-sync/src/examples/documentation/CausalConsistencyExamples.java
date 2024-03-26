@@ -17,6 +17,8 @@
 package documentation;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -43,8 +45,13 @@ public final class CausalConsistencyExamples {
      */
     @SuppressWarnings("deprecation")
     public static void main(final String[] args) {
-        setupDatabase();
-        MongoClient client = MongoClients.create();
+        MongoClientSettings clientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
+                .build();
+        setupDatabase(clientSettings);
+        MongoClient client = MongoClients.create(clientSettings);
 
         // Start Causal Consistency Example 1
         // Example 1: Use a causally consistent session to ensure that the update occurs before the insert.
@@ -82,8 +89,8 @@ public final class CausalConsistencyExamples {
         // End Causal Consistency Example 2
     }
 
-    private static void setupDatabase() {
-        MongoClient client = MongoClients.create();
+    private static void setupDatabase(final MongoClientSettings clientSettings) {
+        MongoClient client = MongoClients.create(clientSettings);
         client.getDatabase("test").drop();
 
         MongoDatabase database = client.getDatabase("test");
