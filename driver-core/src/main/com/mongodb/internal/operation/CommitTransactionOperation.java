@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -36,7 +37,6 @@ import java.util.List;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -121,7 +121,8 @@ public class CommitTransactionOperation extends TransactionOperation {
         CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
-            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxCommitTimeMS());
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.setMaxTimeSupplier(timeoutContext::getMaxCommitTimeMS);
             return command;
         };
         if (alreadyCommitted) {
@@ -136,6 +137,7 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
+    @SuppressWarnings("deprecation") //wTimeout
     protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
         return command -> {
             WriteConcern retryWriteConcern = getWriteConcern().withW("majority");

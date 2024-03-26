@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -114,6 +115,7 @@ public class MongoOperationPublisherTest {
     public void withTimeout() {
         assertEquals(DEFAULT_MOP, DEFAULT_MOP.withTimeout(60_000, TimeUnit.MILLISECONDS));
         assertEquals(1000, DEFAULT_MOP.withTimeout(1000, TimeUnit.MILLISECONDS).getTimeoutMS());
+        assertThrows(IllegalArgumentException.class, () -> DEFAULT_MOP.withTimeout(500, TimeUnit.NANOSECONDS));
     }
 
     @Test

@@ -41,6 +41,7 @@ class FindFlowTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: FindPublisher<Document> = mock()
         val flow = FindFlow(wrapped)
@@ -69,8 +70,8 @@ class FindFlowTest {
         flow.max(bson)
         flow.maxAwaitTime(1)
         flow.maxAwaitTime(1, TimeUnit.SECONDS)
-        @Suppress("DEPRECATION") flow.maxTime(1)
-        @Suppress("DEPRECATION") flow.maxTime(1, TimeUnit.SECONDS)
+        flow.maxTime(1)
+        flow.maxTime(1, TimeUnit.SECONDS)
         flow.min(bson)
         flow.noCursorTimeout(true)
         flow.partial(true)
@@ -95,8 +96,8 @@ class FindFlowTest {
         verify(wrapped).max(bson)
         verify(wrapped).maxAwaitTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxAwaitTime(1, TimeUnit.SECONDS)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).min(bson)
         verify(wrapped).noCursorTimeout(true)
         verify(wrapped).partial(true)

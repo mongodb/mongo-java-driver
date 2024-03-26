@@ -1315,6 +1315,7 @@ public class JsonPoweredCrudTestHelper {
                 arguments.getDocument("readPreference").getString("mode").getValue());
     }
 
+    @SuppressWarnings("deprecation") //wTimeoutMS
     WriteConcern getWriteConcern(final BsonDocument arguments) {
         WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         BsonDocument writeConcernDocument = arguments.getDocument("writeConcern");

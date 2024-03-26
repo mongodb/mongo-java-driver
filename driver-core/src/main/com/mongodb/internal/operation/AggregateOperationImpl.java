@@ -47,7 +47,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTra
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
+import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -210,7 +210,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
         appendReadConcernToCommand(operationContext.getSessionContext(), maxWireVersion, commandDocument);
         commandDocument.put("pipeline", pipelineCreator.create());
-        addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
+        setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
         BsonDocument cursor = new BsonDocument();
         if (batchSize != null) {
             cursor.put("batchSize", new BsonInt32(batchSize));

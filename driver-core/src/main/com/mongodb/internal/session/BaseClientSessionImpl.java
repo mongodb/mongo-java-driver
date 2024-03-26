@@ -226,6 +226,6 @@ public class BaseClientSessionImpl implements ClientSession {
 
         return timeoutSettings
                 .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS))
-                .withTimeoutMS(timeoutMS);
+                .withTimeout(timeoutMS, MILLISECONDS);
     }
 }

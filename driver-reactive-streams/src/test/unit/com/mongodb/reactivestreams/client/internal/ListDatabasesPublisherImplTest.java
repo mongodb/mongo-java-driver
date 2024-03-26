@@ -35,6 +35,7 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected ListDatabasesOperation")
     @Test
+    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperation() {
         configureBatchCursor();
 

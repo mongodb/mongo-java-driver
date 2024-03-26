@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeoutNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -308,13 +309,7 @@ public final class TransactionOptions {
          * @since CSOT
          */
         public Builder timeout(@Nullable final Long timeout, final TimeUnit timeUnit) {
-            if (timeout == null) {
-                this.timeoutMS = null;
-            } else {
-                notNull("timeUnit", timeUnit);
-                isTrueArgument("timeout > 0", timeout > 0);
-                this.timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
-            }
+            this.timeoutMS = convertAndValidateTimeoutNullable(timeout, timeUnit);
             return this;
         }
 

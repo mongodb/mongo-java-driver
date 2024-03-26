@@ -35,7 +35,6 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBat
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -121,7 +120,6 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), commandDocument);
             commandDocument.put("key", new BsonString(fieldName));
             putIfNotNull(commandDocument, "query", filter);
-            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
             if (collation != null) {
                 commandDocument.put("collation", collation.asDocument());
             }

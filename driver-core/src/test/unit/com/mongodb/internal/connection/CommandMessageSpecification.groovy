@@ -22,6 +22,8 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.session.SessionContext
@@ -63,7 +65,7 @@ class CommandMessageSpecification extends Specification {
         def output = new BasicOutputBuffer()
 
         when:
-        message.encode(output, sessionContext)
+        message.encode(output, operationContext)
 
         then:
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
@@ -77,11 +79,11 @@ class CommandMessageSpecification extends Specification {
         def expectedCommandDocument = command.clone()
                 .append('$db', new BsonString(namespace.databaseName))
 
-        if (sessionContext.clusterTime != null) {
-            expectedCommandDocument.append('$clusterTime', sessionContext.clusterTime)
+        if (operationContext.getSessionContext().clusterTime != null) {
+            expectedCommandDocument.append('$clusterTime', operationContext.getSessionContext().clusterTime)
         }
-        if (sessionContext.hasSession() && responseExpected) {
-            expectedCommandDocument.append('lsid', sessionContext.sessionId)
+        if (operationContext.getSessionContext().hasSession() && responseExpected) {
+            expectedCommandDocument.append('lsid', operationContext.getSessionContext().sessionId)
         }
 
         if (readPreference != ReadPreference.primary()) {
@@ -92,35 +94,44 @@ class CommandMessageSpecification extends Specification {
         getCommandDocument(byteBuf, replyHeader) == expectedCommandDocument
 
         where:
-        [readPreference, serverType, clusterConnectionMode, sessionContext, responseExpected] << [
+        [readPreference, serverType, clusterConnectionMode, operationContext, responseExpected, isCryptd] << [
                 [ReadPreference.primary(), ReadPreference.secondary()],
                 [ServerType.REPLICA_SET_PRIMARY, ServerType.SHARD_ROUTER],
                 [ClusterConnectionMode.SINGLE, ClusterConnectionMode.MULTIPLE],
                 [
-                        Stub(SessionContext) {
-                            hasSession() >> false
-                            getClusterTime() >> null
-                            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
-                            getReadConcern() >> ReadConcern.DEFAULT
-                        },
-                        Stub(SessionContext) {
-                            hasSession() >> false
-                            getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
-                            getReadConcern() >> ReadConcern.DEFAULT
-                        },
-                        Stub(SessionContext) {
-                            hasSession() >> true
-                            getClusterTime() >> null
-                            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
-                            getReadConcern() >> ReadConcern.DEFAULT
-                        },
-                        Stub(SessionContext) {
-                            hasSession() >> true
-                            getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
-                            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
-                            getReadConcern() >> ReadConcern.DEFAULT
-                            }
+                        new OperationContext(
+                                IgnorableRequestContext.INSTANCE,
+                                Stub(SessionContext) {
+                                    hasSession() >> false
+                                    getClusterTime() >> null
+                                    getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+                                    getReadConcern() >> ReadConcern.DEFAULT
+                                }, Stub(TimeoutContext), null),
+                        new OperationContext(
+                                IgnorableRequestContext.INSTANCE,
+                                Stub(SessionContext) {
+                                    hasSession() >> false
+                                    getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
+                                    getReadConcern() >> ReadConcern.DEFAULT
+                                }, Stub(TimeoutContext), null),
+                        new OperationContext(
+                                IgnorableRequestContext.INSTANCE,
+                                Stub(SessionContext) {
+                                    hasSession() >> true
+                                    getClusterTime() >> null
+                                    getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+                                    getReadConcern() >> ReadConcern.DEFAULT
+                                }, Stub(TimeoutContext), null),
+                        new OperationContext(
+                                IgnorableRequestContext.INSTANCE,
+                                Stub(SessionContext) {
+                                    hasSession() >> true
+                                    getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
+                                    getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+                                    getReadConcern() >> ReadConcern.DEFAULT
+                                }, Stub(TimeoutContext), null)
                 ],
+                [true, false],
                 [true, false]
         ].combinations()
     }
@@ -141,7 +152,8 @@ class CommandMessageSpecification extends Specification {
                 MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true, payload, new NoOpFieldNameValidator(),
                 ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
-        message.encode(output, NoOpSessionContext.INSTANCE)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                Stub(TimeoutContext), null))
 
         when:
         def commandDocument = message.getCommandDocument(output)
@@ -192,7 +204,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         def messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -210,7 +223,7 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext, Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -228,7 +241,7 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext, Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -246,7 +259,10 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE,
+                sessionContext,
+                Stub(TimeoutContext),
+                null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, maxMessageSize)
 
@@ -275,7 +291,9 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext),
+                null))
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         def messageHeader = new MessageHeader(byteBuf, 2048)
 
@@ -293,7 +311,8 @@ class CommandMessageSpecification extends Specification {
         message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
         output.truncateToPosition(0)
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
         byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         messageHeader = new MessageHeader(byteBuf, 1024)
 
@@ -320,7 +339,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
 
         then:
         thrown(BsonMaximumSizeExceededException)
@@ -339,7 +359,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
 
         then:
         thrown(MongoClientException)
@@ -359,7 +380,8 @@ class CommandMessageSpecification extends Specification {
         }
 
         when:
-        message.encode(output, sessionContext)
+        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
+                Stub(TimeoutContext), null))
 
         then:
         thrown(MongoClientException)

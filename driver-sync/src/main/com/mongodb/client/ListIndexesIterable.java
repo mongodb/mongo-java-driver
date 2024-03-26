@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -36,8 +37,22 @@ public interface ListIndexesIterable<TResult> extends MongoIterable<TResult> {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
+    @Deprecated
     ListIndexesIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

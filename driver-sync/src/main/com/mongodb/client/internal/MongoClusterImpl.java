@@ -175,7 +175,7 @@ final class MongoClusterImpl implements MongoCluster {
     public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, serverApi, serverSessionPool,
-                timeoutSettings.withTimeoutMS(timeUnit.toMillis(timeout)), uuidRepresentation, writeConcern);
+                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern);
     }
 
     @Override

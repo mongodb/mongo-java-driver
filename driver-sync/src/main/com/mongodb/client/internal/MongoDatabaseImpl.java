@@ -48,7 +48,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
@@ -150,11 +149,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
-        isTrueArgument("timeout >= 0", timeout >= 0);
-        notNull("timeUnit", timeUnit);
-        TimeoutSettings newTimeoutSettings = timeoutSettings.withTimeoutMS(TimeUnit.MILLISECONDS.convert(timeout, timeUnit));
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, autoEncryptionSettings, newTimeoutSettings, executor);
+                uuidRepresentation, autoEncryptionSettings, timeoutSettings.withTimeout(timeout, timeUnit), executor);
     }
 
     @Override

@@ -33,7 +33,6 @@ import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static java.lang.String.format;
@@ -52,15 +51,12 @@ final class CommandBatchCursorHelper {
 
     static BsonDocument getMoreCommandDocument(
             final long cursorId, final ConnectionDescription connectionDescription, final MongoNamespace namespace, final int batchSize,
-            final long maxTimeMS, @Nullable final BsonValue comment) {
+            @Nullable final BsonValue comment) {
         BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursorId))
                 .append("collection", new BsonString(namespace.getCollectionName()));
 
         if (batchSize != 0) {
             document.append("batchSize", new BsonInt32(batchSize));
-        }
-        if (maxTimeMS != 0) {
-            document.append("maxTimeMS", new BsonInt64(maxTimeMS));
         }
         if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {
             putIfNotNull(document, "comment", comment);
@@ -76,11 +72,9 @@ final class CommandBatchCursorHelper {
         return commandCursorResult;
     }
 
-    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor, final long maxTimeMS) {
-        BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor) {
+       return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                 .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
-        putIfNotZero(command, "maxTimeMS", maxTimeMS);
-        return command;
     }
 
 

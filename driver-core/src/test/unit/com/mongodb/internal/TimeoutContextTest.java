@@ -35,6 +35,7 @@ import static com.mongodb.ClusterFixture.sleep;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -140,7 +141,7 @@ final class TimeoutContextTest {
         assertTrue(timeoutContext.timeoutOrAlternative(999999) <= 999);
 
         timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
-        assertEquals(timeoutContext.getMaxCommitTimeMS(), 0);
+        assertEquals(0, timeoutContext.getMaxCommitTimeMS());
 
         timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
         assertTrue(timeoutContext.getMaxCommitTimeMS() <= 999);
@@ -266,6 +267,39 @@ final class TimeoutContextTest {
 
         TimeoutContext actualTimeoutContext = TimeoutContext.createTimeoutContext(clientSession, timeoutContext.getTimeoutSettings());
         assertEquals(sessionTimeoutContext, actualTimeoutContext);
+    }
+
+    @Test
+    @DisplayName("should override maxTimeMS when MaxTimeSupplier is set")
+    void shouldOverrideMaximeMS() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
+
+        timeoutContext.setMaxTimeSupplier(() -> 2L);
+
+        assertEquals(2, timeoutContext.getMaxTimeMS());
+    }
+
+    @Test
+    @DisplayName("should reset maxTimeMS to default behaviour")
+    void shouldResetMaximeMS() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
+        timeoutContext.setMaxTimeSupplier(() -> 1L);
+
+        timeoutContext.resetToDefaultMaxTimeSupplier();
+
+        assertTrue(timeoutContext.getMaxTimeMS() > 1);
+    }
+
+    @Test
+    @DisplayName("should propagate exception from MaxTimeSupplier")
+    void shouldPropagateException() {
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
+        MongoOperationTimeoutException expectedException = new MongoOperationTimeoutException("test");
+        timeoutContext.setMaxTimeSupplier(() -> {
+            throw expectedException;
+        });
+
+        assertSame(expectedException, assertThrows(expectedException.getClass(), timeoutContext::getMaxTimeMS));
     }
 
     private TimeoutContextTest() {

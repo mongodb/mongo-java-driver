@@ -35,7 +35,6 @@ import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalEx
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -224,16 +223,6 @@ final class CommandOperationHelper {
             return clientException;
         }
         return exception;
-    }
-
-    static BsonDocument appendMaxTimeMs(final TimeoutContext timeoutContext, final BsonDocument command) {
-        if (timeoutContext.hasTimeoutMS()) {
-            long maxTimeMS = timeoutContext.getMaxTimeMS();
-            if (maxTimeMS > 0) {
-                command.append("maxTimeMS", new BsonInt64(maxTimeMS));
-            }
-        }
-        return command;
     }
 
     private CommandOperationHelper() {

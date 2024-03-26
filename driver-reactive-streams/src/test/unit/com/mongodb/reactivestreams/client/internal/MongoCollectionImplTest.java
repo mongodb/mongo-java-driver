@@ -479,6 +479,7 @@ public class MongoCollectionImplTest extends TestHelper {
     }
 
     @Test
+    @SuppressWarnings("deprecation") //maxTime
     public void testDropIndex() {
         String indexName = "index_name";
         Bson index = Indexes.ascending("ascending_index");
@@ -538,6 +539,7 @@ public class MongoCollectionImplTest extends TestHelper {
     }
 
     @Test
+    @SuppressWarnings("deprecation") //maxTime
     public void testDropIndexes() {
         DropIndexOptions options = new DropIndexOptions().maxTime(1, TimeUnit.MILLISECONDS);
         assertAll("dropIndexes",

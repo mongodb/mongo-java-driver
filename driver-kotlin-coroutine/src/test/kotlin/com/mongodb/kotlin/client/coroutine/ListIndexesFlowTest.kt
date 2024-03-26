@@ -38,6 +38,7 @@ class ListIndexesFlowTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: ListIndexesPublisher<Document> = mock()
         val flow = ListIndexesFlow(wrapped)

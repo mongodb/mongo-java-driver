@@ -79,7 +79,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.assertions.Assertions.notNullElements;
 import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
@@ -197,11 +196,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public MongoCollection<TDocument> withTimeout(final long timeout, final TimeUnit timeUnit) {
-        isTrueArgument("timeout >= 0", timeout >= 0);
-        notNull("timeUnit", timeUnit);
-        TimeoutSettings newTimeoutSettings = timeoutSettings.withTimeoutMS(TimeUnit.MILLISECONDS.convert(timeout, timeUnit));
-        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, newTimeoutSettings, executor);
+        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
+                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings.withTimeout(timeout, timeUnit), executor);
     }
 
     @Override

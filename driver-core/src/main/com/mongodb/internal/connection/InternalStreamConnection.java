@@ -351,7 +351,7 @@ public class InternalStreamConnection implements InternalConnection {
             operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
                 throw e;
             });
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
             commandEventSender.sendStartedEvent();
             try {
@@ -373,7 +373,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             sendCommandMessage(message, bsonOutput, operationContext);
             if (message.isResponseExpected()) {
                 hasMoreToCome = true;
@@ -403,9 +403,9 @@ public class InternalStreamConnection implements InternalConnection {
             List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
             try {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
-                        getMessageSettings(description));
+                        getMessageSettings(description, initialServerDescription));
                 compressedBsonOutput = new ByteBufferBsonOutput(this);
-                compressedMessage.encode(compressedBsonOutput, operationContext.getSessionContext());
+                compressedMessage.encode(compressedBsonOutput, operationContext);
             } finally {
                 ResourceUtil.release(byteBuffers);
                 bsonOutput.close();
@@ -477,7 +477,7 @@ public class InternalStreamConnection implements InternalConnection {
         ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
 
         try {
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
@@ -488,8 +488,8 @@ public class InternalStreamConnection implements InternalConnection {
                 List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
                 try {
                     CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
-                            getMessageSettings(description));
-                    compressedMessage.encode(compressedBsonOutput, operationContext.getSessionContext());
+                            getMessageSettings(description, initialServerDescription));
+                    compressedMessage.encode(compressedBsonOutput, operationContext);
                 } finally {
                     ResourceUtil.release(byteBuffers);
                     bsonOutput.close();

@@ -21,6 +21,7 @@ import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
@@ -55,11 +56,13 @@ public class CommandHelperTest {
     @SuppressWarnings("unchecked")
     void testExecuteCommand() {
         InternalConnection internalConnection = mock(InternalConnection.class);
+        ServerDescription serverDescription = mock(ServerDescription.class);
         OperationContext operationContext = createOperationContext();
 
 
         when(internalConnection.getDescription()).thenReturn(CONNECTION_DESCRIPTION);
         when(internalConnection.sendAndReceive(any(), any(), any())).thenReturn(OK);
+        when(internalConnection.getInitialServerDescription()).thenReturn(serverDescription);
 
         assertEquals(OK,
                 executeCommand("admin", COMMAND, SINGLE, operationContext.getServerApi(), internalConnection, operationContext));
@@ -71,9 +74,11 @@ public class CommandHelperTest {
     @SuppressWarnings("unchecked")
     void testExecuteCommandWithoutCheckingForFailure() {
         InternalConnection internalConnection = mock(InternalConnection.class);
+        ServerDescription serverDescription = mock(ServerDescription.class);
         OperationContext operationContext = createOperationContext();
 
         when(internalConnection.getDescription()).thenReturn(CONNECTION_DESCRIPTION);
+        when(internalConnection.getInitialServerDescription()).thenReturn(serverDescription);
         when(internalConnection.sendAndReceive(any(), any(), any()))
                 .thenThrow(new MongoCommandException(NOT_OK, new ServerAddress()));
 
@@ -90,8 +95,9 @@ public class CommandHelperTest {
     void testExecuteCommandAsyncUsesTheOperationContext() {
         InternalConnection internalConnection = mock(InternalConnection.class);
         OperationContext operationContext = createOperationContext();
+        ServerDescription serverDescription = mock(ServerDescription.class);
 
-
+        when(internalConnection.getInitialServerDescription()).thenReturn(serverDescription);
         when(internalConnection.getDescription()).thenReturn(CONNECTION_DESCRIPTION);
         when(internalConnection.sendAndReceive(any(), any(), any())).thenReturn(OK);
 

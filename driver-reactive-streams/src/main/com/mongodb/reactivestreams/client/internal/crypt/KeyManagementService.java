@@ -69,6 +69,7 @@ class KeyManagementService implements Closeable {
         tlsChannelStreamFactoryFactory.close();
     }
 
+    @SuppressWarnings("deprecation") //readTimeout
     Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout) {
         SocketSettings socketSettings = SocketSettings.builder()
                 .connectTimeout(timeoutMillis, MILLISECONDS)
@@ -159,6 +160,7 @@ class KeyManagementService implements Closeable {
         }
     }
 
+    @SuppressWarnings("deprecation") //readTimeout
     private OperationContext createOperationContext(@Nullable final Timeout operationTimeout, final SocketSettings socketSettings) {
         return OperationContext.simpleOperationContext(new TimeoutContext(
                 new TimeoutSettings(

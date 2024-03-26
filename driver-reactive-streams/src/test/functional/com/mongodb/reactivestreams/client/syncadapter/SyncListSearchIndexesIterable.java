@@ -40,6 +40,7 @@ final class SyncListSearchIndexesIterable<T> extends SyncMongoIterable<T> implem
     }
 
     @Override
+    @Deprecated
     public ListSearchIndexesIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

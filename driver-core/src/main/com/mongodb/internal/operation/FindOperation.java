@@ -53,7 +53,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
+import static com.mongodb.internal.operation.OperationHelper.setNonTailableCursorMaxTimeSupplier;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
@@ -400,7 +400,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         } else if (isTailableCursor()) {
             commandDocument.put("tailable", BsonBoolean.TRUE);
         } else {
-            addMaxTimeMSToNonTailableCursor(commandDocument, timeoutMode, operationContext);
+            setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
         }
 
         if (noCursorTimeout) {

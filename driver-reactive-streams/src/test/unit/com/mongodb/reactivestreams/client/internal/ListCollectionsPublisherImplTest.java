@@ -37,6 +37,7 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected ListCollectionsOperation")
     @Test
+    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperation() {
         TestOperationExecutor executor = createOperationExecutor(asList(getBatchCursor(), getBatchCursor()));
         ListCollectionsPublisher<String> publisher = new ListCollectionsPublisherImpl<>(null, createMongoOperationPublisher(executor)

@@ -40,6 +40,7 @@ class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements Lis
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public ListCollectionsIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

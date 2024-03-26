@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
@@ -127,13 +126,13 @@ abstract class RequestMessage {
      * Encoded the message to the given output.
      *
      * @param bsonOutput the output
-     * @param sessionContext the session context
+     * @param operationContext the session context
      */
-    public void encode(final BsonOutput bsonOutput, final SessionContext sessionContext) {
-        notNull("sessionContext", sessionContext);
+    public void encode(final BsonOutput bsonOutput, final OperationContext operationContext) {
+        notNull("operationContext", operationContext);
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
-        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, sessionContext);
+        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, operationContext);
         backpatchMessageLength(messageStartPosition, bsonOutput);
         this.encodingMetadata = encodingMetadata;
     }
@@ -163,10 +162,10 @@ abstract class RequestMessage {
      * Encode the message body to the given output.
      *
      * @param bsonOutput the output
-     * @param sessionContext the session context
+     * @param operationContext the session context
      * @return the encoding metadata
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, SessionContext sessionContext);
+    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, OperationContext operationContext);
 
     protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                final FieldNameValidator validator, @Nullable final List<BsonElement> extraElements) {

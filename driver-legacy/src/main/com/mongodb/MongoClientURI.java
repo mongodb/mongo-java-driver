@@ -365,6 +365,7 @@ public class MongoClientURI {
      *
      * @return the MongoClientOptions based on this URI.
      */
+    @SuppressWarnings("deprecation") //proxied.getSocketTimeout
     public MongoClientOptions getOptions() {
         ReadPreference readPreference = proxied.getReadPreference();
         if (readPreference != null) {

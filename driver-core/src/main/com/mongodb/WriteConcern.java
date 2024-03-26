@@ -170,7 +170,21 @@ public class WriteConcern implements Serializable {
      * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
      * @mongodb.driver.manual reference/write-concern/#w-option w option
      * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering wTimeoutMS irrelevant.
+     * If no timeout is specified at these levels, the wTimeoutMS will be used.
      */
+    @Deprecated
     public WriteConcern(final int w, final int wTimeoutMS) {
         this(w, wTimeoutMS, null);
     }
@@ -232,7 +246,21 @@ public class WriteConcern implements Serializable {
      * @see #withWTimeout(long, TimeUnit)
      * @since 3.2
      * @mongodb.driver.manual core/write-concern/#timeouts wTimeout
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#getTimeout(TimeUnit)}</li>
+     *     <li>{@code MongoDatabase#getTimeout(TimeUnit)}</li>
+     *     <li>{@code MongoCollection#getTimeout(TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this wTimeoutMS irrelevant.
+     * If no timeout is specified at these levels, the wTimeoutMS will be used.
      */
+    @Deprecated
     @Nullable
     public Integer getWTimeout(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -384,7 +412,21 @@ public class WriteConcern implements Serializable {
      * @see #getWTimeout(TimeUnit)
      * @since 3.2
      * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this wTimeoutMS irrelevant.
+     * If no timeout is specified at these levels, the wTimeoutMS will be used.
      */
+    @Deprecated
     public WriteConcern withWTimeout(final long wTimeout, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         long newWTimeOutMS = TimeUnit.MILLISECONDS.convert(wTimeout, timeUnit);

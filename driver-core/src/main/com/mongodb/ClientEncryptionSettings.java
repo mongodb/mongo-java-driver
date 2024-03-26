@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -160,8 +160,7 @@ public final class ClientEncryptionSettings {
          * @see #getTimeout
          */
         public ClientEncryptionSettings.Builder timeout(final long timeout, final TimeUnit timeUnit) {
-            isTrueArgument("timeoutMS must be >= 0", timeout >= 0);
-            this.timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
+            this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
             return this;
         }
 
@@ -336,7 +335,7 @@ public final class ClientEncryptionSettings {
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
-        timeoutMS = builder.timeoutMS;
+        this.timeoutMS = builder.timeoutMS;
     }
 
 }

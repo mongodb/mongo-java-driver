@@ -40,7 +40,6 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.addMaxTimeMSToNonTailableCursor;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -223,7 +222,6 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             putIfTrue(commandDocument, "verbose", isVerbose());
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), commandDocument);
             putIfNotZero(commandDocument, "limit", getLimit());
-            addMaxTimeMSToNonTailableCursor(commandDocument, operationContext);
             putIfTrue(commandDocument, "jsMode", isJsMode());
             if (collation != null) {
                 commandDocument.put("collation", collation.asDocument());

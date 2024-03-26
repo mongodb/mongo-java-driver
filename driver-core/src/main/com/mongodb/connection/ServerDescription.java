@@ -70,6 +70,10 @@ public class ServerDescription {
     private final ServerAddress address;
 
     private final ServerType type;
+    /**
+     * Identifies whether the server is a mongocryptd.
+     */
+    private final boolean cryptd;
     private final String canonicalAddress;
     private final Set<String> hosts;
     private final Set<String> passives;
@@ -160,6 +164,7 @@ public class ServerDescription {
     public static class Builder {
         private ServerAddress address;
         private ServerType type = UNKNOWN;
+        private boolean cryptd = false;
         private String canonicalAddress;
         private Set<String> hosts = Collections.emptySet();
         private Set<String> passives = Collections.emptySet();
@@ -190,6 +195,7 @@ public class ServerDescription {
         Builder(final ServerDescription serverDescription) {
             this.address = serverDescription.address;
             this.type = serverDescription.type;
+            this.cryptd = serverDescription.cryptd;
             this.canonicalAddress = serverDescription.canonicalAddress;
             this.hosts = serverDescription.hosts;
             this.passives = serverDescription.passives;
@@ -244,6 +250,17 @@ public class ServerDescription {
          */
         public Builder type(final ServerType type) {
             this.type = notNull("type", type);
+            return this;
+        }
+
+        /**
+         * Sets whether this server is a <a href="https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/">mongocryptd</a>.
+         *
+         * @param cryptd true if this server is a mongocryptd.
+         * @return this
+         */
+        public Builder cryptd(final boolean cryptd) {
+            this.cryptd = cryptd;
             return this;
         }
 
@@ -645,6 +662,15 @@ public class ServerDescription {
     }
 
     /**
+     * Returns whether this server is <a href="https://www.mongodb.com/docs/manual/core/queryable-encryption/reference/mongocryptd/">mongocryptd</a>.
+     *
+     * @return true if this server is a mongocryptd.
+     */
+    public boolean isCryptd() {
+        return cryptd;
+    }
+
+    /**
      * Get a Set of strings in the format of "[hostname]:[port]" that contains all members of the replica set that are neither hidden,
      * passive, nor arbiters.
      *
@@ -869,12 +895,6 @@ public class ServerDescription {
         return exception;
     }
 
-    /**
-     * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the round trip time.
-     *
-     * @param o the object to compare to
-     * @return true if this instance is equals to @code{o}
-     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -883,7 +903,6 @@ public class ServerDescription {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ServerDescription that = (ServerDescription) o;
 
         if (maxDocumentSize != that.maxDocumentSize) {
@@ -954,6 +973,10 @@ public class ServerDescription {
             return false;
         }
 
+        if (cryptd != that.cryptd) {
+            return false;
+        }
+
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
@@ -972,30 +995,9 @@ public class ServerDescription {
 
     @Override
     public int hashCode() {
-        int result = address.hashCode();
-        result = 31 * result + type.hashCode();
-        result = 31 * result + (canonicalAddress != null ? canonicalAddress.hashCode() : 0);
-        result = 31 * result + hosts.hashCode();
-        result = 31 * result + passives.hashCode();
-        result = 31 * result + arbiters.hashCode();
-        result = 31 * result + (primary != null ? primary.hashCode() : 0);
-        result = 31 * result + maxDocumentSize;
-        result = 31 * result + tagSet.hashCode();
-        result = 31 * result + (setName != null ? setName.hashCode() : 0);
-        result = 31 * result + (electionId != null ? electionId.hashCode() : 0);
-        result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
-        result = 31 * result + (topologyVersion != null ? topologyVersion.hashCode() : 0);
-        result = 31 * result + (lastWriteDate != null ? lastWriteDate.hashCode() : 0);
-        result = 31 * result + (int) (lastUpdateTimeNanos ^ (lastUpdateTimeNanos >>> 32));
-        result = 31 * result + (ok ? 1 : 0);
-        result = 31 * result + state.hashCode();
-        result = 31 * result + minWireVersion;
-        result = 31 * result + maxWireVersion;
-        result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
-        result = 31 * result + (helloOk ? 1 : 0);
-        result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
-        result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
-        return result;
+        return Objects.hash(address, type, cryptd, canonicalAddress, hosts, passives, arbiters, primary, maxDocumentSize, tagSet, setName,
+                roundTripTimeNanos, minRoundTripTimeNanos, ok, state, minWireVersion, maxWireVersion, electionId, setVersion,
+                topologyVersion, lastWriteDate, lastUpdateTimeNanos, logicalSessionTimeoutMinutes, exception, helloOk);
     }
 
     @Override
@@ -1003,6 +1005,7 @@ public class ServerDescription {
         return "ServerDescription{"
                + "address=" + address
                + ", type=" + type
+               + ", cryptd=" + cryptd
                + ", state=" + state
                + (state == CONNECTED
                   ?
@@ -1074,6 +1077,7 @@ public class ServerDescription {
     ServerDescription(final Builder builder) {
         address = notNull("address", builder.address);
         type = notNull("type", builder.type);
+        cryptd = builder.cryptd;
         state = notNull("state", builder.state);
         canonicalAddress = builder.canonicalAddress;
         hosts = builder.hosts;

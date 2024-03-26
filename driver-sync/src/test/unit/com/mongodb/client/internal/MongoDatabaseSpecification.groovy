@@ -44,6 +44,8 @@ import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
+
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
@@ -156,6 +158,27 @@ class MongoDatabaseSpecification extends Specification {
         database.getReadConcern() == newReadConcern
         expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
                 newReadConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor))
+    }
+
+    def 'should behave correctly when using withTimeout'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+                readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
+
+        when:
+        def newDatabase = database.withTimeout(10_000, TimeUnit.MILLISECONDS)
+
+        then:
+        newDatabase.getTimeout(TimeUnit.MILLISECONDS) == 10_000
+        expect newDatabase, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+                readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS.withTimeout(10_000, TimeUnit.MILLISECONDS), executor))
+
+        when:
+        database.withTimeout(500, TimeUnit.NANOSECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should be able to executeCommand correctly'() {
