@@ -477,6 +477,7 @@ public final class ClusterFixture {
                 LoggerSettings.builder().build(), null, null, null, Collections.emptyList(), getServerApi(), null);
     }
 
+    @SuppressWarnings("deprecation") //readTimeout
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
         MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString).build();
 

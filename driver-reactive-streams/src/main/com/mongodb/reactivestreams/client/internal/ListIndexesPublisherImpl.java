@@ -44,6 +44,7 @@ final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implemen
         super(clientSession, mongoOperationPublisher);
     }
 
+    @SuppressWarnings("deprecation")
     public ListIndexesPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);

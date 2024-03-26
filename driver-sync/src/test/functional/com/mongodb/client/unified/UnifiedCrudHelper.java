@@ -270,6 +270,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 new BsonArray(iterable.into(new ArrayList<>()).stream().map(BsonString::new).collect(toList())));
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeListCollections(final BsonDocument operation) {
         MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments");
@@ -347,6 +348,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     private ListIndexesIterable<BsonDocument> createListIndexesIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
@@ -1656,6 +1658,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
+    @SuppressWarnings("deprecation") //options.maxTime
     private static DropIndexOptions getDropIndexOptions(final BsonDocument arguments) {
         DropIndexOptions options = new DropIndexOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {

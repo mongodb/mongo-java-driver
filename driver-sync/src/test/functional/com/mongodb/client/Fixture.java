@@ -93,6 +93,7 @@ public final class Fixture {
         return getMongoClientSettings(requireNonNull(getMultiMongosConnectionString()));
     }
 
+    @SuppressWarnings("deprecation") //readTimeout
     public static MongoClientSettings.Builder getMongoClientSettings(final ConnectionString connectionString) {
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
