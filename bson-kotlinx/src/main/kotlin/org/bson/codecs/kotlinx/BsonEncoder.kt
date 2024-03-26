@@ -139,6 +139,18 @@ internal class DefaultBsonEncoder(
         return true
     }
 
+    override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
+        deferredElementName?.let {
+            if (value != null || configuration.explicitNulls) {
+                encodeName(it)
+                super.encodeSerializableValue(serializer, value)
+            } else {
+                deferredElementName = null
+            }
+        }
+            ?: super.encodeSerializableValue(serializer, value)
+    }
+
     override fun <T : Any> encodeNullableSerializableValue(serializer: SerializationStrategy<T>, value: T?) {
         deferredElementName?.let {
             if (value != null || configuration.explicitNulls) {
@@ -158,7 +170,14 @@ internal class DefaultBsonEncoder(
     override fun encodeDouble(value: Double) = writer.writeDouble(value)
     override fun encodeInt(value: Int) = writer.writeInt32(value)
     override fun encodeLong(value: Long) = writer.writeInt64(value)
-    override fun encodeNull() = writer.writeNull()
+    override fun encodeNull() {
+        deferredElementName?.let {
+            if (configuration.explicitNulls) {
+                encodeName(it)
+            }
+        }
+        writer.writeNull()
+    }
 
     override fun encodeString(value: String) {
         when (state) {
