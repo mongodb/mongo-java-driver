@@ -32,6 +32,24 @@ class TransactionOptionsSpecification extends Specification {
         options.getMaxCommitTime(TimeUnit.MILLISECONDS) == null
     }
 
+    def 'should throw an exception if the timeout is invalid'() {
+        given:
+        def builder = TransactionOptions.builder()
+
+
+        when:
+        builder.timeout(500, TimeUnit.NANOSECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        builder.timeout(-1, TimeUnit.SECONDS).build()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should apply options set in builder'() {
         when:
         def options = TransactionOptions.builder()
@@ -39,6 +57,7 @@ class TransactionOptionsSpecification extends Specification {
                 .writeConcern(WriteConcern.JOURNALED)
                 .readPreference(ReadPreference.secondary())
                 .maxCommitTime(5, TimeUnit.SECONDS)
+                .timeout(null, TimeUnit.MILLISECONDS)
                 .build()
 
         then:
@@ -47,6 +66,7 @@ class TransactionOptionsSpecification extends Specification {
         options.readPreference == ReadPreference.secondary()
         options.getMaxCommitTime(TimeUnit.MILLISECONDS) == 5000
         options.getMaxCommitTime(TimeUnit.SECONDS) == 5
+        options.getTimeout(TimeUnit.MILLISECONDS) == null
     }
 
     def 'should merge'() {
@@ -56,12 +76,14 @@ class TransactionOptionsSpecification extends Specification {
                 .writeConcern(WriteConcern.MAJORITY)
                 .readPreference(ReadPreference.secondary())
                 .maxCommitTime(5, TimeUnit.SECONDS)
+                .timeout(123, TimeUnit.MILLISECONDS)
                 .build()
         def third = TransactionOptions.builder()
                 .readConcern(ReadConcern.LOCAL)
                 .writeConcern(WriteConcern.W2)
                 .readPreference(ReadPreference.nearest())
                 .maxCommitTime(10, TimeUnit.SECONDS)
+                .timeout(123, TimeUnit.MILLISECONDS)
                 .build()
 
         expect:
