@@ -1,0 +1,96 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+plugins {
+    id 'application'
+    id 'org.graalvm.buildtools.native' version '0.9.23'
+}
+
+application {
+    mainClass = 'com.mongodb.internal.graalvm.NativeImageApp'
+}
+
+def systemPropertiesForRunningNativeApp = System.getProperties().findAll { it.key.toString().startsWith("org.mongodb.") }
+tasks.matching { it.name == 'run' }.configureEach {
+    systemProperties(systemPropertiesForRunningNativeApp)
+}
+
+// see https://graalvm.github.io/native-build-tools/latest/gradle-plugin.html
+graalvmNative {
+    metadataRepository {
+        enabled = false
+    }
+    agent {
+        // Executing the `run` Gradle task with the tracing agent
+        // https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/
+        // requires running Gradle with GraalVM despite the toolchain for the task already being GraalVM.
+        // The same is true about executing the `metadataCopy` Gradle task.
+        // This may be a manifestation of an issue with the `org.graalvm.buildtools.native` plugin.
+        enabled = false
+        defaultMode = 'standard'
+        metadataCopy {
+            inputTaskNames.add('run')
+            outputDirectories.add('src/main/resources/META-INF/native-image')
+            mergeWithExisting = false
+        }
+    }
+    binaries {
+        configureEach {
+            buildArgs.add('--strict-image-heap')
+            buildArgs.add('-H:+UnlockExperimentalVMOptions')
+            // see class initialization report is generated at `graalvm/build/native/nativeCompile/reports`,
+            // informing us on the kind of initialization for each Java class
+            buildArgs.add('-H:+PrintClassInitialization')
+            // see the "registerResource" entries in the `native-image` built-time output,
+            // informing us on the resources included in the native image being built
+            buildArgs.add('-H:Log=registerResource:5')
+        }
+        main {
+            sharedLibrary = false
+            def mainClassName = application.mainClass.get()
+            imageName = mainClassName.substring(mainClassName.lastIndexOf('.') + 1, mainClassName.length())
+            runtimeArgs.addAll(systemPropertiesForRunningNativeApp.entrySet()
+                    .stream()
+                    .map {"-D${it.getKey()}=${it.getValue()}" }
+                    .toList())
+            quickBuild = true
+            // See the "Apply" entries in the `native-image` built-time output, informing us on
+            // the build configuration files (https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildConfiguration/)
+            // and the reachability metadata files (https://www.graalvm.org/latest/reference-manual/native-image/metadata/)
+            // which are applied at build time.
+            verbose = true
+        }
+    }
+}
+
+dependencies {
+    // we intentionally depend here on the driver artifacts instead of depending on compiled classes
+    implementation project(path:':bson', configuration:'archives')
+    implementation project(path:':driver-core', configuration:'archives')
+    implementation project(path:':driver-sync', configuration:'archives')
+    implementation project(path:':driver-reactive-streams', configuration:'archives')
+    implementation project(path:':driver-legacy', configuration:'archives')
+    // note that as a result of these `sourceSets` dependencies, `driver-sync/src/test/resources/logback-test.xml` is used
+    implementation project(':driver-core').sourceSets.test.output
+    implementation project(':driver-sync').sourceSets.test.output
+    implementation project(':driver-legacy').sourceSets.test.output
+    implementation project(':driver-reactive-streams').sourceSets.test.output
+    implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion"
+    implementation 'org.slf4j:slf4j-api:2.0.12'
+    implementation 'ch.qos.logback:logback-classic:1.5.3'
+    implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")
+    implementation 'io.projectreactor:reactor-core'
+}

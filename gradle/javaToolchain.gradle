@@ -30,11 +30,60 @@ allprojects {
             }
         }
     }
+    project.pluginManager.withPlugin('org.graalvm.buildtools.native') {
+        def minRequiredGraalVMJavaVersion = 21
+        // By configuring the toolchains for the `org.graalvm.buildtools.native` plugin
+        // conditionally, we avoid Gradle errors caused by it failing to locate an installed GraalVM
+        // for Java SE older than 21. One situation when this is relevant is building from an IDE,
+        // where the `DEFAULT_JDK_VERSION` is likely used.
+        if (javaVersion >= minRequiredGraalVMJavaVersion) {
+            def javaLanguageVersion = JavaLanguageVersion.of(javaVersion)
+            // `JvmVendorSpec.GRAAL_VM` matches only GraalVM Community (https://github.com/graalvm/graalvm-ce-builds/releases),
+            // and does not match any other GraalVM distribution.
+            // That is, Gradle fails to locate any other installed distribution of GraalVM.
+            // Furthermore, there is no other way to express via the Gradle toolchain functionality
+            // that GraalVM must be used. The documentation of the `org.graalvm.buildtools.native` plugin
+            // says the following about this limitation:
+            // "be aware that the toolchain detection cannot distinguish between GraalVM JDKs
+            // and standard JDKs without Native Image support:
+            // if you have both installed on the machine, Gradle may randomly pick one or the other".
+            // Fortunately, `JvmVendorSpec.GRAAL_VM` makes things less hideous than that.
+            //
+            // The documentation of the `org.graalvm.buildtools.native` plugin mentions
+            // the environment variable `GRAALVM_HOME` as an alternative to Gradle toolchain functionality.
+            // I was unable to find a way to stop relying on the toolchain specification requiring `JvmVendorSpec.GRAAL_VM`
+            // even with `GRAALVM_HOME`.
+            def graalVendor = JvmVendorSpec.GRAAL_VM
+            graalvmNative {
+                agent {
+                    java {
+                        toolchain {
+                            languageVersion = javaLanguageVersion
+                            vendor = graalVendor
+                        }
+                    }
+                }
+                binaries {
+                    configureEach {
+                        javaLauncher = javaToolchains.launcherFor {
+                            languageVersion = javaLanguageVersion
+                            vendor = graalVendor
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     if (project == project(":bson-record-codec")) {
         tasks.withType(JavaCompile) {
             options.encoding = "UTF-8"
             options.release.set(17)
+        }
+    } else if (project == project(':graalvm-native-image-app')) {
+        tasks.withType(JavaCompile) {
+            options.encoding = 'UTF-8'
+            options.release.set(DEFAULT_JDK_VERSION)
         }
     } else if (project in javaMainProjects) {
         tasks.withType(JavaCompile) {

@@ -60,9 +60,12 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
                 put("key", localMasterKey);
             }});
         }};
-
-        MongoClientSettings clientSettings = MongoClientSettings.builder().build();
-        MongoClient mongoClient = MongoClients.create(clientSettings);
+        MongoClientSettings commonClientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
+                .build();
+        MongoClient mongoClient = MongoClients.create(commonClientSettings);
 
         // Set up the key vault for this example
         MongoNamespace keyVaultNamespace = new MongoNamespace("encryption.testKeyVault");
@@ -81,9 +84,7 @@ public class ClientSideEncryptionExplicitEncryptionAndDecryptionTour {
 
         // Create the ClientEncryption instance
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(MongoClientSettings.builder()
-                        .applyConnectionString(new ConnectionString("mongodb://localhost"))
-                        .build())
+                .keyVaultMongoClientSettings(commonClientSettings)
                 .keyVaultNamespace(keyVaultNamespace.getFullName())
                 .kmsProviders(kmsProviders)
                 .build();

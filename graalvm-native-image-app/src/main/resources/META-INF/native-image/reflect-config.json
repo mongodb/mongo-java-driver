@@ -1,0 +1,446 @@
+[
+{
+  "name":"boolean",
+  "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
+},
+{
+  "name":"ch.qos.logback.classic.encoder.PatternLayoutEncoder",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.joran.SerializedModelConfigurator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.DateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.LevelConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.LineSeparatorConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.LoggerConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.MessageConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.ThreadConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.util.DefaultJoranConfigurator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.core.ConsoleAppender",
+  "queryAllPublicMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.core.OutputStreamAppender",
+  "methods":[{"name":"setEncoder","parameterTypes":["ch.qos.logback.core.encoder.Encoder"] }]
+},
+{
+  "name":"ch.qos.logback.core.encoder.Encoder",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"ch.qos.logback.core.encoder.LayoutWrappingEncoder",
+  "methods":[{"name":"setParent","parameterTypes":["ch.qos.logback.core.spi.ContextAware"] }]
+},
+{
+  "name":"ch.qos.logback.core.pattern.PatternLayoutEncoderBase",
+  "methods":[{"name":"setPattern","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"ch.qos.logback.core.spi.ContextAware",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"com.mongodb.BasicDBObject",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.mongodb.MongoNamespace",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"com.mongodb.WriteConcern",
+  "allPublicFields":true
+},
+{
+  "name":"com.mongodb.client.model.changestream.ChangeStreamDocument",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","org.bson.BsonDocument","org.bson.BsonDocument","org.bson.BsonDocument","java.lang.Object","java.lang.Object","org.bson.BsonDocument","org.bson.BsonTimestamp","com.mongodb.client.model.changestream.UpdateDescription","org.bson.BsonInt64","org.bson.BsonDocument","org.bson.BsonDateTime","com.mongodb.client.model.changestream.SplitEvent","org.bson.BsonDocument"] }]
+},
+{
+  "name":"com.mongodb.client.model.changestream.SplitEvent",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"com.mongodb.client.model.changestream.TruncatedArray",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
+},
+{
+  "name":"com.mongodb.client.model.changestream.UpdateDescription",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.util.List","org.bson.BsonDocument","java.util.List","org.bson.BsonDocument"] }]
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI",
+  "allPublicFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$cstring",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_crypto_fn",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_ctx_t",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_hash_fn",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_hmac_fn",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_kms_ctx_t",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_log_fn_t",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_random_fn",
+  "queryAllDeclaredMethods":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_status_t",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_t",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.AESCipher$General",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.HmacCore$HmacSHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.HmacCore$HmacSHA512",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.jna.CallbackProxy",
+  "methods":[{"name":"callback","parameterTypes":["java.lang.Object[]"] }]
+},
+{
+  "name":"com.sun.jna.Pointer",
+  "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
+},
+{
+  "name":"com.sun.jna.Structure$FFIType",
+  "allDeclaredFields":true,
+  "queryAllPublicConstructors":true,
+  "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}],
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.jna.Structure$FFIType$size_t",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.jna.ptr.PointerByReference",
+  "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}],
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"int",
+  "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
+},
+{
+  "name":"java.io.FilePermission"
+},
+{
+  "name":"java.lang.Object",
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"java.lang.Record"
+},
+{
+  "name":"java.lang.RuntimePermission"
+},
+{
+  "name":"java.lang.Thread",
+  "fields":[{"name":"threadLocalRandomProbe"}]
+},
+{
+  "name":"java.lang.Throwable",
+  "methods":[{"name":"addSuppressed","parameterTypes":["java.lang.Throwable"] }]
+},
+{
+  "name":"java.lang.reflect.Method",
+  "methods":[{"name":"isVarArgs","parameterTypes":[] }]
+},
+{
+  "name":"java.net.NetPermission"
+},
+{
+  "name":"java.net.Socket",
+  "methods":[{"name":"setOption","parameterTypes":["java.net.SocketOption","java.lang.Object"] }]
+},
+{
+  "name":"java.net.SocketPermission"
+},
+{
+  "name":"java.net.URLPermission",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String"] }]
+},
+{
+  "name":"java.nio.Buffer"
+},
+{
+  "name":"java.security.AllPermission"
+},
+{
+  "name":"java.security.SecureRandomParameters"
+},
+{
+  "name":"java.security.SecurityPermission"
+},
+{
+  "name":"java.util.PropertyPermission"
+},
+{
+  "name":"java.util.concurrent.ForkJoinTask",
+  "fields":[{"name":"aux"}, {"name":"status"}]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicBoolean",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicReference",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.Striped64",
+  "fields":[{"name":"base"}, {"name":"cellsBusy"}]
+},
+{
+  "name":"javax.smartcardio.CardPermission"
+},
+{
+  "name":"jdk.internal.misc.Unsafe"
+},
+{
+  "name":"jdk.net.ExtendedSocketOptions",
+  "fields":[{"name":"TCP_KEEPCOUNT"}, {"name":"TCP_KEEPIDLE"}, {"name":"TCP_KEEPINTERVAL"}]
+},
+{
+  "name":"long",
+  "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
+},
+{
+  "name":"org.bson.codecs.kotlin.DataClassCodecProvider"
+},
+{
+  "name":"org.bson.codecs.kotlinx.KotlinSerializerCodecProvider"
+},
+{
+  "name":"org.bson.codecs.record.RecordCodecProvider"
+},
+{
+  "name":"org.slf4j.Logger"
+},
+{
+  "name":"reactivestreams.tour.Address",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getCity","parameterTypes":[] }, {"name":"getStreet","parameterTypes":[] }, {"name":"getZip","parameterTypes":[] }, {"name":"setCity","parameterTypes":["java.lang.String"] }, {"name":"setStreet","parameterTypes":["java.lang.String"] }, {"name":"setZip","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"reactivestreams.tour.Person",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getAddress","parameterTypes":[] }, {"name":"getAge","parameterTypes":[] }, {"name":"getId","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"setAddress","parameterTypes":["reactivestreams.tour.Address"] }, {"name":"setAge","parameterTypes":["int"] }, {"name":"setId","parameterTypes":["org.bson.types.ObjectId"] }, {"name":"setName","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"reactor.core.publisher.BaseSubscriber",
+  "fields":[{"name":"subscription"}]
+},
+{
+  "name":"reactor.core.publisher.FlatMapTracker",
+  "fields":[{"name":"size"}]
+},
+{
+  "name":"reactor.core.publisher.FluxConcatArray$ConcatArraySubscriber",
+  "fields":[{"name":"requested"}]
+},
+{
+  "name":"reactor.core.publisher.FluxCreate$BaseSink",
+  "fields":[{"name":"disposable"}, {"name":"requestConsumer"}, {"name":"requested"}]
+},
+{
+  "name":"reactor.core.publisher.FluxCreate$BufferAsyncSink",
+  "fields":[{"name":"wip"}]
+},
+{
+  "name":"reactor.core.publisher.FluxCreate$SerializedFluxSink",
+  "fields":[{"name":"error"}, {"name":"wip"}]
+},
+{
+  "name":"reactor.core.publisher.FluxDoFinally$DoFinallySubscriber",
+  "fields":[{"name":"once"}]
+},
+{
+  "name":"reactor.core.publisher.FluxFlatMap$FlatMapInner",
+  "fields":[{"name":"s"}]
+},
+{
+  "name":"reactor.core.publisher.FluxFlatMap$FlatMapMain",
+  "fields":[{"name":"error"}, {"name":"requested"}, {"name":"wip"}]
+},
+{
+  "name":"reactor.core.publisher.FluxIterable$IterableSubscription",
+  "fields":[{"name":"requested"}]
+},
+{
+  "name":"reactor.core.publisher.LambdaMonoSubscriber",
+  "fields":[{"name":"subscription"}]
+},
+{
+  "name":"reactor.core.publisher.LambdaSubscriber",
+  "fields":[{"name":"subscription"}]
+},
+{
+  "name":"reactor.core.publisher.MonoCallable$MonoCallableSubscription",
+  "fields":[{"name":"requestedOnce"}]
+},
+{
+  "name":"reactor.core.publisher.MonoCreate$DefaultMonoSink",
+  "fields":[{"name":"disposable"}, {"name":"requestConsumer"}, {"name":"state"}]
+},
+{
+  "name":"reactor.core.publisher.MonoFlatMap$FlatMapMain",
+  "fields":[{"name":"second"}]
+},
+{
+  "name":"reactor.core.publisher.MonoFlatMapMany$FlatMapManyMain",
+  "fields":[{"name":"inner"}, {"name":"requested"}]
+},
+{
+  "name":"reactor.core.publisher.MonoIgnoreThen$ThenIgnoreMain",
+  "fields":[{"name":"state"}]
+},
+{
+  "name":"reactor.core.publisher.MonoNext$NextSubscriber",
+  "fields":[{"name":"wip"}]
+},
+{
+  "name":"reactor.core.publisher.Operators$BaseFluxToMonoOperator",
+  "fields":[{"name":"state"}]
+},
+{
+  "name":"reactor.core.publisher.Operators$MultiSubscriptionSubscriber",
+  "fields":[{"name":"missedProduced"}, {"name":"missedRequested"}, {"name":"missedSubscription"}, {"name":"wip"}]
+},
+{
+  "name":"reactor.core.publisher.StrictSubscriber",
+  "fields":[{"name":"error"}, {"name":"requested"}, {"name":"s"}, {"name":"wip"}]
+},
+{
+  "name":"reactor.util.concurrent.MpscLinkedQueue",
+  "fields":[{"name":"consumerNode"}, {"name":"producerNode"}]
+},
+{
+  "name":"reactor.util.concurrent.MpscLinkedQueue$LinkedQueueNode",
+  "fields":[{"name":"next"}]
+},
+{
+  "name":"reactor.util.concurrent.SpscLinkedArrayQueue",
+  "fields":[{"name":"consumerIndex"}, {"name":"producerIndex"}]
+},
+{
+  "name":"sun.security.provider.NativePRNG",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
+},
+{
+  "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA2$SHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA5$SHA512",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"tour.Address",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getCity","parameterTypes":[] }, {"name":"getStreet","parameterTypes":[] }, {"name":"getZip","parameterTypes":[] }, {"name":"setCity","parameterTypes":["java.lang.String"] }, {"name":"setStreet","parameterTypes":["java.lang.String"] }, {"name":"setZip","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"tour.Person",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"getAddress","parameterTypes":[] }, {"name":"getAge","parameterTypes":[] }, {"name":"getId","parameterTypes":[] }, {"name":"getName","parameterTypes":[] }, {"name":"setAddress","parameterTypes":["tour.Address"] }, {"name":"setAge","parameterTypes":["int"] }, {"name":"setId","parameterTypes":["org.bson.types.ObjectId"] }, {"name":"setName","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"void",
+  "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
+}
+]

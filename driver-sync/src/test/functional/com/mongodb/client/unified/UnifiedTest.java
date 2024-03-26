@@ -72,6 +72,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getServerVersion;
+import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
@@ -223,7 +224,9 @@ public abstract class UnifiedTest {
             throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
         }
 
-        killAllSessions();
+        if (!isDataLakeTest()) {
+            killAllSessions();
+        }
 
         startingClusterTime = addInitialDataAndGetClusterTime();
 
@@ -435,6 +438,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeFindOne(operation);
                 case "distinct":
                     return crudHelper.executeDistinct(operation);
+                case "mapReduce":
+                    return crudHelper.executeMapReduce(operation);
                 case "countDocuments":
                     return crudHelper.executeCountDocuments(operation);
                 case "estimatedDocumentCount":
