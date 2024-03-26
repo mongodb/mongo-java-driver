@@ -108,7 +108,7 @@ class CryptConnection implements Connection {
         Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
         RawBsonDocument encryptedCommand = crypt.encrypt(database,
                 new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout);
-        //TODO JAVA-5322. timeoutMS can't be set at encryptedCommand here as not modification allowed to raw command.
+
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
                 new RawBsonDocumentCodec(), operationContext, responseExpected, null, null);
 

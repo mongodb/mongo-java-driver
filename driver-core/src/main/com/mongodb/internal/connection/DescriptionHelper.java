@@ -92,6 +92,7 @@ public final class DescriptionHelper {
                                 .state(CONNECTED)
                                 .address(serverAddress)
                                 .type(getServerType(helloResult))
+                                .cryptd(helloResult.getBoolean("iscryptd", BsonBoolean.FALSE).getValue())
                                 .canonicalAddress(helloResult.containsKey("me") ? helloResult.getString("me").getValue() : null)
                                 .hosts(listToSet(helloResult.getArray("hosts", new BsonArray())))
                                 .passives(listToSet(helloResult.getArray("passives", new BsonArray())))

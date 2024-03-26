@@ -17,8 +17,10 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerConnectionState;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
@@ -53,6 +55,7 @@ class TestInternalConnection implements InternalConnection {
     }
 
     private final ConnectionDescription description;
+    private final ServerDescription serverDescription;
     private final BufferProvider bufferProvider;
     private final Deque<Interaction> replies;
     private final List<BsonInput> sent;
@@ -66,6 +69,10 @@ class TestInternalConnection implements InternalConnection {
     TestInternalConnection(final ServerId serverId, final ServerType serverType) {
         this.description = new ConnectionDescription(new ConnectionId(serverId), THREE_DOT_SIX_WIRE_VERSION, serverType, 0, 0, 0,
                 Collections.emptyList());
+        this.serverDescription = ServerDescription.builder()
+                .address(new ServerAddress("localhost", 27017))
+                .type(serverType)
+                .state(ServerConnectionState.CONNECTED).build();
         this.bufferProvider = new SimpleBufferProvider();
 
         this.replies = new LinkedList<>();
@@ -101,7 +108,7 @@ class TestInternalConnection implements InternalConnection {
 
     @Override
     public ServerDescription getInitialServerDescription() {
-        throw new UnsupportedOperationException();
+        return serverDescription;
     }
 
     public void open(final OperationContext operationContext) {
@@ -164,7 +171,7 @@ class TestInternalConnection implements InternalConnection {
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             sendMessage(bsonOutput.getByteBuffers(), message.getId(), operationContext);
         }
         try (ResponseBuffers responseBuffers = receiveMessage(message.getId(), operationContext)) {

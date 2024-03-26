@@ -60,7 +60,6 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateC
 class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private final MongoNamespace namespace;
-    private final long maxTimeMS;
     private final Decoder<T> decoder;
     @Nullable
     private final BsonValue comment;
@@ -85,12 +84,12 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.commandCursorResult = toCommandCursorResult(connectionDescription.getServerAddress(), FIRST_BATCH, commandCursorDocument);
         this.namespace = commandCursorResult.getNamespace();
         this.batchSize = batchSize;
-        this.maxTimeMS = maxTimeMS;
         this.decoder = decoder;
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeSupplier(() -> maxTimeMS);
 
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
         resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
@@ -236,8 +235,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 this.commandCursorResult = toCommandCursorResult(connection.getDescription().getServerAddress(), NEXT_BATCH,
                         assertNotNull(
                             connection.command(namespace.getDatabaseName(),
-                                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize,
-                                         maxTimeMS, comment),
+                                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
                                  NO_OP_FIELD_NAME_VALIDATOR,
                                  ReadPreference.primary(),
                                  CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
@@ -365,8 +363,10 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final Connection localConnection) {
             OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
-            localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor,
-                            operationContext.getTimeoutContext().getMaxTimeMS()),
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.resetToDefaultMaxTimeSupplier();
+
+            localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
         }
     }

@@ -49,6 +49,7 @@ public final class MessageSettings {
     private final int maxWireVersion;
     private final ServerType serverType;
     private final boolean sessionSupported;
+    private final boolean cryptd;
 
     /**
      * Gets the builder
@@ -70,6 +71,7 @@ public final class MessageSettings {
         private int maxWireVersion;
         private ServerType serverType;
         private boolean sessionSupported;
+        private boolean cryptd;
 
         /**
          * Build it.
@@ -127,6 +129,17 @@ public final class MessageSettings {
             this.sessionSupported = sessionSupported;
             return this;
         }
+
+        /**
+         * Set whether the server is a mongocryptd.
+         *
+         * @param cryptd true if the server is a mongocryptd.
+         * @return this
+         */
+        public Builder cryptd(final boolean cryptd) {
+            this.cryptd = cryptd;
+            return this;
+        }
     }
 
     /**
@@ -163,6 +176,9 @@ public final class MessageSettings {
     public ServerType getServerType() {
         return serverType;
     }
+    public boolean isCryptd() {
+        return cryptd;
+    }
 
     public boolean isSessionSupported() {
         return sessionSupported;
@@ -176,5 +192,6 @@ public final class MessageSettings {
         this.maxWireVersion = builder.maxWireVersion;
         this.serverType = builder.serverType;
         this.sessionSupported = builder.sessionSupported;
+        this.cryptd = builder.cryptd;
     }
 }

@@ -24,10 +24,12 @@ import com.mongodb.session.ClientSession;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -45,6 +47,8 @@ public class TimeoutContext {
     @Nullable
     private Timeout computedServerSelectionTimeout;
     private long minRoundTripTimeMS = 0;
+
+    private MaxTimeSupplier maxTimeSupplier = this::calculateMaxTimeMS;
 
     public static MongoOperationTimeoutException createMongoTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
@@ -165,11 +169,8 @@ public class TimeoutContext {
         Long timeoutMS = timeoutSettings.getTimeoutMS();
         if (timeoutMS == null) {
             return alternativeTimeoutMS;
-        } else if (timeoutMS == 0) {
-            return timeoutMS;
-        } else {
-            return timeoutRemainingMS();
         }
+        return timeoutRemainingMS();
     }
 
     /**
@@ -200,6 +201,10 @@ public class TimeoutContext {
     }
 
     public long getMaxTimeMS() {
+        return notNull("Should never be null", maxTimeSupplier.get());
+    }
+
+    private long calculateMaxTimeMS() {
         long maxTimeMS = timeoutOrAlternative(timeoutSettings.getMaxTimeMS());
         if (timeout == null || timeout.isInfinite()) {
             return maxTimeMS;
@@ -208,6 +213,14 @@ public class TimeoutContext {
             throw createMongoTimeoutException();
         }
         return maxTimeMS - minRoundTripTimeMS;
+    }
+
+    public void setMaxTimeSupplier(final MaxTimeSupplier maxTimeSupplier) {
+        this.maxTimeSupplier = maxTimeSupplier;
+    }
+
+    public void resetToDefaultMaxTimeSupplier() {
+        this.maxTimeSupplier = this::calculateMaxTimeMS;
     }
 
     public Long getMaxCommitTimeMS() {
@@ -335,8 +348,10 @@ public class TimeoutContext {
      * @return a new timeout context with the cached computed server selection timeout if available or this
      */
     public TimeoutContext withComputedServerSelectionTimeoutContext() {
-        return computedServerSelectionTimeout == null
-                ? this : new TimeoutContext(false, timeoutSettings, computedServerSelectionTimeout);
+        if (this.hasTimeoutMS() && computedServerSelectionTimeout != null) {
+            return new TimeoutContext(false, timeoutSettings, computedServerSelectionTimeout);
+        }
+        return this;
     }
 
     public Timeout startWaitQueueTimeout(final StartTime checkoutStart) {
@@ -349,4 +364,8 @@ public class TimeoutContext {
         return timeout;
     }
 
+    public interface MaxTimeSupplier extends Supplier<Long> {
+        @Override
+        Long get();
+    }
 }
