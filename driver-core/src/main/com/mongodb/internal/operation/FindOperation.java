@@ -393,12 +393,13 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
         if (limit < 0 || batchSize < 0) {
             commandDocument.put("singleBatch", BsonBoolean.TRUE);
         }
-        if (isAwaitData()) {
+        if (isTailableCursor()) {
             commandDocument.put("tailable", BsonBoolean.TRUE);
-            commandDocument.put("awaitData", BsonBoolean.TRUE);
-            putIfNotZero(commandDocument, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
-        } else if (isTailableCursor()) {
-            commandDocument.put("tailable", BsonBoolean.TRUE);
+            if (isAwaitData()) {
+                commandDocument.put("awaitData", BsonBoolean.TRUE);
+            } else {
+                operationContext.getTimeoutContext().setMaxTimeSupplier(() -> 0L);
+            }
         } else {
             setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
         }
