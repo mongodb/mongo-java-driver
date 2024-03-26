@@ -207,6 +207,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
+    @SuppressWarnings("deprecation") //maxWaitTime
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
         Timeout maxWaitTimeout = checkoutStart.timeoutAfterOrInfiniteIfNegative(settings.getMaxWaitTime(NANOSECONDS), NANOSECONDS);
@@ -486,6 +487,7 @@ final class DefaultConnectionPool implements ConnectionPool {
      * Send both current and deprecated events in order to preserve backwards compatibility.
      * Must not throw {@link Exception}s.
      */
+    @SuppressWarnings("deprecation") // settings.getMaxWaitTime
     private void connectionPoolCreated(final ConnectionPoolListener connectionPoolListener, final ServerId serverId,
                                              final ConnectionPoolSettings settings) {
         ClusterId clusterId = serverId.getClusterId();

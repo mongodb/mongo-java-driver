@@ -196,14 +196,9 @@ final class OperationHelper {
         return true;
     }
 
-    static void addMaxTimeMSToNonTailableCursor(final BsonDocument commandDocument, final OperationContext operationContext) {
-        addMaxTimeMSToNonTailableCursor(commandDocument, TimeoutMode.CURSOR_LIFETIME, operationContext);
-    }
-
-    static void addMaxTimeMSToNonTailableCursor(final BsonDocument command, final TimeoutMode timeoutMode,
-            final OperationContext operationContext) {
-        if (timeoutMode != TimeoutMode.ITERATION) {
-            operationContext.getTimeoutContext().putMaxTimeMS(command);
+    static void setNonTailableCursorMaxTimeSupplier(final TimeoutMode timeoutMode, final OperationContext operationContext) {
+        if (timeoutMode == TimeoutMode.ITERATION) {
+            operationContext.getTimeoutContext().setMaxTimeSupplier(() -> 0L);
         }
     }
 

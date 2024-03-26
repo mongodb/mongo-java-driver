@@ -26,6 +26,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -89,6 +90,8 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
+
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeSupplier(() -> maxTimeMS);
 
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
@@ -172,7 +175,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
     private void getMoreLoop(final AsyncConnection connection, final ServerCursor serverCursor,
             final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(),
-                getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, maxTimeMS, comment),
+                getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
                 NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
                 assertNotNull(resourceManager.getConnectionSource()).getOperationContext(),
@@ -318,8 +321,10 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
             OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
-            BsonDocument killCursorsCommand = getKillCursorsCommand(namespace, localServerCursor, operationContext);
-            localConnection.commandAsync(namespace.getDatabaseName(), killCursorsCommand,
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.resetToDefaultMaxTimeSupplier();
+
+            localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
                     operationContext, (r, t) -> callback.onResult(null, null));
         }

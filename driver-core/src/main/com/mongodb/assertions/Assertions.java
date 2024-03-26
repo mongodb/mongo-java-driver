@@ -21,6 +21,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -138,6 +139,24 @@ public final class Assertions {
         if (!condition) {
             throw new IllegalArgumentException("state should be: " + name);
         }
+    }
+
+    /**
+     * Throw IllegalArgumentException if the condition returns false.
+     *
+     * @param msg the error message if the condition returns false
+     * @param supplier the supplier of the value
+     * @param condition the condition function
+     * @return the supplied value if it meets the condition
+     * @param <T> the type of the supplied value
+     */
+    public static <T> T isTrueArgument(final String msg, final Supplier<T> supplier, final Function<T, Boolean> condition) {
+        T value = doesNotThrow(supplier);
+        if (!condition.apply(value)) {
+            throw new IllegalArgumentException(msg);
+        }
+
+        return value;
     }
 
     /**

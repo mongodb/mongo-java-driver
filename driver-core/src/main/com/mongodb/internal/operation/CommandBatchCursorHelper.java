@@ -22,7 +22,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ServerCursor;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -52,15 +51,12 @@ final class CommandBatchCursorHelper {
 
     static BsonDocument getMoreCommandDocument(
             final long cursorId, final ConnectionDescription connectionDescription, final MongoNamespace namespace, final int batchSize,
-            final long maxTimeMS, @Nullable final BsonValue comment) {
+            @Nullable final BsonValue comment) {
         BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursorId))
                 .append("collection", new BsonString(namespace.getCollectionName()));
 
         if (batchSize != 0) {
             document.append("batchSize", new BsonInt32(batchSize));
-        }
-        if (maxTimeMS != 0) {
-            document.append("maxTimeMS", new BsonInt64(maxTimeMS));
         }
         if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {
             putIfNotNull(document, "comment", comment);
@@ -76,12 +72,9 @@ final class CommandBatchCursorHelper {
         return commandCursorResult;
     }
 
-    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor,
-            final OperationContext operationContext) {
-        BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+    static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor) {
+       return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                 .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
-        operationContext.getTimeoutContext().putMaxTimeMS(command);
-        return command;
     }
 
 

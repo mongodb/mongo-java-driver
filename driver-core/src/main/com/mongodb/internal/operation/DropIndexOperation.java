@@ -93,7 +93,6 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
             } else {
                 command.put("index", indexKeys);
             }
-            operationContext.getTimeoutContext().putMaxTimeMS(command);
             appendWriteConcernToCommand(writeConcern, command);
             return command;
         };

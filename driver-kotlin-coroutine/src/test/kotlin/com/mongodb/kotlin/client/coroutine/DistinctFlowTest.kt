@@ -39,6 +39,7 @@ class DistinctFlowTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: DistinctPublisher<Document> = mock()
         val flow = DistinctFlow(wrapped)
@@ -54,8 +55,8 @@ class DistinctFlowTest {
         flow.comment(bsonComment)
         flow.comment(comment)
         flow.filter(filter)
-        @Suppress("DEPRECATION") flow.maxTime(1)
-        @Suppress("DEPRECATION") flow.maxTime(1, TimeUnit.SECONDS)
+        flow.maxTime(1)
+        flow.maxTime(1, TimeUnit.SECONDS)
         flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
@@ -63,8 +64,8 @@ class DistinctFlowTest {
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).filter(filter)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)

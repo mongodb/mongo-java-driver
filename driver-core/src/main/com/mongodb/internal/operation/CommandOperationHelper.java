@@ -225,14 +225,6 @@ final class CommandOperationHelper {
         return exception;
     }
 
-    static BsonDocument appendMaxTimeMs(final TimeoutContext timeoutContext, final BsonDocument command) {
-        if (timeoutContext.hasTimeoutMS()) {
-            // TODO (CSOT) should there be a preceding hasTimeoutMS check? It seems this will skip the legacy?
-            timeoutContext.putMaxTimeMS(command);
-        }
-        return command;
-    }
-
     private CommandOperationHelper() {
     }
 }

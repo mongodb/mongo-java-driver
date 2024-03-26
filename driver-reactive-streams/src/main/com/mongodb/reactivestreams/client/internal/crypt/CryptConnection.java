@@ -123,7 +123,6 @@ class CryptConnection implements AsyncConnection {
             getEncoder(command).encode(writer, command, EncoderContext.builder().build());
             crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout)
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
-                            //TODO JAVA-5322. timeoutMS can't be set at encryptedCommand here as not modification allowed to raw command.
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
                                     new RawBsonDocumentCodec(), operationContext, responseExpected, null, null, sinkToCallback(sink))))
                     .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, operationTimeout))

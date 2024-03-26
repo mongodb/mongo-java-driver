@@ -29,6 +29,8 @@ import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandListener
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.diagnostics.logging.Logger
 import com.mongodb.internal.logging.StructuredLogger
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -57,7 +59,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def message = new CommandMessage(namespace, commandDocument,
                 new NoOpFieldNameValidator(), ReadPreference.primary(), messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
-        message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
+        message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                Stub(TimeoutContext), null))
         def logger = Stub(Logger) {
             isDebugEnabled() >> debugLoggingEnabled
         }
@@ -101,7 +104,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
                 messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
-        message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
+        message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                Stub(TimeoutContext), null))
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
@@ -157,7 +161,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
                 messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
-        message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
+        message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                Stub(TimeoutContext), null))
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }
@@ -190,7 +195,8 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
                 messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
-        message.encode(bsonOutput, NoOpSessionContext.INSTANCE)
+        message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                Stub(TimeoutContext), null))
         def logger = Mock(Logger) {
             isDebugEnabled() >> true
         }

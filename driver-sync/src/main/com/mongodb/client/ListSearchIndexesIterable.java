@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
@@ -66,11 +67,25 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
     /**
      * Sets the maximum execution time on the server for this operation.
      *
-     * @param maxTime  the max time.
-     * @param timeUnit the time unit, which may not be null.
-     * @return this.
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     *
+     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
+     *
+     * <ul>
+     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
+     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
+     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     * </ul>
+     *
+     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
+     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
+    @Deprecated
     ListSearchIndexesIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

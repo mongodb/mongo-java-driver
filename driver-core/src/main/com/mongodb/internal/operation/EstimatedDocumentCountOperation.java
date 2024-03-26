@@ -110,7 +110,6 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
         return (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), document);
-            operationContext.getTimeoutContext().putMaxTimeMS(document);
             if (comment != null) {
                 document.put("comment", comment);
             }

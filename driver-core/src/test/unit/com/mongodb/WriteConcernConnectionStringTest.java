@@ -64,6 +64,7 @@ public class WriteConcernConnectionStringTest extends TestCase {
         }
     }
 
+    @SuppressWarnings("deprecation") //wTimeout
     private WriteConcern getExpectedWriteConcern() {
         BsonDocument writeConcernDocument = definition.getDocument("writeConcern");
 
