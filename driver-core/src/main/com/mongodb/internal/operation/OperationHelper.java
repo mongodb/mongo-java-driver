@@ -198,7 +198,7 @@ final class OperationHelper {
 
     static void setNonTailableCursorMaxTimeSupplier(final TimeoutMode timeoutMode, final OperationContext operationContext) {
         if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext.getTimeoutContext().setMaxTimeSupplier(() -> 0L);
+            operationContext.getTimeoutContext().setMaxTime(0L);
         }
     }
 

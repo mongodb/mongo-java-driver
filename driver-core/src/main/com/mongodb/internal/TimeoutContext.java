@@ -21,8 +21,6 @@ import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
-import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -50,7 +48,7 @@ public class TimeoutContext {
     private Timeout computedServerSelectionTimeout;
     private long minRoundTripTimeMS = 0;
 
-    private MaxTimeSupplier maxTimeSupplier = this::getMaxTimeMSInternal;
+    private MaxTimeSupplier maxTimeSupplier = this::getDefaultMaxTimeTimeout;
 
     public static MongoOperationTimeoutException createMongoRoundTripTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than the server's minimum round trip time.");
@@ -198,15 +196,13 @@ public class TimeoutContext {
         return timeoutSettings.getMaxAwaitTimeMS();
     }
 
-
-    // TODO (CSOT) JAVA-5385 used only by tests?
-    public long getMaxTimeMS() {
+    public Timeout getMaxTimeMSTimeout() {
         return notNull("Should never be null", maxTimeSupplier.get());
     }
 
-    // TODO-CSOT check maxTimeMS logic
-    private long getMaxTimeMSInternal() {
-        return getMaxTimeTimeout().run(MILLISECONDS,
+    // TODO (CSOT) JAVA-5385 used only by tests?
+    public long getMaxTimeMS() {
+        return getMaxTimeMSTimeout().run(MILLISECONDS,
                 () -> 0L,
                 (ms) -> ms,
                 () -> {
@@ -214,30 +210,23 @@ public class TimeoutContext {
                 });
     }
 
-    private Timeout getMaxTimeTimeout() {
+    private Timeout getDefaultMaxTimeTimeout() {
         long maxTimeMS = timeoutSettings.getMaxTimeMS();
-        Timeout t = timeout != null
-                ? timeout
+        return timeout != null
+                ? timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
                 : Timeout.expiresIn(maxTimeMS, MILLISECONDS);
-        t = t.shortenBy(minRoundTripTimeMS, MILLISECONDS);
-        return t;
     }
 
-    public void putMaxTimeMS(final BsonDocument command) {
-        getMaxTimeTimeout().run(MILLISECONDS,
-                () -> {},
-                (ms) -> command.put("maxTimeMS", new BsonInt64(ms)),
-                () -> {
-                    throw createMongoRoundTripTimeoutException();
-                });
+    public void resetToDefaultMaxTimeSupplier() {
+        this.maxTimeSupplier = this::getDefaultMaxTimeTimeout;
     }
 
     public void setMaxTimeSupplier(final MaxTimeSupplier maxTimeSupplier) {
         this.maxTimeSupplier = maxTimeSupplier;
     }
 
-    public void resetToDefaultMaxTimeSupplier() {
-        this.maxTimeSupplier = this::getMaxTimeMSInternal;
+    public void setMaxTime(final long maxTimeMS) {
+        this.maxTimeSupplier = () -> Timeout.expiresIn(maxTimeMS, MILLISECONDS);
     }
 
     public Long getMaxCommitTimeMS() {
@@ -380,8 +369,8 @@ public class TimeoutContext {
         return timeout;
     }
 
-    public interface MaxTimeSupplier extends Supplier<Long> {
+    public interface MaxTimeSupplier extends Supplier<Timeout> {
         @Override
-        Long get();
+        Timeout get();
     }
 }

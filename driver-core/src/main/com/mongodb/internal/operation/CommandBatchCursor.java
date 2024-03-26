@@ -89,7 +89,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
-        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeSupplier(() -> maxTimeMS);
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTime(maxTimeMS);
 
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
         resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,

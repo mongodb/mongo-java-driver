@@ -274,7 +274,7 @@ final class TimeoutContextTest {
     void shouldOverrideMaximeMS() {
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
 
-        timeoutContext.setMaxTimeSupplier(() -> 2L);
+        timeoutContext.setMaxTime(2L);
 
         assertEquals(2, timeoutContext.getMaxTimeMS());
     }
@@ -283,7 +283,7 @@ final class TimeoutContextTest {
     @DisplayName("should reset maxTimeMS to default behaviour")
     void shouldResetMaximeMS() {
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
-        timeoutContext.setMaxTimeSupplier(() -> 1L);
+        timeoutContext.setMaxTime(1L);
 
         timeoutContext.resetToDefaultMaxTimeSupplier();
 

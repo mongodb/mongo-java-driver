@@ -91,7 +91,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
-        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeSupplier(() -> maxTimeMS);
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTime(maxTimeMS);
 
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
