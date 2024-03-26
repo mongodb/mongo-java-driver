@@ -1,6 +1,5 @@
 {
   "description": "timeoutMS behaves correctly for the withTransaction API",
-  "comment": "Manually updated some of the timeoutMS and blockTimeMS to remove race conditions. Added ignoreExtraElements: true, Added expectError to withTransaction result",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -156,7 +155,6 @@
       "expectEvents": [
         {
           "client": "client",
-          "ignoreExtraEvents": true,
           "events": [
             {
               "commandStartedEvent": {
@@ -179,6 +177,21 @@
                 "databaseName": "test",
                 "command": {
                   "insert": "coll",
+                  "maxTimeMS": {
+                    "$$type": [
+                      "int",
+                      "long"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "commandStartedEvent": {
+                "commandName": "abortTransaction",
+                "databaseName": "admin",
+                "command": {
+                  "abortTransaction": 1,
                   "maxTimeMS": {
                     "$$type": [
                       "int",

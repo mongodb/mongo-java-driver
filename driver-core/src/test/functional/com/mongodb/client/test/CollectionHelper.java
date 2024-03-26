@@ -161,6 +161,23 @@ public final class CollectionHelper<T> {
         create(collectionName, options, WriteConcern.ACKNOWLEDGED);
     }
 
+    public void create(final WriteConcern writeConcern, final BsonDocument createOptions) {
+        CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions();
+        for (String option : createOptions.keySet()) {
+            switch (option) {
+                case "capped":
+                    createCollectionOptions.capped(createOptions.getBoolean("capped").getValue());
+                    break;
+                case "size":
+                    createCollectionOptions.sizeInBytes(createOptions.getNumber("size").longValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported create collection option: " + option);
+            }
+        }
+        create(namespace.getCollectionName(), createCollectionOptions, writeConcern);
+    }
+
     public void create(final String collectionName, final CreateCollectionOptions options, final WriteConcern writeConcern) {
         drop(namespace, writeConcern);
         CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName,

@@ -1,6 +1,6 @@
 {
   "description": "timeoutMS behaves correctly for tailable awaitData cursors",
-  "comment": "Manually updated some of the timeoutMS and blockTimeMS to remove race conditions",
+  "comment": "Manually changed: timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set. Added ignoreExtra events, sometimes an extra getMore is called.",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -18,7 +18,7 @@
       "client": {
         "id": "client",
         "uriOptions": {
-          "timeoutMS": 10
+          "timeoutMS": 200
         },
         "useMultipleMongoses": false,
         "observeEvents": [
@@ -131,7 +131,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 300
               }
             }
           }
@@ -200,7 +200,7 @@
           "arguments": {
             "filter": {},
             "cursorType": "tailableAwait",
-            "timeoutMS": 200,
+            "timeoutMS": 250,
             "batchSize": 1
           },
           "saveResultAsEntity": "tailableCursor"
@@ -284,7 +284,7 @@
           "arguments": {
             "filter": {},
             "cursorType": "tailableAwait",
-            "timeoutMS": 200,
+            "timeoutMS": 250,
             "batchSize": 1,
             "maxAwaitTimeMS": 1
           },
@@ -302,6 +302,7 @@
       "expectEvents": [
         {
           "client": "client",
+          "ignoreExtraEvents": true,
           "events": [
             {
               "commandStartedEvent": {
@@ -355,7 +356,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 15
+                "blockTimeMS": 250
               }
             }
           }
