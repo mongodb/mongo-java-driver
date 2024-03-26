@@ -198,10 +198,11 @@ public final class ClusterFixture {
     }
 
     public static boolean hasEncryptionTestsEnabled() {
-        List<String> requiredSystemProperties = asList("awsAccessKeyId", "awsSecretAccessKey", "azureTenantId", "azureClientId",
-                "azureClientSecret", "gcpEmail", "gcpPrivateKey", "tmpAwsAccessKeyId", "tmpAwsSecretAccessKey", "tmpAwsSessionToken");
+        List<String> requiredSystemProperties = asList("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AZURE_TENANT_ID", "AZURE_CLIENT_ID",
+                "AZURE_CLIENT_SECRET", "GCP_EMAIL", "GCP_PRIVATE_KEY", "AWS_TEMP_ACCESS_KEY_ID", "AWS_TEMP_SECRET_ACCESS_KEY",
+                "AWS_TEMP_SESSION_TOKEN");
         return requiredSystemProperties.stream()
-                        .map(name -> getEnv("org.mongodb.test." + name, ""))
+                        .map(name -> getEnv(name, ""))
                         .filter(s -> !s.isEmpty())
                         .count() == requiredSystemProperties.size();
     }

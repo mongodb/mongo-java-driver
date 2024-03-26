@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo;
 
+import java.util.SortedSet;
+
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
@@ -80,6 +82,7 @@ public final class ClassModelTest {
         TypeData<List> listList = createBuilder(List.class).addTypeParameter(list).build();
         TypeData<Set> set = createBuilder(Set.class).addTypeParameter(simple).build();
         TypeData<Set> setSet = createBuilder(Set.class).addTypeParameter(set).build();
+        TypeData<SortedSet> sortedSet = createBuilder(SortedSet.class).addTypeParameter(simple).build();
         TypeData<Map> map = createBuilder(Map.class).addTypeParameter(string).addTypeParameter(simple).build();
         TypeData<List> listMap = createBuilder(List.class).addTypeParameter(map).build();
         TypeData<Map> mapMap = createBuilder(Map.class).addTypeParameter(string).addTypeParameter(map).build();
@@ -91,12 +94,14 @@ public final class ClassModelTest {
 
         ClassModel<?> classModel = ClassModel.builder(CollectionNestedPojoModel.class).build();
 
-        assertEquals(12, classModel.getPropertyModels().size());
+        assertEquals(13, classModel.getPropertyModels().size());
         assertEquals(classModel.getPropertyModel("listSimple").getTypeData(), list);
         assertEquals(classModel.getPropertyModel("listListSimple").getTypeData(), listList);
 
         assertEquals(classModel.getPropertyModel("setSimple").getTypeData(), set);
         assertEquals(classModel.getPropertyModel("setSetSimple").getTypeData(), setSet);
+
+        assertEquals(classModel.getPropertyModel("sortedSetSimple").getTypeData(), sortedSet);
 
         assertEquals(classModel.getPropertyModel("mapSimple").getTypeData(), map);
         assertEquals(classModel.getPropertyModel("mapMapSimple").getTypeData(), mapMap);

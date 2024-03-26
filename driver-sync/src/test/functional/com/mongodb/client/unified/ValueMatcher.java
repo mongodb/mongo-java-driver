@@ -82,8 +82,6 @@ final class ValueMatcher {
                 }
             }
 
-            assertNotNull(context.getMessage("Actual value must contain key " + keyContext), actual);
-
             if (expected.isDocument()) {
                 BsonDocument expectedDocument = expected.asDocument();
                 assertTrue(context.getMessage("Actual value must be a document but is " + actual.getBsonType()), actual.isDocument());
@@ -142,6 +140,8 @@ final class ValueMatcher {
                 assertTrue(context.getMessage("Expected a number"), actual.isNumber());
                 assertEquals(context.getMessage("Expected BSON numbers to be equal"),
                         expected.asNumber().doubleValue(), actual.asNumber().doubleValue(), 0.0);
+            } else if (expected.isNull()) {
+                assertTrue(context.getMessage("Expected BSON null"), actual == null || actual.isNull());
             } else {
                 assertEquals(context.getMessage("Expected BSON types to be equal"), expected.getBsonType(), actual.getBsonType());
                 assertEquals(context.getMessage("Expected BSON values to be equal"), expected, actual);

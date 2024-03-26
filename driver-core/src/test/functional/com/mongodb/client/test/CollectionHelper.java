@@ -103,6 +103,13 @@ public final class CollectionHelper<T> {
             } catch (MongoWriteConcernException e) {
                 LOGGER.info("Retrying drop collection after a write concern error: " + e);
                 // repeat until success!
+            } catch (MongoCommandException e) {
+                if ("Interrupted".equals(e.getErrorCodeName())) {
+                    LOGGER.info("Retrying drop collection after an Interrupted error: " + e);
+                    // repeat until success!
+                } else {
+                    throw e;
+                }
             }
         }
     }

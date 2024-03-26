@@ -24,12 +24,15 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.client.unified.UnifiedRetryableWritesTest.customSkips;
+
 public class UnifiedRetryableWritesTest extends UnifiedReactiveStreamsTest {
     public UnifiedRetryableWritesTest(@SuppressWarnings("unused") final String fileDescription,
                                       @SuppressWarnings("unused") final String testDescription,
                                       final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
                                       final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+        customSkips(testDescription);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
