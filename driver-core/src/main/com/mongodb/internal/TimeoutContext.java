@@ -160,7 +160,7 @@ public class TimeoutContext {
      * @return timeout to use.
      */
     public long timeoutOrAlternative(final long alternativeTimeoutMS) {
-        Timeout t = timeout != null ? timeout : Timeout.expiresIn(alternativeTimeoutMS, MILLISECONDS);
+        Timeout t = timeout != null ? timeout : Timeout.expiresInWithZeroAsInfinite(alternativeTimeoutMS, MILLISECONDS);
         return t.run(MILLISECONDS,
                 () -> 0L,
                 (ms) -> ms,
@@ -177,7 +177,7 @@ public class TimeoutContext {
      */
     // TODO (CSOT) JAVA-5385 used only by tests?
     public long calculateMin(final long alternativeTimeoutMS) {
-        Timeout minimum = Timeout.expiresIn(alternativeTimeoutMS, MILLISECONDS)
+        Timeout minimum = Timeout.expiresInWithZeroAsInfinite(alternativeTimeoutMS, MILLISECONDS)
                 .orEarlier(Timeout.nullAsInfinite(timeout));
 
         return minimum.run(MILLISECONDS,
@@ -214,7 +214,7 @@ public class TimeoutContext {
         long maxTimeMS = timeoutSettings.getMaxTimeMS();
         return timeout != null
                 ? timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
-                : Timeout.expiresIn(maxTimeMS, MILLISECONDS);
+                : Timeout.expiresInWithZeroAsInfinite(maxTimeMS, MILLISECONDS);
     }
 
     public void resetToDefaultMaxTimeSupplier() {
@@ -226,7 +226,7 @@ public class TimeoutContext {
     }
 
     public void setMaxTime(final long maxTimeMS) {
-        this.maxTimeSupplier = () -> Timeout.expiresIn(maxTimeMS, MILLISECONDS);
+        this.maxTimeSupplier = () -> Timeout.expiresInWithZeroAsInfinite(maxTimeMS, MILLISECONDS);
     }
 
     public Long getMaxCommitTimeMS() {
@@ -244,7 +244,7 @@ public class TimeoutContext {
 
     public Timeout createConnectTimeoutMs() {
         // null timeout treated as infinite will be later than the other
-        return Timeout.expiresIn(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS)
+        return Timeout.expiresInWithZeroAsInfinite(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS)
                 .orEarlier(Timeout.nullAsInfinite(timeout));
     }
 
@@ -313,7 +313,7 @@ public class TimeoutContext {
     public static Timeout calculateTimeout(@Nullable final Long timeoutMS) {
         // TODO-CSOT rename to startTimeout?
         if (timeoutMS != null) {
-            return timeoutMS == 0 ? Timeout.infinite() : Timeout.expiresIn(timeoutMS, MILLISECONDS);
+            return Timeout.expiresInWithZeroAsInfinite(timeoutMS, MILLISECONDS);
         }
         return null;
     }

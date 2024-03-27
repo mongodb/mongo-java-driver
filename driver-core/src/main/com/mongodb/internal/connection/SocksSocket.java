@@ -32,7 +32,6 @@ import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -85,7 +84,7 @@ public final class SocksSocket extends Socket {
         // `Socket` requires `IllegalArgumentException`
         isTrueArgument("timeoutMs", timeoutMs >= 0);
         try {
-            Timeout timeout = toTimeout(timeoutMs);
+            Timeout timeout = Timeout.expiresInWithZeroAsInfinite(timeoutMs, MILLISECONDS);
             InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
             assertTrue(unresolvedAddress.isUnresolved());
             this.remoteAddress = unresolvedAddress;
@@ -300,13 +299,6 @@ public final class SocksSocket extends Socket {
             authMethods = new SocksAuthenticationMethod[]{SocksAuthenticationMethod.NO_AUTH};
         }
         return authMethods;
-    }
-
-    private static Timeout toTimeout(final int timeoutMs) {
-        if (timeoutMs == 0) {
-            return Timeout.infinite();
-        }
-        return Timeout.expiresIn(timeoutMs, TimeUnit.MILLISECONDS);
     }
 
     private byte[] readSocksReply(final int length, final Timeout timeout) throws IOException {

@@ -118,6 +118,13 @@ public interface Timeout {
         return TimePoint.now().timeoutAfterOrInfiniteIfNegative(duration, unit);
     }
 
+    static Timeout expiresInWithZeroAsInfinite(final long duration, final TimeUnit unit) {
+        if (duration == 0) {
+            return Timeout.infinite();
+        }
+        return expiresIn(duration, unit);
+    }
+
     /**
      * This timeout, shortened by the provided amount (it will expire sooner).
      *
