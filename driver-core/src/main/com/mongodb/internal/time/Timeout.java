@@ -194,9 +194,11 @@ public interface Timeout {
      * @return the result provided by the branch
      * @param <T> the type of the result
      */
-    <T> T run(TimeUnit timeUnit,
-            Supplier<T> onInfinite, LongFunction<T> onHasRemaining,
-            Supplier<T> onExpired);
+    default <T> T run(final TimeUnit timeUnit,
+            final Supplier<T> onInfinite, final LongFunction<T> onHasRemaining,
+            final Supplier<T> onExpired) {
+        return checkedRun(timeUnit, onInfinite::get, onHasRemaining::apply, onExpired::get);
+    }
 
     default void run(final TimeUnit timeUnit,
             final Runnable onInfinite, final LongConsumer onHasRemaining,

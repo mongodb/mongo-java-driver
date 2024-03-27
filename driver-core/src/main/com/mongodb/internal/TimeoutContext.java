@@ -17,18 +17,19 @@ package com.mongodb.internal;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.internal.function.CheckedFunction;
+import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 
 import java.util.Objects;
-import java.util.function.Supplier;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -48,7 +49,8 @@ public class TimeoutContext {
     private Timeout computedServerSelectionTimeout;
     private long minRoundTripTimeMS = 0;
 
-    private MaxTimeSupplier maxTimeSupplier = this::getDefaultMaxTimeTimeout;
+    @Nullable
+    private Long maxTimeMSOverride = null;
 
     public static MongoOperationTimeoutException createMongoRoundTripTimeoutException() {
         return createMongoTimeoutException("Remaining timeoutMS is less than the server's minimum round trip time.");
@@ -160,32 +162,16 @@ public class TimeoutContext {
      * @return timeout to use.
      */
     public long timeoutOrAlternative(final long alternativeTimeoutMS) {
-        Timeout t = timeout != null ? timeout : Timeout.expiresInWithZeroAsInfinite(alternativeTimeoutMS, MILLISECONDS);
-        return t.run(MILLISECONDS,
-                () -> 0L,
-                (ms) -> ms,
-                () -> {
-                    throw createMongoTimeoutException("The operation timeout has expired.");
-                });
-    }
-
-    /**
-     * Calculates the minimum timeout value between two possible timeouts.
-     *
-     * @param alternativeTimeoutMS the alternative timeout
-     * @return the minimum value to use.
-     */
-    // TODO (CSOT) JAVA-5385 used only by tests?
-    public long calculateMin(final long alternativeTimeoutMS) {
-        Timeout minimum = Timeout.expiresInWithZeroAsInfinite(alternativeTimeoutMS, MILLISECONDS)
-                .orEarlier(Timeout.nullAsInfinite(timeout));
-
-        return minimum.run(MILLISECONDS,
-                () -> 0L,
-                (ms) -> ms,
-                () -> {
-                    throw createMongoTimeoutException("The operation timeout has expired.");
-                });
+        if (timeout == null) {
+            return alternativeTimeoutMS;
+        } else {
+            return timeout.run(MILLISECONDS,
+                    () -> 0L,
+                    (ms) -> ms,
+                    () -> {
+                        throw createMongoTimeoutException("The operation timeout has expired.");
+                    });
+        }
     }
 
     public TimeoutSettings getTimeoutSettings() {
@@ -197,7 +183,14 @@ public class TimeoutContext {
     }
 
     public Timeout getMaxTimeMSTimeout() {
-        return notNull("Should never be null", maxTimeSupplier.get());
+        if (maxTimeMSOverride != null) {
+            return new SingleUseTimeout(maxTimeMSOverride);
+        } else {
+            long maxTimeMS = timeoutSettings.getMaxTimeMS();
+            return timeout != null
+                    ? timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
+                    : new SingleUseTimeout(maxTimeMS);
+        }
     }
 
     // TODO (CSOT) JAVA-5385 used only by tests?
@@ -210,23 +203,12 @@ public class TimeoutContext {
                 });
     }
 
-    private Timeout getDefaultMaxTimeTimeout() {
-        long maxTimeMS = timeoutSettings.getMaxTimeMS();
-        return timeout != null
-                ? timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
-                : Timeout.expiresInWithZeroAsInfinite(maxTimeMS, MILLISECONDS);
+    public void resetToDefaultMaxTime() {
+        this.maxTimeMSOverride = null;
     }
 
-    public void resetToDefaultMaxTimeSupplier() {
-        this.maxTimeSupplier = this::getDefaultMaxTimeTimeout;
-    }
-
-    public void setMaxTimeSupplier(final MaxTimeSupplier maxTimeSupplier) {
-        this.maxTimeSupplier = maxTimeSupplier;
-    }
-
-    public void setMaxTime(final long maxTimeMS) {
-        this.maxTimeSupplier = () -> Timeout.expiresInWithZeroAsInfinite(maxTimeMS, MILLISECONDS);
+    public void setMaxTimeOverride(final long maxTimeMS) {
+        this.maxTimeMSOverride = maxTimeMS;
     }
 
     public Long getMaxCommitTimeMS() {
@@ -246,6 +228,51 @@ public class TimeoutContext {
         // null timeout treated as infinite will be later than the other
         return Timeout.expiresInWithZeroAsInfinite(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS)
                 .orEarlier(Timeout.nullAsInfinite(timeout));
+    }
+
+    /**
+     * A timeout that begins at the moment that it is used.
+     */
+    static class SingleUseTimeout implements Timeout {
+        @Nullable
+        private final Long nanos;
+        private boolean used = false;
+
+        public SingleUseTimeout(final long ms) {
+            if (ms == 0) {
+                nanos = null;
+            } else {
+                nanos = NANOSECONDS.convert(ms, MILLISECONDS);
+            }
+        }
+
+        @Override
+        public Timeout orEarlier(final Timeout other) {
+            return Timeout.super.orEarlier(other);
+        }
+
+        @Override
+        public Timeout shortenBy(final long amount, final TimeUnit timeUnit) {
+            throw new AssertionError("Single-use timeout must not be shortened");
+        }
+
+        @Override
+        public <T, E extends Exception> T checkedRun(final TimeUnit timeUnit, final CheckedSupplier<T, E> onInfinite,
+                final CheckedFunction<Long, T, E> onHasRemaining, final CheckedSupplier<T, E> onExpired) throws E {
+            if (used) {
+                throw new AssertionError("Single-use timeout must not be used multiple times");
+            }
+            used = true;
+            if (this.nanos == null) {
+                return onInfinite.get();
+            }
+            long remaining = timeUnit.convert(nanos, NANOSECONDS);
+            if (remaining == 0) {
+                return onExpired.get();
+            } else {
+                return onHasRemaining.apply(remaining);
+            }
+        }
     }
 
     public void resetTimeout() {
@@ -367,10 +394,5 @@ public class TimeoutContext {
     @Nullable
     public Timeout getTimeout() {
         return timeout;
-    }
-
-    public interface MaxTimeSupplier extends Supplier<Timeout> {
-        @Override
-        Timeout get();
     }
 }

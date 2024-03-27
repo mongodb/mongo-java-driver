@@ -16,17 +16,15 @@
 package com.mongodb.internal.time;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.function.CheckedFunction;
 import com.mongodb.internal.function.CheckedSupplier;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.function.LongFunction;
-import java.util.function.Supplier;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -85,12 +83,6 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
         }
         long durationNanos = NANOSECONDS.convert(amount, timeUnit);
         return TimePoint.at(nanos - durationNanos);
-    }
-
-    @Override
-    public <T> T run(final TimeUnit timeUnit, final Supplier<T> onInfinite, final LongFunction<T> onHasRemaining,
-            final Supplier<T> onExpired) {
-        return checkedRun(timeUnit, onInfinite::get, onHasRemaining::apply, onExpired::get);
     }
 
     @Override

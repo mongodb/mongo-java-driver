@@ -35,7 +35,6 @@ import static com.mongodb.ClusterFixture.sleep;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -145,22 +144,6 @@ final class TimeoutContextTest {
 
         timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
         assertTrue(timeoutContext.getMaxCommitTimeMS() <= 999);
-    }
-
-    @Test
-    @DisplayName("Calculate min works as expected")
-    void testCalculateMin() {
-        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
-        assertEquals(99L, timeoutContext.calculateMin(99));
-
-        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(0L));
-        assertEquals(99L, timeoutContext.calculateMin(99));
-
-        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
-        assertTrue(timeoutContext.calculateMin(0) <= 999);
-
-        timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(999L));
-        assertTrue(timeoutContext.calculateMin(999999) <= 999);
     }
 
     @Test
@@ -274,7 +257,7 @@ final class TimeoutContextTest {
     void shouldOverrideMaximeMS() {
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
 
-        timeoutContext.setMaxTime(2L);
+        timeoutContext.setMaxTimeOverride(2L);
 
         assertEquals(2, timeoutContext.getMaxTimeMS());
     }
@@ -283,23 +266,11 @@ final class TimeoutContextTest {
     @DisplayName("should reset maxTimeMS to default behaviour")
     void shouldResetMaximeMS() {
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
-        timeoutContext.setMaxTime(1L);
+        timeoutContext.setMaxTimeOverride(1L);
 
-        timeoutContext.resetToDefaultMaxTimeSupplier();
+        timeoutContext.resetToDefaultMaxTime();
 
         assertTrue(timeoutContext.getMaxTimeMS() > 1);
-    }
-
-    @Test
-    @DisplayName("should propagate exception from MaxTimeSupplier")
-    void shouldPropagateException() {
-        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
-        MongoOperationTimeoutException expectedException = new MongoOperationTimeoutException("test");
-        timeoutContext.setMaxTimeSupplier(() -> {
-            throw expectedException;
-        });
-
-        assertSame(expectedException, assertThrows(expectedException.getClass(), timeoutContext::getMaxTimeMS));
     }
 
     private TimeoutContextTest() {
