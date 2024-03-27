@@ -78,7 +78,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     @Override
     public Timeout shortenBy(final long amount, final TimeUnit timeUnit) {
-        if (nanos == null) {
+        if (isInfiniteLocal()) {
             return this; // shortening (lengthening) an infinite timeout does nothing
         }
         long durationNanos = NANOSECONDS.convert(amount, timeUnit);

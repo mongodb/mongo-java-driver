@@ -226,8 +226,10 @@ public class TimeoutContext {
 
     public Timeout createConnectTimeoutMs() {
         // null timeout treated as infinite will be later than the other
-        return Timeout.expiresInWithZeroAsInfinite(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS)
-                .orEarlier(Timeout.nullAsInfinite(timeout));
+
+        return Timeout.earliest(
+                Timeout.expiresInWithZeroAsInfinite(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS),
+                Timeout.nullAsInfinite(timeout));
     }
 
     /**
@@ -244,11 +246,6 @@ public class TimeoutContext {
             } else {
                 nanos = NANOSECONDS.convert(ms, MILLISECONDS);
             }
-        }
-
-        @Override
-        public Timeout orEarlier(final Timeout other) {
-            return Timeout.super.orEarlier(other);
         }
 
         @Override
@@ -366,7 +363,7 @@ public class TimeoutContext {
             return serverSelectionTimeout;
         }
 
-        if (serverSelectionTimeout.orEarlier(timeout) == timeout) {
+        if (timeout != null && Timeout.earliest(serverSelectionTimeout, timeout) == timeout) {
             return timeout;
         }
 

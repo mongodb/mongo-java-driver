@@ -22,6 +22,9 @@ import com.mongodb.internal.function.CheckedRunnable;
 import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.lang.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -38,25 +41,29 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * @see TimePoint
  */
 public interface Timeout {
-
     /**
-     * @param other other timeout
-     * @return The earliest of this and the other, if the other is not null
+     * @param timeouts the timeouts
+     * @return the instance of the timeout that expires earliest
      */
-    default Timeout orEarlier(@Nullable final Timeout other) {
-        if (other == null) {
-            return this;
-        }
-        TimePoint tpa = (TimePoint) this;
-        TimePoint tpb = (TimePoint) other;
-        return tpa.compareTo(tpb) < 0 ? tpa : tpb;
+    static Timeout earliest(final Timeout... timeouts) {
+        List<Timeout> list = Arrays.asList(timeouts);
+        list.forEach(v -> {
+            if (! (v instanceof TimePoint)) {
+                throw new AssertionError("Only TimePoints may be compared");
+            }
+        });
+        return Collections.min(list, (a, b) -> {
+            TimePoint tpa = (TimePoint) a;
+            TimePoint tpb = (TimePoint) b;
+            return tpa.compareTo(tpb);
+        });
     }
+
 
     /**
      * @see TimePoint#isInfiniteLocal()
      */
     // TODO-CSOT refactor: make static, move to tests
-    @Deprecated
     default boolean isInfinite() {
         return run(NANOSECONDS, () -> {
             return true;
@@ -71,7 +78,6 @@ public interface Timeout {
      * @see TimePoint#hasExpiredLocal()
      */
     // TODO-CSOT refactor: make static, move to tests
-    @Deprecated
     default boolean hasExpired() {
         return run(NANOSECONDS, () -> false, (ns) -> false, () -> true);
     }
@@ -80,7 +86,6 @@ public interface Timeout {
      * @see TimePoint#remainingLocal
      */
     // TODO-CSOT refactor: make static, move to tests
-    @Deprecated
     default long remaining(final TimeUnit unit) {
         return checkedRun(unit,
                 () -> {
@@ -106,7 +111,8 @@ public interface Timeout {
     }
 
     /**
-     * @param duration the positive duration, in the specified time unit.
+     * @param duration the non-negative duration, in the specified time unit.
+     *                 0 implies expired.
      * @param unit the time unit.
      * @return a timeout that expires in the specified duration after now.
      */

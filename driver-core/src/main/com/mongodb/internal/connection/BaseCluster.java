@@ -146,7 +146,9 @@ abstract class BaseCluster implements Cluster {
                 selectionWaitingLogged = true;
             }
             connect();
-            Timeout heartbeatLimitedTimeout = computedServerSelectionTimeout.orEarlier(startMinWaitHeartbeatTimeout());
+            Timeout heartbeatLimitedTimeout = Timeout.earliest(
+                    computedServerSelectionTimeout,
+                    startMinWaitHeartbeatTimeout());
             heartbeatLimitedTimeout.awaitOn(currentPhaseLatch,
                     () -> format("waiting for a server that matches %s", serverSelector));
         }
@@ -451,9 +453,10 @@ abstract class BaseCluster implements Cluster {
                         iter.remove();
                     } else {
                         someWaitersNotSatisfied = true;
-                        timeout = timeout
-                                .orEarlier(currentRequest.getTimeout())
-                                .orEarlier(startMinWaitHeartbeatTimeout());
+                        timeout = Timeout.earliest(
+                                timeout,
+                                currentRequest.getTimeout(),
+                                startMinWaitHeartbeatTimeout());
                     }
                 }
 
