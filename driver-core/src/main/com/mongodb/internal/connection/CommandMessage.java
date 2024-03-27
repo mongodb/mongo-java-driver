@@ -51,6 +51,7 @@ import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDo
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -222,10 +223,12 @@ public final class CommandMessage extends RequestMessage {
 
         List<BsonElement> extraElements = new ArrayList<>();
         if (!getSettings().isCryptd()) {
-            long maxTimeMS = timeoutContext.getMaxTimeMS();
-            if (maxTimeMS > 0) {
-                extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)));
-            }
+            timeoutContext.getMaxTimeMSTimeout().run(MILLISECONDS,
+                    () -> {},
+                    (ms) -> extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(ms))),
+                    () -> {
+                        throw TimeoutContext.createMongoRoundTripTimeoutException();
+                    });
         }
         extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
         if (sessionContext.getClusterTime() != null) {

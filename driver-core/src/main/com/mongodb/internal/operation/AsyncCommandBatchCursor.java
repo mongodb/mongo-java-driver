@@ -91,7 +91,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
-        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeSupplier(() -> maxTimeMS);
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeOverride(maxTimeMS);
 
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
@@ -322,7 +322,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
             OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            timeoutContext.resetToDefaultMaxTimeSupplier();
+            timeoutContext.resetToDefaultMaxTime();
 
             localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),

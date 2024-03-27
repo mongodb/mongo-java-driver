@@ -70,7 +70,7 @@ class CommandBatchCursorSpecification extends Specification {
                 null, connectionSource, initialConnection)
 
         then:
-        1 * timeoutContext.setMaxTimeSupplier(*_)
+        1 * timeoutContext.setMaxTimeOverride(*_)
 
         when:
         cursor.hasNext()

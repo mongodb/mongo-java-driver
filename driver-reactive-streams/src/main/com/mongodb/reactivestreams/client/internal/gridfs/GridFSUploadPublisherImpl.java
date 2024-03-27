@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -50,6 +51,7 @@ import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collecti
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeoutDeferred;
 import static java.time.Duration.ofMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 
 /**
@@ -265,12 +267,15 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
      * @return Mono that emits a {@link MongoOperationTimeoutException}.
      */
     private static Mono<MongoOperationTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
-        if (timeout != null && !timeout.isInfinite()) {
-            return Mono.delay(ofMillis(timeout.remaining(MILLISECONDS)))
-                    .then(Mono.error(TimeoutContext.createMongoTimeoutException("GridFS timeout out waiting for data"
-                            + " from provided source Publisher")));
-        }
-        return Mono.never();
+        return Timeout.nullAsInfinite(timeout).run(NANOSECONDS,
+                (Supplier<Mono<MongoOperationTimeoutException>>) () -> Mono.never(),
+                (ms) -> Mono.delay(ofMillis(ms)).then(createTimeoutMonoError()),
+                () -> createTimeoutMonoError());
+    }
+
+    private static Mono<MongoOperationTimeoutException> createTimeoutMonoError() {
+        return Mono.error(TimeoutContext.createMongoTimeoutException(
+                "GridFS timed out waiting for data from provided source Publisher"));
     }
 
     private Mono<InsertOneResult> createSaveFileDataMono(final AtomicBoolean terminated,

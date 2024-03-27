@@ -24,7 +24,6 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 
@@ -42,10 +41,12 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -121,7 +122,10 @@ public class SocketStream implements Stream {
         SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
         configureSocket(socksProxy, operationContext, settings);
         InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
-        socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
+        operationContext.getTimeoutContext().createConnectTimeoutMs().checkedRun(MILLISECONDS,
+                () -> socksProxy.connect(inetSocketAddress, 0),
+                (ms) -> socksProxy.connect(inetSocketAddress, Math.toIntExact(ms)),
+                () -> throwMongoTimeoutException("The operation timeout has expired."));
 
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
         //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
@@ -149,8 +153,11 @@ public class SocketStream implements Stream {
          */
         SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
 
-        socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
-                operationContext.getTimeoutContext().getConnectTimeoutMs());
+        InetSocketAddress inetSocketAddress = toSocketAddress(address.getHost(), address.getPort());
+        operationContext.getTimeoutContext().createConnectTimeoutMs().checkedRun(MILLISECONDS,
+                () -> socksProxy.connect(inetSocketAddress, 0),
+                (ms) -> socksProxy.connect(inetSocketAddress, Math.toIntExact(ms)),
+                () -> throwMongoTimeoutException("The operation timeout has expired."));
         return socksProxy;
     }
 
@@ -164,7 +171,7 @@ public class SocketStream implements Stream {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
             if (operationContext.getTimeoutContext().hasExpired()) {
-                throw TimeoutContext.createMongoTimeoutException("Timeout occurred during socket write.");
+                throwMongoTimeoutException("Timeout occurred during socket write.");
             }
         }
     }

@@ -37,11 +37,13 @@ public final class TimeoutHelper {
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                final String message,
                                                                @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
-            long remainingMs = getRemainingMs(timeout, message);
-            return collection.withTimeout(remainingMs, MILLISECONDS);
-        }
-        return collection;
+        // TODO-CSOT why not nanoseconds here, and below?
+        return Timeout.nullAsInfinite(timeout).run(MILLISECONDS,
+                () -> collection,
+                (ms) -> collection.withTimeout(ms, MILLISECONDS),
+                () -> {
+                    throw TimeoutContext.createMongoTimeoutException(message);
+                });
     }
 
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
@@ -52,11 +54,12 @@ public final class TimeoutHelper {
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
-            long remainingMs = getRemainingMs(timeout, message);
-            return database.withTimeout(remainingMs, MILLISECONDS);
-        }
-        return database;
+        return Timeout.nullAsInfinite(timeout).run(MILLISECONDS,
+                () -> database,
+                (ms) -> database.withTimeout(ms, MILLISECONDS),
+                () -> {
+                    throw TimeoutContext.createMongoTimeoutException(message);
+                });
     }
 
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
@@ -64,15 +67,4 @@ public final class TimeoutHelper {
         return databaseWithTimeout(database, DEFAULT_TIMEOUT_MESSAGE, timeout);
     }
 
-    private static long getRemainingMs(final Timeout timeout, final String message) {
-        long remainingMs = timeout.remaining(MILLISECONDS);
-        if (remainingMs <= 0) {
-            throw TimeoutContext.createMongoTimeoutException(message);
-        }
-        return remainingMs;
-    }
-
-    private static boolean shouldOverrideTimeout(@Nullable final Timeout timeout) {
-        return timeout != null && !timeout.isInfinite();
-    }
 }

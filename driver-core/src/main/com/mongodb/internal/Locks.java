@@ -17,6 +17,7 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.internal.function.CheckedSupplier;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

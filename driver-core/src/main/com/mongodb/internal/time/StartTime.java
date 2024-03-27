@@ -37,7 +37,7 @@ public interface StartTime {
     Timeout asTimeout();
 
     /**
-     * Returns an {@linkplain Timeout#isInfinite() infinite} timeout if
+     * Returns an {@linkplain Timeout#infinite() infinite} timeout if
      * {@code timeoutValue} is negative, an expired timeout if
      * {@code timeoutValue} is 0, otherwise a timeout in {@code durationNanos}.
      * <p>

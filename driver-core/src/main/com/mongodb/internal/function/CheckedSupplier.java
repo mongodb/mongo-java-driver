@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
+package com.mongodb.internal.function;
+
 /**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
+@FunctionalInterface
+public interface CheckedSupplier<T, E extends Exception> {
 
-@NonNullApi
-package com.mongodb.internal.async;
-
-import com.mongodb.lang.NonNullApi;
+    /**
+     * Gets a result.
+     *
+     * @return a result
+     * @throws E the checked exception to throw
+     */
+    T get() throws E;
+}

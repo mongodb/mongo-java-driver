@@ -16,11 +16,20 @@
 package com.mongodb.internal.time;
 
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.internal.function.CheckedConsumer;
+import com.mongodb.internal.function.CheckedFunction;
+import com.mongodb.internal.function.CheckedRunnable;
+import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.lang.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
+import java.util.function.LongConsumer;
+import java.util.function.LongFunction;
 import java.util.function.Supplier;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
@@ -32,47 +41,58 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * @see TimePoint
  */
 public interface Timeout {
+    /**
+     * @param timeouts the timeouts
+     * @return the instance of the timeout that expires earliest
+     */
+    static Timeout earliest(final Timeout... timeouts) {
+        List<Timeout> list = Arrays.asList(timeouts);
+        list.forEach(v -> {
+            if (! (v instanceof TimePoint)) {
+                throw new AssertionError("Only TimePoints may be compared");
+            }
+        });
+        return Collections.min(list, (a, b) -> {
+            TimePoint tpa = (TimePoint) a;
+            TimePoint tpb = (TimePoint) b;
+            return tpa.compareTo(tpb);
+        });
+    }
+
 
     /**
-     * @param other other timeout
-     * @return The earliest of this and the other, if the other is not null
+     * @see TimePoint#isInfiniteLocal()
      */
-    default Timeout orEarlier(@Nullable final Timeout other) {
-        if (other == null) {
-            return this;
-        }
-        TimePoint tpa = (TimePoint) this;
-        TimePoint tpb = (TimePoint) other;
-        return tpa.compareTo(tpb) < 0 ? tpa : tpb;
+    // TODO-CSOT refactor: make static, move to tests
+    default boolean isInfinite() {
+        return run(NANOSECONDS, () -> {
+            return true;
+        }, (ns) -> {
+            return false;
+        }, () -> {
+            return false;
+        });
     }
 
     /**
-     * @see TimePoint#isInfinite()
+     * @see TimePoint#hasExpiredLocal()
      */
-    boolean isInfinite();
+    // TODO-CSOT refactor: make static, move to tests
+    default boolean hasExpired() {
+        return run(NANOSECONDS, () -> false, (ns) -> false, () -> true);
+    }
 
     /**
-     * @see TimePoint#hasExpired()
+     * @see TimePoint#remainingLocal
      */
-    boolean hasExpired();
-
-    /**
-     * @see TimePoint#remaining
-     */
-    long remaining(TimeUnit unit);
-
-    /**
-     * A convenience method that handles converting to -1, for integration with older internal APIs.
-     * <p>
-     * Returns an {@linkplain #isInfinite() infinite} timeout if {@code durationNanos} is either negative
-     * or is equal to {@link Long#MAX_VALUE}, otherwise a timeout of {@code durationNanos}.
-     * <p>
-     * Note that the contract of this method is also used in some places to specify the behavior of methods that accept
-     * {@code (long timeout, TimeUnit unit)}, e.g., {@link com.mongodb.internal.connection.ConcurrentPool#get(long, TimeUnit)},
-     * so it cannot be changed without updating those methods.</p>
-     */
-    default long remainingOrNegativeForInfinite(final TimeUnit unit) {
-        return isInfinite() ? -1 : remaining(unit);
+    // TODO-CSOT refactor: make static, move to tests
+    default long remaining(final TimeUnit unit) {
+        return checkedRun(unit,
+                () -> {
+                    throw new AssertionError("Infinite TimePoints have infinite remaining time");
+                },
+                (time) -> time,
+                () -> 0L);
     }
 
     /**
@@ -83,7 +103,16 @@ public interface Timeout {
     }
 
     /**
-     * @param duration the positive duration, in the specified time unit.
+     * @param timeout the timeout
+     * @return the provided timeout, or an infinite timeout if provided null.
+     */
+    static Timeout nullAsInfinite(@Nullable final Timeout timeout) {
+        return timeout == null ? infinite() : timeout;
+    }
+
+    /**
+     * @param duration the non-negative duration, in the specified time unit.
+     *                 0 implies expired.
      * @param unit the time unit.
      * @return a timeout that expires in the specified duration after now.
      */
@@ -95,47 +124,150 @@ public interface Timeout {
         return TimePoint.now().timeoutAfterOrInfiniteIfNegative(duration, unit);
     }
 
+    static Timeout expiresInWithZeroAsInfinite(final long duration, final TimeUnit unit) {
+        if (duration == 0) {
+            return Timeout.infinite();
+        }
+        return expiresIn(duration, unit);
+    }
+
     /**
-     * {@linkplain Condition#awaitNanos(long)} awaits} on the provided
-     * condition. Will {@linkplain Condition#await()} await} without a waiting
-     * time if this timeout is infinite. The {@link #hasExpired()} method is not
+     * This timeout, shortened by the provided amount (it will expire sooner).
+     *
+     * @param amount the amount to shorten by
+     * @param timeUnit the time unit of the amount
+     * @return the shortened timeout
+     */
+    Timeout shortenBy(long amount, TimeUnit timeUnit);
+
+    /**
+     * {@linkplain Condition#awaitNanos(long) Awaits} on the provided
+     * condition. Will {@linkplain Condition#await() await} without a waiting
+     * time if this timeout is infinite.
+     * {@linkplain #ifExistsAndExpired(Timeout, Runnable) Expiry} is not
      * checked by this method, and should be called outside of this method.
      * @param condition the condition.
      * @param action supplies the name of the action, for {@link MongoInterruptedException}
      */
     default void awaitOn(final Condition condition, final Supplier<String> action) {
+        // TODO-CSOT consider adding expired branch to these await methods
         try {
-            if (isInfinite()) {
-                condition.await();
-            } else {
-                // the timeout will track this remaining time
-                //noinspection ResultOfMethodCallIgnored
-                condition.awaitNanos(remaining(NANOSECONDS));
-            }
+            // ignore result, the timeout will track this remaining time
+            //noinspection ResultOfMethodCallIgnored
+            checkedRun(NANOSECONDS,
+                    () -> condition.await(),
+                    (ns) -> condition.awaitNanos(ns),
+                    () -> condition.awaitNanos(0));
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted while " + action.get(), e);
         }
     }
 
     /**
-     * {@linkplain CountDownLatch#await(long, TimeUnit) awaits} on the provided
-     * condition. Will {@linkplain CountDownLatch#await()} await} without a waiting
-     * time if this timeout is infinite. The {@link #hasExpired()} method is not
+     * {@linkplain CountDownLatch#await(long, TimeUnit) Awaits} on the provided
+     * condition. Will {@linkplain CountDownLatch#await() await} without a waiting
+     * time if this timeout is infinite.
+     * {@linkplain #ifExistsAndExpired(Timeout, Runnable) Expiry} is not
      * checked by this method, and should be called outside of this method.
      * @param latch the latch.
      * @param action supplies the name of the action, for {@link MongoInterruptedException}
      */
     default void awaitOn(final CountDownLatch latch, final Supplier<String> action) {
         try {
-            if (isInfinite()) {
-                latch.await();
-            } else {
-                // the timeout will track this remaining time
-                //noinspection ResultOfMethodCallIgnored
-                latch.await(this.remaining(NANOSECONDS), NANOSECONDS);
-            }
+            // ignore result, the timeout will track this remaining time
+            //noinspection ResultOfMethodCallIgnored
+            checkedRun(NANOSECONDS,
+                    () -> latch.await(),
+                    (ns) -> latch.await(ns, NANOSECONDS),
+                    () -> latch.await(0, NANOSECONDS));
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted while " + action.get(), e);
         }
+    }
+
+    /**
+     * Run one of 3 possible branches depending on the state of the timeout,
+     * and returns the result.
+     *
+     * @param timeUnit the positive (non-zero) remaining time to provide to the
+     *                 {@code onHasRemaining} branch. The underlying nano time
+     *                 is rounded down to the given time unit. If 0, the timeout
+     *                 is considered expired.
+     * @param onInfinite branch to take when the timeout is infinite
+     * @param onHasRemaining branch to take when there is positive remaining
+     *                       time in the specified time unit
+     * @param onExpired branch to take when the timeout is expired
+     * @return the result provided by the branch
+     * @param <T> the type of the result
+     */
+    default <T> T run(final TimeUnit timeUnit,
+            final Supplier<T> onInfinite, final LongFunction<T> onHasRemaining,
+            final Supplier<T> onExpired) {
+        return checkedRun(timeUnit, onInfinite::get, onHasRemaining::apply, onExpired::get);
+    }
+
+    default void run(final TimeUnit timeUnit,
+            final Runnable onInfinite, final LongConsumer onHasRemaining,
+            final Runnable onExpired) {
+        this.run(timeUnit, () -> {
+            onInfinite.run();
+            return null;
+        }, (t) -> {
+            onHasRemaining.accept(t);
+            return null;
+        }, () -> {
+            onExpired.run();
+            return null;
+        });
+    }
+
+    default <E extends Exception> void checkedRun(final TimeUnit timeUnit,
+            final CheckedRunnable<E> onInfinite, final CheckedConsumer<Long, E> onHasRemaining,
+            final CheckedRunnable<E> onExpired) throws E {
+        this.checkedRun(timeUnit, () -> {
+            onInfinite.run();
+            return null;
+        }, (t) -> {
+            onHasRemaining.accept(t);
+            return null;
+        }, () -> {
+            onExpired.run();
+            return null;
+        });
+    }
+
+    /**
+     * Run, but throwing a checked exception.
+     * @see #run(TimeUnit, Supplier, LongFunction, Supplier)
+     * @param <E> the checked exception type
+     * @throws E the checked exception
+     */
+    <T, E extends Exception> T checkedRun(TimeUnit timeUnit,
+            CheckedSupplier<T, E> onInfinite, CheckedFunction<Long, T, E> onHasRemaining,
+            CheckedSupplier<T, E> onExpired) throws E;
+
+    /**
+     * Checked run, but returning nullable values
+     * @see #checkedRun(TimeUnit, CheckedSupplier, CheckedFunction, CheckedSupplier)
+     */
+    @Nullable
+    default <T, E extends Exception> T checkedRunNullable(final TimeUnit timeUnit,
+            final CheckedSupplier<T, E> onInfinite, final CheckedFunction<Long, T, E> onHasRemaining,
+            final CheckedSupplier<T, E> onExpired) throws E {
+        return checkedRun(timeUnit, onInfinite, onHasRemaining, onExpired);
+    }
+
+    default void ifExpired(final Runnable onExpired) {
+        ifExistsAndExpired(this, onExpired);
+    }
+
+    static void ifExistsAndExpired(@Nullable final Timeout t, final Runnable onExpired) {
+        if (t == null) {
+            return;
+        }
+        t.run(NANOSECONDS,
+                () -> {},
+                (ns) -> {},
+                () -> onExpired.run());
     }
 }

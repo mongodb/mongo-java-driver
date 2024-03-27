@@ -122,7 +122,8 @@ public class CommitTransactionOperation extends TransactionOperation {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
             TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            timeoutContext.setMaxTimeSupplier(timeoutContext::getMaxCommitTimeMS);
+            // TODO-CSOT here, we are using an already-started timeout. Is that expected? If so, we can use a Long insteaf of a supplier override
+            timeoutContext.setMaxTimeOverride(timeoutContext.getMaxCommitTimeMS());
             return command;
         };
         if (alreadyCommitted) {
