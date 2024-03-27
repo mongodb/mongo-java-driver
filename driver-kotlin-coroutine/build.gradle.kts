@@ -75,6 +75,7 @@ dependencies {
     testImplementation("io.github.classgraph:classgraph:4.8.154")
 
     integrationTestImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+    integrationTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     integrationTestImplementation(project(path = ":driver-sync"))
     integrationTestImplementation(project(path = ":driver-core"))
     integrationTestImplementation(project(path = ":bson"))
