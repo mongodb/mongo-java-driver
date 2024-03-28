@@ -1,25 +1,5 @@
 [
 {
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_crypto_fn",
-  "methods":[{"name":"crypt","parameterTypes":["com.sun.jna.Pointer","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.sun.jna.Pointer","com.mongodb.crypt.capi.CAPI$mongocrypt_status_t"] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_hash_fn",
-  "methods":[{"name":"hash","parameterTypes":["com.sun.jna.Pointer","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_status_t"] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_hmac_fn",
-  "methods":[{"name":"hmac","parameterTypes":["com.sun.jna.Pointer","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","com.mongodb.crypt.capi.CAPI$mongocrypt_status_t"] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_log_fn_t",
-  "methods":[{"name":"log","parameterTypes":["int","com.mongodb.crypt.capi.CAPI$cstring","int","com.sun.jna.Pointer"] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_random_fn",
-  "methods":[{"name":"random","parameterTypes":["com.sun.jna.Pointer","com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t","int","com.mongodb.crypt.capi.CAPI$mongocrypt_status_t"] }]
-},
-{
   "name":"com.mongodb.internal.graalvm.NativeImageApp",
   "methods":[{"name":"main","parameterTypes":["java.lang.String[]"] }]
 },

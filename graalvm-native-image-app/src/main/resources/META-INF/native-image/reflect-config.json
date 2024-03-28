@@ -66,100 +66,6 @@
   "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
 },
 {
-  "name":"com.mongodb.BasicDBObject",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.mongodb.MongoNamespace",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
-},
-{
-  "name":"com.mongodb.WriteConcern",
-  "allPublicFields":true
-},
-{
-  "name":"com.mongodb.client.model.changestream.ChangeStreamDocument",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","org.bson.BsonDocument","org.bson.BsonDocument","org.bson.BsonDocument","java.lang.Object","java.lang.Object","org.bson.BsonDocument","org.bson.BsonTimestamp","com.mongodb.client.model.changestream.UpdateDescription","org.bson.BsonInt64","org.bson.BsonDocument","org.bson.BsonDateTime","com.mongodb.client.model.changestream.SplitEvent","org.bson.BsonDocument"] }]
-},
-{
-  "name":"com.mongodb.client.model.changestream.SplitEvent",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
-},
-{
-  "name":"com.mongodb.client.model.changestream.TruncatedArray",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true
-},
-{
-  "name":"com.mongodb.client.model.changestream.UpdateDescription",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["java.util.List","org.bson.BsonDocument","java.util.List","org.bson.BsonDocument"] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI",
-  "allPublicFields":true,
-  "queryAllDeclaredMethods":true
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$cstring",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_binary_t",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_crypto_fn",
-  "queryAllDeclaredMethods":true,
-  "queryAllPublicMethods":true
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_ctx_t",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_hash_fn",
-  "queryAllDeclaredMethods":true,
-  "queryAllPublicMethods":true
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_hmac_fn",
-  "queryAllDeclaredMethods":true,
-  "queryAllPublicMethods":true
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_kms_ctx_t",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_log_fn_t",
-  "queryAllDeclaredMethods":true,
-  "queryAllPublicMethods":true
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_random_fn",
-  "queryAllDeclaredMethods":true,
-  "queryAllPublicMethods":true
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_status_t",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.mongodb.crypt.capi.CAPI$mongocrypt_t",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"com.sun.crypto.provider.AESCipher$General",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -286,15 +192,6 @@
 {
   "name":"long",
   "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
-},
-{
-  "name":"org.bson.codecs.kotlin.DataClassCodecProvider"
-},
-{
-  "name":"org.bson.codecs.kotlinx.KotlinSerializerCodecProvider"
-},
-{
-  "name":"org.bson.codecs.record.RecordCodecProvider"
 },
 {
   "name":"org.slf4j.Logger"
