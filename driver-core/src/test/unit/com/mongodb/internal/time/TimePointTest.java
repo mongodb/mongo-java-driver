@@ -51,7 +51,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-final class TimePointTest {
+public final class TimePointTest {
 
     private final AtomicLong currentNanos = new AtomicLong();
     private final TimePoint mockTimePoint = new TimePoint(0L) {
@@ -61,27 +61,21 @@ final class TimePointTest {
         }
     };
 
-    @Test
-    void timeoutRun() {
-        Timeout timeout = Timeout.infinite();
+    public static boolean isInfinite(final Timeout timeout) {
+        return timeout.call(NANOSECONDS, () -> true, (ns) -> false, () -> false);
+    }
 
-        Long t = timeout.call(MILLISECONDS, () -> {
-            return -1L;
-        }, (ms) -> {
-            return ms;
-        }, () -> {
-            return 0L;
-        });
+    public static boolean hasExpired(final Timeout timeout) {
+        return timeout.call(NANOSECONDS, () -> false, (ns) -> false, () -> true);
+    }
 
-        Long t2 = timeout.call(MILLISECONDS,
-                () -> -1L,
-                (ms) -> ms,
+    public static long remaining(final Timeout timeout, final TimeUnit unit) {
+        return timeout.checkedCall(unit,
+                () -> {
+                    throw new AssertionError("Infinite TimePoints have infinite remaining time");
+                },
+                (time) -> time,
                 () -> 0L);
-
-
-        assertEquals(-1, t);
-        assertEquals(-1, t2);
-        // TODO-CSOT expand
     }
 
     // Timeout
@@ -89,10 +83,10 @@ final class TimePointTest {
     @Test
     void timeoutExpiresIn() {
         assertAll(
-                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES)),
-                () -> assertTrue(Timeout.expiresIn(0L, NANOSECONDS).hasExpired()),
-                () -> assertFalse(Timeout.expiresIn(1L, NANOSECONDS).isInfinite()),
-                () -> assertFalse(Timeout.expiresIn(1000, MINUTES).hasExpired()));
+                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED)),
+                () -> assertTrue(hasExpired(Timeout.expiresIn(0L, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED))),
+                () -> assertFalse(isInfinite(Timeout.expiresIn(1L, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED))),
+                () -> assertFalse(hasExpired(Timeout.expiresIn(1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED))));
     }
 
     @Test
@@ -110,7 +104,7 @@ final class TimePointTest {
 
         reset(condition);
 
-        Timeout.expiresIn(100, NANOSECONDS).awaitOn(condition, () -> "ignored");
+        Timeout.expiresIn(100, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED).awaitOn(condition, () -> "ignored");
         verify(condition, times(1)).awaitNanos(anyLong());
         verifyNoMoreInteractions(condition);
     }
@@ -125,7 +119,7 @@ final class TimePointTest {
 
         reset(latch);
 
-        Timeout.expiresIn(100, NANOSECONDS).awaitOn(latch, () -> "ignored");
+        Timeout.expiresIn(100, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED).awaitOn(latch, () -> "ignored");
         verify(latch, times(1)).await(anyLong(), any(TimeUnit.class));
         verifyNoMoreInteractions(latch);
     }
@@ -153,10 +147,8 @@ final class TimePointTest {
     @Test
     void isInfinite() {
         assertAll(
-                () -> assertTrue(TimePoint.infinite().isInfiniteLocal()),
-                () -> assertFalse(TimePoint.now().isInfiniteLocal()),
-                () -> assertTrue(Timeout.infinite().isInfinite()),
-                () -> assertFalse(TimePoint.now().isInfinite()));
+                () -> assertTrue(isInfinite(Timeout.infinite())),
+                () -> assertFalse(isInfinite(TimePoint.now())));
     }
 
     @Test
@@ -171,24 +163,19 @@ final class TimePointTest {
     @Test
     void remaining() {
         assertAll(
-                () -> assertThrows(AssertionError.class, () -> TimePoint.infinite().remaining(NANOSECONDS)),
-                () -> assertEquals(0, TimePoint.now().remaining(NANOSECONDS)),
-                () -> assertThrows(AssertionError.class, () -> TimePoint.infinite().remainingLocal(NANOSECONDS)),
-                () -> assertEquals(0, TimePoint.now().remainingLocal(NANOSECONDS))
+                () -> assertThrows(AssertionError.class, () -> remaining(TimePoint.infinite(), NANOSECONDS)),
+                () -> assertEquals(0, remaining(TimePoint.now(), NANOSECONDS))
         );
         Timeout earlier = TimePoint.at(System.nanoTime() - 100);
-        assertEquals(0, earlier.remaining(NANOSECONDS));
-        assertTrue(earlier.hasExpired());
+        assertEquals(0, remaining(earlier, NANOSECONDS));
+        assertTrue(hasExpired(earlier));
 
         currentNanos.set(-100);
-        assertEquals(100, mockTimePoint.remaining(NANOSECONDS));
-        assertEquals(100, mockTimePoint.remainingLocal(NANOSECONDS));
+        assertEquals(100, remaining(mockTimePoint, NANOSECONDS));
         currentNanos.set(-1000000);
-        assertEquals(1, mockTimePoint.remaining(MILLISECONDS));
-        assertEquals(1, mockTimePoint.remainingLocal(MILLISECONDS));
+        assertEquals(1, remaining(mockTimePoint, MILLISECONDS));
         currentNanos.set(-1000000 + 1);
-        assertEquals(0, mockTimePoint.remaining(MILLISECONDS));
-        assertEquals(0, mockTimePoint.remainingLocal(MILLISECONDS));
+        assertEquals(0, remaining(mockTimePoint, MILLISECONDS));
     }
 
     @ParameterizedTest
@@ -196,9 +183,9 @@ final class TimePointTest {
     void remaining(final long durationNanos) {
         TimePoint start = TimePoint.now();
         Timeout timeout = start.timeoutAfterOrInfiniteIfNegative(durationNanos, NANOSECONDS);
-        while (!timeout.hasExpired()) {
+        while (!hasExpired(timeout)) {
             long remainingNanosUpperBound = Math.max(0, durationNanos - TimePoint.now().durationSince(start).toNanos());
-            long remainingNanos = timeout.remaining(NANOSECONDS);
+            long remainingNanos = remaining(timeout, NANOSECONDS);
             long remainingNanosLowerBound = Math.max(0, durationNanos - TimePoint.now().durationSince(start).toNanos());
             assertTrue(remainingNanos >= remainingNanosLowerBound, "remaining nanos is too low");
             assertTrue(remainingNanos <= remainingNanosUpperBound, "remaining nanos is too high");
@@ -228,11 +215,10 @@ final class TimePointTest {
     @Test
     void hasExpired() {
         assertAll(
-                () -> assertFalse(Timeout.infinite().hasExpired()),
-                () -> assertTrue(TimePoint.now().hasExpiredLocal()),
-                () -> assertTrue(TimePoint.now().hasExpired()),
-                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES)),
-                () -> assertFalse(Timeout.expiresIn(1000, MINUTES).hasExpired()));
+                () -> assertFalse(hasExpired(Timeout.infinite())),
+                () -> assertTrue(hasExpired(TimePoint.now())),
+                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED)),
+                () -> assertFalse(hasExpired(Timeout.expiresIn(1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED))));
     }
 
     @ParameterizedTest
@@ -267,8 +253,7 @@ final class TimePointTest {
     void fromNowOrInfinite() {
         TimePoint timePoint = TimePoint.now();
         assertAll(
-                () -> assertFalse(TimePoint.now().timeoutAfterOrInfiniteIfNegative(1L, NANOSECONDS).isInfiniteLocal()),
-                () -> assertFalse(TimePoint.now().timeoutAfterOrInfiniteIfNegative(1L, NANOSECONDS).isInfinite()),
+                () -> assertFalse(isInfinite(TimePoint.now().timeoutAfterOrInfiniteIfNegative(1L, NANOSECONDS))),
                 () -> assertEquals(timePoint, timePoint.timeoutAfterOrInfiniteIfNegative(0, NANOSECONDS)),
                 () -> assertNotEquals(TimePoint.infinite(), timePoint.timeoutAfterOrInfiniteIfNegative(1, NANOSECONDS)),
                 () -> assertNotEquals(timePoint, timePoint.timeoutAfterOrInfiniteIfNegative(1, NANOSECONDS)),
@@ -325,8 +310,7 @@ final class TimePointTest {
         TimePoint start = TimePoint.now();
         TimePoint end = start.timeoutAfterOrInfiniteIfNegative(duration, unit);
         if (duration < 0) {
-            assertTrue(end.isInfiniteLocal());
-            assertTrue(end.isInfinite());
+            assertTrue(isInfinite(end));
         } else {
             assertEquals(unit.toNanos(duration), end.durationSince(start).toNanos());
         }

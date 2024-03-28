@@ -138,7 +138,7 @@ abstract class BaseCluster implements Cluster {
                         serverSelector, currentDescription);
                 return serverTuple;
             }
-            computedServerSelectionTimeout.ifExpired(() -> {
+            computedServerSelectionTimeout.onExpired(() -> {
                 logAndThrowTimeoutException(operationContext.getId(), serverSelector, currentDescription);
             });
             if (!selectionWaitingLogged) {
@@ -240,7 +240,7 @@ abstract class BaseCluster implements Cluster {
     private Timeout startMinWaitHeartbeatTimeout() {
         long minHeartbeatFrequency = serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS);
         minHeartbeatFrequency = Math.max(0, minHeartbeatFrequency);
-        return Timeout.expiresIn(minHeartbeatFrequency, NANOSECONDS);
+        return Timeout.expiresIn(minHeartbeatFrequency, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED);
     }
 
     private boolean handleServerSelectionRequest(
@@ -267,7 +267,7 @@ abstract class BaseCluster implements Cluster {
                 }
             }
 
-            Timeout.ifExistsAndExpired(request.getTimeout(), () -> {
+            Timeout.onExistsAndExpired(request.getTimeout(), () -> {
                 logAndThrowTimeoutException(request.getOperationId(), request.originalSelector, description);
             });
             return false;

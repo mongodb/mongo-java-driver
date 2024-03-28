@@ -78,7 +78,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     @Override
     public Timeout shortenBy(final long amount, final TimeUnit timeUnit) {
-        if (isInfiniteLocal()) {
+        if (isInfinite()) {
             return this; // shortening (lengthening) an infinite timeout does nothing
         }
         long durationNanos = NANOSECONDS.convert(amount, timeUnit);
@@ -89,10 +89,10 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     public <T, E extends Exception> T checkedCall(final TimeUnit timeUnit,
             final CheckedSupplier<T, E> onInfinite, final CheckedFunction<Long, T, E> onHasRemaining,
             final CheckedSupplier<T, E> onExpired) throws E {
-        if (this.isInfiniteLocal()) {
+        if (this.isInfinite()) {
             return onInfinite.get();
         }
-        long remaining = remainingLocal(timeUnit);
+        long remaining = remaining(timeUnit);
         if (remaining <= 0) {
             return onExpired.get();
         } else {
@@ -103,7 +103,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     /**
      * @return true if this timepoint is infinite.
      */
-    public boolean isInfiniteLocal() {
+    private boolean isInfinite() {
         return nanos == null;
     }
 
@@ -117,7 +117,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     /**
      * The number of whole time units that remain until this TimePoint
-     * {@link #hasExpiredLocal()}. This should not be used to check for expiry,
+     * {@link #hasExpired()}. This should not be used to check for expiry,
      * but can be used to supply a remaining value, in the finest-grained
      * TimeUnit available, to some method that may time out.
      * This method must not be used with infinite TimePoints.
@@ -125,9 +125,9 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
      * @param unit the time unit
      * @return the remaining time
      * @throws AssertionError if the timeout is infinite. Always check if the
-     * timeout {@link #isInfiniteLocal()} before calling.
+     * timeout {@link #isInfinite()} before calling.
      */
-    public long remainingLocal(final TimeUnit unit) {
+    private long remaining(final TimeUnit unit) {
         if (nanos == null) {
             throw new AssertionError("Infinite TimePoints have infinite remaining time");
         }
@@ -141,7 +141,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
      * This method is functionally equivalent to {@code TimePoint.now().durationSince(this)}.
      * Note that the duration will represent fully-elapsed whole units.
      *
-     * @throws AssertionError If this TimePoint is {@linkplain #isInfiniteLocal() infinite}.
+     * @throws AssertionError If this TimePoint is {@linkplain #isInfinite() infinite}.
      * @see #durationSince(TimePoint)
      */
     public Duration elapsed() {
@@ -149,18 +149,6 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
             throw new AssertionError("No time can elapse since an infinite TimePoint");
         }
         return Duration.ofNanos(currentNanos() - nanos);
-    }
-
-    /**
-     * @return true if this timepoint has passed / elapsed. Always false
-     * if this timepoint is infinite.
-     */
-    public boolean hasExpiredLocal() {
-        if (isInfiniteLocal()) {
-            return false;
-        }
-        Duration elapsed = elapsed();
-        return !elapsed.isNegative() && !elapsed.isZero();
     }
 
     /**

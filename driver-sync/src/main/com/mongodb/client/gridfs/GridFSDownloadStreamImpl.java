@@ -213,7 +213,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     }
 
     private void checkTimeout() {
-        Timeout.ifExistsAndExpired(timeout, () -> {
+        Timeout.onExistsAndExpired(timeout, () -> {
             throw new MongoOperationTimeoutException("The GridFS download stream has timed out");
         });
     }

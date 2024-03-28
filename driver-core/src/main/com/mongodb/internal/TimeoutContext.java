@@ -234,7 +234,7 @@ public class TimeoutContext {
         // null timeout treated as infinite will be later than the other
 
         return Timeout.earliest(
-                Timeout.expiresInWithZeroAsInfinite(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS),
+                Timeout.expiresIn(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS, Timeout.ZeroDurationIs.INFINITE),
                 Timeout.nullAsInfinite(timeout));
     }
 
@@ -302,7 +302,7 @@ public class TimeoutContext {
     @Nullable
     public static Timeout startTimeout(@Nullable final Long timeoutMS) {
         if (timeoutMS != null) {
-            return Timeout.expiresInWithZeroAsInfinite(timeoutMS, MILLISECONDS);
+            return Timeout.expiresIn(timeoutMS, MILLISECONDS, Timeout.ZeroDurationIs.INFINITE);
         }
         return null;
     }

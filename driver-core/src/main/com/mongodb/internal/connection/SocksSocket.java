@@ -84,7 +84,7 @@ public final class SocksSocket extends Socket {
         // `Socket` requires `IllegalArgumentException`
         isTrueArgument("timeoutMs", timeoutMs >= 0);
         try {
-            Timeout timeout = Timeout.expiresInWithZeroAsInfinite(timeoutMs, MILLISECONDS);
+            Timeout timeout = Timeout.expiresIn(timeoutMs, MILLISECONDS, Timeout.ZeroDurationIs.INFINITE);
             InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
             assertTrue(unresolvedAddress.isUnresolved());
             this.remoteAddress = unresolvedAddress;

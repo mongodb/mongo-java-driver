@@ -1072,7 +1072,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                         & !stateAndGeneration.throwIfClosedOrPaused()
                         & (availableConnection = tryGetAvailable ? tryGetAvailableConnection() : null) == null) {
 
-                    Timeout.ifExistsAndExpired(waitQueueTimeout, () -> {
+                    Timeout.onExistsAndExpired(waitQueueTimeout, () -> {
                         throw createTimeoutException(startTime);
                     });
                     waitQueueTimeout.awaitOn(permitAvailableOrHandedOverOrClosedOrPausedCondition,

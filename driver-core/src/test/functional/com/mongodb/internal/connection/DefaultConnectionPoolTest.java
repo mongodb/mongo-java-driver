@@ -31,6 +31,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.internal.inject.OptionalProvider;
 import com.mongodb.internal.inject.SameObjectProvider;
+import com.mongodb.internal.time.TimePointTest;
 import com.mongodb.internal.time.Timeout;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -529,7 +530,7 @@ public class DefaultConnectionPoolTest {
             }
         };
         Collection<Future<?>> tasks = new ArrayList<>();
-        Timeout timeout = Timeout.expiresIn(durationNanos, NANOSECONDS);
+        Timeout timeout = Timeout.expiresIn(durationNanos, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED);
         for (int i = 0; i < concurrentUsersCount; i++) {
             if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously and check in
                 tasks.add(executor.submit(() -> {
@@ -553,7 +554,7 @@ public class DefaultConnectionPoolTest {
             } else if (checkoutAsync) {//check out asynchronously and check in
                 tasks.add(executor.submit(() -> {
                     while (!Thread.currentThread().isInterrupted()) {
-                        if (timeout.hasExpired()) {
+                        if (TimePointTest.hasExpired(timeout)) {
                             break;
                         }
                         spontaneouslyInvalidateReady.run();

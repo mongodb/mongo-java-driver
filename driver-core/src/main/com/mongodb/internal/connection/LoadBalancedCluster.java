@@ -225,7 +225,7 @@ final class LoadBalancedCluster implements Cluster {
                     throw createShutdownException();
                 }
 
-                serverSelectionTimeout.ifExpired(() -> {
+                serverSelectionTimeout.onExpired(() -> {
                     throw createTimeoutException();
                 });
                 serverSelectionTimeout.awaitOn(condition, () -> format("resolving SRV records for %s", settings.getSrvHost()));

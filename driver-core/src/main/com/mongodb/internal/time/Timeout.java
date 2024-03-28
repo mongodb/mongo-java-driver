@@ -21,6 +21,7 @@ import com.mongodb.internal.function.CheckedFunction;
 import com.mongodb.internal.function.CheckedRunnable;
 import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.lang.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,36 +60,6 @@ public interface Timeout {
         });
     }
 
-
-    /**
-     * @see TimePoint#isInfiniteLocal()
-     */
-    // TODO-CSOT refactor: make static, move to tests
-    default boolean isInfinite() {
-        return call(NANOSECONDS, () -> true, (ns) -> false, () -> false);
-    }
-
-    /**
-     * @see TimePoint#hasExpiredLocal()
-     */
-    // TODO-CSOT refactor: make static, move to tests
-    default boolean hasExpired() {
-        return call(NANOSECONDS, () -> false, (ns) -> false, () -> true);
-    }
-
-    /**
-     * @see TimePoint#remainingLocal
-     */
-    // TODO-CSOT refactor: make static, move to tests
-    default long remaining(final TimeUnit unit) {
-        return checkedCall(unit,
-                () -> {
-                    throw new AssertionError("Infinite TimePoints have infinite remaining time");
-                },
-                (time) -> time,
-                () -> 0L);
-    }
-
     /**
      * @return an infinite (non-expiring) timeout
      */
@@ -105,24 +76,26 @@ public interface Timeout {
     }
 
     /**
-     * @param duration the non-negative duration, in the specified time unit.
-     *                 0 implies expired.
-     * @param unit the time unit.
+     * @param duration the non-negative duration, in the specified time unit
+     * @param unit the time unit
+     * @param zeroDurationIs what to interpret a 0 duration as (infinite or expired)
      * @return a timeout that expires in the specified duration after now.
      */
-    static Timeout expiresIn(final long duration, final TimeUnit unit) {
+    @NotNull
+    static Timeout expiresIn(final long duration, final TimeUnit unit, final ZeroDurationIs zeroDurationIs) {
         // TODO (CSOT) confirm that all usages in final PR always supply a non-negative duration
         if (duration < 0) {
             throw new AssertionError("Timeouts must not be in the past");
         }
-        return TimePoint.now().timeoutAfterOrInfiniteIfNegative(duration, unit);
-    }
 
-    static Timeout expiresInWithZeroAsInfinite(final long duration, final TimeUnit unit) {
-        if (duration == 0) {
-            return Timeout.infinite();
+        if (zeroDurationIs == ZeroDurationIs.INFINITE) {
+            if (duration == 0) {
+                return Timeout.infinite();
+            }
+            return expiresIn(duration, unit, ZeroDurationIs.EXPIRED);
+        } else {
+            return TimePoint.now().timeoutAfterOrInfiniteIfNegative(duration, unit);
         }
-        return expiresIn(duration, unit);
     }
 
     /**
@@ -138,7 +111,7 @@ public interface Timeout {
      * {@linkplain Condition#awaitNanos(long) Awaits} on the provided
      * condition. Will {@linkplain Condition#await() await} without a waiting
      * time if this timeout is infinite.
-     * {@linkplain #ifExistsAndExpired(Timeout, Runnable) Expiry} is not
+     * {@linkplain #onExistsAndExpired(Timeout, Runnable) Expiry} is not
      * checked by this method, and should be called outside of this method.
      * @param condition the condition.
      * @param action supplies the name of the action, for {@link MongoInterruptedException}
@@ -160,7 +133,7 @@ public interface Timeout {
      * {@linkplain CountDownLatch#await(long, TimeUnit) Awaits} on the provided
      * condition. Will {@linkplain CountDownLatch#await() await} without a waiting
      * time if this timeout is infinite.
-     * {@linkplain #ifExistsAndExpired(Timeout, Runnable) Expiry} is not
+     * {@linkplain #onExistsAndExpired(Timeout, Runnable) Expiry} is not
      * checked by this method, and should be called outside of this method.
      * @param latch the latch.
      * @param action supplies the name of the action, for {@link MongoInterruptedException}
@@ -192,7 +165,6 @@ public interface Timeout {
      * @return the result provided by the branch
      * @param <T> the type of the result
      */
-    // TODO-CSOT rename apply to? accept...? passTo? callWith? callUsing?
     default <T> T call(final TimeUnit timeUnit,
             final Supplier<T> onInfinite, final LongFunction<T> onHasRemaining,
             final Supplier<T> onExpired) {
@@ -247,11 +219,11 @@ public interface Timeout {
         });
     }
 
-    default void ifExpired(final Runnable onExpired) {
-        ifExistsAndExpired(this, onExpired);
+    default void onExpired(final Runnable onExpired) {
+        onExistsAndExpired(this, onExpired);
     }
 
-    static void ifExistsAndExpired(@Nullable final Timeout t, final Runnable onExpired) {
+    static void onExistsAndExpired(@Nullable final Timeout t, final Runnable onExpired) {
         if (t == null) {
             return;
         }
@@ -259,5 +231,9 @@ public interface Timeout {
                 () -> {},
                 (ns) -> {},
                 () -> onExpired.run());
+    }
+
+    enum ZeroDurationIs {
+        EXPIRED, INFINITE
     }
 }

@@ -37,7 +37,6 @@ public final class TimeoutHelper {
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                final String message,
                                                                @Nullable final Timeout timeout) {
-        // TODO-CSOT why not nanoseconds here, and below?
         return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> collection,
                 (ms) -> collection.withTimeout(ms, MILLISECONDS),

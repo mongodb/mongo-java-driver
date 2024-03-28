@@ -349,7 +349,7 @@ public class InternalStreamConnection implements InternalConnection {
         CommandEventSender commandEventSender;
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
                 throw TimeoutContext.createMongoRoundTripTimeoutException();
             });
             message.encode(bsonOutput, operationContext);
@@ -418,7 +418,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
             throw TimeoutContext.createMongoRoundTripTimeoutException();
         });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
@@ -432,7 +432,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
-        Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
             throw createMongoOperationTimeoutExceptionAndClose(commandEventSender);
         });
 
@@ -520,7 +520,7 @@ public class InternalStreamConnection implements InternalConnection {
                 callback.onResult(null, null);
             } else {
                 boolean[] shouldReturn = {false};
-                Timeout.ifExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+                Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
                     callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
                     shouldReturn[0] = true;
                 });

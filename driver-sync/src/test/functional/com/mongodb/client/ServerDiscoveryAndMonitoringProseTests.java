@@ -28,6 +28,7 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.TimePointTest;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -267,7 +268,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)
             throws InterruptedException {
-        assertPoll(queue, allowed, required, Timeout.expiresIn(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
+        assertPoll(queue, allowed, required, Timeout.expiresIn(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS, Timeout.ZeroDurationIs.EXPIRED));
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required,
@@ -292,7 +293,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                     return;
                 }
             }
-            if (timeout.hasExpired()) {
+            if (TimePointTest.hasExpired(timeout)) {
                 fail(format("encountered %s, required %s", encountered, required));
             }
         }
