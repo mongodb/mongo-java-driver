@@ -334,14 +334,14 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     private PooledConnection getPooledConnection(final Timeout waitQueueTimeout, final StartTime startTime) throws MongoTimeoutException {
         try {
-            UsageTrackingInternalConnection internalConnection = waitQueueTimeout.run(NANOSECONDS,
-                    (Supplier<UsageTrackingInternalConnection>) () -> pool.get(-1L, NANOSECONDS),
+            UsageTrackingInternalConnection internalConnection = waitQueueTimeout.call(NANOSECONDS,
+                    () -> pool.get(-1L, NANOSECONDS),
                     (t) -> pool.get(t, NANOSECONDS),
                     () -> pool.get(0L, NANOSECONDS));
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
-                internalConnection = waitQueueTimeout.run(NANOSECONDS,
-                        (Supplier<UsageTrackingInternalConnection>) () -> pool.get(-1L, NANOSECONDS),
+                internalConnection = waitQueueTimeout.call(NANOSECONDS,
+                        () -> pool.get(-1L, NANOSECONDS),
                         (t) -> pool.get(t, NANOSECONDS),
                         () -> pool.get(0L, NANOSECONDS));
             }

@@ -16,8 +16,8 @@
 
 package com.mongodb.reactivestreams.client.internal.gridfs;
 
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoGridFSException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -109,7 +108,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     public void subscribe(final Subscriber<? super Void> s) {
         Mono.defer(() -> {
             AtomicBoolean terminated = new AtomicBoolean(false);
-            Timeout timeout = TimeoutContext.calculateTimeout(timeoutMs);
+            Timeout timeout = TimeoutContext.startTimeout(timeoutMs);
             return createCheckAndCreateIndexesMono(timeout)
                     .then(createSaveChunksMono(terminated, timeout))
                     .flatMap(lengthInBytes -> createSaveFileDataMono(terminated, lengthInBytes, timeout))
@@ -267,8 +266,8 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
      * @return Mono that emits a {@link MongoOperationTimeoutException}.
      */
     private static Mono<MongoOperationTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
-        return Timeout.nullAsInfinite(timeout).run(NANOSECONDS,
-                (Supplier<Mono<MongoOperationTimeoutException>>) () -> Mono.never(),
+        return Timeout.nullAsInfinite(timeout).call(NANOSECONDS,
+                () -> Mono.never(),
                 (ms) -> Mono.delay(ofMillis(ms)).then(createTimeoutMonoError()),
                 () -> createTimeoutMonoError());
     }

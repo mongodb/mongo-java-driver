@@ -533,9 +533,8 @@ public class DefaultConnectionPoolTest {
         for (int i = 0; i < concurrentUsersCount; i++) {
             if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously and check in
                 tasks.add(executor.submit(() -> {
-                    // TODO-CSOT this and below seem like they cannot be refactored into a typical "timeout.run"
                     while (!Thread.currentThread().isInterrupted()) {
-                        if (timeout.hasExpired()) {
+                        if (timeout.call(NANOSECONDS, () -> false, (ns) -> false, () -> true)) {
                             break;
                         }
                         spontaneouslyInvalidateReady.run();

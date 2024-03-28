@@ -65,13 +65,7 @@ public interface Timeout {
      */
     // TODO-CSOT refactor: make static, move to tests
     default boolean isInfinite() {
-        return run(NANOSECONDS, () -> {
-            return true;
-        }, (ns) -> {
-            return false;
-        }, () -> {
-            return false;
-        });
+        return call(NANOSECONDS, () -> true, (ns) -> false, () -> false);
     }
 
     /**
@@ -79,7 +73,7 @@ public interface Timeout {
      */
     // TODO-CSOT refactor: make static, move to tests
     default boolean hasExpired() {
-        return run(NANOSECONDS, () -> false, (ns) -> false, () -> true);
+        return call(NANOSECONDS, () -> false, (ns) -> false, () -> true);
     }
 
     /**
@@ -87,7 +81,7 @@ public interface Timeout {
      */
     // TODO-CSOT refactor: make static, move to tests
     default long remaining(final TimeUnit unit) {
-        return checkedRun(unit,
+        return checkedCall(unit,
                 () -> {
                     throw new AssertionError("Infinite TimePoints have infinite remaining time");
                 },
@@ -150,7 +144,6 @@ public interface Timeout {
      * @param action supplies the name of the action, for {@link MongoInterruptedException}
      */
     default void awaitOn(final Condition condition, final Supplier<String> action) {
-        // TODO-CSOT consider adding expired branch to these await methods
         try {
             // ignore result, the timeout will track this remaining time
             //noinspection ResultOfMethodCallIgnored
@@ -186,9 +179,8 @@ public interface Timeout {
     }
 
     /**
-     * Run one of 3 possible branches depending on the state of the timeout,
-     * and returns the result.
-     *
+     * Call one of 3 possible branches depending on the state of the timeout,
+     * and return the result.
      * @param timeUnit the positive (non-zero) remaining time to provide to the
      *                 {@code onHasRemaining} branch. The underlying nano time
      *                 is rounded down to the given time unit. If 0, the timeout
@@ -200,31 +192,31 @@ public interface Timeout {
      * @return the result provided by the branch
      * @param <T> the type of the result
      */
-    default <T> T run(final TimeUnit timeUnit,
+    // TODO-CSOT rename apply to? accept...? passTo? callWith? callUsing?
+    default <T> T call(final TimeUnit timeUnit,
             final Supplier<T> onInfinite, final LongFunction<T> onHasRemaining,
             final Supplier<T> onExpired) {
-        return checkedRun(timeUnit, onInfinite::get, onHasRemaining::apply, onExpired::get);
+        return checkedCall(timeUnit, onInfinite::get, onHasRemaining::apply, onExpired::get);
     }
 
+    /**
+     * Call, but throwing a checked exception.
+     * @see #call(TimeUnit, Supplier, LongFunction, Supplier)
+     * @param <E> the checked exception type
+     * @throws E the checked exception
+     */
+    <T, E extends Exception> T checkedCall(TimeUnit timeUnit,
+            CheckedSupplier<T, E> onInfinite, CheckedFunction<Long, T, E> onHasRemaining,
+            CheckedSupplier<T, E> onExpired) throws E;
+
+    /**
+     * Run one of 3 possible branches depending on the state of the timeout.
+     * @see #call(TimeUnit, Supplier, LongFunction, Supplier)
+     */
     default void run(final TimeUnit timeUnit,
             final Runnable onInfinite, final LongConsumer onHasRemaining,
             final Runnable onExpired) {
-        this.run(timeUnit, () -> {
-            onInfinite.run();
-            return null;
-        }, (t) -> {
-            onHasRemaining.accept(t);
-            return null;
-        }, () -> {
-            onExpired.run();
-            return null;
-        });
-    }
-
-    default <E extends Exception> void checkedRun(final TimeUnit timeUnit,
-            final CheckedRunnable<E> onInfinite, final CheckedConsumer<Long, E> onHasRemaining,
-            final CheckedRunnable<E> onExpired) throws E {
-        this.checkedRun(timeUnit, () -> {
+        this.call(timeUnit, () -> {
             onInfinite.run();
             return null;
         }, (t) -> {
@@ -238,23 +230,21 @@ public interface Timeout {
 
     /**
      * Run, but throwing a checked exception.
-     * @see #run(TimeUnit, Supplier, LongFunction, Supplier)
-     * @param <E> the checked exception type
-     * @throws E the checked exception
+     * @see #checkedCall(TimeUnit, CheckedSupplier, CheckedFunction, CheckedSupplier)
      */
-    <T, E extends Exception> T checkedRun(TimeUnit timeUnit,
-            CheckedSupplier<T, E> onInfinite, CheckedFunction<Long, T, E> onHasRemaining,
-            CheckedSupplier<T, E> onExpired) throws E;
-
-    /**
-     * Checked run, but returning nullable values
-     * @see #checkedRun(TimeUnit, CheckedSupplier, CheckedFunction, CheckedSupplier)
-     */
-    @Nullable
-    default <T, E extends Exception> T checkedRunNullable(final TimeUnit timeUnit,
-            final CheckedSupplier<T, E> onInfinite, final CheckedFunction<Long, T, E> onHasRemaining,
-            final CheckedSupplier<T, E> onExpired) throws E {
-        return checkedRun(timeUnit, onInfinite, onHasRemaining, onExpired);
+    default <E extends Exception> void checkedRun(final TimeUnit timeUnit,
+            final CheckedRunnable<E> onInfinite, final CheckedConsumer<Long, E> onHasRemaining,
+            final CheckedRunnable<E> onExpired) throws E {
+        this.checkedCall(timeUnit, () -> {
+            onInfinite.run();
+            return null;
+        }, (t) -> {
+            onHasRemaining.accept(t);
+            return null;
+        }, () -> {
+            onExpired.run();
+            return null;
+        });
     }
 
     default void ifExpired(final Runnable onExpired) {

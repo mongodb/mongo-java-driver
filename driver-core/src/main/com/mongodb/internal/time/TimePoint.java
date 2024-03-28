@@ -86,7 +86,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     }
 
     @Override
-    public <T, E extends Exception> T checkedRun(final TimeUnit timeUnit,
+    public <T, E extends Exception> T checkedCall(final TimeUnit timeUnit,
             final CheckedSupplier<T, E> onInfinite, final CheckedFunction<Long, T, E> onHasRemaining,
             final CheckedSupplier<T, E> onExpired) throws E {
         if (this.isInfiniteLocal()) {

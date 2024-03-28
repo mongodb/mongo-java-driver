@@ -358,7 +358,7 @@ final class LoadBalancedCluster implements Cluster {
 
                         Timeout nextTimeout = next.getTimeout();
                         Timeout waitTimeNanosFinal = waitTimeNanos;
-                        waitTimeNanos = nextTimeout.run(NANOSECONDS,
+                        waitTimeNanos = nextTimeout.call(NANOSECONDS,
                                 () -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
                                 (ms) -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
                                 () -> {

@@ -460,7 +460,6 @@ abstract class BaseCluster implements Cluster {
                     }
                 }
 
-                // TODO-CSOT because min heartbeat cannot be infinite, infinite is being used to mark the second branch
                 if (someWaitersNotSatisfied) {
                     connect();
                 }
@@ -508,8 +507,10 @@ abstract class BaseCluster implements Cluster {
                     asList(
                             new Entry(OPERATION, null),
                             new Entry(OPERATION_ID, operationId),
-                            new Entry(REMAINING_TIME_MS, timeout.run(MILLISECONDS, () -> "infinite", (ms) -> ms, () -> 0L)),
-                            // TODO-CSOT the above extracts values, but the alternative seems worse
+                            timeout.call(MILLISECONDS,
+                                    () -> new Entry(REMAINING_TIME_MS, "infinite"),
+                                    (ms) -> new Entry(REMAINING_TIME_MS, ms),
+                                    () -> new Entry(REMAINING_TIME_MS, 0L)),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Waiting for server to become available for operation[ {}] with ID {}.[ Remaining time: {} ms.]"

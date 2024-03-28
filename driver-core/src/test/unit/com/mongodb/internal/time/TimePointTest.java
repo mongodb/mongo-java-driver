@@ -65,7 +65,7 @@ final class TimePointTest {
     void timeoutRun() {
         Timeout timeout = Timeout.infinite();
 
-        Long t = timeout.run(MILLISECONDS, () -> {
+        Long t = timeout.call(MILLISECONDS, () -> {
             return -1L;
         }, (ms) -> {
             return ms;
@@ -73,7 +73,7 @@ final class TimePointTest {
             return 0L;
         });
 
-        Long t2 = timeout.run(MILLISECONDS,
+        Long t2 = timeout.call(MILLISECONDS,
                 () -> -1L,
                 (ms) -> ms,
                 () -> 0L);

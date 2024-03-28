@@ -274,10 +274,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                    final Timeout timeout) throws InterruptedException {
         Set<Class<?>> encountered = new HashSet<>();
         while (true) {
-            Object element = timeout.checkedRunNullable(MILLISECONDS,
-                    () -> queue.take(),
-                    (ms) -> queue.poll(timeout.remaining(NANOSECONDS), NANOSECONDS),
-                    () -> queue.poll());
+            Object element = poll(queue, timeout);
             if (element != null) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Polled " + element);
@@ -299,6 +296,23 @@ public class ServerDiscoveryAndMonitoringProseTests {
                 fail(format("encountered %s, required %s", encountered, required));
             }
         }
+    }
+
+    @Nullable
+    private static Object poll(final BlockingQueue<?> queue, final Timeout timeout) throws InterruptedException {
+        long remainingNs = timeout.call(NANOSECONDS,
+                () -> -1L,
+                (ns) -> ns,
+                () -> 0L);
+        Object element;
+        if (remainingNs == -1) {
+            element = queue.take();
+        } else if (remainingNs == 0) {
+            element = queue.poll();
+        } else {
+            element = queue.poll(remainingNs, NANOSECONDS);
+        }
+        return element;
     }
 
     private static Optional<Class<?>> findAssignable(final Class<?> from, final Set<Class<?>> toAnyOf) {
