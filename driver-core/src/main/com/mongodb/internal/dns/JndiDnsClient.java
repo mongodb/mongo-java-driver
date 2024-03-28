@@ -32,7 +32,10 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 
-final class JndiDnsClient implements DnsClient {
+/**
+ * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ */
+public final class JndiDnsClient implements DnsClient {
 
     @Override
     public List<String> getResourceRecordData(final String name, final String type) throws DnsException {
