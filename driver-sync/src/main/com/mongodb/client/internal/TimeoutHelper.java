@@ -40,9 +40,7 @@ public final class TimeoutHelper {
         return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> collection,
                 (ms) -> collection.withTimeout(ms, MILLISECONDS),
-                () -> {
-                    throw TimeoutContext.createMongoTimeoutException(message);
-                });
+                () -> TimeoutContext.throwMongoTimeoutException(message));
     }
 
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
@@ -56,9 +54,7 @@ public final class TimeoutHelper {
         return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> database,
                 (ms) -> database.withTimeout(ms, MILLISECONDS),
-                () -> {
-                    throw TimeoutContext.createMongoTimeoutException(message);
-                });
+                () -> TimeoutContext.throwMongoTimeoutException(message));
     }
 
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,

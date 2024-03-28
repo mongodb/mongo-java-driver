@@ -49,7 +49,7 @@ public interface Timeout {
     static Timeout earliest(final Timeout... timeouts) {
         List<Timeout> list = Arrays.asList(timeouts);
         list.forEach(v -> {
-            if (! (v instanceof TimePoint)) {
+            if (!(v instanceof TimePoint)) {
                 throw new AssertionError("Only TimePoints may be compared");
             }
         });

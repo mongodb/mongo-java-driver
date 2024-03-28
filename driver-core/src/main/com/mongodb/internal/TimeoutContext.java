@@ -28,7 +28,7 @@ import java.util.function.LongConsumer;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.*;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -59,7 +59,7 @@ public class TimeoutContext {
         return new MongoOperationTimeoutException(message);
     }
 
-    public static void throwMongoTimeoutException(final String message) {
+    public static <T> T throwMongoTimeoutException(final String message) {
         throw new MongoOperationTimeoutException(message);
     }
 
@@ -167,9 +167,7 @@ public class TimeoutContext {
             return timeout.call(MILLISECONDS,
                     () -> 0L,
                     (ms) -> ms,
-                    () -> {
-                        throw createMongoTimeoutException("The operation timeout has expired.");
-                    });
+                    () -> throwMongoTimeoutException("The operation timeout has expired."));
         }
     }
 

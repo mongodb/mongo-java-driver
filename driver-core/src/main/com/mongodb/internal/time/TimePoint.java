@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -82,7 +83,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
             return this; // shortening (lengthening) an infinite timeout does nothing
         }
         long durationNanos = NANOSECONDS.convert(amount, timeUnit);
-        return TimePoint.at(nanos - durationNanos);
+        return TimePoint.at(assertNotNull(nanos) - durationNanos);
     }
 
     @Override
@@ -117,7 +118,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     /**
      * The number of whole time units that remain until this TimePoint
-     * {@link #hasExpired()}. This should not be used to check for expiry,
+     * has expired. This should not be used to check for expiry,
      * but can be used to supply a remaining value, in the finest-grained
      * TimeUnit available, to some method that may time out.
      * This method must not be used with infinite TimePoints.

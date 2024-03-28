@@ -68,7 +68,7 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, firstBatch, batchSize, maxTimeMS, CODEC,
                 null, connectionSource, initialConnection)
         then:
-        1 * timeoutContext.setMaxTimeOverrideToMaxCommitTime(*_)
+        1 * timeoutContext.setMaxTimeOverride(*_)
 
         when:
         def batch = nextBatch(cursor)
