@@ -184,10 +184,12 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the explicitly set {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
+     * Gets the {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
+     *
+     * <p>If set, it will be used to look up the {@link java.net.InetAddress} for each host, via
+     * {@link InetAddressResolver#lookupByName(String)}. Otherwise, {@link java.net.InetAddress#getAllByName(String)} will be used.
      *
      * @return the {@link java.net.InetAddress} resolver
-     * @see Builder#inetAddressResolver(InetAddressResolver)
      * @since 4.10
      */
     @Nullable
@@ -658,7 +660,6 @@ public final class MongoClientSettings {
          *
          * @param inetAddressResolver the InetAddress provider
          * @return the {@link java.net.InetAddress} resolver
-         * @see #getInetAddressResolver()
          * @since 4.10
          */
         public Builder inetAddressResolver(@Nullable final InetAddressResolver inetAddressResolver) {
