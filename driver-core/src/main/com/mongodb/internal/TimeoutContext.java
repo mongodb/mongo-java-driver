@@ -105,15 +105,20 @@ public class TimeoutContext {
        return new TimeoutContext(timeoutSettings);
     }
 
+    // Creates a copy of the timeout context that can be reset without resetting the original.
+    public TimeoutContext copyTimeoutContext() {
+        return new TimeoutContext(getTimeoutSettings(), getTimeout());
+    }
+
     public TimeoutContext(final TimeoutSettings timeoutSettings) {
         this(false, timeoutSettings, startTimeout(timeoutSettings.getTimeoutMS()));
     }
 
-    public TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+    private TimeoutContext(final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
         this(false, timeoutSettings, timeout);
     }
 
-    TimeoutContext(final boolean isMaintenanceContext, final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
+    private TimeoutContext(final boolean isMaintenanceContext, final TimeoutSettings timeoutSettings, @Nullable final Timeout timeout) {
         this.isMaintenanceContext = isMaintenanceContext;
         this.timeoutSettings = timeoutSettings;
         this.timeout = timeout;
