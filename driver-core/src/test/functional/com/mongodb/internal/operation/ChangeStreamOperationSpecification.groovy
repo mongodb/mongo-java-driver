@@ -519,7 +519,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def cursor = execute(operation, async)
 
         when:
-        // split into two insert command, because starting in MongoDB 8.0 the same clusterTime is applied to all documents in a bulk
+        // split into two insert commands, because starting in MongoDB 8.0 the same clusterTime is applied to all documents in a bulk
         // write operation, and the test relies on the clusterTime values being both ascending _and_ unique.
         def expectedOne = insertDocuments(helper, [1])
         def expectedTwo = insertDocuments(helper, [2])
