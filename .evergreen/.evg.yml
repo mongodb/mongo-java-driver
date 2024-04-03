@@ -2235,7 +2235,7 @@ buildvariants:
 - matrix_name: "scala-tests"
   matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["7.0"], topology: "replicaset",
                  scala: "*", os: "ubuntu" }
-  display_name: "${scala} ${version} ${topology} ${os}"
+  display_name: "${scala} ${jdk} ${version} ${topology} ${os}"
   tags: ["test-scala-variant"]
   tasks:
     - name: "scala-tests"

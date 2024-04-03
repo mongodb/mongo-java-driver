@@ -23,7 +23,7 @@ import com.mongodb.client.MongoIterable as JMongoIterable
  *
  * @param T The type that this iterable will decode documents to.
  */
-public open class MongoIterable<T : Any>(private val delegate: JMongoIterable<T>) {
+public open class MongoIterable<T : Any?>(private val delegate: JMongoIterable<T>) {
 
     /**
      * Returns a cursor used for iterating over elements of type `T. The cursor is primarily used for change streams.
@@ -71,7 +71,7 @@ public open class MongoIterable<T : Any>(private val delegate: JMongoIterable<T>
      * @param transform a function that maps from the source to the target document type
      * @return an iterable which maps T to U
      */
-    public fun <R : Any> map(transform: (T) -> R): MongoIterable<R> = MongoIterable(delegate.map(transform))
+    public fun <R : Any?> map(transform: (T) -> R): MongoIterable<R> = MongoIterable(delegate.map(transform))
 
     /** Performs the given [action] on each element and safely closes the cursor. */
     public fun forEach(action: (T) -> Unit): Unit = use { it.forEach(action) }
