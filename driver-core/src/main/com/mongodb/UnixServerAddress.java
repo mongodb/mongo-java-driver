@@ -17,12 +17,14 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.internal.graalvm.substitution.SocketStreamFactorySubstitution;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Represents the location of a MongoD unix domain socket.
+ * It is {@linkplain SocketStreamFactorySubstitution#create(ServerAddress) not supported in GraalVM native image}.
  *
  * <p>Requires the 'jnr.unixsocket' library.</p>
  * @since 3.7

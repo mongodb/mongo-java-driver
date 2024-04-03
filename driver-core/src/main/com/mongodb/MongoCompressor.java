@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.internal.graalvm.substitution.MongoCompressorSubstitution;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collections;
@@ -46,6 +47,7 @@ public final class MongoCompressor {
      *
      * @return A compressor based on the snappy compression algorithm
      * @mongodb.server.release 3.4
+     * @throws UnsupportedOperationException If {@linkplain MongoCompressorSubstitution#createSnappyCompressor() called in a GraalVM native image}.
      */
     public static MongoCompressor createSnappyCompressor() {
         return new MongoCompressor("snappy");

@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.graalvm;
 
+import com.mongodb.internal.graalvm.substitution.Substitutions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,8 @@ final class NativeImageApp {
         String[] arguments = new String[] {getConnectionStringSystemPropertyOrDefault()};
         LOGGER.info("proper args={}, tour/example arguments={}", Arrays.toString(args), Arrays.toString(arguments));
         List<Throwable> errors = Stream.<ThrowingRunnable>of(
+                new ThrowingRunnable.Named("GraalVM native image substitutions",
+                        Substitutions::assertUsed),
                 new ThrowingRunnable.Named(DnsSpi.class,
                         () -> DnsSpi.main(arguments)),
                 new ThrowingRunnable.Named(gridfs.GridFSTour.class,

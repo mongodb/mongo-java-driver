@@ -92,4 +92,5 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.5.3'
     implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")
     implementation 'io.projectreactor:reactor-core'
+    implementation "org.graalvm.sdk:nativeimage:$graalSdkVersion"
 }

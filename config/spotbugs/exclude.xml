@@ -276,5 +276,9 @@
         <Class name="~com.mongodb.kotlin.client.coroutine.*"/>
         <Bug pattern="NP_NONNULL_PARAM_VIOLATION"/>
     </Match>
+    <Match>
+        <Class name="~com.mongodb.internal.graalvm.substitution.*"/>
+        <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD"/>
+    </Match>
 
 </FindBugsFilter>
