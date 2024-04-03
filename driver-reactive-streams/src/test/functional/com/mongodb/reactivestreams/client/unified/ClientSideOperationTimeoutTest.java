@@ -100,7 +100,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         try {
             super.shouldPassAllOutcomes();
         } catch (AssertionError e) {
-            assertNoDroppedError(format("%s failed due to %s.\"
+            assertNoDroppedError(format("%s failed due to %s.\n"
                             + "The test also caused a dropped error; `onError` called with no handler.",
                     testDescription, e.getMessage()));
             if (racyTestAssertion(testDescription, e)) {
