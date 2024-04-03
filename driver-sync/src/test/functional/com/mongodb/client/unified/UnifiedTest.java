@@ -282,11 +282,12 @@ public abstract class UnifiedTest {
             final Iterable<LogMatcher.Tweak> tweaks) {
         for (BsonValue cur : definition.getArray("expectLogMessages")) {
             BsonDocument curLogMessagesForClient = cur.asDocument();
+            boolean ignoreExtraMessages = curLogMessagesForClient.getBoolean("ignoreExtraMessages", BsonBoolean.FALSE).getValue();
             String clientId = curLogMessagesForClient.getString("client").getValue();
             TestLoggingInterceptor loggingInterceptor =
                     entities.getClientLoggingInterceptor(clientId);
-            rootContext.getLogMatcher().assertLogMessageEquality(clientId, curLogMessagesForClient.getArray("messages"),
-                    loggingInterceptor.getMessages(), tweaks);
+            rootContext.getLogMatcher().assertLogMessageEquality(clientId, ignoreExtraMessages,
+                    curLogMessagesForClient.getArray("messages"), loggingInterceptor.getMessages(), tweaks);
         }
     }
 
