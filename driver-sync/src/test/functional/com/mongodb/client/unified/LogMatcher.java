@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 final class LogMatcher {
     private final ValueMatcher valueMatcher;
@@ -46,11 +47,16 @@ final class LogMatcher {
         this.context = context;
     }
 
-    void assertLogMessageEquality(final String client, final BsonArray expectedMessages, final List<LogMessage> actualMessages,
-            final Iterable<Tweak> tweaks) {
+    void assertLogMessageEquality(final String client, final boolean ignoreExtraMessages, final BsonArray expectedMessages,
+            final List<LogMessage> actualMessages, final Iterable<Tweak> tweaks) {
         context.push(ContextElement.ofLogMessages(client, expectedMessages, actualMessages));
 
-        assertEquals(context.getMessage("Number of log messages must be the same"), expectedMessages.size(), actualMessages.size());
+        if (ignoreExtraMessages) {
+            assertTrue(context.getMessage("Number of messages must be greater than or equal to the expected number of messages"),
+                    actualMessages.size() >= expectedMessages.size());
+        } else {
+            assertEquals(context.getMessage("Number of log messages must be the same"), expectedMessages.size(), actualMessages.size());
+        }
 
         for (int i = 0; i < expectedMessages.size(); i++) {
             BsonDocument expectedMessage = expectedMessages.get(i).asDocument().clone();
