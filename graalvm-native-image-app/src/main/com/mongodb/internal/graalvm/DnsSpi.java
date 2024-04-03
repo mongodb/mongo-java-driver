@@ -43,7 +43,11 @@ final class DnsSpi {
         try (MongoClient client = MongoClients.create(MongoClientSettings.builder()
                 .applyToClusterSettings(builder -> builder
                         .srvHost("a.b.c")
-                        .serverSelectionTimeout(1, TimeUnit.MILLISECONDS))
+                        // `MongoClient` uses `CustomDnsClientProvider` asynchronously,
+                        // and by waiting for server selection that cannot succeed due to `a.b.c` not resolving to an IP address,
+                        // we give `MongoClient` enough time to use `CustomDnsClientProvider`.
+                        // This is a tolerable race condition for a test.
+                        .serverSelectionTimeout(2, TimeUnit.SECONDS))
                 .build())) {
             LOGGER.info("Database names: {}", client.listDatabaseNames().into(new ArrayList<>()));
         } catch (RuntimeException e) {
@@ -53,7 +57,7 @@ final class DnsSpi {
                 err.addSuppressed(e);
                 throw err;
             }
-            // an exception is expected provided that the assertion succeeds
+            // an exception is expected because `a.b.c` does not resolve to an IP address
         }
     }
 
