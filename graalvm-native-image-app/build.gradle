@@ -51,9 +51,8 @@ graalvmNative {
         configureEach {
             buildArgs.add('--strict-image-heap')
             buildArgs.add('-H:+UnlockExperimentalVMOptions')
-            // see class initialization report is generated at `graalvm/build/native/nativeCompile/reports`,
-            // informing us on the kind of initialization for each Java class
-            buildArgs.add('-H:+PrintClassInitialization')
+            // see class initialization and other reports in `graalvm/build/native/nativeCompile/reports`
+            buildArgs.add('--diagnostics-mode')
             // see the "registerResource" entries in the `native-image` built-time output,
             // informing us on the resources included in the native image being built
             buildArgs.add('-H:Log=registerResource:5')

@@ -36,7 +36,7 @@ import org.bson.BsonDocument
  *
  * @param T The type of documents the cursor contains
  */
-public sealed interface MongoCursor<T : Any> : Iterator<T>, Closeable {
+public sealed interface MongoCursor<T : Any?> : Iterator<T>, Closeable {
 
     /**
      * Gets the number of results available locally without blocking, which may be 0.
@@ -98,7 +98,7 @@ public sealed interface MongoChangeStreamCursor<T : Any> : MongoCursor<T> {
     public val resumeToken: BsonDocument?
 }
 
-internal class MongoCursorImpl<T : Any>(private val wrapped: JMongoCursor<T>) : MongoCursor<T> {
+internal class MongoCursorImpl<T : Any?>(private val wrapped: JMongoCursor<T>) : MongoCursor<T> {
 
     override fun hasNext(): Boolean = wrapped.hasNext()
 

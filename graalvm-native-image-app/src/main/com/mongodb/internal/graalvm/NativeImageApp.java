@@ -29,11 +29,14 @@ final class NativeImageApp {
     private static final Logger LOGGER = LoggerFactory.getLogger(NativeImageApp.class);
 
     public static void main(final String[] args) {
+        LOGGER.info("Begin");
         LOGGER.info("java.vendor={}, java.vm.name={}, java.version={}",
                 System.getProperty("java.vendor"), System.getProperty("java.vm.name"), System.getProperty("java.version"));
         String[] arguments = new String[] {getConnectionStringSystemPropertyOrDefault()};
         LOGGER.info("proper args={}, tour/example arguments={}", Arrays.toString(args), Arrays.toString(arguments));
         List<Throwable> errors = Stream.<ThrowingRunnable>of(
+                new ThrowingRunnable.Named(DnsSpi.class,
+                        () -> DnsSpi.main(arguments)),
                 new ThrowingRunnable.Named(gridfs.GridFSTour.class,
                         () -> gridfs.GridFSTour.main(arguments)),
                 new ThrowingRunnable.Named(documentation.CausalConsistencyExamples.class,
@@ -85,6 +88,7 @@ final class NativeImageApp {
             errors.forEach(error::addSuppressed);
             throw error;
         }
+        LOGGER.info("End");
     }
 
     private NativeImageApp() {
