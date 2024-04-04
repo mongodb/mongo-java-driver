@@ -132,7 +132,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
         if (isInfinite()) {
             throw new AssertionError("Infinite TimePoints have infinite remaining time");
         }
-        long remaining = nanos - currentNanos();
+        long remaining = assertNotNull(nanos) - currentNanos();
         remaining = unit.convert(remaining, NANOSECONDS);
         return remaining <= 0 ? 0 : remaining;
     }
@@ -149,7 +149,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
         if (isInfinite()) {
             throw new AssertionError("No time can elapse since an infinite TimePoint");
         }
-        return Duration.ofNanos(currentNanos() - nanos);
+        return Duration.ofNanos(currentNanos() - assertNotNull(nanos));
     }
 
     /**
@@ -193,7 +193,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
             throw new AssertionError("No time can be added to an infinite TimePoint");
         }
         long durationNanos = duration.toNanos();
-        return TimePoint.at(nanos + durationNanos);
+        return TimePoint.at(assertNotNull(nanos) + durationNanos);
     }
 
     /**
@@ -234,7 +234,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     public String toString() {
         String remainingMs = isInfinite()
                 ? "infinite"
-                : "" + TimeUnit.MILLISECONDS.convert(currentNanos() - nanos, NANOSECONDS);
+                : "" + TimeUnit.MILLISECONDS.convert(currentNanos() - assertNotNull(nanos), NANOSECONDS);
         return "TimePoint{"
                 + "nanos=" + nanos
                 + "remainingMs=" + remainingMs
