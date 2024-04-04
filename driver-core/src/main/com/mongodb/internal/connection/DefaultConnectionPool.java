@@ -336,13 +336,13 @@ final class DefaultConnectionPool implements ConnectionPool {
         try {
             UsageTrackingInternalConnection internalConnection = waitQueueTimeout.call(NANOSECONDS,
                     () -> pool.get(-1L, NANOSECONDS),
-                    (t) -> pool.get(t, NANOSECONDS),
+                    (ns) -> pool.get(ns, NANOSECONDS),
                     () -> pool.get(0L, NANOSECONDS));
             while (shouldPrune(internalConnection)) {
                 pool.release(internalConnection, true);
                 internalConnection = waitQueueTimeout.call(NANOSECONDS,
                         () -> pool.get(-1L, NANOSECONDS),
-                        (t) -> pool.get(t, NANOSECONDS),
+                        (ns) -> pool.get(ns, NANOSECONDS),
                         () -> pool.get(0L, NANOSECONDS));
             }
             return new PooledConnection(internalConnection);
@@ -1346,7 +1346,7 @@ final class DefaultConnectionPool implements ConnectionPool {
 
                     task.timeout().run(NANOSECONDS,
                             () -> task.execute(),
-                            (ms) -> task.execute(),
+                            (ns) -> task.execute(),
                             () -> task.failAsTimedOut());
                 } catch (InterruptedException closed) {
                     // fail the rest of the tasks and stop

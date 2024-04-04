@@ -16,6 +16,7 @@
 package com.mongodb.internal.time;
 
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.internal.function.CheckedConsumer;
 import com.mongodb.internal.function.CheckedFunction;
 import com.mongodb.internal.function.CheckedRunnable;
@@ -86,14 +87,17 @@ public interface Timeout {
         // TODO (CSOT) confirm that all usages in final PR always supply a non-negative duration
         if (duration < 0) {
             throw new AssertionError("Timeouts must not be in the past");
-        }
-
-        if (zeroDurationIs == ZeroDurationIs.INFINITE) {
-            if (duration == 0) {
-                return Timeout.infinite();
+        } else if (duration == 0) {
+            switch (zeroDurationIs) {
+                case INFINITE:
+                    return Timeout.infinite();
+                case EXPIRED:
+                    return TimePoint.now();
+                default:
+                    throw Assertions.fail("Unknown enum value");
             }
-            return expiresIn(duration, unit, ZeroDurationIs.EXPIRED);
         } else {
+            // duration will never be negative
             return TimePoint.now().timeoutAfterOrInfiniteIfNegative(duration, unit);
         }
     }
