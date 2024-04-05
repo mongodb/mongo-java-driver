@@ -143,17 +143,17 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public DeleteResult deleteKey(final BsonBinary id) {
-        return collectionWithTimeout(collection, startTimeout()).deleteOne(Filters.eq("_id", id));
+        return collectionWithOptionsTimeout().deleteOne(Filters.eq("_id", id));
     }
 
     @Override
     public BsonDocument getKey(final BsonBinary id) {
-        return collectionWithTimeout(collection, startTimeout()).find(Filters.eq("_id", id)).first();
+        return collectionWithOptionsTimeout().find(Filters.eq("_id", id)).first();
     }
 
     @Override
     public FindIterable<BsonDocument> getKeys() {
-        return collectionWithTimeout(collection, startTimeout()).find();
+        return collectionWithOptionsTimeout().find();
     }
 
     @Override
@@ -282,5 +282,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
     @Nullable
     private Timeout startTimeout() {
         return TimeoutContext.calculateTimeout(options.getTimeout(MILLISECONDS));
+    }
+
+    private MongoCollection<BsonDocument> collectionWithOptionsTimeout() {
+        Long timeout = options.getTimeout(MILLISECONDS);
+        return timeout != null ? collection.withTimeout(timeout, MILLISECONDS) : collection;
     }
 }
