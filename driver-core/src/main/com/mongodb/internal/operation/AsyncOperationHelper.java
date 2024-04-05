@@ -21,6 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -325,10 +326,12 @@ final class AsyncOperationHelper {
         });
     }
 
-    static CommandWriteTransformerAsync<BsonDocument, Void> writeConcernErrorTransformerAsync() {
+    static CommandWriteTransformerAsync<BsonDocument, Void> writeConcernErrorTransformerAsync(final TimeoutContext timeoutContext) {
         return (result, connection) -> {
             assertNotNull(result);
-            throwOnWriteConcernError(result, connection.getDescription().getServerAddress(), connection.getDescription().getMaxWireVersion());
+            throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
+                    connection.getDescription().getMaxWireVersion(),
+                    timeoutContext);
             return null;
         };
     }

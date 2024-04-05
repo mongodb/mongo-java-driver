@@ -93,7 +93,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             getCommands(localEncryptedFields).forEach(command -> {
                 try {
                     executeCommand(binding, namespace.getDatabaseName(), command.get(),
-                            connection, writeConcernErrorTransformer());
+                            connection, writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
                 } catch (MongoCommandException e) {
                     rethrowIfNotNamespaceError(e);
                 }
@@ -250,7 +250,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             } else {
                 try {
                     executeCommandAsync(binding, namespace.getDatabaseName(), nextCommandFunction.get(),
-                            connection, writeConcernErrorTransformerAsync(), this);
+                            connection, writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), this);
                 } catch (MongoOperationTimeoutException operationTimeoutException) {
                     finalCallback.onResult(null, operationTimeoutException);
                 }

@@ -51,7 +51,7 @@ public class TimeoutContext {
     private MaxTimeSupplier maxTimeSupplier = this::calculateMaxTimeMS;
 
     public static MongoOperationTimeoutException createMongoTimeoutException() {
-        return createMongoTimeoutException("Remaining timeoutMS is less than the servers minimum round trip time.");
+        return createMongoTimeoutException("Remaining timeoutMS is less or equal to the servers minimum round trip time.");
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final String message) {

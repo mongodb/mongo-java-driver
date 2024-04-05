@@ -74,8 +74,7 @@ final class ErrorMatcher {
             // TODO (CSOT) JAVA-5248 Should only be MongoOperationTimeoutException.
             assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
                     expectedError.getBoolean("isTimeoutError").getValue(),
-                    e instanceof MongoOperationTimeoutException || e instanceof MongoExecutionTimeoutException
-                    || e instanceof MongoSocketReadTimeoutException
+                    e instanceof MongoOperationTimeoutException
             );
         }
 

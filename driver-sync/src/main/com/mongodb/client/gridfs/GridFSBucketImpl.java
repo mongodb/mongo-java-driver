@@ -631,7 +631,7 @@ final class GridFSBucketImpl implements GridFSBucket {
             while ((len = downloadStream.read(buffer)) != -1) {
                 destination.write(buffer, 0, len);
             }
-        } catch (MongoOperationTimeoutException e){ // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
+        } catch (MongoOperationTimeoutException e){
             throw e;
         } catch (IOException e) {
             savedThrowable = new MongoGridFSException("IOException when reading from the OutputStream", e);

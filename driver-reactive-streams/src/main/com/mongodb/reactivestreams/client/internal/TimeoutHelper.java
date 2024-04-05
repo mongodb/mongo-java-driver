@@ -23,6 +23,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import reactor.core.publisher.Mono;
 
+import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -38,15 +39,21 @@ public final class TimeoutHelper {
     public static long getRemainingMs(final String message, final Timeout timeout) {
         long remainingMs = timeout.remaining(MILLISECONDS);
         if (remainingMs <= 0) {
-            throw new MongoOperationTimeoutException(message);
+            throw createMongoTimeoutException(message);
         }
         return remainingMs;
     }
 
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                @Nullable final Timeout timeout) {
+      return collectionWithTimeout(collection, timeout, DEFAULT_TIMEOUT_MESSAGE);
+    }
+
+    public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
+                                                               @Nullable final Timeout timeout,
+                                                                final String message) {
         if (shouldOverrideTimeout(timeout)) {
-            long remainingMs = getRemainingMs(DEFAULT_TIMEOUT_MESSAGE, timeout);
+            long remainingMs = getRemainingMs(message, timeout);
             return collection.withTimeout(remainingMs, MILLISECONDS);
         }
         return collection;

@@ -440,13 +440,13 @@ public class InternalStreamConnection implements InternalConnection {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
             if (!isCommandOk(responseBuffers)) {
                 throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
-                        new BsonDocumentCodec()), description.getServerAddress());
+                        new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
             }
 
             commandSuccessful = true;
             commandEventSender.sendSucceededEvent(responseBuffers);
 
-            T commandResult = getCommandResult(decoder, responseBuffers, responseTo);
+            T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
             hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
             if (hasMoreToCome) {
                 responseTo = responseBuffers.getReplyHeader().getRequestId();
@@ -539,13 +539,13 @@ public class InternalStreamConnection implements InternalConnection {
                         if (!commandOk) {
                             MongoException commandFailureException = getCommandFailureException(
                                     responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
-                                    description.getServerAddress());
+                                    description.getServerAddress(), operationContext.getTimeoutContext());
                             commandEventSender.sendFailedEvent(commandFailureException);
                             throw commandFailureException;
                         }
                         commandEventSender.sendSucceededEvent(responseBuffers);
 
-                        T result1 = getCommandResult(decoder, responseBuffers, messageId);
+                        T result1 = getCommandResult(decoder, responseBuffers, messageId, operationContext.getTimeoutContext());
                         callback.onResult(result1, null);
                     } catch (Throwable localThrowable) {
                         callback.onResult(null, localThrowable);
@@ -566,9 +566,17 @@ public class InternalStreamConnection implements InternalConnection {
         });
     }
 
-    private <T> T getCommandResult(final Decoder<T> decoder, final ResponseBuffers responseBuffers, final int messageId) {
+    private <T> T getCommandResult(final Decoder<T> decoder,
+                                   final ResponseBuffers responseBuffers,
+                                   final int messageId,
+                                   final TimeoutContext timeoutContext) {
         T result = new ReplyMessage<>(responseBuffers, decoder, messageId).getDocument();
-        MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers, description.getServerAddress());
+        MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers,
+                description.getServerAddress(),
+                timeoutContext);
+        if (writeConcernBasedError instanceof MongoOperationTimeoutException) {
+            throw writeConcernBasedError;
+        }
         if (writeConcernBasedError != null) {
             throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
         }

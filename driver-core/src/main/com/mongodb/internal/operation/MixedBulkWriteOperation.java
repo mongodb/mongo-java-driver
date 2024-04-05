@@ -265,7 +265,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 BsonDocument result = executeCommand(operationContext, connection, currentBatch);
                 if (currentBatch.getRetryWrites() && !operationContext.getSessionContext().hasActiveTransaction()) {
                     MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
-                            connection.getDescription().getServerAddress(), "errMsg");
+                            connection.getDescription().getServerAddress(), "errMsg", timeoutContext);
                     if (writeConcernBasedError != null) {
                         if (currentBulkWriteTracker.lastAttempt()) {
                             addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);
@@ -314,7 +314,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (t == null) {
                     if (currentBatch.getRetryWrites() && !operationContext.getSessionContext().hasActiveTransaction()) {
                         MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
-                                connection.getDescription().getServerAddress(), "errMsg");
+                                connection.getDescription().getServerAddress(), "errMsg", binding.getOperationContext().getTimeoutContext());
                         if (writeConcernBasedError != null) {
                             if (currentBulkWriteTracker.lastAttempt()) {
                                 addRetryableWriteErrorLabel(writeConcernBasedError, maxWireVersion);

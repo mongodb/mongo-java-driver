@@ -237,7 +237,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             checkEncryptedFieldsSupported(connection.getDescription());
             getCommandFunctions().forEach(commandCreator ->
                executeCommand(binding, databaseName, commandCreator.get(), connection,
-                      writeConcernErrorTransformer())
+                      writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()))
             );
             return null;
         });
@@ -421,7 +421,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 finalCallback.onResult(null, null);
             } else {
                 executeCommandAsync(binding, databaseName, nextCommandFunction.get(),
-                        connection, writeConcernErrorTransformerAsync(), this);
+                        connection, writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), this);
             }
         }
     }

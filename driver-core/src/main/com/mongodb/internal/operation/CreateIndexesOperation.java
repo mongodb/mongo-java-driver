@@ -102,7 +102,8 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     @Override
     public Void execute(final WriteBinding binding) {
         try {
-            return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer());
+            return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(
+                    binding.getOperationContext().getTimeoutContext()));
         } catch (MongoCommandException e) {
             throw checkForDuplicateKeyError(e);
         }
@@ -110,7 +111,8 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformerAsync(),
+        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformerAsync(binding
+                        .getOperationContext().getTimeoutContext()),
                 ((result, t) -> {
                     if (t != null) {
                         callback.onResult(null, translateException(t));
