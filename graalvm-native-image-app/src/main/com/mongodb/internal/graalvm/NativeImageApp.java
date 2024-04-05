@@ -121,7 +121,7 @@ final class NativeImageApp {
                     try {
                         runnable.run();
                     } catch (Exception | AssertionError e) {
-                        LOGGER.debug("Failure in {}", name, e);
+                        LOGGER.info("Failure in {}", name, e);
                         throw e;
                     } finally {
                         LOGGER.info("End {}", name);

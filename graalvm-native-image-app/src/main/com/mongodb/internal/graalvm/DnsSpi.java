@@ -34,7 +34,8 @@ final class DnsSpi {
 
     private static void useInetAddressResolverProvider(final String... args) {
         try (MongoClient client = args.length == 0 ? MongoClients.create() : MongoClients.create(args[0])) {
-            LOGGER.info("Database names: {}", client.listDatabaseNames().into(new ArrayList<>()));
+            ArrayList<String> databaseNames = client.listDatabaseNames().into(new ArrayList<>());
+            LOGGER.info("Database names: {}", databaseNames);
         }
         CustomInetAddressResolverProvider.assertUsed();
     }
@@ -49,7 +50,8 @@ final class DnsSpi {
                         // This is a tolerable race condition for a test.
                         .serverSelectionTimeout(2, TimeUnit.SECONDS))
                 .build())) {
-            LOGGER.info("Database names: {}", client.listDatabaseNames().into(new ArrayList<>()));
+            ArrayList<String> databaseNames = client.listDatabaseNames().into(new ArrayList<>());
+            LOGGER.info("Database names: {}", databaseNames);
         } catch (RuntimeException e) {
             try {
                 CustomDnsClientProvider.assertUsed();
