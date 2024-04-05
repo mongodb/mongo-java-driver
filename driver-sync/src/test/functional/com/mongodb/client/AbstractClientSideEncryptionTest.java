@@ -62,6 +62,7 @@ import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEqualit
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.CrudTestHelper.replaceTypeAssertionWithActual;
 import static com.mongodb.client.Fixture.getMongoClient;
+import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -323,9 +324,9 @@ public abstract class AbstractClientSideEncryptionTest {
                     assertBsonValue("Expected operation result differs from actual", expectedResult, actualResult);
                 }
 
-                assertFalse(String.format("Expected error '%s' but none thrown for operation %s",
+                assertFalse(format("Expected error '%s' but none thrown for operation %s",
                         getErrorContainsField(expectedResult), operationName), hasErrorContainsField(expectedResult));
-                assertFalse(String.format("Expected error code '%s' but none thrown for operation %s",
+                assertFalse(format("Expected error code '%s' but none thrown for operation %s",
                         getErrorCodeNameField(expectedResult), operationName), hasErrorCodeNameField(expectedResult));
             } catch (Exception e) {
                 boolean passedAssertion = false;
@@ -334,7 +335,7 @@ public abstract class AbstractClientSideEncryptionTest {
                }
                 if (hasErrorContainsField(expectedResult)) {
                     String expectedError = getErrorContainsField(expectedResult);
-                    assertTrue(String.format("Expected '%s' but got '%s' for operation %s", expectedError, e.getMessage(),
+                    assertTrue(format("Expected '%s' but got '%s' for operation %s", expectedError, e.getMessage(),
                             operationName), e.getMessage().toLowerCase().contains(expectedError.toLowerCase()));
                     passedAssertion = true;
                 }
@@ -386,7 +387,8 @@ public abstract class AbstractClientSideEncryptionTest {
             BsonDocument expectedResultDoc = expectedResult.asDocument();
             BsonDocument actualResultDoc = actualResult.asDocument();
             expectedResultDoc.keySet().forEach(k ->
-                    assertEquals(message, expectedResultDoc.get(k), actualResultDoc.get(k, new BsonUndefined()))
+                    assertEquals(format("%s :\n Expected: %s\n Got: %s", message, expectedResultDoc.toJson(), actualResultDoc.toJson()),
+                            expectedResultDoc.get(k), actualResultDoc.get(k, new BsonUndefined()))
             );
         } else if (expectedResult.isArray() && actualResult.isArray()) {
             BsonArray expectedResultArray = expectedResult.asArray();
