@@ -25,12 +25,10 @@ import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.event.ClusterListener
-import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.selector.WritableServerSelector
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
 import static com.mongodb.connection.ClusterType.UNKNOWN
