@@ -78,7 +78,7 @@ import static org.bson.internal.BsonUtil.mutableDeepCopy;
  */
 public class ClientEncryptionImpl implements ClientEncryption {
     private static final String TIMEOUT_ERROR_MESSAGE_CREATE_DATA_KEY = "Creating data key exceeded the timeout limit.";
-    private static final String TIMEOUT_ERROR_MESSAGE_REWRAP_DATA_KEY = "Creating data key exceeded the timeout limit.";
+    private static final String TIMEOUT_ERROR_MESSAGE_REWRAP_DATA_KEY = "Rewrapping data key exceeded the timeout limit.";
     private static final String TIMEOUT_ERROR_MESSAGE_CREATE_COLLECTION = "Encryption collection creation exceeded the timeout limit.";
     private final Crypt crypt;
     private final ClientEncryptionSettings options;

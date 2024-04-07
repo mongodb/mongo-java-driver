@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoIncompatibleDriverException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
@@ -32,6 +33,7 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -128,7 +130,8 @@ abstract class BaseCluster implements Cluster {
         while (true) {
             CountDownLatch currentPhaseLatch = phase.get();
             ClusterDescription currentDescription = description;
-            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, computedServerSelectionTimeout);
+            ServerTuple serverTuple = selectServer(compositeServerSelector, currentDescription, computedServerSelectionTimeout,
+                    operationContext.getTimeoutContext());
 
             if (!currentDescription.isCompatibleWithDriver()) {
                 throw createAndLogIncompatibleException(operationContext.getId(), serverSelector, currentDescription);
@@ -139,7 +142,7 @@ abstract class BaseCluster implements Cluster {
                 return serverTuple;
             }
             if (computedServerSelectionTimeout.hasExpired()) {
-                throw createAndLogTimeoutException(operationContext.getId(), serverSelector, currentDescription);
+                throw createAndLogTimeoutException(operationContext, serverSelector, currentDescription);
             }
             if (!selectionWaitingLogged) {
                 logServerSelectionWaiting(clusterId, operationContext.getId(), computedServerSelectionTimeout, serverSelector, currentDescription);
@@ -158,7 +161,7 @@ abstract class BaseCluster implements Cluster {
         isTrue("open", !isClosed());
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(
-                serverSelector, getCompositeServerSelector(serverSelector), operationContext.getId(), computedServerSelectionTimeout,
+                serverSelector, getCompositeServerSelector(serverSelector), operationContext, computedServerSelectionTimeout,
                 callback);
 
         CountDownLatch currentPhase = phase.get();
@@ -244,30 +247,34 @@ abstract class BaseCluster implements Cluster {
     private boolean handleServerSelectionRequest(
             final ServerSelectionRequest request, final CountDownLatch currentPhase,
             final ClusterDescription description) {
+
         try {
+            OperationContext operationContext = request.getOperationContext();
+            long operationId = operationContext.getId();
             if (currentPhase != request.phase) {
                 CountDownLatch prevPhase = request.phase;
                 request.phase = currentPhase;
                 if (!description.isCompatibleWithDriver()) {
-                    request.onResult(null, createAndLogIncompatibleException(request.getOperationId(), request.originalSelector, description));
+                    request.onResult(null, createAndLogIncompatibleException(operationId, request.originalSelector, description));
                     return true;
                 }
 
-                ServerTuple serverTuple = selectServer(request.compositeSelector, description, request.getTimeout());
+                ServerTuple serverTuple = selectServer(request.compositeSelector, description, request.getTimeout(),
+                        operationContext.getTimeoutContext());
                 if (serverTuple != null) {
-                    logServerSelectionSucceeded(clusterId, request.getOperationId(), serverTuple.getServerDescription().getAddress(),
+                    logServerSelectionSucceeded(clusterId, operationId, serverTuple.getServerDescription().getAddress(),
                             request.originalSelector, description);
                     request.onResult(serverTuple, null);
                     return true;
                 }
                 if (prevPhase == null) {
-                    logServerSelectionWaiting(clusterId, request.getOperationId(), request.getTimeout(), request.originalSelector,
+                    logServerSelectionWaiting(clusterId, operationId, request.getTimeout(), request.originalSelector,
                             description);
                 }
             }
 
             if (request.getTimeout().hasExpired()) {
-                request.onResult(null, createAndLogTimeoutException(request.getOperationId(),
+                request.onResult(null, createAndLogTimeoutException(operationContext,
                         request.originalSelector, description));
                 return true;
             }
@@ -281,11 +288,11 @@ abstract class BaseCluster implements Cluster {
 
     @Nullable
     private ServerTuple selectServer(final ServerSelector serverSelector,
-            final ClusterDescription clusterDescription, final Timeout serverSelectionTimeout) {
+            final ClusterDescription clusterDescription, final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
         return selectServer(
                 serverSelector,
                 clusterDescription,
-                serverAddress -> getServer(serverAddress, serverSelectionTimeout));
+                serverAddress -> getServer(serverAddress, serverSelectionTimeout, timeoutContext));
     }
 
     @Nullable
@@ -367,13 +374,17 @@ abstract class BaseCluster implements Cluster {
     }
 
     private MongoException createAndLogTimeoutException(
-            final long operationId,
+            final OperationContext operationContext,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
-        MongoTimeoutException exception = new MongoTimeoutException(format(
+        String message = format(
                 "Timed out while waiting for a server that matches %s. Client view of cluster state is %s",
-                serverSelector, clusterDescription.getShortDescription()));
-        logServerSelectionFailed(clusterId, operationId, exception, serverSelector, clusterDescription);
+                serverSelector, clusterDescription.getShortDescription());
+
+        MongoTimeoutException exception = operationContext.getTimeoutContext().hasTimeoutMS()
+                ? new MongoOperationTimeoutException(message) : new MongoTimeoutException(message);
+
+        logServerSelectionFailed(clusterId, operationContext.getId(), exception, serverSelector, clusterDescription);
         return exception;
     }
 
@@ -381,15 +392,15 @@ abstract class BaseCluster implements Cluster {
         private final ServerSelector originalSelector;
         private final ServerSelector compositeSelector;
         private final SingleResultCallback<ServerTuple> callback;
-        private final long operationId;
+        private final OperationContext operationContext;
         private final Timeout timeout;
         private CountDownLatch phase;
 
         ServerSelectionRequest(final ServerSelector serverSelector, final ServerSelector compositeSelector,
-                final long operationId, final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
+                final OperationContext operationContext, final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
             this.originalSelector = serverSelector;
             this.compositeSelector = compositeSelector;
-            this.operationId = operationId;
+            this.operationContext = operationContext;
             this.timeout = timeout;
             this.callback = callback;
         }
@@ -406,8 +417,8 @@ abstract class BaseCluster implements Cluster {
             return timeout;
         }
 
-        public long getOperationId() {
-            return operationId;
+        public OperationContext getOperationContext() {
+            return operationContext;
         }
     }
 

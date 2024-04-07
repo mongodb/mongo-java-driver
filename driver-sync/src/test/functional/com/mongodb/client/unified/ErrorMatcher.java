@@ -24,7 +24,6 @@ import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
-import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
