@@ -318,6 +318,8 @@ public abstract class AbstractClientSideEncryptionTest {
             BsonValue expectedResult = operation.get("result");
             try {
                 BsonDocument actualOutcome = helper.getOperationResults(operation);
+                assertFalse(String.format("Expected a timeout error but got: %s", actualOutcome.toJson()), hasTimeoutError(expectedResult));
+
                 if (expectedResult != null) {
                     BsonValue actualResult = actualOutcome.get("result", new BsonString("No result or error"));
                     assertBsonValue("Expected operation result differs from actual", expectedResult, actualResult);

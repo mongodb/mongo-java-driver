@@ -269,10 +269,16 @@ public class TimeoutContext {
 
     private long timeoutRemainingMS() {
         assertNotNull(timeout);
-        if (timeout.hasExpired()) {
-            throw createMongoTimeoutException("The operation timeout has expired.");
+
+        if (timeout.isInfinite()) {
+            return 0;
         }
-        return timeout.isInfinite() ? 0 : timeout.remaining(MILLISECONDS);
+        long remaining = timeout.remaining(MILLISECONDS);
+        if (remaining > 0) {
+            return remaining;
+        }
+
+        throw createMongoTimeoutException("The operation timeout has expired.");
     }
 
     @Override
