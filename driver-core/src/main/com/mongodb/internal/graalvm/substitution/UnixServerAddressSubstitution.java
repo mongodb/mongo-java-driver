@@ -15,31 +15,17 @@
  */
 package com.mongodb.internal.graalvm.substitution;
 
-import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
-import com.mongodb.internal.connection.SocketStreamFactory;
-import com.mongodb.internal.connection.Stream;
-import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 
-import static com.mongodb.assertions.Assertions.fail;
-
-@TargetClass(SocketStreamFactory.class)
-public final class SocketStreamFactorySubstitution {
+@TargetClass(UnixServerAddress.class)
+public final class UnixServerAddressSubstitution {
     @Substitute
-    public Stream create(final ServerAddress serverAddress) {
-        if (serverAddress instanceof UnixServerAddress) {
-            throw new UnsupportedOperationException("UnixServerAddress is not supported in GraalVM native image");
-        }
-        return createInternal(serverAddress);
+    private static void checkNotInGraalVmNativeImage() {
+        throw new UnsupportedOperationException("UnixServerAddress is not supported in GraalVM native image");
     }
 
-    @Alias
-    private Stream createInternal(final ServerAddress serverAddress) {
-        throw fail();
-    }
-
-    private SocketStreamFactorySubstitution() {
+    private UnixServerAddressSubstitution() {
     }
 }

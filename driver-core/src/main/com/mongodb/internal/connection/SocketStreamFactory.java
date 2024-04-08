@@ -21,7 +21,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.graalvm.substitution.SocketStreamFactorySubstitution;
 import com.mongodb.spi.dns.InetAddressResolver;
 
 import javax.net.SocketFactory;
@@ -54,18 +53,8 @@ public class SocketStreamFactory implements StreamFactory {
         this.sslSettings = notNull("sslSettings", sslSettings);
     }
 
-    /**
-     * @see SocketStreamFactorySubstitution#create(ServerAddress)
-     */
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return createInternal(serverAddress);
-    }
-
-    /**
-     * @see SocketStreamFactorySubstitution#create(ServerAddress)
-     */
-    private Stream createInternal(final ServerAddress serverAddress) {
         Stream stream;
         if (serverAddress instanceof UnixServerAddress) {
             if (sslSettings.isEnabled()) {
