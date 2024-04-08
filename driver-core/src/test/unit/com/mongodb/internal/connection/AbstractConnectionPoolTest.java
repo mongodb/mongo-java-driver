@@ -78,11 +78,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
@@ -285,45 +288,74 @@ public abstract class AbstractConnectionPoolTest {
                 BsonDocument expectedEvent = cur.asDocument();
                 String type = expectedEvent.getString("type").getValue();
                 if (type.equals("ConnectionPoolCreated")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address", "options");
                     ConnectionPoolCreatedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionPoolCreatedEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
                     assertEquals(settings, actualEvent.getSettings());
                 } else if (type.equals("ConnectionPoolCleared")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address");
                     ConnectionPoolClearedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionPoolClearedEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
                 } else if (type.equals("ConnectionPoolReady")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address");
                     ConnectionPoolReadyEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionPoolReadyEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
                 } else if (type.equals("ConnectionPoolClosed")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address");
                     ConnectionPoolClosedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionPoolClosedEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
                 } else if (type.equals("ConnectionCreated")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address", "connectionId");
                     ConnectionCreatedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionCreatedEvent.class);
+                    assertAddressMatch(expectedEvent, actualEvent.getConnectionId().getServerId().getAddress());
                     assertConnectionIdMatch(expectedEvent, actualEvent.getConnectionId());
                 } else if (type.equals("ConnectionReady")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address", "connectionId", "duration");
                     ConnectionReadyEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionReadyEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getConnectionId().getServerId().getAddress());
+                    assertConnectionIdMatch(expectedEvent, actualEvent.getConnectionId());
+                    assertDurationMatch(expectedEvent, actualEvent);
                 } else if (type.equals("ConnectionClosed")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address", "connectionId", "reason");
                     ConnectionClosedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionClosedEvent.class);
+                    assertAddressMatch(expectedEvent, actualEvent.getConnectionId().getServerId().getAddress());
                     assertConnectionIdMatch(expectedEvent, actualEvent.getConnectionId());
                     assertReasonMatch(expectedEvent, actualEvent);
                 } else if (type.equals("ConnectionCheckOutStarted")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address");
                     ConnectionCheckOutStartedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionCheckOutStartedEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
                 } else if (type.equals("ConnectionCheckOutFailed")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address", "reason", "duration");
                     ConnectionCheckOutFailedEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionCheckOutFailedEvent.class);
                     assertAddressMatch(expectedEvent, actualEvent.getServerId().getAddress());
                     assertReasonMatch(expectedEvent, actualEvent);
+                    assertDurationMatch(expectedEvent, actualEvent);
                 } else if (type.equals("ConnectionCheckedOut")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address", "connectionId", "duration");
                     ConnectionCheckedOutEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionCheckedOutEvent.class);
+                    assertAddressMatch(expectedEvent, actualEvent.getConnectionId().getServerId().getAddress());
                     assertConnectionIdMatch(expectedEvent, actualEvent.getConnectionId());
+                    assertDurationMatch(expectedEvent, actualEvent);
                 } else if (type.equals("ConnectionCheckedIn")) {
+                    assertHasOnlySupportedKeys(expectedEvent, "type", "address", "connectionId");
                     ConnectionCheckedInEvent actualEvent = getNextEvent(actualEventsIterator, ConnectionCheckedInEvent.class);
+                    assertAddressMatch(expectedEvent, actualEvent.getConnectionId().getServerId().getAddress());
                     assertConnectionIdMatch(expectedEvent, actualEvent.getConnectionId());
                 } else {
                     throw new UnsupportedOperationException("Unsupported event type " + type);
                 }
             }
+        }
+    }
+
+    private static void assertHasOnlySupportedKeys(final BsonDocument document, final String... supportedKeys) {
+        List<String> supportedKeysList = asList(supportedKeys);
+        List<String> unsupportedKeys = document.keySet().stream()
+                .filter(key -> !supportedKeysList.contains(key))
+                .collect(Collectors.toList());
+        if (!unsupportedKeys.isEmpty()) {
+            fail(format("The runner encountered not yet supported keys %s in %s", unsupportedKeys, document));
         }
     }
 
@@ -397,6 +429,32 @@ public abstract class AbstractConnectionPoolTest {
                                 expectedEvent, actualConnectionIdLocalValue),
                         expectedConnectionId, adjustedConnectionIdLocalValue);
             }
+        }
+    }
+
+    private static void assertDurationMatch(final BsonDocument expectedEvent, final ConnectionReadyEvent actualEvent) {
+        assertDurationMatch(expectedEvent, actualEvent.getElapsedTime(TimeUnit.MILLISECONDS));
+    }
+
+    private static void assertDurationMatch(final BsonDocument expectedEvent, final ConnectionCheckOutFailedEvent actualEvent) {
+        assertDurationMatch(expectedEvent, actualEvent.getElapsedTime(TimeUnit.MILLISECONDS));
+    }
+
+    private static void assertDurationMatch(final BsonDocument expectedEvent, final ConnectionCheckedOutEvent actualEvent) {
+        assertDurationMatch(expectedEvent, actualEvent.getElapsedTime(TimeUnit.MILLISECONDS));
+    }
+
+    private static void assertDurationMatch(final BsonDocument expectedEvent, final long actualDurationMillis) {
+        String durationKey = "duration";
+        if (expectedEvent.isNumber(durationKey)) {
+            assertTrue("actualDurationMillis must not be negative", actualDurationMillis >= 0);
+            long expectedDurationMillis = expectedEvent.getNumber(durationKey).longValue();
+            if (expectedDurationMillis != ANY_INT) {
+                fail(format("Unsupported duration value %d. Pay attention to the expected value unit when supporting the value",
+                        expectedDurationMillis));
+            }
+        } else if (expectedEvent.containsKey(durationKey)) {
+            fail(format("Unsupported value %s", expectedEvent.get(durationKey)));
         }
     }
 
