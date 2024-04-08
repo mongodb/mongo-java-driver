@@ -821,6 +821,37 @@ functions:
           
           MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-csfle-tests-with-mongocryptd.sh
 
+  "trace artifacts":
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+           tag=$(git describe --tags --always --dirty)
+
+           # remove the leading 'r'
+           version=$(echo -n "$tag" | cut -c 2-)
+
+           cat <<EOT > trace-expansions.yml
+           release_version: "$version"
+           EOT
+           cat trace-expansions.yml
+
+           ls -lisah bson-kotlin/build/libs
+    - command: expansions.update
+      params:
+        file: src/trace-expansions.yml
+    - command: papertrail.trace
+      params:
+        key_id: ${papertrail_key_id}
+        secret_key: ${papertrail_secret_key}
+        product: ${product}
+        version: ${release_version}
+        filenames:
+          - "src/*/build/libs/*.jar"
+          - "src/*/build/libs/*.asc"
+          - "src/*/build/publications/mavenJava/*.pom"
+          - "src/*/build/publications/mavenJava/*.asc"
+
   "publish snapshot":
     - command: shell.exec
       type: test
@@ -1491,11 +1522,17 @@ tasks:
           name: "static-analysis"
       commands:
         - func: "publish snapshot"
+        - func: "trace artifacts"
+          vars:
+            product: mongo-java-driver-snapshot
 
     - name: publish-release
       git_tag_only: true
       commands:
         - func: "publish release"
+        - func: "trace artifacts"
+          vars:
+            product: mongo-java-driver
 
     - name: "perf"
       tags: ["perf"]

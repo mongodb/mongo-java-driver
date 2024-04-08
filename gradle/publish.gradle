@@ -74,6 +74,13 @@ def scalaProjects = publishedProjects.findAll { it.name.contains('scala') }
 def javaProjects = publishedProjects - scalaProjects
 def projectsWithManifest = publishedProjects.findAll {it.name != 'driver-legacy' }
 
+configure(publishedProjects) { project ->
+    afterEvaluate {
+        generatePomFileForMavenJavaPublication.destination = "build/publications/mavenJava/" +
+                project.archivesBaseName + "-" + version + "." + "pom"
+    }
+}
+
 configure(javaProjects) { project ->
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
