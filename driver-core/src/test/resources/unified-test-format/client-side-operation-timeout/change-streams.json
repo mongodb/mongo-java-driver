@@ -1,6 +1,5 @@
 {
   "description": "timeoutMS behaves correctly for change streams",
-  "comment": "Manually updated some of the timeoutMS and blockTimeMS to remove race conditions",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -105,7 +104,7 @@
                   "aggregate"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 55
+                "blockTimeMS": 250
               }
             }
           }
@@ -115,7 +114,7 @@
           "object": "collection",
           "arguments": {
             "pipeline": [],
-            "timeoutMS": 50
+            "timeoutMS": 200
           },
           "expectError": {
             "isTimeoutError": true
@@ -311,7 +310,7 @@
           "object": "collection",
           "arguments": {
             "pipeline": [],
-            "timeoutMS": 80
+            "timeoutMS": 200
           },
           "saveResultAsEntity": "changeStream"
         },
@@ -331,7 +330,7 @@
                   "aggregate"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 40,
+                "blockTimeMS": 120,
                 "errorCode": 7,
                 "errorLabels": [
                   "ResumableChangeStreamError"
@@ -413,7 +412,7 @@
           "arguments": {
             "pipeline": [],
             "maxAwaitTimeMS": 1,
-            "timeoutMS": 100
+            "timeoutMS": 200
           },
           "saveResultAsEntity": "changeStream"
         },
@@ -432,7 +431,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 150
+                "blockTimeMS": 250
               }
             }
           }
@@ -535,7 +534,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 150
+                "blockTimeMS": 250
               }
             }
           }
@@ -545,7 +544,7 @@
           "object": "collection",
           "arguments": {
             "pipeline": [],
-            "timeoutMS": 100
+            "timeoutMS": 200
           },
           "saveResultAsEntity": "changeStream"
         },
