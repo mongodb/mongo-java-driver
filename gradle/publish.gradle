@@ -55,6 +55,10 @@ ext {
                     password project.hasProperty('nexusPassword') ? project.getProperty('nexusPassword') : ''
                 }
             }
+
+            maven {
+                url = "$rootDir/build/repo"
+            }
         }
     }
     configureJarManifestAttributes = { project ->
