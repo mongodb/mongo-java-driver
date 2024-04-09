@@ -90,6 +90,8 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
                         || testDescription.equals("commitTransaction ignores socketTimeoutMS if timeoutMS is set")
                         || testDescription.equals("commitTransaction ignores maxCommitTimeMS if timeoutMS is set")
                 ));
+        assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS behaves correctly when closing cursors")
+                && testDescription.equals("timeoutMS can be overridden for close"));
 
         assumeFalse("TODO (CSOT) - JAVA-5259 No client.withTimeout", testDescription.endsWith("on client"));
 
@@ -101,17 +103,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("TODO (CSOT) - JAVA-4062", testDescription.contains("wTimeoutMS is ignored")
           || testDescription.contains("ignores wTimeoutMS"));
-
-        // TEST BUGS / ISSUES
-        assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",
-                fileDescription.startsWith("timeoutMS behaves correctly for tailable awaitData cursors"));
-        assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",
-                fileDescription.startsWith("timeoutMS behaves correctly for tailable non-await cursors"));
-        assumeFalse("TODO (CSOT) - Tests need to create a capped collection - not in json",
-                fileDescription.startsWith("timeoutMS behaves correctly for tailable non-awaitData cursors"));
-
-        assumeFalse("TODO (CSOT) - Invalid collection name in the test",
-             testDescription.equals("timeoutMS can be overridden for close"));
     }
 
     private static final List<String> RACY_GET_MORE_TESTS = asList(

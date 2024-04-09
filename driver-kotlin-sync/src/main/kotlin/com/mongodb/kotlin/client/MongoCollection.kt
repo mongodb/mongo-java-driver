@@ -254,7 +254,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public fun <R : Any> distinct(
+    public fun <R : Any?> distinct(
         fieldName: String,
         filter: Bson = BsonDocument(),
         resultClass: Class<R>
@@ -271,7 +271,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public fun <R : Any> distinct(
+    public fun <R : Any?> distinct(
         clientSession: ClientSession,
         fieldName: String,
         filter: Bson = BsonDocument(),
@@ -287,7 +287,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public inline fun <reified R : Any> distinct(
+    public inline fun <reified R : Any?> distinct(
         fieldName: String,
         filter: Bson = BsonDocument()
     ): DistinctIterable<R> = distinct(fieldName, filter, R::class.java)
@@ -302,7 +302,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public inline fun <reified R : Any> distinct(
+    public inline fun <reified R : Any?> distinct(
         clientSession: ClientSession,
         fieldName: String,
         filter: Bson = BsonDocument()

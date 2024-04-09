@@ -722,7 +722,11 @@ final class Operations<TDocument> {
     }
 
     private BsonDocument documentToBsonDocument(final TDocument document) {
-        return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
+        if (document instanceof BsonDocument) {
+            return (BsonDocument) document;
+        } else {
+            return new BsonDocumentWrapper<>(document, getCodec());
+        }
     }
 
     @Nullable

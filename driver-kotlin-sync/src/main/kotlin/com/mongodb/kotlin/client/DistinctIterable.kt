@@ -28,12 +28,16 @@ import org.bson.conversions.Bson
  * @param T The type of the result.
  * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
  */
-public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>) : MongoIterable<T>(wrapped) {
+public class DistinctIterable<T : Any?>(private val wrapped: JDistinctIterable<T>) : MongoIterable<T>(wrapped) {
 
-    public override fun batchSize(batchSize: Int): DistinctIterable<T> {
-        super.batchSize(batchSize)
-        return this
-    }
+    /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     */
+    public override fun batchSize(batchSize: Int): DistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the timeoutMode for the cursor.
@@ -45,10 +49,7 @@ public class DistinctIterable<T : Any>(private val wrapped: JDistinctIterable<T>
      * @return this
      * @since CSOT
      */
-    public fun timeoutMode(timeoutMode: TimeoutMode): DistinctIterable<T> {
-        wrapped.timeoutMode(timeoutMode)
-        return this
-    }
+    public fun timeoutMode(timeoutMode: TimeoutMode): DistinctIterable<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Sets the query filter to apply to the query.
