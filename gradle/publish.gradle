@@ -68,7 +68,7 @@ ext {
     }
 }
 
-def projectsNotPublishedToMaven = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor") + project("driver-lambda")
+def projectsNotPublishedToMaven = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor") + project("driver-lambda") + project(":graalvm-native-image-app")
 def publishedProjects = subprojects - projectsNotPublishedToMaven
 def scalaProjects = publishedProjects.findAll { it.name.contains('scala') }
 def javaProjects = publishedProjects - scalaProjects
