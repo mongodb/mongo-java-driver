@@ -64,6 +64,7 @@ import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.Long.MAX_VALUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -530,7 +531,7 @@ public class DefaultConnectionPoolTest {
             }
         };
         Collection<Future<?>> tasks = new ArrayList<>();
-        Timeout timeout = Timeout.expiresIn(durationNanos, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED);
+        Timeout timeout = Timeout.expiresIn(durationNanos, NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED);
         for (int i = 0; i < concurrentUsersCount; i++) {
             if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously and check in
                 tasks.add(executor.submit(() -> {

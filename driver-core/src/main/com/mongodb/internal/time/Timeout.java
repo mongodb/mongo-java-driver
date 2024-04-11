@@ -79,19 +79,19 @@ public interface Timeout {
     /**
      * @param duration the non-negative duration, in the specified time unit
      * @param unit the time unit
-     * @param zeroDurationIs what to interpret a 0 duration as (infinite or expired)
+     * @param zeroSemantics what to interpret a 0 duration as (infinite or expired)
      * @return a timeout that expires in the specified duration after now.
      */
     @NotNull
-    static Timeout expiresIn(final long duration, final TimeUnit unit, final ZeroDurationIs zeroDurationIs) {
+    static Timeout expiresIn(final long duration, final TimeUnit unit, final ZeroSemantics zeroSemantics) {
         // TODO (CSOT) confirm that all usages in final PR always supply a non-negative duration
         if (duration < 0) {
             throw new AssertionError("Timeouts must not be in the past");
         } else if (duration == 0) {
-            switch (zeroDurationIs) {
-                case INFINITE:
+            switch (zeroSemantics) {
+                case ZERO_DURATION_MEANS_INFINITE:
                     return Timeout.infinite();
-                case EXPIRED:
+                case ZERO_DURATION_MEANS_EXPIRED:
                     return TimePoint.now();
                 default:
                     throw Assertions.fail("Unknown enum value");
@@ -237,7 +237,8 @@ public interface Timeout {
                 () -> onExpired.run());
     }
 
-    enum ZeroDurationIs {
-        EXPIRED, INFINITE
+    enum ZeroSemantics {
+        ZERO_DURATION_MEANS_EXPIRED,
+        ZERO_DURATION_MEANS_INFINITE
     }
 }

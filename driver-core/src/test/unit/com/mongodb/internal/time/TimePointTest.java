@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.stream.Stream;
 
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -83,10 +84,10 @@ public final class TimePointTest {
     @Test
     void timeoutExpiresIn() {
         assertAll(
-                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED)),
-                () -> assertTrue(hasExpired(Timeout.expiresIn(0L, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED))),
-                () -> assertFalse(isInfinite(Timeout.expiresIn(1L, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED))),
-                () -> assertFalse(hasExpired(Timeout.expiresIn(1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED))));
+                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES, ZERO_DURATION_MEANS_EXPIRED)),
+                () -> assertTrue(hasExpired(Timeout.expiresIn(0L, NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED))),
+                () -> assertFalse(isInfinite(Timeout.expiresIn(1L, NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED))),
+                () -> assertFalse(hasExpired(Timeout.expiresIn(1000, MINUTES, ZERO_DURATION_MEANS_EXPIRED))));
     }
 
     @Test
@@ -104,7 +105,7 @@ public final class TimePointTest {
 
         reset(condition);
 
-        Timeout.expiresIn(100, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED).awaitOn(condition, () -> "ignored");
+        Timeout.expiresIn(100, NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED).awaitOn(condition, () -> "ignored");
         verify(condition, times(1)).awaitNanos(anyLong());
         verifyNoMoreInteractions(condition);
     }
@@ -119,7 +120,7 @@ public final class TimePointTest {
 
         reset(latch);
 
-        Timeout.expiresIn(100, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED).awaitOn(latch, () -> "ignored");
+        Timeout.expiresIn(100, NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED).awaitOn(latch, () -> "ignored");
         verify(latch, times(1)).await(anyLong(), any(TimeUnit.class));
         verifyNoMoreInteractions(latch);
     }
@@ -217,8 +218,8 @@ public final class TimePointTest {
         assertAll(
                 () -> assertFalse(hasExpired(Timeout.infinite())),
                 () -> assertTrue(hasExpired(TimePoint.now())),
-                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED)),
-                () -> assertFalse(hasExpired(Timeout.expiresIn(1000, MINUTES, Timeout.ZeroDurationIs.EXPIRED))));
+                () -> assertThrows(AssertionError.class, () -> Timeout.expiresIn(-1000, MINUTES, ZERO_DURATION_MEANS_EXPIRED)),
+                () -> assertFalse(hasExpired(Timeout.expiresIn(1000, MINUTES, ZERO_DURATION_MEANS_EXPIRED))));
     }
 
     @ParameterizedTest

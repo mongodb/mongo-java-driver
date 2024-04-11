@@ -77,6 +77,7 @@ import static com.mongodb.internal.logging.LogMessage.Entry.Name.SERVER_PORT;
 import static com.mongodb.internal.logging.LogMessage.Entry.Name.TOPOLOGY_DESCRIPTION;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static com.mongodb.internal.logging.LogMessage.Level.INFO;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Comparator.comparingInt;
@@ -240,7 +241,7 @@ abstract class BaseCluster implements Cluster {
     private Timeout startMinWaitHeartbeatTimeout() {
         long minHeartbeatFrequency = serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS);
         minHeartbeatFrequency = Math.max(0, minHeartbeatFrequency);
-        return Timeout.expiresIn(minHeartbeatFrequency, NANOSECONDS, Timeout.ZeroDurationIs.EXPIRED);
+        return Timeout.expiresIn(minHeartbeatFrequency, NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED);
     }
 
     private boolean handleServerSelectionRequest(

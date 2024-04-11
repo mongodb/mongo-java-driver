@@ -43,6 +43,7 @@ import static com.mongodb.internal.connection.SocksSocket.AddressType.DOMAIN_NAM
 import static com.mongodb.internal.connection.SocksSocket.AddressType.IP_V4;
 import static com.mongodb.internal.connection.SocksSocket.AddressType.IP_V6;
 import static com.mongodb.internal.connection.SocksSocket.ServerReply.REPLY_SUCCEEDED;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -84,7 +85,7 @@ public final class SocksSocket extends Socket {
         // `Socket` requires `IllegalArgumentException`
         isTrueArgument("timeoutMs", timeoutMs >= 0);
         try {
-            Timeout timeout = Timeout.expiresIn(timeoutMs, MILLISECONDS, Timeout.ZeroDurationIs.INFINITE);
+            Timeout timeout = Timeout.expiresIn(timeoutMs, MILLISECONDS, ZERO_DURATION_MEANS_INFINITE);
             InetSocketAddress unresolvedAddress = (InetSocketAddress) endpoint;
             assertTrue(unresolvedAddress.isUnresolved());
             this.remoteAddress = unresolvedAddress;

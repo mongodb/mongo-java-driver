@@ -29,6 +29,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -211,10 +212,18 @@ public class TimeoutContext {
         this.maxTimeSupplier = null;
     }
 
+    /**
+     * The override will be provided as the remaining value in
+     * {@link #runMaxTimeMSTimeout}, where 0 will invoke the onExpired path
+     */
     public void setMaxTimeOverride(final long maxTimeMS) {
         this.maxTimeSupplier = () -> maxTimeMS;
     }
 
+    /**
+     * The override will be provided as the remaining value in 
+     * {@link #runMaxTimeMSTimeout}, where 0 will invoke the onExpired path
+     */
     public void setMaxTimeOverrideToMaxCommitTime() {
         this.maxTimeSupplier = () -> getMaxCommitTimeMS();
     }
@@ -237,7 +246,7 @@ public class TimeoutContext {
         // null timeout treated as infinite will be later than the other
 
         return Timeout.earliest(
-                Timeout.expiresIn(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS, Timeout.ZeroDurationIs.INFINITE),
+                Timeout.expiresIn(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS, ZERO_DURATION_MEANS_INFINITE),
                 Timeout.nullAsInfinite(timeout));
     }
 
@@ -305,7 +314,7 @@ public class TimeoutContext {
     @Nullable
     public static Timeout startTimeout(@Nullable final Long timeoutMS) {
         if (timeoutMS != null) {
-            return Timeout.expiresIn(timeoutMS, MILLISECONDS, Timeout.ZeroDurationIs.INFINITE);
+            return Timeout.expiresIn(timeoutMS, MILLISECONDS, ZERO_DURATION_MEANS_INFINITE);
         }
         return null;
     }
