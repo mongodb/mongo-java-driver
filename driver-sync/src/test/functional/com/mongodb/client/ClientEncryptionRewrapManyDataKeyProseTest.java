@@ -17,19 +17,13 @@
 package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
 
 public class ClientEncryptionRewrapManyDataKeyProseTest extends AbstractClientEncryptionRewrapManyDataKeyProseTest {
 
     @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
-    }
-
-    @Override
-    public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
+    public ClientEncryption createClientEncryption(final ClientEncryptionSettings settings) {
         return ClientEncryptions.create(settings);
     }
 }
