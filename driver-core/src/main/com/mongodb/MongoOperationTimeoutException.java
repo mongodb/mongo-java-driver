@@ -15,6 +15,9 @@
  */
 package com.mongodb;
 
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+
 import java.util.concurrent.TimeUnit;
 
 /**

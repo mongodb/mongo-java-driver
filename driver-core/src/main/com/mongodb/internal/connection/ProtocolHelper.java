@@ -255,10 +255,11 @@ public final class ProtocolHelper {
         int errorCode = getErrorCode(response);
         String errorMessage = getErrorMessage(response, errorMessageFieldName);
         if (ErrorCategory.fromErrorCode(errorCode) == ErrorCategory.EXECUTION_TIMEOUT) {
+            MongoExecutionTimeoutException mongoExecutionTimeoutException = new MongoExecutionTimeoutException(errorCode, errorMessage, response);
             if (timeoutContext.hasTimeoutMS()) {
-                return TimeoutContext.createMongoTimeoutException(errorMessage);
+                return TimeoutContext.createMongoTimeoutException(mongoExecutionTimeoutException);
             }
-            return new MongoExecutionTimeoutException(errorCode, errorMessage, response);
+            return mongoExecutionTimeoutException;
         } else if (isNodeIsRecoveringError(errorCode, errorMessage)) {
             return new MongoNodeIsRecoveringException(response, serverAddress);
         } else if (isNotPrimaryError(errorCode, errorMessage)) {

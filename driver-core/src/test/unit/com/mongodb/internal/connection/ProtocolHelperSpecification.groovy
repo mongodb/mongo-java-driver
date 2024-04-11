@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNodeIsRecoveringException
@@ -94,9 +93,11 @@ class ProtocolHelperSpecification extends Specification {
 
     def 'query failure exception should be MongoOperationTimeoutException if error code is 50'() {
         expect:
-        getQueryFailureException(new BsonDocument('code', new BsonInt32(50)),
-                new ServerAddress(),new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
-                instanceof MongoOperationTimeoutException
+        def exception = getQueryFailureException(new BsonDocument('code', new BsonInt32(50)),
+                new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
+        exception instanceof MongoOperationTimeoutException
+        exception.getCause() instanceof MongoExecutionTimeoutException
+
     }
 
     def 'command failure exceptions should handle MongoNotPrimaryException scenarios'() {

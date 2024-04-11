@@ -95,7 +95,9 @@ class MultiServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.getServer(firstServer, OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout())
+        cluster.getServer(firstServer,
+                OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout(),
+                OPERATION_CONTEXT.getTimeoutContext())
 
         then:
         thrown(IllegalStateException)
