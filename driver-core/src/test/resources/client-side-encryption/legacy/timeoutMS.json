@@ -4,7 +4,6 @@
       "minServerVersion": "4.4"
     }
   ],
-  "comment": "Updated timeoutMS and blockTimeMS manually to address race conditions in tests with SSL handshake.",
   "database_name": "cse-timeouts-db",
   "collection_name": "cse-timeouts-coll",
   "data": [],
@@ -162,7 +161,7 @@
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
-          "times": 3
+          "times": 2
         },
         "data": {
           "failCommands": [
@@ -170,7 +169,7 @@
             "find"
           ],
           "blockConnection": true,
-          "blockTimeMS": 200
+          "blockTimeMS": 300
         }
       },
       "clientOptions": {
