@@ -221,7 +221,7 @@ public class TimeoutContext {
     }
 
     /**
-     * The override will be provided as the remaining value in 
+     * The override will be provided as the remaining value in
      * {@link #runMaxTimeMSTimeout}, where 0 will invoke the onExpired path
      */
     public void setMaxTimeOverrideToMaxCommitTime() {
