@@ -274,7 +274,11 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
             final OperationContext operationContext, final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+                (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
+                        CommandOperationHelper.onRetryableWriteAttemptFailure(
+                                operationContext, previouslyChosenException, mostRecentAttemptException);
+        return new RetryingSyncSupplier<>(retryState, onAttemptFailure,
                 CommandOperationHelper::shouldAttemptToRetryWrite, () -> {
             logRetryExecute(retryState, operationContext);
             return writeFunction.get();
@@ -283,7 +287,11 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
+        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+                (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
+                        CommandOperationHelper.onRetryableReadAttemptFailure(
+                                operationContext, previouslyChosenException, mostRecentAttemptException);
+        return new RetryingSyncSupplier<>(retryState, onAttemptFailure,
                 CommandOperationHelper::shouldAttemptToRetryRead, () -> {
             logRetryExecute(retryState, operationContext);
             return readFunction.get();

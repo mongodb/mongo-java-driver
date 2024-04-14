@@ -51,8 +51,15 @@ final class CommandOperationHelper {
         BsonDocument create(ServerDescription serverDescription, ConnectionDescription connectionDescription);
     }
 
+    static Throwable onRetryableReadAttemptFailure(
+            final OperationContext operationContext,
+            @Nullable final Throwable previouslyChosenException,
+            final Throwable mostRecentAttemptException) {
+        operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+        return chooseRetryableReadException(previouslyChosenException, mostRecentAttemptException);
+    }
 
-    static Throwable chooseRetryableReadException(
+    private static Throwable chooseRetryableReadException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
         assertFalse(mostRecentAttemptException instanceof ResourceSupplierInternalException);
         if (previouslyChosenException == null
@@ -64,7 +71,15 @@ final class CommandOperationHelper {
         }
     }
 
-    static Throwable chooseRetryableWriteException(
+    static Throwable onRetryableWriteAttemptFailure(
+            final OperationContext operationContext,
+            @Nullable final Throwable previouslyChosenException,
+            final Throwable mostRecentAttemptException) {
+        operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+        return chooseRetryableWriteException(previouslyChosenException, mostRecentAttemptException);
+    }
+
+    private static Throwable chooseRetryableWriteException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
         if (previouslyChosenException == null) {
             if (mostRecentAttemptException instanceof ResourceSupplierInternalException) {

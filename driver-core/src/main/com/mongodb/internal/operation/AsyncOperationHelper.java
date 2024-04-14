@@ -44,6 +44,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -285,7 +286,11 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
+        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+                (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
+                        CommandOperationHelper.onRetryableReadAttemptFailure(
+                                operationContext, previouslyChosenException, mostRecentAttemptException);
+        return new RetryingAsyncCallbackSupplier<>(retryState, onAttemptFailure,
                 CommandOperationHelper::shouldAttemptToRetryRead, callback -> {
             logRetryExecute(retryState, operationContext);
             asyncReadFunction.get(callback);
@@ -294,7 +299,11 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateWriteWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+                (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
+                        CommandOperationHelper.onRetryableWriteAttemptFailure(
+                                operationContext, previouslyChosenException, mostRecentAttemptException);
+        return new RetryingAsyncCallbackSupplier<>(retryState, onAttemptFailure,
                 CommandOperationHelper::shouldAttemptToRetryWrite, callback -> {
             logRetryExecute(retryState, operationContext);
             asyncWriteFunction.get(callback);

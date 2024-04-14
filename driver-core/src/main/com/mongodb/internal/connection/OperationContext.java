@@ -15,6 +15,17 @@
  */
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
+import com.mongodb.selector.ServerSelector;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -23,12 +34,87 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OperationContext {
     private static final AtomicLong NEXT_ID = new AtomicLong(0);
     private final long id;
+    private final ServerDeprioritization serverDeprioritization;
 
     public OperationContext() {
         id = NEXT_ID.incrementAndGet();
+        serverDeprioritization = new ServerDeprioritization();
     }
 
     public long getId() {
         return id;
+    }
+
+    /**
+     * @return The same {@link ServerDeprioritization} if called on the same {@link OperationContext}.
+     */
+    public ServerDeprioritization getServerDeprioritization() {
+        return serverDeprioritization;
+    }
+
+    public static final class ServerDeprioritization {
+        @Nullable
+        private ServerAddress candidate;
+        private final Set<ServerAddress> deprioritized;
+
+        private ServerDeprioritization() {
+            candidate = null;
+            deprioritized = new HashSet<>();
+        }
+
+        ServerSelector apply(final ServerSelector selector) {
+            return new DeprioritizingSelector(selector);
+        }
+
+        void updateCandidate(final ServerAddress serverAddress, final ClusterType clusterType) {
+            candidate = isEnabled(clusterType) ? serverAddress : null;
+        }
+
+        public void onAttemptFailure(final Throwable failure) {
+            if (!(failure instanceof MongoConnectionPoolClearedException)) {
+                deprioritized.add(candidate);
+            }
+            candidate = null;
+        }
+
+        private static boolean isEnabled(final ClusterType clusterType) {
+            return clusterType == ClusterType.SHARDED;
+        }
+
+        /**
+         * {@link ServerSelector} requires thread safety, but that is only because a user may specify
+         * {@link com.mongodb.connection.ClusterSettings.Builder#serverSelector(ServerSelector)},
+         * which indeed may be used concurrently. {@link DeprioritizingSelector} does not need to be thread-safe.
+         */
+        private final class DeprioritizingSelector implements ServerSelector {
+            private final ServerSelector wrapped;
+
+            private DeprioritizingSelector(final ServerSelector wrapped) {
+                this.wrapped = wrapped;
+            }
+
+            @Override
+            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                if (isEnabled(clusterDescription.getType())) {
+                    List<ServerDescription> filteredServerDescriptions = ClusterDescriptionHelper.getServersByPredicate(
+                            clusterDescription, serverDescription -> !deprioritized.contains(serverDescription.getAddress()));
+                    ClusterDescription filteredClusterDescription = new ClusterDescription(
+                            clusterDescription.getConnectionMode(),
+                            clusterDescription.getType(),
+                            clusterDescription.getSrvResolutionException(),
+                            filteredServerDescriptions,
+                            clusterDescription.getClusterSettings(),
+                            clusterDescription.getServerSettings());
+                    List<ServerDescription> result = wrapped.select(filteredClusterDescription);
+                    if (result.isEmpty()) {
+                        // fall back to select from all servers ignoring the deprioritized ones
+                        result = wrapped.select(clusterDescription);
+                    }
+                    return result;
+                } else {
+                    return wrapped.select(clusterDescription);
+                }
+            }
+        }
     }
 }

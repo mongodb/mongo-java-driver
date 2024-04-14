@@ -51,6 +51,7 @@ import org.bson.FieldNameValidator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -140,7 +141,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+                (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
+                        CommandOperationHelper.onRetryableWriteAttemptFailure(
+                                operationContext, previouslyChosenException, mostRecentAttemptException);
+        return new RetryingSyncSupplier<>(retryState, onAttemptFailure,
                 this::shouldAttemptToRetryWrite, () -> {
             logRetryExecute(retryState, operationContext);
             return writeFunction.get();
@@ -149,7 +154,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> writeFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+                (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
+                        CommandOperationHelper.onRetryableWriteAttemptFailure(
+                                operationContext, previouslyChosenException, mostRecentAttemptException);
+        return new RetryingAsyncCallbackSupplier<>(retryState, onAttemptFailure,
                 this::shouldAttemptToRetryWrite, callback -> {
             logRetryExecute(retryState, operationContext);
             writeFunction.get(callback);

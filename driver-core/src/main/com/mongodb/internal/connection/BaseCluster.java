@@ -33,6 +33,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.LogMessage;
@@ -122,8 +123,9 @@ abstract class BaseCluster implements Cluster {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
             logServerSelectionStarted(clusterId, operationContext, serverSelector, curDescription);
-            ServerSelector compositeServerSelector = getCompositeServerSelector(serverSelector);
-            ServerTuple serverTuple = selectServer(compositeServerSelector, curDescription);
+            ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
+            ServerSelector completeServerSelector = getCompleteServerSelector(serverSelector, serverDeprioritization);
+            ServerTuple serverTuple = selectServer(completeServerSelector, curDescription);
 
             boolean selectionWaitingLogged = false;
 
@@ -137,8 +139,10 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (serverTuple != null) {
+                    ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                     logServerSelectionSucceeded(
-                            clusterId, operationContext, serverTuple.getServerDescription().getAddress(), serverSelector, curDescription);
+                            clusterId, operationContext, serverAddress, serverSelector, curDescription);
+                    serverDeprioritization.updateCandidate(serverAddress, curDescription.getType());
                     return serverTuple;
                 }
 
@@ -163,7 +167,7 @@ abstract class BaseCluster implements Cluster {
 
                 currentPhase = phase.get();
                 curDescription = description;
-                serverTuple = selectServer(compositeServerSelector, curDescription);
+                serverTuple = selectServer(completeServerSelector, curDescription);
             }
 
         } catch (InterruptedException e) {
@@ -180,8 +184,9 @@ abstract class BaseCluster implements Cluster {
         ClusterDescription currentDescription = description;
 
         logServerSelectionStarted(clusterId, operationContext, serverSelector, currentDescription);
-        ServerSelectionRequest request = new ServerSelectionRequest(operationContext, serverSelector, getCompositeServerSelector(serverSelector),
-                                                                    getMaxWaitTimeNanos(), callback);
+        ServerSelectionRequest request = new ServerSelectionRequest(operationContext, serverSelector,
+                getCompleteServerSelector(serverSelector, operationContext.getServerDeprioritization()),
+                getMaxWaitTimeNanos(), callback);
 
         if (!handleServerSelectionRequest(request, currentPhase, currentDescription)) {
             notifyWaitQueueHandler(request);
@@ -276,10 +281,12 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
 
-                ServerTuple serverTuple = selectServer(request.compositeSelector, description);
+                ServerTuple serverTuple = selectServer(request.completeSelector, description);
                 if (serverTuple != null) {
-                    logServerSelectionSucceeded(clusterId, request.operationContext, serverTuple.getServerDescription().getAddress(),
+                    ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
+                    logServerSelectionSucceeded(clusterId, request.operationContext, serverAddress,
                             request.originalSelector, description);
+                    request.operationContext.getServerDeprioritization().updateCandidate(serverAddress, description.getType());
                     request.onResult(serverTuple, null);
                     return true;
                 }
@@ -343,14 +350,13 @@ abstract class BaseCluster implements Cluster {
         return result;
     }
 
-    private ServerSelector getCompositeServerSelector(final ServerSelector serverSelector) {
+    private ServerSelector getCompleteServerSelector(final ServerSelector serverSelector, final ServerDeprioritization serverDeprioritization) {
         ServerSelector latencyMinimizingServerSelector =
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS);
-        if (settings.getServerSelector() == null) {
-            return new CompositeServerSelector(asList(serverSelector, latencyMinimizingServerSelector));
-        } else {
-            return new CompositeServerSelector(asList(serverSelector, settings.getServerSelector(), latencyMinimizingServerSelector));
-        }
+        CompositeServerSelector compositeSelector = settings.getServerSelector() == null
+                ? new CompositeServerSelector(asList(serverSelector, latencyMinimizingServerSelector))
+                : new CompositeServerSelector(asList(serverSelector, settings.getServerSelector(), latencyMinimizingServerSelector));
+        return serverDeprioritization.apply(compositeSelector);
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress) {
@@ -399,7 +405,7 @@ abstract class BaseCluster implements Cluster {
     private static final class ServerSelectionRequest {
         private final OperationContext operationContext;
         private final ServerSelector originalSelector;
-        private final ServerSelector compositeSelector;
+        private final ServerSelector completeSelector;
         @Nullable
         private final Long maxWaitTimeNanos;
         private final SingleResultCallback<ServerTuple> callback;
@@ -407,13 +413,13 @@ abstract class BaseCluster implements Cluster {
         private CountDownLatch phase;
 
         ServerSelectionRequest(final OperationContext operationContext,
-                               final ServerSelector serverSelector, final ServerSelector compositeSelector,
+                               final ServerSelector serverSelector, final ServerSelector completeSelector,
                                @Nullable
                                final Long maxWaitTimeNanos,
                                final SingleResultCallback<ServerTuple> callback) {
             this.operationContext = operationContext;
             this.originalSelector = serverSelector;
-            this.compositeSelector = compositeSelector;
+            this.completeSelector = completeSelector;
             this.maxWaitTimeNanos = maxWaitTimeNanos;
             this.callback = callback;
         }
