@@ -26,6 +26,9 @@ data class SyncListCollectionsIterable<T : Any>(val wrapped: ListCollectionsFlow
     JListCollectionsIterable<T>, SyncMongoIterable<T>(wrapped) {
 
     override fun batchSize(batchSize: Int): SyncListCollectionsIterable<T> = apply { wrapped.batchSize(batchSize) }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListCollectionsIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

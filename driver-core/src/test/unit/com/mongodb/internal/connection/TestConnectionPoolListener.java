@@ -29,6 +29,7 @@ import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.TimePointTest;
 import com.mongodb.internal.time.Timeout;
 
 import java.util.ArrayList;
@@ -92,9 +93,9 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
         ArrayList<Object> seen = new ArrayList<>();
 
         for (Class<?> eventClass : eventClasses) {
-            waitForEvent(eventClass, 1, timeout.remaining(unit), unit);
+            waitForEvent(eventClass, 1, TimePointTest.remaining(timeout, unit), unit);
 
-            if (timeout.hasExpired()) {
+            if (TimePointTest.hasExpired(timeout)) {
                 throw new TimeoutException("Timed out waiting for event of type " + eventClass
                         + ". Timing out after seeing " + seen);
             }

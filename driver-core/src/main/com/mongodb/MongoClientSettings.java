@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -188,12 +189,10 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
-     *
-     * <p>If set, it will be used to look up the {@link java.net.InetAddress} for each host, via
-     * {@link InetAddressResolver#lookupByName(String)}. Otherwise, {@link java.net.InetAddress#getAllByName(String)} will be used.
+     * Gets the explicitly set {@link InetAddressResolver} to use for looking up the {@link java.net.InetAddress} instances for each host.
      *
      * @return the {@link java.net.InetAddress} resolver
+     * @see Builder#inetAddressResolver(InetAddressResolver)
      * @since 4.10
      */
     @Nullable
@@ -241,6 +240,7 @@ public final class MongoClientSettings {
         private Builder() {
         }
 
+        @SuppressWarnings("deprecation") //readTimeout
         private Builder(final MongoClientSettings settings) {
             notNull("settings", settings);
             applicationName = settings.getApplicationName();
@@ -669,6 +669,7 @@ public final class MongoClientSettings {
          *
          * @param inetAddressResolver the InetAddress provider
          * @return the {@link java.net.InetAddress} resolver
+         * @see #getInetAddressResolver()
          * @since 4.10
          */
         public Builder inetAddressResolver(@Nullable final InetAddressResolver inetAddressResolver) {
@@ -704,11 +705,9 @@ public final class MongoClientSettings {
          * @see #getTimeout
          */
         public Builder timeout(final long timeout, final TimeUnit timeUnit) {
-            isTrueArgument("timeoutMS must be >= 0", timeout >= 0);
-            this.timeoutMS = MILLISECONDS.convert(timeout, timeUnit);
+            this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
             return this;
         }
-
 
         // Package-private to provide interop with MongoClientOptions
         Builder heartbeatConnectTimeoutMS(final int heartbeatConnectTimeoutMS) {
@@ -1117,6 +1116,7 @@ public final class MongoClientSettings {
                 + '}';
     }
 
+    @SuppressWarnings("deprecation") //readTimeout
     private MongoClientSettings(final Builder builder) {
         isTrue("timeoutMS > 0 ", builder.timeoutMS == null || builder.timeoutMS >= 0);
         readPreference = builder.readPreference;

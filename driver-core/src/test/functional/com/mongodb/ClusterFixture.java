@@ -129,8 +129,8 @@ public final class ClusterFixture {
     public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
 
     public static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(5));
-    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(TIMEOUT_DURATION.toMillis());
-    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeoutMS(0L);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_TIMEOUT = TIMEOUT_SETTINGS.withTimeout(TIMEOUT, SECONDS);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeout(0L, MILLISECONDS);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME = TIMEOUT_SETTINGS.withMaxTimeMS(100);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME = TIMEOUT_SETTINGS.withMaxAwaitTimeMS(101);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME =
@@ -477,6 +477,7 @@ public final class ClusterFixture {
                 LoggerSettings.builder().build(), null, null, null, Collections.emptyList(), getServerApi(), null);
     }
 
+    @SuppressWarnings("deprecation") //readTimeout
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
         MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString).build();
 

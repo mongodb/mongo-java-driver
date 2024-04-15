@@ -39,6 +39,7 @@ import static com.mongodb.client.ClientSideOperationTimeoutTest.checkSkipCSOTTes
 import static com.mongodb.client.ClientSideOperationTimeoutTest.racyTestAssertion;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorError;
+import static java.lang.String.format;
 import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
@@ -99,16 +100,16 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         try {
             super.shouldPassAllOutcomes();
         } catch (AssertionError e) {
+            assertNoDroppedError(format("%s failed due to %s.\n"
+                            + "The test also caused a dropped error; `onError` called with no handler.",
+                    testDescription, e.getMessage()));
             if (racyTestAssertion(testDescription, e)) {
                 // Ignore failure - racy test often no time to do the getMore
                 return;
             }
             throw e;
         }
-        Throwable droppedError = atomicReferenceThrowable.get();
-        if (droppedError != null) {
-            throw new AssertionError("Test passed but there was a dropped error; `onError` called with no handler.", droppedError);
-        }
+        assertNoDroppedError(format("%s passed but there was a dropped error; `onError` called with no handler.", testDescription));
     }
 
     @Override
@@ -125,5 +126,12 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         disableSleep();
         Hooks.resetOnOperatorDebug();
         Hooks.resetOnErrorDropped();
+    }
+
+    private void assertNoDroppedError(final String message) {
+        Throwable droppedError = atomicReferenceThrowable.get();
+        if (droppedError != null) {
+            throw new AssertionError(message, droppedError);
+        }
     }
 }

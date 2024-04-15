@@ -140,6 +140,12 @@ class MongoClusterSpecification extends Specification {
         mongoCluster.getTimeout(TimeUnit.MILLISECONDS) == 10_000
         expect mongoCluster, isTheSameAs(createMongoCluster(MongoClientSettings.builder(CLIENT_SETTINGS)
                 .timeout(10_000, TimeUnit.MILLISECONDS).build()))
+
+        when:
+        createMongoCluster().withTimeout(500, TimeUnit.NANOSECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
 

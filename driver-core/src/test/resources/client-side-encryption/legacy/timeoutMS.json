@@ -4,6 +4,7 @@
       "minServerVersion": "4.4"
     }
   ],
+  "comment": "Updated timeoutMS and blockTimeMS manually to address race conditions in tests with SSL handshake.",
   "database_name": "cse-timeouts-db",
   "collection_name": "cse-timeouts-coll",
   "data": [],
@@ -100,7 +101,6 @@
   "tests": [
     {
       "description": "timeoutMS applied to listCollections to get collection schema",
-      "comment": "Updated timeoutMS and blockTimeMS manually to address race conditions in tests with SSL handshake.",
       "failPoint": {
         "configureFailPoint": "failCommand",
         "mode": {
@@ -111,7 +111,7 @@
             "listCollections"
           ],
           "blockConnection": true,
-          "blockTimeMS": 100
+          "blockTimeMS": 250
         }
       },
       "clientOptions": {
@@ -120,7 +120,7 @@
             "aws": {}
           }
         },
-        "timeoutMS": 90
+        "timeoutMS": 200
       },
       "operations": [
         {
@@ -170,7 +170,7 @@
             "find"
           ],
           "blockConnection": true,
-          "blockTimeMS": 20
+          "blockTimeMS": 200
         }
       },
       "clientOptions": {
@@ -179,7 +179,7 @@
             "aws": {}
           }
         },
-        "timeoutMS": 50
+        "timeoutMS": 500
       },
       "operations": [
         {

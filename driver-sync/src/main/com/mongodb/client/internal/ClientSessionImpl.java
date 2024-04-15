@@ -224,7 +224,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         while (true) {
             T retVal;
             try {
-                startTransaction(options, copyTimeoutContext(withTransactionTimeoutContext));
+                startTransaction(options, withTransactionTimeoutContext.copyTimeoutContext());
                 retVal = transactionBody.execute();
             } catch (Throwable e) {
                 if (transactionState == TransactionState.IN) {
@@ -303,10 +303,5 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         return new TimeoutContext(getTimeoutSettings(
                 TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions()),
                 operationExecutor.getTimeoutSettings()));
-    }
-
-    // Creates a copy of the timeout context that can be reset without resetting the original.
-    private TimeoutContext copyTimeoutContext(final TimeoutContext timeoutContext) {
-        return new TimeoutContext(timeoutContext.getTimeoutSettings(), timeoutContext.getTimeout());
     }
 }

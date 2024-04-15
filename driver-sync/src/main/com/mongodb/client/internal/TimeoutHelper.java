@@ -38,8 +38,10 @@ public final class TimeoutHelper {
                                                                final String message,
                                                                @Nullable final Timeout timeout) {
         if (timeout != null) {
-            long remainingMs = getRemainingMs(timeout, message);
-            return collection.withTimeout(remainingMs, MILLISECONDS);
+            return timeout.call(MILLISECONDS,
+                    () -> collection.withTimeout(0, MILLISECONDS),
+                    ms -> collection.withTimeout(ms, MILLISECONDS),
+                    () -> TimeoutContext.throwMongoTimeoutException(message));
         }
         return collection;
     }
@@ -53,8 +55,10 @@ public final class TimeoutHelper {
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
         if (timeout != null) {
-            long remainingMs = getRemainingMs(timeout, message);
-            return database.withTimeout(remainingMs, MILLISECONDS);
+            return timeout.call(MILLISECONDS,
+                    () -> database.withTimeout(0, MILLISECONDS),
+                    ms -> database.withTimeout(ms, MILLISECONDS),
+                    () -> TimeoutContext.throwMongoTimeoutException(message));
         }
         return database;
     }
@@ -64,14 +68,4 @@ public final class TimeoutHelper {
         return databaseWithTimeout(database, DEFAULT_TIMEOUT_MESSAGE, timeout);
     }
 
-    private static long getRemainingMs(final Timeout timeout, final String message) {
-        if (timeout.isInfinite()) {
-            return 0;
-        }
-        long remainingMs = timeout.remaining(MILLISECONDS);
-        if (remainingMs <= 0) {
-            throw TimeoutContext.createMongoTimeoutException(message);
-        }
-        return remainingMs;
-    }
 }

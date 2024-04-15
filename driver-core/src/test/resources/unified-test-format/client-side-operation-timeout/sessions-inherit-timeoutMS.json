@@ -1,6 +1,5 @@
 {
   "description": "sessions inherit timeoutMS from their parent MongoClient",
-  "comment": "Manually added ignoreExtraElements: true (withTransaction test)",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -22,7 +21,7 @@
       "client": {
         "id": "client",
         "uriOptions": {
-          "timeoutMS": 50
+          "timeoutMS": 500
         },
         "useMultipleMongoses": false,
         "observeEvents": [
@@ -79,7 +78,7 @@
                   "commitTransaction"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 60
+                "blockTimeMS": 600
               }
             }
           }
@@ -166,7 +165,7 @@
                   "abortTransaction"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 60
+                "blockTimeMS": 600
               }
             }
           }
@@ -250,7 +249,7 @@
                   "insert"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 60
+                "blockTimeMS": 600
               }
             }
           }
@@ -283,7 +282,6 @@
       "expectEvents": [
         {
           "client": "client",
-          "ignoreExtraEvents": true,
           "events": [
             {
               "commandStartedEvent": {
@@ -303,6 +301,26 @@
             {
               "commandFailedEvent": {
                 "commandName": "insert"
+              }
+            },
+            {
+              "commandStartedEvent": {
+                "commandName": "abortTransaction",
+                "databaseName": "admin",
+                "command": {
+                  "abortTransaction": 1,
+                  "maxTimeMS": {
+                    "$$type": [
+                      "int",
+                      "long"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "commandFailedEvent": {
+                "commandName": "abortTransaction"
               }
             }
           ]

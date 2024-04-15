@@ -48,6 +48,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -348,10 +349,10 @@ public class InternalStreamConnection implements InternalConnection {
         CommandEventSender commandEventSender;
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-                throw e;
+            Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+                throw TimeoutContext.createMongoRoundTripTimeoutException();
             });
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
             commandEventSender.sendStartedEvent();
             try {
@@ -373,7 +374,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             sendCommandMessage(message, bsonOutput, operationContext);
             if (message.isResponseExpected()) {
                 hasMoreToCome = true;
@@ -403,9 +404,9 @@ public class InternalStreamConnection implements InternalConnection {
             List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
             try {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
-                        getMessageSettings(description));
+                        getMessageSettings(description, initialServerDescription));
                 compressedBsonOutput = new ByteBufferBsonOutput(this);
-                compressedMessage.encode(compressedBsonOutput, operationContext.getSessionContext());
+                compressedMessage.encode(compressedBsonOutput, operationContext);
             } finally {
                 ResourceUtil.release(byteBuffers);
                 bsonOutput.close();
@@ -417,8 +418,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-            throw e;
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            throw TimeoutContext.createMongoRoundTripTimeoutException();
         });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
@@ -431,8 +432,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
-        validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> {
-            throw e;
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            throw createMongoOperationTimeoutExceptionAndClose(commandEventSender);
         });
 
         boolean commandSuccessful = false;
@@ -477,7 +478,7 @@ public class InternalStreamConnection implements InternalConnection {
         ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
 
         try {
-            message.encode(bsonOutput, operationContext.getSessionContext());
+            message.encode(bsonOutput, operationContext);
             CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
@@ -488,8 +489,8 @@ public class InternalStreamConnection implements InternalConnection {
                 List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
                 try {
                     CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, localSendCompressor,
-                            getMessageSettings(description));
-                    compressedMessage.encode(compressedBsonOutput, operationContext.getSessionContext());
+                            getMessageSettings(description, initialServerDescription));
+                    compressedMessage.encode(compressedBsonOutput, operationContext);
                 } finally {
                     ResourceUtil.release(byteBuffers);
                     bsonOutput.close();
@@ -518,9 +519,12 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
             } else {
-                Optional<MongoOperationTimeoutException> e = validateHasTimedOutAndClose(commandEventSender, operationContext);
-                if (e.isPresent()) {
-                    callback.onResult(null, e.get());
+                boolean[] shouldReturn = {false};
+                Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+                    callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
+                    shouldReturn[0] = true;
+                });
+                if (shouldReturn[0]) {
                     return;
                 }
 
@@ -557,13 +561,11 @@ public class InternalStreamConnection implements InternalConnection {
         });
     }
 
-    private Optional<MongoOperationTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
-            final OperationContext operationContext) {
-        return operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().map(e -> {
-            close();
-            commandEventSender.sendFailedEvent(e);
-            return e;
-        });
+    private MongoOperationTimeoutException createMongoOperationTimeoutExceptionAndClose(final CommandEventSender commandEventSender) {
+        MongoOperationTimeoutException e = TimeoutContext.createMongoRoundTripTimeoutException();
+        close();
+        commandEventSender.sendFailedEvent(e);
+        return e;
     }
 
     private <T> T getCommandResult(final Decoder<T> decoder, final ResponseBuffers responseBuffers, final int messageId) {

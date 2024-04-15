@@ -515,7 +515,13 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def cursor = execute(operation, async)
 
         when:
-        def expected = insertDocuments(helper, [1, 2])
+        // split into two insert commands, because starting in MongoDB 8.0 the same clusterTime is applied to all documents in a bulk
+        // write operation, and the test relies on the clusterTime values being both ascending _and_ unique.
+        def expectedOne = insertDocuments(helper, [1])
+        def expectedTwo = insertDocuments(helper, [2])
+        def expected = []
+        expected.addAll(expectedOne)
+        expected.addAll(expectedTwo)
         def result = next(cursor, async, 2)
 
         then:

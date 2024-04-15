@@ -26,6 +26,7 @@ import com.mongodb.MongoQueryException;
 import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
@@ -221,7 +222,7 @@ public final class ProtocolHelper {
         return new MongoQueryException(errorDocument, serverAddress);
     }
 
-    static MessageSettings getMessageSettings(final ConnectionDescription connectionDescription) {
+    static MessageSettings getMessageSettings(final ConnectionDescription connectionDescription, final ServerDescription serverDescription) {
         return MessageSettings.builder()
                 .maxDocumentSize(connectionDescription.getMaxDocumentSize())
                 .maxMessageSize(connectionDescription.getMaxMessageSize())
@@ -229,6 +230,7 @@ public final class ProtocolHelper {
                 .maxWireVersion(connectionDescription.getMaxWireVersion())
                 .serverType(connectionDescription.getServerType())
                 .sessionSupported(connectionDescription.getLogicalSessionTimeoutMinutes() != null)
+                .cryptd(serverDescription.isCryptd())
                 .build();
     }
 

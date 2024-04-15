@@ -36,6 +36,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected ListIndexesOperation")
     @Test
+    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperation() {
         configureBatchCursor();
 

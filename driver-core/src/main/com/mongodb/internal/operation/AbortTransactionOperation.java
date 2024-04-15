@@ -23,7 +23,6 @@ import org.bson.BsonDocument;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 
 /**
  * An operation that aborts a transaction.
@@ -50,9 +49,9 @@ public class AbortTransactionOperation extends TransactionOperation {
     @Override
     CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
+            operationContext.getTimeoutContext().resetToDefaultMaxTime();
             BsonDocument command = AbortTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
-            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
             putIfNotNull(command, "recoveryToken", recoveryToken);
             return command;
         };

@@ -63,6 +63,7 @@ public class WriteConcernDocumentTest extends TestCase {
         }
     }
 
+    @SuppressWarnings("deprecation") //wTimeoutMS
     private WriteConcern getWriteConcern(final BsonDocument writeConcernDocument) {
         BsonValue wValue = writeConcernDocument.get("w");
         WriteConcern retVal;

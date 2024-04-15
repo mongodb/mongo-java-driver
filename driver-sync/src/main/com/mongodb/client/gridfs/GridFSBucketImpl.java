@@ -17,8 +17,8 @@
 package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoGridFSException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -36,7 +36,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.TimeoutContext;
-
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -56,7 +55,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -145,8 +143,6 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
-        isTrueArgument("timeout >= 0", timeout >= 0);
-        notNull("timeUnit", timeUnit);
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withTimeout(timeout, timeUnit),
                 chunksCollection.withTimeout(timeout, timeUnit));
     }
@@ -660,6 +656,6 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Nullable
     private Timeout startTimeout() {
-        return TimeoutContext.calculateTimeout(filesCollection.getTimeout(MILLISECONDS));
+        return TimeoutContext.startTimeout(filesCollection.getTimeout(MILLISECONDS));
     }
 }

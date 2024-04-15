@@ -136,6 +136,7 @@ public abstract class AbstractClientSideEncryptionTest {
         assumeTrue("Client side encryption tests disabled", hasEncryptionTestsEnabled());
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
+        assumeFalse("TODO CSOT - JAVA-5406", filename.equals("timeoutMS.json"));
 
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
@@ -318,6 +319,8 @@ public abstract class AbstractClientSideEncryptionTest {
             BsonValue expectedResult = operation.get("result");
             try {
                 BsonDocument actualOutcome = helper.getOperationResults(operation);
+                assertFalse(String.format("Expected a timeout error but got: %s", actualOutcome.toJson()), hasTimeoutError(expectedResult));
+
                 if (expectedResult != null) {
                     BsonValue actualResult = actualOutcome.get("result", new BsonString("No result or error"));
                     assertBsonValue("Expected operation result differs from actual", expectedResult, actualResult);

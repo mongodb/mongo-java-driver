@@ -50,7 +50,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getReadPreference() == ReadPreference.primary()
         settings.getCommandListeners().isEmpty()
         settings.getApplicationName() == null
-        settings.getLoggerSettings() == LoggerSettings.builder().build();
+        settings.getLoggerSettings() == LoggerSettings.builder().build()
         settings.clusterSettings == ClusterSettings.builder().build()
         settings.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         settings.socketSettings == SocketSettings.builder().build()
@@ -245,16 +245,25 @@ class MongoClientSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'should throw an exception if the timeout is set and negative'() {
+    def 'should throw an exception if the timeout is invalid'() {
+        given:
+        def builder = MongoClientSettings.builder()
+
         when:
-        MongoClientSettings.builder().timeout(-1, TimeUnit.SECONDS).build()
+        builder.timeout(500, TimeUnit.NANOSECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        builder.timeout(-1, TimeUnit.SECONDS)
 
         then:
         thrown(IllegalArgumentException)
 
         when:
         def connectionString = new ConnectionString('mongodb://localhost/?timeoutMS=-1')
-        MongoClientSettings.builder().applyConnectionString(connectionString).build()
+        builder.applyConnectionString(connectionString).build()
 
         then:
         thrown(IllegalStateException)

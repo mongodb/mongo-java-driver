@@ -46,7 +46,6 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
-import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.IndexHelper.generateIndexName;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
@@ -194,7 +193,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 values.add(getIndex(request));
             }
             command.put("indexes", new BsonArray(values));
-            putIfNotZero(command, "maxTimeMS", operationContext.getTimeoutContext().getMaxTimeMS());
             appendWriteConcernToCommand(writeConcern, command);
             if (commitQuorum != null) {
                 if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {

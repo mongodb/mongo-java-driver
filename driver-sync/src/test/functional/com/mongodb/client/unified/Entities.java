@@ -368,6 +368,7 @@ public final class Entities {
         tasks.put(id, new ArrayList<>());
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS & wTimeoutMS
     private void initClient(final BsonDocument entity, final String id,
                             final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                             final boolean waitForPoolAsyncWorkManagerStart) {

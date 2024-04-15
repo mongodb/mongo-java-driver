@@ -111,6 +111,9 @@ functions:
           ${PROJECT_DIRECTORY}/${file}
 
   "upload mo artifacts":
+    - command: ec2.assume_role
+      params:
+        role_arn: ${UPLOAD_MO_ARTIFACTS_ROLE_ARN}
     - command: shell.exec
       params:
         shell: bash
@@ -119,8 +122,9 @@ functions:
           find $MONGO_ORCHESTRATION_HOME -name \*.log | xargs tar czf mongodb-logs.tar.gz
     - command: s3.put
       params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
+        aws_key: ${AWS_ACCESS_KEY_ID}
+        aws_secret: ${AWS_SECRET_ACCESS_KEY}
+        aws_session_token: ${AWS_SESSION_TOKEN}
         local_file: mongodb-logs.tar.gz
         remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-mongodb-logs.tar.gz
         bucket: mciuploads
@@ -129,8 +133,9 @@ functions:
         display_name: "mongodb-logs.tar.gz"
     - command: s3.put
       params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
+        aws_key: ${AWS_ACCESS_KEY_ID}
+        aws_secret: ${AWS_SECRET_ACCESS_KEY}
+        aws_session_token: ${AWS_SESSION_TOKEN}
         local_file: drivers-tools/.evergreen/orchestration/server.log
         remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-orchestration.log
         bucket: mciuploads
@@ -150,7 +155,7 @@ functions:
           ${PREPARE_SHELL}
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
-          INSTALL_LEGACY_SHELL=${INSTALL_LEGACY_SHELL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
+          INSTALL_LEGACY_SHELL=${INSTALL_LEGACY_SHELL} bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     # run-orchestration generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
@@ -625,7 +630,7 @@ functions:
           OCSP_TLS_SHOULD_SUCCEED="${OCSP_TLS_SHOULD_SUCCEED}" \
           OCSP_MUST_STAPLE="${OCSP_MUST_STAPLE}" \
           JAVA_VERSION="${JAVA_VERSION}" \
-          sh ${PROJECT_DIRECTORY}/.evergreen/run-ocsp-test.sh
+          bash ${PROJECT_DIRECTORY}/.evergreen/run-ocsp-test.sh
 
   "run-valid-ocsp-server-ca-responder":
     - command: shell.exec
@@ -881,6 +886,15 @@ functions:
     - command: perf.send
       params:
         file: src/results.json
+
+  "run graalvm native image app":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-graalvm-native-image-app.sh
 
 # Anchors
 
@@ -1641,6 +1655,10 @@ tasks:
             VERSION: latest
             TOPOLOGY: replica_set
         - func: run socks5 tests
+    - name: "graalvm-native-image-app"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run graalvm native image app"
 axes:
   - id: version
     display_name: MongoDB Version
@@ -2217,7 +2235,7 @@ buildvariants:
 - matrix_name: "scala-tests"
   matrix_spec: { auth: "noauth", ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["7.0"], topology: "replicaset",
                  scala: "*", os: "ubuntu" }
-  display_name: "${scala} ${version} ${topology} ${os}"
+  display_name: "${scala} ${jdk} ${version} ${topology} ${os}"
   tags: ["test-scala-variant"]
   tasks:
     - name: "scala-tests"
@@ -2286,3 +2304,10 @@ buildvariants:
   tasks:
     - name: testazurekms_task_group
       batchtime: 20160 # Use a batchtime of 14 days as suggested by the CSFLE test README
+
+- matrix_name: "graalvm-native-image-app"
+  matrix_spec: { version: [ "7.0" ], topology: [ "replicaset" ], auth: [ "noauth" ], ssl: [ "nossl" ],
+                   jdk: [ "jdk21" ], os: [ "linux" ] }
+  display_name: "GraalVM native image app: ${version} ${topology} ${auth} ${ssl} ${jdk} ${os}"
+  tasks:
+    - name: "graalvm-native-image-app"

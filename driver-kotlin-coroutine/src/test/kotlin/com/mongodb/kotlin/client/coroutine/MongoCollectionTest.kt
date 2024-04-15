@@ -912,6 +912,7 @@ class MongoCollectionTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingDropIndex() {
         val mongoCollection = MongoCollection(wrapped)
         val indexName = "index"
@@ -952,6 +953,7 @@ class MongoCollectionTest {
     }
 
     @Test
+    @Suppress("DEPRECATION") // maxtime
     fun shouldCallTheUnderlyingDropIndexes() {
         val mongoCollection = MongoCollection(wrapped)
         val defaultOptions = DropIndexOptions()
