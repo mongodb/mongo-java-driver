@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.TimeoutContext.calculateTimeout;
+import static com.mongodb.internal.TimeoutContext.startTimeout;
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -70,7 +70,7 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
         if (fileInfo != null) {
             return Mono.fromCallable(() -> fileInfo);
         }
-        return Mono.from(gridFSFileMono.apply(calculateTimeout(timeoutMs)))
+        return Mono.from(gridFSFileMono.apply(startTimeout(timeoutMs)))
                 .doOnNext(gridFSFile -> fileInfo = gridFSFile);
     }
 
@@ -83,7 +83,7 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
     @Override
     public void subscribe(final Subscriber<? super ByteBuffer> subscriber) {
         Flux.defer(()-> {
-            Timeout operationTimeout = calculateTimeout(timeoutMs);
+            Timeout operationTimeout = startTimeout(timeoutMs);
            return Mono.from(gridFSFileMono.apply(operationTimeout))
                     .doOnSuccess(gridFSFile -> {
                         if (gridFSFile == null) {

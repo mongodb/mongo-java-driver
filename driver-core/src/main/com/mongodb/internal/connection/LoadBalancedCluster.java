@@ -67,6 +67,7 @@ import static com.mongodb.internal.event.EventListenerHelper.singleClusterListen
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @ThreadSafe
 final class LoadBalancedCluster implements Cluster {
@@ -227,9 +228,9 @@ final class LoadBalancedCluster implements Cluster {
                 if (isClosed()) {
                     throw createShutdownException();
                 }
-                if (serverSelectionTimeout.hasExpired()) {
+                serverSelectionTimeout.onExpired(() -> {
                     throw createTimeoutException(timeoutContext);
-                }
+                });
                 serverSelectionTimeout.awaitOn(condition, () -> format("resolving SRV records for %s", settings.getSrvHost()));
             }
         });
@@ -363,12 +364,15 @@ final class LoadBalancedCluster implements Cluster {
                         ServerSelectionRequest next = iterator.next();
 
                         Timeout nextTimeout = next.getTimeout();
-                        if (nextTimeout.hasExpired()) {
-                            timeoutList.add(next);
-                            iterator.remove();
-                        } else {
-                            waitTimeNanos = waitTimeNanos.orEarlier(nextTimeout);
-                        }
+                        Timeout waitTimeNanosFinal = waitTimeNanos;
+                        waitTimeNanos = nextTimeout.call(NANOSECONDS,
+                                () -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
+                                (ns) -> Timeout.earliest(waitTimeNanosFinal, nextTimeout),
+                                () -> {
+                                    timeoutList.add(next);
+                                    iterator.remove();
+                                    return waitTimeNanosFinal;
+                                });
                     }
                     if (timeoutList.isEmpty()) {
                         try {

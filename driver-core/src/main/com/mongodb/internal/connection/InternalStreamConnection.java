@@ -48,6 +48,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -348,8 +349,8 @@ public class InternalStreamConnection implements InternalConnection {
         CommandEventSender commandEventSender;
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-                throw e;
+            Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+                throw TimeoutContext.createMongoRoundTripTimeoutException();
             });
             message.encode(bsonOutput, operationContext);
             commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
@@ -417,8 +418,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-            throw e;
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            throw TimeoutContext.createMongoRoundTripTimeoutException();
         });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
@@ -431,8 +432,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
-        validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> {
-            throw e;
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            throw createMongoOperationTimeoutExceptionAndClose(commandEventSender);
         });
 
         boolean commandSuccessful = false;
@@ -518,9 +519,12 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
             } else {
-                Optional<MongoOperationTimeoutException> e = validateHasTimedOutAndClose(commandEventSender, operationContext);
-                if (e.isPresent()) {
-                    callback.onResult(null, e.get());
+                boolean[] shouldReturn = {false};
+                Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+                    callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
+                    shouldReturn[0] = true;
+                });
+                if (shouldReturn[0]) {
                     return;
                 }
 
@@ -557,13 +561,11 @@ public class InternalStreamConnection implements InternalConnection {
         });
     }
 
-    private Optional<MongoOperationTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
-            final OperationContext operationContext) {
-        return operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().map(e -> {
-            close();
-            commandEventSender.sendFailedEvent(e);
-            return e;
-        });
+    private MongoOperationTimeoutException createMongoOperationTimeoutExceptionAndClose(final CommandEventSender commandEventSender) {
+        MongoOperationTimeoutException e = TimeoutContext.createMongoRoundTripTimeoutException();
+        close();
+        commandEventSender.sendFailedEvent(e);
+        return e;
     }
 
     private <T> T getCommandResult(final Decoder<T> decoder,

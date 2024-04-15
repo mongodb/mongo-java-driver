@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal;
+package com.mongodb.internal.function;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @FunctionalInterface
-public interface CheckedSupplier<T, E extends Exception> {
+public interface CheckedFunction<T, R, E extends Exception> {
 
     /**
-     * Gets a result.
+     * Applies the function to the given argument.
      *
-     * @return a result
+     * @param t the function argument
+     * @return the function result
      * @throws E the checked exception to throw
      */
-    T get() throws E;
+    R apply(T t) throws E;
 }

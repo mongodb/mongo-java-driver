@@ -108,7 +108,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     public void subscribe(final Subscriber<? super Void> s) {
         Mono.defer(() -> {
             AtomicBoolean terminated = new AtomicBoolean(false);
-            Timeout timeout = TimeoutContext.calculateTimeout(timeoutMs);
+            Timeout timeout = TimeoutContext.startTimeout(timeoutMs);
             return createCheckAndCreateIndexesMono(timeout)
                     .then(createSaveChunksMono(terminated, timeout))
                     .flatMap(lengthInBytes -> createSaveFileDataMono(terminated, lengthInBytes, timeout))
@@ -271,12 +271,15 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
      * @return Mono that emits a {@link MongoOperationTimeoutException}.
      */
     private static Mono<MongoOperationTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
-        if (timeout != null && !timeout.isInfinite()) {
-            return Mono.delay(ofMillis(timeout.remaining(MILLISECONDS)))
-                    .then(Mono.error(TimeoutContext.createMongoTimeoutException("GridFS timeout out waiting for data"
-                            + " from provided source Publisher")));
-        }
-        return Mono.never();
+        return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
+                () -> Mono.never(),
+                (ms) -> Mono.delay(ofMillis(ms)).then(createTimeoutMonoError()),
+                () -> createTimeoutMonoError());
+    }
+
+    private static Mono<MongoOperationTimeoutException> createTimeoutMonoError() {
+        return Mono.error(TimeoutContext.createMongoTimeoutException(
+                "GridFS timed out waiting for data from provided source Publisher"));
     }
 
     private Mono<InsertOneResult> createSaveFileDataMono(final AtomicBoolean terminated,

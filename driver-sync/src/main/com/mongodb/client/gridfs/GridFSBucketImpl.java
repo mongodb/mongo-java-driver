@@ -656,6 +656,6 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Nullable
     private Timeout startTimeout() {
-        return TimeoutContext.calculateTimeout(filesCollection.getTimeout(MILLISECONDS));
+        return TimeoutContext.startTimeout(filesCollection.getTimeout(MILLISECONDS));
     }
 }

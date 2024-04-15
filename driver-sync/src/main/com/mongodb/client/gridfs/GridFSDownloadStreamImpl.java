@@ -213,9 +213,9 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     }
 
     private void checkTimeout() {
-        if (timeout != null && timeout.hasExpired()) {
+        Timeout.onExistsAndExpired(timeout, () -> {
             throw createMongoTimeoutException(TIMEOUT_MESSAGE);
-        }
+        });
     }
     private void checkClosed() {
         withInterruptibleLock(closeLock, () -> {

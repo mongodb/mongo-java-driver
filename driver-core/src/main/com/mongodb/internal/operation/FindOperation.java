@@ -397,7 +397,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             if (isAwaitData()) {
                 commandDocument.put("awaitData", BsonBoolean.TRUE);
             } else {
-                operationContext.getTimeoutContext().setMaxTimeSupplier(() -> 0L);
+                operationContext.getTimeoutContext().setMaxTimeOverride(0L);
             }
         } else {
             setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
