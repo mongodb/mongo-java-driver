@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -35,21 +36,12 @@ public final class TimeoutHelper {
         //NOP
     }
 
-    public static long getRemainingMs(final String message, final Timeout timeout) {
-        long remainingMs = timeout.remaining(MILLISECONDS);
-        if (remainingMs <= 0) {
-            throw new MongoOperationTimeoutException(message);
-        }
-        return remainingMs;
-    }
-
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
-            long remainingMs = getRemainingMs(DEFAULT_TIMEOUT_MESSAGE, timeout);
-            return collection.withTimeout(remainingMs, MILLISECONDS);
-        }
-        return collection;
+        return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
+                () -> collection,
+                (ms) -> collection.withTimeout(ms, MILLISECONDS),
+                () -> TimeoutContext.throwMongoTimeoutException(DEFAULT_TIMEOUT_MESSAGE));
     }
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
@@ -75,11 +67,10 @@ public final class TimeoutHelper {
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
-            long remainingMs = getRemainingMs(message, timeout);
-            return database.withTimeout(remainingMs, MILLISECONDS);
-        }
-        return database;
+        return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
+                () -> database,
+                (ms) -> database.withTimeout(ms, MILLISECONDS),
+                () -> TimeoutContext.throwMongoTimeoutException(message));
     }
 
     private static Mono<MongoDatabase> databaseWithTimeoutMono(final MongoDatabase database,
@@ -103,7 +94,4 @@ public final class TimeoutHelper {
         return Mono.defer(() -> databaseWithTimeoutMono(database, message, timeout));
     }
 
-    private static boolean shouldOverrideTimeout(@Nullable final Timeout timeout) {
-        return timeout != null && !timeout.isInfinite();
-    }
 }

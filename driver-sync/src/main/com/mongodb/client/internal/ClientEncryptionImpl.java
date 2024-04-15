@@ -281,6 +281,6 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Nullable
     private Timeout startTimeout() {
-        return TimeoutContext.calculateTimeout(options.getTimeout(MILLISECONDS));
+        return TimeoutContext.startTimeout(options.getTimeout(MILLISECONDS));
     }
 }

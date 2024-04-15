@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.mockito.MongoMockito.mock;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeoutDeferred;
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeoutMono;
@@ -115,7 +116,7 @@ class TimeoutHelperTest {
         MongoCollection<Document> collection = mock(MongoCollection.class, mongoCollection -> {
             when(mongoCollection.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(mongoCollection);
         });
-        Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS);
+        Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS, ZERO_DURATION_MEANS_EXPIRED);
 
         //when
         MongoCollection<Document> result = collectionWithTimeout(collection, timeout);
@@ -137,7 +138,7 @@ class TimeoutHelperTest {
         MongoDatabase database = mock(MongoDatabase.class, mongoDatabase -> {
             when(mongoDatabase.withTimeout(anyLong(), eq(TimeUnit.MILLISECONDS))).thenReturn(mongoDatabase);
         });
-        Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS);
+        Timeout timeout = Timeout.expiresIn(1, TimeUnit.DAYS, ZERO_DURATION_MEANS_EXPIRED);
 
         //when
         MongoDatabase result = databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, timeout);
@@ -154,7 +155,7 @@ class TimeoutHelperTest {
     void shouldThrowErrorWhenTimeoutHasExpiredOnCollection() {
         //given
         MongoCollection<Document> collection = mock(MongoCollection.class);
-        Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS);
+        Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS, ZERO_DURATION_MEANS_EXPIRED);
 
         //when
         MongoOperationTimeoutException mongoExecutionTimeoutException =
@@ -175,7 +176,7 @@ class TimeoutHelperTest {
     void shouldThrowErrorWhenTimeoutHasExpiredOnDatabase() {
         //given
         MongoDatabase database = mock(MongoDatabase.class);
-        Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS);
+        Timeout timeout = Timeout.expiresIn(1, TimeUnit.MICROSECONDS, ZERO_DURATION_MEANS_EXPIRED);
 
         //when
         MongoOperationTimeoutException mongoExecutionTimeoutException =
@@ -195,11 +196,7 @@ class TimeoutHelperTest {
     void shouldThrowErrorWhenTimeoutHasExpiredWithZeroRemainingOnCollection() {
         //given
         MongoCollection<Document> collection = mock(MongoCollection.class);
-        Timeout timeout = mock(Timeout.class, timeout1 -> {
-            when(timeout1.hasExpired()).thenReturn(true);
-            when(timeout1.isInfinite()).thenReturn(false);
-            when(timeout1.remaining(TimeUnit.MILLISECONDS)).thenReturn(0L);
-        });
+        Timeout timeout = Timeout.expiresIn(0, TimeUnit.NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED);
 
         //when
         assertThrows(MongoOperationTimeoutException.class, () -> collectionWithTimeout(collection, timeout));
@@ -214,11 +211,7 @@ class TimeoutHelperTest {
     void shouldThrowErrorWhenTimeoutHasExpiredWithZeroRemainingOnDatabase() {
         //given
         MongoDatabase database = mock(MongoDatabase.class);
-        Timeout timeout = mock(Timeout.class, timeout1 -> {
-            when(timeout1.hasExpired()).thenReturn(true);
-            when(timeout1.isInfinite()).thenReturn(false);
-            when(timeout1.remaining(TimeUnit.MILLISECONDS)).thenReturn(0L);
-        });
+        Timeout timeout = Timeout.expiresIn(0, TimeUnit.NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED);
 
         //when
         assertThrows(MongoOperationTimeoutException.class, () -> databaseWithTimeout(database, TIMEOUT_ERROR_MESSAGE, timeout));

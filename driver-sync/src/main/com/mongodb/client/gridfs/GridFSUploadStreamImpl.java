@@ -146,9 +146,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     }
 
     private void checkTimeout() {
-        if (timeout != null && timeout.hasExpired()) {
-            throw TimeoutContext.createMongoTimeoutException(TIMEOUT_MESSAGE);
-        }
+        Timeout.onExistsAndExpired(timeout, () -> TimeoutContext.throwMongoTimeoutException(TIMEOUT_MESSAGE));
     }
 
     @Override

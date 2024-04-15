@@ -25,7 +25,6 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -121,8 +120,7 @@ public class CommitTransactionOperation extends TransactionOperation {
         CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
-            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            timeoutContext.setMaxTimeSupplier(timeoutContext::getMaxCommitTimeMS);
+            operationContext.getTimeoutContext().setMaxTimeOverrideToMaxCommitTime();
             return command;
         };
         if (alreadyCommitted) {

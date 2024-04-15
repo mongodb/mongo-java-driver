@@ -250,6 +250,6 @@ public final class GridFSPublisherCreator {
 
     @Nullable
     private static Timeout startTimeout(@Nullable final Long timeoutMs) {
-        return timeoutMs == null ? null : TimeoutContext.calculateTimeout(timeoutMs);
+        return timeoutMs == null ? null : TimeoutContext.startTimeout(timeoutMs);
     }
 }

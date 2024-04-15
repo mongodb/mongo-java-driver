@@ -49,7 +49,7 @@ public class AbortTransactionOperation extends TransactionOperation {
     @Override
     CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            operationContext.getTimeoutContext().resetToDefaultMaxTimeSupplier();
+            operationContext.getTimeoutContext().resetToDefaultMaxTime();
             BsonDocument command = AbortTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
             putIfNotNull(command, "recoveryToken", recoveryToken);

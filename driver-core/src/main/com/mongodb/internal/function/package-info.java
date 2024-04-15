@@ -18,6 +18,6 @@
  */
 
 @NonNullApi
-package com.mongodb.internal.async;
+package com.mongodb.internal.function;
 
 import com.mongodb.lang.NonNullApi;
