@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackBiFunction;
@@ -316,11 +317,11 @@ final class SyncOperationHelper {
     }
 
 
-    static CommandWriteTransformer<BsonDocument, Void> writeConcernErrorTransformer() {
+    static CommandWriteTransformer<BsonDocument, Void> writeConcernErrorTransformer(final TimeoutContext timeoutContext) {
         return (result, connection) -> {
             assertNotNull(result);
             throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                    connection.getDescription().getMaxWireVersion());
+                    connection.getDescription().getMaxWireVersion(), timeoutContext);
             return null;
         };
     }

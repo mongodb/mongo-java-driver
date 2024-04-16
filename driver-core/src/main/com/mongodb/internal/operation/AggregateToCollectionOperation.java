@@ -159,7 +159,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
                                     getCommandCreator(),
                                     new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                            connection.getDescription().getMaxWireVersion());
+                            connection.getDescription().getMaxWireVersion(), binding.getOperationContext().getTimeoutContext());
                     return null;
                 }, false);
     }
@@ -173,7 +173,7 @@ public class AggregateToCollectionOperation implements AsyncReadOperation<Void>,
                                   getCommandCreator(),
                                   new BsonDocumentCodec(), (result, source, connection) -> {
                     throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                            connection.getDescription().getMaxWireVersion());
+                            connection.getDescription().getMaxWireVersion(), binding.getOperationContext().getTimeoutContext());
                     return null;
                 }, false, callback);
     }

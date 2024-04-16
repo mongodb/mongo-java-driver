@@ -77,6 +77,9 @@ import static org.bson.internal.BsonUtil.mutableDeepCopy;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ClientEncryptionImpl implements ClientEncryption {
+    private static final String TIMEOUT_ERROR_MESSAGE_CREATE_DATA_KEY = "Creating data key exceeded the timeout limit.";
+    private static final String TIMEOUT_ERROR_MESSAGE_REWRAP_DATA_KEY = "Rewrapping data key exceeded the timeout limit.";
+    private static final String TIMEOUT_ERROR_MESSAGE_CREATE_COLLECTION = "Encryption collection creation exceeded the timeout limit.";
     private final Crypt crypt;
     private final ClientEncryptionSettings options;
     private final MongoClient keyVaultClient;
@@ -132,7 +135,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                             .getDatabase(namespace.getDatabaseName())
                             .getCollection(namespace.getCollectionName(), BsonDocument.class)
                             .withWriteConcern(WriteConcern.MAJORITY);
-                    return Mono.from(collectionWithTimeout(vaultCollection, operationTimeout) //TODO should be defered?
+                    return Mono.from(collectionWithTimeout(vaultCollection, operationTimeout, TIMEOUT_ERROR_MESSAGE_CREATE_DATA_KEY)
                                     .insertOne(dataKeyDocument))
                             .map(i -> dataKeyDocument.getBinary("_id"));
                 });
@@ -233,8 +236,8 @@ public class ClientEncryptionImpl implements ClientEncryption {
                                                 Updates.currentDate("updateDate"))
                                 );
                             }).collect(Collectors.toList());
-                            return Mono.from(collectionWithTimeout(collection, operationTimeout).bulkWrite(updateModels))
-                                    .map(RewrapManyDataKeyResult::new);
+                            return Mono.from(collectionWithTimeout(collection, operationTimeout, TIMEOUT_ERROR_MESSAGE_REWRAP_DATA_KEY)
+                                            .bulkWrite(updateModels)).map(RewrapManyDataKeyResult::new);
                         });
                 }));
     }
@@ -296,7 +299,8 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         //
                         // Similarly, the `Subscriber` of the returned `Publisher` is guaranteed to observe all those write actions
                         // via the `maybeUpdatedEncryptedFields` reference, which is emitted as a result of `thenReturn`.
-                        .thenEmpty(Mono.defer(() -> Mono.fromDirect(databaseWithTimeout(database, operationTimeout)
+                        .thenEmpty(Mono.defer(() -> Mono.fromDirect(databaseWithTimeout(database,
+                                TIMEOUT_ERROR_MESSAGE_CREATE_COLLECTION, operationTimeout)
                                 .createCollection(collectionName, new CreateCollectionOptions(createCollectionOptions)
                                         .encryptedFields(maybeUpdatedEncryptedFields))))
                         )

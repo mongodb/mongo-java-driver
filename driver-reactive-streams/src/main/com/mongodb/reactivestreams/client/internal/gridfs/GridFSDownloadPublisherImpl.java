@@ -46,6 +46,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
+    private static final String TIMEOUT_ERROR_MESSAGE = "Finding chunks exceeded the timeout limit.";
     private final ClientSession clientSession;
     private final Function<Timeout, GridFSFindPublisher> gridFSFileMono;
     private final MongoCollection<Document> chunksCollection;
@@ -97,9 +98,9 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
         Document filter = new Document("files_id", gridFSFile.getId());
         FindPublisher<Document> chunkPublisher;
         if (clientSession != null) {
-            chunkPublisher = collectionWithTimeout(chunksCollection, timeout).find(clientSession, filter);
+            chunkPublisher = collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).find(clientSession, filter);
         } else {
-            chunkPublisher = collectionWithTimeout(chunksCollection, timeout).find(filter);
+            chunkPublisher = collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).find(filter);
         }
 
         AtomicInteger chunkCounter = new AtomicInteger(0);
