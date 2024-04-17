@@ -59,7 +59,6 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public AggregateIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

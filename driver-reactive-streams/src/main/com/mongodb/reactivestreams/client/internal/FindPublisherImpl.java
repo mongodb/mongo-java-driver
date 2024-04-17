@@ -70,7 +70,6 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public FindPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         findOptions.maxTime(maxTime, timeUnit);

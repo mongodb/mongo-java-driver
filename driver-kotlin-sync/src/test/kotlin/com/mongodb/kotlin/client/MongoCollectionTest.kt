@@ -876,7 +876,6 @@ class MongoCollectionTest {
     }
 
     @Test
-    @Suppress("DEPRECATION")
     fun shouldProvideExtensionFunctionsForTimeBasedOptions() {
         val oneThousand = 1000L
 

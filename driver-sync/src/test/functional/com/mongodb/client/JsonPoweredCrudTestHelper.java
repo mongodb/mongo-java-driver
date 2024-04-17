@@ -313,7 +313,6 @@ public class JsonPoweredCrudTestHelper {
         return toResult(response);
     }
 
-    @SuppressWarnings("deprecation") //maxTimeMS
     BsonDocument getAggregateResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                     @Nullable final ClientSession clientSession) {
         List<BsonDocument> pipeline = new ArrayList<>();
@@ -551,7 +550,6 @@ public class JsonPoweredCrudTestHelper {
         return toResult(createFindIterable(collectionOptions, arguments, clientSession));
     }
 
-    @SuppressWarnings("deprecation") //maxTimeMS
     private FindIterable<BsonDocument> createFindIterable(final BsonDocument collectionOptions, final BsonDocument arguments,
                                                           @Nullable final ClientSession clientSession) {
         FindIterable<BsonDocument> iterable;

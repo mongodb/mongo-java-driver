@@ -258,21 +258,7 @@ public final class TransactionOptions {
          * @return this
          * @mongodb.server.release 4.2
          * @since 3.11
-         *
-         * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-         *
-         * <ul>
-         *     <li>{@code MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
-         *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
-         *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
-         *     <li>{@code ClientSession}</li>
-         *     <li>{@code TransactionOptions.Builder#timeout(long, TimeUnit)}</li>
-         * </ul>
-         *
-         * When executing a commit transaction operation, any explicitly set timeout at these levels takes precedence, rendering this
-         * commit time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
          */
-        @Deprecated
         public Builder maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
             if (maxCommitTime == null) {
                 this.maxCommitTimeMS = null;

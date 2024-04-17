@@ -61,7 +61,6 @@ class SyncFindIterable<T> extends SyncMongoIterable<T> implements FindIterable<T
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public FindIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

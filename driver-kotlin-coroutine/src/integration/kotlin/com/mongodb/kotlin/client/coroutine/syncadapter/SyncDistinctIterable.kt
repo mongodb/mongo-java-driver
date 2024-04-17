@@ -28,7 +28,7 @@ data class SyncDistinctIterable<T : Any>(val wrapped: DistinctFlow<T>) :
     override fun batchSize(batchSize: Int): SyncDistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun filter(filter: Bson?): SyncDistinctIterable<T> = apply { wrapped.filter(filter) }
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncDistinctIterable<T> = apply {
-        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
+        wrapped.maxTime(maxTime, timeUnit)
     }
     override fun collation(collation: Collation?): SyncDistinctIterable<T> = apply { wrapped.collation(collation) }
     override fun comment(comment: String?): SyncDistinctIterable<T> = apply { wrapped.comment(comment) }

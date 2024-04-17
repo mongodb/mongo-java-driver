@@ -1451,8 +1451,7 @@ public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
-public fun CountOptions.maxTime(maxTime: Long): CountOptions =
-    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
+public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
  *
@@ -1468,7 +1467,7 @@ public fun DropIndexOptions.maxTime(maxTime: Long): DropIndexOptions =
  * @return the options
  */
 public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocumentCountOptions =
-    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
+    this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
  *
@@ -1476,7 +1475,7 @@ public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocume
  * @return the options
  */
 public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptions =
-    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
+    this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
  *
@@ -1484,7 +1483,7 @@ public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptio
  * @return the options
  */
 public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOptions =
-    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
+    this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
  *
@@ -1492,7 +1491,7 @@ public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOpt
  * @return the options
  */
 public fun FindOneAndUpdateOptions.maxTime(maxTime: Long): FindOneAndUpdateOptions =
-    this.apply { @Suppress("DEPRECATION") maxTime(maxTime, TimeUnit.MILLISECONDS) }
+    this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * expireAfter extension function
  *

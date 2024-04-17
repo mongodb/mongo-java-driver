@@ -69,7 +69,6 @@ public final class GridFSFindPublisherImpl implements GridFSFindPublisher {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public GridFSFindPublisher maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
