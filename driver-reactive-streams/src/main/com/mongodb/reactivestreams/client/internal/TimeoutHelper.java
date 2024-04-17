@@ -38,10 +38,16 @@ public final class TimeoutHelper {
 
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                @Nullable final Timeout timeout) {
+        return collectionWithTimeout(collection, timeout, DEFAULT_TIMEOUT_MESSAGE);
+    }
+
+    public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
+                                                               @Nullable final Timeout timeout,
+                                                               final String message) {
         return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> collection,
-                (ms) -> collection.withTimeout(ms, MILLISECONDS),
-                () -> TimeoutContext.throwMongoTimeoutException(DEFAULT_TIMEOUT_MESSAGE));
+                ms -> collection.withTimeout(ms, MILLISECONDS),
+                () -> TimeoutContext.throwMongoTimeoutException(message));
     }
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
@@ -69,7 +75,7 @@ public final class TimeoutHelper {
                                                     @Nullable final Timeout timeout) {
         return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> database,
-                (ms) -> database.withTimeout(ms, MILLISECONDS),
+                ms -> database.withTimeout(ms, MILLISECONDS),
                 () -> TimeoutContext.throwMongoTimeoutException(message));
     }
 

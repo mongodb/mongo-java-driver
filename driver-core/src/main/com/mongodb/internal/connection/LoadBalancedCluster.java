@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
@@ -36,6 +37,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.Locks;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -181,9 +183,11 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress, final Timeout serverSelectionTimeout) {
+    public ClusterableServer getServer(final ServerAddress serverAddress,
+                                       final Timeout serverSelectionTimeout,
+                                       final TimeoutContext timeoutContext) {
         isTrue("open", !isClosed());
-        waitForSrv(serverSelectionTimeout);
+        waitForSrv(serverSelectionTimeout, timeoutContext);
         return assertNotNull(server);
     }
 
@@ -203,7 +207,7 @@ final class LoadBalancedCluster implements Cluster {
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
-        waitForSrv(computedServerSelectionTimeout);
+        waitForSrv(computedServerSelectionTimeout, operationContext.getTimeoutContext());
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
@@ -215,7 +219,7 @@ final class LoadBalancedCluster implements Cluster {
         return serverTuple;
     }
 
-    private void waitForSrv(final Timeout serverSelectionTimeout) {
+    private void waitForSrv(final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
         if (initializationCompleted) {
             return;
         }
@@ -224,9 +228,8 @@ final class LoadBalancedCluster implements Cluster {
                 if (isClosed()) {
                     throw createShutdownException();
                 }
-
                 serverSelectionTimeout.onExpired(() -> {
-                    throw createTimeoutException();
+                    throw createTimeoutException(timeoutContext);
                 });
                 serverSelectionTimeout.awaitOn(condition, () -> format("resolving SRV records for %s", settings.getSrvHost()));
             }
@@ -242,7 +245,7 @@ final class LoadBalancedCluster implements Cluster {
         }
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest serverSelectionRequest = new ServerSelectionRequest(operationContext.getId(), serverSelector,
-                computedServerSelectionTimeout, callback);
+                operationContext, computedServerSelectionTimeout, callback);
         if (initializationCompleted) {
             handleServerSelectionRequest(serverSelectionRequest);
         } else {
@@ -307,16 +310,20 @@ final class LoadBalancedCluster implements Cluster {
                 + "to multiple hosts");
     }
 
-    private MongoTimeoutException createTimeoutException() {
+    private MongoTimeoutException createTimeoutException(final TimeoutContext timeoutContext) {
         MongoException localSrvResolutionException = srvResolutionException;
+        String message;
         if (localSrvResolutionException == null) {
-            return new MongoTimeoutException(format("Timed out while waiting to resolve SRV records for %s.",
-                    settings.getSrvHost()));
+            message = format("Timed out while waiting to resolve SRV records for %s.", settings.getSrvHost());
         } else {
-            return new MongoTimeoutException(format("Timed out while waiting to resolve SRV records for %s. "
-                            + "Resolution exception was '%s'",
-                    settings.getSrvHost(), localSrvResolutionException));
+            message = format("Timed out while waiting to resolve SRV records for %s. "
+                    + "Resolution exception was '%s'", settings.getSrvHost(), localSrvResolutionException);
         }
+        return createTimeoutException(timeoutContext, message);
+    }
+
+    private static MongoTimeoutException createTimeoutException(final TimeoutContext timeoutContext, final String message) {
+        return timeoutContext.hasTimeoutMS() ? new MongoOperationTimeoutException(message) : new MongoTimeoutException(message);
     }
 
     private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
@@ -377,7 +384,9 @@ final class LoadBalancedCluster implements Cluster {
                 } finally {
                     lock.unlock();
                 }
-                timeoutList.forEach(request -> request.onError(createTimeoutException()));
+                timeoutList.forEach(request -> request.onError(createTimeoutException(request
+                        .getOperationContext()
+                        .getTimeoutContext())));
                 timeoutList.clear();
             }
 
@@ -399,17 +408,23 @@ final class LoadBalancedCluster implements Cluster {
         private final ServerSelector serverSelector;
         private final SingleResultCallback<ServerTuple> callback;
         private final Timeout timeout;
+        private final OperationContext operationContext;
 
-        private ServerSelectionRequest(final long operationId, final ServerSelector serverSelector, final Timeout timeout,
-                final SingleResultCallback<ServerTuple> callback) {
+        private ServerSelectionRequest(final long operationId, final ServerSelector serverSelector, final OperationContext operationContext,
+                                       final Timeout timeout, final SingleResultCallback<ServerTuple> callback) {
             this.operationId = operationId;
             this.serverSelector = serverSelector;
             this.timeout = timeout;
+            this.operationContext = operationContext;
             this.callback = callback;
         }
 
         Timeout getTimeout() {
             return timeout;
+        }
+
+        OperationContext getOperationContext() {
+            return operationContext;
         }
 
         public void onSuccess(final ServerTuple serverTuple) {

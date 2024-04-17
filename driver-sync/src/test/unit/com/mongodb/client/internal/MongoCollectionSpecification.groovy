@@ -59,7 +59,6 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
-import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.bulk.InsertRequest

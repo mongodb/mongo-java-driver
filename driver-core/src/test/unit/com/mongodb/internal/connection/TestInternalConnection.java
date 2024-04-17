@@ -179,7 +179,7 @@ class TestInternalConnection implements InternalConnection {
             responseBuffers.reset();
             if (!commandOk) {
                 throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
-                        description.getServerAddress());
+                        description.getServerAddress(), operationContext.getTimeoutContext());
             }
             return new ReplyMessage<>(responseBuffers, decoder, message.getId()).getDocument();
         }

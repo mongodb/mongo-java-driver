@@ -31,6 +31,7 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 
 /**
  * Represents both the state associated with a retryable activity and a handle that can be used to affect retrying, e.g.,
@@ -201,7 +202,9 @@ public final class RetryState {
              * a timeout exception but as a deliberate cessation of retry attempts.
              */
             if (hasTimeoutMs() && !loopState.isLastIteration()) {
-                previouslyChosenException = new MongoOperationTimeoutException("Retry attempt timed out.", previouslyChosenException);
+                previouslyChosenException = createMongoTimeoutException(
+                        "Retry attempt timed out.",
+                        previouslyChosenException);
             }
             throw previouslyChosenException;
         } else {

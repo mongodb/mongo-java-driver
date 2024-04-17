@@ -20,6 +20,7 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -208,12 +209,16 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
 
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), transformer());
+        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), transformer(binding
+                .getOperationContext()
+                .getTimeoutContext()));
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), transformerAsync(), callback);
+        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), transformerAsync(binding
+                .getOperationContext()
+                .getTimeoutContext()), callback);
     }
 
     /**
@@ -243,18 +248,18 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
                                 explainVerbosity), new BsonDocumentCodec());
     }
 
-    private CommandWriteTransformer<BsonDocument, MapReduceStatistics> transformer() {
+    private CommandWriteTransformer<BsonDocument, MapReduceStatistics> transformer(final TimeoutContext timeoutContext) {
         return (result, connection) -> {
             throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                    connection.getDescription().getMaxWireVersion());
+                    connection.getDescription().getMaxWireVersion(), timeoutContext);
             return MapReduceHelper.createStatistics(result);
         };
     }
 
-    private CommandWriteTransformerAsync<BsonDocument, MapReduceStatistics> transformerAsync() {
+    private CommandWriteTransformerAsync<BsonDocument, MapReduceStatistics> transformerAsync(final TimeoutContext timeoutContext) {
         return (result, connection) -> {
             throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                    connection.getDescription().getMaxWireVersion());
+                    connection.getDescription().getMaxWireVersion(), timeoutContext);
             return MapReduceHelper.createStatistics(result);
         };
     }

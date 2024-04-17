@@ -78,7 +78,10 @@ class SingleServerClusterSpecification extends Specification {
 
         then:
         cluster.getServer(firstServer,
-                OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout()) == factory.getServer(firstServer)
+                OPERATION_CONTEXT
+                        .getTimeoutContext()
+                        .computeServerSelectionTimeout(),
+                OPERATION_CONTEXT.getTimeoutContext()) == factory.getServer(firstServer)
 
         cleanup:
         cluster?.close()
@@ -92,7 +95,8 @@ class SingleServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.getServer(firstServer, OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout())
+        cluster.getServer(firstServer, OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout(),
+                OPERATION_CONTEXT.getTimeoutContext())
 
         then:
         thrown(IllegalStateException)
