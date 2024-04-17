@@ -260,6 +260,7 @@ public class WriteConcern implements Serializable {
      * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this wTimeoutMS irrelevant.
      * If no timeout is specified at these levels, the wTimeoutMS will be used.
      */
+    @Deprecated
     @Nullable
     public Integer getWTimeout(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
