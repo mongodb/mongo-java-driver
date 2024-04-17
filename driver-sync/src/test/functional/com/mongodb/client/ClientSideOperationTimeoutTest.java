@@ -100,9 +100,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
         assumeFalse("TODO (CSOT) - JAVA-5248",
                 fileDescription.equals("MaxTimeMSExpired server errors are transformed into a custom timeout error"));
-
-        assumeFalse("TODO (CSOT) - JAVA-4062", testDescription.contains("wTimeoutMS is ignored")
-          || testDescription.contains("ignores wTimeoutMS"));
     }
 
     private static final List<String> RACY_GET_MORE_TESTS = asList(

@@ -20,6 +20,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReferenceCounted;
@@ -33,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.operation.WriteConcernHelper.cloneWithoutTimeout;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -54,6 +56,8 @@ public class BaseClientSessionImpl implements ClientSession {
     private ReferenceCounted transactionContext;
     @Nullable
     private TimeoutContext timeoutContext;
+
+    private TransactionOptions transactionOptions;
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
@@ -210,6 +214,23 @@ public class BaseClientSessionImpl implements ClientSession {
         this.timeoutContext = timeoutContext;
     }
 
+    protected void setTransactionOptions(final TimeoutContext timeoutContext, final TransactionOptions combinedTransactionOptions) {
+        WriteConcern writeConcern = combinedTransactionOptions.getWriteConcern();
+        if (timeoutContext.hasTimeoutMS() && writeConcern != null) {
+            WriteConcern writeConcernWithoutTimeout = cloneWithoutTimeout(writeConcern);
+
+            this.transactionOptions = TransactionOptions.merge(
+                    TransactionOptions.builder().writeConcern(writeConcernWithoutTimeout).build(),
+                    combinedTransactionOptions);
+            return;
+        }
+        this.transactionOptions = combinedTransactionOptions;
+    }
+
+    protected void setTransactionOptions(@Nullable final TransactionOptions transactionOptions) {
+           this.transactionOptions = transactionOptions;
+    }
+
     protected void resetTimeout() {
         if (timeoutContext != null && timeoutContext.hasTimeoutMS()) {
             timeoutContext.resetTimeout();
@@ -227,5 +248,14 @@ public class BaseClientSessionImpl implements ClientSession {
         return timeoutSettings
                 .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS))
                 .withTimeout(timeoutMS, MILLISECONDS);
+    }
+
+    @Nullable
+    protected TransactionOptions getTransactionOptionsInternal() {
+        return transactionOptions;
+    }
+
+    protected enum TransactionState {
+        NONE, IN, COMMITTED, ABORTED
     }
 }

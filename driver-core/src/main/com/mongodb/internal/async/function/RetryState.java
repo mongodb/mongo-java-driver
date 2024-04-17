@@ -201,7 +201,7 @@ public final class RetryState {
              * a timeout exception but as a deliberate cessation of retry attempts.
              */
             if (hasTimeoutMs() && !loopState.isLastIteration()) {
-                previouslyChosenException = new MongoOperationTimeoutException("MongoDB operation timed out during a retry attempt", previouslyChosenException);
+                previouslyChosenException = new MongoOperationTimeoutException("Retry attempt timed out.", previouslyChosenException);
             }
             throw previouslyChosenException;
         } else {
