@@ -39,7 +39,6 @@ class FindIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JFindIterable<Document> = mock()
         val iterable = FindIterable(wrapped)
@@ -78,8 +77,8 @@ class FindIterableTest {
         iterable.max(bson)
         iterable.maxAwaitTime(1)
         iterable.maxAwaitTime(1, TimeUnit.SECONDS)
-        iterable.maxTime(1)
-        iterable.maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") iterable.maxTime(1)
+        @Suppress("DEPRECATION") iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.min(bson)
         iterable.noCursorTimeout(true)
         iterable.partial(true)
@@ -105,10 +104,10 @@ class FindIterableTest {
         verify(wrapped).let(bson)
         verify(wrapped).limit(1)
         verify(wrapped).max(bson)
-        verify(wrapped).maxAwaitTime(1, TimeUnit.MILLISECONDS)
-        verify(wrapped).maxAwaitTime(1, TimeUnit.SECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxAwaitTime(1, TimeUnit.MILLISECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxAwaitTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).min(bson)
         verify(wrapped).noCursorTimeout(true)
         verify(wrapped).partial(true)

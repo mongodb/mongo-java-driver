@@ -93,8 +93,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    *             - [[org.mongodb.scala.MongoClientSettings.Builder timeout(long, TimeUnit)]]
    *             - [[org.mongodb.scala.MongoDatabase.withTimeout withTimeout(long, TimeUnit)]]
    *             - [[org.mongodb.scala.MongoCollection.withTimeout withTimeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.ClientSessionOptions]]
-   *             - [[org.mongodb.scala.TransactionOptions]]
+   *             - [[org.mongodb.scala.ClientSession]]
    *
    * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
    *             execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.

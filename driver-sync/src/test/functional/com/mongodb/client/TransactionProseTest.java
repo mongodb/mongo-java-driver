@@ -41,7 +41,6 @@ public class TransactionProseTest {
     private MongoCollection<Document> collection;
 
     @Before
-    @SuppressWarnings("deprecation") //readTimeout
     public void setUp() {
         assumeTrue(canRunTests());
         MongoClientSettings.Builder builder = MongoClientSettings.builder()

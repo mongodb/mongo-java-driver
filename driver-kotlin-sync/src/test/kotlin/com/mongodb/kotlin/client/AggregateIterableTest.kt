@@ -44,7 +44,6 @@ class AggregateIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JAggregateIterable<Document> = mock()
         val iterable = AggregateIterable(wrapped)
@@ -79,8 +78,8 @@ class AggregateIterableTest {
         iterable.let(bson)
         iterable.maxAwaitTime(1)
         iterable.maxAwaitTime(1, TimeUnit.SECONDS)
-        iterable.maxTime(1)
-        iterable.maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") iterable.maxTime(1)
+        @Suppress("DEPRECATION") iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).allowDiskUse(true)
@@ -94,10 +93,10 @@ class AggregateIterableTest {
         verify(wrapped, times(2)).explain(BsonDocument::class.java, verbosity)
         verify(wrapped).hint(hint)
         verify(wrapped).hintString(hintString)
-        verify(wrapped).maxAwaitTime(1, TimeUnit.MILLISECONDS)
-        verify(wrapped).maxAwaitTime(1, TimeUnit.SECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
-        verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxAwaitTime(1, TimeUnit.MILLISECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxAwaitTime(1, TimeUnit.SECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
+        @Suppress("DEPRECATION") verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).let(bson)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 

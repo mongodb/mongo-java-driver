@@ -1084,7 +1084,6 @@ public class ConnectionString {
     }
 
     @Nullable
-    @SuppressWarnings("deprecation") //wTimeout
     private WriteConcern buildWriteConcern(@Nullable final Boolean safe, @Nullable final String w,
                                            @Nullable final Integer wTimeout,
                                            @Nullable final Boolean journal) {
@@ -1592,21 +1591,7 @@ public class ConnectionString {
     /**
      * Gets the socket timeout specified in the connection string.
      * @return the socket timeout
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@link MongoClientSettings.Builder#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoDatabase#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoCollection#getTimeout(TimeUnit)}</li>
-     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-     *     <li>{@link com.mongodb.TransactionOptions}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this socket timeout
-     * irrelevant. If no timeout is specified at these levels, the socket timeout will be used.
      */
-    @Deprecated
     @Nullable
     public Integer getSocketTimeout() {
         return socketTimeout;

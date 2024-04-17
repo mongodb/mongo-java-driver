@@ -240,7 +240,6 @@ public final class MongoClientSettings {
         private Builder() {
         }
 
-        @SuppressWarnings("deprecation") //readTimeout
         private Builder(final MongoClientSettings settings) {
             notNull("settings", settings);
             applicationName = settings.getApplicationName();
@@ -1116,7 +1115,6 @@ public final class MongoClientSettings {
                 + '}';
     }
 
-    @SuppressWarnings("deprecation") //readTimeout
     private MongoClientSettings(final Builder builder) {
         isTrue("timeoutMS > 0 ", builder.timeoutMS == null || builder.timeoutMS >= 0);
         readPreference = builder.readPreference;

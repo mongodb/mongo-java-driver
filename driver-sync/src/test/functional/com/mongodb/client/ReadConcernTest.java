@@ -41,7 +41,6 @@ public class ReadConcernTest {
     private TestCommandListener commandListener;
 
     @Before
-    @SuppressWarnings("deprecation")
     public void setUp() {
         assumeTrue(canRunTests());
 

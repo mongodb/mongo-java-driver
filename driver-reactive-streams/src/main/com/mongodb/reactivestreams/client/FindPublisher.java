@@ -85,8 +85,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
      *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
      *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-     *     <li>{@link com.mongodb.TransactionOptions}</li>
+     *     <li>{@link ClientSession}</li>
      * </ul>
      *
      * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time

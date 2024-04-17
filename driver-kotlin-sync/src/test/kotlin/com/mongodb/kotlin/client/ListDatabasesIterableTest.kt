@@ -39,7 +39,6 @@ class ListDatabasesIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JListDatabasesIterable<Document> = mock()
         val iterable = ListDatabasesIterable(wrapped)

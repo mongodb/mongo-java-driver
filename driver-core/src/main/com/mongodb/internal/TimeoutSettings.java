@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Timeout Settings.
@@ -52,23 +51,6 @@ public class TimeoutSettings {
 
     public static final TimeoutSettings DEFAULT = create(MongoClientSettings.builder().build());
 
-    @Nullable
-    public static Long convertAndValidateTimeoutNullable(@Nullable final Long timeout, final TimeUnit timeUnit) {
-        return timeout == null ? null : convertAndValidateTimeout(timeout, timeUnit, "timeout");
-    }
-
-    public static long convertAndValidateTimeout(final long timeout, final TimeUnit timeUnit) {
-        return convertAndValidateTimeout(timeout, timeUnit, "timeout");
-    }
-
-    public static long convertAndValidateTimeout(final long timeout, final TimeUnit timeUnit, final String fieldName) {
-        return isTrueArgument(fieldName + " was too small. After conversion it was rounded to 0 milliseconds, "
-                        + " which would result in an unintended infinite timeout.",
-                () -> MILLISECONDS.convert(timeout, timeUnit),
-                (timeoutMS) ->  timeout == 0 && timeoutMS == 0 || timeoutMS > 0);
-    }
-
-    @SuppressWarnings("deprecation")
     public static TimeoutSettings create(final MongoClientSettings settings) {
         return new TimeoutSettings(
                 settings.getClusterSettings().getServerSelectionTimeout(TimeUnit.MILLISECONDS),
@@ -78,7 +60,6 @@ public class TimeoutSettings {
                 settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
     }
 
-    @SuppressWarnings("deprecation")
     public static TimeoutSettings createHeartbeatSettings(final MongoClientSettings settings) {
         return new TimeoutSettings(
                 settings.getClusterSettings().getServerSelectionTimeout(TimeUnit.MILLISECONDS),
@@ -127,11 +108,7 @@ public class TimeoutSettings {
         return new TimeoutSettings(serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, null, maxWaitTimeMS);
     }
 
-    public TimeoutSettings withTimeout(@Nullable final Long timeout, final TimeUnit timeUnit) {
-        return withTimeoutMS(convertAndValidateTimeoutNullable(timeout, timeUnit));
-    }
-
-    TimeoutSettings withTimeoutMS(@Nullable final Long timeoutMS) {
+    public TimeoutSettings withTimeoutMS(@Nullable final Long timeoutMS) {
         return new TimeoutSettings(timeoutMS, serverSelectionTimeoutMS, connectTimeoutMS, readTimeoutMS, maxAwaitTimeMS,
                 maxTimeMS, maxCommitTimeMS, wTimeoutMS, maxWaitTimeMS);
     }

@@ -196,7 +196,6 @@ public class MongoClientOptions {
      *
      * @return the maximum wait time.
      */
-    @SuppressWarnings("deprecation")
     public int getMaxWaitTime() {
         return toIntExact(wrapped.getConnectionPoolSettings().getMaxWaitTime(MILLISECONDS));
     }
@@ -289,7 +288,6 @@ public class MongoClientOptions {
      *
      * @return the socket timeout, in milliseconds
      */
-    @SuppressWarnings("deprecation")
     public int getSocketTimeout() {
         return wrapped.getSocketSettings().getReadTimeout(MILLISECONDS);
     }
@@ -340,7 +338,6 @@ public class MongoClientOptions {
      * @return the heartbeat socket timeout, in milliseconds
      * @since 2.12
      */
-    @SuppressWarnings("deprecation")
     public int getHeartbeatSocketTimeout() {
         return wrapped.getHeartbeatSocketSettings().getReadTimeout(MILLISECONDS);
     }
@@ -858,7 +855,6 @@ public class MongoClientOptions {
          * @return {@code this}
          * @see MongoClientOptions#getMaxWaitTime()
          */
-        @SuppressWarnings("deprecation")
         public Builder maxWaitTime(final int maxWaitTime) {
             wrapped.applyToConnectionPoolSettings(builder -> builder.maxWaitTime(maxWaitTime, MILLISECONDS));
             return this;
@@ -953,7 +949,6 @@ public class MongoClientOptions {
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getSocketTimeout()
          */
-        @SuppressWarnings("deprecation")
         public Builder socketTimeout(final int socketTimeout) {
             wrapped.applyToSocketSettings(builder -> builder.readTimeout(socketTimeout, MILLISECONDS));
             return this;

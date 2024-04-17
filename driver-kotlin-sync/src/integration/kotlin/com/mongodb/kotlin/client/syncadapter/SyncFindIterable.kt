@@ -40,10 +40,8 @@ internal class SyncFindIterable<T : Any>(val wrapped: FindIterable<T>) :
         wrapped.allowDiskUse(allowDiskUse)
     }
 
-    @Suppress("DEPRECATION")
-    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncFindIterable<T> = apply {
-        wrapped.maxTime(maxTime, timeUnit)
+        @Suppress("DEPRECATION") wrapped.maxTime(maxTime, timeUnit)
     }
 
     override fun maxAwaitTime(maxAwaitTime: Long, timeUnit: TimeUnit): SyncFindIterable<T> = apply {

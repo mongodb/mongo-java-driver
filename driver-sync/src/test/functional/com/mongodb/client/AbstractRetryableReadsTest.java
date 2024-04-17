@@ -113,7 +113,6 @@ public abstract class AbstractRetryableReadsTest {
     }
 
     @Before
-    @SuppressWarnings("deprecation") //maxTimeMS
     public void setUp() {
         assumeFalse(skipTest);
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
