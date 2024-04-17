@@ -431,7 +431,7 @@
     },
     {
       "description": "abortTransaction ignores wTimeoutMS if timeoutMS is set",
-      "comment": "Moved timeoutMS from abortTransaction to startTransaction manually, as commitTransaction does not support a timeoutMS option.",
+      "comment": "Moved timeoutMS from abortTransaction to startTransaction manually, as abortTransaction does not support a timeoutMS option.",
       "operations": [
         {
           "name": "createEntities",
