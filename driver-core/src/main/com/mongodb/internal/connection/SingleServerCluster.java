@@ -25,6 +25,7 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerDescriptionChangedEvent;
@@ -70,7 +71,8 @@ public final class SingleServerCluster extends BaseCluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress, final Timeout serverSelectionTimeout) {
+    public ClusterableServer getServer(final ServerAddress serverAddress, final Timeout serverSelectionTimeout,
+                                       final TimeoutContext timeoutContext) {
         isTrue("open", !isClosed());
         return assertNotNull(server.get());
     }

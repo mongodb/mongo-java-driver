@@ -127,7 +127,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             executeCommand(binding, databaseName, getCommand(), new BsonDocumentCodec(),
-                    writeConcernErrorTransformer());
+                    writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
             return null;
         });
     }
@@ -140,7 +140,8 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
                 errHandlingCallback.onResult(null, t);
             } else {
                 SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                executeCommandAsync(binding, databaseName, getCommand(), connection, writeConcernErrorTransformerAsync(),
+                executeCommandAsync(binding, databaseName, getCommand(), connection,
+                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
                         wrappedCallback);
             }
         });

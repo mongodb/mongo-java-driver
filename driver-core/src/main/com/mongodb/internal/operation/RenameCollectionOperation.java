@@ -75,7 +75,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection, writeConcernErrorTransformer()));
+        return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection,
+                writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext())));
     }
 
     @Override
@@ -86,7 +87,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 errHandlingCallback.onResult(null, t);
             } else {
                 executeCommandAsync(binding, "admin", getCommand(), assertNotNull(connection),
-                        writeConcernErrorTransformerAsync(), releasingCallback(errHandlingCallback, connection));
+                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
+                        releasingCallback(errHandlingCallback, connection));
             }
         });
     }

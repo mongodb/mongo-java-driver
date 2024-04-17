@@ -57,6 +57,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Void> {
 
+    private static final String TIMEOUT_ERROR_MESSAGE = "Saving chunks exceeded the timeout limit.";
     private static final Document PROJECTION = new Document("_id", 1);
     private static final Document FILES_INDEX = new Document("filename", 1).append("uploadDate", 1);
     private static final Document CHUNKS_INDEX = new Document("files_id", 1).append("n", 1);
@@ -251,8 +252,13 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                                 .append("n", chunkIndex.getAndIncrement())
                                 .append("data", data);
 
-                        return clientSession == null ? collectionWithTimeout(chunksCollection, timeout).insertOne(chunkDocument)
-                                : collectionWithTimeout(chunksCollection, timeout).insertOne(clientSession, chunkDocument);
+                        if (clientSession == null) {
+                            return collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).insertOne(chunkDocument);
+                        } else {
+                            return collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).insertOne(clientSession,
+                                    chunkDocument);
+                        }
+
                     })
                     .subscribe(null, sink::error, () -> sink.success(lengthInBytes.get()));
         });

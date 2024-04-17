@@ -31,6 +31,7 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.event.ServerDescriptionChangedEvent
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.selector.ReadPreferenceServerSelector
 import com.mongodb.internal.selector.ServerAddressSelector
 import com.mongodb.internal.selector.WritableServerSelector
@@ -70,7 +71,9 @@ class BaseClusterSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress, Timeout serverSelectionTimeout) {
+            ClusterableServer getServer(final ServerAddress serverAddress,
+                                        Timeout serverSelectionTimeout,
+                                        TimeoutContext timeoutContext) {
                 throw new UnsupportedOperationException()
             }
 
@@ -86,6 +89,15 @@ class BaseClusterSpecification extends Specification {
         when: 'a server is selected before initialization'
         cluster.selectServer({ def clusterDescription -> [] },
                 createOperationContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(1)))
+
+        then: 'a MongoTimeoutException is thrown'
+        thrown(MongoTimeoutException)
+
+        when: 'a server is selected before initialization and timeoutMS is set'
+        cluster.selectServer({ def clusterDescription -> [] },
+                createOperationContext(TIMEOUT_SETTINGS
+                        .withServerSelectionTimeoutMS(1)
+                        .withTimeout(1, MILLISECONDS)))
 
         then: 'a MongoTimeoutException is thrown'
         thrown(MongoTimeoutException)

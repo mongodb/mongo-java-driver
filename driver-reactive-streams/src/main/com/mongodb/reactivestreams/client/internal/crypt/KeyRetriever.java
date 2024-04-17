@@ -32,6 +32,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
 
 class KeyRetriever {
+    private static final String TIMEOUT_ERROR_MESSAGE = "Key retrieval exceeded the timeout limit.";
     private final MongoClient client;
     private final MongoNamespace namespace;
 
@@ -45,7 +46,7 @@ class KeyRetriever {
             MongoCollection<BsonDocument> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName(), BsonDocument.class);
 
-          return collectionWithTimeout(collection, operationTimeout)
+          return collectionWithTimeout(collection, operationTimeout, TIMEOUT_ERROR_MESSAGE)
                     .withReadConcern(ReadConcern.MAJORITY)
                     .find(keyFilter);
         }).collectList();

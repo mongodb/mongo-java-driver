@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
@@ -53,6 +54,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -234,6 +236,32 @@ public class LoadBalancedClusterTest {
 
         MongoTimeoutException exception = assertThrows(MongoTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class),
                 createOperationContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(5))));
+        assertTrue(exception.getMessage().contains("while waiting to resolve SRV records for foo.bar.com"));
+    }
+
+    @Test
+    public void shouldTimeoutSelectServerWhenThereIsSRVLookupAndTimeoutMsIsSet() {
+        // given
+        String srvHostName = "foo.bar.com";
+        ServerAddress resolvedServerAddress = new ServerAddress("host1");
+        ClusterableServer expectedServer = mock(ClusterableServer.class);
+
+        ClusterSettings clusterSettings = ClusterSettings.builder()
+                .mode(ClusterConnectionMode.LOAD_BALANCED)
+                .srvHost(srvHostName)
+                .build();
+
+        ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
+
+        DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2)).sleepTime(Duration.ofHours(1)));
+
+        cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
+
+        //when & then
+        MongoOperationTimeoutException exception = assertThrows(MongoOperationTimeoutException.class, () -> cluster.selectServer(mock(ServerSelector.class),
+                createOperationContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(5).withTimeout(10L, MILLISECONDS))));
         assertTrue(exception.getMessage().contains("while waiting to resolve SRV records for foo.bar.com"));
     }
 
