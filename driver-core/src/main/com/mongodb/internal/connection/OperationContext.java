@@ -107,7 +107,7 @@ public class OperationContext {
                             clusterDescription.getServerSettings());
                     List<ServerDescription> result = wrapped.select(filteredClusterDescription);
                     if (result.isEmpty()) {
-                        // fall back to select from all servers ignoring the deprioritized ones
+                        // fall back to selecting from all servers ignoring the deprioritized ones
                         result = wrapped.select(clusterDescription);
                     }
                     return result;
