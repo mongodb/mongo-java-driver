@@ -216,15 +216,15 @@ public class BaseClientSessionImpl implements ClientSession {
 
     protected void setTransactionOptions(final TimeoutContext timeoutContext, final TransactionOptions combinedTransactionOptions) {
         WriteConcern writeConcern = combinedTransactionOptions.getWriteConcern();
-        if (timeoutContext.hasTimeoutMS() && writeConcern != null) {
-            WriteConcern writeConcernWithoutTimeout = cloneWithoutTimeout(writeConcern);
-
-            this.transactionOptions = TransactionOptions.merge(
-                    TransactionOptions.builder().writeConcern(writeConcernWithoutTimeout).build(),
-                    combinedTransactionOptions);
+        if (!timeoutContext.hasTimeoutMS() || writeConcern == null) {
+            this.transactionOptions = combinedTransactionOptions;
             return;
         }
-        this.transactionOptions = combinedTransactionOptions;
+        WriteConcern writeConcernWithoutTimeout = cloneWithoutTimeout(writeConcern);
+
+        this.transactionOptions = TransactionOptions.merge(
+                TransactionOptions.builder().writeConcern(writeConcernWithoutTimeout).build(),
+                combinedTransactionOptions);
     }
 
     protected void setTransactionOptions(@Nullable final TransactionOptions transactionOptions) {
