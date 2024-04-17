@@ -57,7 +57,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
     @Test
     public void testRetryWritesWithInsertOneAgainstMMAPv1RaisesError() {
-        assumeTrue(canRunTests());
+        assumeTrue(canRunMmapv1Tests());
         boolean exceptionFound = false;
 
         try {
@@ -74,7 +74,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
     @Test
     public void testRetryWritesWithFindOneAndDeleteAgainstMMAPv1RaisesError() {
-        assumeTrue(canRunTests());
+        assumeTrue(canRunMmapv1Tests());
         boolean exceptionFound = false;
 
         try {
@@ -108,7 +108,27 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                 mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)));
     }
 
-    private boolean canRunTests() {
+    /**
+     * Prose test #4.
+     */
+    @Test
+    public void retriesOnDifferentMongosWhenAvailable() {
+        com.mongodb.client.RetryableWritesProseTest.retriesOnDifferentMongosWhenAvailable(
+                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
+    }
+
+    /**
+     * Prose test #5.
+     */
+    @Test
+    public void retriesOnSameMongosWhenAnotherNotAvailable() {
+        com.mongodb.client.RetryableWritesProseTest.retriesOnSameMongosWhenAnotherNotAvailable(
+                mongoClientSettings -> new SyncMongoClient(MongoClients.create(mongoClientSettings)),
+                mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
+    }
+
+    private boolean canRunMmapv1Tests() {
         Document storageEngine = (Document) getServerStatus().get("storageEngine");
 
         return ((isSharded() || isDiscoverableReplicaSet())
