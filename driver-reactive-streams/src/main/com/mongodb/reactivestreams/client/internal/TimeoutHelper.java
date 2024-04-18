@@ -44,10 +44,13 @@ public final class TimeoutHelper {
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                @Nullable final Timeout timeout,
                                                                final String message) {
-        return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
-                () -> collection,
-                ms -> collection.withTimeout(ms, MILLISECONDS),
-                () -> TimeoutContext.throwMongoTimeoutException(message));
+        if (timeout != null) {
+            return timeout.call(MILLISECONDS,
+                    () -> collection.withTimeout(0, MILLISECONDS),
+                    ms -> collection.withTimeout(ms, MILLISECONDS),
+                    () -> TimeoutContext.throwMongoTimeoutException(message));
+        }
+        return collection;
     }
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
@@ -73,10 +76,13 @@ public final class TimeoutHelper {
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
-        return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
-                () -> database,
-                ms -> database.withTimeout(ms, MILLISECONDS),
-                () -> TimeoutContext.throwMongoTimeoutException(message));
+        if (timeout != null) {
+            return timeout.call(MILLISECONDS,
+                    () -> database.withTimeout(0, MILLISECONDS),
+                    ms -> database.withTimeout(ms, MILLISECONDS),
+                    () -> TimeoutContext.throwMongoTimeoutException(message));
+        }
+        return database;
     }
 
     private static Mono<MongoDatabase> databaseWithTimeoutMono(final MongoDatabase database,
@@ -99,5 +105,4 @@ public final class TimeoutHelper {
                                                                   @Nullable final Timeout timeout) {
         return Mono.defer(() -> databaseWithTimeoutMono(database, message, timeout));
     }
-
 }
