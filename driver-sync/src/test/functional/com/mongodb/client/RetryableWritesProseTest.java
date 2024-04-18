@@ -21,6 +21,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.MongoServerException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
@@ -318,7 +319,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
                     .getCollection("retriesOnDifferentMongosWhenAvailable");
             collection.drop();
             commandListener.reset();
-            assertThrows(RuntimeException.class, () -> operation.apply(collection));
+            assertThrows(MongoServerException.class, () -> operation.apply(collection));
             List<CommandEvent> failedCommandEvents = commandListener.getEvents();
             assertEquals(2, failedCommandEvents.size(), failedCommandEvents::toString);
             List<String> unexpectedCommandNames = failedCommandEvents.stream()
