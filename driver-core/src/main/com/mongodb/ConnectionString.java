@@ -916,7 +916,7 @@ public class ConnectionString {
 
         if (credential != null && authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
-                String[] mechanismPropertyKeyValue = part.split(":");
+                String[] mechanismPropertyKeyValue = part.split(":", 2);
                 if (mechanismPropertyKeyValue.length != 2) {
                     throw new IllegalArgumentException(format("The connection string contains invalid authentication properties. "
                             + "'%s' is not a key value pair", part));

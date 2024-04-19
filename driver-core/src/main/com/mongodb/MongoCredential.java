@@ -37,6 +37,7 @@ import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateOidcCredentialConstruction;
 
 /**
@@ -185,7 +186,7 @@ public final class MongoCredential {
     public static final String AWS_CREDENTIAL_PROVIDER_KEY = "AWS_CREDENTIAL_PROVIDER";
 
     /**
-     * The provider name. The value must be a string.
+     * The environment. The value must be a string.
      * <p>
      * If this is provided,
      * {@link MongoCredential#OIDC_CALLBACK_KEY} and
@@ -195,7 +196,7 @@ public final class MongoCredential {
      * @see #createOidcCredential(String)
      * @since 4.10
      */
-    public static final String PROVIDER_NAME_KEY = "PROVIDER_NAME";
+    public static final String ENVIRONMENT_KEY = "ENVIRONMENT";
 
     /**
      * This callback is invoked when the OIDC-based authenticator requests
@@ -204,7 +205,7 @@ public final class MongoCredential {
      * and a {@linkplain OidcCallbackResult#getRefreshToken() refresh token}
      * must not be returned by the callback.
      * <p>
-     * If this is provided, {@link MongoCredential#PROVIDER_NAME_KEY}
+     * If this is provided, {@link MongoCredential#ENVIRONMENT_KEY}
      * and {@link MongoCredential#OIDC_HUMAN_CALLBACK_KEY}
      * must not be provided.
      *
@@ -219,7 +220,7 @@ public final class MongoCredential {
      * from the MongoDB server. The type of the value must be
      * {@link OidcCallback}.
      * <p>
-     * If this is provided, {@link MongoCredential#PROVIDER_NAME_KEY}
+     * If this is provided, {@link MongoCredential#ENVIRONMENT_KEY}
      * and {@link MongoCredential#OIDC_CALLBACK_KEY}
      * must not be provided.
      *
@@ -252,6 +253,13 @@ public final class MongoCredential {
      */
     public static final List<String> DEFAULT_ALLOWED_HOSTS = Collections.unmodifiableList(Arrays.asList(
             "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
+
+    /**
+     * The token resource.
+     *
+     * @since TODO-OIDC update all
+     */
+    public static final String TOKEN_RESOURCE_KEY = "TOKEN_RESOURCE";
 
     /**
      * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
@@ -408,7 +416,7 @@ public final class MongoCredential {
      * @return the credential
      * @since 4.10
      * @see #withMechanismProperty(String, Object)
-     * @see #PROVIDER_NAME_KEY
+     * @see #ENVIRONMENT_KEY
      * @see #OIDC_CALLBACK_KEY
      * @see #OIDC_HUMAN_CALLBACK_KEY
      * @see #ALLOWED_HOSTS_KEY
@@ -463,6 +471,7 @@ public final class MongoCredential {
 
         if (mechanism == MONGODB_OIDC) {
             validateOidcCredentialConstruction(source, mechanismProperties);
+            validateCreateOidcCredential(password);
         }
 
         if (userName == null && !Arrays.asList(MONGODB_X509, MONGODB_AWS, MONGODB_OIDC).contains(mechanism)) {
@@ -697,6 +706,7 @@ public final class MongoCredential {
         /**
          * @return Unique client ID for this OIDC client.
          */
+        @Nullable
         String getClientId();
 
         /**

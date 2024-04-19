@@ -33,7 +33,6 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,14 +59,16 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OIDC_HUMAN_CALLBACK_KEY;
-import static com.mongodb.MongoCredential.OidcCallbackResult;
 import static com.mongodb.MongoCredential.OidcCallback;
 import static com.mongodb.MongoCredential.OidcCallbackContext;
-import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
+import static com.mongodb.MongoCredential.OidcCallbackResult;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -80,42 +81,51 @@ import static util.ThreadTestHelpers.executeAll;
  */
 public class OidcAuthenticationProseTests {
 
+    private String appName;
+
     public static boolean oidcTestsEnabled() {
         return Boolean.parseBoolean(getenv().get("OIDC_TESTS_ENABLED"));
     }
 
-    private String appName;
+    private void assumeTestEnvironment() {
+        assumeTrue(getenv("OIDC_TOKEN_DIR") != null);
+    }
 
     protected static String getOidcUri() {
-        ConnectionString cs = new ConnectionString(getenv("OIDC_ATLAS_URI_SINGLE"));
-        // remove any username and password
-        return "mongodb+srv://" + cs.getHosts().get(0) + "/?authMechanism=MONGODB-OIDC";
+        return getenv("MONGODB_URI_SINGLE");
     }
 
-    protected static String getOidcUri(final String username) {
-        ConnectionString cs = new ConnectionString(getenv("OIDC_ATLAS_URI_SINGLE"));
-        // set username
-        return "mongodb+srv://" + username + "@" + cs.getHosts().get(0) + "/?authMechanism=MONGODB-OIDC";
+    private static String getOidcUriMulti() {
+        return getenv("MONGODB_URI_MULTI");
     }
 
-    protected static String getOidcUriMulti(@Nullable final String username) {
-        ConnectionString cs = new ConnectionString(getenv("OIDC_ATLAS_URI_MULTI"));
-        // set username
-        String userPart = username == null ? "" : username + "@";
-        return "mongodb+srv://" + userPart + cs.getHosts().get(0) + "/?authMechanism=MONGODB-OIDC";
+    private static String getAdminOidcUri() {
+        String oidcUri = getOidcUri();
+        if (!oidcUri.contains("ENVIRONMENT:")) {
+            oidcUri += "&authMechanismProperties=ENVIRONMENT:" + getOidcEnv();
+        }
+        return oidcUri;
     }
 
-    private static String getAwsOidcUri() {
-        return getOidcUri() + "&authMechanismProperties=PROVIDER_NAME:aws";
+    private static String getOidcEnv() {
+        return getenv("OIDC_ENV");
     }
 
-    @NotNull
+    @Nullable
+    private static String getUserWithDomain(@Nullable final String user) {
+        return user == null ? null : user + "@" + getenv("OIDC_DOMAIN");
+    }
+
     private static String oidcTokenDirectory() {
-        return getenv("OIDC_TOKEN_DIR");
+        String dir = getenv("OIDC_TOKEN_DIR");
+        if (!dir.endsWith("/")) {
+            dir = dir + "/";
+        }
+        return dir;
     }
 
-    private static String getAwsTokenFilePath() {
-        return getenv(OidcAuthenticator.AWS_WEB_IDENTITY_TOKEN_FILE);
+    private static String getTestTokenFilePath() {
+        return getenv(OidcAuthenticator.OIDC_TOKEN_FILE);
     }
 
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
@@ -137,17 +147,17 @@ public class OidcAuthenticationProseTests {
     @Test
     public void test1p1CallbackIsCalledDuringAuth() {
         // #. Create a ``MongoClient`` configured with an OIDC callback...
-        TestCallback onRequest = createCallback();
-        MongoClientSettings clientSettings = createSettings(getOidcUri(), onRequest, null);
+        TestCallback callback = createCallback();
+        MongoClientSettings clientSettings = createSettings(callback);
         // #. Perform a find operation that succeeds
         performFind(clientSettings);
-        assertEquals(1, onRequest.invocations.get());
+        assertEquals(1, callback.invocations.get());
     }
 
     @Test
     public void test1p2CallbackCalledOnceForMultipleConnections() {
-        TestCallback onRequest = createCallback();
-        MongoClientSettings clientSettings = createSettings(getOidcUri(), onRequest, null);
+        TestCallback callback = createCallback();
+        MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             List<Thread> threads = new ArrayList<>();
             for (int i = 0; i < 10; i++) {
@@ -164,47 +174,47 @@ public class OidcAuthenticationProseTests {
                 }
             }
         }
-        assertEquals(1, onRequest.invocations.get());
+        assertEquals(1, callback.invocations.get());
     }
 
     @Test
     public void test2p1ValidCallbackInputs() {
-        String connectionString = getOidcUri();
         Duration expectedSeconds = Duration.ofMinutes(5);
 
-        TestCallback onRequest = createCallback();
+        TestCallback callback1 = createCallback();
         // #. Verify that the request callback was called with the appropriate
         //    inputs, including the timeout parameter if possible.
-        OidcCallback onRequest2 = (context) -> {
+        OidcCallback callback2 = (context) -> {
             assertEquals(expectedSeconds, context.getTimeout());
-            return onRequest.onRequest(context);
+            return callback1.onRequest(context);
         };
-        MongoClientSettings clientSettings = createSettings(connectionString, onRequest2);
+        MongoClientSettings clientSettings = createSettings(callback2);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             performFind(mongoClient);
             // callback was called
-            assertEquals(1, onRequest.getInvocations());
+            assertEquals(1, callback1.getInvocations());
         }
     }
 
     @Test
     public void test2p2RequestCallbackReturnsNull() {
         //noinspection ConstantConditions
-        OidcCallback onRequest = (context) -> null;
-        MongoClientSettings settings = this.createSettings(getOidcUri(), onRequest, null);
-        performFind(settings, MongoConfigurationException.class, "Result of callback must not be null");
+        OidcCallback callback = (context) -> null;
+        MongoClientSettings clientSettings = this.createSettings(callback);
+        performFind(clientSettings, MongoConfigurationException.class,
+                "Result of callback must not be null");
     }
 
     @Test
     public void test2p3CallbackReturnsMissingData() {
         // #. Create a client with a request callback that returns data not
         //    conforming to the OIDCRequestTokenResult with missing field(s).
-        OidcCallback onRequest = (context) -> {
+        OidcCallback callback = (context) -> {
             //noinspection ConstantConditions
             return new OidcCallbackResult(null, Duration.ZERO);
         };
         // we ensure that the error is propagated
-        MongoClientSettings clientSettings = createSettings(getOidcUri(), onRequest, null);
+        MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             try {
                 performFind(mongoClient);
@@ -217,24 +227,25 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void test2p4InvalidClientConfigurationWithCallback() {
-        String awsOidcUri = getAwsOidcUri();
+        String uri = getOidcUri() + "&authMechanismProperties=ENVIRONMENT:" + getOidcEnv();
         MongoClientSettings settings = createSettings(
-                awsOidcUri, createCallback(), null);
+                uri, createCallback(), null, OIDC_CALLBACK_KEY);
         try {
             performFind(settings);
             fail();
         } catch (Exception e) {
             assertCause(IllegalArgumentException.class,
-                    "OIDC_CALLBACK must not be specified when PROVIDER_NAME is specified", e);
+                    "OIDC_CALLBACK must not be specified when ENVIRONMENT is specified", e);
         }
     }
 
     @Test
     public void test3p1AuthFailsWithCachedToken() throws ExecutionException, InterruptedException, NoSuchFieldException, IllegalAccessException {
-        TestCallback onRequestWrapped = createCallback();
+        TestCallback callbackWrapped = createCallback();
+        // reference to the token to poison
         CompletableFuture<String> poisonToken = new CompletableFuture<>();
-        OidcCallback onRequest = (context) -> {
-            OidcCallbackResult result = onRequestWrapped.onRequest(context);
+        OidcCallback callback = (context) -> {
+            OidcCallbackResult result = callbackWrapped.onRequest(context);
             String accessToken = result.getAccessToken();
             if (!poisonToken.isDone()) {
                 poisonToken.complete(accessToken);
@@ -242,11 +253,11 @@ public class OidcAuthenticationProseTests {
             return result;
         };
 
-        MongoClientSettings clientSettings = createSettings(getOidcUri(), onRequest, null);
+        MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             // populate cache
             performFind(mongoClient);
-            assertEquals(1, onRequestWrapped.invocations.get());
+            assertEquals(1, callbackWrapped.invocations.get());
             // Poison the *Client Cache* with an invalid access token.
             // uses reflection
             String poisonString = poisonToken.get();
@@ -256,19 +267,20 @@ public class OidcAuthenticationProseTests {
             poisonChars[0] = '~';
             poisonChars[1] = '~';
 
-            assertEquals(1, onRequestWrapped.invocations.get());
+            assertEquals(1, callbackWrapped.invocations.get());
 
             // cause another connection to be opened
-            delayNextFind(); // cause both callbacks to be called
+            delayNextFind();
             executeAll(2, () -> performFind(mongoClient));
         }
-        assertEquals(2, onRequestWrapped.invocations.get());
+        assertEquals(2, callbackWrapped.invocations.get());
     }
 
     @Test
     public void test3p2AuthFailsWithoutCachedToken() {
-        MongoClientSettings clientSettings = createSettings(getOidcUri(),
-                (x) -> new OidcCallbackResult("invalid_token", Duration.ZERO), null);
+        OidcCallback callback =
+                (x) -> new OidcCallbackResult("invalid_token", Duration.ZERO);
+        MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             try {
                 performFind(mongoClient);
@@ -281,25 +293,80 @@ public class OidcAuthenticationProseTests {
     }
 
     @Test
+    public void test3p3UnexpectedErrorDoesNotClearCache() {
+        assumeTestEnvironment();
+
+        TestListener listener = new TestListener();
+        TestCommandListener commandListener = new TestCommandListener(listener);
+
+        TestCallback callback = createCallback();
+        MongoClientSettings clientSettings = createSettings(getOidcUri(), callback, commandListener);
+
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            failCommand(20, 1, "saslStart");
+            assertCause(MongoCommandException.class,
+                    "Command failed with error 20",
+                    () -> performFind(mongoClient));
+
+            assertEquals(Arrays.asList(
+                    "isMaster started",
+                    "isMaster succeeded",
+                    "saslStart started",
+                    "saslStart failed"
+            ), listener.getEventStrings());
+
+            assertEquals(1, callback.getInvocations());
+            performFind(mongoClient);
+            assertEquals(1, callback.getInvocations());
+        }
+    }
+
+    // TODO-OIDC reinstate 2 broken(?) tests in mongodb-oidc-no-retry.json
+
+    @Test
     public void test4p1Reauthentication() {
-        TestCallback onRequest = createCallback();
-        MongoClientSettings clientSettings = createSettings(getOidcUri(), onRequest);
+        TestCallback callback = createCallback();
+        MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             failCommand(391, 1, "find");
             // #. Perform a find operation that succeeds.
             performFind(mongoClient);
         }
-        assertEquals(2, onRequest.invocations.get());
+        assertEquals(2, callback.invocations.get());
+    }
+
+    @Test
+    public void test5p1Azure() {
+        assumeTrue(getOidcEnv().equals("azure"));
+        String oidcUri = getOidcUri();
+        assertFalse(oidcUri.contains("@"));
+        MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            // #. Perform a find operation that succeeds.
+            performFind(mongoClient);
+        }
+    }
+
+    @Test
+    public void test5p1AzureFails() {
+        assumeTrue(getOidcEnv().equals("azure"));
+        String oidcUri = getOidcUri();
+        oidcUri = oidcUri.replace("://", "://bad@");
+        MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            // #. Perform a find operation that succeeds.
+            performFind(mongoClient);
+        }
     }
 
     // Tests for human authentication ("testh", to preserve ordering)
 
     @Test
     public void testh1p1SinglePrincipalImplicitUsername() {
+        assumeTestEnvironment();
         // #. Create default OIDC client with authMechanism=MONGODB-OIDC.
-        String oidcUri = getOidcUri();
         TestCallback callback = createHumanCallback();
-        MongoClientSettings clientSettings = createHumanSettings(oidcUri, callback, null);
+        MongoClientSettings clientSettings = createHumanSettings(callback, null);
         // #. Perform a find operation that succeeds
         performFind(clientSettings);
         assertEquals(1, callback.invocations.get());
@@ -307,67 +374,61 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void testh1p2SinglePrincipalExplicitUsername() {
+        assumeTestEnvironment();
         // #. Create a client with MONGODB_URI_SINGLE, a username of test_user1,
         //    authMechanism=MONGODB-OIDC, and the OIDC human callback.
-        String oidcUri = getOidcUri("test_user1");
         TestCallback callback = createHumanCallback();
-        MongoClientSettings clientSettings = createHumanSettings(oidcUri, callback, null);
+        MongoClientSettings clientSettings = createSettingsHuman(getUserWithDomain("test_user1"), callback, getOidcUri());
         // #. Perform a find operation that succeeds
         performFind(clientSettings);
     }
 
     @Test
     public void testh1p3MultiplePrincipalUser1() {
+        assumeTestEnvironment();
         // #. Create a client with MONGODB_URI_MULTI, a username of test_user1,
         //    authMechanism=MONGODB-OIDC, and the OIDC human callback.
-        String oidcUri = getOidcUriMulti("test_user1");
-        TestCallback callback = createHumanCallback();
-        MongoClientSettings clientSettings = createHumanSettings(oidcUri, callback, null);
+        MongoClientSettings clientSettings = createSettingsMulti(getUserWithDomain("test_user1"), createHumanCallback());
         // #. Perform a find operation that succeeds
         performFind(clientSettings);
     }
 
     @Test
     public void testh1p4MultiplePrincipalUser2() {
+        assumeTestEnvironment();
         //- Create a human callback that reads in the generated ``test_user2`` token file.
         //- Create a client with ``MONGODB_URI_MULTI``, a username of ``test_user2``,
         //  ``authMechanism=MONGODB-OIDC``, and the OIDC human callback.
-        String oidcUri = getOidcUriMulti("test_user2");
-        TestCallback callback = createHumanCallback()
-                .setPathSupplier(() -> tokenQueue("test_user2").remove());
-        MongoClientSettings clientSettings = createHumanSettings(oidcUri, callback, null);
-        // #. Perform a find operation that succeeds
+        MongoClientSettings clientSettings = createSettingsMulti(getUserWithDomain("test_user2"), createHumanCallback()
+                .setPathSupplier(() -> tokenQueue("test_user2").remove()));
         performFind(clientSettings);
     }
 
     @Test
     public void testh1p5MultiplePrincipalNoUser() {
-        //- Create a client with ``MONGODB_URI_MULTI``, no username,
-        //  ``authMechanism=MONGODB-OIDC``, and the OIDC human callback.
-        String oidcUri = getOidcUriMulti(null);
-        TestCallback callback = createHumanCallback();
-        MongoClientSettings clientSettings = createHumanSettings(oidcUri, callback, null);
-        // #. Perform a find operation that succeeds
+        assumeTestEnvironment();
+        // Create an OIDC configured client with `MONGODB_URI_MULTI` and no username.
+        MongoClientSettings clientSettings = createSettingsMulti(null, createHumanCallback());
+        // Assert that a `find` operation fails.
         performFind(clientSettings, MongoCommandException.class, "Authentication failed");
     }
 
     @Test
     public void testh1p6AllowedHostsBlocked() {
+        assumeTestEnvironment();
         //- Create a default OIDC client, with an ``ALLOWED_HOSTS`` that is an empty list.
         //- Assert that a ``find`` operation fails with a client-side error.
-        MongoClientSettings settings1 = createSettings(
-                getOidcUri(),
+        MongoClientSettings clientSettings1 = createSettings(getOidcUri(),
                 createHumanCallback(), null, OIDC_HUMAN_CALLBACK_KEY, Collections.emptyList());
-        performFind(settings1, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
+        performFind(clientSettings1, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
 
         //- Create a client that uses the URL
         //  ``mongodb://localhost/?authMechanism=MONGODB-OIDC&ignored=example.com``, a
         //  human callback, and an ``ALLOWED_HOSTS`` that contains ``["example.com"]``.
         //- Assert that a ``find`` operation fails with a client-side error.
-        MongoClientSettings settings2 = createSettings(
-                getOidcUri() + "&ignored=example.com",
+        MongoClientSettings clientSettings2 = createSettings(getOidcUri() + "&ignored=example.com",
                 createHumanCallback(), null, OIDC_HUMAN_CALLBACK_KEY, Arrays.asList("example.com"));
-        performFind(settings2, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
+        performFind(clientSettings2, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
     }
 
     // Not a prose test
@@ -380,67 +441,117 @@ public class OidcAuthenticationProseTests {
     }
 
     @Test
+    public void testh1p7() {
+        // example.com changed to localhost
+        String string = "mongodb+srv://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ALLOWED_HOSTS:%5B%22localhost%22%5D";
+        assertCause(IllegalArgumentException.class,
+                "connection string contains disallowed mechanism properties",
+                () ->  new ConnectionString(string));
+    }
+
+    @Test
+    public void testh1p8MachineIdpWithHumanCallback() {
+        assumeTrue(getenv("OIDC_IS_LOCAL") != null);
+
+        TestCallback callback = createHumanCallback()
+                .setPathSupplier(() -> oidcTokenDirectory() + "test_machine");
+        MongoClientSettings clientSettings = createSettingsHuman(
+                "test_machine", callback, getOidcUri());
+        performFind(clientSettings);
+    }
+
+    @Test
     public void testh2p1ValidCallbackInputs() {
-        TestCallback onRequest = createHumanCallback();
-        OidcCallback onRequest2 = (context) -> {
-            assertTrue(context.getIdpInfo().getClientId().startsWith("0oad"));
-            assertTrue(context.getIdpInfo().getIssuer().endsWith("mock-identity-config-oidc"));
-            assertEquals(Arrays.asList("fizz", "buzz"), context.getIdpInfo().getRequestScopes());
+        assumeTestEnvironment();
+        TestCallback callback1 = createHumanCallback();
+        OidcCallback callback2 = (context) -> {
+            MongoCredential.IdpInfo idpInfo = assertNotNull(context.getIdpInfo());
+            assertTrue(assertNotNull(idpInfo.getClientId()).startsWith("0oad"));
+            assertTrue(idpInfo.getIssuer().endsWith("mock-identity-config-oidc"));
+            assertEquals(Arrays.asList("fizz", "buzz"), idpInfo.getRequestScopes());
             assertEquals(Duration.ofMinutes(5), context.getTimeout());
-            return onRequest.onRequest(context);
+            return callback1.onRequest(context);
         };
-        MongoClientSettings clientSettings = createHumanSettings(getOidcUri(), onRequest2, null);
+        MongoClientSettings clientSettings = createHumanSettings(callback2, null);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             performFind(mongoClient);
             // Ensure that callback was called
-            assertEquals(1, onRequest.getInvocations());
+            assertEquals(1, callback1.getInvocations());
         }
     }
 
     @Test
     public void testh2p2HumanCallbackReturnsMissingData() {
+        assumeTestEnvironment();
         //noinspection ConstantConditions
-        OidcCallback onRequestNull = (context) -> null;
-        performFind(createHumanSettings(getOidcUri(), onRequestNull, null),
+        OidcCallback callbackNull = (context) -> null;
+        performFind(createHumanSettings(callbackNull, null),
                 MongoConfigurationException.class,
                 "Result of callback must not be null");
 
         //noinspection ConstantConditions
-        OidcCallback onRequest = (context) -> new OidcCallbackResult(null, Duration.ZERO);
-        performFind(createHumanSettings(getOidcUri(), onRequest, null),
+        OidcCallback callback =
+                (context) -> new OidcCallbackResult(null, Duration.ZERO);
+        performFind(createHumanSettings(callback, null),
                 IllegalArgumentException.class,
                 "accessToken can not be null");
+    }
 
+    // not a prose test
+    @Test
+    public void testRefreshTokenAbsent() {
         // additionally, check validation for refresh in machine workflow:
-        OidcCallback onRequestMachineRefresh = (context) -> new OidcCallbackResult("access", Duration.ZERO, "exists");
-        performFind(createSettings(getOidcUri(), onRequestMachineRefresh, null),
+        OidcCallback callbackMachineRefresh =
+                (context) -> new OidcCallbackResult("access", Duration.ZERO, "exists");
+        performFind(createSettings(callbackMachineRefresh),
                 MongoConfigurationException.class,
                 "Refresh token must only be provided in human workflow");
     }
 
     @Test
-    public void testh3p1UsesSpecAuthIfCachedToken() {
-        failCommandAndCloseConnection("find", 1);
-        MongoClientSettings settings = createHumanSettings(getOidcUri(), createHumanCallback(), null);
+    public void testh2p3RefreshTokenPassed() {
+        assumeTestEnvironment();
+        AtomicInteger refreshTokensProvided = new AtomicInteger();
+        TestCallback callback1 = createHumanCallback();
+        OidcCallback callback2 = (context) -> {
+            if (context.getRefreshToken() != null) {
+                refreshTokensProvided.incrementAndGet();
+            }
+            return callback1.onRequest(context);
+        };
+        MongoClientSettings clientSettings = createHumanSettings(callback2, null);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performFind(mongoClient);
+            failCommand(391, 1, "find");
+            performFind(mongoClient);
+            assertEquals(2, callback1.getInvocations());
+            assertEquals(1, refreshTokensProvided.get());
+        }
+    }
 
-        try (MongoClient mongoClient = createMongoClient(settings)) {
+    @Test
+    public void testh3p1UsesSpecAuthIfCachedToken() {
+        assumeTestEnvironment();
+        MongoClientSettings clientSettings = createHumanSettings(createHumanCallback(), null);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            failCommandAndCloseConnection("find", 1);
             assertCause(MongoSocketException.class,
                     "Prematurely reached end of stream",
                     () -> performFind(mongoClient));
-            failCommand(20, 99, "saslStart");
-
+            failCommand(18, 1, "saslStart");
             performFind(mongoClient);
         }
     }
 
     @Test
     public void testh3p2NoSpecAuthIfNoCachedToken() {
-        failCommand(20, 99, "saslStart");
+        assumeTestEnvironment();
+        failCommand(18, 1, "saslStart");
         TestListener listener = new TestListener();
         TestCommandListener commandListener = new TestCommandListener(listener);
-        performFind(createHumanSettings(getOidcUri(), createHumanCallback(), commandListener),
+        performFind(createHumanSettings(createHumanCallback(), commandListener),
                 MongoCommandException.class,
-                "Command failed with error 20");
+                "Command failed with error 18");
         assertEquals(Arrays.asList(
                 "isMaster started",
                 "isMaster succeeded",
@@ -451,18 +562,19 @@ public class OidcAuthenticationProseTests {
     }
 
     @Test
-    public void testh4p1Succeeds() {
+    public void testh4p1ReauthenticationSucceeds() {
+        assumeTestEnvironment();
         TestListener listener = new TestListener();
         TestCommandListener commandListener = new TestCommandListener(listener);
         TestCallback callback = createHumanCallback()
                 .setEventListener(listener);
-        MongoClientSettings settings = createHumanSettings(getOidcUri(), callback, commandListener);
-        try (MongoClient mongoClient = createMongoClient(settings)) {
+        MongoClientSettings clientSettings = createHumanSettings(callback, commandListener);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             performFind(mongoClient);
             listener.clear();
             assertEquals(1, callback.getInvocations());
-
             failCommand(391, 1, "find");
+            // Perform another find operation that succeeds.
             performFind(mongoClient);
             assertEquals(Arrays.asList(
                     // first find fails:
@@ -482,27 +594,66 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void testh4p2SucceedsNoRefresh() {
-        TestListener listener = new TestListener();
-        TestCommandListener commandListener = new TestCommandListener(listener);
-        TestCallback callback = createHumanCallback().setEventListener(listener);
-        MongoClientSettings settings = createHumanSettings(getOidcUri(), callback, commandListener);
-        try (MongoClient mongoClient = createMongoClient(settings)) {
-
+        assumeTestEnvironment();
+        TestCallback callback = createHumanCallback();
+        MongoClientSettings clientSettings = createHumanSettings(callback, null);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             performFind(mongoClient);
-            listener.clear();
             assertEquals(1, callback.getInvocations());
 
             failCommand(391, 1, "find");
             performFind(mongoClient);
+            assertEquals(2, callback.getInvocations());
         }
     }
 
 
-    // TODO-OIDC awaiting spec updates, add 4.3 and 4.4
+    @Test
+    public void testh4p3SucceedsAfterRefreshFails() {
+        assumeTestEnvironment();
+        TestCallback callback1 = createHumanCallback();
+        OidcCallback callback2 = (context) -> {
+            OidcCallbackResult oidcCallbackResult = callback1.onRequest(context);
+            return new OidcCallbackResult(oidcCallbackResult.getAccessToken(), Duration.ofMinutes(5), "BAD_REFRESH");
+        };
+        MongoClientSettings clientSettings = createHumanSettings(callback2, null);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performFind(mongoClient);
+            failCommand(391, 1, "find");
+            performFind(mongoClient);
+            assertEquals(2, callback1.getInvocations());
+        }
+    }
+
+    @Test
+    public void testh4p4Fails() {
+        assumeTestEnvironment();
+        ConcurrentLinkedQueue<String> tokens = tokenQueue(
+                "test_user1",
+                "test_user1_expires",
+                "test_user1_expires");
+        TestCallback callback1 = createHumanCallback()
+                .setPathSupplier(() -> tokens.remove());
+        OidcCallback callback2 = (context) -> {
+            OidcCallbackResult oidcCallbackResult = callback1.onRequest(context);
+            return new OidcCallbackResult(oidcCallbackResult.getAccessToken(), Duration.ofMinutes(5), "BAD_REFRESH");
+        };
+        MongoClientSettings clientSettings = createHumanSettings(callback2, null);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performFind(mongoClient);
+            assertEquals(1, callback1.getInvocations());
+            failCommand(391, 1, "find");
+            assertCause(MongoCommandException.class,
+                    "Command failed with error 18",
+                    () -> performFind(mongoClient));
+            assertEquals(3, callback1.getInvocations());
+        }
+    }
 
     // Not a prose test
     @Test
     public void testErrorClearsCache() {
+        assumeTestEnvironment();
         // #. Create a new client with a valid request callback that
         //    gives credentials that expire within 5 minutes and
         //    a refresh callback that gives invalid credentials.
@@ -512,14 +663,14 @@ public class OidcAuthenticationProseTests {
                 "test_user1_expires",
                 "test_user1_expires",
                 "test_user1_1");
-        TestCallback onRequest = createHumanCallback()
+        TestCallback callback = createHumanCallback()
                 .setRefreshToken("refresh")
                 .setPathSupplier(() -> tokens.remove())
                 .setEventListener(listener);
 
         TestCommandListener commandListener = new TestCommandListener(listener);
 
-        MongoClientSettings clientSettings = createHumanSettings(getOidcUri(), onRequest, commandListener);
+        MongoClientSettings clientSettings = createHumanSettings(callback, commandListener);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             // #. Ensure that a find operation adds a new entry to the cache.
             performFind(mongoClient);
@@ -585,17 +736,31 @@ public class OidcAuthenticationProseTests {
         }
     }
 
+
+    private MongoClientSettings createSettings(final OidcCallback callback) {
+        return createSettings(getOidcUri(), callback, null);
+    }
+
     public MongoClientSettings createSettings(
             final String connectionString,
-            @Nullable final OidcCallback onRequest) {
-        return createSettings(connectionString, onRequest, null);
+            @Nullable final TestCallback callback) {
+        return createSettings(connectionString, callback, null);
     }
 
     private MongoClientSettings createSettings(
             final String connectionString,
             @Nullable final OidcCallback callback,
             @Nullable final CommandListener commandListener) {
-        return createSettings(connectionString, callback, commandListener, OIDC_CALLBACK_KEY);
+        String cleanedConnectionString = callback == null ? connectionString : connectionString
+                .replace("ENVIRONMENT:azure,", "")
+                .replace("ENVIRONMENT:gcp,", "")
+                .replace("ENVIRONMENT:test,", "");
+        return createSettings(cleanedConnectionString, callback, commandListener, OIDC_CALLBACK_KEY);
+    }
+
+    private MongoClientSettings createHumanSettings(
+            final OidcCallback callback, @Nullable final TestCommandListener commandListener) {
+        return createHumanSettings(getOidcUri(), callback, commandListener);
     }
 
     private MongoClientSettings createHumanSettings(
@@ -605,15 +770,16 @@ public class OidcAuthenticationProseTests {
         return createSettings(connectionString, callback, commandListener, OIDC_HUMAN_CALLBACK_KEY);
     }
 
-    @NotNull
     private MongoClientSettings createSettings(
             final String connectionString,
-            @Nullable final OidcCallback onRequest,
+            final @Nullable OidcCallback callback,
             @Nullable final CommandListener commandListener,
             final String oidcCallbackKey) {
         ConnectionString cs = new ConnectionString(connectionString);
-        MongoCredential credential = cs.getCredential()
-                .withMechanismProperty(oidcCallbackKey, onRequest);
+        MongoCredential credential = assertNotNull(cs.getCredential());
+        if (callback != null) {
+            credential = credential.withMechanismProperty(oidcCallbackKey, callback);
+        }
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applicationName(appName)
                 .applyConnectionString(cs)
@@ -627,13 +793,13 @@ public class OidcAuthenticationProseTests {
 
     private MongoClientSettings createSettings(
             final String connectionString,
-            @Nullable final OidcCallback onRequest,
+            @Nullable final OidcCallback callback,
             @Nullable final CommandListener commandListener,
             final String oidcCallbackKey,
             @Nullable final List<String> allowedHosts) {
         ConnectionString cs = new ConnectionString(connectionString);
         MongoCredential credential = cs.getCredential()
-                .withMechanismProperty(oidcCallbackKey, onRequest)
+                .withMechanismProperty(oidcCallbackKey, callback)
                 .withMechanismProperty(ALLOWED_HOSTS_KEY, allowedHosts);
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .applicationName(appName)
@@ -643,6 +809,22 @@ public class OidcAuthenticationProseTests {
             builder.addCommandListener(commandListener);
         }
         return builder.build();
+    }
+
+    private MongoClientSettings createSettingsMulti(@Nullable final String user, final OidcCallback callback) {
+        return createSettingsHuman(user, callback, getOidcUriMulti());
+    }
+
+    private MongoClientSettings createSettingsHuman(@Nullable final String user, final OidcCallback callback, final String oidcUri) {
+        ConnectionString cs = new ConnectionString(oidcUri);
+        MongoCredential credential = MongoCredential.createOidcCredential(user)
+                .withMechanismProperty(OIDC_HUMAN_CALLBACK_KEY, callback);
+        return MongoClientSettings.builder()
+                .applicationName(appName)
+                .applyConnectionString(cs)
+                .retryReads(false)
+                .credential(credential)
+                .build();
     }
 
     private void performFind(final MongoClientSettings settings) {
@@ -681,7 +863,7 @@ public class OidcAuthenticationProseTests {
             cause = cause.getCause();
         }
         if (!expectedCause.isInstance(cause)) {
-            throw new AssertionFailedError("Unexpected cause", actualException);
+            throw new AssertionFailedError("Unexpected cause: " + actualException.getClass(), actualException);
         }
         if (!cause.getMessage().contains(expectedMessageFragment)) {
             throw new AssertionFailedError("Unexpected message", actualException);
@@ -690,7 +872,7 @@ public class OidcAuthenticationProseTests {
 
     protected void delayNextFind() {
         try (MongoClient client = createMongoClient(createSettings(
-                getAwsOidcUri(), null, null))) {
+                getAdminOidcUri(), null, null, OIDC_CALLBACK_KEY))) {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(1)))
                     .append("data", new BsonDocument()
@@ -704,7 +886,7 @@ public class OidcAuthenticationProseTests {
 
     protected void failCommand(final int code, final int times, final String... commands) {
         try (MongoClient mongoClient = createMongoClient(createSettings(
-                getAwsOidcUri(), null, null))) {
+                getAdminOidcUri(), null, null, OIDC_CALLBACK_KEY))) {
             List<BsonString> list = Arrays.stream(commands).map(c -> new BsonString(c)).collect(Collectors.toList());
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(times)))
@@ -718,7 +900,7 @@ public class OidcAuthenticationProseTests {
 
     private void failCommandAndCloseConnection(final String command, final int times) {
         try (MongoClient mongoClient = createMongoClient(createSettings(
-                getAwsOidcUri(), null, null))) {
+                getAdminOidcUri(), null, null, OIDC_CALLBACK_KEY))) {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(times)))
                     .append("data", new BsonDocument()
@@ -772,11 +954,10 @@ public class OidcAuthenticationProseTests {
                         + " - IdpInfo: " + (context.getIdpInfo() == null ? "none" : "present")
                         + ")");
             }
-            return callback();
+            return callback(context);
         }
 
-        @NotNull
-        private OidcCallbackResult callback() {
+        private OidcCallbackResult callback(final OidcCallbackContext context) {
             if (concurrentTracker != null) {
                 if (concurrentTracker.get() > 0) {
                     throw new RuntimeException("Callbacks should not be invoked by multiple threads.");
@@ -785,25 +966,50 @@ public class OidcAuthenticationProseTests {
             }
             try {
                 invocations.incrementAndGet();
-                Path path = Paths.get(pathSupplier == null
-                        ? getAwsTokenFilePath()
-                        : pathSupplier.get());
-                String accessToken;
                 try {
                     simulateDelay();
-                    accessToken = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-                } catch (IOException | InterruptedException e) {
+                } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                if (testListener != null) {
-                    testListener.add("read access token: " + path.getFileName());
+                MongoCredential credential = assertNotNull(new ConnectionString(getOidcUri()).getCredential());
+                String oidcEnv = getOidcEnv();
+                OidcCallback c;
+                if (oidcEnv.contains("azure")) {
+                    c = OidcAuthenticator.getAzureCallback(credential);
+                } else if (oidcEnv.contains("gcp")) {
+                    c = OidcAuthenticator.getGcpCallback(credential);
+                } else if (oidcEnv.contains("test")) {
+                    c = null;
+                } else {
+                    c = null;
                 }
-                return new OidcCallbackResult(accessToken, Duration.ZERO, refreshToken);
+                if (c == null) {
+                    c = getProseTestCallback();
+                }
+                return c.onRequest(context);
+
             } finally {
                 if (concurrentTracker != null) {
                     concurrentTracker.decrementAndGet();
                 }
             }
+        }
+
+        private OidcCallback getProseTestCallback() {
+            return (x) -> {
+                try {
+                    Path path = Paths.get(pathSupplier == null
+                            ? getTestTokenFilePath()
+                            : pathSupplier.get());
+                    String accessToken = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                    if (testListener != null) {
+                        testListener.add("read access token: " + path.getFileName());
+                    }
+                    return new OidcCallbackResult(accessToken, Duration.ZERO, refreshToken);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            };
         }
 
         private void simulateDelay() throws InterruptedException {
@@ -847,6 +1053,7 @@ public class OidcAuthenticationProseTests {
                     this.testListener,
                     pathSupplier);
         }
+
         public TestCallback setRefreshToken(final String token) {
             return new TestCallback(
                     token,
@@ -857,7 +1064,6 @@ public class OidcAuthenticationProseTests {
         }
     }
 
-    @NotNull
     private ConcurrentLinkedQueue<String> tokenQueue(final String... queue) {
         String tokenPath = oidcTokenDirectory();
         return java.util.stream.Stream

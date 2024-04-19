@@ -16,9 +16,9 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.AuthenticationMechanism;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadConcern;
@@ -26,11 +26,6 @@ import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.internal.connection.OidcAuthenticator;
-import com.mongodb.event.TestServerMonitorListener;
-import com.mongodb.internal.connection.ServerMonitoringModeUtil;
-import com.mongodb.internal.connection.TestClusterListener;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
@@ -62,11 +57,15 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
+import com.mongodb.logging.TestLoggingInterceptor;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -76,12 +75,6 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,6 +89,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
@@ -529,30 +523,47 @@ public final class Entities {
                                 ServerMonitoringModeUtil.fromString(value.asString().getValue())));
                         break;
                     case "authMechanism":
-                        if (value.equals(new BsonString(AuthenticationMechanism.MONGODB_OIDC.getMechanismName()))) {
-                            clientSettingsBuilder.credential(MongoCredential.createOidcCredential(null));
+                        if (value.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
+                            // authMechanismProperties depends on authMechanism
+                            BsonDocument authMechanismProperties = entity
+                                    .getDocument("uriOptions")
+                                    .getDocument("authMechanismProperties");
+                            boolean hasPlaceholder = authMechanismProperties.equals(
+                                    new BsonDocument("$$placeholder", new BsonInt32(1)));
+                            if (!hasPlaceholder) {
+                                throw new UnsupportedOperationException("Unsupported authMechanism: " + value);
+                            }
+
+                            // override the org.mongodb.test.uri connection string
+                            String uri = getenv("MONGODB_URI");
+                            ConnectionString cs = new ConnectionString(uri);
+                            clientSettingsBuilder.applyConnectionString(cs);
+
+                            String env = getenv("OIDC_ENV");
+                            if (env == null) {
+                                env = "test";
+                            }
+                            MongoCredential oidcCredential = MongoCredential
+                                    .createOidcCredential(null)
+                                    .withMechanismProperty("ENVIRONMENT", env);
+                            if (env.equals("azure")) {
+                                oidcCredential = oidcCredential
+                                        .withMechanismProperty("TOKEN_RESOURCE", getenv("AZUREOIDC_RESOURCE"));
+                            } else if (env.equals("gcp")) {
+                                oidcCredential = oidcCredential
+                                        .withMechanismProperty("TOKEN_RESOURCE", getenv("GCPOIDC_RESOURCE"));
+                            }
+                            clientSettingsBuilder.credential(oidcCredential);
                             break;
                         }
                         throw new UnsupportedOperationException("Unsupported authMechanism: " + value);
                     case "authMechanismProperties":
-                        MongoCredential credential = clientSettingsBuilder.build().getCredential();
-                        boolean isOidc = credential != null
-                                && credential.getAuthenticationMechanism() == AuthenticationMechanism.MONGODB_OIDC;
-                        boolean hasPlaceholder = value.equals(new BsonDocument("$$placeholder", new BsonInt32(1)));
-                        if (isOidc && hasPlaceholder) {
-                            clientSettingsBuilder.credential(credential.withMechanismProperty(
-                                    MongoCredential.OIDC_CALLBACK_KEY,
-                                    (MongoCredential.OidcCallback) context -> {
-                                        Path path = Paths.get(getenv(OidcAuthenticator.AWS_WEB_IDENTITY_TOKEN_FILE));
-                                        String accessToken;
-                                        try {
-                                            accessToken = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-                                        } catch (IOException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                        return new MongoCredential.OidcCallbackResult(accessToken, Duration.ZERO);
-                                    }));
-                            break;
+                        // authMechanismProperties are handled as part of authMechanism, above
+                        BsonValue authMechanism = entity
+                                .getDocument("uriOptions")
+                                .get("authMechanism");
+                        if (authMechanism.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
+                            break; // only OIDC supports authMechanismProperties
                         }
                         throw new UnsupportedOperationException("Failure to apply authMechanismProperties: " + value);
                     default:

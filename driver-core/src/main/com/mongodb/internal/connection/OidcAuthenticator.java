@@ -31,6 +31,9 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.Locks;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.authentication.AzureCredentialHelper;
+import com.mongodb.internal.authentication.CredentialInfo;
+import com.mongodb.internal.authentication.GcpCredentialHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -50,12 +53,13 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.MongoCredential.DEFAULT_ALLOWED_HOSTS;
 import static com.mongodb.MongoCredential.IdpInfo;
 import static com.mongodb.MongoCredential.OIDC_HUMAN_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OidcCallback;
 import static com.mongodb.MongoCredential.OidcCallbackContext;
-import static com.mongodb.MongoCredential.PROVIDER_NAME_KEY;
+import static com.mongodb.MongoCredential.ENVIRONMENT_KEY;
 import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -69,11 +73,18 @@ import static java.lang.String.format;
  */
 public final class OidcAuthenticator extends SaslAuthenticator {
 
-    private static final List<String> SUPPORTED_PROVIDERS = Arrays.asList("aws");
+    private static final String TEST_ENVIRONMENT = "test";
+    private static final String AZURE_ENVIRONMENT = "azure";
+    private static final String GCP_ENVIRONMENT = "gcp";
+    private static final List<String> SUPPORTED_ENVIRONMENTS = Arrays.asList(
+            AZURE_ENVIRONMENT, GCP_ENVIRONMENT, TEST_ENVIRONMENT);
+    private static final List<String> SUPPORTS_TOKEN_RESOURCE = Arrays.asList(
+            AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
 
     private static final Duration CALLBACK_TIMEOUT = Duration.ofMinutes(5);
 
-    public static final String AWS_WEB_IDENTITY_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
+    public static final String OIDC_TOKEN_FILE = "OIDC_TOKEN_FILE";
+
     private static final int CALLBACK_API_VERSION_NUMBER = 1;
 
     @Nullable
@@ -113,9 +124,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @Nullable
     public BsonDocument createSpeculativeAuthenticateCommand(final InternalConnection connection) {
         try {
-            if (isAutomaticAuthentication()) {
-                return wrapInSpeculative(prepareAwsTokenFromFileAsJwt());
-            }
             String cachedAccessToken = getCachedAccessToken();
             if (cachedAccessToken != null) {
                 return wrapInSpeculative(prepareTokenAsJwt(cachedAccessToken));
@@ -152,11 +160,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         speculativeAuthenticateResponse = response;
     }
 
-    private boolean isAutomaticAuthentication() {
-        return getOidcCallbackMechanismProperty(PROVIDER_NAME_KEY) == null;
-    }
-
     private boolean isHumanCallback() {
+        // built-in providers (aws, azure...) are considered machine callbacks
         return getOidcCallbackMechanismProperty(OIDC_HUMAN_CALLBACK_KEY) != null;
     }
 
@@ -167,10 +172,47 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 .getMechanismProperty(key, null);
     }
 
-    @Nullable
     private OidcCallback getRequestCallback() {
-        OidcCallback machine = getOidcCallbackMechanismProperty(OIDC_CALLBACK_KEY);
-        return machine != null ? machine : getOidcCallbackMechanismProperty(OIDC_HUMAN_CALLBACK_KEY);
+        String environment = getEnvironmentName(getMongoCredential());
+        OidcCallback machine;
+        if (TEST_ENVIRONMENT.equals(environment)) {
+            machine = getTestCallback();
+        } else if (AZURE_ENVIRONMENT.equals(environment)) {
+            machine = getAzureCallback(getMongoCredential());
+        } else if (GCP_ENVIRONMENT.equals(environment)) {
+            machine = getGcpCallback(getMongoCredential());
+        } else {
+            machine = getOidcCallbackMechanismProperty(OIDC_CALLBACK_KEY);
+        }
+        OidcCallback human = getOidcCallbackMechanismProperty(OIDC_HUMAN_CALLBACK_KEY);
+        return machine != null ? machine : assertNotNull(human);
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public static OidcCallback getTestCallback() {
+        return (context) -> {
+            String accessToken = readTestTokenFromFile();
+            return new OidcCallbackResult(accessToken, Duration.ZERO);
+        };
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public static OidcCallback getAzureCallback(final MongoCredential credential) {
+        return (context) -> {
+            String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
+            String objectId = credential.getUserName();
+            CredentialInfo response = AzureCredentialHelper.fetchAzureCredentialInfo(resource, objectId);
+            return new OidcCallbackResult(response.getAccessToken(), response.getExpiresIn());
+        };
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public static OidcCallback getGcpCallback(final MongoCredential credential) {
+        return (context) -> {
+            String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
+            CredentialInfo response = GcpCredentialHelper.fetchGcpCredentialInfo(resource);
+            return new OidcCallbackResult(response.getAccessToken(), response.getExpiresIn());
+        };
     }
 
     @Override
@@ -239,16 +281,13 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private byte[] evaluate(final byte[] challenge) {
-        if (isAutomaticAuthentication()) {
-            return prepareAwsTokenFromFileAsJwt();
-        }
         byte[][] jwt = new byte[1][];
         Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
             OidcCacheEntry oidcCacheEntry = getMongoCredentialWithCache().getOidcCacheEntry();
             String cachedRefreshToken = oidcCacheEntry.getRefreshToken();
             IdpInfo cachedIdpInfo = oidcCacheEntry.getIdpInfo();
             String cachedAccessToken = validatedCachedAccessToken();
-            OidcCallback requestCallback = assertNotNull(getRequestCallback());
+            OidcCallback requestCallback = getRequestCallback();
             boolean isHuman = isHumanCallback();
 
             if (cachedAccessToken != null) {
@@ -443,18 +482,18 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     }
 
-    private static String readAwsTokenFromFile() {
-        String path = System.getenv(AWS_WEB_IDENTITY_TOKEN_FILE);
+    private static String readTestTokenFromFile() {
+        String path = System.getenv(OIDC_TOKEN_FILE);
         if (path == null) {
             throw new MongoClientException(
-                    format("Environment variable must be specified: %s", AWS_WEB_IDENTITY_TOKEN_FILE));
+                    format("Environment variable must be specified: %s", OIDC_TOKEN_FILE));
         }
         try {
             return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new MongoClientException(format(
                     "Could not read file specified by environment variable: %s at path: %s",
-                    AWS_WEB_IDENTITY_TOKEN_FILE, path), e);
+                    OIDC_TOKEN_FILE, path), e);
         }
     }
 
@@ -483,13 +522,12 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         validateAllowedHosts(getMongoCredential());
         BsonDocument c = new RawBsonDocument(challenge);
         String issuer = c.getString("issuer").getValue();
-        String clientId = c.getString("clientId").getValue();
+        String clientId = !c.containsKey("clientId") ? null : c.getString("clientId").getValue();
         return new IdpInfoImpl(
                 issuer,
                 clientId,
                 getStringArray(c, "requestScopes"));
     }
-
 
     @Nullable
     private static List<String> getStringArray(final BsonDocument document, final String key) {
@@ -529,11 +567,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return toJwtDocument(accessToken);
     }
 
-    private static byte[] prepareAwsTokenFromFileAsJwt() {
-        String accessToken = readAwsTokenFromFile();
-        return toJwtDocument(accessToken);
-    }
-
     private static byte[] toJwtDocument(final String accessToken) {
         return toBson(new BsonDocument().append("jwt", new BsonString(accessToken)));
     }
@@ -553,10 +586,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 throw new IllegalArgumentException("source must be '$external'");
             }
 
-            Object providerName = mechanismProperties.get(PROVIDER_NAME_KEY.toLowerCase());
+            String providerName = getEnvironmentName(mechanismProperties);
             if (providerName != null) {
-                if (!(providerName instanceof String) || !SUPPORTED_PROVIDERS.contains(providerName)) {
-                    throw new IllegalArgumentException(PROVIDER_NAME_KEY + " must be one of: " + SUPPORTED_PROVIDERS);
+                if (!SUPPORTED_ENVIRONMENTS.contains(providerName)) {
+                    throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be one of: " + SUPPORTED_ENVIRONMENTS);
                 }
             }
         }
@@ -571,13 +604,13 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
         public static void validateBeforeUse(final MongoCredential credential) {
             String userName = credential.getUserName();
-            Object providerName = credential.getMechanismProperty(PROVIDER_NAME_KEY, null);
+            Object providerName = credential.getMechanismProperty(ENVIRONMENT_KEY, null);
             Object machineCallback = credential.getMechanismProperty(OIDC_CALLBACK_KEY, null);
             Object humanCallback = credential.getMechanismProperty(OIDC_HUMAN_CALLBACK_KEY, null);
             if (providerName == null) {
                 // callback
                 if (machineCallback == null && humanCallback == null) {
-                    throw new IllegalArgumentException("Either " + PROVIDER_NAME_KEY
+                    throw new IllegalArgumentException("Either " + ENVIRONMENT_KEY
                             + " or " + OIDC_CALLBACK_KEY
                             + " or " + OIDC_HUMAN_CALLBACK_KEY
                             + " must be specified");
@@ -589,18 +622,39 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 }
             } else {
                 if (userName != null) {
-                    throw new IllegalArgumentException("user name must not be specified when " + PROVIDER_NAME_KEY + " is specified");
+                    throw new IllegalArgumentException("user name must not be specified when " + ENVIRONMENT_KEY + " is specified");
                 }
                 if (machineCallback != null) {
-                    throw new IllegalArgumentException(OIDC_CALLBACK_KEY + " must not be specified when " + PROVIDER_NAME_KEY + " is specified");
+                    throw new IllegalArgumentException(OIDC_CALLBACK_KEY + " must not be specified when " + ENVIRONMENT_KEY + " is specified");
                 }
                 if (humanCallback != null) {
-                    throw new IllegalArgumentException(OIDC_HUMAN_CALLBACK_KEY + " must not be specified when " + PROVIDER_NAME_KEY + " is specified");
+                    throw new IllegalArgumentException(OIDC_HUMAN_CALLBACK_KEY + " must not be specified when " + ENVIRONMENT_KEY + " is specified");
+                }
+                String tokenResource = credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null);
+                boolean hasTokenResourceProperty = tokenResource != null;
+                boolean tokenResourceSupported = SUPPORTS_TOKEN_RESOURCE.contains(providerName);
+                if (hasTokenResourceProperty != tokenResourceSupported) {
+                    throw new IllegalArgumentException(TOKEN_RESOURCE_KEY
+                            + " must be provided if and only if " + ENVIRONMENT_KEY
+                            + " " + providerName  + " "
+                            + " is one of: " + SUPPORTS_TOKEN_RESOURCE
+                            + ". " + TOKEN_RESOURCE_KEY + ": " + tokenResource);
                 }
             }
         }
     }
 
+    @Nullable
+    private static String getEnvironmentName(final Map<String, Object> mechanismProperties) {
+        Object o = mechanismProperties.get(ENVIRONMENT_KEY.toLowerCase());
+        return o instanceof String ? (String) o : null;
+    }
+
+    @Nullable
+    private static String getEnvironmentName(final MongoCredential credential) {
+        Object o = credential.getMechanismProperty(ENVIRONMENT_KEY, null);
+        return o instanceof String ? (String) o : null;
+    }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     static class OidcCallbackContextImpl implements OidcCallbackContext {
@@ -646,12 +700,13 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     static final class IdpInfoImpl implements IdpInfo {
         private final String issuer;
+        @Nullable
         private final String clientId;
         private final List<String> requestScopes;
 
-        IdpInfoImpl(final String issuer, final String clientId, @Nullable final List<String> requestScopes) {
+        IdpInfoImpl(final String issuer, @Nullable final String clientId, @Nullable final List<String> requestScopes) {
             this.issuer = assertNotNull(issuer);
-            this.clientId = assertNotNull(clientId);
+            this.clientId = clientId;
             this.requestScopes = requestScopes == null
                     ? Collections.emptyList()
                     : Collections.unmodifiableList(requestScopes);
@@ -663,6 +718,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
 
         @Override
+        @Nullable
         public String getClientId() {
             return clientId;
         }

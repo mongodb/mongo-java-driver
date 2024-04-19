@@ -18,6 +18,7 @@ package com.mongodb.internal.authentication;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.internal.ExpirableValue;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.json.JsonParseException;
@@ -55,39 +56,47 @@ public final class AzureCredentialHelper {
                 if (cachedValue.isPresent()) {
                     accessToken = cachedValue.get();
                 } else {
-                    String endpoint = "http://" + "169.254.169.254:80"
-                            + "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net";
-
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put("Metadata", "true");
-                    headers.put("Accept", "application/json");
-
                     long startNanoTime = System.nanoTime();
-                    BsonDocument responseDocument;
-                    try {
-                        responseDocument = BsonDocument.parse(getHttpContents("GET", endpoint, headers));
-                    } catch (JsonParseException e) {
-                        throw new MongoClientException("Exception parsing JSON from Azure IMDS metadata response.", e);
-                    }
-
-                    if (!responseDocument.isString(ACCESS_TOKEN_FIELD)) {
-                        throw new MongoClientException(String.format(
-                                "The %s field from Azure IMDS metadata response is missing or is not a string", ACCESS_TOKEN_FIELD));
-                    }
-                    if (!responseDocument.isString(EXPIRES_IN_FIELD)) {
-                        throw new MongoClientException(String.format(
-                                "The %s field from Azure IMDS metadata response is missing or is not a string", EXPIRES_IN_FIELD));
-                    }
-                    accessToken = responseDocument.getString(ACCESS_TOKEN_FIELD).getValue();
-                    int expiresInSeconds = Integer.parseInt(responseDocument.getString(EXPIRES_IN_FIELD).getValue());
-                    cachedAccessToken = ExpirableValue.expirable(accessToken, Duration.ofSeconds(expiresInSeconds).minus(Duration.ofMinutes(1)),
-                            startNanoTime);
+                    CredentialInfo response = fetchAzureCredentialInfo("https://vault.azure.net", null);
+                    accessToken = response.getAccessToken();
+                    Duration duration = response.getExpiresIn().minus(Duration.ofMinutes(1));
+                    cachedAccessToken = ExpirableValue.expirable(accessToken, duration, startNanoTime);
                 }
             } finally {
                 CACHED_ACCESS_TOKEN_LOCK.unlock();
             }
        }
        return new BsonDocument("accessToken", new BsonString(accessToken));
+    }
+
+    public static CredentialInfo fetchAzureCredentialInfo(final String resource, @Nullable final String objectId) {
+        String endpoint = "http://169.254.169.254:80"
+                + "/metadata/identity/oauth2/token?api-version=2018-02-01"
+                + "&resource=" + resource
+                + (objectId == null ? "" : "&object_id=" + objectId);
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Metadata", "true");
+        headers.put("Accept", "application/json");
+
+        BsonDocument responseDocument;
+        try {
+            responseDocument = BsonDocument.parse(getHttpContents("GET", endpoint, headers));
+        } catch (JsonParseException e) {
+            throw new MongoClientException("Exception parsing JSON from Azure IMDS metadata response.", e);
+        }
+
+        if (!responseDocument.isString(ACCESS_TOKEN_FIELD)) {
+            throw new MongoClientException(String.format(
+                    "The %s field from Azure IMDS metadata response is missing or is not a string", ACCESS_TOKEN_FIELD));
+        }
+        if (!responseDocument.isString(EXPIRES_IN_FIELD)) {
+            throw new MongoClientException(String.format(
+                    "The %s field from Azure IMDS metadata response is missing or is not a string", EXPIRES_IN_FIELD));
+        }
+        String accessToken = responseDocument.getString(ACCESS_TOKEN_FIELD).getValue();
+        int expiresInSeconds = Integer.parseInt(responseDocument.getString(EXPIRES_IN_FIELD).getValue());
+        return new CredentialInfo(accessToken, Duration.ofSeconds(expiresInSeconds));
     }
 
     private AzureCredentialHelper() {

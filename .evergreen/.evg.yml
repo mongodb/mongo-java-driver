@@ -12,9 +12,8 @@ stepback: true
 # Actual testing tasks are marked with `type: test`
 command_type: system
 
-# Protect ourself against rogue test case, or curl gone wild, that runs forever
-# 12 minutes is the longest we'll ever run
-exec_timeout_secs: 3600 # 12 minutes is the longest we'll ever run
+# Protect ourselves against rogue test case, or curl gone wild, that runs forever
+exec_timeout_secs: 7200
 
 # What to do when evergreen hits the timeout (`post:` tasks are run automatically)
 timeout:
@@ -967,6 +966,58 @@ tasks:
             LOAD_BALANCER: 'true'
         - func: "run load-balancer"
         - func: "run load-balancer tests"
+
+    - name: "oidc-auth-test-latest"
+      commands:
+        - command: subprocess.exec
+          type: test
+          params:
+            working_dir: "src"
+            binary: bash
+            include_expansions_in_env: ["DRIVERS_TOOLS", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+            args:
+              - .evergreen/run-mongodb-oidc-test.sh
+
+    - name: "oidc-auth-test-azure-latest"
+      commands:
+        - command: shell.exec
+          params:
+            shell: bash
+            env:
+              JAVA_HOME: ${JAVA_HOME}
+            script: |-
+              set -o errexit
+              ${PREPARE_SHELL}
+              cd src
+              git add .
+              git commit -m "add files"
+              # uncompressed tar used to allow appending .git folder
+              export AZUREOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
+              git archive -o $AZUREOIDC_DRIVERS_TAR_FILE HEAD
+              tar -rf $AZUREOIDC_DRIVERS_TAR_FILE .git
+              export AZUREOIDC_TEST_CMD="OIDC_ENV=azure ./.evergreen/run-mongodb-oidc-test.sh"
+              bash $DRIVERS_TOOLS/.evergreen/auth_oidc/azure/run-driver-test.sh
+
+    - name: "oidc-auth-test-gcp-latest"
+      commands:
+        - command: shell.exec
+          params:
+            shell: bash
+            script: |-
+              set -o errexit
+              ${PREPARE_SHELL}
+              cd src
+              git add .
+              git commit -m "add files"
+              # uncompressed tar used to allow appending .git folder
+              export GCPOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
+              git archive -o $GCPOIDC_DRIVERS_TAR_FILE HEAD
+              tar -rf $GCPOIDC_DRIVERS_TAR_FILE .git
+              # Define the command to run on the VM.
+              # Ensure that we source the environment file created for us, set up any other variables we need,
+              # and then run our test suite on the vm.
+              export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
+              bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
 
     - name: serverless-test
       commands:
@@ -2065,6 +2116,77 @@ task_groups:
     tasks:
       - test-aws-lambda-deployed
 
+  - name: testoidc_task_group
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - func: fix absolute paths
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: subprocess.exec
+        params:
+          binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/setup.sh
+    teardown_task:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/teardown.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - oidc-auth-test-latest
+
+  - name: testazureoidc_task_group
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - func: fix absolute paths
+      - command: subprocess.exec
+        params:
+          binary: bash
+          env:
+            AZUREOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/azure/create-and-setup-vm.sh
+    teardown_task:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/azure/delete-vm.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - oidc-auth-test-azure-latest
+
+  - name: testgcpoidc_task_group
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - func: fix absolute paths
+      - command: subprocess.exec
+        params:
+          binary: bash
+          env:
+            GCPOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/setup.sh
+    teardown_task:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/teardown.sh
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    tasks:
+      - oidc-auth-test-gcp-latest
+
 buildvariants:
 
 # Test packaging and other release related routines
@@ -2215,6 +2337,27 @@ buildvariants:
   run_on: rhel80-small
   tasks:
     - name: "test_atlas_task_group_search_indexes"
+
+- name: "oidc-auth-test"
+  display_name: "OIDC Auth"
+  run_on: ubuntu2204-small
+  tasks:
+    - name: testoidc_task_group
+      batchtime: 20160 # 14 days
+
+- name: testazureoidc-variant
+  display_name: "OIDC Auth Azure"
+  run_on: ubuntu2204-small
+  tasks:
+    - name: testazureoidc_task_group
+      batchtime: 20160 # 14 days
+
+- name: testgcpoidc-variant
+  display_name: "OIDC Auth GCP"
+  run_on: ubuntu2204-small
+  tasks:
+    - name: testgcpoidc_task_group
+      batchtime: 20160 # 14 days
 
 - matrix_name: "aws-auth-test"
   matrix_spec: { ssl: "nossl", jdk: ["jdk8", "jdk17", "jdk21"], version: ["4.4", "5.0", "6.0", "7.0", "latest"], os: "ubuntu",

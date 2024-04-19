@@ -18,7 +18,9 @@ package com.mongodb.internal.authentication;
 
 import com.mongodb.MongoClientException;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,15 +32,27 @@ import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class GcpCredentialHelper {
+
+    public static CredentialInfo fetchGcpCredentialInfo(final String resource) {
+        String endpoint = "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?" + resource;
+        return new CredentialInfo(
+                getBsonDocument(endpoint).getValue(),
+                Duration.ZERO);
+    }
+
     public static BsonDocument obtainFromEnvironment() {
         String endpoint = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
+        return new BsonDocument("accessToken", getBsonDocument(endpoint));
+    }
 
+    private static BsonString getBsonDocument(final String endpoint) {
         Map<String, String> header = new HashMap<>();
         header.put("Metadata-Flavor", "Google");
+        header.put("Accept", "application/json");
         String response = getHttpContents("GET", endpoint, header);
         BsonDocument responseDocument = BsonDocument.parse(response);
         if (responseDocument.containsKey("access_token")) {
-            return new BsonDocument("accessToken", responseDocument.get("access_token"));
+            return responseDocument.get("access_token").asString();
         } else {
             throw new MongoClientException("access_token is missing from GCE metadata response.  Full response is ''" + response);
         }
