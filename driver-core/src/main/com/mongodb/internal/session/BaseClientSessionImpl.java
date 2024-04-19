@@ -30,11 +30,11 @@ import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.internal.operation.WriteConcernHelper.cloneWithoutTimeout;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -57,7 +57,13 @@ public class BaseClientSessionImpl implements ClientSession {
     @Nullable
     private TimeoutContext timeoutContext;
 
-    private TransactionOptions transactionOptions;
+    protected static boolean hasTimeoutMS(@Nullable final TimeoutContext timeoutContext) {
+        return timeoutContext != null && timeoutContext.hasTimeoutMS();
+    }
+
+    protected static boolean hasWTimeoutMS(@Nullable final WriteConcern writeConcern) {
+        return writeConcern != null && writeConcern.getWTimeout(TimeUnit.MILLISECONDS) != null;
+    }
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
@@ -214,23 +220,6 @@ public class BaseClientSessionImpl implements ClientSession {
         this.timeoutContext = timeoutContext;
     }
 
-    protected void setTransactionOptions(final TimeoutContext timeoutContext, final TransactionOptions combinedTransactionOptions) {
-        WriteConcern writeConcern = combinedTransactionOptions.getWriteConcern();
-        if (!timeoutContext.hasTimeoutMS() || writeConcern == null) {
-            this.transactionOptions = combinedTransactionOptions;
-            return;
-        }
-        WriteConcern writeConcernWithoutTimeout = cloneWithoutTimeout(writeConcern);
-
-        this.transactionOptions = TransactionOptions.merge(
-                TransactionOptions.builder().writeConcern(writeConcernWithoutTimeout).build(),
-                combinedTransactionOptions);
-    }
-
-    protected void setTransactionOptions(@Nullable final TransactionOptions transactionOptions) {
-           this.transactionOptions = transactionOptions;
-    }
-
     protected void resetTimeout() {
         if (timeoutContext != null && timeoutContext.hasTimeoutMS()) {
             timeoutContext.resetTimeout();
@@ -248,11 +237,6 @@ public class BaseClientSessionImpl implements ClientSession {
         return timeoutSettings
                 .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS))
                 .withTimeout(timeoutMS, MILLISECONDS);
-    }
-
-    @Nullable
-    protected TransactionOptions getTransactionOptionsInternal() {
-        return transactionOptions;
     }
 
     protected enum TransactionState {
