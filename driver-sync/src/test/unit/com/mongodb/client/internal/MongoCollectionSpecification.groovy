@@ -1476,7 +1476,8 @@ class MongoCollectionSpecification extends Specification {
     def 'should validate the client session correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
-                true, true, readConcern, JAVA_LEGACY, null, null, Stub(OperationExecutor))
+                true, true, readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS,
+                Stub(OperationExecutor))
 
         when:
         collection.aggregate(null, [Document.parse('{$match:{}}')])

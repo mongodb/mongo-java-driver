@@ -141,6 +141,7 @@
     },
     {
       "description": "commitTransaction ignores wTimeoutMS if timeoutMS is set",
+      "comment": "Moved timeoutMS from commitTransaction to startTransaction manually, as commitTransaction does not support a timeoutMS option.",
       "operations": [
         {
           "name": "createEntities",
@@ -186,7 +187,10 @@
         },
         {
           "name": "startTransaction",
-          "object": "session"
+          "object": "session",
+          "arguments": {
+            "timeoutMS": 10000
+          }
         },
         {
           "name": "countDocuments",
@@ -198,10 +202,7 @@
         },
         {
           "name": "commitTransaction",
-          "object": "session",
-          "arguments": {
-            "timeoutMS": 10000
-          }
+          "object": "session"
         }
       ],
       "expectEvents": [
@@ -430,6 +431,7 @@
     },
     {
       "description": "abortTransaction ignores wTimeoutMS if timeoutMS is set",
+      "comment": "Moved timeoutMS from abortTransaction to startTransaction manually, as abortTransaction does not support a timeoutMS option.",
       "operations": [
         {
           "name": "createEntities",
@@ -475,7 +477,10 @@
         },
         {
           "name": "startTransaction",
-          "object": "session"
+          "object": "session",
+          "arguments": {
+            "timeoutMS": 10000
+          }
         },
         {
           "name": "countDocuments",
@@ -487,10 +492,7 @@
         },
         {
           "name": "abortTransaction",
-          "object": "session",
-          "arguments": {
-            "timeoutMS": 10000
-          }
+          "object": "session"
         }
       ],
       "expectEvents": [

@@ -28,8 +28,10 @@ import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -102,6 +104,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     @Override
     public void startTransaction(final TransactionOptions transactionOptions) {
         notNull("transactionOptions", transactionOptions);
+
         Boolean snapshot = getOptions().isSnapshot();
         if (snapshot != null && snapshot) {
             throw new IllegalArgumentException("Transactions are not supported in snapshot sessions");
@@ -116,7 +119,9 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         }
         getServerSession().advanceTransactionNumber();
         this.transactionOptions = TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions());
-        WriteConcern writeConcern = this.transactionOptions.getWriteConcern();
+
+        TimeoutContext timeoutContext = createTimeoutContext();
+        WriteConcern writeConcern = getWriteConcern(timeoutContext);
         if (writeConcern == null) {
             throw new MongoInternalException("Invariant violated. Transaction options write concern can not be null");
         }
@@ -124,7 +129,16 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
         clearTransactionContext();
-        setTimeoutContext(createTimeoutContext());
+        setTimeoutContext(timeoutContext);
+    }
+
+    @Nullable
+    private WriteConcern getWriteConcern(@Nullable final TimeoutContext timeoutContext) {
+        WriteConcern writeConcern = transactionOptions.getWriteConcern();
+        if (hasTimeoutMS(timeoutContext) && hasWTimeoutMS(writeConcern)) {
+            return WriteConcernHelper.cloneWithoutTimeout(writeConcern);
+        }
+        return writeConcern;
     }
 
     @Override
@@ -146,9 +160,11 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
             commitInProgress = true;
             resetTimeout();
+            TimeoutContext timeoutContext = getTimeoutContext();
+            WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
             return executor
                     .execute(
-                            new CommitTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()), alreadyCommitted)
+                            new CommitTransactionOperation(writeConcern, alreadyCommitted)
                                     .recoveryToken(getRecoveryToken()), readConcern, this)
                     .doOnSuccess(ignored -> setTimeoutContext(null))
                     .doOnTerminate(() -> {
@@ -180,8 +196,10 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             }
 
             resetTimeout();
+            TimeoutContext timeoutContext = getTimeoutContext();
+            WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
             return executor
-                    .execute(new AbortTransactionOperation(assertNotNull(transactionOptions.getWriteConcern()))
+                    .execute(new AbortTransactionOperation(writeConcern)
                                     .recoveryToken(getRecoveryToken()), readConcern, this)
                     .onErrorResume(Throwable.class, (e) -> Mono.empty())
                     .doOnTerminate(() -> {
@@ -211,10 +229,6 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         transactionOptions = null;
         transactionState = nextState;
         setTimeoutContext(null);
-    }
-
-    private enum TransactionState {
-        NONE, IN, COMMITTED, ABORTED
     }
 
     private TimeoutContext createTimeoutContext() {

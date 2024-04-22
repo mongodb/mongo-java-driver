@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -125,7 +126,8 @@ public class CommitTransactionOperation extends TransactionOperation {
         };
         if (alreadyCommitted) {
             return (operationContext, serverDescription, connectionDescription) ->
-                    getRetryCommandModifier().apply(creator.create(operationContext, serverDescription, connectionDescription));
+                    getRetryCommandModifier(operationContext.getTimeoutContext())
+                            .apply(creator.create(operationContext, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
                 return (operationContext, serverDescription, connectionDescription) ->
                         creator.create(operationContext, serverDescription, connectionDescription)
@@ -135,10 +137,10 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
         return command -> {
             WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null) {
+            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
                 retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
             }
             command.put("writeConcern", retryWriteConcern.asDocument());
