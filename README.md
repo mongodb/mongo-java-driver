@@ -56,7 +56,7 @@ with prior patch releases of the same minor release branch.
 
 APIs marked with the `@Alpha` annotation at the class, method or field level are in the early stages of development, 
 subject to incompatible changes, or even removal, in a future release and may lack some intended features. These APIs 
-may be unstable, have potential performance implications as development progresses, and is exempt from any compatibility 
+may be unstable, have potential performance implications as development progresses, and are exempt from any compatibility 
 guarantees made by its containing library. 
 
 It is inadvisable for <i>applications</i> to use Alpha APIs in production environments and for <i>libraries</i> 
