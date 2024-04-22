@@ -1211,6 +1211,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "readConcern":
                     optionsBuilder.readConcern(asReadConcern(cur.getValue().asDocument()));
                     break;
+                case "timeoutMS":
+                    optionsBuilder.timeout(cur.getValue().asInt32().longValue(), TimeUnit.MILLISECONDS);
+                    break;
                 case "maxCommitTimeMS":
                     optionsBuilder.maxCommitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;

@@ -498,7 +498,7 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
         def database = new MongoDatabaseImpl('databaseName', codecRegistry, secondary(), WriteConcern.MAJORITY, true, true,
-                ReadConcern.MAJORITY, JAVA_LEGACY, null, null, new TestOperationExecutor([]))
+                ReadConcern.MAJORITY, JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
 
         when:
         def collection = database.getCollection('collectionName')
@@ -509,7 +509,7 @@ class MongoDatabaseSpecification extends Specification {
         where:
         expectedCollection = new MongoCollectionImpl<Document>(new MongoNamespace('databaseName', 'collectionName'), Document,
                 fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()]), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, JAVA_LEGACY, null, null,
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, JAVA_LEGACY, null, TIMEOUT_SETTINGS,
                 new TestOperationExecutor([]))
     }
 

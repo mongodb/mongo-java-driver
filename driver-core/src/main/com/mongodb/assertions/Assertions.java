@@ -25,7 +25,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>
+ * <p>Design by contract assertions.</p>
  * All {@code assert...} methods throw {@link AssertionError} and should be used to check conditions which may be violated if and only if
  * the driver code is incorrect. The intended usage of this methods is the same as of the
  * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/language/assert.html">Java {@code assert} statement</a>. The reason

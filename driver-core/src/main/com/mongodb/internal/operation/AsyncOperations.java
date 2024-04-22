@@ -74,7 +74,11 @@ public final class AsyncOperations<TDocument> {
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
             final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
             final boolean retryWrites, final boolean retryReads, final TimeoutSettings timeoutSettings) {
-        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        WriteConcern writeConcernToUse = writeConcern;
+        if (timeoutSettings.getTimeoutMS() != null) {
+            writeConcernToUse = assertNotNull(WriteConcernHelper.cloneWithoutTimeout(writeConcern));
+        }
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcernToUse,
                 retryWrites, retryReads);
         this.timeoutSettings = timeoutSettings;
     }
