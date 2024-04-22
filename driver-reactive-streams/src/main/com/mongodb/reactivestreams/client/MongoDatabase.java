@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
@@ -160,6 +161,7 @@ public interface MongoDatabase {
      * @since CSOT
      * @see #getTimeout
      */
+    @Alpha(Alpha.Reason.CLIENT)
     MongoDatabase withTimeout(long timeout, TimeUnit timeUnit);
 
     /**

@@ -52,6 +52,17 @@ almost always be binary compatible with prior minor releases from the same major
 Patch 4.x.y increments (such as 4.0.0 -> 4.0.1, 4.1.1 -> 4.1.2, etc) will occur for bug fixes only and will always be binary compatible
 with prior patch releases of the same minor release branch.
 
+#### @Alpha
+
+APIs marked with the `@Alpha` annotation at the class, method or field level are in the early stages of development, 
+subject to incompatible changes, or even removal, in a future release and may lack some intended features. These APIs 
+may be unstable, have potential performance implications as development progresses, and is exempt from any compatibility 
+guarantees made by its containing library. 
+
+It is inadvisable for <i>applications</i> to use Alpha APIs in production environments and for <i>libraries</i> 
+(which get included on users' CLASSPATHs, outside the library developers' control) to depend on these APIs. Alpha APIs 
+are intended for <b>experimental purposes</b> only.
+
 #### @Beta
 
 APIs marked with the `@Beta` annotation at the class or method level are subject to change. They can be modified in any way, or even

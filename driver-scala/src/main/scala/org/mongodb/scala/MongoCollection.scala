@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.Alpha
 import com.mongodb.client.model.DropCollectionOptions
 
 import java.util
@@ -103,6 +104,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @return the optional timeout duration
    * @since CSOT
    */
+  @Alpha(Array(Alpha.Reason.CLIENT))
   lazy val timeout: Option[Duration] =
     Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
 
@@ -169,6 +171,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @return a new MongoCollection instance with the set time limit for operations
    * @since CSOT
    */
+  @Alpha(Array(Alpha.Reason.CLIENT))
   def withTimeout(timeout: Duration): MongoCollection[TResult] =
     MongoCollection(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
 

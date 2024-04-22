@@ -37,7 +37,12 @@ https://github.com/mongodb/mongo-java-driver.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-3) The following files: Beta.java, UnsignedLongs.java, UnsignedLongsTest.java
+3) The following files:
+
+    Alpha.java (formerly Beta.java)
+    Beta.java
+    UnsignedLongs.java
+    UnsignedLongsTest.java
 
     Copyright 2010 The Guava Authors
     Copyright 2011 The Guava Authors

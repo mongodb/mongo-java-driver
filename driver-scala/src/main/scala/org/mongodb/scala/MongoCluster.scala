@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.Alpha
 import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.reactivestreams.client.{ MongoCluster => JMongoCluster }
 import org.bson.codecs.configuration.CodecRegistry
@@ -99,6 +100,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    *
    * @return the optional timeout duration
    */
+  @Alpha(Array(Alpha.Reason.CLIENT))
   lazy val timeout: Option[Duration] =
     Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
 
@@ -156,6 +158,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    * @return a new MongoCluster instance with the set time limit for operations
    * @since CSOT
    */
+  @Alpha(Array(Alpha.Reason.CLIENT))
   def withTimeout(timeout: Duration): MongoCluster =
     MongoCluster(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
 

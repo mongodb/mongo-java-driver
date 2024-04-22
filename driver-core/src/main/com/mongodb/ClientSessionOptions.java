@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
@@ -94,6 +95,7 @@ public final class ClientSessionOptions {
      * @return the default timeout
      * @since CSOT
      */
+    @Alpha(Alpha.Reason.CLIENT)
     @Nullable
     public Long getDefaultTimeout(final TimeUnit timeUnit) {
         return defaultTimeoutMS == null ? null : timeUnit.convert(defaultTimeoutMS, MILLISECONDS);
@@ -223,6 +225,7 @@ public final class ClientSessionOptions {
          * @since CSOT
          * @see #getDefaultTimeout
          */
+        @Alpha(Alpha.Reason.CLIENT)
         public Builder defaultTimeout(final long defaultTimeout, final TimeUnit timeUnit) {
             this.defaultTimeoutMS = convertAndValidateTimeout(defaultTimeout, timeUnit, "defaultTimeout");
             return this;

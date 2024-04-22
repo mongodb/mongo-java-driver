@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
@@ -105,6 +106,7 @@ public interface MongoCluster {
      * @since CSOT
      */
     @Nullable
+    @Alpha(Alpha.Reason.CLIENT)
     Long getTimeout(TimeUnit timeUnit);
 
     /**
@@ -164,6 +166,7 @@ public interface MongoCluster {
      * @since CSOT
      * @see #getTimeout
      */
+    @Alpha(Alpha.Reason.CLIENT)
     MongoCluster withTimeout(long timeout, TimeUnit timeUnit);
 
     /**

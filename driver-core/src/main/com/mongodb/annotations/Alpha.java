@@ -1,3 +1,20 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ * Copyright 2010 The Guava Authors
+ * Copyright 2011 The Guava Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.mongodb.annotations;
 
 import java.lang.annotation.Documented;
@@ -8,21 +25,18 @@ import java.lang.annotation.Target;
 
 /**
  * Signifies that a public API (public class, method or field) is in the early stages
- * of development and may undergo significant changes or even be removed in future releases.
- * An API bearing this annotation is exempt from any compatibility guarantees made by its
- * containing library.
+ * of development, subject to incompatible changes, or even removal, in a future release
+ * and may lack some intended features. An API bearing this annotation may be unstable,
+ * have potential performance implications as development progresses, and is exempt from
+ * any compatibility guarantees made by its containing library.
  *
- * <p>It is discouraged for <i>applications</i> to use Alpha APIs in production environments due to their
- * possible instability and frequent changes, and potential performance implications. Similarly, it is inadvisable
- * for <i>libraries</i> (which get included on users' CLASSPATHs, outside the library developers' control)
- * to depend on Alpha APIs.
+ * <p>It is inadvisable for <i>applications</i> to use Alpha APIs in production environments and
+ * for <i>libraries</i> (which get included on users' CLASSPATHs, outside the library developers'
+ * control) to depend on these APIs. Alpha APIs are intended for <b>experimental purposes</b> only.</p>
  *
- * <p> Alpha APIs should be used solely for experimental purposes and with the understanding that substantial
- * adjustments may be necessary during upgrades.
- *
- * <p>To report issues on this API, please visit the MongoDB JIRA issue tracker at
- * <a href="https://jira.mongodb.org/browse/JAVA">https://jira.mongodb.org/browse/JAVA</a>.</p>
- **/
+ * <p>To report issues on this API as development continues towards a more stable release, please visit the
+ * MongoDB JIRA issue tracker at <a href="https://jira.mongodb.org/browse/JAVA">https://jira.mongodb.org/browse/JAVA</a>.</p>
+ */
 @Retention(RetentionPolicy.CLASS)
 @Target({
         ElementType.ANNOTATION_TYPE,

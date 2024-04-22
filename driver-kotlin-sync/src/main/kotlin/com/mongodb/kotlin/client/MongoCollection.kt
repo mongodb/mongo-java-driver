@@ -19,6 +19,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
+import com.mongodb.annotations.Alpha
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.MongoCollection as JMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
@@ -103,6 +104,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return the optional timeout duration
      * @since CSOT
      */
+    @Alpha(Alpha.Reason.CLIENT)
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
     /**
@@ -179,6 +181,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @see [MongoCollection.timeout]
      * @since CSOT
      */
+    @Alpha(Alpha.Reason.CLIENT)
     public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCollection<T> =
         MongoCollection(wrapped.withTimeout(timeout, timeUnit))
 

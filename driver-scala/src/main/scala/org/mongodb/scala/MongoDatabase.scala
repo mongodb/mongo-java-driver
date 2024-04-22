@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.Alpha
 import com.mongodb.client.model.{ CreateCollectionOptions, CreateViewOptions }
 import com.mongodb.reactivestreams.client.{ MongoDatabase => JMongoDatabase }
 import org.bson.codecs.configuration.CodecRegistry
@@ -89,6 +90,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @return the optional timeout duration
    * @since CSOT
    */
+  @Alpha(Array(Alpha.Reason.CLIENT))
   lazy val timeout: Option[Duration] =
     Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
 
@@ -146,6 +148,7 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @return a new MongoDatabase instance with the set time limit for operations
    * @since CSOT
    */
+  @Alpha(Array(Alpha.Reason.CLIENT))
   def withTimeout(timeout: Duration): MongoDatabase =
     MongoDatabase(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
 

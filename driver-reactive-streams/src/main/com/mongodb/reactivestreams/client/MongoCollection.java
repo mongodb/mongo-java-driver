@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
@@ -136,6 +137,7 @@ public interface MongoCollection<TDocument> {
      * @return the timeout in the given time unit
      * @since CSOT
      */
+    @Alpha(Alpha.Reason.CLIENT)
     @Nullable
     Long getTimeout(TimeUnit timeUnit);
 
@@ -202,6 +204,7 @@ public interface MongoCollection<TDocument> {
      * @since CSOT
      * @see #getTimeout
      */
+    @Alpha(Alpha.Reason.CLIENT)
     MongoCollection<TDocument> withTimeout(long timeout, TimeUnit timeUnit);
 
     /**
