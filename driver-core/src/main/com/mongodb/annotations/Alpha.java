@@ -59,7 +59,7 @@ public @interface Alpha {
     enum Reason {
         /**
          * Indicates that the driver API is either experimental or in development.
-         * Use in production environments is discouraged due to potential changes and instability.
+         * Use in production environments is inadvisable due to potential API changes and possible instability.
          */
         CLIENT,
     }
