@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * have potential performance implications as development progresses, and is exempt from
  * any compatibility guarantees made by its containing library.
  *
- * <p>It is inadvisable for <i>applications</i> to use Alpha APIs in production environments and
+ * <p>It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or
  * for <i>libraries</i> (which get included on users' CLASSPATHs, outside the library developers'
  * control) to depend on these APIs. Alpha APIs are intended for <b>experimental purposes</b> only.</p>
  *

@@ -59,7 +59,7 @@ subject to incompatible changes, or even removal, in a future release and may la
 may be unstable, have potential performance implications as development progresses, and are exempt from any compatibility 
 guarantees made by its containing library. 
 
-It is inadvisable for <i>applications</i> to use Alpha APIs in production environments and for <i>libraries</i> 
+It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or for <i>libraries</i> 
 (which get included on users' CLASSPATHs, outside the library developers' control) to depend on these APIs. Alpha APIs 
 are intended for <b>experimental purposes</b> only.
 
