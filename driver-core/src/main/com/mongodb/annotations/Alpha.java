@@ -33,9 +33,6 @@ import java.lang.annotation.Target;
  * <p>It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or
  * for <i>libraries</i> (which get included on users' CLASSPATHs, outside the library developers'
  * control) to depend on these APIs. Alpha APIs are intended for <b>experimental purposes</b> only.</p>
- *
- * <p>To report issues on this API as development continues towards a more stable release, please visit the
- * MongoDB JIRA issue tracker at <a href="https://jira.mongodb.org/browse/JAVA">https://jira.mongodb.org/browse/JAVA</a>.</p>
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({

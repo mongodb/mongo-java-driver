@@ -105,8 +105,8 @@ public interface MongoCluster {
      * @return the timeout in the given time unit
      * @since CSOT
      */
-    @Nullable
     @Alpha(Alpha.Reason.CLIENT)
+    @Nullable
     Long getTimeout(TimeUnit timeUnit);
 
     /**
