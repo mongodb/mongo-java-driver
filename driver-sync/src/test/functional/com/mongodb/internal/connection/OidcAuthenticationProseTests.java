@@ -33,6 +33,7 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,7 +72,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.ThreadTestHelpers.executeAll;
 
@@ -201,7 +201,7 @@ public class OidcAuthenticationProseTests {
         //noinspection ConstantConditions
         OidcCallback callback = (context) -> null;
         MongoClientSettings clientSettings = this.createSettings(callback);
-        performFind(clientSettings, MongoConfigurationException.class,
+        assertFindFails(clientSettings, MongoConfigurationException.class,
                 "Result of callback must not be null");
     }
 
@@ -216,12 +216,9 @@ public class OidcAuthenticationProseTests {
         // we ensure that the error is propagated
         MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
-            try {
-                performFind(mongoClient);
-                fail();
-            } catch (Exception e) {
-                assertCause(IllegalArgumentException.class, "accessToken can not be null", e);
-            }
+            assertCause(IllegalArgumentException.class,
+                    "accessToken can not be null",
+                    () -> performFind(mongoClient));
         }
     }
 
@@ -230,13 +227,9 @@ public class OidcAuthenticationProseTests {
         String uri = getOidcUri() + "&authMechanismProperties=ENVIRONMENT:" + getOidcEnv();
         MongoClientSettings settings = createSettings(
                 uri, createCallback(), null, OIDC_CALLBACK_KEY);
-        try {
-            performFind(settings);
-            fail();
-        } catch (Exception e) {
-            assertCause(IllegalArgumentException.class,
-                    "OIDC_CALLBACK must not be specified when ENVIRONMENT is specified", e);
-        }
+        assertCause(IllegalArgumentException.class,
+                "OIDC_CALLBACK must not be specified when ENVIRONMENT is specified",
+                () -> performFind(settings));
     }
 
     @Test
@@ -282,13 +275,9 @@ public class OidcAuthenticationProseTests {
                 (x) -> new OidcCallbackResult("invalid_token", Duration.ZERO);
         MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
-            try {
-                performFind(mongoClient);
-                fail();
-            } catch (Exception e) {
-                assertCause(MongoCommandException.class,
-                        "Command failed with error 18 (AuthenticationFailed):", e);
-            }
+            assertCause(MongoCommandException.class,
+                    "Command failed with error 18 (AuthenticationFailed):",
+                    () -> performFind(mongoClient));
         }
     }
 
@@ -321,8 +310,6 @@ public class OidcAuthenticationProseTests {
         }
     }
 
-    // TODO-OIDC reinstate 2 broken(?) tests in mongodb-oidc-no-retry.json
-
     @Test
     public void test4p1Reauthentication() {
         TestCallback callback = createCallback();
@@ -333,6 +320,59 @@ public class OidcAuthenticationProseTests {
             performFind(mongoClient);
         }
         assertEquals(2, callback.invocations.get());
+    }
+
+    @Test
+    public void test4p2ReadCommandsFailIfReauthenticationFails() {
+        // Create a `MongoClient` whose OIDC callback returns one good token
+        // and then bad tokens after the first call.
+        TestCallback wrappedCallback = createCallback();
+        OidcCallback callback = (context) -> {
+            OidcCallbackResult result1 = wrappedCallback.callback(context);
+            return new OidcCallbackResult(
+                    wrappedCallback.getInvocations() > 1 ? "bad" : result1.getAccessToken(),
+                    Duration.ZERO,
+                    null);
+        };
+        MongoClientSettings clientSettings = createSettings(callback);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performFind(mongoClient);
+            failCommand(391, 1, "find");
+            assertCause(MongoCommandException.class,
+                    "Command failed with error 18",
+                    () -> performFind(mongoClient));
+        }
+        assertEquals(2, wrappedCallback.invocations.get());
+    }
+
+    @Test
+    public void test4p3WriteCommandsFailIfReauthenticationFails() {
+        // Create a `MongoClient` whose OIDC callback returns one good token
+        // and then bad tokens after the first call.
+        TestCallback wrappedCallback = createCallback();
+        OidcCallback callback = (context) -> {
+            OidcCallbackResult result1 = wrappedCallback.callback(context);
+            return new OidcCallbackResult(
+                    wrappedCallback.getInvocations() > 1 ? "bad" : result1.getAccessToken(),
+                    Duration.ZERO,
+                    null);
+        };
+        MongoClientSettings clientSettings = createSettings(callback);
+        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
+            performInsert(mongoClient);
+            failCommand(391, 1, "insert");
+            assertCause(MongoCommandException.class,
+                    "Command failed with error 18",
+                    () -> performInsert(mongoClient));
+        }
+        assertEquals(2, wrappedCallback.invocations.get());
+    }
+
+    private static void performInsert(final MongoClient mongoClient) {
+        mongoClient
+                .getDatabase("test")
+                .getCollection("test")
+                .insertOne(Document.parse("{ x: 1 }"));
     }
 
     @Test
@@ -410,7 +450,7 @@ public class OidcAuthenticationProseTests {
         // Create an OIDC configured client with `MONGODB_URI_MULTI` and no username.
         MongoClientSettings clientSettings = createSettingsMulti(null, createHumanCallback());
         // Assert that a `find` operation fails.
-        performFind(clientSettings, MongoCommandException.class, "Authentication failed");
+        assertFindFails(clientSettings, MongoCommandException.class, "Authentication failed");
     }
 
     @Test
@@ -420,7 +460,7 @@ public class OidcAuthenticationProseTests {
         //- Assert that a ``find`` operation fails with a client-side error.
         MongoClientSettings clientSettings1 = createSettings(getOidcUri(),
                 createHumanCallback(), null, OIDC_HUMAN_CALLBACK_KEY, Collections.emptyList());
-        performFind(clientSettings1, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
+        assertFindFails(clientSettings1, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
 
         //- Create a client that uses the URL
         //  ``mongodb://localhost/?authMechanism=MONGODB-OIDC&ignored=example.com``, a
@@ -428,7 +468,7 @@ public class OidcAuthenticationProseTests {
         //- Assert that a ``find`` operation fails with a client-side error.
         MongoClientSettings clientSettings2 = createSettings(getOidcUri() + "&ignored=example.com",
                 createHumanCallback(), null, OIDC_HUMAN_CALLBACK_KEY, Arrays.asList("example.com"));
-        performFind(clientSettings2, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
+        assertFindFails(clientSettings2, MongoSecurityException.class, "not permitted by ALLOWED_HOSTS");
     }
 
     // Not a prose test
@@ -485,14 +525,14 @@ public class OidcAuthenticationProseTests {
         assumeTestEnvironment();
         //noinspection ConstantConditions
         OidcCallback callbackNull = (context) -> null;
-        performFind(createHumanSettings(callbackNull, null),
+        assertFindFails(createHumanSettings(callbackNull, null),
                 MongoConfigurationException.class,
                 "Result of callback must not be null");
 
         //noinspection ConstantConditions
         OidcCallback callback =
                 (context) -> new OidcCallbackResult(null, Duration.ZERO);
-        performFind(createHumanSettings(callback, null),
+        assertFindFails(createHumanSettings(callback, null),
                 IllegalArgumentException.class,
                 "accessToken can not be null");
     }
@@ -503,7 +543,7 @@ public class OidcAuthenticationProseTests {
         // additionally, check validation for refresh in machine workflow:
         OidcCallback callbackMachineRefresh =
                 (context) -> new OidcCallbackResult("access", Duration.ZERO, "exists");
-        performFind(createSettings(callbackMachineRefresh),
+        assertFindFails(createSettings(callbackMachineRefresh),
                 MongoConfigurationException.class,
                 "Refresh token must only be provided in human workflow");
     }
@@ -549,7 +589,7 @@ public class OidcAuthenticationProseTests {
         failCommand(18, 1, "saslStart");
         TestListener listener = new TestListener();
         TestCommandListener commandListener = new TestCommandListener(listener);
-        performFind(createHumanSettings(createHumanCallback(), commandListener),
+        assertFindFails(createHumanSettings(createHumanCallback(), commandListener),
                 MongoCommandException.class,
                 "Command failed with error 18");
         assertEquals(Arrays.asList(
@@ -833,7 +873,7 @@ public class OidcAuthenticationProseTests {
         }
     }
 
-    private <T extends Throwable> void performFind(
+    private <T extends Throwable> void assertFindFails(
             final MongoClientSettings settings,
             final Class<T> expectedExceptionOrCause,
             final String expectedMessage) {
@@ -852,21 +892,15 @@ public class OidcAuthenticationProseTests {
 
     private static <T extends Throwable> void assertCause(
             final Class<T> expectedCause, final String expectedMessageFragment, final Executable e) {
-        Throwable actualException = assertThrows(Throwable.class, e);
-        assertCause(expectedCause, expectedMessageFragment, actualException);
-    }
-
-    private static <T extends Throwable> void assertCause(
-            final Class<T> expectedCause, final String expectedMessageFragment, final Throwable actualException) {
-        Throwable cause = actualException;
+        Throwable cause = assertThrows(Throwable.class, e);
         while (cause.getCause() != null) {
             cause = cause.getCause();
         }
         if (!expectedCause.isInstance(cause)) {
-            throw new AssertionFailedError("Unexpected cause: " + actualException.getClass(), actualException);
+            throw new AssertionFailedError("Unexpected cause: " + assertThrows(Throwable.class, e).getClass(), assertThrows(Throwable.class, e));
         }
         if (!cause.getMessage().contains(expectedMessageFragment)) {
-            throw new AssertionFailedError("Unexpected message", actualException);
+            throw new AssertionFailedError("Unexpected message", assertThrows(Throwable.class, e));
         }
     }
 

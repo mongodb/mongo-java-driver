@@ -2174,6 +2174,7 @@ task_groups:
           binary: bash
           env:
             GCPOIDC_VMNAME_PREFIX: "JAVA_DRIVER"
+            GCPKMS_MACHINETYPE: "e2-medium" # comparable elapsed time to Azure; default was starved, caused timeouts
           args:
             - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/gcp/setup.sh
     teardown_task:
