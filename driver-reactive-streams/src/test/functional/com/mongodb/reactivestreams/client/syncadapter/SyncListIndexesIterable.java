@@ -32,7 +32,6 @@ class SyncListIndexesIterable<T> extends SyncMongoIterable<T> implements ListInd
     }
 
     @Override
-    @Deprecated
     public ListIndexesIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

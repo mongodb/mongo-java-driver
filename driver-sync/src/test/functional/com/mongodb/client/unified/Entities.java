@@ -368,7 +368,6 @@ public final class Entities {
         tasks.put(id, new ArrayList<>());
     }
 
-    @SuppressWarnings("deprecation") //maxTimeMS & wTimeoutMS
     private void initClient(final BsonDocument entity, final String id,
                             final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                             final boolean waitForPoolAsyncWorkManagerStart) {
@@ -714,7 +713,6 @@ public final class Entities {
         putEntity(id, clientEncryptionSupplier.apply(Assertions.notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
     }
 
-    @SuppressWarnings("deprecation") //maxCommitTimeMS
     private TransactionOptions getTransactionOptions(final BsonDocument options) {
         TransactionOptions.Builder transactionOptionsBuilder = TransactionOptions.builder();
         for (Map.Entry<String, BsonValue> entry : options.entrySet()) {

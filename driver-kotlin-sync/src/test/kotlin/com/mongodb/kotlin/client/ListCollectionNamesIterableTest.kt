@@ -38,7 +38,6 @@ class ListCollectionNamesIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION")
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JListCollectionNamesIterable = mock()
         val iterable = ListCollectionNamesIterable(wrapped)

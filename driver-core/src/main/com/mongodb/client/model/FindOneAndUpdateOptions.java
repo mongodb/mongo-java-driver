@@ -142,20 +142,7 @@ public class FindOneAndUpdateOptions {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@code MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
-     *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@code ClientSession}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
-    @Deprecated
     public FindOneAndUpdateOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
@@ -167,20 +154,7 @@ public class FindOneAndUpdateOptions {
      *
      * @param timeUnit the time unit for the result
      * @return the max time
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@code MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
-     *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@code ClientSession}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
-    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }

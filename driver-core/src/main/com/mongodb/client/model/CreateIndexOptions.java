@@ -18,7 +18,6 @@ package com.mongodb.client.model;
 
 
 import com.mongodb.CreateIndexCommitQuorum;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -40,21 +39,7 @@ public class CreateIndexOptions {
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@link MongoClientSettings.Builder#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoDatabase#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoCollection#getTimeout(TimeUnit)}</li>
-     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-     *     <li>{@link com.mongodb.TransactionOptions}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
-    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
@@ -66,21 +51,7 @@ public class CreateIndexOptions {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
-     *     <li>{@code  MongoDatabase#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@code  MongoCollection#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-     *     <li>{@link com.mongodb.TransactionOptions}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
-    @Deprecated
     public CreateIndexOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);

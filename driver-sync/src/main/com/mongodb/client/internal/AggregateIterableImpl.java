@@ -123,7 +123,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    @Deprecated
     public AggregateIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);

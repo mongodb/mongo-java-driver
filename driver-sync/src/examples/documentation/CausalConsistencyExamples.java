@@ -43,7 +43,6 @@ public final class CausalConsistencyExamples {
      *
      * @param args takes an optional single argument for the connection string
      */
-    @SuppressWarnings("deprecation")
     public static void main(final String[] args) {
         MongoClientSettings clientSettings = (
                 args.length == 0

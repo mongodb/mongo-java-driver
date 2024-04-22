@@ -173,7 +173,6 @@ public final class MongoCryptHelper {
         return spawnArgs;
     }
 
-    @SuppressWarnings("deprecation") // builder.readTimeout
     public static MongoClientSettings createMongocryptdClientSettings(@Nullable final String connectionString) {
 
         return MongoClientSettings.builder()

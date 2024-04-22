@@ -39,7 +39,6 @@ final class SyncListCollectionNamesIterable extends SyncMongoIterable<String> im
     }
 
     @Override
-    @Deprecated
     public ListCollectionNamesIterable maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;

@@ -46,7 +46,6 @@ class AggregateFlowTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: AggregatePublisher<Document> = mock()
         val flow = AggregateFlow(wrapped)
