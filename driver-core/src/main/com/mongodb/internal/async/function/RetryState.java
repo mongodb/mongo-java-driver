@@ -203,7 +203,7 @@ public final class RetryState {
              */
             if (hasTimeoutMs() && !loopState.isLastIteration()) {
                 previouslyChosenException = createMongoTimeoutException(
-                        "MongoDB operation timed out during a retry attempt",
+                        "Retry attempt timed out.",
                         previouslyChosenException);
             }
             throw previouslyChosenException;

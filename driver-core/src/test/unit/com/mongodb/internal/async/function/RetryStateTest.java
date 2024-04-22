@@ -50,7 +50,7 @@ final class RetryStateTest {
 
     private static final TimeoutContext TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT = new TimeoutContext(new TimeoutSettings(0L, 0L,
             0L, 0L, 0L));
-    private static final String EXPECTED_TIMEOUT_MESSAGE = "MongoDB operation timed out during a retry attempt";
+    private static final String EXPECTED_TIMEOUT_MESSAGE = "Retry attempt timed out.";
 
     static Stream<Arguments> infiniteTimeout() {
         return Stream.of(

@@ -24,10 +24,12 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.ProtocolHelper;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
@@ -41,6 +43,21 @@ public final class WriteConcernHelper {
         if (writeConcern != null && !writeConcern.isServerDefault()) {
             commandDocument.put("writeConcern", writeConcern.asDocument());
         }
+    }
+    @Nullable
+    public static WriteConcern cloneWithoutTimeout(@Nullable final WriteConcern writeConcern) {
+        if (writeConcern == null || writeConcern.getWTimeout(TimeUnit.MILLISECONDS) == null) {
+            return writeConcern;
+        }
+
+        WriteConcern mapped;
+        Object w = writeConcern.getWObject();
+        if (w == null) {
+            mapped = WriteConcern.ACKNOWLEDGED;
+        } else {
+            mapped = w instanceof Integer ? new WriteConcern((Integer) w) : new WriteConcern((String) w);
+        }
+        return mapped.withJournal(writeConcern.getJournal());
     }
 
     public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress,
