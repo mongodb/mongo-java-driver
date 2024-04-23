@@ -21,7 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoCredential.OidcTokens;
+import com.mongodb.MongoCredential.OidcCallbackResult;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
@@ -193,8 +193,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public static OidcCallback getTestCallback() {
         return (context) -> {
-            String accessToken = readTestTokenFromFile();
-            return new OidcTokens(accessToken);
+            String accessToken = readTokenFromFile();
+            return new OidcCallbackResult(accessToken);
         };
     }
 
@@ -204,7 +204,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
             String objectId = credential.getUserName();
             CredentialInfo response = AzureCredentialHelper.fetchAzureCredentialInfo(resource, objectId);
-            return new OidcTokens(response.getAccessToken(), response.getExpiresIn());
+            return new OidcCallbackResult(response.getAccessToken(), response.getExpiresIn());
         };
     }
 
@@ -213,7 +213,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return (context) -> {
             String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
             CredentialInfo response = GcpCredentialHelper.fetchGcpCredentialInfo(resource);
-            return new OidcTokens(response.getAccessToken(), response.getExpiresIn());
+            return new OidcCallbackResult(response.getAccessToken(), response.getExpiresIn());
         };
     }
 
@@ -302,7 +302,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 assertNotNull(cachedIdpInfo);
                 // Invoke Callback using cached Refresh Token
                 fallbackState = FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN;
-                OidcTokens result = requestCallback.onRequest(new OidcCallbackContextImpl(
+                OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
                         CALLBACK_TIMEOUT, cachedIdpInfo, cachedRefreshToken, userName));
                 jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(cachedIdpInfo, result);
             } else {
@@ -311,7 +311,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 if (!isHuman) {
                     // no principal request
                     fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
-                    OidcTokens result = requestCallback.onRequest(new OidcCallbackContextImpl(
+                    OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
                             CALLBACK_TIMEOUT, userName));
                     jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(null, result);
                     if (result.getRefreshToken() != null) {
@@ -341,7 +341,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                         IdpInfo idpInfo = toIdpInfo(challenge);
                         // there is no cached refresh token
                         fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
-                        OidcTokens result = requestCallback.onRequest(new OidcCallbackContextImpl(
+                        OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
                                 CALLBACK_TIMEOUT, idpInfo, null, userName));
                         jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(idpInfo, result);
                     }
@@ -485,7 +485,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     }
 
-    private static String readTestTokenFromFile() {
+    private static String readTokenFromFile() {
         String path = System.getenv(OIDC_TOKEN_FILE);
         if (path == null) {
             throw new MongoClientException(
@@ -502,14 +502,14 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     private byte[] populateCacheWithCallbackResultAndPrepareJwt(
             @Nullable final IdpInfo serverInfo,
-            @Nullable final OidcTokens oidcTokens) {
-        if (oidcTokens == null) {
+            @Nullable final OidcCallbackResult oidcCallbackResult) {
+        if (oidcCallbackResult == null) {
             throw new MongoConfigurationException("Result of callback must not be null");
         }
-        OidcCacheEntry newEntry = new OidcCacheEntry(oidcTokens.getAccessToken(),
-                oidcTokens.getRefreshToken(), serverInfo);
+        OidcCacheEntry newEntry = new OidcCacheEntry(oidcCallbackResult.getAccessToken(),
+                oidcCallbackResult.getRefreshToken(), serverInfo);
         getMongoCredentialWithCache().setOidcCacheEntry(newEntry);
-        return prepareTokenAsJwt(oidcTokens.getAccessToken());
+        return prepareTokenAsJwt(oidcCallbackResult.getAccessToken());
     }
 
     private static byte[] prepareUsername(@Nullable final String username) {

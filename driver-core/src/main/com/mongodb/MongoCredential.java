@@ -202,7 +202,7 @@ public final class MongoCredential {
      * This callback is invoked when the OIDC-based authenticator requests
      * a token. The type of the value must be {@link OidcCallback}.
      * {@link IdpInfo} will not be supplied to the callback,
-     * and a {@linkplain com.mongodb.MongoCredential.OidcTokens#getRefreshToken() refresh token}
+     * and a {@linkplain com.mongodb.MongoCredential.OidcCallbackResult#getRefreshToken() refresh token}
      * must not be returned by the callback.
      * <p>
      * If this is provided, {@link MongoCredential#ENVIRONMENT_KEY}
@@ -698,7 +698,7 @@ public final class MongoCredential {
          * @param context The context.
          * @return The response produced by an OIDC Identity Provider
          */
-        OidcTokens onRequest(OidcCallbackContext context);
+        OidcCallbackResult onRequest(OidcCallbackContext context);
     }
 
     /**
@@ -732,7 +732,7 @@ public final class MongoCredential {
      *
      * @since 5.1
      */
-    public static final class OidcTokens {
+    public static final class OidcCallbackResult {
 
         private final String accessToken;
 
@@ -746,7 +746,7 @@ public final class MongoCredential {
          * An access token that does not expire.
          * @param accessToken The OIDC access token.
          */
-        public OidcTokens(final String accessToken) {
+        public OidcCallbackResult(final String accessToken) {
             this(accessToken, Duration.ZERO, null);
         }
 
@@ -756,7 +756,7 @@ public final class MongoCredential {
          *                  A {@linkplain Duration#isZero() zero-length} duration
          *                  means that the access token does not expire.
          */
-        public OidcTokens(final String accessToken, final Duration expiresIn) {
+        public OidcCallbackResult(final String accessToken, final Duration expiresIn) {
             this(accessToken, expiresIn, null);
         }
 
@@ -767,7 +767,7 @@ public final class MongoCredential {
          *                  means that the access token does not expire.
          * @param refreshToken The refresh token. If null, refresh will not be attempted.
          */
-        public OidcTokens(final String accessToken, final Duration expiresIn,
+        public OidcCallbackResult(final String accessToken, final Duration expiresIn,
                 @Nullable final String refreshToken) {
             notNull("accessToken", accessToken);
             notNull("expiresIn", expiresIn);

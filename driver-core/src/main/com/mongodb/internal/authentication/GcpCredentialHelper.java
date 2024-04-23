@@ -32,7 +32,6 @@ import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class GcpCredentialHelper {
-
     public static BsonDocument obtainFromEnvironment() {
         String endpoint = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 
@@ -43,8 +42,7 @@ public final class GcpCredentialHelper {
         if (responseDocument.containsKey("access_token")) {
             return new BsonDocument("accessToken", responseDocument.get("access_token"));
         } else {
-            throw new MongoClientException("access_token is missing from GCE metadata response.  Full response is ''"
-                    + response);
+            throw new MongoClientException("access_token is missing from GCE metadata response.  Full response is ''" + response);
         }
     }
 
