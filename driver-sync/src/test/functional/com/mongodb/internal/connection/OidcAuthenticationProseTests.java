@@ -64,7 +64,7 @@ import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OIDC_HUMAN_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OidcCallback;
 import static com.mongodb.MongoCredential.OidcCallbackContext;
-import static com.mongodb.MongoCredential.OidcCallbackResult;
+import static com.mongodb.MongoCredential.OidcTokens;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
@@ -211,7 +211,7 @@ public class OidcAuthenticationProseTests {
         //    conforming to the OIDCRequestTokenResult with missing field(s).
         OidcCallback callback = (context) -> {
             //noinspection ConstantConditions
-            return new OidcCallbackResult(null, Duration.ZERO);
+            return new OidcTokens(null);
         };
         // we ensure that the error is propagated
         MongoClientSettings clientSettings = createSettings(callback);
@@ -238,7 +238,7 @@ public class OidcAuthenticationProseTests {
         // reference to the token to poison
         CompletableFuture<String> poisonToken = new CompletableFuture<>();
         OidcCallback callback = (context) -> {
-            OidcCallbackResult result = callbackWrapped.onRequest(context);
+            OidcTokens result = callbackWrapped.onRequest(context);
             String accessToken = result.getAccessToken();
             if (!poisonToken.isDone()) {
                 poisonToken.complete(accessToken);
@@ -272,7 +272,7 @@ public class OidcAuthenticationProseTests {
     @Test
     public void test3p2AuthFailsWithoutCachedToken() {
         OidcCallback callback =
-                (x) -> new OidcCallbackResult("invalid_token", Duration.ZERO);
+                (x) -> new OidcTokens("invalid_token");
         MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             assertCause(MongoCommandException.class,
@@ -328,11 +328,8 @@ public class OidcAuthenticationProseTests {
         // and then bad tokens after the first call.
         TestCallback wrappedCallback = createCallback();
         OidcCallback callback = (context) -> {
-            OidcCallbackResult result1 = wrappedCallback.callback(context);
-            return new OidcCallbackResult(
-                    wrappedCallback.getInvocations() > 1 ? "bad" : result1.getAccessToken(),
-                    Duration.ZERO,
-                    null);
+            OidcTokens result1 = wrappedCallback.callback(context);
+            return new OidcTokens(wrappedCallback.getInvocations() > 1 ? "bad" : result1.getAccessToken());
         };
         MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -351,11 +348,9 @@ public class OidcAuthenticationProseTests {
         // and then bad tokens after the first call.
         TestCallback wrappedCallback = createCallback();
         OidcCallback callback = (context) -> {
-            OidcCallbackResult result1 = wrappedCallback.callback(context);
-            return new OidcCallbackResult(
-                    wrappedCallback.getInvocations() > 1 ? "bad" : result1.getAccessToken(),
-                    Duration.ZERO,
-                    null);
+            OidcTokens result1 = wrappedCallback.callback(context);
+            return new OidcTokens(
+                    wrappedCallback.getInvocations() > 1 ? "bad" : result1.getAccessToken());
         };
         MongoClientSettings clientSettings = createSettings(callback);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -531,7 +526,7 @@ public class OidcAuthenticationProseTests {
 
         //noinspection ConstantConditions
         OidcCallback callback =
-                (context) -> new OidcCallbackResult(null, Duration.ZERO);
+                (context) -> new OidcTokens(null);
         assertFindFails(createHumanSettings(callback, null),
                 IllegalArgumentException.class,
                 "accessToken can not be null");
@@ -542,7 +537,7 @@ public class OidcAuthenticationProseTests {
     public void testRefreshTokenAbsent() {
         // additionally, check validation for refresh in machine workflow:
         OidcCallback callbackMachineRefresh =
-                (context) -> new OidcCallbackResult("access", Duration.ZERO, "exists");
+                (context) -> new OidcTokens("access", Duration.ZERO, "exists");
         assertFindFails(createSettings(callbackMachineRefresh),
                 MongoConfigurationException.class,
                 "Refresh token must only be provided in human workflow");
@@ -653,8 +648,8 @@ public class OidcAuthenticationProseTests {
         assumeTestEnvironment();
         TestCallback callback1 = createHumanCallback();
         OidcCallback callback2 = (context) -> {
-            OidcCallbackResult oidcCallbackResult = callback1.onRequest(context);
-            return new OidcCallbackResult(oidcCallbackResult.getAccessToken(), Duration.ofMinutes(5), "BAD_REFRESH");
+            OidcTokens oidcTokens = callback1.onRequest(context);
+            return new OidcTokens(oidcTokens.getAccessToken(), Duration.ofMinutes(5), "BAD_REFRESH");
         };
         MongoClientSettings clientSettings = createHumanSettings(callback2, null);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -675,8 +670,8 @@ public class OidcAuthenticationProseTests {
         TestCallback callback1 = createHumanCallback()
                 .setPathSupplier(() -> tokens.remove());
         OidcCallback callback2 = (context) -> {
-            OidcCallbackResult oidcCallbackResult = callback1.onRequest(context);
-            return new OidcCallbackResult(oidcCallbackResult.getAccessToken(), Duration.ofMinutes(5), "BAD_REFRESH");
+            OidcTokens oidcTokens = callback1.onRequest(context);
+            return new OidcTokens(oidcTokens.getAccessToken(), Duration.ofMinutes(5), "BAD_REFRESH");
         };
         MongoClientSettings clientSettings = createHumanSettings(callback2, null);
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
@@ -981,7 +976,7 @@ public class OidcAuthenticationProseTests {
         }
 
         @Override
-        public OidcCallbackResult onRequest(final OidcCallbackContext context) {
+        public OidcTokens onRequest(final OidcCallbackContext context) {
             if (testListener != null) {
                 testListener.add("onRequest invoked ("
                         + "Refresh Token: " + (context.getRefreshToken() == null ? "none" : "present")
@@ -991,7 +986,7 @@ public class OidcAuthenticationProseTests {
             return callback(context);
         }
 
-        private OidcCallbackResult callback(final OidcCallbackContext context) {
+        private OidcTokens callback(final OidcCallbackContext context) {
             if (concurrentTracker != null) {
                 if (concurrentTracker.get() > 0) {
                     throw new RuntimeException("Callbacks should not be invoked by multiple threads.");
@@ -1039,7 +1034,7 @@ public class OidcAuthenticationProseTests {
                     if (testListener != null) {
                         testListener.add("read access token: " + path.getFileName());
                     }
-                    return new OidcCallbackResult(accessToken, Duration.ZERO, refreshToken);
+                    return new OidcTokens(accessToken, Duration.ZERO, refreshToken);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

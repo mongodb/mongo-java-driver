@@ -21,7 +21,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoCredential.OidcCallbackResult;
+import com.mongodb.MongoCredential.OidcTokens;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
@@ -192,7 +192,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     public static OidcCallback getTestCallback() {
         return (context) -> {
             String accessToken = readTestTokenFromFile();
-            return new OidcCallbackResult(accessToken, Duration.ZERO);
+            return new OidcTokens(accessToken);
         };
     }
 
@@ -202,7 +202,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
             String objectId = credential.getUserName();
             CredentialInfo response = AzureCredentialHelper.fetchAzureCredentialInfo(resource, objectId);
-            return new OidcCallbackResult(response.getAccessToken(), response.getExpiresIn());
+            return new OidcTokens(response.getAccessToken(), response.getExpiresIn());
         };
     }
 
@@ -211,7 +211,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return (context) -> {
             String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
             CredentialInfo response = GcpCredentialHelper.fetchGcpCredentialInfo(resource);
-            return new OidcCallbackResult(response.getAccessToken(), response.getExpiresIn());
+            return new OidcTokens(response.getAccessToken(), response.getExpiresIn());
         };
     }
 
@@ -289,6 +289,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             String cachedAccessToken = validatedCachedAccessToken();
             OidcCallback requestCallback = getRequestCallback();
             boolean isHuman = isHumanCallback();
+            String userName = getMongoCredentialWithCache().getCredential().getUserName();
 
             if (cachedAccessToken != null) {
                 fallbackState = FallbackState.PHASE_1_CACHED_TOKEN;
@@ -299,8 +300,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 assertNotNull(cachedIdpInfo);
                 // Invoke Callback using cached Refresh Token
                 fallbackState = FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN;
-                OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                        CALLBACK_TIMEOUT, cachedIdpInfo, cachedRefreshToken));
+                OidcTokens result = requestCallback.onRequest(new OidcCallbackContextImpl(
+                        CALLBACK_TIMEOUT, cachedIdpInfo, cachedRefreshToken, userName));
                 jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(cachedIdpInfo, result);
             } else {
                 // cache is empty
@@ -308,8 +309,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 if (!isHuman) {
                     // no principal request
                     fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
-                    OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                            CALLBACK_TIMEOUT));
+                    OidcTokens result = requestCallback.onRequest(new OidcCallbackContextImpl(
+                            CALLBACK_TIMEOUT, userName));
                     jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(null, result);
                     if (result.getRefreshToken() != null) {
                         throw new MongoConfigurationException(
@@ -333,13 +334,13 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     if (!alreadyTriedPrincipal && idpInfoNotPresent) {
                         // request for idp info, only in the human workflow
                         fallbackState = FallbackState.PHASE_3A_PRINCIPAL;
-                        jwt[0] = prepareUsername(getMongoCredentialWithCache().getCredential().getUserName());
+                        jwt[0] = prepareUsername(userName);
                     } else {
                         IdpInfo idpInfo = toIdpInfo(challenge);
                         // there is no cached refresh token
                         fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
-                        OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                                CALLBACK_TIMEOUT, idpInfo, null));
+                        OidcTokens result = requestCallback.onRequest(new OidcCallbackContextImpl(
+                                CALLBACK_TIMEOUT, idpInfo, null, userName));
                         jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(idpInfo, result);
                     }
                 }
@@ -499,14 +500,14 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     private byte[] populateCacheWithCallbackResultAndPrepareJwt(
             @Nullable final IdpInfo serverInfo,
-            @Nullable final OidcCallbackResult oidcCallbackResult) {
-        if (oidcCallbackResult == null) {
+            @Nullable final OidcTokens oidcTokens) {
+        if (oidcTokens == null) {
             throw new MongoConfigurationException("Result of callback must not be null");
         }
-        OidcCacheEntry newEntry = new OidcCacheEntry(oidcCallbackResult.getAccessToken(),
-                oidcCallbackResult.getRefreshToken(), serverInfo);
+        OidcCacheEntry newEntry = new OidcCacheEntry(oidcTokens.getAccessToken(),
+                oidcTokens.getRefreshToken(), serverInfo);
         getMongoCredentialWithCache().setOidcCacheEntry(newEntry);
-        return prepareTokenAsJwt(oidcCallbackResult.getAccessToken());
+        return prepareTokenAsJwt(oidcTokens.getAccessToken());
     }
 
     private static byte[] prepareUsername(@Nullable final String username) {
@@ -663,20 +664,26 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         private final IdpInfo idpInfo;
         @Nullable
         private final String refreshToken;
+        @Nullable
+        private final String userName;
 
-        OidcCallbackContextImpl(final Duration timeout) {
+        OidcCallbackContextImpl(final Duration timeout, @Nullable final String userName) {
             this.timeout = assertNotNull(timeout);
             this.idpInfo = null;
             this.refreshToken = null;
+            this.userName = userName;
         }
 
-        OidcCallbackContextImpl(final Duration timeout, final IdpInfo idpInfo, @Nullable final String refreshToken) {
+        OidcCallbackContextImpl(final Duration timeout, final IdpInfo idpInfo,
+                @Nullable final String refreshToken, @Nullable final String userName) {
             this.timeout = assertNotNull(timeout);
             this.idpInfo = assertNotNull(idpInfo);
             this.refreshToken = refreshToken;
+            this.userName = userName;
         }
 
         @Override
+        @Nullable
         public IdpInfo getIdpInfo() {
             return idpInfo;
         }
@@ -692,8 +699,15 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
 
         @Override
+        @Nullable
         public String getRefreshToken() {
             return refreshToken;
+        }
+
+        @Override
+        @Nullable
+        public String getUserName() {
+            return userName;
         }
     }
 

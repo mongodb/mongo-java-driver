@@ -194,7 +194,7 @@ public final class MongoCredential {
      * must not be provided.
      *
      * @see #createOidcCredential(String)
-     * @since 4.10
+     * @since 5.1
      */
     public static final String ENVIRONMENT_KEY = "ENVIRONMENT";
 
@@ -202,7 +202,7 @@ public final class MongoCredential {
      * This callback is invoked when the OIDC-based authenticator requests
      * a token. The type of the value must be {@link OidcCallback}.
      * {@link IdpInfo} will not be supplied to the callback,
-     * and a {@linkplain OidcCallbackResult#getRefreshToken() refresh token}
+     * and a {@linkplain com.mongodb.MongoCredential.OidcTokens#getRefreshToken() refresh token}
      * must not be returned by the callback.
      * <p>
      * If this is provided, {@link MongoCredential#ENVIRONMENT_KEY}
@@ -210,7 +210,7 @@ public final class MongoCredential {
      * must not be provided.
      *
      * @see #createOidcCredential(String)
-     * @since 4.10
+     * @since 5.1
      */
     public static final String OIDC_CALLBACK_KEY = "OIDC_CALLBACK";
 
@@ -225,7 +225,7 @@ public final class MongoCredential {
      * must not be provided.
      *
      * @see #createOidcCredential(String)
-     * @since 4.10
+     * @since 5.1
      */
     public static final String OIDC_HUMAN_CALLBACK_KEY = "OIDC_HUMAN_CALLBACK";
 
@@ -238,7 +238,7 @@ public final class MongoCredential {
      *
      * @see MongoCredential#DEFAULT_ALLOWED_HOSTS
      * @see #createOidcCredential(String)
-     * @since 4.10
+     * @since 5.1
      */
     public static final String ALLOWED_HOSTS_KEY = "ALLOWED_HOSTS";
 
@@ -249,7 +249,7 @@ public final class MongoCredential {
      * {@code "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
      *
      * @see #createOidcCredential(String)
-     * @since 4.10
+     * @since 5.1
      */
     public static final List<String> DEFAULT_ALLOWED_HOSTS = Collections.unmodifiableList(Arrays.asList(
             "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
@@ -257,7 +257,7 @@ public final class MongoCredential {
     /**
      * The token resource.
      *
-     * @since TODO-OIDC update all
+     * @since 5.1
      */
     public static final String TOKEN_RESOURCE_KEY = "TOKEN_RESOURCE";
 
@@ -414,7 +414,7 @@ public final class MongoCredential {
      *
      * @param userName the user name, which may be null. This is the OIDC principal name.
      * @return the credential
-     * @since 4.10
+     * @since 5.1
      * @see #withMechanismProperty(String, Object)
      * @see #ENVIRONMENT_KEY
      * @see #OIDC_CALLBACK_KEY
@@ -650,14 +650,16 @@ public final class MongoCredential {
 
     /**
      * The context for the {@link OidcCallback#onRequest(OidcCallbackContext) OIDC request callback}.
+     *
+     * @since 5.1
      */
     @Evolving
     public interface OidcCallbackContext {
         /**
-         * @return The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
+         * @return Convenience method to obtain the username.
          */
         @Nullable
-        IdpInfo getIdpInfo();
+        String getUserName();
 
         /**
          * @return The timeout that this callback must complete within.
@@ -668,6 +670,12 @@ public final class MongoCredential {
          * @return The OIDC callback API version. Currently, version 1.
          */
         int getVersion();
+
+        /**
+         * @return The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
+         */
+        @Nullable
+        IdpInfo getIdpInfo();
 
         /**
          * @return The OIDC Refresh token supplied by a prior callback invocation.
@@ -682,17 +690,21 @@ public final class MongoCredential {
      * <p>
      * It does not have to be thread-safe, unless it is provided to multiple
      * MongoClients.
+     *
+     * @since 5.1
      */
     public interface OidcCallback {
         /**
          * @param context The context.
          * @return The response produced by an OIDC Identity Provider
          */
-        OidcCallbackResult onRequest(OidcCallbackContext context);
+        OidcTokens onRequest(OidcCallbackContext context);
     }
 
     /**
      * The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
+     *
+     * @since 5.1
      */
     @Evolving
     public interface IdpInfo {
@@ -716,9 +728,11 @@ public final class MongoCredential {
     }
 
     /**
-     * The response produced by an OIDC Identity Provider.
+     * The OIDC credential information.
+     *
+     * @since 5.1
      */
-    public static final class OidcCallbackResult {
+    public static final class OidcTokens {
 
         private final String accessToken;
 
@@ -727,13 +741,22 @@ public final class MongoCredential {
         @Nullable
         private final String refreshToken;
 
+
+        /**
+         * An access token that does not expire.
+         * @param accessToken The OIDC access token.
+         */
+        public OidcTokens(final String accessToken) {
+            this(accessToken, Duration.ZERO, null);
+        }
+
         /**
          * @param accessToken The OIDC access token.
          * @param expiresIn Time until the access token expires.
          *                  A {@linkplain Duration#isZero() zero-length} duration
          *                  means that the access token does not expire.
          */
-        public OidcCallbackResult(final String accessToken, final Duration expiresIn) {
+        public OidcTokens(final String accessToken, final Duration expiresIn) {
             this(accessToken, expiresIn, null);
         }
 
@@ -744,7 +767,7 @@ public final class MongoCredential {
          *                  means that the access token does not expire.
          * @param refreshToken The refresh token. If null, refresh will not be attempted.
          */
-        public OidcCallbackResult(final String accessToken, final Duration expiresIn,
+        public OidcTokens(final String accessToken, final Duration expiresIn,
                 @Nullable final String refreshToken) {
             notNull("accessToken", accessToken);
             notNull("expiresIn", expiresIn);
