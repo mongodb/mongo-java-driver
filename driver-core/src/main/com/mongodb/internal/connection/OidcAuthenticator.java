@@ -80,6 +80,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT, TEST_ENVIRONMENT);
     private static final List<String> SUPPORTS_TOKEN_RESOURCE = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
+    private static final List<String> ALLOWS_USERNAME = Arrays.asList(
+            AZURE_ENVIRONMENT);
 
     private static final Duration CALLBACK_TIMEOUT = Duration.ofMinutes(5);
 
@@ -622,7 +624,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                             + " must not be specified");
                 }
             } else {
-                if (userName != null) {
+                if (userName != null && !ALLOWS_USERNAME.contains(providerName)) {
                     throw new IllegalArgumentException("user name must not be specified when " + ENVIRONMENT_KEY + " is specified");
                 }
                 if (machineCallback != null) {

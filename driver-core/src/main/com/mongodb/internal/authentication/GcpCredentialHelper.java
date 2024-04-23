@@ -52,7 +52,7 @@ public final class GcpCredentialHelper {
         String endpoint = "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience="
                 + resource;
         Map<String, String> header = new HashMap<>();
-        header.put("Metadata-Flavor", "Google");;
+        header.put("Metadata-Flavor", "Google");
         String response = getHttpContents("GET", endpoint, header);
         return new CredentialInfo(
                     new BsonString(response).getValue(),
