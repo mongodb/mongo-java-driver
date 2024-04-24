@@ -38,12 +38,7 @@ which java
 export OIDC_TESTS_ENABLED=true
 export OIDC_ENV="$OIDC_ENV" # read by tests
 
-# use admin credentials for tests
-TO_REPLACE="mongodb://"
-REPLACEMENT="mongodb://$OIDC_ADMIN_USER:$OIDC_ADMIN_PWD@"
-ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
-
-./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
+./gradlew -Dorg.mongodb.test.uri="$MONGODB_URI" \
   --stacktrace --debug --info --no-build-cache driver-core:cleanTest \
   driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest \
   driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests \
