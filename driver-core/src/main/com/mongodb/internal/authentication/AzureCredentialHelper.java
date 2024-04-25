@@ -23,6 +23,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.json.JsonParseException;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +74,7 @@ public final class AzureCredentialHelper {
     public static CredentialInfo fetchAzureCredentialInfo(final String resource, @Nullable final String clientId) {
         String endpoint = "http://169.254.169.254:80"
                 + "/metadata/identity/oauth2/token?api-version=2018-02-01"
-                + "&resource=" + resource
+                + "&resource=" + getEncoded(resource)
                 + (clientId == null ? "" : "&client_id=" + clientId);
 
         Map<String, String> headers = new HashMap<>();
@@ -97,6 +99,14 @@ public final class AzureCredentialHelper {
         String accessToken = responseDocument.getString(ACCESS_TOKEN_FIELD).getValue();
         int expiresInSeconds = Integer.parseInt(responseDocument.getString(EXPIRES_IN_FIELD).getValue());
         return new CredentialInfo(accessToken, Duration.ofSeconds(expiresInSeconds));
+    }
+
+    static String getEncoded(final String resource) {
+        try {
+            return URLEncoder.encode(resource, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private AzureCredentialHelper() {

@@ -27,7 +27,6 @@ import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -92,6 +91,8 @@ import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
 import static com.mongodb.client.unified.EventMatcher.getReasonString;
@@ -530,13 +531,11 @@ public final class Entities {
                             boolean hasPlaceholder = authMechanismProperties.equals(
                                     new BsonDocument("$$placeholder", new BsonInt32(1)));
                             if (!hasPlaceholder) {
-                                throw new UnsupportedOperationException("Unsupported authMechanism: " + value);
+                                throw new UnsupportedOperationException(
+                                        "Unsupported authMechanismProperties for authMechanism: " + value);
                             }
 
-                            String env = getenv("OIDC_ENV");
-                            if (env == null) {
-                                env = "test";
-                            }
+                            String env = assertNotNull(getenv("OIDC_ENV"));
                             MongoCredential oidcCredential = MongoCredential
                                     .createOidcCredential(null)
                                     .withMechanismProperty("ENVIRONMENT", env);
@@ -723,7 +722,7 @@ public final class Entities {
             }
         }
 
-        putEntity(id, clientEncryptionSupplier.apply(Assertions.notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
+        putEntity(id, clientEncryptionSupplier.apply(notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
     }
 
     private TransactionOptions getTransactionOptions(final BsonDocument options) {

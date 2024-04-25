@@ -18,12 +18,12 @@ package com.mongodb.internal.authentication;
 
 import com.mongodb.MongoClientException;
 import org.bson.BsonDocument;
-import org.bson.BsonString;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.internal.authentication.AzureCredentialHelper.getEncoded;
 import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 
 /**
@@ -46,14 +46,14 @@ public final class GcpCredentialHelper {
         }
     }
 
-    public static CredentialInfo fetchGcpCredentialInfo(final String resource) {
+    public static CredentialInfo fetchGcpCredentialInfo(final String audience) {
         String endpoint = "http://metadata/computeMetadata/v1/instance/service-accounts/default/identity?audience="
-                + resource;
+                + getEncoded(audience);
         Map<String, String> header = new HashMap<>();
         header.put("Metadata-Flavor", "Google");
         String response = getHttpContents("GET", endpoint, header);
         return new CredentialInfo(
-                    new BsonString(response).getValue(),
+                    response,
                     Duration.ZERO);
     }
 
