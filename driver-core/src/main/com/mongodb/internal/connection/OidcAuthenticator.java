@@ -202,8 +202,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     public static OidcCallback getAzureCallback(final MongoCredential credential) {
         return (context) -> {
             String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
-            String objectId = credential.getUserName();
-            CredentialInfo response = AzureCredentialHelper.fetchAzureCredentialInfo(resource, objectId);
+            String clientId = credential.getUserName();
+            CredentialInfo response = AzureCredentialHelper.fetchAzureCredentialInfo(resource, clientId);
             return new OidcCallbackResult(response.getAccessToken(), response.getExpiresIn());
         };
     }

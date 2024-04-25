@@ -4,9 +4,6 @@ set +x          # Disable debug trace
 set -eu
 
 echo "Running MONGODB-OIDC authentication tests"
-
-OIDC_ENV=${OIDC_ENV:-"test"}
-
 echo "OIDC_ENV $OIDC_ENV"
 
 if [ $OIDC_ENV == "test" ]; then
@@ -36,7 +33,6 @@ fi
 
 which java
 export OIDC_TESTS_ENABLED=true
-export OIDC_ENV="$OIDC_ENV" # read by tests
 
 ./gradlew -Dorg.mongodb.test.uri="$MONGODB_URI" \
   --stacktrace --debug --info --no-build-cache driver-core:cleanTest \

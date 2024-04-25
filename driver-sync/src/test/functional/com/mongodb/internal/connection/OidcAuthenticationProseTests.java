@@ -23,6 +23,7 @@ import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.TestListener;
@@ -77,7 +78,7 @@ import static util.ThreadTestHelpers.executeAll;
 
 /**
  * See
- * <a href="https://github.com/mongodb/specifications/blob/master/source/auth/tests/mongodb-oidc.rst#mongodb-oidc">Prose Tests</a>.
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/auth/tests/mongodb-oidc.md#mongodb-oidc">Prose Tests</a>.
  */
 public class OidcAuthenticationProseTests {
 
@@ -97,14 +98,6 @@ public class OidcAuthenticationProseTests {
 
     private static String getOidcUriMulti() {
         return getenv("MONGODB_URI_MULTI");
-    }
-
-    private static String getAdminOidcUri() {
-        String oidcUri = getOidcUri();
-        if (!oidcUri.contains("ENVIRONMENT:")) {
-            oidcUri += "&authMechanismProperties=ENVIRONMENT:" + getOidcEnv();
-        }
-        return oidcUri;
     }
 
     private static String getOidcEnv() {
@@ -900,8 +893,8 @@ public class OidcAuthenticationProseTests {
     }
 
     protected void delayNextFind() {
-        try (MongoClient client = createMongoClient(createSettings(
-                getAdminOidcUri(), null, null, OIDC_CALLBACK_KEY))) {
+
+        try (MongoClient client = createMongoClient(Fixture.getMongoClientSettings())) {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(1)))
                     .append("data", new BsonDocument()
@@ -914,8 +907,7 @@ public class OidcAuthenticationProseTests {
     }
 
     protected void failCommand(final int code, final int times, final String... commands) {
-        try (MongoClient mongoClient = createMongoClient(createSettings(
-                getAdminOidcUri(), null, null, OIDC_CALLBACK_KEY))) {
+        try (MongoClient mongoClient = createMongoClient(Fixture.getMongoClientSettings())) {
             List<BsonString> list = Arrays.stream(commands).map(c -> new BsonString(c)).collect(Collectors.toList());
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(times)))
@@ -928,8 +920,7 @@ public class OidcAuthenticationProseTests {
     }
 
     private void failCommandAndCloseConnection(final String command, final int times) {
-        try (MongoClient mongoClient = createMongoClient(createSettings(
-                getAdminOidcUri(), null, null, OIDC_CALLBACK_KEY))) {
+        try (MongoClient mongoClient = createMongoClient(Fixture.getMongoClientSettings())) {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                     .append("mode", new BsonDocument("times", new BsonInt32(times)))
                     .append("data", new BsonDocument()

@@ -69,11 +69,11 @@ public final class AzureCredentialHelper {
        return new BsonDocument("accessToken", new BsonString(accessToken));
     }
 
-    public static CredentialInfo fetchAzureCredentialInfo(final String resource, @Nullable final String objectId) {
+    public static CredentialInfo fetchAzureCredentialInfo(final String resource, @Nullable final String clientId) {
         String endpoint = "http://169.254.169.254:80"
                 + "/metadata/identity/oauth2/token?api-version=2018-02-01"
                 + "&resource=" + resource
-                + (objectId == null ? "" : "&object_id=" + objectId);
+                + (clientId == null ? "" : "&client_id=" + clientId);
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Metadata", "true");
