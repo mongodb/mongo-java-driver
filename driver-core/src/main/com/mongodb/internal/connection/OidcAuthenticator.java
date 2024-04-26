@@ -53,14 +53,14 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
-import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.MongoCredential.DEFAULT_ALLOWED_HOSTS;
+import static com.mongodb.MongoCredential.ENVIRONMENT_KEY;
 import static com.mongodb.MongoCredential.IdpInfo;
+import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OIDC_HUMAN_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OidcCallback;
 import static com.mongodb.MongoCredential.OidcCallbackContext;
-import static com.mongodb.MongoCredential.ENVIRONMENT_KEY;
-import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
+import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -78,7 +78,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final String GCP_ENVIRONMENT = "gcp";
     private static final List<String> SUPPORTED_ENVIRONMENTS = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT, TEST_ENVIRONMENT);
-    private static final List<String> SUPPORTS_TOKEN_RESOURCE = Arrays.asList(
+    private static final List<String> REQUIRES_TOKEN_RESOURCE = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
     private static final List<String> ALLOWS_USERNAME = Arrays.asList(
             AZURE_ENVIRONMENT);
@@ -177,7 +177,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private OidcCallback getRequestCallback() {
-        String environment = getEnvironmentName(getMongoCredential());
+        String environment = getMongoCredential().getMechanismProperty(ENVIRONMENT_KEY, null);
         OidcCallback machine;
         if (TEST_ENVIRONMENT.equals(environment)) {
             machine = getTestCallback();
@@ -193,7 +193,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public static OidcCallback getTestCallback() {
+    static OidcCallback getTestCallback() {
         return (context) -> {
             String accessToken = readTokenFromFile();
             return new OidcCallbackResult(accessToken);
@@ -201,7 +201,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public static OidcCallback getAzureCallback(final MongoCredential credential) {
+    static OidcCallback getAzureCallback(final MongoCredential credential) {
         return (context) -> {
             String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
             String clientId = credential.getUserName();
@@ -211,7 +211,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public static OidcCallback getGcpCallback(final MongoCredential credential) {
+    static OidcCallback getGcpCallback(final MongoCredential credential) {
         return (context) -> {
             String resource = assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
             CredentialInfo response = GcpCredentialHelper.fetchGcpCredentialInfo(resource);
@@ -584,9 +584,9 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 throw new IllegalArgumentException("source must be '$external'");
             }
 
-            String providerName = getEnvironmentName(mechanismProperties);
-            if (providerName != null) {
-                if (!SUPPORTED_ENVIRONMENTS.contains(providerName)) {
+            Object environmentName = mechanismProperties.get(ENVIRONMENT_KEY.toLowerCase());
+            if (environmentName != null) {
+                if (!(environmentName instanceof String) || !SUPPORTED_ENVIRONMENTS.contains(environmentName)) {
                     throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be one of: " + SUPPORTED_ENVIRONMENTS);
                 }
             }
@@ -602,10 +602,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
         public static void validateBeforeUse(final MongoCredential credential) {
             String userName = credential.getUserName();
-            Object providerName = credential.getMechanismProperty(ENVIRONMENT_KEY, null);
+            Object environmentName = credential.getMechanismProperty(ENVIRONMENT_KEY, null);
             Object machineCallback = credential.getMechanismProperty(OIDC_CALLBACK_KEY, null);
             Object humanCallback = credential.getMechanismProperty(OIDC_HUMAN_CALLBACK_KEY, null);
-            if (providerName == null) {
+            if (environmentName == null) {
                 // callback
                 if (machineCallback == null && humanCallback == null) {
                     throw new IllegalArgumentException("Either " + ENVIRONMENT_KEY
@@ -619,7 +619,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                             + " must not be specified");
                 }
             } else {
-                if (userName != null && !ALLOWS_USERNAME.contains(providerName)) {
+                if (!(environmentName instanceof String)) {
+                    throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be a String");
+                }
+                if (userName != null && !ALLOWS_USERNAME.contains(environmentName)) {
                     throw new IllegalArgumentException("user name must not be specified when " + ENVIRONMENT_KEY + " is specified");
                 }
                 if (machineCallback != null) {
@@ -630,28 +633,16 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 }
                 String tokenResource = credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null);
                 boolean hasTokenResourceProperty = tokenResource != null;
-                boolean tokenResourceSupported = SUPPORTS_TOKEN_RESOURCE.contains(providerName);
+                boolean tokenResourceSupported = REQUIRES_TOKEN_RESOURCE.contains(environmentName);
                 if (hasTokenResourceProperty != tokenResourceSupported) {
                     throw new IllegalArgumentException(TOKEN_RESOURCE_KEY
                             + " must be provided if and only if " + ENVIRONMENT_KEY
-                            + " " + providerName  + " "
-                            + " is one of: " + SUPPORTS_TOKEN_RESOURCE
+                            + " " + environmentName  + " "
+                            + " is one of: " + REQUIRES_TOKEN_RESOURCE
                             + ". " + TOKEN_RESOURCE_KEY + ": " + tokenResource);
                 }
             }
         }
-    }
-
-    @Nullable
-    private static String getEnvironmentName(final Map<String, Object> mechanismProperties) {
-        Object o = mechanismProperties.get(ENVIRONMENT_KEY.toLowerCase());
-        return o instanceof String ? (String) o : null;
-    }
-
-    @Nullable
-    private static String getEnvironmentName(final MongoCredential credential) {
-        Object o = credential.getMechanismProperty(ENVIRONMENT_KEY, null);
-        return o instanceof String ? (String) o : null;
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)

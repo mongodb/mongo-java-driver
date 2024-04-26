@@ -70,7 +70,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -364,11 +364,11 @@ public class OidcAuthenticationProseTests {
     }
 
     @Test
-    public void test5p1Azure() {
+    public void test5p1AzureSucceedsWithNoUsername() {
         assumeTrue(getOidcEnv().equals("azure"));
         String oidcUri = getOidcUri();
-        assertFalse(oidcUri.contains("@"));
         MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
+        assertNull(clientSettings.getCredential().getUserName());
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             // #. Perform a find operation that succeeds.
             performFind(mongoClient);
@@ -376,7 +376,7 @@ public class OidcAuthenticationProseTests {
     }
 
     @Test
-    public void test5p1AzureFails() {
+    public void test5p2AzureFailsWithBadUsername() {
         assumeTrue(getOidcEnv().equals("azure"));
         String oidcUri = getOidcUri();
         oidcUri = oidcUri.replace("://", "://bad@");
