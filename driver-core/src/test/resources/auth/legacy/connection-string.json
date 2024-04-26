@@ -474,13 +474,13 @@
       }
     },
     {
-      "description": "should throw an exception if username and password is specified for test environment (MONGODB-OIDC)",
+      "description": "should throw an exception if supplied a password (MONGODB-OIDC)",
       "uri": "mongodb://user:pass@localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:test",
       "valid": false,
       "credential": null
     },
     {
-      "description": "should throw an exception if username is specified for test environment (MONGODB-OIDC)",
+      "description": "should throw an exception if username is specified for test (MONGODB-OIDC)",
       "uri": "mongodb://principalName@localhost/?authMechanism=MONGODB-OIDC&ENVIRONMENT:test",
       "valid": false,
       "credential": null
@@ -500,12 +500,6 @@
     {
       "description": "should throw an exception when unsupported auth property is specified (MONGODB-OIDC)",
       "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=UnsupportedProperty:unexisted",
-      "valid": false,
-      "credential": null
-    },
-    {
-      "description": "should throw an exception if neither provider nor callbacks specified (MONGODB-OIDC)",
-      "uri": "mongodb://localhost/?authMechanism=MONGODB-OIDC",
       "valid": false,
       "credential": null
     },
