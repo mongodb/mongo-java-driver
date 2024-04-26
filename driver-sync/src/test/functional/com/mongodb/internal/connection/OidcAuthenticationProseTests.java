@@ -22,6 +22,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.Fixture;
@@ -373,9 +374,11 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
         // Create an OIDC configured client with `ENVIRONMENT:azure` and a valid
         // `TOKEN_RESOURCE` and no username.
+        MongoCredential credential = Assertions.assertNotNull(new ConnectionString(oidcUri).getCredential());
+        assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
         assertNull(Assertions.assertNotNull(clientSettings.getCredential()).getUserName());
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
-            // Perform a `find` operation that succeeds..
+            // Perform a `find` operation that succeeds.
             performFind(mongoClient);
         }
     }
@@ -384,12 +387,21 @@ public class OidcAuthenticationProseTests {
     public void test5p2AzureFailsWithBadUsername() {
         assumeTrue(getOidcEnv().equals("azure"));
         String oidcUri = getOidcUri();
-        oidcUri = oidcUri.replace("://", "://bad@");
-        MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
-        try (MongoClient mongoClient = createMongoClient(clientSettings)) {
-            // #. Perform a find operation that succeeds.
-            performFind(mongoClient);
-        }
+        ConnectionString cs = new ConnectionString(oidcUri);
+        MongoCredential oldCredential = Assertions.assertNotNull(cs.getCredential());
+        String tokenResource = oldCredential.getMechanismProperty(TOKEN_RESOURCE_KEY, null);
+        assertNotNull(tokenResource);
+        MongoCredential cred = MongoCredential.createOidcCredential("bad")
+                .withMechanismProperty(ENVIRONMENT_KEY, "azure")
+                .withMechanismProperty(TOKEN_RESOURCE_KEY, tokenResource);
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                .applicationName(appName)
+                .retryReads(false)
+                .applyConnectionString(cs)
+                .credential(cred);
+        MongoClientSettings clientSettings = builder.build();
+        // the failure is external to the driver
+        assertFindFails(clientSettings, MongoServerException.class, "");
     }
 
     // Tests for human authentication ("testh", to preserve ordering)
@@ -475,7 +487,8 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void testh1p7AllowedHostsInConnectionStringIgnored() {
-        // example.com changed to localhost
+        // example.com changed to localhost, because resolveAdditionalQueryParametersFromTxtRecords
+        // fails with "Failed looking up TXT record for host example.com"
         String string = "mongodb+srv://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ALLOWED_HOSTS:%5B%22localhost%22%5D";
         assertCause(IllegalArgumentException.class,
                 "connection string contains disallowed mechanism properties",
