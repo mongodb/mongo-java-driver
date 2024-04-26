@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -105,7 +106,7 @@ public interface MongoCluster {
      * @return the timeout in the given time unit
      * @since CSOT
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     @Nullable
     Long getTimeout(TimeUnit timeUnit);
 
@@ -166,7 +167,7 @@ public interface MongoCluster {
      * @since CSOT
      * @see #getTimeout
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     MongoCluster withTimeout(long timeout, TimeUnit timeUnit);
 
     /**

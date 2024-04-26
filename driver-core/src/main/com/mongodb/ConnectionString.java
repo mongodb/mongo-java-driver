@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerMonitoringMode;
@@ -1577,7 +1578,7 @@ public class ConnectionString {
      * @return the time limit for the full execution of an operation in milliseconds or null.
      * @since CSOT
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     @Nullable
     public Long getTimeout() {
         return timeout;

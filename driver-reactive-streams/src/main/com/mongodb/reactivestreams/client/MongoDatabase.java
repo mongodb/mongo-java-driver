@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
@@ -104,7 +105,7 @@ public interface MongoDatabase {
      * @return the timeout in the given time unit
      * @since CSOT
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     @Nullable
     Long getTimeout(TimeUnit timeUnit);
 
@@ -162,7 +163,7 @@ public interface MongoDatabase {
      * @since CSOT
      * @see #getTimeout
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     MongoDatabase withTimeout(long timeout, TimeUnit timeUnit);
 
     /**

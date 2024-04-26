@@ -15,6 +15,8 @@
  */
 package com.mongodb.kotlin.client
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.ListDatabasesIterable as JListDatabasesIterable
 import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
@@ -45,6 +47,7 @@ public class ListDatabasesIterable<T : Any>(private val wrapped: JListDatabasesI
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListDatabasesIterable<T> {
         wrapped.timeoutMode(timeoutMode)
         return this

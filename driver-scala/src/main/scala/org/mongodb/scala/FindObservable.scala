@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.reactivestreams.client.FindPublisher
 import com.mongodb.{ CursorType, ExplainVerbosity }
 import org.mongodb.scala.bson.BsonValue
@@ -360,6 +361,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): FindObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

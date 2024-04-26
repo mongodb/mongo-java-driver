@@ -15,6 +15,8 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListIndexesPublisher
 import java.util.concurrent.TimeUnit
@@ -50,6 +52,7 @@ public class ListIndexesFlow<T : Any>(private val wrapped: ListIndexesPublisher<
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListIndexesFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**

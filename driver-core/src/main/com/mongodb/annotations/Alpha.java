@@ -26,9 +26,9 @@ import java.lang.annotation.Target;
 /**
  * Signifies that a public API (public class, method or field) is in the early stages
  * of development, subject to incompatible changes, or even removal, in a future release
- * and may lack some intended features. An API bearing this annotation may be unstable,
- * have potential performance implications as development progresses, and is exempt from
- * any compatibility guarantees made by its containing library.
+ * and may lack some intended features. An API bearing this annotation may contain known
+ * issues affecting functionality, performance, and stability. It is also exempt from any
+ * compatibility guarantees made by its containing library.
  *
  * <p>It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or
  * for <i>libraries</i> (which get included on users' CLASSPATHs, outside the library developers'
@@ -43,21 +43,10 @@ import java.lang.annotation.Target;
         ElementType.PACKAGE,
         ElementType.TYPE })
 @Documented
-@Alpha(Alpha.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public @interface Alpha {
     /**
      * @return The reason an API element is marked with {@link Alpha}.
      */
-    Alpha.Reason[] value();
-
-    /**
-     * @see Alpha#value()
-     */
-    enum Reason {
-        /**
-         * Indicates that the driver API is either experimental or in development.
-         * Use in production environments is inadvisable due to potential API changes and possible instability.
-         */
-        CLIENT,
-    }
+    Reason[] value();
 }

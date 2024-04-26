@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
@@ -105,7 +106,7 @@ public interface GridFSBucket {
      * @return the timeout in the given time unit
      * @since 4.x
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     @Nullable
     Long getTimeout(TimeUnit timeUnit);
 
@@ -157,7 +158,7 @@ public interface GridFSBucket {
      * @since 4.x
      * @see #getTimeout
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     GridFSBucket withTimeout(long timeout, TimeUnit timeUnit);
 
     /**

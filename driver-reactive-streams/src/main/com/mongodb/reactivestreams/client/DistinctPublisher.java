@@ -17,6 +17,8 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -121,6 +123,7 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     DistinctPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**

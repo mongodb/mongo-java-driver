@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -39,7 +40,7 @@ public class DropCollectionOptions {
      * @since 4.7
      * @mongodb.server.release 7.0
      */
-    @Beta(Beta.Reason.SERVER)
+    @Beta(Reason.SERVER)
     @Nullable
     public Bson getEncryptedFields() {
         return encryptedFields;
@@ -56,7 +57,7 @@ public class DropCollectionOptions {
      * @mongodb.server.release 7.0
      * @mongodb.driver.manual core/security-client-side-encryption/ In-use encryption
      */
-    @Beta(Beta.Reason.SERVER)
+    @Beta(Reason.SERVER)
     public DropCollectionOptions encryptedFields(@Nullable final Bson encryptedFields) {
         this.encryptedFields = encryptedFields;
         return this;

@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
+
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ListIndexesPublisher
 import org.mongodb.scala.bson.BsonValue
@@ -103,6 +105,7 @@ case class ListIndexesObservable[TResult](wrapped: ListIndexesPublisher[TResult]
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): ListIndexesObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

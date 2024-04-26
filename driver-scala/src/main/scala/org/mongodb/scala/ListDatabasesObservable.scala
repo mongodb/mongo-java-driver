@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
+
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher
 import org.mongodb.scala.bson.BsonValue
@@ -145,6 +147,7 @@ case class ListDatabasesObservable[TResult](wrapped: ListDatabasesPublisher[TRes
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): ListDatabasesObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

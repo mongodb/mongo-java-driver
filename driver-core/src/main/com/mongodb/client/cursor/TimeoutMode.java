@@ -15,6 +15,9 @@
  */
 package com.mongodb.client.cursor;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @see com.mongodb.MongoClientSettings#getTimeout(TimeUnit)
  * @since CSOT
  */
+@Alpha(Reason.CLIENT)
 public enum TimeoutMode {
 
     /**

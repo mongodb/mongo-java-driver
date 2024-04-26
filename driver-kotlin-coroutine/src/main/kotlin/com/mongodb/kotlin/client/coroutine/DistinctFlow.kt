@@ -15,6 +15,8 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.DistinctPublisher
@@ -52,6 +54,7 @@ public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : 
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): DistinctFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**

@@ -19,6 +19,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
 import com.mongodb.reactivestreams.client.MongoDatabase as JMongoDatabase
@@ -75,7 +76,7 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * @return the optional timeout duration
      * @since CSOT
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
     /**
@@ -132,7 +133,7 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
      * @see [MongoDatabase.timeout]
      * @since CSOT
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoDatabase =
         MongoDatabase(wrapped.withTimeout(timeout, timeUnit))
 

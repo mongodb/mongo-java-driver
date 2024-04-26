@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.gridfs
 
-import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.{ Alpha, Reason }
 import java.nio.ByteBuffer
 import com.mongodb.reactivestreams.client.gridfs.{ GridFSBucket => JGridFSBucket, GridFSBuckets }
 import org.mongodb.scala.bson.conversions.Bson
@@ -123,7 +123,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @return the optional timeout duration
    * @since CSOT
    */
-  @Alpha(Array(Alpha.Reason.CLIENT))
+  @Alpha(Array(Reason.CLIENT))
   lazy val timeout: Option[Duration] =
     Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
 
@@ -170,9 +170,9 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * @param timeout the timeout, which must be greater than or equal to 0
    * @return a new GridFSBucket instance with the set time limit for operations
-   * @since 4.x
+   * @since CSOT
    */
-  @Alpha(Array(Alpha.Reason.CLIENT))
+  @Alpha(Array(Reason.CLIENT))
   def withTimeout(timeout: Duration): GridFSBucket =
     GridFSBucket(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
 

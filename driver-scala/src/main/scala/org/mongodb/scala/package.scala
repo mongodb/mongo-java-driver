@@ -16,7 +16,7 @@
 
 package org.mongodb
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import org.bson.BsonDocumentReader
 import org.bson.codecs.{ DecoderContext, DocumentCodec }
 import org.mongodb.scala.bson.BsonDocument
@@ -395,7 +395,7 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    *
    * @since 4.9
    */
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   type MongoUpdatedEncryptedFieldsException = com.mongodb.MongoUpdatedEncryptedFieldsException
 
   /**

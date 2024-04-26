@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.client.model.mql.ExpressionCodecProvider;
@@ -705,7 +706,7 @@ public final class MongoClientSettings {
          * @since CSOT
          * @see #getTimeout
          */
-        @Alpha(Alpha.Reason.CLIENT)
+        @Alpha(Reason.CLIENT)
         public Builder timeout(final long timeout, final TimeUnit timeUnit) {
             this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
             return this;
@@ -918,7 +919,7 @@ public final class MongoClientSettings {
      * @return the timeout in the given time unit
      * @since CSOT
      */
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);

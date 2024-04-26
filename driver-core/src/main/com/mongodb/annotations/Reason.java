@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.model.search;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
-import com.mongodb.annotations.Sealed;
+package com.mongodb.annotations;
 
 /**
- * @see SearchCollector#facet(SearchOperator, Iterable)
- * @since 4.7
+ * Enumerates the reasons an API element which might be marked with annotations like {@link Alpha} or {@link Beta}.
  */
-@Sealed
-@Beta({Reason.CLIENT, Reason.SERVER})
-public interface FacetSearchCollector extends SearchCollector {
+public enum Reason {
+    /**
+     * Indicates that the status of the driver API is the reason for the annotation.
+     */
+    CLIENT,
+
+    /**
+     * The driver API relies on the server API.
+     * This dependency is the reason for the annotation and suggests that changes in the server API could impact the driver API.
+     */
+    SERVER
 }

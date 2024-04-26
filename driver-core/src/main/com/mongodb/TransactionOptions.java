@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
@@ -113,7 +114,7 @@ public final class TransactionOptions {
      * @since CSOT
      */
     @Nullable
-    @Alpha(Alpha.Reason.CLIENT)
+    @Alpha(Reason.CLIENT)
     public Long getTimeout(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         if (timeoutMS == null) {
@@ -310,7 +311,7 @@ public final class TransactionOptions {
          * @return this
          * @since CSOT
          */
-        @Alpha(Alpha.Reason.CLIENT)
+        @Alpha(Reason.CLIENT)
         public Builder timeout(@Nullable final Long timeout, final TimeUnit timeUnit) {
             this.timeoutMS = convertAndValidateTimeoutNullable(timeout, timeUnit);
             return this;

@@ -17,6 +17,7 @@
 package org.mongodb.scala
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.{ Alpha, Reason }
 
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.AggregatePublisher
@@ -226,6 +227,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): AggregateObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

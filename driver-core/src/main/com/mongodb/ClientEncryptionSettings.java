@@ -16,7 +16,9 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
@@ -159,6 +161,7 @@ public final class ClientEncryptionSettings {
          * @since CSOT
          * @see #getTimeout
          */
+        @Alpha(Reason.CLIENT)
         public ClientEncryptionSettings.Builder timeout(final long timeout, final TimeUnit timeUnit) {
             this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
             return this;
@@ -324,6 +327,7 @@ public final class ClientEncryptionSettings {
      * @return the timeout in the given time unit
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
