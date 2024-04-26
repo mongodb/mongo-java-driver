@@ -25,6 +25,10 @@ public final class CredentialInfo {
     private final String accessToken;
     private final Duration expiresIn;
 
+    /**
+     * @param expiresIn The meaning of {@linkplain Duration#isZero() zero-length} duration is the same as in
+     * {@link com.mongodb.MongoCredential.OidcCallbackResult#OidcCallbackResult(String, Duration)}.
+     */
     public CredentialInfo(final String accessToken, final Duration expiresIn) {
         this.accessToken = accessToken;
         this.expiresIn = expiresIn;
