@@ -52,7 +52,6 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public ListIndexesIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);

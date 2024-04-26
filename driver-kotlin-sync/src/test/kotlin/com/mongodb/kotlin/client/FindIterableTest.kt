@@ -39,7 +39,6 @@ class FindIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JFindIterable<Document> = mock()
         val iterable = FindIterable(wrapped)

@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
@@ -178,21 +177,7 @@ public class ConnectionPoolSettings {
          * @param timeUnit    the TimeUnit for this wait period
          * @return this
          * @see #getMaxWaitTime(TimeUnit)
-         *
-         * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-         *
-         * <ul>
-         *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
-         *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
-         *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
-         *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-         *     <li>{@link com.mongodb.TransactionOptions}</li>
-         * </ul>
-         *
-         * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum wait time
-         * irrelevant. If no timeout is specified at these levels, the maximum wait time will be used.
          */
-        @Deprecated
         public Builder maxWaitTime(final long maxWaitTime, final TimeUnit timeUnit) {
             this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
             return this;
@@ -397,21 +382,7 @@ public class ConnectionPoolSettings {
      * @return the maximum amount of time to wait in the given TimeUnits
      * @see Builder#maxWaitTime(long, TimeUnit)
      * @see ConnectionString#getMaxWaitTime()
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@link MongoClientSettings.Builder#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoDatabase#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoCollection#getTimeout(TimeUnit)}</li>
-     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-     *     <li>{@link com.mongodb.TransactionOptions}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum wait time
-     * irrelevant. If no timeout is specified at these levels, the maximum wait time will be used.
      */
-    @Deprecated
     public long getMaxWaitTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxWaitTimeMS, MILLISECONDS);
     }

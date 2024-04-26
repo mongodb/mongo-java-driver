@@ -48,7 +48,6 @@ final class ListCollectionNamesIterableImpl implements ListCollectionNamesIterab
     }
 
     @Override
-    @Deprecated
     public ListCollectionNamesIterable maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         wrapped.maxTime(maxTime, timeUnit);

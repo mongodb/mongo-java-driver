@@ -30,8 +30,6 @@ internal class SyncDistinctIterable<T : Any>(val wrapped: DistinctIterable<T>) :
         wrapped.timeoutMode(timeoutMode)
     }
     override fun filter(filter: Bson?): SyncDistinctIterable<T> = apply { wrapped.filter(filter) }
-    @Suppress("DEPRECATION")
-    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncDistinctIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

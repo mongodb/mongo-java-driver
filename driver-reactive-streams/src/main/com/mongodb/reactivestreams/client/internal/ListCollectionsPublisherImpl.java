@@ -52,7 +52,6 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
         this.collectionNamesOnly = collectionNamesOnly;
     }
 
-    @SuppressWarnings("deprecation")
     public ListCollectionsPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);

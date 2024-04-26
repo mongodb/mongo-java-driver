@@ -36,8 +36,6 @@ internal class SyncListSearchIndexesIterable<T : Any>(val wrapped: ListSearchInd
         wrapped.allowDiskUse(allowDiskUse)
     }
 
-    @Suppress("DEPRECATION")
-    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListSearchIndexesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

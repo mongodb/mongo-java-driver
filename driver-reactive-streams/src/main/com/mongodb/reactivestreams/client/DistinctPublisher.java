@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
@@ -51,21 +50,7 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@link MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
-     *     <li>{@link MongoDatabase#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@link MongoCollection#withTimeout(long, TimeUnit)}</li>
-     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-     *     <li>{@link com.mongodb.TransactionOptions}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum execution time
-     * irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
      */
-    @Deprecated
     DistinctPublisher<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**

@@ -85,7 +85,6 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public AggregatePublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);

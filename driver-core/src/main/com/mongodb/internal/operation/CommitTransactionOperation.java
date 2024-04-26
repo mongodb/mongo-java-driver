@@ -137,7 +137,6 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    @SuppressWarnings("deprecation") //wTimeout
     protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
         return command -> {
             WriteConcern retryWriteConcern = getWriteConcern().withW("majority");

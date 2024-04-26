@@ -40,7 +40,6 @@ class DistinctIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JDistinctIterable<Document> = mock()
         val iterable = DistinctIterable(wrapped)

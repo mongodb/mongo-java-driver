@@ -1590,7 +1590,6 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1599,7 +1598,6 @@ public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
@@ -1607,7 +1605,6 @@ public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply { maxT
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun DropIndexOptions.maxTime(maxTime: Long): DropIndexOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1616,7 +1613,6 @@ public fun DropIndexOptions.maxTime(maxTime: Long): DropIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocumentCountOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1625,7 +1621,6 @@ public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocume
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1634,7 +1629,6 @@ public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptio
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1643,7 +1637,6 @@ public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOpt
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun FindOneAndUpdateOptions.maxTime(maxTime: Long): FindOneAndUpdateOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**

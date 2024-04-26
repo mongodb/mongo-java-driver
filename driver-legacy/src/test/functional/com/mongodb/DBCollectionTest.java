@@ -754,7 +754,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         try {
-            @SuppressWarnings("deprecation")
             WriteResult res = collection.insert(new BasicDBObject(), new WriteConcern(5).withWTimeout(1, MILLISECONDS));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
@@ -768,7 +767,6 @@ public class DBCollectionTest extends DatabaseTestCase {
         ObjectId id = new ObjectId();
         collection.insert(new BasicDBObject("_id", id));
         try {
-            @SuppressWarnings("deprecation")
             WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
                                                 false, false, new WriteConcern(5).withWTimeout(1, MILLISECONDS));
             fail("Write should have failed but succeeded with result " + res);
@@ -780,7 +778,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation") //writeConcern
     public void testWriteConcernExceptionOnFindAndModify() throws UnknownHostException {
         assumeThat(serverVersionAtLeast(3, 2), is(true));
         assumeThat(isDiscoverableReplicaSet(), is(true));
@@ -838,7 +835,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation") //writeConcern
     public void testWriteConcernExceptionOnUpsert() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         ObjectId id = new ObjectId();
@@ -854,7 +850,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         try {
@@ -867,7 +862,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation") //writeConcern
     public void testBulkWriteConcernException() throws UnknownHostException {
         assumeThat(isDiscoverableReplicaSet(), is(true));
         try {

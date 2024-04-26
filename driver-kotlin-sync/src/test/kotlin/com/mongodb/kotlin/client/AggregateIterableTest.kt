@@ -44,7 +44,6 @@ class AggregateIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JAggregateIterable<Document> = mock()
         val iterable = AggregateIterable(wrapped)

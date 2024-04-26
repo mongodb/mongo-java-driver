@@ -235,6 +235,5 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
  * @param maxCommitTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun TransactionOptions.Builder.maxCommitTime(maxCommitTime: Long): TransactionOptions.Builder =
     this.apply { maxCommitTime(maxCommitTime, TimeUnit.MILLISECONDS) }

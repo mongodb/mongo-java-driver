@@ -58,7 +58,6 @@ final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements 
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public DistinctPublisher<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);

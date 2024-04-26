@@ -51,7 +51,6 @@ public class AggregatePublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected AggregateOperation")
     @Test
-    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperation() {
         List<BsonDocument> pipeline = singletonList(BsonDocument.parse("{'$match': 1}"));
 
@@ -146,7 +145,6 @@ public class AggregatePublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected AggregateOperation for $out")
     @Test
-    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperationsForDollarOut() {
         String collectionName = "collectionName";
         List<BsonDocument> pipeline = asList(BsonDocument.parse("{'$match': 1}"),
@@ -325,7 +323,6 @@ public class AggregatePublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected AggregateOperation for $merge document")
     @Test
-    @SuppressWarnings("deprecation")
     void shouldBuildTheExpectedOperationsForDollarMergeDocument() {
         String collectionName = "collectionName";
         List<BsonDocument> pipeline = asList(BsonDocument.parse("{'$match': 1}"),

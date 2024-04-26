@@ -28,7 +28,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 
-@Suppress("DEPRECATION") // maxTime
 class ListCollectionsFlowTest {
     @Test
     fun shouldHaveTheSameMethods() {
