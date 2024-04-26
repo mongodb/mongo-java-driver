@@ -194,6 +194,7 @@ public final class MongoCredential {
      * must not be provided.
      *
      * @see #createOidcCredential(String)
+     * @see MongoCredential#TOKEN_RESOURCE_KEY
      * @since 5.1
      */
     public static final String ENVIRONMENT_KEY = "ENVIRONMENT";
@@ -257,6 +258,8 @@ public final class MongoCredential {
     /**
      * The token resource.
      *
+     * @see MongoCredential#ENVIRONMENT_KEY
+     * @see #createOidcCredential(String)
      * @since 5.1
      */
     public static final String TOKEN_RESOURCE_KEY = "TOKEN_RESOURCE";
