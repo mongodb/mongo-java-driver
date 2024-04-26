@@ -22,7 +22,6 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
-import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.Fixture;
@@ -401,7 +400,7 @@ public class OidcAuthenticationProseTests {
                 .credential(cred);
         MongoClientSettings clientSettings = builder.build();
         // the failure is external to the driver
-        assertFindFails(clientSettings, MongoServerException.class, "");
+        assertFindFails(clientSettings, IOException.class, "400 Bad Request");
     }
 
     // Tests for human authentication ("testh", to preserve ordering)
@@ -902,11 +901,11 @@ public class OidcAuthenticationProseTests {
         while (cause.getCause() != null) {
             cause = cause.getCause();
         }
-        if (!expectedCause.isInstance(cause)) {
-            throw new AssertionFailedError("Unexpected cause: " + assertThrows(Throwable.class, e).getClass(), assertThrows(Throwable.class, e));
-        }
         if (!cause.getMessage().contains(expectedMessageFragment)) {
-            throw new AssertionFailedError("Unexpected message", assertThrows(Throwable.class, e));
+            throw new AssertionFailedError("Unexpected message: " + cause.getMessage(), cause);
+        }
+        if (!expectedCause.isInstance(cause)) {
+            throw new AssertionFailedError("Unexpected cause: " + cause.getClass(), assertThrows(Throwable.class, e));
         }
     }
 
