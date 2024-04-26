@@ -54,7 +54,7 @@ public final class Locks {
         }, callback);
     }
 
-    public static void withLock(final StampedLock lock, final Runnable runnable) {
+    public static void withInterruptibleLock(final StampedLock lock, final Runnable runnable) {
         long stamp;
         try {
             stamp = lock.writeLockInterruptibly();

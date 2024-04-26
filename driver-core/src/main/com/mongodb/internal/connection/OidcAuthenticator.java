@@ -126,7 +126,9 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     @Nullable
     public BsonDocument createSpeculativeAuthenticateCommand(final InternalConnection connection) {
         try {
-            String cachedAccessToken = getCachedAccessToken();
+            String cachedAccessToken = getMongoCredentialWithCache()
+                    .getOidcCacheEntry()
+                    .getCachedAccessToken();
             if (cachedAccessToken != null) {
                 return wrapInSpeculative(prepareTokenAsJwt(cachedAccessToken));
             } else {
@@ -284,7 +286,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     private byte[] evaluate(final byte[] challenge) {
         byte[][] jwt = new byte[1][];
-        Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
+        Locks.withInterruptibleLock(getMongoCredentialWithCache().getOidcLock(), () -> {
             OidcCacheEntry oidcCacheEntry = getMongoCredentialWithCache().getOidcCacheEntry();
             String cachedRefreshToken = oidcCacheEntry.getRefreshToken();
             IdpInfo cachedIdpInfo = oidcCacheEntry.getIdpInfo();
@@ -358,7 +360,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private String validatedCachedAccessToken() {
         MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
         OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
-        String cachedAccessToken = getCachedAccessToken();
+        String cachedAccessToken = cacheEntry.getCachedAccessToken();
         String invalidConnectionAccessToken = connectionLastAccessToken;
 
         if (cachedAccessToken != null) {
@@ -377,7 +379,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
     private boolean shouldRetryHandler() {
         boolean[] result = new boolean[1];
-        Locks.withLock(getMongoCredentialWithCache().getOidcLock(), () -> {
+        Locks.withInterruptibleLock(getMongoCredentialWithCache().getOidcLock(), () -> {
             MongoCredentialWithCache mongoCredentialWithCache = getMongoCredentialWithCache();
             OidcCacheEntry cacheEntry = mongoCredentialWithCache.getOidcCacheEntry();
             if (fallbackState == FallbackState.PHASE_1_CACHED_TOKEN) {
@@ -400,13 +402,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             }
         });
         return result[0];
-    }
-
-    @Nullable
-    private String getCachedAccessToken() {
-        return getMongoCredentialWithCache()
-                .getOidcCacheEntry()
-                .getCachedAccessToken();
     }
 
     static final class OidcCacheEntry {
