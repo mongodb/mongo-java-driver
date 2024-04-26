@@ -38,6 +38,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -923,6 +924,9 @@ public class ConnectionString {
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
+                if (!decodeWholeOptionValue(mechanism)) {
+                    value = urldecode(value);
+                }
                 if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
                     throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
                             + "'%s' must be set on the credential programmatically.", key));
@@ -936,6 +940,13 @@ public class ConnectionString {
             }
         }
         return credential;
+    }
+
+    private static boolean decodeWholeOptionValue(final AuthenticationMechanism mechanism) {
+        return !AuthenticationMechanism.MONGODB_OIDC.equals(mechanism);
+    }
+    private static boolean decodeWholeOptionValue(final List<String> options) {
+        return !options.contains("authMechanism=" + AuthenticationMechanism.MONGODB_OIDC.getMechanismName());
     }
 
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
@@ -1018,12 +1029,14 @@ public class ConnectionString {
 
     private Map<String, List<String>> parseOptions(final String optionsPart) {
         Map<String, List<String>> optionsMap = new HashMap<>();
-        if (optionsPart.length() == 0) {
+        if (optionsPart.isEmpty()) {
             return optionsMap;
         }
 
-        for (final String part : optionsPart.split("&|;")) {
-            if (part.length() == 0) {
+        List<String> options = Arrays.asList(optionsPart.split("&|;"));
+        boolean decodeWholeOptionValue = decodeWholeOptionValue(options);
+        for (final String part : options) {
+            if (part.isEmpty()) {
                 continue;
             }
             int idx = part.indexOf("=");
@@ -1034,7 +1047,10 @@ public class ConnectionString {
                 if (valueList == null) {
                     valueList = new ArrayList<>(1);
                 }
-                valueList.add(urldecode(value));
+                if (decodeWholeOptionValue) {
+                    value = urldecode(value);
+                }
+                valueList.add(value);
                 optionsMap.put(key, valueList);
             } else {
                 throw new IllegalArgumentException(format("The connection string contains an invalid option '%s'. "

@@ -20,6 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -32,6 +36,31 @@ final class ConnectionStringUnitTest {
     void defaults() {
         ConnectionString connectionStringDefault = new ConnectionString(DEFAULT_OPTIONS);
         assertAll(() -> assertNull(connectionStringDefault.getServerMonitoringMode()));
+    }
+
+    @Test
+    public void mustDecodeOidcIndividually() {
+        String string = "abc,d!@#$%^&*;ef:ghi";
+        ConnectionString cs = new ConnectionString(
+                "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties="
+                        + "ENVIRONMENT:azure,TOKEN_RESOURCE:" + encode(string));
+        assertEquals(string, cs.getCredential().getMechanismProperty("TOKEN_RESOURCE", null));
+    }
+
+    @Test
+    public void mustDecodeNonOidcAsWhole()  {
+        ConnectionString cs2 = new ConnectionString(
+                "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                        + encode("SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true&authSource=$external"));
+        assertEquals("other", cs2.getCredential().getMechanismProperty("SERVICE_NAME", null));
+    }
+
+    private static String encode(final String string) {
+        try {
+            return URLEncoder.encode(string, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @ParameterizedTest
