@@ -186,7 +186,13 @@ public final class MongoCredential {
     public static final String AWS_CREDENTIAL_PROVIDER_KEY = "AWS_CREDENTIAL_PROVIDER";
 
     /**
-     * The environment. The value must be a string.
+     * Mechanism property key for specifying the environment for OIDC.
+     * The value must be either "gcp" or "azure".
+     * The environment determines how the driver should obtain an access token,
+     * as an alternative to supplying a callback.
+     * <p>
+     * The "gcp" and "azure" environments require
+     * {@link MongoCredential#TOKEN_RESOURCE_KEY} to be specified.
      * <p>
      * If this is provided,
      * {@link MongoCredential#OIDC_CALLBACK_KEY} and
@@ -200,6 +206,7 @@ public final class MongoCredential {
     public static final String ENVIRONMENT_KEY = "ENVIRONMENT";
 
     /**
+     * Mechanism property key for the OIDC callback.
      * This callback is invoked when the OIDC-based authenticator requests
      * a token. The type of the value must be {@link OidcCallback}.
      * {@link IdpInfo} will not be supplied to the callback,
@@ -216,6 +223,7 @@ public final class MongoCredential {
     public static final String OIDC_CALLBACK_KEY = "OIDC_CALLBACK";
 
     /**
+     * Mechanism property key for the OIDC human callback.
      * This callback is invoked when the OIDC-based authenticator requests
      * a token from the identity provider (IDP) using the IDP information
      * from the MongoDB server. The type of the value must be
@@ -232,7 +240,7 @@ public final class MongoCredential {
 
 
     /**
-     * Mechanism key for a list of allowed hostnames or ip-addresses for MongoDB connections. Ports must be excluded.
+     * Mechanism property key for a list of allowed hostnames or ip-addresses for MongoDB connections. Ports must be excluded.
      * The hostnames may include a leading "*." wildcard, which allows for matching (potentially nested) subdomains.
      * When MONGODB-OIDC authentication is attempted against a hostname that does not match any of list of allowed hosts
      * the driver will raise an error. The type of the value must be {@code List<String>}.
@@ -256,7 +264,8 @@ public final class MongoCredential {
             "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
 
     /**
-     * The token resource.
+     * Mechanism property key for specifying he URI of the target resource (sometimes called the audience),
+     * used in some OIDC environments.
      *
      * @see MongoCredential#ENVIRONMENT_KEY
      * @see #createOidcCredential(String)
@@ -420,6 +429,7 @@ public final class MongoCredential {
      * @since 5.1
      * @see #withMechanismProperty(String, Object)
      * @see #ENVIRONMENT_KEY
+     * @see #TOKEN_RESOURCE_KEY
      * @see #OIDC_CALLBACK_KEY
      * @see #OIDC_HUMAN_CALLBACK_KEY
      * @see #ALLOWED_HOSTS_KEY
@@ -675,13 +685,17 @@ public final class MongoCredential {
         int getVersion();
 
         /**
-         * @return The OIDC Identity Provider's configuration that can be used to acquire an Access Token.
+         * @return The OIDC Identity Provider's configuration that can be used
+         * to acquire an Access Token, or null if not using a
+         * {@linkplain MongoCredential#OIDC_HUMAN_CALLBACK_KEY human callback.}
          */
         @Nullable
         IdpInfo getIdpInfo();
 
         /**
-         * @return The OIDC Refresh token supplied by a prior callback invocation.
+         * @return The OIDC Refresh token supplied by a prior callback invocation,
+         * or null if no token was supplied, or if not using a
+         * {@linkplain MongoCredential#OIDC_HUMAN_CALLBACK_KEY human callback.}
          */
         @Nullable
         String getRefreshToken();

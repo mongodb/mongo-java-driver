@@ -540,11 +540,11 @@ public final class Entities {
                                     .createOidcCredential(null)
                                     .withMechanismProperty("ENVIRONMENT", env);
                             if (env.equals("azure")) {
-                                oidcCredential = oidcCredential
-                                        .withMechanismProperty("TOKEN_RESOURCE", getenv("AZUREOIDC_RESOURCE"));
+                                oidcCredential = oidcCredential.withMechanismProperty(
+                                        MongoCredential.TOKEN_RESOURCE_KEY, getenv("AZUREOIDC_RESOURCE"));
                             } else if (env.equals("gcp")) {
-                                oidcCredential = oidcCredential
-                                        .withMechanismProperty("TOKEN_RESOURCE", getenv("GCPOIDC_RESOURCE"));
+                                oidcCredential = oidcCredential.withMechanismProperty(
+                                        MongoCredential.TOKEN_RESOURCE_KEY, getenv("GCPOIDC_RESOURCE"));
                             }
                             clientSettingsBuilder.credential(oidcCredential);
                             break;
@@ -556,7 +556,7 @@ public final class Entities {
                                 .getDocument("uriOptions")
                                 .get("authMechanism");
                         if (authMechanism.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
-                            break; // only OIDC supports authMechanismProperties
+                            break; // authMechanismProperties only supported here for OIDC
                         }
                         throw new UnsupportedOperationException("Failure to apply authMechanismProperties: " + value);
                     default:
