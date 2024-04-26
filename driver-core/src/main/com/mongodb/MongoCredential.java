@@ -659,7 +659,7 @@ public final class MongoCredential {
     @Evolving
     public interface OidcCallbackContext {
         /**
-         * @return Convenience method to obtain the username.
+         * @return Convenience method to obtain the {@linkplain MongoCredential#getUserName() username}.
          */
         @Nullable
         String getUserName();
