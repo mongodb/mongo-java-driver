@@ -556,7 +556,7 @@ public final class Entities {
                                 .getDocument("uriOptions")
                                 .get("authMechanism");
                         if (authMechanism.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
-                            break; // authMechanismProperties only supported here for OIDC
+                            break;
                         }
                         throw new UnsupportedOperationException("Failure to apply authMechanismProperties: " + value);
                     default:

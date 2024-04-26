@@ -186,10 +186,10 @@ public final class MongoCredential {
     public static final String AWS_CREDENTIAL_PROVIDER_KEY = "AWS_CREDENTIAL_PROVIDER";
 
     /**
-     * Mechanism property key for specifying the environment for OIDC.
-     * The value must be either "gcp" or "azure".
-     * The environment determines how the driver should obtain an access token,
-     * as an alternative to supplying a callback.
+     * Mechanism property key for specifying the environment for OIDC, which is
+     * the name of a built-in OIDC application environment integration to use
+     * to obtain credentials. The value must be either "gcp" or "azure".
+     * This is an alternative to supplying a callback.
      * <p>
      * The "gcp" and "azure" environments require
      * {@link MongoCredential#TOKEN_RESOURCE_KEY} to be specified.

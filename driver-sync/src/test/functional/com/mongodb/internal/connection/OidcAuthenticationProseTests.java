@@ -23,6 +23,7 @@ import com.mongodb.MongoConfigurationException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -61,11 +62,13 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.MongoCredential.ENVIRONMENT_KEY;
 import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OIDC_HUMAN_CALLBACK_KEY;
 import static com.mongodb.MongoCredential.OidcCallback;
 import static com.mongodb.MongoCredential.OidcCallbackContext;
 import static com.mongodb.MongoCredential.OidcCallbackResult;
+import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
@@ -368,9 +371,11 @@ public class OidcAuthenticationProseTests {
         assumeTrue(getOidcEnv().equals("azure"));
         String oidcUri = getOidcUri();
         MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
-        assertNull(clientSettings.getCredential().getUserName());
+        // Create an OIDC configured client with `ENVIRONMENT:azure` and a valid
+        // `TOKEN_RESOURCE` and no username.
+        assertNull(Assertions.assertNotNull(clientSettings.getCredential()).getUserName());
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
-            // #. Perform a find operation that succeeds.
+            // Perform a `find` operation that succeeds..
             performFind(mongoClient);
         }
     }
@@ -469,7 +474,7 @@ public class OidcAuthenticationProseTests {
     }
 
     @Test
-    public void testh1p7() {
+    public void testh1p7AllowedHostsInConnectionStringIgnored() {
         // example.com changed to localhost
         String string = "mongodb+srv://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ALLOWED_HOSTS:%5B%22localhost%22%5D";
         assertCause(IllegalArgumentException.class,

@@ -76,7 +76,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final String TEST_ENVIRONMENT = "test";
     private static final String AZURE_ENVIRONMENT = "azure";
     private static final String GCP_ENVIRONMENT = "gcp";
-    private static final List<String> SUPPORTED_ENVIRONMENTS = Arrays.asList(
+    private static final List<String> IMPLEMENTED_ENVIRONMENTS = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT, TEST_ENVIRONMENT);
     private static final List<String> REQUIRES_TOKEN_RESOURCE = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
@@ -586,8 +586,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
 
             Object environmentName = mechanismProperties.get(ENVIRONMENT_KEY.toLowerCase());
             if (environmentName != null) {
-                if (!(environmentName instanceof String) || !SUPPORTED_ENVIRONMENTS.contains(environmentName)) {
-                    throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be one of: " + SUPPORTED_ENVIRONMENTS);
+                if (!(environmentName instanceof String) || !IMPLEMENTED_ENVIRONMENTS.contains(environmentName)) {
+                    throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be one of: " + IMPLEMENTED_ENVIRONMENTS);
                 }
             }
         }

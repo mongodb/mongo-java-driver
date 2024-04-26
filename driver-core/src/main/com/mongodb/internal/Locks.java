@@ -17,8 +17,6 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.internal.async.AsyncRunnable;
-import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -38,23 +36,7 @@ public final class Locks {
         });
     }
 
-    public static void withLockAsync(final StampedLock lock, final AsyncRunnable runnable,
-            final SingleResultCallback<Void> callback) {
-        long stamp;
-        try {
-            stamp = lock.writeLockInterruptibly();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            callback.onResult(null, new MongoInterruptedException("Interrupted waiting for lock", e));
-            return;
-        }
-
-        runnable.thenAlwaysRunAndFinish(() -> {
-            lock.unlockWrite(stamp);
-        }, callback);
-    }
-
-    public static void withInterruptibleLock(final StampedLock lock, final Runnable runnable) {
+    public static void withInterruptibleLock(final StampedLock lock, final Runnable runnable) throws MongoInterruptedException{
         long stamp;
         try {
             stamp = lock.writeLockInterruptibly();

@@ -75,7 +75,7 @@ public final class AzureCredentialHelper {
         String endpoint = "http://169.254.169.254:80"
                 + "/metadata/identity/oauth2/token?api-version=2018-02-01"
                 + "&resource=" + getEncoded(resource)
-                + (clientId == null ? "" : "&client_id=" + clientId);
+                + (clientId == null ? "" : "&client_id=" + getEncoded(clientId));
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Metadata", "true");
