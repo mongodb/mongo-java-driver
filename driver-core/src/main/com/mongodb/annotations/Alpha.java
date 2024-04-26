@@ -24,11 +24,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Signifies that a public API (public class, method or field) is in the early stages
- * of development, subject to incompatible changes, or even removal, in a future release
- * and may lack some intended features. An API bearing this annotation may contain known
- * issues affecting functionality, performance, and stability. It is also exempt from any
- * compatibility guarantees made by its containing library.
+ * Signifies that a public API element is in the early stages of development, subject to
+ * incompatible changes, or even removal, in a future release and may lack some intended features.
+ * An API bearing this annotation may contain known issues affecting functionality, performance,
+ * and stability. It is also exempt from any compatibility guarantees made by its containing library.
  *
  * <p>It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or
  * for <i>libraries</i> (which get included on users' CLASSPATHs, outside the library developers'

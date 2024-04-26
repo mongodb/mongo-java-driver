@@ -17,7 +17,7 @@
 package com.mongodb.annotations;
 
 /**
- * Enumerates the reasons an API element which might be marked with annotations like {@link Alpha} or {@link Beta}.
+ * Enumerates the reasons an API element might be marked with annotations like {@link Alpha} or {@link Beta}.
  */
 public enum Reason {
     /**
