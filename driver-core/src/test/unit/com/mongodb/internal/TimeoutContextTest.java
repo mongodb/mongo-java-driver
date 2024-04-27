@@ -19,9 +19,13 @@ import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.session.ClientSession;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT;
@@ -42,12 +46,7 @@ final class TimeoutContextTest {
 
     public static long getMaxTimeMS(final TimeoutContext timeoutContext) {
         long[] result = {0L};
-        timeoutContext.runMaxTimeMSTimeout(
-                () -> {},
-                (ms) -> result[0] = ms,
-                () -> {
-                    throw TimeoutContext.createMongoRoundTripTimeoutException();
-                });
+        timeoutContext.runMaxTimeMS((ms) -> result[0] = ms);
         return result[0];
     }
 
@@ -282,6 +281,61 @@ final class TimeoutContextTest {
         timeoutContext.resetToDefaultMaxTime();
 
         assertTrue(getMaxTimeMS(timeoutContext) > 1);
+    }
+
+    static Stream<Arguments> shouldChooseConnectTimeoutWhenItIsLessThenTimeoutMs() {
+        return Stream.of(
+                //connectTimeoutMS, timeoutMS, expected
+                Arguments.of(500L, 1000L, 500L),
+                Arguments.of(0L, null, 0L),
+                Arguments.of(1000L, null, 1000L),
+                Arguments.of(1000L, 0L, 1000L),
+                Arguments.of(0L, 0L, 0L)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    @DisplayName("should choose connectTimeoutMS when connectTimeoutMS is less than timeoutMS")
+    void shouldChooseConnectTimeoutWhenItIsLessThenTimeoutMs(final Long connectTimeoutMS,
+                                                          final Long timeoutMS,
+                                                          final long expected) {
+        TimeoutContext timeoutContext = new TimeoutContext(
+                new TimeoutSettings(0,
+                connectTimeoutMS,
+                0,
+                timeoutMS,
+                0));
+
+        long calculatedTimeoutMS = timeoutContext.getConnectTimeoutMs();
+        assertEquals(expected, calculatedTimeoutMS);
+    }
+
+
+    static Stream<Arguments> shouldChooseTimeoutMsWhenItIsLessThenConnectTimeoutMS() {
+        return Stream.of(
+                //connectTimeoutMS, timeoutMS, expected
+                Arguments.of(1000L, 1000L, 999),
+                Arguments.of(1000L, 500L, 499L),
+                Arguments.of(0L, 1000L, 999L)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    @DisplayName("should choose timeoutMS when timeoutMS is less than connectTimeoutMS")
+    void shouldChooseTimeoutMsWhenItIsLessThenConnectTimeoutMS(final Long connectTimeoutMS,
+                                                          final Long timeoutMS,
+                                                          final long expected) {
+        TimeoutContext timeoutContext = new TimeoutContext(
+                new TimeoutSettings(0,
+                        connectTimeoutMS,
+                        0,
+                        timeoutMS,
+                        0));
+
+        long calculatedTimeoutMS = timeoutContext.getConnectTimeoutMs();
+        assertTrue(expected - calculatedTimeoutMS <= 1);
     }
 
     private TimeoutContextTest() {

@@ -46,7 +46,6 @@ import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddre
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -122,10 +121,7 @@ public class SocketStream implements Stream {
         SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
         configureSocket(socksProxy, operationContext, settings);
         InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
-        operationContext.getTimeoutContext().createConnectTimeoutMs().checkedRun(MILLISECONDS,
-                () -> socksProxy.connect(inetSocketAddress, 0),
-                (ms) -> socksProxy.connect(inetSocketAddress, Math.toIntExact(ms)),
-                () -> throwMongoTimeoutException("The operation timeout has expired."));
+        socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
 
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
         //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
@@ -153,11 +149,8 @@ public class SocketStream implements Stream {
          */
         SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
 
-        InetSocketAddress inetSocketAddress = toSocketAddress(address.getHost(), address.getPort());
-        operationContext.getTimeoutContext().createConnectTimeoutMs().checkedRun(MILLISECONDS,
-                () -> socksProxy.connect(inetSocketAddress, 0),
-                (ms) -> socksProxy.connect(inetSocketAddress, Math.toIntExact(ms)),
-                () -> throwMongoTimeoutException("The operation timeout has expired."));
+        socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
+                operationContext.getTimeoutContext().getConnectTimeoutMs());
         return socksProxy;
     }
 
@@ -185,9 +178,7 @@ public class SocketStream implements Stream {
                 byte[] bytes = buffer.array();
                 while (totalBytesRead < buffer.limit()) {
                     int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
-                    if (readTimeoutMS > 0) {
-                        socket.setSoTimeout(readTimeoutMS);
-                    }
+                    socket.setSoTimeout(readTimeoutMS);
                     int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
                     if (bytesRead == -1) {
                         throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());

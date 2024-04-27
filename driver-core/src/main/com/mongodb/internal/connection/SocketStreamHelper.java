@@ -27,9 +27,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketOption;
 
-import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 final class SocketStreamHelper {
@@ -75,10 +73,7 @@ final class SocketStreamHelper {
             final SslSettings sslSettings) throws IOException {
         configureSocket(socket, operationContext, settings);
         configureSslSocket(socket, sslSettings, inetSocketAddress);
-        operationContext.getTimeoutContext().createConnectTimeoutMs().checkedRun(MILLISECONDS,
-                () -> socket.connect(inetSocketAddress, 0),
-                (ms) -> socket.connect(inetSocketAddress, Math.toIntExact(ms)),
-                () -> throwMongoTimeoutException("The operation timeout has expired."));
+        socket.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
     }
 
     static void configureSocket(final Socket socket, final OperationContext operationContext, final SocketSettings settings) throws SocketException {
