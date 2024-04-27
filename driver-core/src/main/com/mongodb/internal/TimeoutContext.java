@@ -187,7 +187,7 @@ public class TimeoutContext {
 
     public void runMaxTimeMS(final LongConsumer onRemaining) {
         if (maxTimeSupplier != null) {
-            onRemaining.accept(maxTimeSupplier.get());
+            runWithFixedTimout(maxTimeSupplier.get(), onRemaining);
         }
         if (timeout != null) {
             timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
@@ -198,7 +198,13 @@ public class TimeoutContext {
                                 throw createMongoRoundTripTimeoutException();
                             });
         } else {
-            onRemaining.accept(timeoutSettings.getMaxTimeMS());
+            runWithFixedTimout(timeoutSettings.getMaxTimeMS(), onRemaining);
+        }
+    }
+
+    private static void runWithFixedTimout(final long ms, final LongConsumer onRemaining) {
+        if (ms != 0) {
+            onRemaining.accept(ms);
         }
     }
 
