@@ -188,18 +188,20 @@ public class TimeoutContext {
     public void runMaxTimeMS(final LongConsumer onRemaining) {
         if (maxTimeSupplier != null) {
             runWithFixedTimout(maxTimeSupplier.get(), onRemaining);
+            return;
         }
-        if (timeout != null) {
-            timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
-                    .run(MILLISECONDS,
-                            () -> {},
-                            onRemaining,
-                            () -> {
-                                throw createMongoRoundTripTimeoutException();
-                            });
-        } else {
+        if (timeout == null) {
             runWithFixedTimout(timeoutSettings.getMaxTimeMS(), onRemaining);
+            return;
         }
+        timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
+                .run(MILLISECONDS,
+                        () -> {},
+                        onRemaining,
+                        () -> {
+                            throw createMongoRoundTripTimeoutException();
+                        });
+
     }
 
     private static void runWithFixedTimout(final long ms, final LongConsumer onRemaining) {

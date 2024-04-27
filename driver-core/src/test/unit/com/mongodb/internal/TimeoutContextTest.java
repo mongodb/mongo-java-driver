@@ -197,16 +197,19 @@ final class TimeoutContextTest {
 
         assertThrows(MongoOperationTimeoutException.class, smallTimeout::getReadTimeoutMS);
         assertThrows(MongoOperationTimeoutException.class, smallTimeout::getWriteTimeoutMS);
+        assertThrows(MongoOperationTimeoutException.class, smallTimeout::getConnectTimeoutMs);
         assertThrows(MongoOperationTimeoutException.class, () -> getMaxTimeMS(smallTimeout));
         assertThrows(MongoOperationTimeoutException.class, smallTimeout::getMaxCommitTimeMS);
         assertThrows(MongoOperationTimeoutException.class, () -> smallTimeout.timeoutOrAlternative(1));
         assertDoesNotThrow(longTimeout::getReadTimeoutMS);
         assertDoesNotThrow(longTimeout::getWriteTimeoutMS);
+        assertDoesNotThrow(longTimeout::getConnectTimeoutMs);
         assertDoesNotThrow(() -> getMaxTimeMS(longTimeout));
         assertDoesNotThrow(longTimeout::getMaxCommitTimeMS);
         assertDoesNotThrow(() -> longTimeout.timeoutOrAlternative(1));
         assertDoesNotThrow(noTimeout::getReadTimeoutMS);
         assertDoesNotThrow(noTimeout::getWriteTimeoutMS);
+        assertDoesNotThrow(noTimeout::getConnectTimeoutMs);
         assertDoesNotThrow(() -> getMaxTimeMS(noTimeout));
         assertDoesNotThrow(noTimeout::getMaxCommitTimeMS);
         assertDoesNotThrow(() -> noTimeout.timeoutOrAlternative(1));
