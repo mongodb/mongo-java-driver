@@ -15,6 +15,7 @@
  */
 package com.mongodb;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ServerMonitoringMode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,18 +42,23 @@ final class ConnectionStringUnitTest {
     @Test
     public void mustDecodeOidcIndividually() {
         String string = "abc,d!@#$%^&*;ef:ghi";
+        // encoded tags will fail parsing with an "invalid read preference tag"
+        // error if decoding is skipped.
+        String encodedTags = encode("dc:ny,rack:1");
         ConnectionString cs = new ConnectionString(
-                "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties="
-                        + "ENVIRONMENT:azure,TOKEN_RESOURCE:" + encode(string));
-        assertEquals(string, cs.getCredential().getMechanismProperty("TOKEN_RESOURCE", null));
+                "mongodb://localhost/?readPreference=primaryPreferred&readPreferenceTags=" + encodedTags
+                + "&authMechanism=MONGODB-OIDC&authMechanismProperties="
+                + "ENVIRONMENT:azure,TOKEN_RESOURCE:" + encode(string));
+        MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+        assertEquals(string, credential.getMechanismProperty("TOKEN_RESOURCE", null));
     }
 
     @Test
     public void mustDecodeNonOidcAsWhole()  {
         ConnectionString cs2 = new ConnectionString(
                 "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
-                        + encode("SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true&authSource=$external"));
-        assertEquals("other", cs2.getCredential().getMechanismProperty("SERVICE_NAME", null));
+                        + encode("SERVICE_NAME:ot her,CANONICALIZE_HOST_NAME:true&authSource=$external"));
+        assertEquals("ot her", cs2.getCredential().getMechanismProperty("SERVICE_NAME", null));
     }
 
     private static String encode(final String string) {
