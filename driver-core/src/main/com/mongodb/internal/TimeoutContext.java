@@ -187,11 +187,11 @@ public class TimeoutContext {
 
     public void runMaxTimeMS(final LongConsumer onRemaining) {
         if (maxTimeSupplier != null) {
-            runWithFixedTimout(maxTimeSupplier.get(), onRemaining);
+            runWithFixedTimeout(maxTimeSupplier.get(), onRemaining);
             return;
         }
         if (timeout == null) {
-            runWithFixedTimout(timeoutSettings.getMaxTimeMS(), onRemaining);
+            runWithFixedTimeout(timeoutSettings.getMaxTimeMS(), onRemaining);
             return;
         }
         timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
@@ -204,7 +204,7 @@ public class TimeoutContext {
 
     }
 
-    private static void runWithFixedTimout(final long ms, final LongConsumer onRemaining) {
+    private static void runWithFixedTimeout(final long ms, final LongConsumer onRemaining) {
         if (ms != 0) {
             onRemaining.accept(ms);
         }
