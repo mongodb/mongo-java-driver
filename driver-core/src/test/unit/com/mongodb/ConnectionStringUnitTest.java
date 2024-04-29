@@ -55,15 +55,22 @@ final class ConnectionStringUnitTest {
 
     @Test
     public void mustDecodeNonOidcAsWhole()  {
-        ConnectionString cs1 = new ConnectionString(
-                "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
-                        + "SERVICE_NAME:" + encode("ot her") + ",CANONICALIZE_HOST_NAME:true&authSource=$external");
-        assertEquals("ot her", cs1.getCredential().getMechanismProperty("SERVICE_NAME", null));
-
-        ConnectionString cs2 = new ConnectionString(
-                "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
-                        + encode("SERVICE_NAME:ot her,CANONICALIZE_HOST_NAME:true&authSource=$external"));
-        assertEquals("ot her", cs2.getCredential().getMechanismProperty("SERVICE_NAME", null));
+        // this string allows us to check if there is no double decoding
+        String rawValue = encode("ot her");
+        assertAll(() -> {
+            // even though only one part has been encoded by the user, the whole option value (pre-split) must be decoded
+            ConnectionString cs = new ConnectionString(
+                    "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                            + "SERVICE_NAME:" + encode(rawValue) + ",CANONICALIZE_HOST_NAME:true&authSource=$external");
+            MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+            assertEquals(rawValue, credential.getMechanismProperty("SERVICE_NAME", null));
+        }, () -> {
+            ConnectionString cs = new ConnectionString(
+                    "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                            + encode("SERVICE_NAME:" + rawValue + ",CANONICALIZE_HOST_NAME:true&authSource=$external"));
+            MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+            assertEquals(rawValue, credential.getMechanismProperty("SERVICE_NAME", null));
+        });
     }
 
     private static String encode(final String string) {
