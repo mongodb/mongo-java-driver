@@ -52,9 +52,7 @@
     {
       "collectionName": "collName",
       "databaseName": "test",
-      "documents": [
-
-      ]
+      "documents": []
     }
   ],
   "tests": [
@@ -65,12 +63,9 @@
           "name": "find",
           "object": "collection0",
           "arguments": {
-            "filter": {
-            }
+            "filter": {}
           },
-          "expectResult": [
-
-          ]
+          "expectResult": []
         }
       ],
       "expectEvents": [
@@ -81,8 +76,7 @@
               "commandStartedEvent": {
                 "command": {
                   "find": "collName",
-                  "filter": {
-                  }
+                  "filter": {}
                 }
               }
             },
@@ -161,12 +155,9 @@
           "name": "find",
           "object": "collection0",
           "arguments": {
-            "filter": {
-            }
+            "filter": {}
           },
-          "expectResult": [
-
-          ]
+          "expectResult": []
         }
       ],
       "expectEvents": [
@@ -177,8 +168,7 @@
               "commandStartedEvent": {
                 "command": {
                   "find": "collName",
-                  "filter": {
-                  }
+                  "filter": {}
                 }
               }
             },
@@ -191,8 +181,7 @@
               "commandStartedEvent": {
                 "command": {
                   "find": "collName",
-                  "filter": {
-                  }
+                  "filter": {}
                 }
               }
             },
@@ -324,12 +313,14 @@
             "client": "failPointClient",
             "failPoint": {
               "configureFailPoint": "failCommand",
-              "mode": "alwaysOn",
+              "mode": {
+                "times": 1
+              },
               "data": {
                 "failCommands": [
                   "saslStart"
                 ],
-                "errorCode": 20
+                "errorCode": 18
               }
             }
           }
@@ -399,12 +390,14 @@
             "client": "failPointClient",
             "failPoint": {
               "configureFailPoint": "failCommand",
-              "mode": "alwaysOn",
+              "mode": {
+                "times": 1
+              },
               "data": {
                 "failCommands": [
                   "saslStart"
                 ],
-                "errorCode": 20
+                "errorCode": 18
               }
             }
           }
@@ -419,7 +412,7 @@
             }
           },
           "expectError": {
-            "errorCode": 20
+            "errorCode": 18
           }
         }
       ]
