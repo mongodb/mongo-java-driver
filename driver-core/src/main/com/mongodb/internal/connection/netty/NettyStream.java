@@ -71,7 +71,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.Locks.withLock;
-import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static com.mongodb.internal.connection.SslHelper.enableSni;
@@ -192,10 +191,8 @@ final class NettyStream implements Stream {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(workerGroup);
             bootstrap.channel(socketChannelClass);
-            operationContext.getTimeoutContext().createConnectTimeoutMs().checkedRun(MILLISECONDS,
-                    () -> bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 0),
-                    (ms) -> bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(ms)),
-                    () -> throwMongoTimeoutException("The operation timeout has expired."));
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                    operationContext.getTimeoutContext().getConnectTimeoutMs());
             bootstrap.option(ChannelOption.TCP_NODELAY, true);
             bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 

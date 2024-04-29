@@ -185,25 +185,27 @@ public class TimeoutContext {
         return timeoutSettings.getMaxAwaitTimeMS();
     }
 
-    public void runMaxTimeMSTimeout(final Runnable onInfinite, final LongConsumer onRemaining,
-            final Runnable onExpired) {
+    public void runMaxTimeMS(final LongConsumer onRemaining) {
         if (maxTimeSupplier != null) {
-            runWithFixedTimout(maxTimeSupplier.get(), onInfinite, onRemaining);
+            runWithFixedTimeout(maxTimeSupplier.get(), onRemaining);
             return;
         }
-
-        if (timeout != null) {
-            timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
-                    .run(MILLISECONDS, onInfinite, onRemaining, onExpired);
-        } else {
-            runWithFixedTimout(timeoutSettings.getMaxTimeMS(), onInfinite, onRemaining);
+        if (timeout == null) {
+            runWithFixedTimeout(timeoutSettings.getMaxTimeMS(), onRemaining);
+            return;
         }
+        timeout.shortenBy(minRoundTripTimeMS, MILLISECONDS)
+                .run(MILLISECONDS,
+                        () -> {},
+                        onRemaining,
+                        () -> {
+                            throw createMongoRoundTripTimeoutException();
+                        });
+
     }
 
-    private static void runWithFixedTimout(final long ms, final Runnable onInfinite, final LongConsumer onRemaining) {
-        if (ms == 0) {
-            onInfinite.run();
-        } else {
+    private static void runWithFixedTimeout(final long ms, final LongConsumer onRemaining) {
+        if (ms != 0) {
             onRemaining.accept(ms);
         }
     }
@@ -214,7 +216,10 @@ public class TimeoutContext {
 
     /**
      * The override will be provided as the remaining value in
-     * {@link #runMaxTimeMSTimeout}, where 0 will invoke the onExpired path
+     * {@link #runMaxTimeMS}, where 0 is ignored.
+     * <p>
+     * NOTE: Suitable for static user-defined values only (i.e MaxAwaitTimeMS),
+     * not for running timeouts that adjust dynamically.
      */
     public void setMaxTimeOverride(final long maxTimeMS) {
         this.maxTimeSupplier = () -> maxTimeMS;
@@ -222,7 +227,7 @@ public class TimeoutContext {
 
     /**
      * The override will be provided as the remaining value in
-     * {@link #runMaxTimeMSTimeout}, where 0 will invoke the onExpired path
+     * {@link #runMaxTimeMS}, where 0 is ignored.
      */
     public void setMaxTimeOverrideToMaxCommitTime() {
         this.maxTimeSupplier = () -> getMaxCommitTimeMS();
@@ -242,12 +247,12 @@ public class TimeoutContext {
         return timeoutOrAlternative(0);
     }
 
-    public Timeout createConnectTimeoutMs() {
-        // null timeout treated as infinite will be later than the other
-
-        return Timeout.earliest(
-                Timeout.expiresIn(getTimeoutSettings().getConnectTimeoutMS(), MILLISECONDS, ZERO_DURATION_MEANS_INFINITE),
-                Timeout.nullAsInfinite(timeout));
+    public int getConnectTimeoutMs() {
+        final long connectTimeoutMS = getTimeoutSettings().getConnectTimeoutMS();
+        return Math.toIntExact(Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
+                () -> connectTimeoutMS,
+                (ms) -> connectTimeoutMS == 0 ? ms : Math.min(ms, connectTimeoutMS),
+                () -> throwMongoTimeoutException("The operation timeout has expired.")));
     }
 
     public void resetTimeout() {

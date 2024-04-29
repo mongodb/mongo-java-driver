@@ -60,7 +60,7 @@ class CommandMessageTest {
         BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
         SessionContext sessionContext = mock(SessionContext.class);
         TimeoutContext timeoutContext = mock(TimeoutContext.class, mock -> {
-            doThrow(new MongoOperationTimeoutException("test")).when(mock).runMaxTimeMSTimeout(any(), any(), any());
+            doThrow(new MongoOperationTimeoutException("test")).when(mock).runMaxTimeMS(any());
         });
         OperationContext operationContext = mock(OperationContext.class, mock -> {
             when(mock.getSessionContext()).thenReturn(sessionContext);
