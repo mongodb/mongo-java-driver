@@ -377,7 +377,7 @@ public class OidcAuthenticationProseTests {
         MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
         // Create an OIDC configured client with `ENVIRONMENT:azure` and a valid
         // `TOKEN_RESOURCE` and no username.
-        MongoCredential credential = Assertions.assertNotNull(new ConnectionString(oidcUri).getCredential());
+        MongoCredential credential = Assertions.assertNotNull(clientSettings.getCredential());
         assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
         assertNull(credential.getUserName());
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
