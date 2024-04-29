@@ -55,6 +55,11 @@ final class ConnectionStringUnitTest {
 
     @Test
     public void mustDecodeNonOidcAsWhole()  {
+        ConnectionString cs1 = new ConnectionString(
+                "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                        + "SERVICE_NAME:" + encode("ot her") + ",CANONICALIZE_HOST_NAME:true&authSource=$external");
+        assertEquals("ot her", cs1.getCredential().getMechanismProperty("SERVICE_NAME", null));
+
         ConnectionString cs2 = new ConnectionString(
                 "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
                         + encode("SERVICE_NAME:ot her,CANONICALIZE_HOST_NAME:true&authSource=$external"));

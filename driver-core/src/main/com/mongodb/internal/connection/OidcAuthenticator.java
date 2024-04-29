@@ -78,6 +78,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final String GCP_ENVIRONMENT = "gcp";
     private static final List<String> IMPLEMENTED_ENVIRONMENTS = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT, TEST_ENVIRONMENT);
+    private static final List<String> USER_SUPPORTED_ENVIRONMENTS = Arrays.asList(
+            AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
     private static final List<String> REQUIRES_TOKEN_RESOURCE = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
     private static final List<String> ALLOWS_USERNAME = Arrays.asList(
@@ -192,8 +194,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return machine != null ? machine : assertNotNull(human);
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    static OidcCallback getTestCallback() {
+    private static OidcCallback getTestCallback() {
         return (context) -> {
             String accessToken = readTokenFromFile();
             return new OidcCallbackResult(accessToken);
@@ -587,7 +588,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             Object environmentName = mechanismProperties.get(ENVIRONMENT_KEY.toLowerCase());
             if (environmentName != null) {
                 if (!(environmentName instanceof String) || !IMPLEMENTED_ENVIRONMENTS.contains(environmentName)) {
-                    throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be one of: " + IMPLEMENTED_ENVIRONMENTS);
+                    throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be one of: " + USER_SUPPORTED_ENVIRONMENTS);
                 }
             }
         }
