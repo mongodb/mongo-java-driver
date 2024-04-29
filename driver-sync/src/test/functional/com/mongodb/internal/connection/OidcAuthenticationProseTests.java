@@ -107,6 +107,10 @@ public class OidcAuthenticationProseTests {
         return getenv("OIDC_ENV");
     }
 
+    private static void assumeAzure() {
+        assumeTrue(getOidcEnv().equals("azure"));
+    }
+
     @Nullable
     private static String getUserWithDomain(@Nullable final String user) {
         return user == null ? null : user + "@" + getenv("OIDC_DOMAIN");
@@ -368,14 +372,14 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void test5p1AzureSucceedsWithNoUsername() {
-        assumeTrue(getOidcEnv().equals("azure"));
+        assumeAzure();
         String oidcUri = getOidcUri();
         MongoClientSettings clientSettings = createSettings(oidcUri, createCallback(), null);
         // Create an OIDC configured client with `ENVIRONMENT:azure` and a valid
         // `TOKEN_RESOURCE` and no username.
         MongoCredential credential = Assertions.assertNotNull(new ConnectionString(oidcUri).getCredential());
         assertNotNull(credential.getMechanismProperty(TOKEN_RESOURCE_KEY, null));
-        assertNull(Assertions.assertNotNull(clientSettings.getCredential()).getUserName());
+        assertNull(credential.getUserName());
         try (MongoClient mongoClient = createMongoClient(clientSettings)) {
             // Perform a `find` operation that succeeds.
             performFind(mongoClient);
@@ -384,7 +388,7 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void test5p2AzureFailsWithBadUsername() {
-        assumeTrue(getOidcEnv().equals("azure"));
+        assumeAzure();
         String oidcUri = getOidcUri();
         ConnectionString cs = new ConnectionString(oidcUri);
         MongoCredential oldCredential = Assertions.assertNotNull(cs.getCredential());
