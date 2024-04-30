@@ -71,7 +71,7 @@ public class OperationContext {
         }
 
         public void onAttemptFailure(final Throwable failure) {
-            if (!(failure instanceof MongoConnectionPoolClearedException)) {
+            if (candidate != null && !(failure instanceof MongoConnectionPoolClearedException)) {
                 deprioritized.add(candidate);
             }
             candidate = null;

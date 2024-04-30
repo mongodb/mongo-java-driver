@@ -38,6 +38,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
@@ -112,6 +113,11 @@ final class ServerDeprioritizationTest {
         serverDeprioritization.onAttemptFailure(
                 new MongoConnectionPoolClearedException(new ServerId(new ClusterId(), new ServerAddress()), null));
         assertEquals(ALL_SERVERS, serverDeprioritization.apply(ALL_SELECTOR).select(SHARDED_CLUSTER));
+    }
+
+    @Test
+    void onAttemptFailureDoesNotThrowIfNoCandidate() {
+        assertDoesNotThrow(() -> serverDeprioritization.onAttemptFailure(new RuntimeException()));
     }
 
     private void deprioritize(final ServerDescription... serverDescriptions) {
