@@ -241,7 +241,7 @@ import static java.util.Collections.unmodifiableList;
  * </li>
  * <li>{@code authMechanismProperties=PROPERTY_NAME:PROPERTY_VALUE,PROPERTY_NAME2:PROPERTY_VALUE2}: This option allows authentication
  * mechanism properties to be set on the connection string. Property values must be percent-encoded individually, when
- * separator or escape characters are used (including {@code ,} (comma), {@code =}, {@code +}, {@code &}, and {@code %}). The
+ * special characters are used, including {@code ,} (comma), {@code =}, {@code +}, {@code &}, and {@code %}. The
  * entire substring following the {@code =} should not itself be encoded.
  * </li>
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
