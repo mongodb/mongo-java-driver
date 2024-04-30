@@ -49,7 +49,7 @@ public interface InternalConnection extends BufferProvider {
     ServerDescription getInitialServerDescription();
 
     /**
-     * Opens the connection so its ready for use
+     * Opens the connection so its ready for use. Will perform a handshake.
      */
     void open();
 
