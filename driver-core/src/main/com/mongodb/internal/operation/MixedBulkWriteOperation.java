@@ -51,7 +51,7 @@ import org.bson.FieldNameValidator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -141,7 +141,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> writeFunction) {
-        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+        BinaryOperator<Throwable> onAttemptFailure =
                 (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
                         CommandOperationHelper.onRetryableWriteAttemptFailure(
                                 operationContext, previouslyChosenException, mostRecentAttemptException);
@@ -154,7 +154,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> writeFunction) {
-        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+        BinaryOperator<Throwable> onAttemptFailure =
                 (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
                         CommandOperationHelper.onRetryableWriteAttemptFailure(
                                 operationContext, previouslyChosenException, mostRecentAttemptException);

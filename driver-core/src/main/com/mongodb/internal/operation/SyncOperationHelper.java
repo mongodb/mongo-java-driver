@@ -41,6 +41,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -274,7 +275,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
             final OperationContext operationContext, final Supplier<R> writeFunction) {
-        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+        BinaryOperator<Throwable> onAttemptFailure =
                 (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
                         CommandOperationHelper.onRetryableWriteAttemptFailure(
                                 operationContext, previouslyChosenException, mostRecentAttemptException);
@@ -287,7 +288,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
-        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+        BinaryOperator<Throwable> onAttemptFailure =
                 (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
                         CommandOperationHelper.onRetryableReadAttemptFailure(
                                 operationContext, previouslyChosenException, mostRecentAttemptException);

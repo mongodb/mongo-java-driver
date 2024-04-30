@@ -44,7 +44,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -286,7 +286,7 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
-        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+        BinaryOperator<Throwable> onAttemptFailure =
                 (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
                         CommandOperationHelper.onRetryableReadAttemptFailure(
                                 operationContext, previouslyChosenException, mostRecentAttemptException);
@@ -299,7 +299,7 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateWriteWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
-        BiFunction<Throwable, Throwable, Throwable> onAttemptFailure =
+        BinaryOperator<Throwable> onAttemptFailure =
                 (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) ->
                         CommandOperationHelper.onRetryableWriteAttemptFailure(
                                 operationContext, previouslyChosenException, mostRecentAttemptException);
