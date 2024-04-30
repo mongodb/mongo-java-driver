@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.AuthenticationMechanism;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
@@ -30,9 +32,13 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
+import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.EncoderContext;
+import org.bson.io.BasicOutputBuffer;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
@@ -55,6 +61,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         super(credential, clusterConnectionMode, serverApi);
     }
 
+    @Override
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
         doAsSubject(() -> {
             SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
@@ -121,7 +128,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
     private BsonDocument getNextSaslResponse(final SaslClient saslClient, final InternalConnection connection) {
-        BsonDocument response = getSpeculativeAuthenticateResponse();
+        BsonDocument response = connection.opened() ? null : getSpeculativeAuthenticateResponse();
         if (response != null) {
             return response;
         }
@@ -136,9 +143,9 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     private void getNextSaslResponseAsync(final SaslClient saslClient, final InternalConnection connection,
                                           final SingleResultCallback<Void> callback) {
-        BsonDocument response = getSpeculativeAuthenticateResponse();
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
+            BsonDocument response = connection.opened() ? null : getSpeculativeAuthenticateResponse();
             if (response == null) {
                 byte[] serverResponse = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
                 sendSaslStartAsync(serverResponse, connection, (result, t) -> {
@@ -280,6 +287,15 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         }
     }
 
+    static byte[] toBson(final BsonDocument document) {
+        byte[] bytes;
+        BasicOutputBuffer buffer = new BasicOutputBuffer();
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
+        bytes = new byte[buffer.size()];
+        System.arraycopy(buffer.getInternalBuffer(), 0, bytes, 0, buffer.getSize());
+        return bytes;
+    }
+
     private final class Continuator implements SingleResultCallback<BsonDocument> {
         private final SaslClient saslClient;
         private final BsonDocument saslStartDocument;
@@ -331,7 +347,51 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 disposeOfSaslClient(saslClient);
             }
         }
-
     }
 
+    protected abstract static class SaslClientImpl implements SaslClient {
+        private final MongoCredential credential;
+
+        protected SaslClientImpl(final MongoCredential credential) {
+            this.credential = credential;
+        }
+
+        @Override
+        public boolean hasInitialResponse() {
+            return true;
+        }
+
+        @Override
+        public byte[] unwrap(final byte[] bytes, final int i, final int i1) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
+        public byte[] wrap(final byte[] bytes, final int i, final int i1) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
+        public Object getNegotiatedProperty(final String s) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
+        public void dispose() {
+            // nothing to do
+        }
+
+        @Override
+        public final String getMechanismName() {
+            AuthenticationMechanism authMechanism = getCredential().getAuthenticationMechanism();
+            if (authMechanism == null) {
+                throw new IllegalArgumentException("Authentication mechanism cannot be null");
+            }
+            return authMechanism.getMechanismName();
+        }
+
+        protected final MongoCredential getCredential() {
+            return credential;
+        }
+    }
 }

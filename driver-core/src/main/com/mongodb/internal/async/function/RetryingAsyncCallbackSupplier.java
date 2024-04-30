@@ -20,8 +20,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 /**
@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupplier<R> {
     private final RetryState state;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
-    private final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer;
+    private final BinaryOperator<Throwable> failedResultTransformer;
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
@@ -75,7 +75,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      */
     public RetryingAsyncCallbackSupplier(
             final RetryState state,
-            final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer,
+            final BinaryOperator<Throwable> failedResultTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final AsyncCallbackSupplier<R> asyncFunction) {
         this.state = state;
