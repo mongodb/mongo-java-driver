@@ -134,25 +134,11 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"int",
   "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
 },
 {
-  "name":"java.io.FilePermission"
-},
-{
-  "name":"java.lang.Object",
-  "queryAllDeclaredMethods":true
-},
-{
   "name":"java.lang.Record"
-},
-{
-  "name":"java.lang.RuntimePermission"
 },
 {
   "name":"java.lang.Thread",
@@ -167,52 +153,22 @@
   "methods":[{"name":"isVarArgs","parameterTypes":[] }]
 },
 {
-  "name":"java.net.NetPermission"
-},
-{
   "name":"java.net.Socket",
   "methods":[{"name":"setOption","parameterTypes":["java.net.SocketOption","java.lang.Object"] }]
-},
-{
-  "name":"java.net.SocketPermission"
-},
-{
-  "name":"java.net.URLPermission",
-  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String"] }]
 },
 {
   "name":"java.nio.Buffer"
 },
 {
-  "name":"java.security.AllPermission"
-},
-{
   "name":"java.security.SecureRandomParameters"
-},
-{
-  "name":"java.security.SecurityPermission"
-},
-{
-  "name":"java.util.PropertyPermission"
 },
 {
   "name":"java.util.concurrent.ForkJoinTask",
   "fields":[{"name":"aux"}, {"name":"status"}]
 },
 {
-  "name":"java.util.concurrent.atomic.AtomicBoolean",
-  "fields":[{"name":"value"}]
-},
-{
-  "name":"java.util.concurrent.atomic.AtomicReference",
-  "fields":[{"name":"value"}]
-},
-{
   "name":"java.util.concurrent.atomic.Striped64",
   "fields":[{"name":"base"}, {"name":"cellsBusy"}]
-},
-{
-  "name":"javax.smartcardio.CardPermission"
 },
 {
   "name":"jdk.internal.misc.Unsafe"
@@ -244,5 +200,17 @@
 {
   "name":"void",
   "fields":[{"name":"OPTIONS"}, {"name":"STRING_ENCODING"}, {"name":"STRUCTURE_ALIGNMENT"}, {"name":"TYPE_MAPPER"}]
+},
+{
+  "name":"org.bson.codecs.kotlin.DataClassCodecProvider"
+},
+{
+  "name":"org.bson.codecs.kotlinx.KotlinSerializerCodecProvider"
+},
+{
+  "name":"org.bson.codecs.record.RecordCodecProvider"
+},
+{
+  "name":"org.slf4j.Logger"
 }
 ]
