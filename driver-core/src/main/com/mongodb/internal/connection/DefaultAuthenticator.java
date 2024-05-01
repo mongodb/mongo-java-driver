@@ -32,7 +32,6 @@ import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotZero;
 import static java.lang.String.format;
 
 class DefaultAuthenticator extends Authenticator implements SpeculativeAuthenticator {
@@ -48,29 +47,19 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
 
     @Override
     void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
-        if (serverIsLessThanVersionFourDotZero(connectionDescription)) {
-            new ScramShaAuthenticator(getMongoCredentialWithCache().withMechanism(SCRAM_SHA_1), getClusterConnectionMode(), getServerApi())
-                    .authenticate(connection, connectionDescription);
-        } else {
-            try {
-                setDelegate(connectionDescription);
-                delegate.authenticate(connection, connectionDescription);
-            } catch (Exception e) {
-                throw wrapException(e);
-            }
+        try {
+            setDelegate(connectionDescription);
+            delegate.authenticate(connection, connectionDescription);
+        } catch (Exception e) {
+            throw wrapException(e);
         }
     }
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
-        if (serverIsLessThanVersionFourDotZero(connectionDescription)) {
-            new ScramShaAuthenticator(getMongoCredentialWithCache().withMechanism(SCRAM_SHA_1), getClusterConnectionMode(), getServerApi())
-                    .authenticateAsync(connection, connectionDescription, callback);
-        } else {
-            setDelegate(connectionDescription);
-            delegate.authenticateAsync(connection, connectionDescription, callback);
-        }
+        setDelegate(connectionDescription);
+        delegate.authenticateAsync(connection, connectionDescription, callback);
     }
 
     @Override
