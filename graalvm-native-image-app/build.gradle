@@ -40,9 +40,31 @@ graalvmNative {
         // The same is true about executing the `metadataCopy` Gradle task.
         // This may be a manifestation of an issue with the `org.graalvm.buildtools.native` plugin.
         enabled = false
-        defaultMode = 'standard'
+        defaultMode = 'direct'
+        def taskExecutedWithAgentAttached = 'run'
+        modes {
+            direct {
+                // see https://www.graalvm.org/latest/reference-manual/native-image/metadata/ExperimentalAgentOptions
+                options.add("config-output-dir=$buildDir/native/agent-output/$taskExecutedWithAgentAttached")
+                // `experimental-configuration-with-origins` produces
+                // `graalvm-native-image-app/build/native/agent-output/run/reflect-origins.txt`
+                // and similar files that explain the origin of each of the reachability metadata piece.
+                // However, for some reason, the actual reachability metadata is not generated when this option is enabled,
+                // so enable it manually if you need an explanation for a specific reachability metadata entry,
+                // and expect the build to fail.
+                // options.add('experimental-configuration-with-origins')
+
+                // `experimental-class-define-support` does not seem to do what it is supposed to do.
+                // We need this option to work if we want to support `UnixServerAddress` in native image.
+                // Unfortunately, the tracing agent neither generates the metadata in
+                // `graalvm-native-image-app/src/main/resources/META-INF/native-image/proxy-config.json`,
+                // nor does it extract the bytecode of the generated classes to
+                // `graalvm-native-image-app/src/main/resources/META-INF/native-image/agent-extracted-predefined-classes`.
+                options.add('experimental-class-define-support')
+            }
+        }
         metadataCopy {
-            inputTaskNames.add('run')
+            inputTaskNames.add(taskExecutedWithAgentAttached)
             outputDirectories.add('src/main/resources/META-INF/native-image')
             mergeWithExisting = false
         }
