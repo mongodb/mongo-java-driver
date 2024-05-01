@@ -139,7 +139,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
- * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation. Note: This parameter is part of an Alpha API and may be
+ * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation. Note: This parameter is part of an {@linkplain Alpha Alpha API} and may be
  * subject to changes or even removal in future releases.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
