@@ -19,6 +19,7 @@ package com.mongodb.annotations;
 /**
  * Enumerates the reasons an API element might be marked with annotations like {@link Alpha} or {@link Beta}.
  */
+@Beta(Reason.CLIENT)
 public enum Reason {
     /**
      * Indicates that the status of the driver API is the reason for the annotation.

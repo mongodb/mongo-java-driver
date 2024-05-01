@@ -18,6 +18,8 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.Projections;
@@ -288,6 +290,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     FindPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**

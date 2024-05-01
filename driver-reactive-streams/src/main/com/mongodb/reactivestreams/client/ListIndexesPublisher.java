@@ -16,6 +16,8 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -85,6 +87,7 @@ public interface ListIndexesPublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     ListIndexesPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**

@@ -17,6 +17,8 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -85,6 +87,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     AggregateIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**

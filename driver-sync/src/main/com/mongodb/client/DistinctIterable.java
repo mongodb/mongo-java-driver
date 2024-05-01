@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -102,5 +104,6 @@ public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     DistinctIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 }
