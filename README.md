@@ -54,10 +54,10 @@ with prior patch releases of the same minor release branch.
 
 #### @Alpha
 
-APIs marked with the `@Alpha` annotation at a public API element are in the early stages of development, subject to
-incompatible changes, or even removal, in a future release and may lack some intended features. An APIs bearing `@Alpha` 
-annotation may contain known issues affecting functionality, performance, and stability. They are also exempt from any 
-compatibility guarantees made by its containing library.
+APIs marked with the `@Alpha` annotation are in the early stages of development, subject to incompatible changes, 
+or even removal, in a future release and may lack some intended features. An APIs bearing `@Alpha` annotation may 
+contain known issues affecting functionality, performance, and stability. They are also exempt from any compatibility 
+guarantees made by its containing library.
 
 It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or for <i>libraries</i>
 (which get included on users' CLASSPATHs, outside the library developers' control) to depend on these APIs. Alpha APIs
