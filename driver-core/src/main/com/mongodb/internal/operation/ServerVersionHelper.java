@@ -25,7 +25,6 @@ import com.mongodb.connection.ConnectionDescription;
 public final class ServerVersionHelper {
 
     public static final int MIN_WIRE_VERSION = 0;
-    public static final int THREE_DOT_SIX_WIRE_VERSION = 6;
     public static final int FOUR_DOT_ZERO_WIRE_VERSION = 7;
     public static final int FOUR_DOT_TWO_WIRE_VERSION = 8;
     public static final int FOUR_DOT_FOUR_WIRE_VERSION = 9;
