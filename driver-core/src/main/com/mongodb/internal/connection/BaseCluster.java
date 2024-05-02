@@ -49,6 +49,8 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
@@ -82,6 +84,7 @@ import static java.util.Arrays.asList;
 import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.stream.Collectors.toList;
 
 abstract class BaseCluster implements Cluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
@@ -351,12 +354,12 @@ abstract class BaseCluster implements Cluster {
     }
 
     private ServerSelector getCompleteServerSelector(final ServerSelector serverSelector, final ServerDeprioritization serverDeprioritization) {
-        ServerSelector latencyMinimizingServerSelector =
-                new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS);
-        CompositeServerSelector compositeSelector = settings.getServerSelector() == null
-                ? new CompositeServerSelector(asList(serverSelector, latencyMinimizingServerSelector))
-                : new CompositeServerSelector(asList(serverSelector, settings.getServerSelector(), latencyMinimizingServerSelector));
-        return serverDeprioritization.apply(compositeSelector);
+        List<ServerSelector> selectors = Stream.of(
+                serverSelector,
+                settings.getServerSelector(),
+                new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS)
+        ).filter(Objects::nonNull).collect(toList());
+        return serverDeprioritization.apply(new CompositeServerSelector(selectors));
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress) {

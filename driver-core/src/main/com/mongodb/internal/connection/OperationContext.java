@@ -97,16 +97,10 @@ public class OperationContext {
             @Override
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 if (isEnabled(clusterDescription.getType())) {
-                    List<ServerDescription> filteredServerDescriptions = ClusterDescriptionHelper.getServersByPredicate(
+                    List<ServerDescription> nonDeprioritizedServerDescriptions = ClusterDescriptionHelper.getServersByPredicate(
                             clusterDescription, serverDescription -> !deprioritized.contains(serverDescription.getAddress()));
-                    ClusterDescription filteredClusterDescription = new ClusterDescription(
-                            clusterDescription.getConnectionMode(),
-                            clusterDescription.getType(),
-                            clusterDescription.getSrvResolutionException(),
-                            filteredServerDescriptions,
-                            clusterDescription.getClusterSettings(),
-                            clusterDescription.getServerSettings());
-                    List<ServerDescription> result = wrapped.select(filteredClusterDescription);
+                    List<ServerDescription> result = wrapped.select(
+                            copyWithServerDescriptions(clusterDescription, nonDeprioritizedServerDescriptions));
                     if (result.isEmpty()) {
                         // fall back to selecting from all servers ignoring the deprioritized ones
                         result = wrapped.select(clusterDescription);
@@ -115,6 +109,17 @@ public class OperationContext {
                 } else {
                     return wrapped.select(clusterDescription);
                 }
+            }
+
+            private ClusterDescription copyWithServerDescriptions(
+                    final ClusterDescription clusterDescription, final List<ServerDescription> serverDescriptions) {
+                return new ClusterDescription(
+                        clusterDescription.getConnectionMode(),
+                        clusterDescription.getType(),
+                        clusterDescription.getSrvResolutionException(),
+                        serverDescriptions,
+                        clusterDescription.getClusterSettings(),
+                        clusterDescription.getServerSettings());
             }
         }
     }
