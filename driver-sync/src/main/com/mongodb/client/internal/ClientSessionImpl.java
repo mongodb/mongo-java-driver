@@ -203,7 +203,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         .execute(new CommitTransactionOperation(writeConcern,
                                 transactionState == TransactionState.COMMITTED)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
-                setTimeoutContext(null);
             }
         } catch (MongoException e) {
             clearTransactionContextOnError(e);
