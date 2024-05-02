@@ -67,7 +67,7 @@ import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBat
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION
 import static java.util.concurrent.TimeUnit.NANOSECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -81,7 +81,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def serverAddress = new ServerAddress()
     def connectionId = new ConnectionId(SERVER_ID, 1, 1)
     def commandListener = new TestCommandListener()
-    def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+    def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
 
     def connectionDescription = new ConnectionDescription(connectionId, 3,
             ServerType.STANDALONE, getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), [])

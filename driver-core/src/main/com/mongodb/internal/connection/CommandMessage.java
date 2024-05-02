@@ -49,7 +49,6 @@ import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -270,9 +269,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private void checkServerVersionForTransactionSupport() {
-        int wireVersion = getSettings().getMaxWireVersion();
-        if (wireVersion < FOUR_DOT_ZERO_WIRE_VERSION
-                || (wireVersion < FOUR_DOT_TWO_WIRE_VERSION && getSettings().getServerType() == SHARD_ROUTER)) {
+        if (getSettings().getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION && getSettings().getServerType() == SHARD_ROUTER) {
             throw new MongoClientException("Transactions are not supported by the MongoDB cluster to which this client is connected.");
         }
     }
@@ -287,12 +284,12 @@ public final class CommandMessage extends RequestMessage {
 
     private static OpCode getOpCode(final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
             @Nullable final ServerApi serverApi) {
-        return isServerVersionAtLeastThreeDotSix(settings) || clusterConnectionMode == LOAD_BALANCED || serverApi != null
+        return isServerVersionKnown(settings) || clusterConnectionMode == LOAD_BALANCED || serverApi != null
                 ? OpCode.OP_MSG
                 : OpCode.OP_QUERY;
     }
 
-    private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
-        return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
+    private static boolean isServerVersionKnown(final MessageSettings settings) {
+        return settings.getMaxWireVersion() >= FOUR_DOT_ZERO_WIRE_VERSION;
     }
 }
