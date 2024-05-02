@@ -71,10 +71,11 @@ public class OperationContext {
         }
 
         public void onAttemptFailure(final Throwable failure) {
-            if (candidate != null && !(failure instanceof MongoConnectionPoolClearedException)) {
-                deprioritized.add(candidate);
+            if (candidate == null || failure instanceof MongoConnectionPoolClearedException) {
+                candidate = null;
+                return;
             }
-            candidate = null;
+            deprioritized.add(candidate);
         }
 
         private static boolean isEnabled(final ClusterType clusterType) {
