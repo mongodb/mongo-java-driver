@@ -393,8 +393,8 @@ final class AsyncFunctionsTest {
         // chain of 2 in try.
         // WARNING: "onErrorIf" will consider everything in
         // the preceding chain to be part of the try.
-        // Use nested async chains to define the beginning
-        // of the "try".
+        // Use nested async chains, or convenience methods,
+        // to define the beginning of the try.
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -487,6 +487,56 @@ final class AsyncFunctionsTest {
                         async(8, c);
                     }).onErrorIf(t -> t instanceof IllegalStateException, (t, c) -> {
                         async(9, c);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
+    void testTryCatchHelper() {
+        assertBehavesSameVariations(4,
+                () -> {
+                    plain(0);
+                    try {
+                        sync(1);
+                    } catch (Throwable t) {
+                        plain(2);
+                        throw t;
+                    }
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        plain(0);
+                        c.complete(c);
+                    }).thenRunTryCatchAsyncBlocks(c -> {
+                        async(1, c);
+                    }, Throwable.class, (t, c) -> {
+                        plain(2);
+                        c.completeExceptionally(t);
+                    }).finish(callback);
+                });
+
+        assertBehavesSameVariations(5,
+                () -> {
+                    plain(0);
+                    try {
+                        sync(1);
+                    } catch (Throwable t) {
+                        plain(2);
+                        throw t;
+                    }
+                    sync(4);
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        plain(0);
+                        c.complete(c);
+                    }).thenRunTryCatchAsyncBlocks(c -> {
+                        async(1, c);
+                    }, Throwable.class, (t, c) -> {
+                        plain(2);
+                        c.completeExceptionally(t);
+                    }).thenRun(c -> {
+                        async(4, c);
                     }).finish(callback);
                 });
     }
