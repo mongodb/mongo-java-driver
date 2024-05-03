@@ -186,16 +186,20 @@ public final class RetryState {
             final boolean onlyRuntimeExceptions) throws Throwable {
         assertTrue(attempt() < attempts);
         assertNotNull(attemptException);
-        if (attemptException instanceof MongoOperationTimeoutException) {
-            throw attemptException;
-        }
         if (onlyRuntimeExceptions) {
             assertTrue(isRuntime(attemptException));
         }
         assertTrue(!isFirstAttempt() || previouslyChosenException == null);
         Throwable newlyChosenException = transformException(previouslyChosenException, attemptException, onlyRuntimeExceptions, exceptionTransformer);
 
-        if (isLastAttempt()) {
+        /*
+         * A MongoOperationTimeoutException indicates that the operation timed out, either during command execution or server selection.
+         * The timeout for server selection is determined by the computedServerSelectionMS = min(serverSelectionTimeoutMS, timeoutMS).
+         *
+         * The isLastAttempt() method checks if the timeoutMS has expired, which could be greater than the computedServerSelectionMS.
+         * Therefore, it's important to check if the exception is an instance of MongoOperationTimeoutException to detect a timeout.
+         */
+        if (isLastAttempt() || attemptException instanceof MongoOperationTimeoutException) {
             previouslyChosenException = newlyChosenException;
             /*
              * The function of isLastIteration() is to indicate if retrying has been explicitly halted. Such a stop is not interpreted as
