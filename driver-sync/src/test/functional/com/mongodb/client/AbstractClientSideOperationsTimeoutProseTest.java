@@ -56,7 +56,6 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Tag;
@@ -713,7 +712,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @Tag("setsFailPoint")
     @Test
     @DisplayName("Should ignore wTimeoutMS of WriteConcern to initial and subsequent commitTransaction operations")
-    @Disabled //TODO JAVA-5425
     public void shouldIgnoreWtimeoutMsOfWriteConcernToInitialAndSubsequentCommitTransactionOperations() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
@@ -738,7 +736,14 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
         List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("commitTransaction");
         assertEquals(2, commandStartedEvents.size());
-        commandStartedEvents.forEach(e -> assertFalse(e.getCommand().containsKey("writeConcern")));
+
+        commandStartedEvents.forEach(e -> {
+            BsonDocument command = e.getCommand();
+            if (command.containsKey("writeConcern")) {
+                BsonDocument writeConcern = command.getDocument("writeConcern");
+                assertFalse(writeConcern.isEmpty());
+                assertFalse(writeConcern.containsKey("wTimeoutMS"));
+            }});
     }
 
     private static Stream<Arguments> test8ServerSelectionArguments() {
