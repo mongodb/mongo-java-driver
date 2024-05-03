@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mongodb.scala
+package conventions
 
-import org.junit.runner.RunWith
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatestplus.junit.JUnitRunner
+plugins {
+    id("java-library")
+}
 
-@RunWith(classOf[JUnitRunner])
-abstract class BaseSpec extends AnyFlatSpec with Matchers {}
+
+/**
+ * Create a test artifact configuration so that test resources can be consumed by other projects.
+ *
+ * TODO: Migrate to using https://docs.gradle.org/current/userguide/java_testing.html#sec:java_test_fixtures
+ */
+val testArtifacts by configurations.creating
+val testJar by tasks.registering(Jar::class) {
+    archiveBaseName.set("${project.name}-test")
+    from(sourceSets.test.get().output)
+}
+
+tasks.test {
+    mustRunAfter(testJar)
+}
+
+artifacts {
+    add("testArtifacts", testJar)
+}

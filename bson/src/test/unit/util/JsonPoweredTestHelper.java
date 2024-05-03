@@ -87,7 +87,15 @@ public final class JsonPoweredTestHelper {
 
     public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
         List<File> files = new ArrayList<>();
-        addFilesFromDirectory(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()), files);
+
+        URL resource = JsonPoweredTestHelper.class.getResource(resourcePath);
+        File directory;
+        try {
+            directory = new File(resource.toURI());
+        } catch (IllegalArgumentException e) {
+            directory = new File(resource.toExternalForm());
+        }
+        addFilesFromDirectory(directory, files);
         return files;
     }
 

@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Suppress("UnstableApiUsage")
+dependencyResolutionManagement { versionCatalogs { create("libs") { from(files("../gradle/libs.versions.toml")) } } }
 
-plugins {
-    id('conventions.testArtifacts')
-}
-
-archivesBaseName = 'bson'
-description = 'The BSON library'
-
-ext {
-    pomName = 'BSON'
-    pomURL = 'https://bsonspec.org'
-}
-
-afterEvaluate {
-    jar.manifest.attributes['Automatic-Module-Name'] = 'org.mongodb.bson'
-    jar.manifest.attributes['Import-Package'] = 'org.slf4j.*;resolution:=optional'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
 }

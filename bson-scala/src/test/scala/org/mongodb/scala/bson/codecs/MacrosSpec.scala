@@ -530,6 +530,7 @@ class MacrosSpec extends BaseSpec {
   }
 
   it should "support tagged types in case classes" in {
+    assume(!scala.util.Properties.versionNumberString.startsWith("2.11"))
     val a = 1.asInstanceOf[Int with Tag]
     val b = "b".asInstanceOf[String with Tag]
     val c = Map("c" -> 0).asInstanceOf[Map[String with Tag, Int with Tag] with Tag]

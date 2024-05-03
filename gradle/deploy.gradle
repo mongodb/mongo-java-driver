@@ -19,28 +19,12 @@ def deployedProjects =  subprojects - utilProjects
 
 configure(deployedProjects) {
 
-    def isScala = project.name.contains('scala')
-    def hasAllScalaVersions = project.hasProperty('allScalaVersions')
-    def isInvalidScalaProject = false // isScala && !hasAllScalaVersions // TODO JAVA-3564
-
     task publishSnapshots {
         group = 'publishing'
         description = 'Publishes snapshots to Sonatype'
 
         if ( version.endsWith('-SNAPSHOT')) {
-            if (isInvalidScalaProject) {
-                doFirst {
-                    def cause = """
-                    | Not publishing all Scala versions:
-                    | =================================
-                    |
-                    | You must set the -PallScalaVersions flag when publishing
-                    |""".stripMargin()
-                        throw new GradleException(cause)
-                }
-            } else {
-                dependsOn tasks.withType(PublishToMavenRepository)
-            }
+            dependsOn tasks.withType(PublishToMavenRepository)
         }
     }
 

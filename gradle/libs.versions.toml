@@ -1,0 +1,89 @@
+# Copyright 2008-present MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[versions]
+scala-v2-v13 = "2.13.14"
+scala-v2-v12 = "2.12.19"
+scala-v2-v11 = "2.11.12"
+scala-test = "3.2.18"
+scala-test-plus = "3.2.18.0"
+reflections = "0.9.10"
+logback = "1.3.14"
+
+junit-bom = "5.8.2"
+spock-bom = "2.1-groovy-3.0"
+hamcrest = "1.3"
+
+spotless-plugin = "6.14.0"
+test-logger-plugin = "4.0.0"
+
+[libraries]
+scala-library-v2-v13 = { module = "org.scala-lang:scala-library", version.ref = "scala-v2-v13" }
+scala-reflect-v2-v13 = { module = "org.scala-lang:scala-reflect", version.ref = "scala-v2-v13" }
+scala-test-flatspec-v2-v13 = { module = "org.scalatest:scalatest-flatspec_2.13", version.ref = "scala-test" }
+scala-test-shouldmatchers-v2-v13 = { module = "org.scalatest:scalatest-shouldmatchers_2.13", version.ref = "scala-test" }
+scala-test-mockito-v2-v13 = { module = "org.scalatestplus:mockito-4-11_2.13", version.ref = "scala-test-plus" }
+scala-test-junit-runner-v2-v13 = { module = "org.scalatestplus:junit-5-10_2.13", version.ref = "scala-test-plus" }
+
+scala-library-v2-v12 = { module = "org.scala-lang:scala-library", version.ref = "scala-v2-v12" }
+scala-reflect-v2-v12 = { module = "org.scala-lang:scala-reflect", version.ref = "scala-v2-v12" }
+scala-test-flatspec-v2-v12 = { module = "org.scalatest:scalatest-flatspec_2.12", version.ref = "scala-test" }
+scala-test-shouldmatchers-v2-v12 = { module = "org.scalatest:scalatest-shouldmatchers_2.12", version.ref = "scala-test" }
+scala-test-mockito-v2-v12 = { module = "org.scalatestplus:mockito-4-11_2.12", version.ref = "scala-test-plus" }
+scala-test-junit-runner-v2-v12 = { module = "org.scalatestplus:junit-5-10_2.12", version.ref = "scala-test-plus" }
+
+scala-library-v2-v11 = { module = "org.scala-lang:scala-library", version.ref = "scala-v2-v11" }
+scala-reflect-v2-v11 = { module = "org.scala-lang:scala-reflect", version.ref = "scala-v2-v11" }
+scala-test-flatspec-v2-v11 = { module = "org.scalatest:scalatest-flatspec_2.11", version.ref = "scala-test" }
+scala-test-shouldmatchers-v2-v11 = { module = "org.scalatest:scalatest-shouldmatchers_2.11", version.ref = "scala-test" }
+scala-test-mockito-v2-v11 = { module = "org.scalatestplus:mockito-4-11_2.11", version.ref = "scala-test-plus" }
+scala-test-junit-runner-v2-v11 = { module = "org.scalatestplus:junit-5-10_2.11", version.ref = "scala-test-plus" }
+
+reflections-library = {module = "org.reflections:reflections", version.ref = "reflections" }
+
+junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit-bom" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params" }
+junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine" }
+junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine" }
+
+spock-bom = { group = "org.spockframework", name = "spock-bom", version.ref = "spock-bom" }
+spock-core = { group = "org.spockframework", name = "spock-core" }
+spock-junit4 = { group = "org.spockframework", name = "spock-junit4" }
+
+hamcrest-all =  { module = "org.hamcrest:hamcrest-all", version.ref = "hamcrest" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+## Plugins defined in buildSrc get added as an impementation
+spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless-plugin"}
+test-logger-plugin = { group = "com.adarshr", name = "gradle-test-logger-plugin", version.ref = "test-logger-plugin"}
+
+[bundles]
+scala-v2-v13 = ["scala-library-v2-v13", "scala-reflect-v2-v13"]
+scala-v2-v12 = ["scala-library-v2-v12", "scala-reflect-v2-v12"]
+scala-v2-v11 = ["scala-library-v2-v11", "scala-reflect-v2-v11"]
+
+scala-test-v2-v13 = ["scala-test-flatspec-v2-v13", "scala-test-shouldmatchers-v2-v13", "scala-test-mockito-v2-v13",
+    "scala-test-junit-runner-v2-v13", "reflections-library"]
+scala-test-v2-v12 = ["scala-test-flatspec-v2-v12", "scala-test-shouldmatchers-v2-v12", "scala-test-mockito-v2-v12",
+    "scala-test-junit-runner-v2-v12", "reflections-library"]
+scala-test-v2-v11 = ["scala-test-flatspec-v2-v11", "scala-test-shouldmatchers-v2-v11", "scala-test-mockito-v2-v11",
+    "scala-test-junit-runner-v2-v11", "reflections-library"]
+
+junit = ["junit-jupiter-params", "junit-jupiter-engine", "junit-jupiter", "logback-classic", "hamcrest-all"]
+junit-vintage = ["junit-vintage-engine", "junit-jupiter-params", "junit-jupiter-engine", "junit-jupiter", "logback-classic", "hamcrest-all"]
+spock = ["spock-core", "spock-junit4"]
+
+
+

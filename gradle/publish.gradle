@@ -116,43 +116,6 @@ configure(javaProjects) { project ->
     }
 }
 
-configure(scalaProjects) { project ->
-    apply plugin: 'maven-publish'
-    apply plugin: 'signing'
-
-    task sourcesJar(type: Jar) {
-        from project.sourceSets.main.allScala
-        classifier = 'sources'
-    }
-
-    task scaladocJar(type: Jar) {
-        from scaladoc
-        classifier = 'javadoc'
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifactId = project.archivesBaseName.contains('bson') ? 'mongo-scala-bson' : 'mongo-scala-driver'
-                from project.components.java
-                artifact sourcesJar
-                artifact scaladocJar
-            }
-        }
-
-        repositories configureMavenRepositories(project)
-    }
-
-    afterEvaluate {
-        publishing.publications.mavenJava.pom configurePom(project)
-        signing {
-            useInMemoryPgpKeys(findProperty("signingKey"), findProperty("signingPassword"))
-            sign publishing.publications.mavenJava
-        }
-    }
-}
-
-
 configure(projectsWithManifest) { project ->
     apply plugin: 'biz.aQute.bnd.builder'
     afterEvaluate {

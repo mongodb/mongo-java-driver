@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+plugins {
+    id('conventions.testArtifacts')
+}
+
 archivesBaseName = 'mongodb-driver-sync'
 description =  'The MongoDB Synchronous Driver'
 ext {

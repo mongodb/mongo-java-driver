@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+plugins {
+    id('conventions.testArtifacts')
+}
+
 description = "A Reactive Streams implementation of the MongoDB Java driver"
 archivesBaseName = 'mongodb-driver-reactivestreams'
 

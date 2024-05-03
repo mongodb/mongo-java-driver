@@ -17,6 +17,7 @@
 
 plugins {
     id 'com.github.gmazzo.buildconfig' version '3.0.3'
+    id('conventions.testArtifacts')
 }
 
 archivesBaseName = 'mongodb-driver-core'
