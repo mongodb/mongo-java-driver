@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CrudTestHelper.replaceTypeAssertionWithActual;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -90,11 +89,9 @@ public final class CommandMonitoringTestHelper {
                 }
 
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
-                if (serverVersionAtLeast(3, 6)) {
-                    commandDocument.put("$db", new BsonString(actualDatabaseName));
-                    if (operation != null && operation.containsKey("read_preference")) {
-                        commandDocument.put("$readPreference", operation.getDocument("read_preference"));
-                    }
+                commandDocument.put("$db", new BsonString(actualDatabaseName));
+                if (operation != null && operation.containsKey("read_preference")) {
+                    commandDocument.put("$readPreference", operation.getDocument("read_preference"));
                 }
                 commandEvent = new CommandStartedEvent(null, 1, 1, null, actualDatabaseName, commandName,
                         commandDocument);
