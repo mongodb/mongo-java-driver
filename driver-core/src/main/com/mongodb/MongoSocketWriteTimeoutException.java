@@ -16,11 +16,15 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+
 /**
  * This exception is thrown when there is a timeout writing a response from the socket.
  *
  * @since CSOT
  */
+@Alpha(Reason.CLIENT)
 public class MongoSocketWriteTimeoutException extends MongoSocketException {
 
     private static final long serialVersionUID = 1L;

@@ -17,6 +17,8 @@
 package com.mongodb.reactivestreams.client;
 
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -200,6 +202,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     MapReducePublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**

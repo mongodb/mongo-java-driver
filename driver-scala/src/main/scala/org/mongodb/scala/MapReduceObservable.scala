@@ -16,8 +16,9 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
+import com.mongodb.annotations.{ Alpha, Reason }
 
+import java.util.concurrent.TimeUnit
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
 import org.mongodb.scala.bson.conversions.Bson
@@ -231,6 +232,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): MapReduceObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

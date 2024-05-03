@@ -19,6 +19,8 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.MongoCluster as JMongoCluster
 import java.util.concurrent.TimeUnit
 import org.bson.Document
@@ -70,6 +72,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      *
      * @return the optional timeout duration
      */
+    @Alpha(Reason.CLIENT)
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
     /**
@@ -126,6 +129,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * @see [MongoDatabase.timeout]
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCluster =
         MongoCluster(wrapped.withTimeout(timeout, timeUnit))
 

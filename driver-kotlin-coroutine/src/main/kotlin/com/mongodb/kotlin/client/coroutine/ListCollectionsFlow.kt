@@ -15,6 +15,8 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
 import java.util.concurrent.TimeUnit
@@ -52,6 +54,7 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListCollectionsFlow<T> = apply {
         wrapped.timeoutMode(timeoutMode)
     }

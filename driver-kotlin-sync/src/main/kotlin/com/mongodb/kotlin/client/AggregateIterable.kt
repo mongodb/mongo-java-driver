@@ -16,6 +16,8 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.AggregateIterable as JAggregateIterable
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
@@ -52,6 +54,7 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): AggregateIterable<T> {
         wrapped.timeoutMode(timeoutMode)
         return this

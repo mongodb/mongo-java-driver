@@ -15,6 +15,8 @@
  */
 package com.mongodb.kotlin.client
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.DistinctIterable as JDistinctIterable
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
@@ -49,6 +51,7 @@ public class DistinctIterable<T : Any?>(private val wrapped: JDistinctIterable<T
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): DistinctIterable<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**

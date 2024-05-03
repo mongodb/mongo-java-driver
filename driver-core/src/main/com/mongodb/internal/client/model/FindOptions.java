@@ -17,6 +17,8 @@
 package com.mongodb.internal.client.model;
 
 import com.mongodb.CursorType;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -247,6 +249,7 @@ public final class FindOptions {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public FindOptions timeoutMode(final TimeoutMode timeoutMode) {
         this.timeoutMode = timeoutMode;
         return this;
@@ -256,6 +259,7 @@ public final class FindOptions {
      * @see #timeoutMode(TimeoutMode)
      * @return timeout mode
      */
+    @Alpha(Reason.CLIENT)
     @Nullable
     public TimeoutMode getTimeoutMode() {
         return timeoutMode;

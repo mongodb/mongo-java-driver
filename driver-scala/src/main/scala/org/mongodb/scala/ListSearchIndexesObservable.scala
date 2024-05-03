@@ -17,6 +17,7 @@
 package org.mongodb.scala
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher
 import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
@@ -138,6 +139,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

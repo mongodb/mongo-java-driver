@@ -18,6 +18,7 @@ package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
@@ -35,7 +36,7 @@ import org.bson.codecs.configuration.CodecRegistry;
  *
  * @since 4.9.0
  */
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 @Immutable
 public final class ExpressionCodecProvider implements CodecProvider {
     @Override

@@ -15,7 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.search.{ VectorSearchOptions => JVectorSearchOptions }
 
 /**
@@ -25,7 +25,7 @@ import com.mongodb.client.model.search.{ VectorSearchOptions => JVectorSearchOpt
  * @note Requires MongoDB 6.0.10 or greater
  * @since 4.11
  */
-@Beta(Array(Beta.Reason.SERVER))
+@Beta(Array(Reason.SERVER))
 object VectorSearchOptions {
 
   /**

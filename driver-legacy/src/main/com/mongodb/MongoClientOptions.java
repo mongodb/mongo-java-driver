@@ -16,8 +16,10 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.event.ClusterListener;
@@ -576,6 +578,7 @@ public class MongoClientOptions {
      * @return the timeout in milliseconds
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     @Nullable
     public Long getTimeout() {
         return wrapped.getTimeout(MILLISECONDS);
@@ -1372,6 +1375,7 @@ public class MongoClientOptions {
          * @since CSOT
          * @see #getTimeout
          */
+        @Alpha(Reason.CLIENT)
         public Builder timeout(final long timeoutMS) {
             wrapped.timeout(timeoutMS, MILLISECONDS);
             return this;

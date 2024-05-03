@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.mongodb.annotations;
 
 import java.lang.annotation.Documented;
@@ -25,19 +24,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Signifies that a public API (public class, method or field) is subject to
- * incompatible changes, or even removal, in a future release. An API bearing
- * this annotation is exempt from any compatibility guarantees made by its
- * containing library. Note that the presence of this annotation implies nothing
- * about the quality or performance of the API in question, only the fact that
- * it is not "API-frozen."
+ * Signifies that a public API element is in the early stages of development, subject to
+ * incompatible changes, or even removal, in a future release and may lack some intended features.
+ * An API bearing this annotation may contain known issues affecting functionality, performance,
+ * and stability. It is also exempt from any compatibility guarantees made by its containing library.
  *
- * <p>It is generally safe for <i>applications</i> to depend on beta APIs, at
- * the cost of some extra work during upgrades. However it is generally
- * inadvisable for <i>libraries</i> (which get included on users' CLASSPATHs,
- * outside the library developers' control) to do so.
- *
- **/
+ * <p>It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or
+ * for <i>libraries</i> (which get included on users' CLASSPATHs, outside the library developers'
+ * control) to depend on these APIs. Alpha APIs are intended for <b>experimental purposes</b> only.</p>
+ */
 @Retention(RetentionPolicy.CLASS)
 @Target({
         ElementType.ANNOTATION_TYPE,
@@ -48,9 +43,9 @@ import java.lang.annotation.Target;
         ElementType.TYPE })
 @Documented
 @Beta(Reason.CLIENT)
-public @interface Beta {
+public @interface Alpha {
     /**
-     * @return The reason an API element is marked with {@link Beta}.
+     * @return The reason an API element is marked with {@link Alpha}.
      */
     Reason[] value();
 }

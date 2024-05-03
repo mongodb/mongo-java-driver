@@ -17,6 +17,8 @@ package com.mongodb.kotlin.client
 
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.FindIterable as JFindIterable
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
@@ -53,6 +55,7 @@ public class FindIterable<T : Any>(private val wrapped: JFindIterable<T>) : Mong
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): FindIterable<T> {
         wrapped.timeoutMode(timeoutMode)
         return this

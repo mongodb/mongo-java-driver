@@ -16,6 +16,8 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.ListSearchIndexesIterable as JListSearchIndexesIterable
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
@@ -47,6 +49,7 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesIterable<T> {
         wrapped.timeoutMode(timeoutMode)
         return this

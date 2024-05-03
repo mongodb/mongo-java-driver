@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -114,5 +116,6 @@ public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     ListDatabasesIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 }

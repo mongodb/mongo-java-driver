@@ -17,7 +17,9 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -110,6 +112,7 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     ListSearchIndexesIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**

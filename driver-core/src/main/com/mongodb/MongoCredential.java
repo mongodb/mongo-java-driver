@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
 import java.util.Arrays;
@@ -176,7 +177,7 @@ public final class MongoCredential {
      * @see AwsCredential
      * @since 4.4
      */
-    @Beta(Beta.Reason.CLIENT)
+    @Beta(Reason.CLIENT)
     public static final String AWS_CREDENTIAL_PROVIDER_KEY = "AWS_CREDENTIAL_PROVIDER";
 
     /**

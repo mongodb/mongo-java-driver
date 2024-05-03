@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
+
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import org.mongodb.scala.bson.BsonValue
@@ -119,6 +121,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): DistinctObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

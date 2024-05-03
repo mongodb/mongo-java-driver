@@ -15,6 +15,9 @@
  */
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  * @see MongoClientSettings#getTimeout(TimeUnit)
  * @since CSOT
  */
+@Alpha(Reason.CLIENT)
 public final class MongoOperationTimeoutException extends MongoTimeoutException {
     private static final long serialVersionUID = 1L;
 

@@ -18,8 +18,10 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
 import com.mongodb.internal.connection.DecimalFormatHelper;
 import com.mongodb.internal.connection.Time;
 import com.mongodb.lang.Nullable;
@@ -354,6 +356,7 @@ public class ServerDescription {
          * @return this
          * @since CSOT
          */
+        @Alpha(Reason.CLIENT)
         public Builder minRoundTripTime(final long minRoundTripTime, final TimeUnit timeUnit) {
             this.minRoundTripTimeNanos = timeUnit.toNanos(minRoundTripTime);
             return this;
@@ -880,6 +883,7 @@ public class ServerDescription {
      * @return the recent min time taken to request the information, in nano seconds
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public long getMinRoundTripTimeNanos() {
         return minRoundTripTimeNanos;
     }

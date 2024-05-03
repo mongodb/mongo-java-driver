@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerMonitoringMode;
@@ -137,7 +139,8 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
- * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation.</li>
+ * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation. Note: This parameter is part of an {@linkplain Alpha Alpha API} and may be
+ * subject to changes or even removal in future releases.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
  * This option is the same as {@link SocketSettings#getReadTimeout(TimeUnit)}.
@@ -1574,6 +1577,7 @@ public class ConnectionString {
      * @return the time limit for the full execution of an operation in milliseconds or null.
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     @Nullable
     public Long getTimeout() {
         return timeout;
