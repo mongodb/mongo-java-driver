@@ -276,7 +276,6 @@ final class RetryStateTest {
         RetryState retryState = new RetryState(timeoutContext);
 
         MongoOperationTimeoutException expectedTimeoutException = TimeoutContext.createMongoTimeoutException("Server selection failed");
- 
         MongoOperationTimeoutException actualTimeoutException =
                 assertThrows(expectedTimeoutException.getClass(), () -> retryState.advanceOrThrow(expectedTimeoutException,
                         (e1, e2) -> expectedTimeoutException,
