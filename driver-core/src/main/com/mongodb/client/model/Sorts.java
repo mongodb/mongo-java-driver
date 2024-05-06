@@ -17,7 +17,6 @@
 package com.mongodb.client.model;
 
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -27,6 +26,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.model.BsonConstants.MINUS_ONE_INT32;
+import static com.mongodb.client.model.BsonConstants.ONE_INT32;
 import static java.util.Arrays.asList;
 
 /**
@@ -63,8 +64,7 @@ public final class Sorts {
      * @mongodb.driver.manual reference/operator/meta/orderby Sort
      */
     public static Bson ascending(final List<String> fieldNames) {
-        notNull("fieldNames", fieldNames);
-        return orderBy(fieldNames, new BsonInt32(1));
+        return orderBy(fieldNames, ONE_INT32);
     }
 
     /**
@@ -86,8 +86,7 @@ public final class Sorts {
      * @mongodb.driver.manual reference/operator/meta/orderby Sort
      */
     public static Bson descending(final List<String> fieldNames) {
-        notNull("fieldNames", fieldNames);
-        return orderBy(fieldNames, new BsonInt32(-1));
+        return orderBy(fieldNames, MINUS_ONE_INT32);
     }
 
     /**
@@ -119,11 +118,11 @@ public final class Sorts {
      * @return the combined sort specification
      */
     public static Bson orderBy(final List<? extends Bson> sorts) {
-        notNull("sorts", sorts);
         return new CompoundSort(sorts);
     }
 
     private static Bson orderBy(final List<String> fieldNames, final BsonValue value) {
+        notNull("fieldNames", fieldNames);
         BsonDocument document = new BsonDocument();
         for (String fieldName : fieldNames) {
             document.append(fieldName, value);
@@ -135,17 +134,16 @@ public final class Sorts {
         private final List<? extends Bson> sorts;
 
         private CompoundSort(final List<? extends Bson> sorts) {
-            this.sorts = sorts;
+            this.sorts = notNull("sorts", sorts);
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             BsonDocument combinedDocument = new BsonDocument();
             for (Bson sort : sorts) {
-                BsonDocument sortDocument = sort.toBsonDocument(documentClass, codecRegistry);
-                for (String key : sortDocument.keySet()) {
-                    combinedDocument.append(key, sortDocument.get(key));
-                }
+                combinedDocument.putAll(
+                        sort.toBsonDocument(documentClass, codecRegistry)
+                );
             }
             return combinedDocument;
         }
@@ -166,7 +164,7 @@ public final class Sorts {
 
         @Override
         public int hashCode() {
-            return sorts != null ? sorts.hashCode() : 0;
+            return sorts.hashCode();
         }
 
         @Override

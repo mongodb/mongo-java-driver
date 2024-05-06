@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.model.BsonConstants.ONE_INT32;
+import static com.mongodb.client.model.BsonConstants.ZERO_INT32;
 import static java.util.Arrays.asList;
 
 /**
@@ -48,6 +50,7 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public final class Projections {
+    private static final BsonDocument EXCLUDE_ID = new BsonDocument("_id", ZERO_INT32);
     private Projections() {
     }
 
@@ -110,7 +113,7 @@ public final class Projections {
      * @return the projection
      */
     public static Bson include(final List<String> fieldNames) {
-        return combine(fieldNames, new BsonInt32(1));
+        return combine(fieldNames, ONE_INT32);
     }
 
     /**
@@ -130,7 +133,7 @@ public final class Projections {
      * @return the projection
      */
     public static Bson exclude(final List<String> fieldNames) {
-        return combine(fieldNames, new BsonInt32(0));
+        return combine(fieldNames, ZERO_INT32);
     }
 
     /**
@@ -140,7 +143,7 @@ public final class Projections {
      * @return the projection
      */
     public static Bson excludeId() {
-        return new BsonDocument("_id", new BsonInt32(0));
+        return EXCLUDE_ID;
     }
 
     /**
@@ -152,7 +155,7 @@ public final class Projections {
      * @mongodb.driver.manual reference/operator/projection/positional/#projection Project the first matching element ($ operator)
      */
     public static Bson elemMatch(final String fieldName) {
-        return new BsonDocument(fieldName + ".$", new BsonInt32(1));
+        return new BsonDocument(fieldName + ".$", ONE_INT32);
     }
 
     /**
@@ -287,7 +290,6 @@ public final class Projections {
      * @return the combined projection
      */
     public static Bson fields(final List<? extends Bson> projections) {
-        notNull("projections", projections);
         return new FieldsProjection(projections);
     }
 
@@ -295,18 +297,16 @@ public final class Projections {
         private final List<? extends Bson> projections;
 
         FieldsProjection(final List<? extends Bson> projections) {
-            this.projections = projections;
+            this.projections = notNull("projections", projections);
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             BsonDocument combinedDocument = new BsonDocument();
-            for (Bson sort : projections) {
-                BsonDocument sortDocument = sort.toBsonDocument(documentClass, codecRegistry);
-                for (String key : sortDocument.keySet()) {
-                    combinedDocument.remove(key);
-                    combinedDocument.append(key, sortDocument.get(key));
-                }
+            for (Bson projection : projections) {
+                combinedDocument.putAll(
+                        projection.toBsonDocument(documentClass, codecRegistry)
+                );
             }
             return combinedDocument;
         }
@@ -327,7 +327,7 @@ public final class Projections {
 
         @Override
         public int hashCode() {
-            return projections != null ? projections.hashCode() : 0;
+            return projections.hashCode();
         }
 
         @Override
@@ -344,8 +344,8 @@ public final class Projections {
         private final Bson filter;
 
         ElemMatchFilterProjection(final String fieldName, final Bson filter) {
-            this.fieldName = fieldName;
-            this.filter = filter;
+            this.fieldName = notNull("fieldName", fieldName);
+            this.filter = notNull("filter", filter);
         }
 
         @Override
@@ -372,9 +372,7 @@ public final class Projections {
 
         @Override
         public int hashCode() {
-            int result = fieldName != null ? fieldName.hashCode() : 0;
-            result = 31 * result + (filter != null ? filter.hashCode() : 0);
-            return result;
+            return (31 * fieldName.hashCode()) + filter.hashCode();
         }
 
         @Override
@@ -389,7 +387,6 @@ public final class Projections {
     private static Bson combine(final List<String> fieldNames, final BsonValue value) {
         BsonDocument document = new BsonDocument();
         for (String fieldName : fieldNames) {
-            document.remove(fieldName);
             document.append(fieldName, value);
         }
         return document;
