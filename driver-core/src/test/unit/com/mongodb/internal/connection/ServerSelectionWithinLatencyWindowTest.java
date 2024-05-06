@@ -56,7 +56,7 @@ import static util.JsonPoweredTestHelper.testDocs;
 @RunWith(Parameterized.class)
 public class ServerSelectionWithinLatencyWindowTest {
     private final ClusterDescription clusterDescription;
-    private final Map<ServerAddress, Server> serverCatalog;
+    private final Cluster.ServersSnapshot serversSnapshot;
     private final int iterations;
     private final Outcome outcome;
 
@@ -65,7 +65,7 @@ public class ServerSelectionWithinLatencyWindowTest {
             @SuppressWarnings("unused") final String description,
             final BsonDocument definition) {
         clusterDescription = buildClusterDescription(definition.getDocument("topology_description"), null);
-        serverCatalog = serverCatalog(definition.getArray("mocked_topology_state"));
+        serversSnapshot = serverCatalog(definition.getArray("mocked_topology_state"));
         iterations = definition.getInt32("iterations").getValue();
         outcome = Outcome.parse(definition.getDocument("outcome"));
     }
@@ -74,8 +74,7 @@ public class ServerSelectionWithinLatencyWindowTest {
     public void shouldPassAllOutcomes() {
         ServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.nearest());
         Map<ServerAddress, List<ServerTuple>> selectionResultsGroupedByServerAddress = IntStream.range(0, iterations)
-                .mapToObj(i -> BaseCluster.selectServer(selector, clusterDescription,
-                        address -> Assertions.assertNotNull(serverCatalog.get(address))))
+                .mapToObj(i -> BaseCluster.selectServer(selector, clusterDescription, serversSnapshot))
                 .collect(groupingBy(serverTuple -> serverTuple.getServerDescription().getAddress()));
         Map<ServerAddress, BigDecimal> selectionFrequencies = selectionResultsGroupedByServerAddress.entrySet()
                 .stream()
@@ -97,8 +96,8 @@ public class ServerSelectionWithinLatencyWindowTest {
                 .collect(toList());
     }
 
-    private static Map<ServerAddress, Server> serverCatalog(final BsonArray mockedTopologyState) {
-        return mockedTopologyState.stream()
+    private static Cluster.ServersSnapshot serverCatalog(final BsonArray mockedTopologyState) {
+        Map<ServerAddress, Server> serverMap = mockedTopologyState.stream()
                 .map(BsonValue::asDocument)
                 .collect(toMap(
                         el -> new ServerAddress(el.getString("address").getValue()),
@@ -108,6 +107,7 @@ public class ServerSelectionWithinLatencyWindowTest {
                             when(server.operationCount()).thenReturn(operationCount);
                             return server;
                         }));
+        return serverAddress -> Assertions.assertNotNull(serverMap.get(serverAddress));
     }
 
     private static final class Outcome {

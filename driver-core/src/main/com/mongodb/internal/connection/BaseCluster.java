@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
@@ -314,16 +315,35 @@ abstract class BaseCluster implements Cluster {
     @Nullable
     private ServerTuple selectServer(final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
-        return selectServer(serverSelector, clusterDescription, this::getServer);
+        return selectServer(serverSelector, clusterDescription, getServersSnapshot());
     }
 
     @Nullable
     @VisibleForTesting(otherwise = PRIVATE)
     static ServerTuple selectServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription,
-            final Function<ServerAddress, Server> serverCatalog) {
-        return atMostNRandom(new ArrayList<>(serverSelector.select(clusterDescription)), 2, serverDescription -> {
-            Server server = serverCatalog.apply(serverDescription.getAddress());
-            return server == null ? null : new ServerTuple(server, serverDescription);
+            final ServersSnapshot serversSnapshot) {
+        // The set of `Server`s maintained by the `Cluster` is updated concurrently with `clusterDescription` being read.
+        // Additionally, that set of servers continues to be concurrently updated while `serverSelector` selects.
+        // This race condition means that we are not guaranteed not observe all the servers from `clusterDescription`
+        // among the `Server`s maintained by the `Cluster`.
+        // To deal with this race condition, we take `serversSnapshot` of that set of `Server`s
+        // (the snapshot itself does not have to be atomic) non-atomically with reading `clusterDescription`
+        // (this means, `serversSnapshot` and `clusterDescription` are not guaranteed to be consistent with each other),
+        // and do pre-filtering to make sure that the only `ServerDescription`s we may select,
+        // are of those `Server`s that are known to both `clusterDescription` and `serversSnapshot`.
+        // This way we are guaranteed to successfully get `Server`s from `serversSnapshot` based on the selected `ServerDescription`s.
+        //
+        // The pre-filtering we do to deal with the race condition described above is achieved by this `ServerSelector`.
+        ServerSelector raceConditionPreFiltering = clusterDescriptionPotentiallyInconsistentWithServerSnapshot ->
+                clusterDescriptionPotentiallyInconsistentWithServerSnapshot.getServerDescriptions()
+                        .stream()
+                        .filter(serverDescription -> serversSnapshot.containsServer(serverDescription.getAddress()))
+                        .collect(toList());
+        List<ServerDescription> intermediateResult = new CompositeServerSelector(asList(raceConditionPreFiltering, serverSelector))
+                .select(clusterDescription);
+        return atMostNRandom(new ArrayList<>(intermediateResult), 2, serverDescription -> {
+            Server server = assertNotNull(serversSnapshot.getServer(serverDescription.getAddress()));
+            return new ServerTuple(server, serverDescription);
         }).stream()
                 .min(comparingInt(serverTuple -> serverTuple.getServer().operationCount()))
                 .orElse(null);
@@ -345,10 +365,8 @@ abstract class BaseCluster implements Cluster {
         List<ServerTuple> result = new ArrayList<>(n);
         for (int i = list.size() - 1; i >= 0 && result.size() < n; i--) {
             Collections.swap(list, i, random.nextInt(i + 1));
-            ServerTuple serverTuple = transformer.apply(list.get(i));
-            if (serverTuple != null) {
-                result.add(serverTuple);
-            }
+            ServerTuple serverTuple = assertNotNull(transformer.apply(list.get(i)));
+            result.add(serverTuple);
         }
         return result;
     }
@@ -356,7 +374,7 @@ abstract class BaseCluster implements Cluster {
     private ServerSelector getCompleteServerSelector(final ServerSelector serverSelector, final ServerDeprioritization serverDeprioritization) {
         List<ServerSelector> selectors = Stream.of(
                 serverSelector,
-                settings.getServerSelector(),
+                settings.getServerSelector(), // may be null
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS)
         ).filter(Objects::nonNull).collect(toList());
         return serverDeprioritization.apply(new CompositeServerSelector(selectors));

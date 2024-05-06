@@ -67,8 +67,11 @@ class BaseClusterSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress) {
-                throw new UnsupportedOperationException()
+            Cluster.ServersSnapshot getServersSnapshot() {
+                Cluster.ServersSnapshot result = serverAddress -> {
+                    throw new UnsupportedOperationException()
+                }
+                return result
             }
 
             @Override
