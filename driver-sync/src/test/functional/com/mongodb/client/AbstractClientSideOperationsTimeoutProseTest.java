@@ -746,6 +746,56 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             }});
     }
 
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @Tag("setsFailPoint")
+    @Test
+    @DisplayName("Should refresh timeout for commit transaction")
+    public void shouldRefreshTimeoutForCommitTransaction() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+
+        collectionHelper.runAdminCommand("{"
+                + "  configureFailPoint: \"failCommand\","
+                + "  mode: { times: 1 },"
+                + "  data: {"
+                + "    failCommands: [\"abortTransaction\"],"
+                + "    blockConnection: true,"
+                + "    blockTimeMS: " + 600
+                + "  }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS)
+                    .build())) {
+                session.startTransaction(TransactionOptions.builder()
+                        .writeConcern(WriteConcern.ACKNOWLEDGED.withWTimeout(100, TimeUnit.MILLISECONDS))
+                        .build());
+                collection.insertOne(session, new Document("x", 1));
+                sleep(200);
+
+                assertDoesNotThrow(session::commitTransaction);
+                //repeat commit.
+                assertDoesNotThrow(session::commitTransaction);
+            }
+        }
+        List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("commitTransaction");
+        assertEquals(2, commandStartedEvents.size());
+
+        commandStartedEvents.forEach(e -> {
+            BsonDocument command = e.getCommand();
+            if (command.containsKey("writeConcern")) {
+                BsonDocument writeConcern = command.getDocument("writeConcern");
+                assertFalse(writeConcern.isEmpty());
+                assertFalse(writeConcern.containsKey("wTimeoutMS"));
+            }});
+    }
+
     private static Stream<Arguments> test8ServerSelectionArguments() {
         return Stream.of(
                 Arguments.of(Named.of("serverSelectionTimeoutMS honored if timeoutMS is not set",

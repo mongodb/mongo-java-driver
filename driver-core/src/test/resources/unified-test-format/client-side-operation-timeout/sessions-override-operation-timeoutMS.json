@@ -82,7 +82,10 @@
         },
         {
           "name": "startTransaction",
-          "object": "session"
+          "object": "session",
+          "arguments": {
+            "timeoutMS": 500
+          }
         },
         {
           "name": "insertOne",
@@ -97,9 +100,6 @@
         {
           "name": "commitTransaction",
           "object": "session",
-          "arguments": {
-            "timeoutMS": 500
-          },
           "expectError": {
             "isTimeoutError": true
           }
