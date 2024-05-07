@@ -22,6 +22,7 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -266,6 +267,68 @@ final class RetryStateTest {
         RuntimeException attemptException = new RuntimeException() {
         };
         assertThrows(attemptException.getClass(), () -> retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> false));
+    }
+
+    @ParameterizedTest
+    @MethodSource({"infiniteTimeout"})
+    @DisplayName("should rethrow detected timeout exception even if timeout in retry state is not expired")
+    void advanceReThrowDetectedTimeoutExceptionEvenIfTimeoutInRetryStateIsNotExpired(final TimeoutContext timeoutContext) {
+        RetryState retryState = new RetryState(timeoutContext);
+
+        MongoOperationTimeoutException expectedTimeoutException = TimeoutContext.createMongoTimeoutException("Server selection failed");
+        MongoOperationTimeoutException actualTimeoutException =
+                assertThrows(expectedTimeoutException.getClass(), () -> retryState.advanceOrThrow(expectedTimeoutException,
+                        (e1, e2) -> expectedTimeoutException,
+                        (rs, e) -> false));
+
+        Assertions.assertEquals(actualTimeoutException, expectedTimeoutException);
+    }
+
+    @Test
+    @DisplayName("should throw timeout exception from retry, when transformer swallows original timeout exception")
+    void advanceThrowTimeoutExceptionWhenTransformerSwallowOriginalTimeoutException() {
+        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT);
+        RuntimeException previousAttemptException = new RuntimeException() {
+        };
+        MongoOperationTimeoutException expectedTimeoutException = TimeoutContext.createMongoTimeoutException("Server selection failed");
+
+        retryState.advanceOrThrow(previousAttemptException,
+                (e1, e2) -> previousAttemptException,
+                (rs, e) -> true);
+
+        MongoOperationTimeoutException actualTimeoutException =
+                assertThrows(expectedTimeoutException.getClass(), () -> retryState.advanceOrThrow(expectedTimeoutException,
+                        (e1, e2) -> previousAttemptException,
+                        (rs, e) -> false));
+
+        Assertions.assertNotEquals(actualTimeoutException, expectedTimeoutException);
+        Assertions.assertEquals("Retry attempt timed out.", actualTimeoutException.getMessage());
+        Assertions.assertEquals(previousAttemptException, actualTimeoutException.getCause(),
+                "Retry timeout exception should have a cause if transformer returned non-timeout exception.");
+    }
+
+
+    @Test
+    @DisplayName("should throw original timeout exception from retry, when transformer returns original timeout exception")
+    void advanceThrowOriginalTimeoutExceptionWhenTransformerReturnsOriginalTimeoutException() {
+        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT);
+        RuntimeException previousAttemptException = new RuntimeException() {
+        };
+        MongoOperationTimeoutException expectedTimeoutException = TimeoutContext
+                .createMongoTimeoutException("Server selection failed");
+
+        retryState.advanceOrThrow(previousAttemptException,
+                (e1, e2) -> previousAttemptException,
+                (rs, e) -> true);
+
+        MongoOperationTimeoutException actualTimeoutException =
+                assertThrows(expectedTimeoutException.getClass(), () -> retryState.advanceOrThrow(expectedTimeoutException,
+                        (e1, e2) -> expectedTimeoutException,
+                        (rs, e) -> false));
+
+        Assertions.assertEquals(actualTimeoutException, expectedTimeoutException);
+        Assertions.assertNull(actualTimeoutException.getCause(),
+                "Original timeout exception should not have a cause if transformer already returned timeout exception.");
     }
 
     @Test
