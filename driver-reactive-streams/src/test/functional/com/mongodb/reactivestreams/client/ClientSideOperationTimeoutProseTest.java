@@ -107,7 +107,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         return true;
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
     @Test
     @Override
@@ -117,7 +116,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
         //given
         collectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
+                + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                 + "  mode: { times: 1 },"
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
@@ -164,7 +163,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         }
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
     @Test
     @Override
@@ -177,7 +175,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         Hooks.onErrorDropped(droppedErrorFuture::complete);
 
         collectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
+                + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                 + "  mode: { times: 1 },"
                 + "  data: {"
                 + "    failCommands: [\"delete\"],"
@@ -227,7 +225,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS applies to full resume attempt in a next call")
     @Test
     public void testTimeoutMSAppliesToFullResumeAttemptInNextCall() {
@@ -283,7 +280,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS applied to initial aggregate")
     @Test
     public void testTimeoutMSAppliedToInitialAggregate() {
@@ -332,7 +328,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS is refreshed for getMore if maxAwaitTimeMS is not set")
     @Test
     public void testTimeoutMsRefreshedForGetMoreWhenMaxAwaitTimeMsNotSet() {
@@ -402,7 +397,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS is refreshed for getMore if maxAwaitTimeMS is set")
     @Test
     public void testTimeoutMsRefreshedForGetMoreWhenMaxAwaitTimeMsSet() {
@@ -465,7 +459,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS is honored for next operation when several getMore executed internally")
     @Test
     public void testTimeoutMsISHonoredForNnextOperationWhenSeveralGetMoreExecutedInternally() {

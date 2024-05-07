@@ -54,7 +54,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
-        // Time sensitive - cannot just create a cursor with publishers
         skipOperationTimeoutTests(fileDescription, testDescription);
 
         assumeFalse("No iterateOnce support. There is alternative prose test for it.",

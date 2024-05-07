@@ -65,7 +65,7 @@ public class TimeoutContext {
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final Throwable cause) {
-        return createMongoTimeoutException("Operation timed out: " + cause.getMessage(), cause);
+        return createMongoTimeoutException("Operation exceeded the timeout limit: " + cause.getMessage(), cause);
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final String message, final Throwable cause) {
@@ -173,7 +173,7 @@ public class TimeoutContext {
             return timeout.call(MILLISECONDS,
                     () -> 0L,
                     (ms) -> ms,
-                    () -> throwMongoTimeoutException("The operation timeout has expired."));
+                    () -> throwMongoTimeoutException("The operation exceeded the timeout limit."));
         }
     }
 
@@ -252,7 +252,7 @@ public class TimeoutContext {
         return Math.toIntExact(Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> connectTimeoutMS,
                 (ms) -> connectTimeoutMS == 0 ? ms : Math.min(ms, connectTimeoutMS),
-                () -> throwMongoTimeoutException("The operation timeout has expired.")));
+                () -> throwMongoTimeoutException("The operation exceeded the timeout limit.")));
     }
 
     public void resetTimeout() {

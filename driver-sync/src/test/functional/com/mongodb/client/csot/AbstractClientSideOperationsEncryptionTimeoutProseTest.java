@@ -26,6 +26,7 @@ import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.FailPointTestExtension;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -46,9 +47,9 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -76,6 +77,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 
+    protected static final String FAIL_COMMAND_NAME = "failCommand";
+    @RegisterExtension
+    protected static final FailPointTestExtension FAILPOINT_TEST_EXTENSION = new FailPointTestExtension(FAIL_COMMAND_NAME);
     private static final Map<String, Map<String, Object>> KMS_PROVIDERS = new HashMap<>();
 
     private final MongoNamespace keyVaultNamespace = new MongoNamespace("keyvault", "datakeys");
@@ -92,7 +96,6 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
     protected abstract MongoClient createMongoClient(MongoClientSettings.Builder builder);
 
     @Test
-    @Tag("setsFailPoint")
     void shouldThrowOperationTimeoutExceptionWhenCreateDataKey() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -105,7 +108,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
         try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 100))) {
 
             keyVaultCollectionHelper.runAdminCommand("{"
-                    + "  configureFailPoint: \"failCommand\","
+                    + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                     + "  mode: { times: 1 },"
                     + "  data: {"
                     + "    failCommands: [\"insert\"],"
@@ -126,7 +129,6 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
     }
 
     @Test
-    @Tag("setsFailPoint")
     void shouldThrowOperationTimeoutExceptionWhenEncryptData() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -136,7 +138,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
             clientEncryption.createDataKey("local");
 
             keyVaultCollectionHelper.runAdminCommand("{"
-                    + "  configureFailPoint: \"failCommand\","
+                    + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                     + "  mode: { times: 1 },"
                     + "  data: {"
                     + "    failCommands: [\"find\"],"
@@ -161,7 +163,6 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
     }
 
     @Test
-    @Tag("setsFailPoint")
     void shouldThrowOperationTimeoutExceptionWhenDecryptData() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -177,7 +178,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 
         try (ClientEncryption clientEncryption = createClientEncryption(getClientEncryptionSettingsBuilder(rtt + 100))) {
             keyVaultCollectionHelper.runAdminCommand("{"
-                    + "  configureFailPoint: \"failCommand\","
+                    + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                     + "  mode: { times: 1 },"
                     + "  data: {"
                     + "    failCommands: [\"find\"],"
@@ -199,14 +200,13 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
-    @Tag("setsFailPoint")
     void shouldDecreaseOperationTimeoutForSubsequentOperations() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
         long initialTimeoutMS = rtt + 2500;
 
         keyVaultCollectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
+                + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                 + "  mode: \"alwaysOn\","
                 + "  data: {"
                 + "    failCommands: [\"insert\", \"find\", \"listCollections\"],"
@@ -274,7 +274,6 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
      */
     @ParameterizedTest
     @ValueSource(strings = {"insert", "create"})
-    @Tag("setsFailPoint")
     void shouldThrowTimeoutExceptionWhenCreateEncryptedCollection(final String commandToTimeout) {
         assumeTrue(serverVersionAtLeast(7, 0));
         //given
@@ -298,7 +297,7 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
                                 + "}"));
 
                 keyVaultCollectionHelper.runAdminCommand("{"
-                        + "  configureFailPoint: \"failCommand\","
+                        + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                         + "  mode: { times: 1 },"
                         + "  data: {"
                         + "    failCommands: [\"" + commandToTimeout + "\"],"

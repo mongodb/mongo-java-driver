@@ -62,7 +62,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 final class GridFSBucketImpl implements GridFSBucket {
     private static final int DEFAULT_CHUNKSIZE_BYTES = 255 * 1024;
-    private static final String TIMEOUT_MESSAGE = "GridFS operation timed out";
+    private static final String TIMEOUT_MESSAGE = "GridFS operation exceeded the timeout limit.";
     private final String bucketName;
     private final int chunkSizeBytes;
     private final MongoCollection<GridFSFile> filesCollection;

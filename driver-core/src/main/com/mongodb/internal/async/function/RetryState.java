@@ -207,7 +207,7 @@ public final class RetryState {
              */
             if (hasTimeoutMs() && !loopState.isLastIteration()) {
                 previouslyChosenException = createMongoTimeoutException(
-                        "Retry attempt timed out.",
+                        "Retry attempt exceeded the timeout limit.",
                         previouslyChosenException);
             }
             throw previouslyChosenException;
