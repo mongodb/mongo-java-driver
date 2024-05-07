@@ -37,7 +37,7 @@ import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply;
 import static com.mongodb.internal.connection.MessageHelper.getApiVersionField;
 import static com.mongodb.internal.connection.MessageHelper.getDbField;
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
 import static org.junit.Assert.assertEquals;
 
 public class X509AuthenticatorNoUserNameTest {
@@ -48,7 +48,7 @@ public class X509AuthenticatorNoUserNameTest {
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescriptionThreeSix = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                THREE_DOT_SIX_WIRE_VERSION, ServerType.STANDALONE, 1000, 16000,
+                LATEST_WIRE_VERSION, ServerType.STANDALONE, 1000, 16000,
                 48000, Collections.emptyList());
     }
 

@@ -27,7 +27,6 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.Fixture.drop;
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabase;
 import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet;
-import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -37,7 +36,7 @@ public class ChangeStreamsCancellationTest {
 
     @BeforeEach
     public void setup() {
-        assumeTrue(isReplicaSet() && serverVersionAtLeast(3, 6));
+        assumeTrue(isReplicaSet());
         collection = getDefaultDatabase().getCollection("changeStreamsCancellationTest");
     }
 

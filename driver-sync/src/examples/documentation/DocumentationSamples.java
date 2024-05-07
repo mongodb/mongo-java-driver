@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.model.Accumulators.sum;
@@ -507,8 +506,6 @@ public final class DocumentationSamples extends DatabaseTestCase {
     @Test
     public void testAggregate() {
 
-        assumeTrue(serverVersionAtLeast(3, 6));
-
         MongoCollection<Document> salesCollection = database.getCollection("sales");
 
         // Start Aggregation Example 1
@@ -663,7 +660,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testWatch() throws InterruptedException {
-        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(3, 6));
+        assumeTrue(isDiscoverableReplicaSet());
 
         MongoCollection<Document> inventory = collection;
         AtomicBoolean stop = new AtomicBoolean(false);
@@ -725,9 +722,6 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexes() {
-
-        assumeTrue(serverVersionAtLeast(3, 2));
-
         // Start Index Example 1
         collection.createIndex(Indexes.ascending("score"));
         // End Index Example 1

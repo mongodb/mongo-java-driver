@@ -36,7 +36,6 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
@@ -162,7 +161,6 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateCollectionWithTheSetCollation() {
-        assumeThat(serverVersionAtLeast(3, 4), is(true));
         // Given
         collection.drop();
         Collation collation = Collation.builder()

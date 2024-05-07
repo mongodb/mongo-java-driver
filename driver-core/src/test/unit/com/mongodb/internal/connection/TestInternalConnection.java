@@ -44,7 +44,7 @@ import java.util.List;
 
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
 
 class TestInternalConnection implements InternalConnection {
 
@@ -66,7 +66,7 @@ class TestInternalConnection implements InternalConnection {
     }
 
     TestInternalConnection(final ServerId serverId, final ServerType serverType) {
-        this.description = new ConnectionDescription(new ConnectionId(serverId), THREE_DOT_SIX_WIRE_VERSION, serverType, 0, 0, 0,
+        this.description = new ConnectionDescription(new ConnectionId(serverId), LATEST_WIRE_VERSION, serverType, 0, 0, 0,
                 Collections.emptyList());
         this.bufferProvider = new SimpleBufferProvider();
 
