@@ -26,7 +26,6 @@ import com.mongodb.MongoUpdatedEncryptedFieldsException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.FailPointTestExtension;
 import com.mongodb.client.Fixture;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -48,8 +47,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -78,8 +75,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 
     protected static final String FAIL_COMMAND_NAME = "failCommand";
-    @RegisterExtension
-    protected static final FailPointTestExtension FAILPOINT_TEST_EXTENSION = new FailPointTestExtension(FAIL_COMMAND_NAME);
     private static final Map<String, Map<String, Object>> KMS_PROVIDERS = new HashMap<>();
 
     private final MongoNamespace keyVaultNamespace = new MongoNamespace("keyvault", "datakeys");
@@ -383,11 +378,9 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
     }
 
     @AfterEach
-    public void tearDown(final TestInfo info) {
+    public void tearDown() {
+        ClusterFixture.disableFailPoint(FAIL_COMMAND_NAME);
         if (keyVaultCollectionHelper != null) {
-            if (info.getTags().contains("setsFailPoint") && serverVersionAtLeast(4, 4)) {
-                keyVaultCollectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
-            }
             keyVaultCollectionHelper.drop();
         }
     }

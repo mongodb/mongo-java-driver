@@ -59,8 +59,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -102,9 +100,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     protected static final String FAIL_COMMAND_NAME = "failCommand";
-    @RegisterExtension
-    protected static final FailPointTestExtension FAILPOINT_TEST_EXTENSION = new FailPointTestExtension(FAIL_COMMAND_NAME);
-
     protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
@@ -829,7 +824,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @AfterEach
-    public void tearDown(final TestInfo info) {
+    public void tearDown() {
+        ClusterFixture.disableFailPoint(FAIL_COMMAND_NAME);
         if (collectionHelper != null) {
             collectionHelper.drop();
             filesCollectionHelper.drop();

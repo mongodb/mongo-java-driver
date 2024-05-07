@@ -523,8 +523,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     @AfterEach
-    public void tearDown(final TestInfo info) {
-        super.tearDown(info);
+    public void tearDown() {
+        super.tearDown();
         SyncMongoClient.disableSleep();
     }
 
