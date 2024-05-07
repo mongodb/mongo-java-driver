@@ -96,15 +96,15 @@ public class OidcAuthenticationProseTests {
     }
 
     protected static String getOidcUri() {
-        return getenv("MONGODB_URI_SINGLE");
+        return assertNotNull(getenv("MONGODB_URI_SINGLE"));
     }
 
     private static String getOidcUriMulti() {
-        return getenv("MONGODB_URI_MULTI");
+        return assertNotNull(getenv("MONGODB_URI_MULTI"));
     }
 
     private static String getOidcEnv() {
-        return getenv("OIDC_ENV");
+        return assertNotNull(getenv("OIDC_ENV"));
     }
 
     private static void assumeAzure() {
@@ -179,13 +179,13 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void test2p1ValidCallbackInputs() {
-        Duration expectedSeconds = Duration.ofMinutes(5);
+        Duration expectedTimeoutDuration = Duration.ofMinutes(1);
 
         TestCallback callback1 = createCallback();
         // #. Verify that the request callback was called with the appropriate
         //    inputs, including the timeout parameter if possible.
         OidcCallback callback2 = (context) -> {
-            assertEquals(expectedSeconds, context.getTimeout());
+            assertEquals(expectedTimeoutDuration, context.getTimeout());
             return callback1.onRequest(context);
         };
         MongoClientSettings clientSettings = createSettings(callback2);
@@ -230,6 +230,27 @@ public class OidcAuthenticationProseTests {
         assertCause(IllegalArgumentException.class,
                 "OIDC_CALLBACK must not be specified when ENVIRONMENT is specified",
                 () -> performFind(settings));
+    }
+
+    @Test
+    public void test2p5InvalidAllowedHosts() {
+        String uri = "mongodb://localhost/?authMechanism=MONGODB-OIDC&&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:123";
+        ConnectionString cs = new ConnectionString(uri);
+        MongoCredential credential = assertNotNull(cs.getCredential())
+                .withMechanismProperty("ALLOWED_HOSTS", Collections.emptyList());
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applicationName(appName)
+                .applyConnectionString(cs)
+                .retryReads(false)
+                .credential(credential)
+                .build();
+        assertCause(IllegalArgumentException.class,
+                "ALLOWED_HOSTS must not be specified only when OIDC_HUMAN_CALLBACK is specified",
+                () -> {
+                    try (MongoClient mongoClient = createMongoClient(settings)) {
+                        performFind(mongoClient);
+                    }
+                });
     }
 
     @Test
