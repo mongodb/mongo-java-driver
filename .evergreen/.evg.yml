@@ -1766,7 +1766,7 @@ axes:
       - id: "8.0"
         display_name: "8.0"
         variables:
-          VERSION: "7.0"
+          VERSION: "8.0"
           # Multiple mongos instances can be specified in the connection string
           # for this version.
           SAFE_FOR_MULTI_MONGOS: true
