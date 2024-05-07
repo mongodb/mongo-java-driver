@@ -84,6 +84,12 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
             enableSleepAfterCursorError(256);
         }
 
+        /*
+         * The test is occasionally racy. The "killCursors" command may appear as an additional event. This is unexpected in unified tests,
+         * but anticipated in reactive streams because an operation timeout error triggers the closure of the stream/publisher.
+         */
+        ignoreExtraCommandEvents(testDescription.contains("timeoutMS is refreshed for getMore - failure"));
+
         Hooks.onOperatorDebug();
         Hooks.onErrorDropped(atomicReferenceThrowable::set);
     }
