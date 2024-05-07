@@ -369,12 +369,13 @@ abstract class BaseCluster implements Cluster {
         List<ServerSelector> selectors = Stream.of(
                 raceConditionPreFiltering,
                 serverSelector,
+                serverDeprioritization.getServerSelector(),
                 settings.getServerSelector(), // may be null
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
                 AtMostTwoRandomServerSelector.instance(),
                 new OperationCountMinimizingServerSelector(serversSnapshot)
         ).filter(Objects::nonNull).collect(toList());
-        return serverDeprioritization.apply(new CompositeServerSelector(selectors));
+        return new CompositeServerSelector(selectors);
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress) {

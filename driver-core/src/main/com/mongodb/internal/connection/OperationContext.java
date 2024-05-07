@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import static java.util.stream.Collectors.toList;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -56,14 +57,21 @@ public class OperationContext {
         @Nullable
         private ServerAddress candidate;
         private final Set<ServerAddress> deprioritized;
+        private final DeprioritizingSelector selector;
 
         private ServerDeprioritization() {
             candidate = null;
             deprioritized = new HashSet<>();
+            selector = new DeprioritizingSelector();
         }
 
-        ServerSelector apply(final ServerSelector selector) {
-            return new DeprioritizingSelector(selector);
+        /**
+         * The returned {@link ServerSelector} tries to {@linkplain ServerSelector#select(ClusterDescription) select}
+         * only the {@link ServerDescription}s that do not have deprioritized {@link ServerAddress}es.
+         * If no such {@link ServerDescription} can be selected, then it selects {@link ClusterDescription#getServerDescriptions()}.
+         */
+        ServerSelector getServerSelector() {
+            return selector;
         }
 
         void updateCandidate(final ServerAddress serverAddress, final ClusterType clusterType) {
@@ -88,38 +96,21 @@ public class OperationContext {
          * which indeed may be used concurrently. {@link DeprioritizingSelector} does not need to be thread-safe.
          */
         private final class DeprioritizingSelector implements ServerSelector {
-            private final ServerSelector wrapped;
-
-            private DeprioritizingSelector(final ServerSelector wrapped) {
-                this.wrapped = wrapped;
+            private DeprioritizingSelector() {
             }
 
             @Override
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                if (isEnabled(clusterDescription.getType())) {
-                    List<ServerDescription> nonDeprioritizedServerDescriptions = ClusterDescriptionHelper.getServersByPredicate(
-                            clusterDescription, serverDescription -> !deprioritized.contains(serverDescription.getAddress()));
-                    List<ServerDescription> result = wrapped.select(
-                            copyWithServerDescriptions(clusterDescription, nonDeprioritizedServerDescriptions));
-                    if (result.isEmpty()) {
-                        // fall back to selecting from all servers ignoring the deprioritized ones
-                        result = wrapped.select(clusterDescription);
-                    }
-                    return result;
+                List<ServerDescription> serverDescriptions = clusterDescription.getServerDescriptions();
+                if (!isEnabled(clusterDescription.getType())) {
+                    return serverDescriptions;
                 } else {
-                    return wrapped.select(clusterDescription);
+                    List<ServerDescription> nonDeprioritizedServerDescriptions = serverDescriptions
+                            .stream()
+                            .filter(serverDescription -> !deprioritized.contains(serverDescription.getAddress()))
+                            .collect(toList());
+                    return nonDeprioritizedServerDescriptions.isEmpty() ? serverDescriptions : nonDeprioritizedServerDescriptions;
                 }
-            }
-
-            private ClusterDescription copyWithServerDescriptions(
-                    final ClusterDescription clusterDescription, final List<ServerDescription> serverDescriptions) {
-                return new ClusterDescription(
-                        clusterDescription.getConnectionMode(),
-                        clusterDescription.getType(),
-                        clusterDescription.getSrvResolutionException(),
-                        serverDescriptions,
-                        clusterDescription.getClusterSettings(),
-                        clusterDescription.getServerSettings());
             }
         }
     }
