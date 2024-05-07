@@ -86,6 +86,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -468,7 +469,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @Tag("setsFailPoint")
     @SuppressWarnings("try")
-    @DisplayName("9. End Session 1 / 2")
+    @DisplayName("9. End Session. The timeout specified via the MongoClient timeoutMS option")
     @Test
     public void test9EndSessionClientTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -498,12 +499,14 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
             }
         }
-        assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("abortTransaction"));
+        CommandFailedEvent abortTransactionEvent = assertDoesNotThrow(() ->
+                commandListener.getCommandFailedEvent("abortTransaction"));
+        assertInstanceOf(MongoOperationTimeoutException.class, abortTransactionEvent.getThrowable());
     }
 
     @Tag("setsFailPoint")
     @SuppressWarnings("try")
-    @DisplayName("9. End Session 2 / 2")
+    @DisplayName("9. End Session. The timeout specified via the ClientSession defaultTimeoutMS option")
     @Test
     public void test9EndSessionSessionTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -533,8 +536,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
             }
         }
-
-        assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("abortTransaction"));
+        CommandFailedEvent abortTransactionEvent = assertDoesNotThrow(() ->
+                commandListener.getCommandFailedEvent("abortTransaction"));
+        assertInstanceOf(MongoOperationTimeoutException.class, abortTransactionEvent.getThrowable());
     }
 
     @Tag("setsFailPoint")

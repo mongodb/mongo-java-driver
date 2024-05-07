@@ -420,7 +420,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                 .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
-                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
+                    .getCollection(namespace.getCollectionName())
+                    .withReadPreference(ReadPreference.primary());
 
             collectionHelper.runAdminCommand("{"
                     + "    configureFailPoint: \"failCommand\","
@@ -449,6 +450,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .expectNextCount(2)
                     .thenAwait(Duration.ofMillis(600))
                     .thenRequest(2)
+                    .expectNextCount(2)
                     .thenCancel()
                     .verify();
 
