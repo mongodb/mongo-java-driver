@@ -68,10 +68,10 @@ class BaseClusterSpecification extends Specification {
 
             @Override
             Cluster.ServersSnapshot getServersSnapshot() {
-                Cluster.ServersSnapshot result = serverAddress -> {
-                    throw new UnsupportedOperationException()
+                Cluster.ServersSnapshot result = {
+                    serverAddress -> throw new UnsupportedOperationException()
                 }
-                return result
+                result
             }
 
             @Override

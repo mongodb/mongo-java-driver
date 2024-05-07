@@ -39,12 +39,13 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.LogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
+import com.mongodb.internal.selector.AtMostTwoRandomServerSelector;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
+import com.mongodb.internal.selector.OperationCountMinimizingServerSelector;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
@@ -53,10 +54,8 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -82,7 +81,6 @@ import static com.mongodb.internal.logging.LogMessage.Level.INFO;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toList;
@@ -128,8 +126,7 @@ abstract class BaseCluster implements Cluster {
             ClusterDescription curDescription = description;
             logServerSelectionStarted(clusterId, operationContext, serverSelector, curDescription);
             ServerDeprioritization serverDeprioritization = operationContext.getServerDeprioritization();
-            ServerSelector completeServerSelector = getCompleteServerSelector(serverSelector, serverDeprioritization);
-            ServerTuple serverTuple = selectServer(completeServerSelector, curDescription);
+            ServerTuple serverTuple = createCompleteSelectorAndSelectServer(serverSelector, curDescription, serverDeprioritization);
 
             boolean selectionWaitingLogged = false;
 
@@ -171,7 +168,7 @@ abstract class BaseCluster implements Cluster {
 
                 currentPhase = phase.get();
                 curDescription = description;
-                serverTuple = selectServer(completeServerSelector, curDescription);
+                serverTuple = createCompleteSelectorAndSelectServer(serverSelector, curDescription, serverDeprioritization);
             }
 
         } catch (InterruptedException e) {
@@ -189,7 +186,6 @@ abstract class BaseCluster implements Cluster {
 
         logServerSelectionStarted(clusterId, operationContext, serverSelector, currentDescription);
         ServerSelectionRequest request = new ServerSelectionRequest(operationContext, serverSelector,
-                getCompleteServerSelector(serverSelector, operationContext.getServerDeprioritization()),
                 getMaxWaitTimeNanos(), callback);
 
         if (!handleServerSelectionRequest(request, currentPhase, currentDescription)) {
@@ -285,12 +281,13 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
 
-                ServerTuple serverTuple = selectServer(request.completeSelector, description);
+                ServerDeprioritization serverDeprioritization = request.operationContext.getServerDeprioritization();
+                ServerTuple serverTuple = createCompleteSelectorAndSelectServer(request.originalSelector, description, serverDeprioritization);
                 if (serverTuple != null) {
                     ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                     logServerSelectionSucceeded(clusterId, request.operationContext, serverAddress,
                             request.originalSelector, description);
-                    request.operationContext.getServerDeprioritization().updateCandidate(serverAddress, description.getType());
+                    serverDeprioritization.updateCandidate(serverAddress, description.getType());
                     request.onResult(serverTuple, null);
                     return true;
                 }
@@ -313,18 +310,48 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Nullable
-    private ServerTuple selectServer(final ServerSelector serverSelector,
-            final ClusterDescription clusterDescription) {
-        return selectServer(serverSelector, clusterDescription, getServersSnapshot());
+    private ServerTuple createCompleteSelectorAndSelectServer(
+            final ServerSelector serverSelector,
+            final ClusterDescription clusterDescription,
+            final ServerDeprioritization serverDeprioritization) {
+        return createCompleteSelectorAndSelectServer(
+                serverSelector, clusterDescription, getServersSnapshot(), serverDeprioritization, settings);
     }
 
     @Nullable
     @VisibleForTesting(otherwise = PRIVATE)
-    static ServerTuple selectServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription,
+    static ServerTuple createCompleteSelectorAndSelectServer(
+            final ServerSelector serverSelector,
+            final ClusterDescription clusterDescription,
+            final ServersSnapshot serversSnapshot,
+            final ServerDeprioritization serverDeprioritization,
+            final ClusterSettings settings) {
+        ServerSelector completeServerSelector = getCompleteServerSelector(serverSelector, serverDeprioritization, serversSnapshot, settings);
+        return doSelectServer(completeServerSelector, clusterDescription, serversSnapshot);
+    }
+
+    @Nullable
+    private static ServerTuple doSelectServer(
+            final ServerSelector serverSelector,
+            final ClusterDescription clusterDescription,
             final ServersSnapshot serversSnapshot) {
+        return serverSelector.select(clusterDescription)
+                .stream()
+                .map(serverDescription -> new ServerTuple(
+                        assertNotNull(serversSnapshot.getServer(serverDescription.getAddress())),
+                        serverDescription))
+                .findAny()
+                .orElse(null);
+    }
+
+    private static ServerSelector getCompleteServerSelector(
+            final ServerSelector serverSelector,
+            final ServerDeprioritization serverDeprioritization,
+            final ServersSnapshot serversSnapshot,
+            final ClusterSettings settings) {
         // The set of `Server`s maintained by the `Cluster` is updated concurrently with `clusterDescription` being read.
         // Additionally, that set of servers continues to be concurrently updated while `serverSelector` selects.
-        // This race condition means that we are not guaranteed not observe all the servers from `clusterDescription`
+        // This race condition means that we are not guaranteed to observe all the servers from `clusterDescription`
         // among the `Server`s maintained by the `Cluster`.
         // To deal with this race condition, we take `serversSnapshot` of that set of `Server`s
         // (the snapshot itself does not have to be atomic) non-atomically with reading `clusterDescription`
@@ -339,43 +366,13 @@ abstract class BaseCluster implements Cluster {
                         .stream()
                         .filter(serverDescription -> serversSnapshot.containsServer(serverDescription.getAddress()))
                         .collect(toList());
-        List<ServerDescription> intermediateResult = new CompositeServerSelector(asList(raceConditionPreFiltering, serverSelector))
-                .select(clusterDescription);
-        return atMostNRandom(new ArrayList<>(intermediateResult), 2, serverDescription -> {
-            Server server = assertNotNull(serversSnapshot.getServer(serverDescription.getAddress()));
-            return new ServerTuple(server, serverDescription);
-        }).stream()
-                .min(comparingInt(serverTuple -> serverTuple.getServer().operationCount()))
-                .orElse(null);
-    }
-
-    /**
-     * Returns a new {@link List} of at most {@code n} elements, where each element is a result of
-     * {@linkplain Function#apply(Object) applying} the {@code transformer} to a randomly picked element from the specified {@code list},
-     * such that no element is picked more than once. If the {@code transformer} produces {@code null}, then another element is picked
-     * until either {@code n} transformed non-{@code null} elements are collected, or the {@code list} does not have
-     * unpicked elements left.
-     * <p>
-     * Note that this method may reorder the {@code list}, as it uses the
-     * <a href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle">Fisher–Yates, a.k.a. Durstenfeld, shuffle algorithm</a>.
-     */
-    private static List<ServerTuple> atMostNRandom(final ArrayList<ServerDescription> list, final int n,
-            final Function<ServerDescription, ServerTuple> transformer) {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        List<ServerTuple> result = new ArrayList<>(n);
-        for (int i = list.size() - 1; i >= 0 && result.size() < n; i--) {
-            Collections.swap(list, i, random.nextInt(i + 1));
-            ServerTuple serverTuple = assertNotNull(transformer.apply(list.get(i)));
-            result.add(serverTuple);
-        }
-        return result;
-    }
-
-    private ServerSelector getCompleteServerSelector(final ServerSelector serverSelector, final ServerDeprioritization serverDeprioritization) {
         List<ServerSelector> selectors = Stream.of(
+                raceConditionPreFiltering,
                 serverSelector,
                 settings.getServerSelector(), // may be null
-                new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS)
+                new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
+                AtMostTwoRandomServerSelector.instance(),
+                new OperationCountMinimizingServerSelector(serversSnapshot)
         ).filter(Objects::nonNull).collect(toList());
         return serverDeprioritization.apply(new CompositeServerSelector(selectors));
     }
@@ -426,7 +423,6 @@ abstract class BaseCluster implements Cluster {
     private static final class ServerSelectionRequest {
         private final OperationContext operationContext;
         private final ServerSelector originalSelector;
-        private final ServerSelector completeSelector;
         @Nullable
         private final Long maxWaitTimeNanos;
         private final SingleResultCallback<ServerTuple> callback;
@@ -434,13 +430,12 @@ abstract class BaseCluster implements Cluster {
         private CountDownLatch phase;
 
         ServerSelectionRequest(final OperationContext operationContext,
-                               final ServerSelector serverSelector, final ServerSelector completeSelector,
+                               final ServerSelector serverSelector,
                                @Nullable
                                final Long maxWaitTimeNanos,
                                final SingleResultCallback<ServerTuple> callback) {
             this.operationContext = operationContext;
             this.originalSelector = serverSelector;
-            this.completeSelector = completeSelector;
             this.maxWaitTimeNanos = maxWaitTimeNanos;
             this.callback = callback;
         }

@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonArray;
@@ -73,8 +74,11 @@ public class ServerSelectionWithinLatencyWindowTest {
     @Test
     public void shouldPassAllOutcomes() {
         ServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.nearest());
+        OperationContext.ServerDeprioritization emptyServerDeprioritization = new OperationContext().getServerDeprioritization();
+        ClusterSettings defaultClusterSettings = ClusterSettings.builder().build();
         Map<ServerAddress, List<ServerTuple>> selectionResultsGroupedByServerAddress = IntStream.range(0, iterations)
-                .mapToObj(i -> BaseCluster.selectServer(selector, clusterDescription, serversSnapshot))
+                .mapToObj(i -> BaseCluster.createCompleteSelectorAndSelectServer(selector, clusterDescription, serversSnapshot,
+                        emptyServerDeprioritization, defaultClusterSettings))
                 .collect(groupingBy(serverTuple -> serverTuple.getServerDescription().getAddress()));
         Map<ServerAddress, BigDecimal> selectionFrequencies = selectionResultsGroupedByServerAddress.entrySet()
                 .stream()
