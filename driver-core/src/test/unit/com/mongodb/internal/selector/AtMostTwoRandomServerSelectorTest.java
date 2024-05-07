@@ -50,7 +50,7 @@ final class AtMostTwoRandomServerSelectorTest {
         HashMap<ServerAddress, Integer> actualCounters = new HashMap<>();
         for (int i = 0; i < numberOfSelectIterations; i++) {
             List<ServerDescription> selected = AtMostTwoRandomServerSelector.instance().select(clusterDescription);
-            assertEquals(expectedSelectedSize, selected.size());
+            assertEquals(expectedSelectedSize, selected.size(), selected::toString);
             selected.forEach(serverDescription -> actualCounters.merge(serverDescription.getAddress(), 1, Integer::sum));
         }
         actualCounters.forEach((serverAddress, counter) ->

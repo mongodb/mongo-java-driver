@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 @Immutable
 public final class AtMostTwoRandomServerSelector implements ServerSelector {
-    private static final int N = 2;
+    private static final int TWO = 2;
     private static final AtMostTwoRandomServerSelector INSTANCE = new AtMostTwoRandomServerSelector();
 
     private AtMostTwoRandomServerSelector() {
@@ -48,7 +48,7 @@ public final class AtMostTwoRandomServerSelector implements ServerSelector {
         List<ServerDescription> serverDescriptions = new ArrayList<>(clusterDescription.getServerDescriptions());
         List<ServerDescription> result = new ArrayList<>();
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        for (int i = serverDescriptions.size() - 1; i >= 0 && result.size() < N; i--) {
+        for (int i = serverDescriptions.size() - 1; i >= 0 && result.size() < TWO; i--) {
             Collections.swap(serverDescriptions, i, random.nextInt(i + 1));
             result.add(serverDescriptions.get(i));
         }

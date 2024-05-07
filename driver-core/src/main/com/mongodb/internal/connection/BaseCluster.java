@@ -185,8 +185,7 @@ abstract class BaseCluster implements Cluster {
         ClusterDescription currentDescription = description;
 
         logServerSelectionStarted(clusterId, operationContext, serverSelector, currentDescription);
-        ServerSelectionRequest request = new ServerSelectionRequest(operationContext, serverSelector,
-                getMaxWaitTimeNanos(), callback);
+        ServerSelectionRequest request = new ServerSelectionRequest(operationContext, serverSelector, getMaxWaitTimeNanos(), callback);
 
         if (!handleServerSelectionRequest(request, currentPhase, currentDescription)) {
             notifyWaitQueueHandler(request);
@@ -327,15 +326,7 @@ abstract class BaseCluster implements Cluster {
             final ServerDeprioritization serverDeprioritization,
             final ClusterSettings settings) {
         ServerSelector completeServerSelector = getCompleteServerSelector(serverSelector, serverDeprioritization, serversSnapshot, settings);
-        return doSelectServer(completeServerSelector, clusterDescription, serversSnapshot);
-    }
-
-    @Nullable
-    private static ServerTuple doSelectServer(
-            final ServerSelector serverSelector,
-            final ClusterDescription clusterDescription,
-            final ServersSnapshot serversSnapshot) {
-        return serverSelector.select(clusterDescription)
+        return completeServerSelector.select(clusterDescription)
                 .stream()
                 .map(serverDescription -> new ServerTuple(
                         assertNotNull(serversSnapshot.getServer(serverDescription.getAddress())),
