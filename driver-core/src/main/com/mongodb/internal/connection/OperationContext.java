@@ -74,8 +74,8 @@ public class OperationContext {
             return selector;
         }
 
-        void updateCandidate(final ServerAddress serverAddress, final ClusterType clusterType) {
-            candidate = isEnabled(clusterType) ? serverAddress : null;
+        void updateCandidate(final ServerAddress serverAddress) {
+            candidate = serverAddress;
         }
 
         public void onAttemptFailure(final Throwable failure) {
@@ -84,10 +84,6 @@ public class OperationContext {
                 return;
             }
             deprioritized.add(candidate);
-        }
-
-        private static boolean isEnabled(final ClusterType clusterType) {
-            return clusterType == ClusterType.SHARDED;
         }
 
         /**
@@ -104,13 +100,16 @@ public class OperationContext {
                 List<ServerDescription> serverDescriptions = clusterDescription.getServerDescriptions();
                 if (!isEnabled(clusterDescription.getType())) {
                     return serverDescriptions;
-                } else {
-                    List<ServerDescription> nonDeprioritizedServerDescriptions = serverDescriptions
-                            .stream()
-                            .filter(serverDescription -> !deprioritized.contains(serverDescription.getAddress()))
-                            .collect(toList());
-                    return nonDeprioritizedServerDescriptions.isEmpty() ? serverDescriptions : nonDeprioritizedServerDescriptions;
                 }
+                List<ServerDescription> nonDeprioritizedServerDescriptions = serverDescriptions
+                        .stream()
+                        .filter(serverDescription -> !deprioritized.contains(serverDescription.getAddress()))
+                        .collect(toList());
+                return nonDeprioritizedServerDescriptions.isEmpty() ? serverDescriptions : nonDeprioritizedServerDescriptions;
+            }
+
+            private boolean isEnabled(final ClusterType clusterType) {
+                return clusterType == ClusterType.SHARDED;
             }
         }
     }

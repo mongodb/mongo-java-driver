@@ -41,7 +41,7 @@ import com.mongodb.internal.logging.LogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.selector.AtMostTwoRandomServerSelector;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
-import com.mongodb.internal.selector.OperationCountMinimizingServerSelector;
+import com.mongodb.internal.selector.MinimumOperationCountServerSelector;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -143,7 +143,7 @@ abstract class BaseCluster implements Cluster {
                     ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                     logServerSelectionSucceeded(
                             clusterId, operationContext, serverAddress, serverSelector, curDescription);
-                    serverDeprioritization.updateCandidate(serverAddress, curDescription.getType());
+                    serverDeprioritization.updateCandidate(serverAddress);
                     return serverTuple;
                 }
 
@@ -286,7 +286,7 @@ abstract class BaseCluster implements Cluster {
                     ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                     logServerSelectionSucceeded(clusterId, request.operationContext, serverAddress,
                             request.originalSelector, description);
-                    serverDeprioritization.updateCandidate(serverAddress, description.getType());
+                    serverDeprioritization.updateCandidate(serverAddress);
                     request.onResult(serverTuple, null);
                     return true;
                 }
@@ -364,7 +364,7 @@ abstract class BaseCluster implements Cluster {
                 settings.getServerSelector(), // may be null
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
                 AtMostTwoRandomServerSelector.instance(),
-                new OperationCountMinimizingServerSelector(serversSnapshot)
+                new MinimumOperationCountServerSelector(serversSnapshot)
         ).filter(Objects::nonNull).collect(toList());
         return new CompositeServerSelector(selectors);
     }

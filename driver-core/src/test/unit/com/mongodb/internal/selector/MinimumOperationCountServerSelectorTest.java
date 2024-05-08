@@ -45,12 +45,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
 
-final class OperationCountMinimizingServerSelectorTest {
+final class MinimumOperationCountServerSelectorTest {
     @ParameterizedTest
     @MethodSource("args")
     void select(final Map<String, Integer> hostToOperationCount, final List<String> expectedHosts) {
         ClusterDescriptionAndServersSnapshot pair = clusterDescriptionAndServersSnapshot(hostToOperationCount);
-        List<String> actualHosts = new OperationCountMinimizingServerSelector(pair.getServersSnapshot())
+        List<String> actualHosts = new MinimumOperationCountServerSelector(pair.getServersSnapshot())
                 .select(pair.getClusterDescription())
                 .stream()
                 .map(serverDescription -> serverDescription.getAddress().getHost())
@@ -96,7 +96,7 @@ final class OperationCountMinimizingServerSelectorTest {
 
     private static List<ServerDescription> serverDescriptions(final Collection<String> hosts) {
         return hosts.stream()
-                .map(OperationCountMinimizingServerSelectorTest::serverDescription)
+                .map(MinimumOperationCountServerSelectorTest::serverDescription)
                 .collect(toList());
     }
 

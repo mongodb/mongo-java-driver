@@ -48,9 +48,12 @@ public final class AtMostTwoRandomServerSelector implements ServerSelector {
         List<ServerDescription> serverDescriptions = new ArrayList<>(clusterDescription.getServerDescriptions());
         List<ServerDescription> result = new ArrayList<>();
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        for (int i = serverDescriptions.size() - 1; i >= 0 && result.size() < TWO; i--) {
+        for (int i = serverDescriptions.size() - 1; i >= 0; i--) {
             Collections.swap(serverDescriptions, i, random.nextInt(i + 1));
             result.add(serverDescriptions.get(i));
+            if (result.size() == TWO) {
+                break;
+            }
         }
         return result;
     }

@@ -84,15 +84,15 @@ final class ServerDeprioritizationTest {
 
     @ParameterizedTest
     @EnumSource(value = ClusterType.class, mode = EXCLUDE, names = {"SHARDED"})
-    void updateCandidateIgnoresIfNotShardedCluster(final ClusterType clusterType) {
-        serverDeprioritization.updateCandidate(SERVER_A.getAddress(), clusterType);
+    void serverSelectorSelectsAllIfNotShardedCluster(final ClusterType clusterType) {
+        serverDeprioritization.updateCandidate(SERVER_A.getAddress());
         serverDeprioritization.onAttemptFailure(new RuntimeException());
-        assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(SHARDED_CLUSTER));
+        assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(clusterDescription(clusterType)));
     }
 
     @Test
     void onAttemptFailureIgnoresIfPoolClearedException() {
-        serverDeprioritization.updateCandidate(SERVER_A.getAddress(), ClusterType.SHARDED);
+        serverDeprioritization.updateCandidate(SERVER_A.getAddress());
         serverDeprioritization.onAttemptFailure(
                 new MongoConnectionPoolClearedException(new ServerId(new ClusterId(), new ServerAddress()), null));
         assertEquals(ALL_SERVERS, serverDeprioritization.getServerSelector().select(SHARDED_CLUSTER));
@@ -105,7 +105,7 @@ final class ServerDeprioritizationTest {
 
     private void deprioritize(final ServerDescription... serverDescriptions) {
         for (ServerDescription serverDescription : serverDescriptions) {
-            serverDeprioritization.updateCandidate(serverDescription.getAddress(), ClusterType.SHARDED);
+            serverDeprioritization.updateCandidate(serverDescription.getAddress());
             serverDeprioritization.onAttemptFailure(new RuntimeException());
         }
     }
@@ -119,6 +119,6 @@ final class ServerDeprioritizationTest {
     }
 
     private static ClusterDescription clusterDescription(final ClusterType clusterType) {
-        return new ClusterDescription(ClusterConnectionMode.MULTIPLE, clusterType, asList(SERVER_A, SERVER_B, SERVER_C));
+        return new ClusterDescription(ClusterConnectionMode.MULTIPLE, clusterType, ALL_SERVERS);
     }
 }

@@ -37,7 +37,7 @@ import static java.util.Comparator.comparingInt;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
-public final class OperationCountMinimizingServerSelector implements ServerSelector {
+public final class MinimumOperationCountServerSelector implements ServerSelector {
     private final ServersSnapshot serversSnapshot;
 
     /**
@@ -45,7 +45,7 @@ public final class OperationCountMinimizingServerSelector implements ServerSelec
      * {@linkplain ClusterDescription#getServerDescriptions() all} {@link ServerDescription}s
      * in the {@link ClusterDescription} passed to {@link #select(ClusterDescription)}.
      */
-    public OperationCountMinimizingServerSelector(final ServersSnapshot serversSnapshot) {
+    public MinimumOperationCountServerSelector(final ServersSnapshot serversSnapshot) {
         this.serversSnapshot = serversSnapshot;
     }
 
