@@ -30,6 +30,9 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.when;
 
+/**
+ * @see BaseClusterSpecification
+ */
 final class BaseClusterTest {
     @Test
     void selectServerToleratesWhenThereIsNoServerForTheSelectedAddress() {
