@@ -36,6 +36,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
@@ -51,12 +52,11 @@ final class CommandOperationHelper {
         BsonDocument create(ServerDescription serverDescription, ConnectionDescription connectionDescription);
     }
 
-    static Throwable onRetryableReadAttemptFailure(
-            final OperationContext operationContext,
-            @Nullable final Throwable previouslyChosenException,
-            final Throwable mostRecentAttemptException) {
-        operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
-        return chooseRetryableReadException(previouslyChosenException, mostRecentAttemptException);
+    static BinaryOperator<Throwable> onRetryableReadAttemptFailure(final OperationContext operationContext) {
+        return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
+            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            return chooseRetryableReadException(previouslyChosenException, mostRecentAttemptException);
+        };
     }
 
     private static Throwable chooseRetryableReadException(
@@ -71,12 +71,11 @@ final class CommandOperationHelper {
         }
     }
 
-    static Throwable onRetryableWriteAttemptFailure(
-            final OperationContext operationContext,
-            @Nullable final Throwable previouslyChosenException,
-            final Throwable mostRecentAttemptException) {
-        operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
-        return chooseRetryableWriteException(previouslyChosenException, mostRecentAttemptException);
+    static BinaryOperator<Throwable> onRetryableWriteAttemptFailure(final OperationContext operationContext) {
+        return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
+            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            return chooseRetryableWriteException(previouslyChosenException, mostRecentAttemptException);
+        };
     }
 
     private static Throwable chooseRetryableWriteException(
