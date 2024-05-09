@@ -245,7 +245,7 @@ public class OidcAuthenticationProseTests {
                 .credential(credential)
                 .build();
         assertCause(IllegalArgumentException.class,
-                "ALLOWED_HOSTS must not be specified only when OIDC_HUMAN_CALLBACK is specified",
+                "ALLOWED_HOSTS must be specified only when OIDC_HUMAN_CALLBACK is specified",
                 () -> {
                     try (MongoClient mongoClient = createMongoClient(settings)) {
                         performFind(mongoClient);
