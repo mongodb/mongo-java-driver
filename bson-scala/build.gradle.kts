@@ -27,7 +27,7 @@ extra.setAll(
         "mavenName" to "Mongo Scala Bson Library",
         "mavenDescription" to "A Scala wrapper / extension to the bson library",
         "automaticModuleName" to "org.mongodb.bson.scala",
-        "importPackage" to "!scala.*, *",
+        "importPackage" to "!scala.*,*",
         "scalaVersion" to scalaVersion,
         "mavenArtifactId" to "${base.archivesName.get()}_${scalaVersion}"))
 
@@ -59,6 +59,7 @@ when (scalaVersion) {
 
             testImplementation(libs.bundles.scala.test.v2.v11)
         }
+        // Reuse the scala-2.12 source as its compatible.
         sourceSets { main { scala { setSrcDirs(listOf("src/main/scala", "src/main/scala-2.12")) } } }
     }
 }

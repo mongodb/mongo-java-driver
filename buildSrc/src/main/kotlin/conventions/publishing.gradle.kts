@@ -95,8 +95,8 @@ publishing {
         }
 
         afterEvaluate {
-            mavenArtifactId.let { artifactId = it }
-            mavenUrl.let { pom.url.set(it) }
+            mavenArtifactId?.let { artifactId = it }
+            mavenUrl?.let { pom.url.set(it) }
         }
     }
 }

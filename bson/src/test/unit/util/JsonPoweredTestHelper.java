@@ -89,13 +89,11 @@ public final class JsonPoweredTestHelper {
         List<File> files = new ArrayList<>();
 
         URL resource = JsonPoweredTestHelper.class.getResource(resourcePath);
-        File directory;
-        try {
-            directory = new File(resource.toURI());
-        } catch (IllegalArgumentException e) {
-            directory = new File(resource.toExternalForm());
+        if (resource != null) {
+            String externalForm = resource.toExternalForm();
+            File directory = externalForm != null && externalForm.contains(".jar") ? new File(externalForm) : new File(resource.toURI());
+            addFilesFromDirectory(directory, files);
         }
-        addFilesFromDirectory(directory, files);
         return files;
     }
 

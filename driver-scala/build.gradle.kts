@@ -29,8 +29,8 @@ extra.setAll(
     mapOf(
         "mavenName" to "Mongo Scala Driver",
         "mavenDescription" to "A Scala wrapper of the MongoDB Reactive Streams Java driver",
-        "automaticModuleName" to "org.mongodb.bson.scala",
-        "importPackage" to "!scala.*, *",
+        "automaticModuleName" to "org.mongodb.driver.scala",
+        "importPackage" to "!scala.*,*",
         "scalaVersion" to scalaVersion,
         "mavenArtifactId" to "${base.archivesName.get()}_${scalaVersion}"))
 
