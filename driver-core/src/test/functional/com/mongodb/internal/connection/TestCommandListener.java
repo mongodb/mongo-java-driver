@@ -149,7 +149,7 @@ public class TestCommandListener implements CommandListener {
         return getEvents(CommandFailedEvent.class, Integer.MAX_VALUE);
     }
 
-    public List<CommandFailedEvent> getCommandFailedEvents(String commandName) {
+    public List<CommandFailedEvent> getCommandFailedEvents(final String commandName) {
         return getEvents(CommandFailedEvent.class,
                 commandEvent -> commandEvent.getCommandName().equals(commandName),
                 Integer.MAX_VALUE);

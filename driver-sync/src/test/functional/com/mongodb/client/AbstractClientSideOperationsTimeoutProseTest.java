@@ -696,7 +696,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    
     @Test
     @DisplayName("Should ignore wTimeoutMS of WriteConcern to initial and subsequent commitTransaction operations")
     public void shouldIgnoreWtimeoutMsOfWriteConcernToInitialAndSubsequentCommitTransactionOperations() {
@@ -729,7 +728,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             if (command.containsKey("writeConcern")) {
                 BsonDocument writeConcern = command.getDocument("writeConcern");
                 assertFalse(writeConcern.isEmpty());
-                assertFalse(writeConcern.containsKey("wTimeoutMS"));
+                assertFalse(writeConcern.containsKey("wtimeout"));
             }});
     }
 
