@@ -41,6 +41,7 @@ import java.util.function.Function;
 
 import static java.nio.file.Files.isDirectory;
 import static java.util.stream.Collectors.toMap;
+import static org.bson.assertions.Assertions.assertNotNull;
 
 public final class JsonPoweredTestHelper {
 
@@ -89,11 +90,9 @@ public final class JsonPoweredTestHelper {
         List<File> files = new ArrayList<>();
 
         URL resource = JsonPoweredTestHelper.class.getResource(resourcePath);
-        if (resource != null) {
-            String externalForm = resource.toExternalForm();
-            File directory = externalForm != null && externalForm.contains(".jar") ? new File(externalForm) : new File(resource.toURI());
-            addFilesFromDirectory(directory, files);
-        }
+        File directory = new File(assertNotNull(resource).toExternalForm());
+        addFilesFromDirectory(directory, files);
+
         return files;
     }
 
