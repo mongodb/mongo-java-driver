@@ -463,6 +463,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     public void test9EndSessionClientTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
+        assumeFalse(isServerlessTest());
+
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: { times: 1 },"
@@ -499,6 +501,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     public void test9EndSessionSessionTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
+        assumeFalse(isServerlessTest());
+
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: { times: 1 },"
