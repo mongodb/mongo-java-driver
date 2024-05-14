@@ -24,6 +24,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.reactivestreams.client.internal.BatchCursor;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -89,6 +90,15 @@ public class SyncMongoClient implements MongoClient {
         sleepAfterSessionCloseMS = sleepMS;
     }
 
+    /**
+     * Enables behavior for waiting until a reactive {@link BatchCursor} is created.
+     * <p>
+     * When enabled, {@link SyncMongoCursor} allows intercepting the result of the cursor creation process.
+     * If the creation fails, the resulting exception will be propagated; if successful, the
+     * process will proceed to issue getMore commands.
+     * <p>
+     * NOTE:  Do not enable when multiple cursors are being iterated concurrently.
+     */
     public static void enableWaitForBatchCursorCreation() {
         waitForBatchCursorCreation = true;
     }

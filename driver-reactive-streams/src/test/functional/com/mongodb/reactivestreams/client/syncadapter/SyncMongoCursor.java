@@ -63,6 +63,9 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
         CountDownLatch latch = new CountDownLatch(1);
 
         if (isWaitForBatchCursorCreationEnabled()) {
+            // This hook allows us to intercept the `onNext` and `onError` signals for any operation to determine
+            // whether the {@link BatchCursor} was created successfully or if an error occurred during its creation process.
+            // The result is propagated to a {@link CompletableFuture}, which we use to block until it is completed.
             Hooks.onEachOperator(Operators.lift((sc, sub) ->
                     new BatchCursorInterceptSubscriber(sub, batchCursorCompletableFuture)));
         }
