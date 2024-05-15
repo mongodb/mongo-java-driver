@@ -34,8 +34,10 @@ public class UnifiedRetryableReadsTest extends UnifiedSyncTest {
     }
 
     public static void customSkips(final String fileDescription, @SuppressWarnings("unused") final String testDescription) {
+        // Skipped because driver removed the deprecated count methods
         assumeFalse(fileDescription.equals("count"));
         assumeFalse(fileDescription.equals("count-serverErrors"));
+        // Skipped because the driver never had these methods
         assumeFalse(fileDescription.equals("listDatabaseObjects"));
         assumeFalse(fileDescription.equals("listDatabaseObjects-serverErrors"));
         assumeFalse(fileDescription.equals("listCollectionObjects"));
