@@ -57,7 +57,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     private static final int RANDOM_VALUE1;
     private static final short RANDOM_VALUE2;
 
-    private static final AtomicInteger NEXT_COUNTER;
+    private static final AtomicInteger NEXT_COUNTER = new AtomicInteger(new SecureRandom().nextInt());
 
     private static final char[] HEX_CHARS = {
             '0', '1', '2', '3', '4', '5', '6', '7',
@@ -409,7 +409,6 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
             SecureRandom secureRandom = new SecureRandom();
             RANDOM_VALUE1 = secureRandom.nextInt(0x01000000);
             RANDOM_VALUE2 = (short) secureRandom.nextInt(0x00008000);
-            NEXT_COUNTER = new AtomicInteger(secureRandom.nextInt());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

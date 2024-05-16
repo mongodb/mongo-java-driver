@@ -121,7 +121,7 @@
     </Match>
 
     <Match>
-        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 18 -->
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 18 -->
         <!-- Spotbugs assumes that SSLSocket#getSSLParameters never returns null, when that is not the case for all JDKs -->
         <Class name="com.mongodb.internal.connection.SslHelper"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
