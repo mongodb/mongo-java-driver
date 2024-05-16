@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 
-<!-- See https://github.com/spotbugs/spotbugs/blob/master/docs/filter.rst#rank
+<!-- See https://spotbugs.readthedocs.io/en/latest/filter.html#rank
     for the mapping from SpotBugs rank to verbal labels.
 -->
 <FindBugsFilter>
@@ -143,18 +143,10 @@
 
     <Match>
         <!-- MongoDB status: "TODO Ross", SpotBugs rank: 11 -->
-        <Class name="org.bson.codecs.RepresentationConfigurable"/>
-        <Method name="withRepresentation"/>
-        <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
-    </Match>
-
-    <Match>
-        <!-- MongoDB status: "TODO Ross", SpotBugs rank: 11 -->
         <Class name="org.bson.codecs.kotlin.DataClassCodec$Companion"/>
         <Method name="getCodec"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
     </Match>
-
 
     <Match>
         <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 20 -->
