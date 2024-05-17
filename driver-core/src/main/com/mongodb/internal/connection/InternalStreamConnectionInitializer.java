@@ -51,6 +51,7 @@ import static java.lang.String.format;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
+    private static final int INITIAL_MIN_RTT = 0;
     private final ClusterConnectionMode clusterConnectionMode;
     private final Authenticator authenticator;
     private final BsonDocument clientMetadataDocument;
@@ -158,7 +159,7 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                 helloResult);
         ServerDescription serverDescription =
                 createServerDescription(internalConnection.getDescription().getServerAddress(), helloResult,
-                        System.nanoTime() - startTime, 0);
+                        System.nanoTime() - startTime, INITIAL_MIN_RTT);
         return new InternalConnectionInitializationDescription(connectionDescription, serverDescription);
     }
 

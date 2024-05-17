@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
@@ -216,12 +217,27 @@ class DefaultServer implements ClusterableServer {
                 if (e instanceof MongoWriteConcernWithResponseException) {
                     return (T) ((MongoWriteConcernWithResponseException) e).getResponse();
                 } else {
-                    if (e instanceof MongoSocketException && sessionContext.hasSession()) {
+                    if (shouldMarkSessionDirty(e, sessionContext)) {
                         sessionContext.markSessionDirty();
-                    }
+                       }
                     throw e;
                 }
             }
+        }
+
+        private boolean isMongoSocketException(final Throwable e) {
+            return e instanceof MongoSocketException;
+        }
+
+        private boolean isOperationTimeoutFromSocketException(final Throwable e) {
+            return e instanceof MongoOperationTimeoutException && e.getCause() instanceof MongoSocketException;
+        }
+
+        private boolean shouldMarkSessionDirty(final Throwable e, final SessionContext sessionContext) {
+            if (!sessionContext.hasSession()) {
+                return false;
+            }
+            return isMongoSocketException(e) || isOperationTimeoutFromSocketException(e);
         }
 
         @SuppressWarnings("unchecked")
@@ -239,7 +255,7 @@ class DefaultServer implements ClusterableServer {
                         if (t instanceof MongoWriteConcernWithResponseException) {
                             callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
                         } else {
-                            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                            if (shouldMarkSessionDirty(t, sessionContext)) {
                                 sessionContext.markSessionDirty();
                             }
                             callback.onResult(null, t);

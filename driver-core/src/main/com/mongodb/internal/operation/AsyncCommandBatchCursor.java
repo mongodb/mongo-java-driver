@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -286,13 +287,21 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                     return;
                 }
                 callable.call(assertNotNull(connection), (result, t1) -> {
-                    if (t1 instanceof MongoSocketException) {
-                        onCorruptedConnection(connection, (MongoSocketException) t1);
+                    if (t1 != null) {
+                        handleException(connection, t1);
                     }
                     connection.release();
                     callback.onResult(result, t1);
                 });
             });
+        }
+
+        private void handleException(final AsyncConnection connection, Throwable exception) {
+            if (exception instanceof MongoOperationTimeoutException && exception.getCause() instanceof MongoSocketException) {
+                onCorruptedConnection(connection, (MongoSocketException) exception.getCause());
+            } else if (exception instanceof MongoSocketException) {
+                onCorruptedConnection(connection, (MongoSocketException) exception);
+            }
         }
 
         private void getConnection(final SingleResultCallback<AsyncConnection> callback) {
