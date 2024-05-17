@@ -236,6 +236,8 @@ internal data class DataClassCodec<T : Any>(
                 } else {
                     this.get(clazz, types)
                 }
+            codec ?: throw CodecConfigurationException("Can't find a codec for $clazz.")
+
             return kParameter.findAnnotation<BsonRepresentation>()?.let {
                 if (codec !is RepresentationConfigurable<*>) {
                     throw CodecConfigurationException(

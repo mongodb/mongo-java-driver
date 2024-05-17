@@ -151,6 +151,11 @@ data class DataClassWithBsonConstructor(val id: String, val count: Int) {
     @BsonCreator constructor(id: String) : this(id, -1)
 }
 
+data class DataClassWithBsonRepresentation(
+    @BsonId val id: String,
+    @BsonRepresentation(BsonType.OBJECT_ID) val altId: String
+)
+
 data class DataClassWithInvalidBsonRepresentation(@BsonRepresentation(BsonType.STRING) val id: BsonMaxKey)
 
 data class DataClassWithFailingInit(val id: String) {

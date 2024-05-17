@@ -19,10 +19,12 @@ import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
+import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.kotlin.samples.DataClassEmbedded
 import org.bson.codecs.kotlin.samples.DataClassListOfDataClasses
 import org.bson.codecs.kotlin.samples.DataClassListOfListOfDataClasses
@@ -42,6 +44,7 @@ import org.bson.codecs.kotlin.samples.DataClassWithBsonExtraElements
 import org.bson.codecs.kotlin.samples.DataClassWithBsonId
 import org.bson.codecs.kotlin.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlin.samples.DataClassWithBsonProperty
+import org.bson.codecs.kotlin.samples.DataClassWithBsonRepresentation
 import org.bson.codecs.kotlin.samples.DataClassWithCollections
 import org.bson.codecs.kotlin.samples.DataClassWithDataClassMapKey
 import org.bson.codecs.kotlin.samples.DataClassWithDefaults
@@ -449,6 +452,9 @@ class DataClassCodecTest {
     fun testSupportedAnnotations() {
         assertRoundTrips("""{"_id": "a"}""", DataClassWithBsonId("a"))
         assertRoundTrips("""{"_id": "a"}""", DataClassWithBsonProperty("a"))
+        assertRoundTrips(
+            """{"_id": "a", "altId": {"${'$'}oid": "111111111111111111111111"}}""",
+            DataClassWithBsonRepresentation("a", "111111111111111111111111"))
     }
 
     @Test
@@ -465,6 +471,13 @@ class DataClassCodecTest {
         }
         assertThrows<CodecConfigurationException> {
             DataClassCodec.create(DataClassWithInvalidBsonRepresentation::class, registry())
+        }
+    }
+
+    @Test
+    fun testEmptyCodecRegistry() {
+        assertThrows<CodecConfigurationException> {
+            DataClassCodec.create(DataClassWithBsonRepresentation::class, EmptyCodecRegistry())
         }
     }
 
@@ -496,4 +509,8 @@ class DataClassCodecTest {
     }
 
     private fun registry() = fromProviders(DataClassCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)
+    private class EmptyCodecRegistry : CodecRegistry {
+        override fun <T : Any?> get(clazz: Class<T>?): Codec<T>? = null
+        override fun <T : Any?> get(clazz: Class<T>?, registry: CodecRegistry?): Codec<T>? = null
+    }
 }
