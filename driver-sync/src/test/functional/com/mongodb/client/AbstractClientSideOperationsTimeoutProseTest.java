@@ -756,7 +756,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @Test
     public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
         assumeTrue(serverVersionAtLeast(4, 4));
-        //assumeTrue(isServerlessTest());
+        assumeTrue(isServerlessTest());
 
         long rtt = ClusterFixture.getPrimaryRTT();
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
@@ -803,7 +803,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @Test
     public void testKillCursorsIsNotExecutedAfterGetMoreNetworkError() {
         assumeTrue(serverVersionAtLeast(4, 4));
-       // assumeTrue(isServerlessTest());
+        assumeTrue(isServerlessTest());
 
         long rtt = ClusterFixture.getPrimaryRTT();
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
@@ -831,7 +831,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             cursor.next();
             assertThrows(MongoOperationTimeoutException.class, cursor::next);
             cursor.close();
-            sleep(10000);
         }
 
         List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();

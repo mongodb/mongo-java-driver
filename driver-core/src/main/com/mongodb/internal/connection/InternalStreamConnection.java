@@ -71,6 +71,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
@@ -711,7 +712,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private MongoException translateWriteException(final Throwable e, final OperationContext operationContext) {
         if (e instanceof MongoSocketWriteTimeoutException && operationContext.getTimeoutContext().hasExpired()) {
-            return TimeoutContext.createMongoTimeoutException(e);
+            return createMongoTimeoutException(e);
         }
 
         if (e instanceof MongoException) {
@@ -728,12 +729,12 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private MongoException translateReadException(final Throwable e, final OperationContext operationContext) {
-        if (operationContext.getTimeoutContext().hasTimeoutMS()){
-            Throwable cause = e;
-            if(cause instanceof SocketTimeoutException){
-                cause = createReadTimeoutException((SocketTimeoutException) e);
+        if (operationContext.getTimeoutContext().hasTimeoutMS()) {
+            if (e instanceof SocketTimeoutException) {
+                return createMongoTimeoutException(createReadTimeoutException((SocketTimeoutException) e));
+            } else if (e instanceof MongoSocketReadTimeoutException) {
+                return createMongoTimeoutException((e));
             }
-            return TimeoutContext.createMongoTimeoutException(cause);
         }
 
         if (e instanceof MongoException) {

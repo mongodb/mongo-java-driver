@@ -296,7 +296,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             });
         }
 
-        private void handleException(final AsyncConnection connection, Throwable exception) {
+        private void handleException(final AsyncConnection connection, final Throwable exception) {
             if (exception instanceof MongoOperationTimeoutException && exception.getCause() instanceof MongoSocketException) {
                 onCorruptedConnection(connection, (MongoSocketException) exception.getCause());
             } else if (exception instanceof MongoSocketException) {
