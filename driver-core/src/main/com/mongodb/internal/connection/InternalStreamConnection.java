@@ -29,7 +29,6 @@ import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.MongoSocketWriteTimeoutException;
-import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -371,44 +370,45 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Nullable
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-                                final RequestContext requestContext, final OperationContext operationContext) {
-
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
         try {
-            return sendAndReceiveInternal(message, decoder, sessionContext, requestContext, operationContext);
+            return sendAndReceiveInternal(message, decoder, operationContext);
         } catch (MongoCommandException e) {
             if (reauthenticationIsTriggered(e)) {
-                return reauthenticateAndRetry(()-> sendAndReceiveInternal(message, decoder, sessionContext, requestContext, operationContext));
+                return reauthenticateAndRetry(()-> sendAndReceiveInternal(message, decoder, operationContext),
+                        operationContext);
             }
             throw e;
         }
     }
 
     @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-            final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                        final OperationContext operationContext,
+                                        final SingleResultCallback<T> callback) {
 
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
-                message, decoder, sessionContext, requestContext, operationContext, c);
-        beginAsync().<T>thenSupply(c -> {
-            sendAndReceiveAsyncInternal.getAsync(c);
-        }).onErrorIf(e -> reauthenticationIsTriggered(e), (t, c) -> {
-            reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, c);
-        }).finish(callback);
+                message, decoder, operationContext, c);
+        beginAsync()
+                .thenSupply(sendAndReceiveAsyncInternal::getAsync)
+                .onErrorIf(this::reauthenticationIsTriggered, (t, c) -> {
+                    reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, operationContext, c);
+                }).finish(callback);
     }
 
-    private <T> T reauthenticateAndRetry(final Supplier<T> operation) {
+    private <T> T reauthenticateAndRetry(final Supplier<T> operation, final OperationContext operationContext) {
         authenticated.set(false);
-        assertNotNull(authenticator).reauthenticate(this);
+        assertNotNull(authenticator).reauthenticate(this, operationContext);
         authenticated.set(true);
         return operation.get();
     }
 
     private <T> void reauthenticateAndRetryAsync(final AsyncSupplier<T> operation,
+            final OperationContext operationContext,
             final SingleResultCallback<T> callback) {
         beginAsync().thenRun(c -> {
             authenticated.set(false);
-            assertNotNull(authenticator).reauthenticateAsync(this, c);
+            assertNotNull(authenticator).reauthenticateAsync(this, operationContext, c);
         }).<T>thenSupply((c) -> {
             authenticated.set(true);
             operation.getAsync(c);
@@ -428,7 +428,6 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Nullable
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
-            final SessionContext sessionContext, final RequestContext requestContext,
             final OperationContext operationContext) {
         CommandEventSender commandEventSender;
 
@@ -541,8 +540,8 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private <T> void sendAndReceiveAsyncInternal(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext,
-            final RequestContext requestContext, final OperationContext operationContext, final SingleResultCallback<T> callback) {
+    private <T> void sendAndReceiveAsyncInternal(final CommandMessage message, final Decoder<T> decoder,
+                                                 final OperationContext operationContext, final SingleResultCallback<T> callback) {
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
             return;

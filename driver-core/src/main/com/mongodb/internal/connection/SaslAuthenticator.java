@@ -62,7 +62,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         super(credential, clusterConnectionMode, serverApi);
     }
 
-    public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+    public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
+                             final OperationContext operationContext) {
         doAsSubject(() -> {
             SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
             throwIfSaslClientIsNull(saslClient);

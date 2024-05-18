@@ -28,7 +28,6 @@ import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
-import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -103,13 +102,14 @@ public abstract class Authenticator {
     abstract void authenticateAsync(InternalConnection connection, ConnectionDescription connectionDescription,
             OperationContext operationContext, SingleResultCallback<Void> callback);
 
-    public void reauthenticate(final InternalConnection connection) {
-        authenticate(connection, connection.getDescription());
+    public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
+        authenticate(connection, connection.getDescription(), operationContext);
     }
 
-    public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
+    public void reauthenticateAsync(final InternalConnection connection, final OperationContext operationContext,
+                                    final SingleResultCallback<Void> callback) {
         beginAsync().thenRun((c) -> {
-            authenticateAsync(connection, connection.getDescription(), c);
+            authenticateAsync(connection, connection.getDescription(), operationContext, c);
         }).finish(callback);
     }
 }

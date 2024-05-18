@@ -36,14 +36,12 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
-import com.mongodb.internal.binding.AsyncOperationContextBinding;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncSessionBinding;
 import com.mongodb.internal.binding.AsyncSingleConnectionBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
-import com.mongodb.internal.binding.OperationContextBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.SessionBinding;
@@ -383,9 +381,7 @@ public final class ClusterFixture {
                                                final OperationContext operationContext) {
         if (!BINDING_MAP.containsKey(readPreference)) {
             ReadWriteBinding binding = new SessionBinding(new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT,
-                    operationContext,
-                    getServerApi(),
-                    IgnorableRequestContext.INSTANCE));
+                    operationContext));
             BINDING_MAP.put(readPreference, binding);
         }
         return BINDING_MAP.get(readPreference);
@@ -429,7 +425,7 @@ public final class ClusterFixture {
             final OperationContext operationContext) {
         if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
             AsyncReadWriteBinding binding = new AsyncSessionBinding(new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT,
-                    operationContext, getServerApi(), IgnorableRequestContext.INSTANCE));
+                    operationContext));
             ASYNC_BINDING_MAP.put(readPreference, binding);
         }
         return ASYNC_BINDING_MAP.get(readPreference);
