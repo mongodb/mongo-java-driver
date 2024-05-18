@@ -47,7 +47,7 @@ public interface InternalConnection extends BufferProvider {
     ServerDescription getInitialServerDescription();
 
     /**
-     * Opens the connection so its ready for use
+     * pens the connection so its ready for use. Will perform a handshake.
      *
      * @param operationContext the operation context
      */

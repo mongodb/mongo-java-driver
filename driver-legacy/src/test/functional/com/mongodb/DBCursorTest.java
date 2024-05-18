@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -394,13 +393,7 @@ public class DBCursorTest extends DatabaseTestCase {
             assertEquals(1, profileCollection.count());
 
             DBObject profileDocument = profileCollection.findOne();
-            if (serverVersionAtLeast(3, 6)) {
-                assertEquals(expectedComment, ((DBObject) profileDocument.get("command")).get("comment"));
-            } else if (serverVersionAtLeast(3, 2)) {
-                assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("comment"));
-            } else {
-                assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("$comment"));
-            }
+            assertEquals(expectedComment, ((DBObject) profileDocument.get("command")).get("comment"));
         } finally {
             database.command(new BasicDBObject("profile", 0));
             profileCollection.drop();

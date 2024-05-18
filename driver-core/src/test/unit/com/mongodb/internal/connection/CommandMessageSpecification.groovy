@@ -45,7 +45,7 @@ import java.nio.ByteBuffer
 
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION
 
 class CommandMessageSpecification extends Specification {
 
@@ -57,7 +57,7 @@ class CommandMessageSpecification extends Specification {
         given:
         def message = new CommandMessage(namespace, command, fieldNameValidator, readPreference,
                 MessageSettings.builder()
-                        .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION)
+                        .maxWireVersion(LATEST_WIRE_VERSION)
                         .serverType(serverType as ServerType)
                         .sessionSupported(true)
                         .build(),
@@ -160,9 +160,7 @@ class CommandMessageSpecification extends Specification {
 
         def expectedCommandDocument = new BsonDocument('insert', new BsonString('coll')).append('documents',
                 new BsonArray([new BsonDocument('_id', new BsonInt32(1)), new BsonDocument('_id', new BsonInt32(2))]))
-        if (maxWireVersion == THREE_DOT_SIX_WIRE_VERSION) {
-            expectedCommandDocument.append('$db', new BsonString(namespace.getDatabaseName()))
-        }
+        expectedCommandDocument.append('$db', new BsonString(namespace.getDatabaseName()))
         then:
         commandDocument == expectedCommandDocument
 
@@ -170,14 +168,14 @@ class CommandMessageSpecification extends Specification {
         where:
         [maxWireVersion, originalCommandDocument, payload] << [
                 [
-                        THREE_DOT_SIX_WIRE_VERSION,
+                        LATEST_WIRE_VERSION,
                         new BsonDocument('insert', new BsonString('coll')),
                         new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)),
                                                        new BsonDocument('_id', new BsonInt32(2))]
                                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) } ),
                 ],
                 [
-                        THREE_DOT_SIX_WIRE_VERSION,
+                        LATEST_WIRE_VERSION,
                         new BsonDocument('insert', new BsonString('coll')).append('documents',
                                 new BsonArray([new BsonDocument('_id', new BsonInt32(1)), new BsonDocument('_id', new BsonInt32(2))])),
                         null
@@ -188,7 +186,7 @@ class CommandMessageSpecification extends Specification {
     def 'should respect the max message size'() {
         given:
         def maxMessageSize = 1024
-        def messageSettings = MessageSettings.builder().maxMessageSize(maxMessageSize).maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+        def messageSettings = MessageSettings.builder().maxMessageSize(maxMessageSize).maxWireVersion(LATEST_WIRE_VERSION).build()
         def insertCommand = new BsonDocument('insert', new BsonString(namespace.collectionName))
         def payload = new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)).append('a', new BsonBinary(new byte[913])),
                                                      new BsonDocument('_id', new BsonInt32(2)).append('b', new BsonBinary(new byte[441])),
@@ -278,7 +276,7 @@ class CommandMessageSpecification extends Specification {
 
     def 'should respect the max batch count'() {
         given:
-        def messageSettings = MessageSettings.builder().maxBatchCount(2).maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+        def messageSettings = MessageSettings.builder().maxBatchCount(2).maxWireVersion(LATEST_WIRE_VERSION).build()
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900])),
                                                      new BsonDocument('b', new BsonBinary(new byte[450])),
                                                      new BsonDocument('c', new BsonBinary(new byte[450]))]
@@ -328,7 +326,7 @@ class CommandMessageSpecification extends Specification {
     def 'should throw if payload document bigger than max document size'() {
         given:
         def messageSettings = MessageSettings.builder().maxDocumentSize(900)
-                .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+                .maxWireVersion(LATEST_WIRE_VERSION).build()
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900]))]
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) })
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
@@ -344,26 +342,6 @@ class CommandMessageSpecification extends Specification {
 
         then:
         thrown(BsonMaximumSizeExceededException)
-    }
-
-    def 'should throw if wire version does not support transactions'() {
-        given:
-        def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
-        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonInt32(1))])
-        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
-                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
-        def output = new BasicOutputBuffer()
-        def sessionContext = Stub(SessionContext) {
-            getReadConcern() >> ReadConcern.DEFAULT
-            hasActiveTransaction() >> true
-        }
-
-        when:
-        message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, sessionContext,
-                Stub(TimeoutContext), null))
-
-        then:
-        thrown(MongoClientException)
     }
 
     def 'should throw if wire version and sharded cluster does not support transactions'() {

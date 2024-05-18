@@ -29,17 +29,16 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableWaitForBatchCursorCreation;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableWaitForBatchCursorCreation;
 import static org.junit.Assume.assumeFalse;
 
 public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
 
     private static final List<String> ERROR_REQUIRED_FROM_CHANGE_STREAM_INITIALIZATION_TESTS =
             Arrays.asList(
-                    "Test with document comment - pre 4.4",
-                    "Change Stream should error when an invalid aggregation stage is passed in",
-                    "The watch helper must not throw a custom exception when executed against a single server topology, "
-                            + "but instead depend on a server error"
+                    "Test with document comment - pre 4.4"
             );
 
     private static final List<String> EVENT_SENSITIVE_TESTS =
@@ -47,6 +46,14 @@ public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
                     "Test that comment is set on getMore",
                     "Test that comment is not set on getMore - pre 4.4"
             );
+
+    private static final List<String> REQUIRES_BATCH_CURSOR_CREATION_WAITING =
+            Arrays.asList(
+                    "Change Stream should error when an invalid aggregation stage is passed in",
+                    "The watch helper must not throw a custom exception when executed against a single server topology, "
+                            + "but instead depend on a server error"
+            );
+
 
     public ChangeStreamsTest(@SuppressWarnings("unused") final String fileDescription,
                              @SuppressWarnings("unused") final String testDescription,
@@ -58,12 +65,17 @@ public final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
         assumeFalse(EVENT_SENSITIVE_TESTS.contains(testDescription));
 
         enableSleepAfterCursorOpen(256);
+
+        if (REQUIRES_BATCH_CURSOR_CREATION_WAITING.contains(testDescription)) {
+            enableWaitForBatchCursorCreation();
+        }
     }
 
     @After
     public void cleanUp() {
         super.cleanUp();
         disableSleep();
+        disableWaitForBatchCursorCreation();
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
