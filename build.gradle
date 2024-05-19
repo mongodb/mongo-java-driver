@@ -58,6 +58,7 @@ ext {
     mongoCryptVersion = '1.8.0'
     projectReactorVersion = '2022.0.0'
     junitBomVersion = '5.8.2'
+    graalSdkVersion = '24.0.0'
     gitVersion = getGitVersion()
 }
 
