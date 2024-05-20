@@ -42,7 +42,6 @@ import com.mongodb.event.CommandSucceededEvent
 import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils
 import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.session.SessionContext
-import com.mongodb.internal.time.Timeout
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -460,7 +459,7 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.isClosed()
     }
 
-    def 'Should throw MongoOperationTimeoutException with underlying socket exception as a cause when Stream.read throws SocketException and the thread is not interrupted'() {
+    def 'Should throw timeout exception with underlying socket exception as a cause when Stream.read throws SocketException'() {
         given:
         stream.read(_, _) >> { throw new SocketTimeoutException() }
         def connection = getOpenedConnection()
@@ -497,9 +496,9 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
 
-    def 'Should wrap SocketException with MongoOperationTimeoutException when Stream.read throws SocketException and the thread is not interrupted async'() {
+    def 'Should wrap SocketException with timeout exception when Stream.read throws SocketException async'() {
         given:
-        stream.readAsync(_,_, _) >> { numBytes, operationContext, handler ->
+        stream.readAsync(_ , _, _) >> { numBytes, operationContext, handler ->
             handler.failed(new SocketTimeoutException())
         }
         def connection = getOpenedConnection()
@@ -521,7 +520,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'Should wrap MongoSocketReadTimeoutException with MongoOperationTimeoutException async'() {
         given:
-        stream.readAsync(_,_, _) >> { numBytes, operationContext, handler ->
+        stream.readAsync(_, _, _) >> { numBytes, operationContext, handler ->
             handler.failed(new MongoSocketReadTimeoutException("test", new ServerAddress(), null))
         }
 
