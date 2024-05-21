@@ -73,6 +73,7 @@ import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
@@ -657,7 +658,7 @@ public class InternalStreamConnection implements InternalConnection {
         }, Exception.class, (e, c) -> {
             close();
             throwTranslatedWriteException(e);
-        }).finish(callback);
+        }).finish(errorHandlingCallback(callback, LOGGER));
     }
 
     @Override

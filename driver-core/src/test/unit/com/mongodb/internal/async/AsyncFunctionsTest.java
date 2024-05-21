@@ -759,8 +759,8 @@ final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
 
     @Test
     void testInvalid() {
-        isTestingAbruptCompletion = false;
-        invocationTracker.isAsyncStep = true;
+        setIsTestingAbruptCompletion(false);
+        setAsyncStep(true);
         assertThrows(IllegalStateException.class, () -> {
             beginAsync().thenRun(c -> {
                 async(3, c);
@@ -783,8 +783,8 @@ final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
         // Stand-ins for sync-async methods; these "happily" do not throw
         // exceptions, to avoid complicating this demo async code.
         Consumer<Integer> happySync = (i) -> {
-            invocationTracker.getNextOption(1);
-            listener.add("affected-success-" + i);
+            getNextOption(1);
+            listenerAdd("affected-success-" + i);
         };
         BiConsumer<Integer, SingleResultCallback<Void>> happyAsync = (i, c) -> {
             happySync.accept(i);

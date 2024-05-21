@@ -1,3 +1,19 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb.internal.async;
 
 import com.mongodb.client.TestListener;
@@ -17,9 +33,25 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class AsyncFunctionsTestAbstract {
 
-    final TestListener listener = new TestListener();
-    final InvocationTracker invocationTracker = new InvocationTracker();
-    boolean isTestingAbruptCompletion = false;
+    private final TestListener listener = new TestListener();
+    private final InvocationTracker invocationTracker = new InvocationTracker();
+    private boolean isTestingAbruptCompletion = false;
+
+    void setIsTestingAbruptCompletion(final boolean b) {
+        isTestingAbruptCompletion = b;
+    }
+
+    public void setAsyncStep(final boolean isAsyncStep) {
+        invocationTracker.isAsyncStep = isAsyncStep;
+    }
+
+    public void getNextOption(final int i) {
+        invocationTracker.getNextOption(i);
+    }
+
+    public void listenerAdd(final String s) {
+        listener.add(s);
+    }
 
     void plain(final int i) {
         int cur = invocationTracker.getNextOption(2);
@@ -34,10 +66,10 @@ public class AsyncFunctionsTestAbstract {
     int plainReturns(final int i) {
         int cur = invocationTracker.getNextOption(2);
         if (cur == 0) {
-            listener.add("plain-exception-" + i);
+            listener.add("plain-returns-exception-" + i);
             throw new RuntimeException("affected method exception-" + i);
         } else {
-            listener.add("plain-success-" + i);
+            listener.add("plain-returns-success-" + i);
             return i;
         }
     }
@@ -108,10 +140,10 @@ public class AsyncFunctionsTestAbstract {
     private int affectedReturns(final int i) {
         int cur = invocationTracker.getNextOption(2);
         if (cur == 0) {
-            listener.add("affected-exception-" + i);
+            listener.add("affected-returns-exception-" + i);
             throw new RuntimeException("exception-" + i);
         } else {
-            listener.add("affected-success-" + i);
+            listener.add("affected-returns-success-" + i);
             return i;
         }
     }
@@ -216,7 +248,7 @@ public class AsyncFunctionsTestAbstract {
     static class InvocationTracker {
         public static final int DEPTH_LIMIT = 50;
         private final List<Integer> invocationOptionSequence = new ArrayList<>();
-        boolean isAsyncStep; // async = matching, vs initial step = populating
+        private boolean isAsyncStep; // async = matching, vs initial step = populating
         private int currentInvocationIndex;
         private int variationCount;
 
