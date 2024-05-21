@@ -142,7 +142,7 @@
     </Match>
 
     <Match>
-        <!-- MongoDB status: "TODO Ross", SpotBugs rank: 11 -->
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 11 -->
         <Class name="org.bson.codecs.kotlin.DataClassCodec$Companion"/>
         <Method name="getCodec"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
