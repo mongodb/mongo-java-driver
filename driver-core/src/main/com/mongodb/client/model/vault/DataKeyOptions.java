@@ -128,6 +128,8 @@ public class DataKeyOptions {
      *   omitted, the driver creates a random 96 byte KMIP Secret Data managed object.</li>
      *   <li>endpoint: a String, the endpoint as a host with required port. e.g. "example.com:443". If endpoint is not provided, it
      *   defaults to the required endpoint from the KMS providers map.</li>
+     *   <li>delegated: If true (recommended), the KMIP server must decrypt this key. If delegated is not provided,
+     *   defaults to false. </li>
      * </ul>
      * <p>
      * If the kmsProvider is "local" the masterKey is not applicable.
