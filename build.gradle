@@ -347,9 +347,8 @@ configure(javaCodeCheckedProjects) {
 
     spotbugsMain {
         reports {
-            xml.enabled = true
+            xml.enabled = project.buildingWith('xmlReports.enabled')
             html.enabled = !project.buildingWith('xmlReports.enabled')
-            sarif.enabled = true
         }
     }
 
