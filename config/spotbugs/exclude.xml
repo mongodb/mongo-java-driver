@@ -14,17 +14,25 @@
   ~ limitations under the License.
   -->
 
-<!-- See https://spotbugs.readthedocs.io/en/latest/filter.html#rank
+<!--
+    To determine the rank of a newly-detected bug that you would like to exclude,
+    run spotbugsMain task with xml.enabled, then examine the XML report in
+    <module>/build/reports/spotbugs/main.xml, where the rankings are
+    included as part of the report, e.g.
+
+    <BugInstance type="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" priority="2" rank="16" ...
+
+    See https://spotbugs.readthedocs.io/en/latest/filter.html#rank
     for the mapping from SpotBugs rank to verbal labels.
 -->
 <FindBugsFilter>
     <Match>
-        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: * -->
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
 
     <Match>
-        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: * -->
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 16 -->
         <Class name="com.mongodb.internal.connection.tlschannel.impl.BufferHolder"/>
         <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE"/>
     </Match>
