@@ -19,6 +19,17 @@
 -->
 <FindBugsFilter>
     <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: * -->
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <Match>
+        <!-- MongoDB status: "No Fix Needed", SpotBugs rank: * -->
+        <Class name="com.mongodb.internal.connection.tlschannel.impl.BufferHolder"/>
+        <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE"/>
+    </Match>
+
+    <Match>
         <!-- MongoDB status: "No Fix Needed", SpotBugs rank: 18 -->
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
     </Match>

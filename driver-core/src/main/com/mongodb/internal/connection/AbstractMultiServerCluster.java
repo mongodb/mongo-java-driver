@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
@@ -38,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.UNKNOWN;
@@ -234,7 +236,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (replicaSetName == null) {
-            replicaSetName = newDescription.getSetName();
+            replicaSetName = assertNotNull(newDescription.getSetName());
         }
 
         if (!replicaSetName.equals(newDescription.getSetName())) {
