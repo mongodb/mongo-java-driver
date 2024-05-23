@@ -390,11 +390,11 @@ public class InternalStreamConnection implements InternalConnection {
 
         AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
                 message, decoder, operationContext, c);
-        beginAsync()
-                .thenSupply(sendAndReceiveAsyncInternal::getAsync)
-                .onErrorIf(this::reauthenticationIsTriggered, (t, c) -> {
-                    reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, operationContext, c);
-                }).finish(callback);
+        beginAsync().<T>thenSupply(c -> {
+            sendAndReceiveAsyncInternal.getAsync(c);
+        }).onErrorIf(e -> reauthenticationIsTriggered(e), (t, c) -> {
+            reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, operationContext, c);
+        }).finish(callback);
     }
 
     private <T> T reauthenticateAndRetry(final Supplier<T> operation, final OperationContext operationContext) {
