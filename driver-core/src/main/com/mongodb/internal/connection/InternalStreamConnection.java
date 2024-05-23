@@ -371,12 +371,13 @@ public class InternalStreamConnection implements InternalConnection {
     @Nullable
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
+        Supplier<T> sendAndReceiveInternal = () -> sendAndReceiveInternal(
+                message, decoder, operationContext);
         try {
-            return sendAndReceiveInternal(message, decoder, operationContext);
+            return sendAndReceiveInternal.get();
         } catch (MongoCommandException e) {
             if (reauthenticationIsTriggered(e)) {
-                return reauthenticateAndRetry(()-> sendAndReceiveInternal(message, decoder, operationContext),
-                        operationContext);
+                return reauthenticateAndRetry(sendAndReceiveInternal, operationContext);
             }
             throw e;
         }
