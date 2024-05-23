@@ -33,7 +33,7 @@ import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.internal.mockito.MongoMockito.mock;
-import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -51,7 +51,7 @@ class CommandMessageTest {
         //given
         CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 MessageSettings.builder()
-                        .maxWireVersion(LATEST_WIRE_VERSION)
+                        .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .build(),
@@ -77,6 +77,7 @@ class CommandMessageTest {
         //given
         CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 MessageSettings.builder()
+                        .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .cryptd(true)
