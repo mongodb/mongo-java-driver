@@ -17,9 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerUnavailableException;
-import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
@@ -198,7 +196,7 @@ class DefaultServer implements ClusterableServer {
         return serverId;
     }
 
-    private class DefaultServerProtocolExecutor implements ProtocolExecutor {
+    private class DefaultServerProtocolExecutor extends AbstractProtocolExecutor {
 
         @SuppressWarnings("unchecked")
         @Override
@@ -223,21 +221,6 @@ class DefaultServer implements ClusterableServer {
                     throw e;
                 }
             }
-        }
-
-        private boolean isMongoSocketException(final Throwable e) {
-            return e instanceof MongoSocketException;
-        }
-
-        private boolean isOperationTimeoutFromSocketException(final Throwable e) {
-            return e instanceof MongoOperationTimeoutException && e.getCause() instanceof MongoSocketException;
-        }
-
-        private boolean shouldMarkSessionDirty(final Throwable e, final SessionContext sessionContext) {
-            if (!sessionContext.hasSession()) {
-                return false;
-            }
-            return isMongoSocketException(e) || isOperationTimeoutFromSocketException(e);
         }
 
         @SuppressWarnings("unchecked")

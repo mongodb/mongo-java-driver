@@ -154,7 +154,7 @@ public class LoadBalancedServer implements ClusterableServer {
         return connectionPool;
     }
 
-    private class LoadBalancedServerProtocolExecutor implements ProtocolExecutor {
+    private class LoadBalancedServerProtocolExecutor extends AbstractProtocolExecutor {
         @SuppressWarnings("unchecked")
         @Override
         public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection, final SessionContext sessionContext) {
@@ -191,7 +191,7 @@ public class LoadBalancedServer implements ClusterableServer {
         private void handleExecutionException(final InternalConnection connection, final SessionContext sessionContext,
                                               final Throwable t) {
             invalidate(t, connection.getDescription().getServiceId(), connection.getGeneration());
-            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+            if (shouldMarkSessionDirty(t, sessionContext)) {
                 sessionContext.markSessionDirty();
             }
         }

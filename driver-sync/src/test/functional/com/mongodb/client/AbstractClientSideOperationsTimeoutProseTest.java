@@ -752,7 +752,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Tag("setsFailPoint")
-    @DisplayName("KillCursors is not executed after getMore network error")
+    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
     @Test
     public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
         assumeTrue(serverVersionAtLeast(4, 4));
@@ -772,9 +772,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .applyToSocketSettings(builder -> builder.readTimeout(10, TimeUnit.MILLISECONDS))
-
-        )) {
+                .retryReads(true)
+                .applyToSocketSettings(builder -> builder.readTimeout(500, TimeUnit.MILLISECONDS)))) {
 
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
@@ -789,7 +788,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
 
         List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
-        assertEquals(2, events.size());
+        assertEquals(2, events.size(), "Actual events: " + events.stream()
+                .map(CommandStartedEvent::getCommandName)
+                .collect(Collectors.toList()));
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
 
@@ -834,7 +835,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
 
         List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
-        assertEquals(2, events.size());
+        assertEquals(2, events.size(), "Actual events: " + events.stream()
+                .map(CommandStartedEvent::getCommandName)
+                .collect(Collectors.toList()));
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
 
@@ -896,6 +899,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             collectionHelper.drop();
             filesCollectionHelper.drop();
             chunksCollectionHelper.drop();
+            commandListener.reset();
             try {
                 ServerHelper.checkPool(getPrimary());
             } catch (InterruptedException e) {
