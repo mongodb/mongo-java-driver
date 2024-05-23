@@ -23,11 +23,11 @@ import com.mongodb.internal.connection.Cluster.ServersSnapshot;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.selector.ServerSelector;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparingInt;
 
 /**
@@ -51,12 +51,12 @@ public final class MinimumOperationCountServerSelector implements ServerSelector
 
     @Override
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        ServerDescription selected = clusterDescription.getServerDescriptions()
+        return clusterDescription.getServerDescriptions()
                 .stream()
                 .min(comparingInt(serverDescription ->
                         assertNotNull(serversSnapshot.getServer(serverDescription.getAddress()))
                                 .operationCount()))
-                .orElse(null);
-        return selected == null ? emptyList() : singletonList(selected);
+                .map(Collections::singletonList)
+                .orElse(emptyList());
     }
 }
