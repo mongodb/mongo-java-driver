@@ -455,7 +455,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     }
 
     private boolean canRunTests() {
-        return isDiscoverableReplicaSet() && serverVersionAtLeast(3, 6);
+        return isDiscoverableReplicaSet();
     }
 
     private AggregateResponseBatchCursor<?> getBatchCursor(final MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor)
