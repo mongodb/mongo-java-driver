@@ -340,6 +340,19 @@ abstract class BaseCluster implements Cluster {
             final ServerDeprioritization serverDeprioritization,
             final ServersSnapshot serversSnapshot,
             final ClusterSettings settings) {
+        List<ServerSelector> selectors = Stream.of(
+                getRaceConditionPreFilteringSelector(serversSnapshot),
+                serverSelector,
+                serverDeprioritization.getServerSelector(),
+                settings.getServerSelector(), // may be null
+                new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
+                AtMostTwoRandomServerSelector.instance(),
+                new MinimumOperationCountServerSelector(serversSnapshot)
+        ).filter(Objects::nonNull).collect(toList());
+        return new CompositeServerSelector(selectors);
+    }
+
+    private static ServerSelector getRaceConditionPreFilteringSelector(final ServersSnapshot serversSnapshot) {
         // The set of `Server`s maintained by the `Cluster` is updated concurrently with `clusterDescription` being read.
         // Additionally, that set of servers continues to be concurrently updated while `serverSelector` selects.
         // This race condition means that we are not guaranteed to observe all the servers from `clusterDescription`
@@ -349,24 +362,10 @@ abstract class BaseCluster implements Cluster {
         // (this means, `serversSnapshot` and `clusterDescription` are not guaranteed to be consistent with each other),
         // and do pre-filtering to make sure that the only `ServerDescription`s we may select,
         // are of those `Server`s that are known to both `clusterDescription` and `serversSnapshot`.
-        // This way we are guaranteed to successfully get `Server`s from `serversSnapshot` based on the selected `ServerDescription`s.
-        //
-        // The pre-filtering we do to deal with the race condition described above is achieved by this `ServerSelector`.
-        ServerSelector raceConditionPreFiltering = clusterDescriptionPotentiallyInconsistentWithServerSnapshot ->
-                clusterDescriptionPotentiallyInconsistentWithServerSnapshot.getServerDescriptions()
-                        .stream()
-                        .filter(serverDescription -> serversSnapshot.containsServer(serverDescription.getAddress()))
-                        .collect(toList());
-        List<ServerSelector> selectors = Stream.of(
-                raceConditionPreFiltering,
-                serverSelector,
-                serverDeprioritization.getServerSelector(),
-                settings.getServerSelector(), // may be null
-                new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
-                AtMostTwoRandomServerSelector.instance(),
-                new MinimumOperationCountServerSelector(serversSnapshot)
-        ).filter(Objects::nonNull).collect(toList());
-        return new CompositeServerSelector(selectors);
+        return clusterDescription -> clusterDescription.getServerDescriptions()
+                .stream()
+                .filter(serverDescription -> serversSnapshot.containsServer(serverDescription.getAddress()))
+                .collect(toList());
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress) {
