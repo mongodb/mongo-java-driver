@@ -60,7 +60,7 @@ public class ServerDescription {
      * The minimum supported driver wire version
      * @since 3.8
      */
-    public static final int MIN_DRIVER_WIRE_VERSION = 6;
+    public static final int MIN_DRIVER_WIRE_VERSION = 7;
     /**
      * The maximum supported driver wire version
      * @since 3.8

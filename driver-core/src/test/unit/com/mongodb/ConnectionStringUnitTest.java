@@ -15,10 +15,15 @@
  */
 package com.mongodb;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ServerMonitoringMode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,6 +37,48 @@ final class ConnectionStringUnitTest {
     void defaults() {
         ConnectionString connectionStringDefault = new ConnectionString(DEFAULT_OPTIONS);
         assertAll(() -> assertNull(connectionStringDefault.getServerMonitoringMode()));
+    }
+
+    @Test
+    public void mustDecodeOidcIndividually() {
+        String string = "abc,d!@#$%^&*;ef:ghi";
+        // encoded tags will fail parsing with an "invalid read preference tag"
+        // error if decoding is skipped.
+        String encodedTags = encode("dc:ny,rack:1");
+        ConnectionString cs = new ConnectionString(
+                "mongodb://localhost/?readPreference=primaryPreferred&readPreferenceTags=" + encodedTags
+                + "&authMechanism=MONGODB-OIDC&authMechanismProperties="
+                + "ENVIRONMENT:azure,TOKEN_RESOURCE:" + encode(string));
+        MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+        assertEquals(string, credential.getMechanismProperty("TOKEN_RESOURCE", null));
+    }
+
+    @Test
+    public void mustDecodeNonOidcAsWhole()  {
+        // this string allows us to check if there is no double decoding
+        String rawValue = encode("ot her");
+        assertAll(() -> {
+            // even though only one part has been encoded by the user, the whole option value (pre-split) must be decoded
+            ConnectionString cs = new ConnectionString(
+                    "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                            + "SERVICE_NAME:" + encode(rawValue) + ",CANONICALIZE_HOST_NAME:true&authSource=$external");
+            MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+            assertEquals(rawValue, credential.getMechanismProperty("SERVICE_NAME", null));
+        }, () -> {
+            ConnectionString cs = new ConnectionString(
+                    "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                            + encode("SERVICE_NAME:" + rawValue + ",CANONICALIZE_HOST_NAME:true&authSource=$external"));
+            MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+            assertEquals(rawValue, credential.getMechanismProperty("SERVICE_NAME", null));
+        });
+    }
+
+    private static String encode(final String string) {
+        try {
+            return URLEncoder.encode(string, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @ParameterizedTest

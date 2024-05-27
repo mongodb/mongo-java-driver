@@ -29,7 +29,6 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
@@ -48,7 +47,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
 @SuppressWarnings("deprecation")
 public class MapReduceTest extends DatabaseTestCase {
@@ -108,7 +106,6 @@ public class MapReduceTest extends DatabaseTestCase {
     @Test
     public void testWriteConcern() {
         assumeThat(isDiscoverableReplicaSet(), is(true));
-        assumeTrue(serverVersionAtLeast(3, 4));
         DBCollection collection = database.getCollection("testWriteConcernForMapReduce");
         collection.insert(new BasicDBObject("x", new String[]{"a", "b"}).append("s", 1));
         collection.setWriteConcern(new WriteConcern(5));
