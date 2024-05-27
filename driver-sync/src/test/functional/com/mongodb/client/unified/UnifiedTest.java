@@ -109,8 +109,8 @@ public abstract class UnifiedTest {
     private final UnifiedClientEncryptionHelper clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
     private final List<FailPoint> failPoints = new ArrayList<>();
     private final UnifiedTestContext rootContext = new UnifiedTestContext();
+    private boolean ignoreExtraEvents;
     private BsonDocument startingClusterTime;
-    private boolean ignoreExtraCommandEventsOverride = false;
 
     private class UnifiedTestContext {
         private final AssertionContext context = new AssertionContext();
@@ -211,7 +211,9 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.14")
                         || schemaVersion.equals("1.15")
                         || schemaVersion.equals("1.16")
-                        || schemaVersion.equals("1.17"));
+                        || schemaVersion.equals("1.17")
+                        || schemaVersion.equals("1.18")
+                        || schemaVersion.equals("1.19"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
@@ -259,7 +261,7 @@ public abstract class UnifiedTest {
         }
 
         if (definition.containsKey("expectEvents")) {
-            compareEvents(rootContext, definition, ignoreExtraCommandEventsOverride);
+            compareEvents(rootContext, definition);
         }
 
         if (definition.containsKey("expectLogMessages")) {
@@ -274,11 +276,12 @@ public abstract class UnifiedTest {
         }
     }
 
-    private void compareEvents(final UnifiedTestContext context, final BsonDocument definition, final boolean ignoreExtraEventsOverride) {
+    private void compareEvents(final UnifiedTestContext context, final BsonDocument definition) {
         for (BsonValue cur : definition.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
             String client = curClientEvents.getString("client").getValue();
-            boolean ignoreExtraEvents = curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.FALSE).getValue() || ignoreExtraEventsOverride;
+            boolean ignoreExtraEvents =
+                    curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.valueOf(this.ignoreExtraEvents)).getValue();
             String eventType = curClientEvents.getString("eventType", new BsonString("command")).getValue();
             BsonArray expectedEvents = curClientEvents.getArray("events");
             if (eventType.equals("command")) {
@@ -974,7 +977,11 @@ public abstract class UnifiedTest {
         return getCurrentClusterTime();
     }
 
-    protected void ignoreExtraCommandEvents(final boolean ignoreExtraCommandEventsOverride) {
-        this.ignoreExtraCommandEventsOverride = ignoreExtraCommandEventsOverride;
+    protected void ignoreExtraCommandEvents(final boolean ignoreExtraEvents) {
+        this.ignoreExtraEvents = ignoreExtraEvents;
+    }
+
+    protected void ignoreExtraEvents() {
+        this.ignoreExtraEvents = true;
     }
 }

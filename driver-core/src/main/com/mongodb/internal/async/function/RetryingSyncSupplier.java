@@ -17,8 +17,8 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
 
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 /**
@@ -37,11 +37,11 @@ import java.util.function.Supplier;
 public final class RetryingSyncSupplier<R> implements Supplier<R> {
     private final RetryState state;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
-    private final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer;
+    private final BinaryOperator<Throwable> failedResultTransformer;
     private final Supplier<R> syncFunction;
 
     /**
-     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BiFunction, BiPredicate, AsyncCallbackSupplier)}
+     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BinaryOperator, BiPredicate, AsyncCallbackSupplier)}
      * for the documentation of the parameters.
      *
      * @param failedResultTransformer Even though the {@code failedResultTransformer} accepts {@link Throwable},
@@ -51,7 +51,7 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
      */
     public RetryingSyncSupplier(
             final RetryState state,
-            final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer,
+            final BinaryOperator<Throwable> failedResultTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final Supplier<R> syncFunction) {
         this.state = state;

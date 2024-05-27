@@ -33,7 +33,6 @@ import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.ClusterFixture.getServerStatus;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -113,6 +112,6 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
         return ((isSharded() || isDiscoverableReplicaSet())
                 && storageEngine != null && storageEngine.get("name").equals("mmapv1")
-                && serverVersionAtLeast(3, 6) && serverVersionLessThan(4, 2));
+                && serverVersionLessThan(4, 2));
     }
 }

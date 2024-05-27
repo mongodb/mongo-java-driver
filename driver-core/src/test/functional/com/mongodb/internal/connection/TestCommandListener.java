@@ -17,11 +17,13 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.client.TestListener;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonDouble;
@@ -57,6 +59,8 @@ public class TestCommandListener implements CommandListener {
     private final List<String> eventTypes;
     private final List<String> ignoredCommandMonitoringEvents;
     private final List<CommandEvent> events = new ArrayList<>();
+    @Nullable
+    private final TestListener listener;
     private final Lock lock = new ReentrantLock();
     private final Condition commandCompletedCondition = lock.newCondition();
     private final boolean observeSensitiveCommands;
@@ -78,25 +82,44 @@ public class TestCommandListener implements CommandListener {
                 });
     }
 
+    /**
+     * When a test listener is set, this command listener will send string events to the
+     * test listener in the form {@code "<command name> <eventType>"}, where the event
+     * type will be lowercase and will omit the terms "command" and "event".
+     * For example: {@code "saslContinue succeeded"}.
+     *
+     * @see InternalStreamConnection#setRecordEverything(boolean)
+     * @param listener the test listener
+     */
+    public TestCommandListener(final TestListener listener) {
+        this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList(), true, listener);
+    }
+
     public TestCommandListener() {
         this(Arrays.asList("commandStartedEvent", "commandSucceededEvent", "commandFailedEvent"), emptyList());
     }
 
     public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents) {
-        this(eventTypes, ignoredCommandMonitoringEvents, true);
+        this(eventTypes, ignoredCommandMonitoringEvents, true, null);
     }
 
     public TestCommandListener(final List<String> eventTypes, final List<String> ignoredCommandMonitoringEvents,
-            final boolean observeSensitiveCommands) {
+            final boolean observeSensitiveCommands, @Nullable final TestListener listener) {
         this.eventTypes = eventTypes;
         this.ignoredCommandMonitoringEvents = ignoredCommandMonitoringEvents;
         this.observeSensitiveCommands = observeSensitiveCommands;
+        this.listener = listener;
     }
+
+
 
     public void reset() {
         lock.lock();
         try {
             events.clear();
+            if (listener != null) {
+                listener.clear();
+            }
         } finally {
             lock.unlock();
         }
@@ -108,6 +131,18 @@ public class TestCommandListener implements CommandListener {
             return new ArrayList<>(events);
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void addEvent(final CommandEvent c) {
+        events.add(c);
+        String className = c.getClass().getSimpleName()
+                .replace("Command", "")
+                .replace("Event", "")
+                .toLowerCase();
+        // example: "saslContinue succeeded"
+        if (listener != null) {
+            listener.add(c.getCommandName() + " " + className);
         }
     }
 
@@ -249,7 +284,7 @@ public class TestCommandListener implements CommandListener {
         }
         lock.lock();
         try {
-            events.add(new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
+            addEvent(new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
                     event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(),
                     event.getCommand() == null ? null : getWritableClone(event.getCommand())));
         } finally {
@@ -272,7 +307,7 @@ public class TestCommandListener implements CommandListener {
         }
         lock.lock();
         try {
-            events.add(new CommandSucceededEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
+            addEvent(new CommandSucceededEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
                     event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(),
                     event.getResponse() == null ? null : event.getResponse().clone(),
                     event.getElapsedTime(TimeUnit.NANOSECONDS)));
@@ -297,7 +332,7 @@ public class TestCommandListener implements CommandListener {
         }
         lock.lock();
         try {
-            events.add(event);
+            addEvent(event);
             commandCompletedCondition.signal();
         } finally {
             lock.unlock();

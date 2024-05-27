@@ -18,21 +18,34 @@ package com.mongodb.reactivestreams.client.unified;
 
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.junit.After;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.Assume.assumeFalse;
+import static com.mongodb.client.unified.UnifiedRetryableReadsTest.customSkips;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableWaitForBatchCursorCreation;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableWaitForBatchCursorCreation;
 
 public class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
-    public UnifiedRetryableReadsTest(@SuppressWarnings("unused") final String fileDescription,
-                                      @SuppressWarnings("unused") final String testDescription,
-                                      final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
-                                      final BsonArray initialData, final BsonDocument definition) {
+    public UnifiedRetryableReadsTest(final String fileDescription, final String testDescription, final String schemaVersion,
+            final BsonArray runOnRequirements, final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
-        assumeFalse(testDescription.contains("createChangeStream succeeds after retryable handshake"));
+        customSkips(fileDescription, testDescription);
+        if (fileDescription.startsWith("changeStreams") || testDescription.contains("ChangeStream")) {
+            // Several reactive change stream tests fail if we don't block waiting for batch cursor creation.
+            enableWaitForBatchCursorCreation();
+            // The reactive driver will execute extra getMore commands for change streams.  Ignore them.
+            ignoreExtraEvents();
+        }
+    }
+
+    @After
+    public void cleanUp() {
+        super.cleanUp();
+        disableWaitForBatchCursorCreation();
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

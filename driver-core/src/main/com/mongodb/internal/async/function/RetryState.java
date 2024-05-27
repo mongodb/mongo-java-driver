@@ -24,8 +24,8 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
@@ -151,9 +151,9 @@ public final class RetryState {
      * </ul>
      * The exception thrown represents the failed result of the associated retryable activity,
      * i.e., the caller must not do any more attempts.
-     * @see #advanceOrThrow(Throwable, BiFunction, BiPredicate)
+     * @see #advanceOrThrow(Throwable, BinaryOperator, BiPredicate)
      */
-    void advanceOrThrow(final RuntimeException attemptException, final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer,
+    void advanceOrThrow(final RuntimeException attemptException, final BinaryOperator<Throwable> exceptionTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate) throws RuntimeException {
         try {
             doAdvanceOrThrow(attemptException, exceptionTransformer, retryPredicate, true);
@@ -168,9 +168,9 @@ public final class RetryState {
      * This method is intended to be used by code that generally handles all {@link Throwable} types explicitly,
      * which is usually asynchronous code.
      *
-     * @see #advanceOrThrow(RuntimeException, BiFunction, BiPredicate)
+     * @see #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)
      */
-    void advanceOrThrow(final Throwable attemptException, final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer,
+    void advanceOrThrow(final Throwable attemptException, final BinaryOperator<Throwable> exceptionTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate) throws Throwable {
         doAdvanceOrThrow(attemptException, exceptionTransformer, retryPredicate, false);
     }
@@ -181,7 +181,7 @@ public final class RetryState {
      * as {@link RetryState} does not have any source of {@link Exception}s.
      */
     private void doAdvanceOrThrow(final Throwable attemptException,
-            final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer,
+            final BinaryOperator<Throwable> exceptionTransformer,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final boolean onlyRuntimeExceptions) throws Throwable {
         assertTrue(attempt() < attempts);
@@ -224,10 +224,10 @@ public final class RetryState {
     }
 
     /**
-     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)}.
+     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BinaryOperator, BiPredicate, boolean)}.
      */
     private static Throwable transformException(@Nullable final Throwable previouslyChosenException, final Throwable attemptException,
-            final boolean onlyRuntimeExceptions, final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer) {
+            final boolean onlyRuntimeExceptions, final BinaryOperator<Throwable> exceptionTransformer) {
         if (onlyRuntimeExceptions && previouslyChosenException != null) {
             assertTrue(isRuntime(previouslyChosenException));
         }
@@ -252,7 +252,7 @@ public final class RetryState {
 
     /**
      * @param readOnlyRetryState Must not be mutated by this method.
-     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)}.
+     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BinaryOperator, BiPredicate, boolean)}.
      */
     private boolean shouldRetry(final RetryState readOnlyRetryState, final Throwable attemptException, final Throwable newlyChosenException,
             final boolean onlyRuntimeExceptions, final BiPredicate<RetryState, Throwable> retryPredicate) {
@@ -285,7 +285,7 @@ public final class RetryState {
      * by the caller to complete the ongoing attempt.
      * <p>
      * If this method is called from
-     * {@linkplain RetryingSyncSupplier#RetryingSyncSupplier(RetryState, BiFunction, BiPredicate, Supplier)
+     * {@linkplain RetryingSyncSupplier#RetryingSyncSupplier(RetryState, BinaryOperator, BiPredicate, Supplier)
      * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @param predicate {@code true} iff retrying needs to be broken.
@@ -323,7 +323,7 @@ public final class RetryState {
      * but instead of throwing an exception, it relays it to the {@code callback}.
      * <p>
      * If this method is called from
-     * {@linkplain RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BiFunction, BiPredicate, com.mongodb.internal.async.function.AsyncCallbackSupplier)
+     * {@linkplain RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BinaryOperator, BiPredicate, AsyncCallbackSupplier)
      * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @return {@code true} iff the {@code callback} was completed, which happens in the same situations in which

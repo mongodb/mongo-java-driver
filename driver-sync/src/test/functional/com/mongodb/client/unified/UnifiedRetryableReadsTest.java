@@ -24,12 +24,24 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static org.junit.Assume.assumeFalse;
+
 public class UnifiedRetryableReadsTest extends UnifiedSyncTest {
-    public UnifiedRetryableReadsTest(@SuppressWarnings("unused") final String fileDescription,
-                                      @SuppressWarnings("unused") final String testDescription,
-                                      final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
-                                      final BsonArray initialData, final BsonDocument definition) {
+    public UnifiedRetryableReadsTest(final String fileDescription, final String testDescription, final String schemaVersion,
+            final BsonArray runOnRequirements, final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+        customSkips(fileDescription, testDescription);
+    }
+
+    public static void customSkips(final String fileDescription, @SuppressWarnings("unused") final String testDescription) {
+        // Skipped because driver removed the deprecated count methods
+        assumeFalse(fileDescription.equals("count"));
+        assumeFalse(fileDescription.equals("count-serverErrors"));
+        // Skipped because the driver never had these methods
+        assumeFalse(fileDescription.equals("listDatabaseObjects"));
+        assumeFalse(fileDescription.equals("listDatabaseObjects-serverErrors"));
+        assumeFalse(fileDescription.equals("listCollectionObjects"));
+        assumeFalse(fileDescription.equals("listCollectionObjects-serverErrors"));
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

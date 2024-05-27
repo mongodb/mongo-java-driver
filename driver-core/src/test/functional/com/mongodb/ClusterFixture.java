@@ -382,10 +382,8 @@ public final class ClusterFixture {
             final ReadPreference readPreference,
             final OperationContext operationContext) {
         if (!BINDING_MAP.containsKey(readPreference)) {
-            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, operationContext);
-            if (serverVersionAtLeast(3, 6)) {
-                binding = new SessionBinding(binding);
-            }
+            ReadWriteBinding binding = new SessionBinding(new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT,
+                    operationContext));
             BINDING_MAP.put(readPreference, binding);
         }
         ReadWriteBinding readWriteBinding = BINDING_MAP.get(readPreference);
@@ -428,13 +426,10 @@ public final class ClusterFixture {
     public static AsyncReadWriteBinding getAsyncBinding(
             final Cluster cluster,
             final ReadPreference readPreference,
-            final OperationContext operationContext
-            ) {
+            final OperationContext operationContext) {
         if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
-            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, operationContext);
-            if (serverVersionAtLeast(3, 6)) {
-                binding = new AsyncSessionBinding(binding);
-            }
+            AsyncReadWriteBinding binding = new AsyncSessionBinding(new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT,
+                    operationContext));
             ASYNC_BINDING_MAP.put(readPreference, binding);
         }
         AsyncReadWriteBinding readWriteBinding = ASYNC_BINDING_MAP.get(readPreference);
