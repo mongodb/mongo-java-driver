@@ -740,7 +740,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
-    @DisplayName("Should refresh timeout for commit transaction")
+    @DisplayName("Should throw timeout exception for subsequent commit transaction")
     public void shouldThrowTimeoutExceptionForSubsequentCommitTransaction() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
