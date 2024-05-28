@@ -181,10 +181,11 @@ final class LoadBalancedCluster implements Cluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ServersSnapshot getServersSnapshot() {
         isTrue("open", !isClosed());
         waitForSrv();
-        return assertNotNull(server);
+        ClusterableServer server = assertNotNull(this.server);
+        return serverAddress -> server;
     }
 
     @Override

@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoConfigurationException;
-import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
@@ -69,9 +68,10 @@ public final class SingleServerCluster extends BaseCluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ServersSnapshot getServersSnapshot() {
         isTrue("open", !isClosed());
-        return assertNotNull(server.get());
+        ClusterableServer server = assertNotNull(this.server.get());
+        return serverAddress -> server;
     }
 
     @Override

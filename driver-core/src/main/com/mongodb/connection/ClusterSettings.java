@@ -468,16 +468,18 @@ public final class ClusterSettings {
      *
      * <p>The server selector augments the normal server selection rules applied by the driver when determining
      * which server to send an operation to.  At the point that it's called by the driver, the
-     * {@link com.mongodb.connection.ClusterDescription} which is passed to it contains a list of
-     * {@link com.mongodb.connection.ServerDescription} instances which satisfy either the configured {@link com.mongodb.ReadPreference}
-     * for any read operation or ones that can take writes (e.g. a standalone, mongos, or replica set primary).
+     * {@link ClusterDescription} which is passed to it {@linkplain ClusterDescription#getServerDescriptions() contains} a list of
+     * {@link ServerDescription} instances which satisfy either the configured {@link com.mongodb.ReadPreference}
+     * for any read operation or ones that can take writes (e.g. a standalone, mongos, or replica set primary),
+     * barring those corresponding to servers that the driver considers unavailable or potentially problematic.
      * </p>
      * <p>The server selector can then filter the {@code ServerDescription} list using whatever criteria that is required by the
      * application.</p>
-     * <p>After this selector executes, two additional selectors are applied by the driver:</p>
+     * <p>After this selector executes, three additional selectors are applied by the driver:</p>
      * <ul>
      * <li>select from within the latency window</li>
-     * <li>select a random server from those remaining</li>
+     * <li>select at most two random servers from those remaining</li>
+     * <li>select the one with fewer outstanding concurrent operations</li>
      * </ul>
      * <p>To skip the latency window selector, an application can:</p>
      * <ul>
@@ -486,6 +488,7 @@ public final class ClusterSettings {
      * </ul>
      *
      * @return the server selector, which may be null
+     * @see Builder#serverSelector(ServerSelector)
      */
     @Nullable
     public ServerSelector getServerSelector() {

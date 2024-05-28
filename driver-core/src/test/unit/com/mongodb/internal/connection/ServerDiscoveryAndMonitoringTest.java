@@ -120,7 +120,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
         if (expectedServerDescriptionDocument.isDocument("pool")) {
             int expectedGeneration = expectedServerDescriptionDocument.getDocument("pool").getNumber("generation").intValue();
-            DefaultServer server = (DefaultServer) getCluster().getServer(new ServerAddress(serverName));
+            DefaultServer server = (DefaultServer) getCluster().getServersSnapshot().getServer(new ServerAddress(serverName));
             assertEquals(expectedGeneration, server.getConnectionPool().getGeneration());
         }
     }
