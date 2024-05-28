@@ -432,7 +432,6 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
             final OperationContext operationContext) {
         CommandEventSender commandEventSender;
-
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext);
             commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
