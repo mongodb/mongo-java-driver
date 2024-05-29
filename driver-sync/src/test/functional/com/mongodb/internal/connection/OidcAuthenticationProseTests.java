@@ -233,6 +233,29 @@ public class OidcAuthenticationProseTests {
     }
 
     @Test
+    public void test2p5InvalidAllowedHosts() {
+        assumeTestEnvironment();
+
+        String uri = "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:123";
+        ConnectionString cs = new ConnectionString(uri);
+        MongoCredential credential = assertNotNull(cs.getCredential())
+                .withMechanismProperty("ALLOWED_HOSTS", Collections.emptyList());
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applicationName(appName)
+                .applyConnectionString(cs)
+                .retryReads(false)
+                .credential(credential)
+                .build();
+        assertCause(IllegalArgumentException.class,
+                "ALLOWED_HOSTS must be specified only when OIDC_HUMAN_CALLBACK is specified",
+                () -> {
+                    try (MongoClient mongoClient = createMongoClient(settings)) {
+                        performFind(mongoClient);
+                    }
+                });
+    }
+
+    @Test
     public void test3p1AuthFailsWithCachedToken() throws ExecutionException, InterruptedException, NoSuchFieldException, IllegalAccessException {
         TestCallback callbackWrapped = createCallback();
         // reference to the token to poison

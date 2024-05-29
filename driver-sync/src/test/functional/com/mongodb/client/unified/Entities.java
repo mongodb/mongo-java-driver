@@ -18,6 +18,7 @@ package com.mongodb.client.unified;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadConcern;
@@ -534,6 +535,11 @@ public final class Entities {
                                 throw new UnsupportedOperationException(
                                         "Unsupported authMechanismProperties for authMechanism: " + value);
                             }
+
+                            // override the org.mongodb.test.uri connection string
+                            String uri = getenv("MONGODB_URI");
+                            ConnectionString cs = new ConnectionString(uri);
+                            clientSettingsBuilder.applyConnectionString(cs);
 
                             String env = assertNotNull(getenv("OIDC_ENV"));
                             MongoCredential oidcCredential = MongoCredential
