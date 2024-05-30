@@ -402,6 +402,10 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          if [ "${AWS_CREDENTIAL_PROVIDER}" = "builtIn" ]; then
+             echo "Built-in AWS credential provider does not support the web identity auth test, skipping..."
+             exit 0
+          fi
           if [ "${SKIP_WEB_IDENTITY_AUTH_TEST}" = "true" ]; then
              echo "This platform does not support the web identity auth test, skipping..."
              exit 0
@@ -414,6 +418,10 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
+          if [ "${AWS_CREDENTIAL_PROVIDER}" = "builtIn" ]; then
+             echo "Built-in AWS credential provider does not support the web identity auth test, skipping..."
+             exit 0
+          fi
           if [ "${SKIP_WEB_IDENTITY_AUTH_TEST}" = "true" ]; then
              echo "This platform does not support the web identity auth test, skipping..."
              exit 0
