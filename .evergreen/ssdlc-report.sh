@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -o errexit
+set -eu
 
 # Supported/used environment variables:
 # PRODUCT_NAME
@@ -30,7 +30,11 @@ mkdir "${SSDLC_STATIC_ANALYSIS_REPORTS_PATH}"
 
 printf "\nCreating SpotBugs SARIF reports\n"
 ./gradlew -version
-./gradlew -PssdlcReport.enabled=true --continue -x test -x integrationTest -x spotlessApply check scalaCheck kotlinCheck || true
+set +e
+    # This `gradlew` command is expected to exit with a non-zero exit status,
+    # because it reports all the findings that we normally explicitly exclude as "No Fix Needed"/"False Positive".
+    ./gradlew -PssdlcReport.enabled=true --continue -x test -x integrationTest -x spotlessApply check scalaCheck kotlinCheck
+set -e
 printf "\nSpotBugs created the following SARIF reports\n"
 IFS=$'\n'
 declare -a SARIF_PATHS=($(find "${RELATIVE_DIR_PATH}/.." -path "*/spotbugs/*.sarif"))

@@ -47,7 +47,7 @@ This information is available in multiple ways:
         Go to
         <a href="https://papertrail.devprod-infra.prod.corp.mongodb.com/product-version?product=${product_name}&version=${product_version}&format=json">
             https://papertrail.devprod-infra.prod.corp.mongodb.com/product-version?product=${product_name}&version=${product_version}&format=json</a>
-        and loot at the value associated with the <code>submitter</code> key.
+        and look at the value associated with the <code>submitter</code> key.
     </td>
   </tr>
 </table>
