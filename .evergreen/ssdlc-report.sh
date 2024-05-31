@@ -47,7 +47,7 @@ for SARIF_PATH in "${SARIF_PATHS[@]}"; do
 done
 
 printf "\nCreating SSDLC compliance report\n"
-declare -r TEMPLATE_SSDLC_REPORT_PATH="${RELATIVE_DIR_PATH}/../template_ssdlc_compliance_report.md"
+declare -r TEMPLATE_SSDLC_REPORT_PATH="${RELATIVE_DIR_PATH}/template_ssdlc_compliance_report.md"
 declare -r SSDLC_REPORT_PATH="${SSDLC_PATH}/ssdlc_compliance_report.md"
 cp "${TEMPLATE_SSDLC_REPORT_PATH}" "${SSDLC_REPORT_PATH}"
 declare -a SED_EDIT_IN_PLACE_OPTION
