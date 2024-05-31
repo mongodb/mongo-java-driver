@@ -57,4 +57,6 @@ sed "${SED_EDIT_IN_PLACE_OPTION[@]}" \
     -e "s/\${product_version}/${PRODUCT_VERSION}/g" \
     -e "s/\${report_date_utc}/$(date -u +%Y-%m-%d)/g" \
     "${SSDLC_REPORT_PATH}"
-ls "${SSDLC_REPORT_PATH}"
+printf "%s\n" "${SSDLC_REPORT_PATH}"
+
+printf "\n"
