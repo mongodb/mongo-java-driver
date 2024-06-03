@@ -37,26 +37,26 @@ import java.util.function.Supplier;
 public final class RetryingSyncSupplier<R> implements Supplier<R> {
     private final RetryState state;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
-    private final BinaryOperator<Throwable> failedResultTransformer;
+    private final BinaryOperator<Throwable> onAttemptFailureOperator;
     private final Supplier<R> syncFunction;
 
     /**
      * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BinaryOperator, BiPredicate, AsyncCallbackSupplier)}
      * for the documentation of the parameters.
      *
-     * @param failedResultTransformer Even though the {@code failedResultTransformer} accepts {@link Throwable},
+     * @param onAttemptFailureOperator Even though the {@code onAttemptFailureOperator} accepts {@link Throwable},
      * only {@link RuntimeException}s are passed to it.
      * @param retryPredicate Even though the {@code retryPredicate} accepts {@link Throwable},
      * only {@link RuntimeException}s are passed to it.
      */
     public RetryingSyncSupplier(
             final RetryState state,
-            final BinaryOperator<Throwable> failedResultTransformer,
+            final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final Supplier<R> syncFunction) {
         this.state = state;
         this.retryPredicate = retryPredicate;
-        this.failedResultTransformer = failedResultTransformer;
+        this.onAttemptFailureOperator = onAttemptFailureOperator;
         this.syncFunction = syncFunction;
     }
 
@@ -66,10 +66,10 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
             try {
                 return syncFunction.get();
             } catch (RuntimeException attemptException) {
-                state.advanceOrThrow(attemptException, failedResultTransformer, retryPredicate);
+                state.advanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate);
             } catch (Exception attemptException) {
                 // wrap potential sneaky / Kotlin exceptions
-                state.advanceOrThrow(new RuntimeException(attemptException), failedResultTransformer, retryPredicate);
+                state.advanceOrThrow(new RuntimeException(attemptException), onAttemptFailureOperator, retryPredicate);
             }
         }
     }

@@ -394,10 +394,11 @@ class DefaultServerSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress,
-                                        Timeout serverSelectionTimeout,
-                                        TimeoutContext timeoutContext) {
-                throw new UnsupportedOperationException()
+            Cluster.ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
+                Cluster.ServersSnapshot result = {
+                    serverAddress -> throw new UnsupportedOperationException()
+                }
+                result
             }
 
             @Override

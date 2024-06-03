@@ -180,6 +180,42 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     }
 
     /**
+     * The error check checks if the exception is an instance of the provided class.
+     * @see #thenRunTryCatchAsyncBlocks(AsyncRunnable, java.util.function.Predicate, AsyncFunction)
+     */
+    default <T extends Throwable> AsyncRunnable thenRunTryCatchAsyncBlocks(
+            final AsyncRunnable runnable,
+            final Class<T> exceptionClass,
+            final AsyncFunction<Throwable, Void> errorFunction) {
+        return thenRunTryCatchAsyncBlocks(runnable, e -> exceptionClass.isInstance(e), errorFunction);
+    }
+
+    /**
+     * Convenience method corresponding to a try-catch block in sync code.
+     * This MUST be used to properly handle cases where there is code above
+     * the block, whose errors must not be caught by an ensuing
+     * {@link #onErrorIf(java.util.function.Predicate, AsyncFunction)}.
+     *
+     * @param runnable corresponds to the contents of the try block
+     * @param errorCheck for matching on an error (or, a more complex condition)
+     * @param errorFunction corresponds to the contents of the catch block
+     * @return the composition of this runnable, a runnable that runs the
+     * provided runnable, followed by (composed with) the error function, which
+     * is conditional on there being an exception meeting the error check.
+     */
+    default AsyncRunnable thenRunTryCatchAsyncBlocks(
+            final AsyncRunnable runnable,
+            final Predicate<Throwable> errorCheck,
+            final AsyncFunction<Throwable, Void> errorFunction) {
+        return this.thenRun(c -> {
+            beginAsync()
+                    .thenRun(runnable)
+                    .onErrorIf(errorCheck, errorFunction)
+                    .finish(c);
+        });
+    }
+
+    /**
      * @param condition the condition to check
      * @param runnable The async runnable to run after this runnable,
      *                 if and only if the condition is met

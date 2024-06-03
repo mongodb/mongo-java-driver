@@ -33,9 +33,11 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -125,15 +127,14 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress, final Timeout serverSelectionTimeout,
-                                       final TimeoutContext timeoutContext) {
+    public ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout,
+                                              final TimeoutContext timeoutContext) {
         isTrue("is open", !isClosed());
-
-        ServerTuple serverTuple = addressToServerTupleMap.get(serverAddress);
-        if (serverTuple == null) {
-            return null;
-        }
-        return serverTuple.server;
+        Map<ServerAddress, ServerTuple> nonAtomicSnapshot = new HashMap<>(addressToServerTupleMap);
+        return serverAddress -> {
+            ServerTuple serverTuple = nonAtomicSnapshot.get(serverAddress);
+            return serverTuple == null ? null : serverTuple.server;
+        };
     }
 
     void onChange(final Collection<ServerAddress> newHosts) {
