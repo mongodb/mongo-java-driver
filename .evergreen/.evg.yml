@@ -142,6 +142,45 @@ functions:
         content_type: ${content_type|text/plain}
         display_name: "orchestration.log"
 
+  "create and upload SSDLC release assets":
+    - command: shell.exec
+      shell: "bash"
+      params:
+        working_dir: "src"
+        env:
+          PRODUCT_NAME: ${product_name}
+          PRODUCT_VERSION: ${product_version}
+        script: .evergreen/ssdlc-report.sh
+    - command: ec2.assume_role
+      params:
+        role_arn: ${UPLOAD_SSDLC_RELEASE_ASSETS_ROLE_ARN}
+    - command: s3.put
+      params:
+        aws_key: ${AWS_ACCESS_KEY_ID}
+        aws_secret: ${AWS_SECRET_ACCESS_KEY}
+        aws_session_token: ${AWS_SESSION_TOKEN}
+        local_file: ./src/build/ssdlc/ssdlc_compliance_report.md
+        remote_file: ${product_name}/${product_version}/ssdlc_compliance_report.md
+        bucket: java-driver-release-assets
+        region: us-west-1
+        permissions: private
+        content_type: text/markdown
+        display_name: ssdlc_compliance_report.md
+    - command: s3.put
+      params:
+        aws_key: ${AWS_ACCESS_KEY_ID}
+        aws_secret: ${AWS_SECRET_ACCESS_KEY}
+        aws_session_token: ${AWS_SESSION_TOKEN}
+        local_files_include_filter:
+          - build/ssdlc/static-analysis-reports/*.sarif
+        local_files_include_filter_prefix: ./src/
+        remote_file: ${product_name}/${product_version}/static-analysis-reports/
+        bucket: java-driver-release-assets
+        region: us-west-1
+        permissions: private
+        content_type: application/sarif+json
+        display_name:
+
   "upload test results":
     - command: attach.xunit_results
       params:
@@ -692,24 +731,21 @@ functions:
       params:
         working_dir: "src"
         script: |
-           tag=$(git describe --tags --always --dirty)
-
-           # remove the leading 'r'
-           version=$(echo -n "$tag" | cut -c 2-)
-
-           cat <<EOT > trace-expansions.yml
-           release_version: "$version"
-           EOT
-           cat trace-expansions.yml
+          PRODUCT_VERSION="$(echo -n "$(git describe --tags --always --dirty)" | cut -c 2-)"
+          cat > ssdlc-expansions.yml <<EOF
+            product_version: "$PRODUCT_VERSION"
+            product_name: "${product_name}"
+          EOF
+          cat ssdlc-expansions.yml
     - command: expansions.update
       params:
-        file: src/trace-expansions.yml
+        file: src/ssdlc-expansions.yml
     - command: papertrail.trace
       params:
         key_id: ${papertrail_key_id}
         secret_key: ${papertrail_secret_key}
-        product: ${product}
-        version: ${release_version}
+        product: ${product_name}
+        version: ${product_version}
         filenames:
           - "src/build/repo/org/mongodb/*/*/*.jar"
           - "src/build/repo/org/mongodb/*/*/*.pom"
@@ -1440,7 +1476,8 @@ tasks:
         - func: "publish snapshot"
         - func: "trace artifacts"
           vars:
-            product: mongo-java-driver-snapshot
+            product_name: mongo-java-driver-snapshot
+        - func: "create and upload SSDLC release assets"
 
     - name: publish-release
       git_tag_only: true
@@ -1448,7 +1485,8 @@ tasks:
         - func: "publish release"
         - func: "trace artifacts"
           vars:
-            product: mongo-java-driver
+            product_name: mongo-java-driver
+        - func: "create and upload SSDLC release assets"
 
     - name: "perf"
       tags: ["perf"]
