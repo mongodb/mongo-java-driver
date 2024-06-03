@@ -33,21 +33,9 @@ This information is available in multiple ways:
     </td>
   </tr>
   <tr>
-    <th>Papertrail, human-readable</th>
+    <th>Papertrail</th>
     <td>
-        Go to
-        <a href="https://papertrail.devprod-infra.prod.corp.mongodb.com/product-version?product=${product_name}&version=${product_version}">
-            https://papertrail.devprod-infra.prod.corp.mongodb.com/product-version?product=${product_name}&version=${product_version}</a>,
-        look at the value in the "Submitter" column.
-    </td>
-  </tr>
-  <tr>
-    <th>Papertrail, JSON</th>
-    <td>
-        Go to
-        <a href="https://papertrail.devprod-infra.prod.corp.mongodb.com/product-version?product=${product_name}&version=${product_version}&format=json">
-            https://papertrail.devprod-infra.prod.corp.mongodb.com/product-version?product=${product_name}&version=${product_version}&format=json</a>
-        and look at the value associated with the <code>submitter</code> key.
+        Refer to data in Papertrail. There is currently no official way to serve that data.
     </td>
   </tr>
 </table>
