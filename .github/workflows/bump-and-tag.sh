@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# TODO: should this always assume that release X.Y.Z will always be created from X.Y.Z-SNAPSHOT"?
+# This script assumes that release X.Y.Z will always be created from X.Y.Z-SNAPSHOT"
 echo "Replace snapshot version with release version ${RELEASE_VERSION} in build.gradle"
 sed --in-place "s/version = '.*-SNAPSHOT'/version = '${RELEASE_VERSION}'/g" build.gradle
 

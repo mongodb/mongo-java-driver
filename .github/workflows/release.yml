@@ -79,8 +79,6 @@ jobs:
           git config user.email "${GIT_AUTHOR_EMAIL}"
 
       # This step bumps version numbers in build.gradle and creates git artifacts for the release
-      # TODO: this could leverage the git-sign action with some minor changes
-      # See https://github.com/mongodb-labs/drivers-github-tools/tree/main?tab=readme-ov-file#git-sign
       - name: "Bump version numbers and create release tag"
         run: .github/workflows/bump-and-tag.sh
 
