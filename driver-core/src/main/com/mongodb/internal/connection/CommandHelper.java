@@ -57,12 +57,16 @@ public final class CommandHelper {
         }
     }
 
-    static void executeCommandAsync(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
-            @Nullable final ServerApi serverApi, final InternalConnection internalConnection, final OperationContext operationContext,
-            final SingleResultCallback<BsonDocument> callback) {
-        internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
-                new BsonDocumentCodec(), operationContext,
-                (result, t) -> {
+    static void executeCommandAsync(final String database,
+                                    final BsonDocument command,
+                                    final ClusterConnectionMode clusterConnectionMode,
+                                    @Nullable final ServerApi serverApi,
+                                    final InternalConnection internalConnection,
+                                    final OperationContext operationContext,
+                                    final SingleResultCallback<BsonDocument> callback) {
+        internalConnection.sendAndReceiveAsync(
+                getCommandMessage(database, command, internalConnection, clusterConnectionMode, serverApi),
+                new BsonDocumentCodec(), operationContext, (result, t) -> {
                     if (t != null) {
                         callback.onResult(null, t);
                     } else {

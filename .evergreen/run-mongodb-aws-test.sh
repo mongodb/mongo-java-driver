@@ -15,19 +15,8 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
 
 echo "Running MONGODB-AWS authentication tests"
 
-
-# ensure no secrets are printed in log files
-set +x
-
-# load the script
-shopt -s expand_aliases # needed for `urlencode` alias
-[ -s "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh" ] && source "${PROJECT_DIRECTORY}/prepare_mongodb_aws.sh"
-
-MONGODB_URI=${MONGODB_URI:-"mongodb://localhost"}
-MONGODB_URI="${MONGODB_URI}/aws?authMechanism=MONGODB-AWS"
-if [[ -n ${SESSION_TOKEN} ]]; then
-    MONGODB_URI="${MONGODB_URI}&authMechanismProperties=AWS_SESSION_TOKEN:${SESSION_TOKEN}"
-fi
+# Handle credentials and environment setup.
+. $DRIVERS_TOOLS/.evergreen/auth_aws/aws_setup.sh $1
 
 # show test output
 set -x
