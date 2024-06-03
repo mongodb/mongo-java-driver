@@ -10,22 +10,31 @@ on:
         type: "string"
 
 env:
-  GH_TOKEN: ${{ github.token }}
   # TODO: Adding the mongodb-dbx-release-automation app to the repository will allow fetching a one-time token and pushing
   # changes on behalf of the app. This also allows bypassing branch protection rules
-  # When the app was added, these values can be changed to use the app's data
-  GIT_AUTHOR_NAME: "DBX Java Release Bot"
-  GIT_AUTHOR_EMAIL: "dbx-java@mongodb.com"
+  GIT_AUTHOR_NAME: "mongodb-dbx-release-bot[bot]"
+  GIT_AUTHOR_EMAIL: "167856002+mongodb-dbx-release-bot[bot]@users.noreply.github.com"
 
 jobs:
   prepare-release:
     name: "Prepare release"
     runs-on: ubuntu-latest
     permissions:
+      # Write permission for id-token is necessary to generate a new token for the GitHub App
+      id-token: write
       # Write permission for contents is to ensure we're allowed to push to the repository
       contents: write
 
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: "Store GitHub token in environment"
+        run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> "$GITHUB_ENV"
+
       - name: "Create release output"
         run: echo '🎬 Release process for version ${{ env.RELEASE_VERSION }} started by @${{ github.triggering_actor }}' >> $GITHUB_STEP_SUMMARY
 
@@ -33,6 +42,7 @@ jobs:
         with:
           # fetch-depth 0 is required to fetch all branches and tags
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: "Store version numbers in env variables"
         # The awk command to increase the version number was copied from
