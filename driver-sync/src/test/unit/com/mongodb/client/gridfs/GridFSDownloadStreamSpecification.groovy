@@ -22,9 +22,11 @@ import com.mongodb.client.FindIterable
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoCursor
 import com.mongodb.client.gridfs.model.GridFSFile
+import org.bson.BsonBinary
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.Document
-import org.bson.types.Binary
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -43,15 +45,16 @@ class GridFSDownloadStreamSpecification extends Specification {
         when:
         def twoBytes = new byte[2]
         def oneByte = new byte[1]
-        def findQuery = new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 0))
-        def sort = new Document('n', 1)
-        def chunkDocument = new Document('files_id', fileInfo.getId())
-                .append('n', 0)
-                .append('data', new Binary(twoBytes))
+        def findQuery = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonDocument('$gte', new BsonInt32(0)))
+        def sort = new BsonDocument('n', new BsonInt32(1))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(twoBytes))
 
-        def secondChunkDocument = new Document('files_id', fileInfo.getId())
-                .append('n', 1)
-                .append('data', new Binary(oneByte))
+        def secondChunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(1))
+                .append('data', new BsonBinary(oneByte))
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
@@ -112,16 +115,19 @@ class GridFSDownloadStreamSpecification extends Specification {
         when:
         def twoBytes = new byte[2]
         def oneByte = new byte[1]
-        def findQuery = new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 0))
-        def secondFindQuery = new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 1))
-        def sort = new Document('n', 1)
-        def chunkDocument = new Document('files_id', fileInfo.getId())
-                .append('n', 0)
-                .append('data', new Binary(twoBytes))
+        def findQuery = new BsonDocument('files_id', fileInfo.getId()).append('n',
+                new BsonDocument('$gte',
+                new BsonInt32(0)))
+        def secondFindQuery = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonDocument('$gte', new BsonInt32(1)))
+        def sort = new BsonDocument('n', new BsonInt32(1))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(twoBytes))
 
-        def secondChunkDocument = new Document('files_id', fileInfo.getId())
-                .append('n', 1)
-                .append('data', new Binary(oneByte))
+        def secondChunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(1))
+                .append('data', new BsonBinary(oneByte))
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
@@ -194,13 +200,17 @@ class GridFSDownloadStreamSpecification extends Specification {
         def firstChunkBytes = 1..32 as byte[]
         def lastChunkBytes = 33 .. 57 as byte[]
 
-        def sort = new Document('n', 1)
+        def sort = new BsonDocument('n', new BsonInt32(1))
 
-        def findQueries = [new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 0)),
-                           new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 131071))]
+        def findQueries = [new BsonDocument('files_id', fileInfo.getId())
+                                   .append('n', new BsonDocument('$gte', new BsonInt32(0))),
+                           new BsonDocument('files_id', fileInfo.getId())
+                                   .append('n', new BsonDocument('$gte', new BsonInt32(131071)))]
         def chunkDocuments =
-                [new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(firstChunkBytes)),
-                 new Document('files_id', fileInfo.getId()).append('n', 131071).append('data', new Binary(lastChunkBytes))]
+                [new BsonDocument('files_id', fileInfo.getId())
+                         .append('n', new BsonInt32(0)).append('data', new BsonBinary(firstChunkBytes)),
+                 new BsonDocument('files_id', fileInfo.getId())
+                         .append('n', new BsonInt32(131071)).append('data', new BsonBinary(lastChunkBytes))]
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
@@ -276,7 +286,9 @@ class GridFSDownloadStreamSpecification extends Specification {
         def expected10Bytes = 11 .. 20 as byte[]
         def firstChunkBytes = 1..25 as byte[]
 
-        def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(firstChunkBytes))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(firstChunkBytes))
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
@@ -340,8 +352,12 @@ class GridFSDownloadStreamSpecification extends Specification {
         def secondChunkBytes = 26 .. 50 as byte[]
 
         def chunkDocuments =
-                [new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(firstChunkBytes)),
-                 new Document('files_id', fileInfo.getId()).append('n', 1).append('data', new Binary(secondChunkBytes))]
+                [new BsonDocument('files_id', fileInfo.getId())
+                         .append('n', new BsonInt32(0))
+                         .append('data', new BsonBinary(firstChunkBytes)),
+                 new BsonDocument('files_id', fileInfo.getId())
+                         .append('n', new BsonInt32(1))
+                         .append('data', new BsonBinary(secondChunkBytes))]
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
@@ -416,7 +432,9 @@ class GridFSDownloadStreamSpecification extends Specification {
         def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 25L, 25, new Date(), new Document())
 
         def chunkBytes = 1..25 as byte[]
-        def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(chunkBytes))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(chunkBytes))
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
@@ -584,9 +602,9 @@ class GridFSDownloadStreamSpecification extends Specification {
 
     def 'should throw if chunk data differs from the expected'() {
         given:
-        def chunkDocument = new Document('files_id', fileInfo.getId())
-                .append('n', 0)
-                .append('data', new Binary(data))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(data))
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
