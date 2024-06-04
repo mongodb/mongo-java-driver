@@ -17,6 +17,7 @@ env:
 
 jobs:
   prepare-release:
+    environment: release
     name: "Prepare release"
     runs-on: ubuntu-latest
     permissions:
