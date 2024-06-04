@@ -429,7 +429,7 @@ class GridFSBucketSpecification extends Specification {
         def bsonFileId = new BsonObjectId(fileId)
         def fileInfo = new GridFSFile(bsonFileId, filename, 10, 255, new Date(), new Document())
         def mongoCursor =  Mock(MongoCursor)
-        def findIterable =  Mock(FindIterable)
+        def gridFsFileFindIterable =  Mock(FindIterable)
         def findChunkIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def tenBytes = new byte[10]
@@ -450,14 +450,14 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         if (clientSession != null) {
-            1 * filesCollection.find(clientSession) >> findIterable
+            1 * filesCollection.find(clientSession) >> gridFsFileFindIterable
         } else {
-            1 * filesCollection.find() >> findIterable
+            1 * filesCollection.find() >> gridFsFileFindIterable
         }
-        1 * findIterable.filter(new BsonDocument('filename', new BsonString(filename))) >> findIterable
-        1 * findIterable.skip(_) >> findIterable
-        1 * findIterable.sort(_) >> findIterable
-        1 * findIterable.first() >> fileInfo
+        1 * gridFsFileFindIterable.filter(new Document('filename', filename)) >> gridFsFileFindIterable
+        1 * gridFsFileFindIterable.skip(_) >> gridFsFileFindIterable
+        1 * gridFsFileFindIterable.sort(_) >> gridFsFileFindIterable
+        1 * gridFsFileFindIterable.first() >> fileInfo
 
         if (clientSession != null) {
             1 * chunksCollection.find(clientSession, _) >> findChunkIterable
