@@ -224,7 +224,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
             if (batchSize == 1) {
                 discardCursor();
             }
-            if (chunk.get("n").asInt32().getValue() != startChunkIndex) {
+            if (chunk.getInt32("n").getValue() != startChunkIndex) {
                 throw new MongoGridFSException(format("Could not find file chunk for file_id: %s at chunk index %s.",
                         fileId, startChunkIndex));
             }
@@ -246,7 +246,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     private byte[] getBufferFromChunk(@Nullable final BsonDocument chunk, final int expectedChunkIndex) {
 
-        if (chunk == null || chunk.get("n").asInt32().getValue() != expectedChunkIndex) {
+        if (chunk == null || chunk.getInt32("n").getValue() != expectedChunkIndex) {
             throw new MongoGridFSException(format("Could not find file chunk for file_id: %s at chunk index %s.",
                     fileId, expectedChunkIndex));
         }
@@ -254,7 +254,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         if (!(chunk.get("data") instanceof BsonBinary)) {
             throw new MongoGridFSException("Unexpected data format for the chunk");
         }
-        byte[] data = chunk.get("data").asBinary().getData();
+        byte[] data = chunk.getBinary("data").getData();
 
         long expectedDataLength = 0;
         boolean extraChunk = false;
