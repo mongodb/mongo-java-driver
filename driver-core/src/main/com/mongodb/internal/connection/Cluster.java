@@ -18,9 +18,9 @@ package com.mongodb.internal.connection;
 
 
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
@@ -28,8 +28,6 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
 import java.io.Closeable;
-
-import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
 /**
  * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
@@ -43,9 +41,7 @@ public interface Cluster extends Closeable {
 
     ClusterId getClusterId();
 
-    @Nullable
-    @VisibleForTesting(otherwise = PRIVATE)
-    ClusterableServer getServer(ServerAddress serverAddress);
+    ServersSnapshot getServersSnapshot();
 
     /**
      * Get the current description of this cluster.
@@ -89,4 +85,17 @@ public interface Cluster extends Closeable {
      * Server Discovery And Monitoring</a> specification.
      */
     void onChange(ServerDescriptionChangedEvent event);
+
+    /**
+     * A non-atomic snapshot of the servers in a {@link Cluster}.
+     */
+    @ThreadSafe
+    interface ServersSnapshot {
+        @Nullable
+        Server getServer(ServerAddress serverAddress);
+
+        default boolean containsServer(final ServerAddress serverAddress) {
+            return getServer(serverAddress) != null;
+        }
+    }
 }

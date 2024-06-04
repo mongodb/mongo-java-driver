@@ -16,18 +16,25 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ConnectionString;
 import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.MongoServerException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
+import com.mongodb.internal.connection.ServerAddressHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.BsonArray;
@@ -39,6 +46,9 @@ import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -50,6 +60,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.getConnectionString;
+import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.getServerStatus;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
@@ -59,10 +71,13 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -82,7 +97,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
     @Test
     public void testRetryWritesWithInsertOneAgainstMMAPv1RaisesError() {
-        assumeTrue(canRunTests());
+        assumeTrue(canRunMmapv1Tests());
         boolean exceptionFound = false;
 
         try {
@@ -99,7 +114,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
 
     @Test
     public void testRetryWritesWithFindOneAndDeleteAgainstMMAPv1RaisesError() {
-        assumeTrue(canRunTests());
+        assumeTrue(canRunMmapv1Tests());
         boolean exceptionFound = false;
 
         try {
@@ -256,7 +271,134 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
         }
     }
 
-    private boolean canRunTests() {
+    /**
+     * Prose test #4.
+     */
+    @Test
+    public void retriesOnDifferentMongosWhenAvailable() {
+        retriesOnDifferentMongosWhenAvailable(MongoClients::create,
+                mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
+    }
+
+    @SuppressWarnings("try")
+    public static <R> void retriesOnDifferentMongosWhenAvailable(
+            final Function<MongoClientSettings, MongoClient> clientCreator,
+            final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
+        if (write) {
+            assumeTrue(serverVersionAtLeast(4, 4));
+        } else  {
+            assumeTrue(serverVersionAtLeast(4, 2));
+        }
+        assumeTrue(isSharded());
+        ConnectionString connectionString = getMultiMongosConnectionString();
+        assumeTrue(connectionString != null);
+        ServerAddress s0Address = ServerAddressHelper.createServerAddress(connectionString.getHosts().get(0));
+        ServerAddress s1Address = ServerAddressHelper.createServerAddress(connectionString.getHosts().get(1));
+        BsonDocument failPointDocument = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: { times: 1 },\n"
+                + "    data: {\n"
+                + "        failCommands: [\"" + operationName + "\"],\n"
+                + (write
+                ? "        errorLabels: [\"RetryableWriteError\"]," : "")
+                + "        errorCode: 6\n"
+                + "    }\n"
+                + "}\n");
+        TestCommandListener commandListener = new TestCommandListener(singletonList("commandFailedEvent"), emptyList());
+        try (FailPoint s0FailPoint = FailPoint.enable(failPointDocument, s0Address);
+             FailPoint s1FailPoint = FailPoint.enable(failPointDocument, s1Address);
+             MongoClient client = clientCreator.apply(getMultiMongosMongoClientSettingsBuilder()
+                     .retryReads(true)
+                     .retryWrites(true)
+                     .addCommandListener(commandListener)
+                     // explicitly specify only s0 and s1, in case `getMultiMongosMongoClientSettingsBuilder` has more
+                     .applyToClusterSettings(builder -> builder.hosts(asList(s0Address, s1Address)))
+                     .build())) {
+            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
+                    .getCollection("retriesOnDifferentMongosWhenAvailable");
+            collection.drop();
+            commandListener.reset();
+            assertThrows(MongoServerException.class, () -> operation.apply(collection));
+            List<CommandEvent> failedCommandEvents = commandListener.getEvents();
+            assertEquals(2, failedCommandEvents.size(), failedCommandEvents::toString);
+            List<String> unexpectedCommandNames = failedCommandEvents.stream()
+                    .map(CommandEvent::getCommandName)
+                    .filter(commandName -> !commandName.equals(operationName))
+                    .collect(Collectors.toList());
+            assertTrue(unexpectedCommandNames.isEmpty(), unexpectedCommandNames::toString);
+            Set<ServerAddress> failedServerAddresses = failedCommandEvents.stream()
+                    .map(CommandEvent::getConnectionDescription)
+                    .map(ConnectionDescription::getServerAddress)
+                    .collect(Collectors.toSet());
+            assertEquals(new HashSet<>(asList(s0Address, s1Address)), failedServerAddresses);
+        }
+    }
+
+    /**
+     * Prose test #5.
+     */
+    @Test
+    public void retriesOnSameMongosWhenAnotherNotAvailable() {
+        retriesOnSameMongosWhenAnotherNotAvailable(MongoClients::create,
+                mongoCollection -> mongoCollection.insertOne(new Document()), "insert", true);
+    }
+
+    @SuppressWarnings("try")
+    public static <R> void retriesOnSameMongosWhenAnotherNotAvailable(
+            final Function<MongoClientSettings, MongoClient> clientCreator,
+            final Function<MongoCollection<Document>, R> operation, final String operationName, final boolean write) {
+        if (write) {
+            assumeTrue(serverVersionAtLeast(4, 4));
+        } else  {
+            assumeTrue(serverVersionAtLeast(4, 2));
+        }
+        assumeTrue(isSharded());
+        ConnectionString connectionString = getConnectionString();
+        ServerAddress s0Address = ServerAddressHelper.createServerAddress(connectionString.getHosts().get(0));
+        BsonDocument failPointDocument = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: { times: 1 },\n"
+                + "    data: {\n"
+                + "        failCommands: [\"" + operationName + "\"],\n"
+                + (write
+                ? "        errorLabels: [\"RetryableWriteError\"]," : "")
+                + "        errorCode: 6\n"
+                + "    }\n"
+                + "}\n");
+        TestCommandListener commandListener = new TestCommandListener(
+                asList("commandFailedEvent", "commandSucceededEvent"), emptyList());
+        try (FailPoint s0FailPoint = FailPoint.enable(failPointDocument, s0Address);
+             MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
+                     .retryReads(true)
+                     .retryWrites(true)
+                     .addCommandListener(commandListener)
+                     // explicitly specify only s0, in case `getMongoClientSettingsBuilder` has more
+                     .applyToClusterSettings(builder -> builder
+                             .hosts(singletonList(s0Address))
+                             .mode(ClusterConnectionMode.MULTIPLE))
+                     .build())) {
+            MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
+                    .getCollection("retriesOnSameMongosWhenAnotherNotAvailable");
+            collection.drop();
+            commandListener.reset();
+            operation.apply(collection);
+            List<CommandEvent> commandEvents = commandListener.getEvents();
+            assertEquals(2, commandEvents.size(), commandEvents::toString);
+            List<String> unexpectedCommandNames = commandEvents.stream()
+                    .map(CommandEvent::getCommandName)
+                    .filter(commandName -> !commandName.equals(operationName))
+                    .collect(Collectors.toList());
+            assertTrue(unexpectedCommandNames.isEmpty(), unexpectedCommandNames::toString);
+            assertInstanceOf(CommandFailedEvent.class, commandEvents.get(0), commandEvents::toString);
+            assertEquals(s0Address, commandEvents.get(0).getConnectionDescription().getServerAddress(), commandEvents::toString);
+            assertInstanceOf(CommandSucceededEvent.class, commandEvents.get(1), commandEvents::toString);
+            assertEquals(s0Address, commandEvents.get(1).getConnectionDescription().getServerAddress(), commandEvents::toString);
+        }
+    }
+
+    private boolean canRunMmapv1Tests() {
         Document storageEngine = (Document) getServerStatus().get("storageEngine");
 
         return ((isSharded() || isDiscoverableReplicaSet())

@@ -81,12 +81,13 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     protected void applyApplicationError(final BsonDocument applicationError) {
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
         int errorGeneration = applicationError.getNumber("generation",
-                new BsonInt32(((DefaultServer) getCluster().getServer(serverAddress)).getConnectionPool().getGeneration())).intValue();
+                new BsonInt32(((DefaultServer) getCluster().getServersSnapshot().getServer(serverAddress))
+                        .getConnectionPool().getGeneration())).intValue();
         int maxWireVersion = applicationError.getNumber("maxWireVersion").intValue();
         String when = applicationError.getString("when").getValue();
         String type = applicationError.getString("type").getValue();
 
-        DefaultServer server = (DefaultServer) cluster.getServer(serverAddress);
+        DefaultServer server = (DefaultServer) cluster.getServersSnapshot().getServer(serverAddress);
         RuntimeException exception;
 
         switch (type) {

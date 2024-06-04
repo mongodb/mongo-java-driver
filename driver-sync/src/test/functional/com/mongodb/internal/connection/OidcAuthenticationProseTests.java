@@ -234,6 +234,8 @@ public class OidcAuthenticationProseTests {
 
     @Test
     public void test2p5InvalidAllowedHosts() {
+        assumeTestEnvironment();
+
         String uri = "mongodb://localhost/?authMechanism=MONGODB-OIDC&&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:123";
         ConnectionString cs = new ConnectionString(uri);
         MongoCredential credential = assertNotNull(cs.getCredential())
@@ -245,7 +247,7 @@ public class OidcAuthenticationProseTests {
                 .credential(credential)
                 .build();
         assertCause(IllegalArgumentException.class,
-                "ALLOWED_HOSTS must not be specified only when OIDC_HUMAN_CALLBACK is specified",
+                "ALLOWED_HOSTS must be specified only when OIDC_HUMAN_CALLBACK is specified",
                 () -> {
                     try (MongoClient mongoClient = createMongoClient(settings)) {
                         performFind(mongoClient);

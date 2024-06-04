@@ -52,6 +52,8 @@ import static com.mongodb.internal.operation.CommandOperationHelper.addRetryable
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.isRetryWritesEnabled;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
+import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableReadAttemptFailure;
+import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
@@ -285,7 +287,7 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateReadWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncReadFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
+        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
                 CommandOperationHelper::shouldAttemptToRetryRead, callback -> {
             logRetryExecute(retryState, operationContext);
             asyncReadFunction.get(callback);
@@ -294,7 +296,7 @@ final class AsyncOperationHelper {
 
     static <R> AsyncCallbackSupplier<R> decorateWriteWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 CommandOperationHelper::shouldAttemptToRetryWrite, callback -> {
             logRetryExecute(retryState, operationContext);
             asyncWriteFunction.get(callback);
