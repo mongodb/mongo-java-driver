@@ -57,7 +57,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     private final String bucketName;
     private final int chunkSizeBytes;
     private final MongoCollection<GridFSFile> filesCollection;
-    private final MongoCollection<Document> chunksCollection;
+    private final MongoCollection<BsonDocument> chunksCollection;
     private volatile boolean checkedIndexes;
 
     GridFSBucketImpl(final MongoDatabase database) {
@@ -71,7 +71,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<GridFSFile> filesCollection,
-                     final MongoCollection<Document> chunksCollection) {
+                     final MongoCollection<BsonDocument> chunksCollection) {
         this.bucketName = notNull("bucketName", bucketName);
         this.chunkSizeBytes = chunkSizeBytes;
         this.filesCollection = notNull("filesCollection", filesCollection);
@@ -459,8 +459,8 @@ final class GridFSBucketImpl implements GridFSBucket {
         );
     }
 
-    private static MongoCollection<Document> getChunksCollection(final MongoDatabase database, final String bucketName) {
-        return database.getCollection(bucketName + ".chunks").withCodecRegistry(MongoClientSettings.getDefaultCodecRegistry());
+    private static MongoCollection<BsonDocument> getChunksCollection(final MongoDatabase database, final String bucketName) {
+        return database.getCollection(bucketName + ".chunks", BsonDocument.class).withCodecRegistry(MongoClientSettings.getDefaultCodecRegistry());
     }
 
     private void checkCreateIndex(@Nullable final ClientSession clientSession) {
