@@ -19,49 +19,73 @@ package com.mongodb.client.unified;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class UnifiedTestFailureValidator extends UnifiedSyncTest {
+final class UnifiedTestFailureValidator extends UnifiedSyncTest {
     private Throwable exception;
 
-    public UnifiedTestFailureValidator(@SuppressWarnings("unused") final String fileDescription,
-                                       @SuppressWarnings("unused") final String testDescription,
-                                       final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-                                       final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Before
-    public void setUp() {
+    @Override
+    @BeforeEach
+    public void setUp(
+            @Nullable final String fileDescription,
+            @Nullable final String testDescription,
+            final String schemaVersion,
+            @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray,
+            final BsonArray initialData,
+            final BsonDocument definition) {
         try {
-            super.setUp();
+            super.setUp(
+                    fileDescription,
+                    testDescription,
+                    schemaVersion,
+                    runOnRequirements,
+                    entitiesArray,
+                    initialData,
+                    definition);
         } catch (AssertionError | Exception e) {
             exception = e;
         }
     }
 
-    @Test
-    public void shouldPassAllOutcomes() {
+    @Override
+    @ParameterizedTest
+    @MethodSource("data")
+    public void shouldPassAllOutcomes(
+            @Nullable final String fileDescription,
+            @Nullable final String testDescription,
+            final String schemaVersion,
+            @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray,
+            final BsonArray initialData,
+            final BsonDocument definition) {
         if (exception == null) {
             try {
-                super.shouldPassAllOutcomes();
+                super.shouldPassAllOutcomes(
+                        fileDescription,
+                        testDescription,
+                        schemaVersion,
+                        runOnRequirements,
+                        entitiesArray,
+                        initialData,
+                        definition);
             } catch (AssertionError | Exception e) {
                 exception = e;
             }
         }
-        assertNotNull("Expected exception but not was thrown", exception);
+        assertNotNull(exception, "Expected exception but not was thrown");
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/valid-fail");
     }
 }

@@ -85,12 +85,7 @@ public class WorkloadExecutor {
         }
         BsonDocument testDocument = testArray.get(0).asDocument();
 
-        UnifiedTest unifiedTest = new UnifiedSyncTest(fileDocument.getString("schemaVersion").getValue(),
-                fileDocument.getArray("runOnRequirements", null),
-                fileDocument.getArray("createEntities", new BsonArray()),
-                fileDocument.getArray("initialData", new BsonArray()),
-                testDocument) {
-
+        UnifiedTest unifiedTest = new UnifiedSyncTest() {
             @Override
             protected boolean terminateLoop() {
                 return terminateLoop;
@@ -98,8 +93,25 @@ public class WorkloadExecutor {
         };
 
         try {
-            unifiedTest.setUp();
-            unifiedTest.shouldPassAllOutcomes();
+            String schemaVersion = fileDocument.getString("schemaVersion").getValue();
+            BsonArray runOnRequirements = fileDocument.getArray("runOnRequirements", null);
+            BsonArray createEntities = fileDocument.getArray("createEntities", new BsonArray());
+            BsonArray initialData = fileDocument.getArray("initialData", new BsonArray());
+            unifiedTest.setUp(null,
+                    null,
+                    schemaVersion,
+                    runOnRequirements,
+                    createEntities,
+                    initialData,
+                    testDocument);
+            unifiedTest.shouldPassAllOutcomes(
+                    null,
+                    null,
+                    schemaVersion,
+                    runOnRequirements,
+                    createEntities,
+                    initialData,
+                    testDocument);
             Entities entities = unifiedTest.getEntities();
 
             long iterationCount = -1;
