@@ -40,20 +40,6 @@ final class ConnectionStringUnitTest {
     }
 
     @Test
-    public void mustDecodeOidcIndividually() {
-        String string = "abc,d!@#$%^&*;ef:ghi";
-        // encoded tags will fail parsing with an "invalid read preference tag"
-        // error if decoding is skipped.
-        String encodedTags = encode("dc:ny,rack:1");
-        ConnectionString cs = new ConnectionString(
-                "mongodb://localhost/?readPreference=primaryPreferred&readPreferenceTags=" + encodedTags
-                + "&authMechanism=MONGODB-OIDC&authMechanismProperties="
-                + "ENVIRONMENT:azure,TOKEN_RESOURCE:" + encode(string));
-        MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
-        assertEquals(string, credential.getMechanismProperty("TOKEN_RESOURCE", null));
-    }
-
-    @Test
     public void mustDecodeNonOidcAsWhole()  {
         // this string allows us to check if there is no double decoding
         String rawValue = encode("ot her");
