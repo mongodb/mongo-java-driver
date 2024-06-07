@@ -236,7 +236,7 @@ public class OidcAuthenticationProseTests {
     public void test2p5InvalidAllowedHosts() {
         assumeTestEnvironment();
 
-        String uri = "mongodb://localhost/?authMechanism=MONGODB-OIDC&&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:123";
+        String uri = "mongodb://localhost/?authMechanism=MONGODB-OIDC&authMechanismProperties=ENVIRONMENT:azure,TOKEN_RESOURCE:123";
         ConnectionString cs = new ConnectionString(uri);
         MongoCredential credential = assertNotNull(cs.getCredential())
                 .withMechanismProperty("ALLOWED_HOSTS", Collections.emptyList());
