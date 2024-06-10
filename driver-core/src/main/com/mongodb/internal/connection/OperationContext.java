@@ -52,7 +52,7 @@ public class OperationContext {
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
-        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverApi);
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi);
     }
 
     public static OperationContext simpleOperationContext(
@@ -73,11 +73,11 @@ public class OperationContext {
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverApi);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverApi);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
     }
 
     public long getId() {
@@ -102,9 +102,26 @@ public class OperationContext {
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
-    public OperationContext(final long id, final RequestContext requestContext, final SessionContext sessionContext,
-            final TimeoutContext timeoutContext,
-            @Nullable final ServerApi serverApi) {
+    public OperationContext(final long id,
+                            final RequestContext requestContext,
+                            final SessionContext sessionContext,
+                            final TimeoutContext timeoutContext,
+                            final ServerDeprioritization serverDeprioritization,
+                            @Nullable final ServerApi serverApi) {
+        this.id = id;
+        this.serverDeprioritization = serverDeprioritization;
+        this.requestContext = requestContext;
+        this.sessionContext = sessionContext;
+        this.timeoutContext = timeoutContext;
+        this.serverApi = serverApi;
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public OperationContext(final long id,
+                            final RequestContext requestContext,
+                            final SessionContext sessionContext,
+                            final TimeoutContext timeoutContext,
+                            @Nullable final ServerApi serverApi) {
         this.id = id;
         this.serverDeprioritization = new ServerDeprioritization();
         this.requestContext = requestContext;
