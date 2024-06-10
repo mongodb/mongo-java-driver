@@ -16,22 +16,15 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoOperationTimeoutException;
-import com.mongodb.MongoSocketException;
 import com.mongodb.internal.session.SessionContext;
+
+import static com.mongodb.internal.ExceptionUtils.isMongoSocketException;
+import static com.mongodb.internal.ExceptionUtils.isOperationTimeoutFromSocketException;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class AbstractProtocolExecutor implements ProtocolExecutor {
-
-    protected boolean isMongoSocketException(final Throwable e) {
-        return e instanceof MongoSocketException;
-    }
-
-    protected boolean isOperationTimeoutFromSocketException(final Throwable e) {
-        return e instanceof MongoOperationTimeoutException && e.getCause() instanceof MongoSocketException;
-    }
 
     protected boolean shouldMarkSessionDirty(final Throwable e, final SessionContext sessionContext) {
         if (!sessionContext.hasSession()) {
