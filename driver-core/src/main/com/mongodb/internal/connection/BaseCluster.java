@@ -147,6 +147,7 @@ abstract class BaseCluster implements Cluster {
                         serverAddress,
                         serverSelector,
                         currentDescription);
+                serverDeprioritization.updateCandidate(serverAddress);
                 return serverTuple;
             }
             computedServerSelectionTimeout.onExpired(() ->
