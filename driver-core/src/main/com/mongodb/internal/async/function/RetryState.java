@@ -119,24 +119,25 @@ public final class RetryState {
      * which is usually synchronous code.
      *
      * @param attemptException The exception produced by the most recent attempt.
-     * It is passed to the {@code retryPredicate} and to the {@code exceptionTransformer}.
-     * @param exceptionTransformer A function that chooses which exception to preserve as a prospective failed result of the associated
-     * retryable activity and may also transform or mutate the exceptions.
-     * The choice is between
+     * It is passed to the {@code retryPredicate} and to the {@code onAttemptFailureOperator}.
+     * @param onAttemptFailureOperator The action that is called once per failed attempt before (in the happens-before order) the
+     * {@code retryPredicate}, regardless of whether the {@code retryPredicate} is called.
+     * This action is allowed to have side effects.
+     * <p>
+     * It also has to choose which exception to preserve as a prospective failed result of the associated retryable activity.
+     * The {@code onAttemptFailureOperator} may mutate its arguments, choose from the arguments, or return a different exception,
+     * but it must return a {@code @}{@link NonNull} value.
+     * The choice is between</p>
      * <ul>
      *     <li>the previously chosen exception or {@code null} if none has been chosen
-     *     (the first argument of the {@code exceptionTransformer})</li>
-     *     <li>and the exception from the most recent attempt (the second argument of the {@code exceptionTransformer}).</li>
+     *     (the first argument of the {@code onAttemptFailureOperator})</li>
+     *     <li>and the exception from the most recent attempt (the second argument of the {@code onAttemptFailureOperator}).</li>
      * </ul>
-     * The {@code exceptionTransformer} may either choose from its arguments, or return a different exception, a.k.a. transform,
-     * but it must return a {@code @}{@link NonNull} value.
-     * The {@code exceptionTransformer} is called once before (in the happens-before order) the {@code retryPredicate},
-     * regardless of whether the {@code retryPredicate} is called. The result of the {@code exceptionTransformer} does not affect
-     * what exception is passed to the {@code retryPredicate}.
+     * The result of the {@code onAttemptFailureOperator} does not affect the exception passed to the {@code retryPredicate}.
      * @param retryPredicate {@code true} iff another attempt needs to be made. The {@code retryPredicate} is called not more than once
      * per attempt and only if all the following is true:
      * <ul>
-     *     <li>{@code exceptionTransformer} completed normally;</li>
+     *     <li>{@code onAttemptFailureOperator} completed normally;</li>
      *     <li>the most recent attempt is not the {@linkplain #isLastAttempt() last} one.</li>
      * </ul>
      * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
@@ -144,7 +145,7 @@ public final class RetryState {
      * after (in the happens-before order) testing the {@code retryPredicate}, and only if the predicate completes normally.
      * @throws RuntimeException Iff any of the following is true:
      * <ul>
-     *     <li>the {@code exceptionTransformer} completed abruptly;</li>
+     *     <li>the {@code onAttemptFailureOperator} completed abruptly;</li>
      *     <li>the most recent attempt is the {@linkplain #isLastAttempt() last} one;</li>
      *     <li>the {@code retryPredicate} completed abruptly;</li>
      *     <li>the {@code retryPredicate} is {@code false}.</li>
@@ -153,10 +154,10 @@ public final class RetryState {
      * i.e., the caller must not do any more attempts.
      * @see #advanceOrThrow(Throwable, BinaryOperator, BiPredicate)
      */
-    void advanceOrThrow(final RuntimeException attemptException, final BinaryOperator<Throwable> exceptionTransformer,
+    void advanceOrThrow(final RuntimeException attemptException, final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate) throws RuntimeException {
         try {
-            doAdvanceOrThrow(attemptException, exceptionTransformer, retryPredicate, true);
+            doAdvanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate, true);
         } catch (RuntimeException | Error unchecked) {
             throw unchecked;
         } catch (Throwable checked) {
@@ -170,18 +171,19 @@ public final class RetryState {
      *
      * @see #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)
      */
-    void advanceOrThrow(final Throwable attemptException, final BinaryOperator<Throwable> exceptionTransformer,
+    void advanceOrThrow(final Throwable attemptException, final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate) throws Throwable {
-        doAdvanceOrThrow(attemptException, exceptionTransformer, retryPredicate, false);
+        doAdvanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate, false);
     }
 
     /**
      * @param onlyRuntimeExceptions {@code true} iff the method must expect {@link #previouslyChosenException} and {@code attemptException} to be
      * {@link RuntimeException}s and must not explicitly handle other {@link Throwable} types, of which only {@link Error} is possible
      * as {@link RetryState} does not have any source of {@link Exception}s.
+     * @param onAttemptFailureOperator See {@link #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)}.
      */
     private void doAdvanceOrThrow(final Throwable attemptException,
-            final BinaryOperator<Throwable> exceptionTransformer,
+            final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final boolean onlyRuntimeExceptions) throws Throwable {
         assertTrue(attempt() < attempts);
@@ -190,7 +192,7 @@ public final class RetryState {
             assertTrue(isRuntime(attemptException));
         }
         assertTrue(!isFirstAttempt() || previouslyChosenException == null);
-        Throwable newlyChosenException = transformException(previouslyChosenException, attemptException, onlyRuntimeExceptions, exceptionTransformer);
+        Throwable newlyChosenException = callOnAttemptFailureOperator(previouslyChosenException, attemptException, onlyRuntimeExceptions, onAttemptFailureOperator);
 
         /*
          * A MongoOperationTimeoutException indicates that the operation timed out, either during command execution or server selection.
@@ -225,27 +227,31 @@ public final class RetryState {
 
     /**
      * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BinaryOperator, BiPredicate, boolean)}.
+     * @param onAttemptFailureOperator See {@link #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)}.
      */
-    private static Throwable transformException(@Nullable final Throwable previouslyChosenException, final Throwable attemptException,
-            final boolean onlyRuntimeExceptions, final BinaryOperator<Throwable> exceptionTransformer) {
+    private static Throwable callOnAttemptFailureOperator(
+            @Nullable final Throwable previouslyChosenException,
+            final Throwable attemptException,
+            final boolean onlyRuntimeExceptions,
+            final BinaryOperator<Throwable> onAttemptFailureOperator) {
         if (onlyRuntimeExceptions && previouslyChosenException != null) {
             assertTrue(isRuntime(previouslyChosenException));
         }
         Throwable result;
         try {
-            result = assertNotNull(exceptionTransformer.apply(previouslyChosenException, attemptException));
+            result = assertNotNull(onAttemptFailureOperator.apply(previouslyChosenException, attemptException));
             if (onlyRuntimeExceptions) {
                 assertTrue(isRuntime(result));
             }
-        } catch (Throwable exceptionTransformerException) {
-            if (onlyRuntimeExceptions && !isRuntime(exceptionTransformerException)) {
-                throw exceptionTransformerException;
+        } catch (Throwable onAttemptFailureOperatorException) {
+            if (onlyRuntimeExceptions && !isRuntime(onAttemptFailureOperatorException)) {
+                throw onAttemptFailureOperatorException;
             }
             if (previouslyChosenException != null) {
-                exceptionTransformerException.addSuppressed(previouslyChosenException);
+                onAttemptFailureOperatorException.addSuppressed(previouslyChosenException);
             }
-            exceptionTransformerException.addSuppressed(attemptException);
-            throw exceptionTransformerException;
+            onAttemptFailureOperatorException.addSuppressed(attemptException);
+            throw onAttemptFailureOperatorException;
         }
         return result;
     }

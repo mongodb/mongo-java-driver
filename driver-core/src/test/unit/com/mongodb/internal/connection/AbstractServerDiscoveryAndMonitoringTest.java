@@ -87,12 +87,13 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
         int errorGeneration = applicationError.getNumber("generation",
-                new BsonInt32(((DefaultServer) getCluster().getServer(serverAddress, serverSelectionTimeout, timeoutContext)).getConnectionPool().getGeneration())).intValue();
+                new BsonInt32(((DefaultServer) getCluster().getServersSnapshot(serverSelectionTimeout, timeoutContext).getServer(serverAddress))
+                        .getConnectionPool().getGeneration())).intValue();
         int maxWireVersion = applicationError.getNumber("maxWireVersion").intValue();
         String when = applicationError.getString("when").getValue();
         String type = applicationError.getString("type").getValue();
 
-        DefaultServer server = (DefaultServer) cluster.getServer(serverAddress, serverSelectionTimeout, timeoutContext);
+        DefaultServer server = (DefaultServer) cluster.getServersSnapshot(serverSelectionTimeout, timeoutContext).getServer(serverAddress);
         RuntimeException exception;
 
         switch (type) {

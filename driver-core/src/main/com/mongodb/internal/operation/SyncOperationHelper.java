@@ -54,6 +54,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
+import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableReadAttemptFailure;
+import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
 import static com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationHelper.canRetryWrite;
@@ -300,7 +302,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
             final OperationContext operationContext, final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 CommandOperationHelper::shouldAttemptToRetryWrite, () -> {
             logRetryExecute(retryState, operationContext);
             return writeFunction.get();
@@ -309,7 +311,7 @@ final class SyncOperationHelper {
 
     static <R> Supplier<R> decorateReadWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> readFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableReadException,
+        return new RetryingSyncSupplier<>(retryState, onRetryableReadAttemptFailure(operationContext),
                 CommandOperationHelper::shouldAttemptToRetryRead, () -> {
             logRetryExecute(retryState, operationContext);
             return readFunction.get();

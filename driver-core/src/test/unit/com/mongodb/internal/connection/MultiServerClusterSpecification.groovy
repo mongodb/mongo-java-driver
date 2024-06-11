@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterId
@@ -88,14 +87,14 @@ class MultiServerClusterSpecification extends Specification {
         cluster.getCurrentDescription().connectionMode == MULTIPLE
     }
 
-    def 'should not get server when closed'() {
+    def 'should not get servers snapshot when closed'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts(Arrays.asList(firstServer)).mode(MULTIPLE).build(),
                 factory)
         cluster.close()
 
         when:
-        cluster.getServer(firstServer,
+        cluster.getServersSnapshot(
                 OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout(),
                 OPERATION_CONTEXT.getTimeoutContext())
 

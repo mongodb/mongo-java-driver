@@ -40,7 +40,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -245,9 +244,7 @@ import static java.util.Collections.unmodifiableList;
  * mechanism (the default).
  * </li>
  * <li>{@code authMechanismProperties=PROPERTY_NAME:PROPERTY_VALUE,PROPERTY_NAME2:PROPERTY_VALUE2}: This option allows authentication
- * mechanism properties to be set on the connection string. Property values must be percent-encoded individually, when
- * special characters are used, including {@code ,} (comma), {@code =}, {@code +}, {@code &}, and {@code %}. The
- * entire substring following the {@code =} should not itself be encoded.
+ * mechanism properties to be set on the connection string.
  * </li>
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
  *   Deprecated, please use {@code authMechanismProperties=SERVICE_NAME:string} instead.
@@ -932,7 +929,6 @@ public class ConnectionString {
             }
         }
 
-
         MongoCredential credential = null;
         if (mechanism != null) {
             credential = createMongoCredentialWithMechanism(mechanism, userName, password, authSource, gssapiServiceName);
@@ -950,9 +946,6 @@ public class ConnectionString {
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
-                if (decodeValueOfKeyValuePair(credential.getMechanism())) {
-                    value = urldecode(value);
-                }
                 if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
                     throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
                             + "'%s' must be set on the credential programmatically.", key));
@@ -966,27 +959,6 @@ public class ConnectionString {
             }
         }
         return credential;
-    }
-
-    private static boolean decodeWholeOptionValue(final boolean isOidc, final String key) {
-        // The "whole option value" is the entire string following = in an option,
-        // including separators when the value is a list or list of key-values.
-        // This is the original parsing behaviour, but implies that users can
-        // encode separators (much like they might with URL parameters). This
-        // behaviour implies that users cannot encode "key-value" values that
-        // contain a comma, because this will (after this "whole value decoding)
-        // be parsed as a key-value separator, rather than part of a value.
-        return !(isOidc && key.equals("authmechanismproperties"));
-    }
-
-    private static boolean decodeValueOfKeyValuePair(@Nullable final String mechanismName) {
-        // Only authMechanismProperties should be individually decoded, and only
-        // when the mechanism is OIDC. These will not have been decoded.
-        return AuthenticationMechanism.MONGODB_OIDC.getMechanismName().equals(mechanismName);
-    }
-
-    private static boolean isOidc(final List<String> options) {
-        return options.contains("authMechanism=" + AuthenticationMechanism.MONGODB_OIDC.getMechanismName());
     }
 
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
@@ -1073,9 +1045,7 @@ public class ConnectionString {
             return optionsMap;
         }
 
-        List<String> options = Arrays.asList(optionsPart.split("&|;"));
-        boolean isOidc = isOidc(options);
-        for (final String part : options) {
+        for (final String part : optionsPart.split("&|;")) {
             if (part.isEmpty()) {
                 continue;
             }
@@ -1087,10 +1057,7 @@ public class ConnectionString {
                 if (valueList == null) {
                     valueList = new ArrayList<>(1);
                 }
-                if (decodeWholeOptionValue(isOidc, key)) {
-                    value = urldecode(value);
-                }
-                valueList.add(value);
+                valueList.add(urldecode(value));
                 optionsMap.put(key, valueList);
             } else {
                 throw new IllegalArgumentException(format("The connection string contains an invalid option '%s'. "

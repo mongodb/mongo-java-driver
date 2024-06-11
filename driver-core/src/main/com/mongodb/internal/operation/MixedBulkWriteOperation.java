@@ -63,6 +63,7 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.exceptionTrans
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
+import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
@@ -141,7 +142,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final Supplier<R> writeFunction) {
-        return new RetryingSyncSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 this::shouldAttemptToRetryWrite, () -> {
             logRetryExecute(retryState, operationContext);
             return writeFunction.get();
@@ -150,7 +151,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private <R> AsyncCallbackSupplier<R> decorateWriteWithRetries(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> writeFunction) {
-        return new RetryingAsyncCallbackSupplier<>(retryState, CommandOperationHelper::chooseRetryableWriteException,
+        return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 this::shouldAttemptToRetryWrite, callback -> {
             logRetryExecute(retryState, operationContext);
             writeFunction.get(callback);
