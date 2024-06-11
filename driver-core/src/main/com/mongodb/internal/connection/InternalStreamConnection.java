@@ -771,24 +771,22 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private void throwTranslatedWriteException(final Throwable e, final OperationContext operationContext) {
-        throw translateWriteException(e, operationContext);
-    }
-
-    private MongoException translateWriteException(final Throwable e, final OperationContext operationContext) {
-        if (e instanceof MongoSocketWriteTimeoutException && operationContext.getTimeoutContext().hasExpired()) {
-            return createMongoTimeoutException(e);
+        if (e instanceof MongoSocketWriteTimeoutException) {
+            operationContext.getTimeoutContext().onExpired(() -> {
+                throw createMongoTimeoutException(e);
+            });
         }
 
         if (e instanceof MongoException) {
-            return (MongoException) e;
+            throw (MongoException) e;
         }
         Optional<MongoInterruptedException> interruptedException = translateInterruptedException(e, "Interrupted while sending message");
         if (interruptedException.isPresent()) {
-            return interruptedException.get();
+            throw interruptedException.get();
         } else if (e instanceof IOException) {
-            return new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
+            throw new MongoSocketWriteException("Exception sending message", getServerAddress(), e);
         } else {
-            return new MongoInternalException("Unexpected exception", e);
+            throw new MongoInternalException("Unexpected exception", e);
         }
     }
 

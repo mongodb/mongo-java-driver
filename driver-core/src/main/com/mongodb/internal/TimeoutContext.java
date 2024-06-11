@@ -144,6 +144,10 @@ public class TimeoutContext {
         return Timeout.nullAsInfinite(timeout).call(NANOSECONDS, () -> false, (ns) -> false, () -> true);
     }
 
+    public void onExpired(final Runnable onExpired) {
+        Timeout.nullAsInfinite(timeout).onExpired(onExpired);
+    }
+
     /**
      * Sets the recent min round trip time
      * @param minRoundTripTimeMS the min round trip time
@@ -370,6 +374,7 @@ public class TimeoutContext {
         return checkoutStart.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
+    // TODO (CSOT) method not used in production;
     @Nullable
     public Timeout getTimeout() {
         return timeout;

@@ -163,9 +163,9 @@ public class SocketStream implements Stream {
     public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
-            if (operationContext.getTimeoutContext().hasExpired()) {
+            operationContext.getTimeoutContext().onExpired(() -> {
                 throwMongoTimeoutException("Socket write exceeded the timeout limit.");
-            }
+            });
         }
     }
 
