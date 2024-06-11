@@ -5,6 +5,7 @@
     {
       "client": {
         "id": "client",
+        "useMultipleMongoses": false,
         "observeEvents": [
           "commandStartedEvent",
           "commandSucceededEvent",
