@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
+
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import org.mongodb.scala.bson.BsonValue
@@ -37,21 +39,9 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    * Sets the query filter to apply to the query.
    *
    * [[https://www.mongodb.com/docs/manual/reference/method/db.collection.find/ Filter]]
-   *
    * @param filter the filter, which may be null.
    * @return this
-   * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-   *
-   *             - [[org.mongodb.scala.MongoClientSettings.Builder timeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.MongoDatabase.withTimeout withTimeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.MongoCollection.withTimeout withTimeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.ClientSessionOptions]]
-   *             - [[org.mongodb.scala.TransactionOptions]]
-   *
-   * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
-   *             execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
    */
-  @deprecated
   def filter(filter: Bson): DistinctObservable[TResult] = {
     wrapped.filter(filter)
     this
@@ -131,6 +121,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): DistinctObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

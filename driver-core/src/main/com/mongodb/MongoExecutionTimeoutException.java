@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import org.bson.BsonDocument;
 
 /**
@@ -32,6 +34,7 @@ public class MongoExecutionTimeoutException extends MongoException {
      * @param message the error message
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public MongoExecutionTimeoutException(final String message) {
         super(message);
 

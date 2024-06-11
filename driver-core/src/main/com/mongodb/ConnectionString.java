@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerMonitoringMode;
@@ -38,6 +40,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +50,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -137,7 +144,8 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
- * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation.</li>
+ * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation. Note: This parameter is part of an {@linkplain Alpha Alpha API} and may be
+ * subject to changes or even removal in future releases.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
  * This option is the same as {@link SocketSettings#getReadTimeout(TimeUnit)}.
@@ -227,9 +235,9 @@ import static java.util.Collections.unmodifiableList;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509|MONGODB-OIDC}: The authentication mechanism to use if a credential was supplied.
  * The default is unspecified, in which case the client will pick the most secure mechanism available based on the sever version.  For the
- * GSSAPI and MONGODB-X509 mechanisms, no password is accepted, only the username.
+ * GSSAPI, MONGODB-X509, and MONGODB-OIDC mechanisms, no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the connection string.
@@ -237,7 +245,9 @@ import static java.util.Collections.unmodifiableList;
  * mechanism (the default).
  * </li>
  * <li>{@code authMechanismProperties=PROPERTY_NAME:PROPERTY_VALUE,PROPERTY_NAME2:PROPERTY_VALUE2}: This option allows authentication
- * mechanism properties to be set on the connection string.
+ * mechanism properties to be set on the connection string. Property values must be percent-encoded individually, when
+ * special characters are used, including {@code ,} (comma), {@code =}, {@code +}, {@code &}, and {@code %}. The
+ * entire substring following the {@code =} should not itself be encoded.
  * </li>
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
  *   Deprecated, please use {@code authMechanismProperties=SERVICE_NAME:string} instead.
@@ -283,6 +293,9 @@ public class ConnectionString {
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
             new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
+    private static final List<String> MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING = Stream.of(ALLOWED_HOSTS_KEY)
+            .map(k -> k.toLowerCase())
+            .collect(Collectors.toList());
 
     private final MongoCredential credential;
     private final boolean isSrvProtocol;
@@ -930,13 +943,21 @@ public class ConnectionString {
 
         if (credential != null && authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
-                String[] mechanismPropertyKeyValue = part.split(":");
+                String[] mechanismPropertyKeyValue = part.split(":", 2);
                 if (mechanismPropertyKeyValue.length != 2) {
                     throw new IllegalArgumentException(format("The connection string contains invalid authentication properties. "
                             + "'%s' is not a key value pair", part));
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
+                if (decodeValueOfKeyValuePair(credential.getMechanism())) {
+                    value = urldecode(value);
+                }
+                if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
+                    throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
+                            + "'%s' must be set on the credential programmatically.", key));
+                }
+
                 if (key.equals("canonicalize_host_name")) {
                     credential = credential.withMechanismProperty(key, Boolean.valueOf(value));
                 } else {
@@ -945,6 +966,27 @@ public class ConnectionString {
             }
         }
         return credential;
+    }
+
+    private static boolean decodeWholeOptionValue(final boolean isOidc, final String key) {
+        // The "whole option value" is the entire string following = in an option,
+        // including separators when the value is a list or list of key-values.
+        // This is the original parsing behaviour, but implies that users can
+        // encode separators (much like they might with URL parameters). This
+        // behaviour implies that users cannot encode "key-value" values that
+        // contain a comma, because this will (after this "whole value decoding)
+        // be parsed as a key-value separator, rather than part of a value.
+        return !(isOidc && key.equals("authmechanismproperties"));
+    }
+
+    private static boolean decodeValueOfKeyValuePair(@Nullable final String mechanismName) {
+        // Only authMechanismProperties should be individually decoded, and only
+        // when the mechanism is OIDC. These will not have been decoded.
+        return AuthenticationMechanism.MONGODB_OIDC.getMechanismName().equals(mechanismName);
+    }
+
+    private static boolean isOidc(final List<String> options) {
+        return options.contains("authMechanism=" + AuthenticationMechanism.MONGODB_OIDC.getMechanismName());
     }
 
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
@@ -996,6 +1038,10 @@ public class ConnectionString {
             case MONGODB_AWS:
                 credential = MongoCredential.createAwsCredential(userName, password);
                 break;
+            case MONGODB_OIDC:
+                validateCreateOidcCredential(password);
+                credential = MongoCredential.createOidcCredential(userName);
+                break;
             default:
                 throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
                                                                        + "'%s' is not a supported authentication mechanism",
@@ -1023,12 +1069,14 @@ public class ConnectionString {
 
     private Map<String, List<String>> parseOptions(final String optionsPart) {
         Map<String, List<String>> optionsMap = new HashMap<>();
-        if (optionsPart.length() == 0) {
+        if (optionsPart.isEmpty()) {
             return optionsMap;
         }
 
-        for (final String part : optionsPart.split("&|;")) {
-            if (part.length() == 0) {
+        List<String> options = Arrays.asList(optionsPart.split("&|;"));
+        boolean isOidc = isOidc(options);
+        for (final String part : options) {
+            if (part.isEmpty()) {
                 continue;
             }
             int idx = part.indexOf("=");
@@ -1039,7 +1087,10 @@ public class ConnectionString {
                 if (valueList == null) {
                     valueList = new ArrayList<>(1);
                 }
-                valueList.add(urldecode(value));
+                if (decodeWholeOptionValue(isOidc, key)) {
+                    value = urldecode(value);
+                }
+                valueList.add(value);
                 optionsMap.put(key, valueList);
             } else {
                 throw new IllegalArgumentException(format("The connection string contains an invalid option '%s'. "
@@ -1084,7 +1135,6 @@ public class ConnectionString {
     }
 
     @Nullable
-    @SuppressWarnings("deprecation") //wTimeout
     private WriteConcern buildWriteConcern(@Nullable final Boolean safe, @Nullable final String w,
                                            @Nullable final Integer wTimeout,
                                            @Nullable final Boolean journal) {
@@ -1575,6 +1625,7 @@ public class ConnectionString {
      * @return the time limit for the full execution of an operation in milliseconds or null.
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     @Nullable
     public Long getTimeout() {
         return timeout;
@@ -1592,21 +1643,7 @@ public class ConnectionString {
     /**
      * Gets the socket timeout specified in the connection string.
      * @return the socket timeout
-     *
-     * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-     *
-     * <ul>
-     *     <li>{@link MongoClientSettings.Builder#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoDatabase#getTimeout(TimeUnit)}</li>
-     *     <li>{@code MongoCollection#getTimeout(TimeUnit)}</li>
-     *     <li>{@link com.mongodb.ClientSessionOptions}</li>
-     *     <li>{@link com.mongodb.TransactionOptions}</li>
-     * </ul>
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this socket timeout
-     * irrelevant. If no timeout is specified at these levels, the socket timeout will be used.
      */
-    @Deprecated
     @Nullable
     public Integer getSocketTimeout() {
         return socketTimeout;

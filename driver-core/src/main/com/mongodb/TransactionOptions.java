@@ -16,7 +16,9 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
 import java.util.Objects;
@@ -112,6 +114,7 @@ public final class TransactionOptions {
      * @since CSOT
      */
     @Nullable
+    @Alpha(Reason.CLIENT)
     public Long getTimeout(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         if (timeoutMS == null) {
@@ -258,21 +261,7 @@ public final class TransactionOptions {
          * @return this
          * @mongodb.server.release 4.2
          * @since 3.11
-         *
-         * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-         *
-         * <ul>
-         *     <li>{@code MongoClientSettings.Builder#timeout(long, TimeUnit)}</li>
-         *     <li>{@code MongoDatabase#withTimeout(long, TimeUnit)}</li>
-         *     <li>{@code MongoCollection#withTimeout(long, TimeUnit)}</li>
-         *     <li>{@code ClientSession}</li>
-         *     <li>{@code TransactionOptions.Builder#timeout(long, TimeUnit)}</li>
-         * </ul>
-         *
-         * When executing a commit transaction operation, any explicitly set timeout at these levels takes precedence, rendering this
-         * commit time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
          */
-        @Deprecated
         public Builder maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
             if (maxCommitTime == null) {
                 this.maxCommitTimeMS = null;
@@ -308,6 +297,7 @@ public final class TransactionOptions {
          * @return this
          * @since CSOT
          */
+        @Alpha(Reason.CLIENT)
         public Builder timeout(@Nullable final Long timeout, final TimeUnit timeUnit) {
             this.timeoutMS = convertAndValidateTimeoutNullable(timeout, timeUnit);
             return this;

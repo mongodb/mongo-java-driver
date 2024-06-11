@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assume.assumeFalse;
 
 public class UnifiedCrudTest extends UnifiedSyncTest {
@@ -49,6 +51,10 @@ public class UnifiedCrudTest extends UnifiedSyncTest {
         assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint document on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint string on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint document on 4.4+ server"));
+        if (isDiscoverableReplicaSet() && serverVersionAtLeast(8, 0)) {
+            assumeFalse(testDescription.equals("Aggregate with $out includes read preference for 5.0+ server"));
+            assumeFalse(testDescription.equals("Database-level aggregate with $out includes read preference for 5.0+ server"));
+        }
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

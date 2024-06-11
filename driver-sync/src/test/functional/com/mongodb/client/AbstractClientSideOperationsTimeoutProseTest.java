@@ -27,6 +27,7 @@ import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
@@ -84,6 +85,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -702,6 +704,46 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 );
             }
         }
+    }
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @Tag("setsFailPoint")
+    @Test
+    @DisplayName("Should ignore wTimeoutMS of WriteConcern to initial and subsequent commitTransaction operations")
+    public void shouldIgnoreWtimeoutMsOfWriteConcernToInitialAndSubsequentCommitTransactionOperations() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS)
+                    .build())) {
+                session.startTransaction(TransactionOptions.builder()
+                        .writeConcern(WriteConcern.ACKNOWLEDGED.withWTimeout(100, TimeUnit.MILLISECONDS))
+                        .build());
+                collection.insertOne(session, new Document("x", 1));
+                sleep(200);
+
+                assertDoesNotThrow(session::commitTransaction);
+                //repeat commit.
+                assertDoesNotThrow(session::commitTransaction);
+            }
+        }
+        List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("commitTransaction");
+        assertEquals(2, commandStartedEvents.size());
+
+        commandStartedEvents.forEach(e -> {
+            BsonDocument command = e.getCommand();
+            if (command.containsKey("writeConcern")) {
+                BsonDocument writeConcern = command.getDocument("writeConcern");
+                assertFalse(writeConcern.isEmpty());
+                assertFalse(writeConcern.containsKey("wTimeoutMS"));
+            }});
     }
 
     private static Stream<Arguments> test8ServerSelectionArguments() {

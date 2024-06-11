@@ -28,7 +28,6 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -104,7 +103,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
-        assumeTrue(serverVersionAtLeast(3, 6));
         List<DBObject> pipeline = new ArrayList<>(prepareData());
         CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder().build());
         assertTrue(out.keySet().iterator().hasNext());
@@ -133,7 +131,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
     @Test
     public void testWriteConcern() {
         assumeThat(isDiscoverableReplicaSet(), is(true));
-        assumeTrue(serverVersionAtLeast(3, 4));
         DBCollection collection = database.getCollection("testWriteConcern");
         collection.setWriteConcern(new WriteConcern(5));
         try {

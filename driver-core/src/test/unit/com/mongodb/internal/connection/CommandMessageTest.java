@@ -33,8 +33,9 @@ import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.internal.mockito.MongoMockito.mock;
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -50,7 +51,7 @@ class CommandMessageTest {
         //given
         CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 MessageSettings.builder()
-                        .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION)
+                        .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .build(),
@@ -59,13 +60,12 @@ class CommandMessageTest {
         BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
         SessionContext sessionContext = mock(SessionContext.class);
         TimeoutContext timeoutContext = mock(TimeoutContext.class, mock -> {
-            doThrow(new MongoOperationTimeoutException("test")).when(mock).getMaxTimeMS();
+            doThrow(new MongoOperationTimeoutException("test")).when(mock).runMaxTimeMS(any());
         });
         OperationContext operationContext = mock(OperationContext.class, mock -> {
             when(mock.getSessionContext()).thenReturn(sessionContext);
             when(mock.getTimeoutContext()).thenReturn(timeoutContext);
         });
-
 
         //when & then
         assertThrows(MongoOperationTimeoutException.class, () ->
@@ -77,7 +77,7 @@ class CommandMessageTest {
         //given
         CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
                 MessageSettings.builder()
-                        .maxWireVersion(THREE_DOT_SIX_WIRE_VERSION)
+                        .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .cryptd(true)

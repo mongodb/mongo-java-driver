@@ -30,21 +30,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static org.junit.Assume.assumeTrue;
 
 public class ReadConcernTest {
     private MongoClient mongoClient;
     private TestCommandListener commandListener;
 
     @Before
-    @SuppressWarnings("deprecation")
     public void setUp() {
-        assumeTrue(canRunTests());
-
         commandListener = new TestCommandListener();
         mongoClient = MongoClients.create(getMongoClientSettingsBuilder()
                 .addCommandListener(commandListener)
@@ -72,9 +67,5 @@ public class ReadConcernTest {
 
         assertEventsEquality(Arrays.asList(new CommandStartedEvent(null, 1, 1, null, getDefaultDatabaseName(),
                         "find", commandDocument)), events);
-    }
-
-    private boolean canRunTests() {
-        return serverVersionAtLeast(3, 2);
     }
 }

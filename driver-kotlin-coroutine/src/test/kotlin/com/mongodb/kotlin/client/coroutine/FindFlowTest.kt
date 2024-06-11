@@ -41,7 +41,6 @@ class FindFlowTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: FindPublisher<Document> = mock()
         val flow = FindFlow(wrapped)

@@ -94,15 +94,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
                 && testDescription.equals("timeoutMS can be overridden for close"));
 
         assumeFalse("TODO (CSOT) - JAVA-5259 No client.withTimeout", testDescription.endsWith("on client"));
-
-        assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("timeoutMS behaves correctly for retryable operations"));
-        assumeFalse("TODO (CSOT) - JAVA-4052", fileDescription.startsWith("legacy timeouts behave correctly for retryable operations"));
-
-        assumeFalse("TODO (CSOT) - JAVA-5248",
-                fileDescription.equals("MaxTimeMSExpired server errors are transformed into a custom timeout error"));
-
-        assumeFalse("TODO (CSOT) - JAVA-4062", testDescription.contains("wTimeoutMS is ignored")
-          || testDescription.contains("ignores wTimeoutMS"));
     }
 
     private static final List<String> RACY_GET_MORE_TESTS = asList(

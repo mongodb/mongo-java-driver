@@ -31,7 +31,6 @@ final class SocketSettingsTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation") //readTimeout
     void readTimeoutThrowsIfArgumentIsTooLarge() {
         assertThrows(IllegalArgumentException.class, () -> SocketSettings.builder().readTimeout(Integer.MAX_VALUE / 2, TimeUnit.SECONDS));
     }

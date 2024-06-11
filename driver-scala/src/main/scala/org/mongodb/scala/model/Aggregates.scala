@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.fill.FillOutputField
 import com.mongodb.client.model.search.FieldSearchPath
 
@@ -737,7 +737,7 @@ object Aggregates {
    * @note Requires MongoDB 6.0.10 or greater
    * @since 4.11
    */
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   def vectorSearch(
       path: FieldSearchPath,
       queryVector: Iterable[java.lang.Double],
@@ -763,7 +763,7 @@ object Aggregates {
    * @note Requires MongoDB 6.0.10 or greater
    * @since 4.11
    */
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   def vectorSearch(
       path: FieldSearchPath,
       queryVector: Iterable[java.lang.Double],

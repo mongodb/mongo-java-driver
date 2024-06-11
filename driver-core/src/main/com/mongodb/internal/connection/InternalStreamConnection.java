@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -43,11 +44,13 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.internal.ResourceUtil;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.async.AsyncSupplier;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
@@ -66,11 +69,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO_LOWER;
@@ -94,6 +101,19 @@ import static java.util.Arrays.asList;
 @NotThreadSafe
 public class InternalStreamConnection implements InternalConnection {
 
+    private static volatile boolean recordEverything = false;
+
+    /**
+     * Will attempt to record events to the command listener that are usually
+     * suppressed.
+     *
+     * @param recordEverything whether to attempt to record everything
+     */
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public static void setRecordEverything(final boolean recordEverything) {
+        InternalStreamConnection.recordEverything = recordEverything;
+    }
+
     private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<>(asList(
             "authenticate",
             "saslStart",
@@ -113,6 +133,8 @@ public class InternalStreamConnection implements InternalConnection {
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
     private final ClusterConnectionMode clusterConnectionMode;
+    @Nullable
+    private final Authenticator authenticator;
     private final boolean isMonitoringConnection;
     private final ServerId serverId;
     private final ConnectionGenerationSupplier connectionGenerationSupplier;
@@ -124,6 +146,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final AtomicBoolean opened = new AtomicBoolean();
+    private final AtomicBoolean authenticated = new AtomicBoolean();
 
     private final List<MongoCompressor> compressorList;
     private final LoggerSettings loggerSettings;
@@ -149,17 +172,20 @@ public class InternalStreamConnection implements InternalConnection {
             final ConnectionGenerationSupplier connectionGenerationSupplier,
             final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
-        this(clusterConnectionMode, false, serverId, connectionGenerationSupplier, streamFactory, compressorList,
+        this(clusterConnectionMode, null, false, serverId, connectionGenerationSupplier, streamFactory, compressorList,
                 LoggerSettings.builder().build(), commandListener, connectionInitializer);
     }
 
-    public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
+    public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final Authenticator authenticator,
+            final boolean isMonitoringConnection,
             final ServerId serverId,
             final ConnectionGenerationSupplier connectionGenerationSupplier,
             final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
             final LoggerSettings loggerSettings,
             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this.clusterConnectionMode = clusterConnectionMode;
+        this.authenticator = authenticator;
         this.isMonitoringConnection = isMonitoringConnection;
         this.serverId = notNull("serverId", serverId);
         this.connectionGenerationSupplier = notNull("connectionGeneration", connectionGenerationSupplier);
@@ -222,9 +248,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void openAsync(final OperationContext originalOperationContext, final SingleResultCallback<Void> callback) {
-        isTrue("Open already called", stream == null, callback);
+        assertNull(stream);
         try {
-
             OperationContext operationContext = originalOperationContext
                     .withTimeoutContext(originalOperationContext.getTimeoutContext().withComputedServerSelectionTimeoutContext());
 
@@ -281,6 +306,7 @@ public class InternalStreamConnection implements InternalConnection {
         description = initializationDescription.getConnectionDescription();
         initialServerDescription = initializationDescription.getServerDescription();
         opened.set(true);
+        authenticated.set(true);
         sendCompressor = findSendCompressor(description);
     }
 
@@ -345,12 +371,67 @@ public class InternalStreamConnection implements InternalConnection {
     @Nullable
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
-        CommandEventSender commandEventSender;
+        Supplier<T> sendAndReceiveInternal = () -> sendAndReceiveInternal(
+                message, decoder, operationContext);
+        try {
+            return sendAndReceiveInternal.get();
+        } catch (MongoCommandException e) {
+            if (reauthenticationIsTriggered(e)) {
+                return reauthenticateAndRetry(sendAndReceiveInternal, operationContext);
+            }
+            throw e;
+        }
+    }
 
+    @Override
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                        final OperationContext operationContext,
+                                        final SingleResultCallback<T> callback) {
+
+        AsyncSupplier<T> sendAndReceiveAsyncInternal = c -> sendAndReceiveAsyncInternal(
+                message, decoder, operationContext, c);
+        beginAsync().<T>thenSupply(c -> {
+            sendAndReceiveAsyncInternal.getAsync(c);
+        }).onErrorIf(e -> reauthenticationIsTriggered(e), (t, c) -> {
+            reauthenticateAndRetryAsync(sendAndReceiveAsyncInternal, operationContext, c);
+        }).finish(callback);
+    }
+
+    private <T> T reauthenticateAndRetry(final Supplier<T> operation, final OperationContext operationContext) {
+        authenticated.set(false);
+        assertNotNull(authenticator).reauthenticate(this, operationContext);
+        authenticated.set(true);
+        return operation.get();
+    }
+
+    private <T> void reauthenticateAndRetryAsync(final AsyncSupplier<T> operation,
+            final OperationContext operationContext,
+            final SingleResultCallback<T> callback) {
+        beginAsync().thenRun(c -> {
+            authenticated.set(false);
+            assertNotNull(authenticator).reauthenticateAsync(this, operationContext, c);
+        }).<T>thenSupply((c) -> {
+            authenticated.set(true);
+            operation.getAsync(c);
+        }).finish(callback);
+    }
+
+    public boolean reauthenticationIsTriggered(@Nullable final Throwable t) {
+        if (!shouldAuthenticate(authenticator, this.description)) {
+            return false;
+        }
+        if (t instanceof MongoCommandException) {
+            MongoCommandException e = (MongoCommandException) t;
+            return e.getErrorCode() == 391;
+        }
+        return false;
+    }
+
+    @Nullable
+    private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
+            final OperationContext operationContext) {
+        CommandEventSender commandEventSender;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-                throw e;
-            });
             message.encode(bsonOutput, operationContext);
             commandEventSender = createCommandEventSender(message, bsonOutput, operationContext);
             commandEventSender.sendStartedEvent();
@@ -417,8 +498,8 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().ifPresent(e -> {
-            throw e;
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            throw TimeoutContext.createMongoRoundTripTimeoutException();
         });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
@@ -431,22 +512,18 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
             final OperationContext operationContext) {
-        validateHasTimedOutAndClose(commandEventSender, operationContext).ifPresent(e -> {
-            throw e;
-        });
-
         boolean commandSuccessful = false;
         try (ResponseBuffers responseBuffers = receiveResponseBuffers(operationContext)) {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
             if (!isCommandOk(responseBuffers)) {
                 throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
-                        new BsonDocumentCodec()), description.getServerAddress());
+                        new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
             }
 
             commandSuccessful = true;
             commandEventSender.sendSucceededEvent(responseBuffers);
 
-            T commandResult = getCommandResult(decoder, responseBuffers, responseTo);
+            T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
             hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
             if (hasMoreToCome) {
                 responseTo = responseBuffers.getReplyHeader().getRequestId();
@@ -463,11 +540,8 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    @Override
-    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext,
-            final SingleResultCallback<T> callback) {
-        notNull("stream is open", stream, callback);
-
+    private <T> void sendAndReceiveAsyncInternal(final CommandMessage message, final Decoder<T> decoder,
+                                                 final OperationContext operationContext, final SingleResultCallback<T> callback) {
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
             return;
@@ -508,6 +582,16 @@ public class InternalStreamConnection implements InternalConnection {
                                              final SingleResultCallback<T> callback, final ByteBufferBsonOutput bsonOutput,
                                              final CommandEventSender commandEventSender, final boolean responseExpected) {
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+
+        boolean[] shouldReturn = {false};
+        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
+            shouldReturn[0] = true;
+        });
+        if (shouldReturn[0]) {
+            return;
+        }
+
         sendMessageAsync(byteBuffers, messageId, operationContext, (result, t) -> {
             ResourceUtil.release(byteBuffers);
             bsonOutput.close();
@@ -518,12 +602,6 @@ public class InternalStreamConnection implements InternalConnection {
                 commandEventSender.sendSucceededEventForOneWayCommand();
                 callback.onResult(null, null);
             } else {
-                Optional<MongoOperationTimeoutException> e = validateHasTimedOutAndClose(commandEventSender, operationContext);
-                if (e.isPresent()) {
-                    callback.onResult(null, e.get());
-                    return;
-                }
-
                 readAsync(MESSAGE_HEADER_LENGTH, operationContext, new MessageHeaderCallback(operationContext, (responseBuffers, t1) -> {
                     if (t1 != null) {
                         commandEventSender.sendFailedEvent(t1);
@@ -539,13 +617,13 @@ public class InternalStreamConnection implements InternalConnection {
                         if (!commandOk) {
                             MongoException commandFailureException = getCommandFailureException(
                                     responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
-                                    description.getServerAddress());
+                                    description.getServerAddress(), operationContext.getTimeoutContext());
                             commandEventSender.sendFailedEvent(commandFailureException);
                             throw commandFailureException;
                         }
                         commandEventSender.sendSucceededEvent(responseBuffers);
 
-                        T result1 = getCommandResult(decoder, responseBuffers, messageId);
+                        T result1 = getCommandResult(decoder, responseBuffers, messageId, operationContext.getTimeoutContext());
                         callback.onResult(result1, null);
                     } catch (Throwable localThrowable) {
                         callback.onResult(null, localThrowable);
@@ -557,18 +635,24 @@ public class InternalStreamConnection implements InternalConnection {
         });
     }
 
-    private Optional<MongoOperationTimeoutException> validateHasTimedOutAndClose(final CommandEventSender commandEventSender,
-            final OperationContext operationContext) {
-        return operationContext.getTimeoutContext().validateHasTimedOutForCommandExecution().map(e -> {
-            close();
-            commandEventSender.sendFailedEvent(e);
-            return e;
-        });
+    private MongoOperationTimeoutException createMongoOperationTimeoutExceptionAndClose(final CommandEventSender commandEventSender) {
+        MongoOperationTimeoutException e = TimeoutContext.createMongoRoundTripTimeoutException();
+        close();
+        commandEventSender.sendFailedEvent(e);
+        return e;
     }
 
-    private <T> T getCommandResult(final Decoder<T> decoder, final ResponseBuffers responseBuffers, final int messageId) {
+    private <T> T getCommandResult(final Decoder<T> decoder,
+                                   final ResponseBuffers responseBuffers,
+                                   final int messageId,
+                                   final TimeoutContext timeoutContext) {
         T result = new ReplyMessage<>(responseBuffers, decoder, messageId).getDocument();
-        MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers, description.getServerAddress());
+        MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers,
+                description.getServerAddress(),
+                timeoutContext);
+        if (writeConcernBasedError instanceof MongoOperationTimeoutException) {
+            throw writeConcernBasedError;
+        }
         if (writeConcernBasedError != null) {
             throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
         }
@@ -593,7 +677,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public ResponseBuffers receiveMessage(final int responseTo, final OperationContext operationContext) {
-        notNull("stream is open", stream);
+        assertNotNull(stream);
         if (isClosed()) {
             throw new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress());
         }
@@ -602,9 +686,9 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
-            final SingleResultCallback<Void> callback) {
-        notNull("stream is open", stream, callback);
+    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId,
+                                 final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        assertNotNull(stream);
 
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
@@ -637,7 +721,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
             final SingleResultCallback<ResponseBuffers> callback) {
-        isTrue("stream is open", stream != null, callback);
+        assertNotNull(stream);
 
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
@@ -874,13 +958,15 @@ public class InternalStreamConnection implements InternalConnection {
     private static final StructuredLogger COMMAND_PROTOCOL_LOGGER = new StructuredLogger("protocol.command");
 
     private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
-            final OperationContext operationContext) {
-        if (!isMonitoringConnection && opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isRequired(DEBUG, getClusterId()))) {
-            return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description,
-                    commandListener, operationContext, message, bsonOutput, COMMAND_PROTOCOL_LOGGER, loggerSettings);
-        } else {
+                                                        final OperationContext operationContext) {
+        boolean listensOrLogs = commandListener != null || COMMAND_PROTOCOL_LOGGER.isRequired(DEBUG, getClusterId());
+        if (!recordEverything && (isMonitoringConnection || !opened() || !authenticated.get() || !listensOrLogs)) {
             return new NoOpCommandEventSender();
         }
+        return new LoggingCommandEventSender(
+                SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
+                operationContext, message, bsonOutput,
+                COMMAND_PROTOCOL_LOGGER, loggerSettings);
     }
 
     private ClusterId getClusterId() {

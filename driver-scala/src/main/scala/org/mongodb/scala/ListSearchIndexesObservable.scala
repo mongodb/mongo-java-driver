@@ -17,6 +17,7 @@
 package org.mongodb.scala
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher
 import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
@@ -62,22 +63,10 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
   /**
    * Sets the maximum execution time on the server for this operation.
    *
-   * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
-   *
-   * @param duration the duration
-   * @return this
-   * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-   *
-   *             - [[org.mongodb.scala.MongoClientSettings.Builder timeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.MongoDatabase.withTimeout withTimeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.MongoCollection.withTimeout withTimeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.ClientSessionOptions]]
-   *             - [[org.mongodb.scala.TransactionOptions]]
-   *
-   * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
-   *             execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
+   * @param duration the duration.
+   * @return this.
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
    */
-  @deprecated
   def maxTime(duration: Duration): ListSearchIndexesObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this
@@ -150,6 +139,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

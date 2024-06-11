@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
+
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
 import org.mongodb.scala.bson.BsonValue
@@ -48,21 +50,9 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    * Sets the maximum execution time on the server for this operation.
    *
    * [[https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/ Max Time]]
-   *
    * @param duration the duration
    * @return this
-   * @deprecated Prefer using the operation execution timeout configuration options available at the following levels:
-   *
-   *             - [[org.mongodb.scala.MongoClientSettings.Builder timeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.MongoDatabase.withTimeout withTimeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.MongoCollection.withTimeout withTimeout(long, TimeUnit)]]
-   *             - [[org.mongodb.scala.ClientSessionOptions]]
-   *             - [[org.mongodb.scala.TransactionOptions]]
-   *
-   * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
-   *             execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
    */
-  @deprecated
   def maxTime(duration: Duration): ListCollectionsObservable[TResult] = {
     wrapped.maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     this
@@ -116,6 +106,7 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    * @return this
    * @since CSOT
    */
+  @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): ListCollectionsObservable[TResult] = {
     wrapped.timeoutMode(timeoutMode)
     this

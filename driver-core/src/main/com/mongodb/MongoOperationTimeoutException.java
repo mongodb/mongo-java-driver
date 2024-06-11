@@ -15,6 +15,9 @@
  */
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  * @see MongoClientSettings#getTimeout(TimeUnit)
  * @since CSOT
  */
+@Alpha(Reason.CLIENT)
 public final class MongoOperationTimeoutException extends MongoTimeoutException {
     private static final long serialVersionUID = 1L;
 
@@ -44,6 +48,7 @@ public final class MongoOperationTimeoutException extends MongoTimeoutException 
      * @param message the message
      */
     public MongoOperationTimeoutException(final String message) {
+        // TODO (CSOT) - JAVA-5248 move all messages here as constants to ensure consistency?
         super(message);
     }
 

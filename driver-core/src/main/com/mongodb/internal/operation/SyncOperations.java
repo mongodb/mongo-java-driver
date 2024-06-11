@@ -60,6 +60,7 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -82,7 +83,11 @@ public final class SyncOperations<TDocument> {
     public SyncOperations(@Nullable final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
                           final boolean retryWrites, final boolean retryReads, final TimeoutSettings timeoutSettings) {
-        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+        WriteConcern writeConcernToUse = writeConcern;
+        if (timeoutSettings.getTimeoutMS() != null) {
+            writeConcernToUse = assertNotNull(WriteConcernHelper.cloneWithoutTimeout(writeConcern));
+        }
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcernToUse,
                 retryWrites, retryReads);
         this.timeoutSettings = timeoutSettings;
     }
@@ -125,12 +130,12 @@ public final class SyncOperations<TDocument> {
         return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
     }
 
-    @SuppressWarnings("deprecation") // MaxTime
+    // TODO (CSOT) @SuppressWarnings("deprecation") // MaxTime
     public TimeoutSettings createTimeoutSettings(final CreateIndexOptions options) {
         return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
     }
 
-    @SuppressWarnings("deprecation") // MaxTime
+    // TODO (CSOT) @SuppressWarnings("deprecation") // MaxTime
     public TimeoutSettings createTimeoutSettings(final DropIndexOptions options) {
         return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
     }

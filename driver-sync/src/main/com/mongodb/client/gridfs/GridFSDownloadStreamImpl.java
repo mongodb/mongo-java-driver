@@ -16,7 +16,6 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
@@ -36,6 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
+import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static java.lang.String.format;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
@@ -213,10 +213,9 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     }
 
     private void checkTimeout() {
-        if (timeout != null && timeout.hasExpired()) {
-            // TODO (CSOT) - JAVA-5248 Update to MongoOperationTimeoutException
-            throw new MongoOperationTimeoutException("The GridFS download stream has timed out");
-        }
+        Timeout.onExistsAndExpired(timeout, () -> {
+            throw createMongoTimeoutException(TIMEOUT_MESSAGE);
+        });
     }
     private void checkClosed() {
         withInterruptibleLock(closeLock, () -> {

@@ -601,7 +601,7 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
-                             'SERVICE_NAME:foo:bar')
+                             'SERVICE_NAMEbar') // missing =
 
         then:
         thrown(IllegalArgumentException)

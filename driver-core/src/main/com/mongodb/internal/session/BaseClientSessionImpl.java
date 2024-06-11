@@ -20,6 +20,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ReferenceCounted;
@@ -29,6 +30,7 @@ import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -54,6 +56,14 @@ public class BaseClientSessionImpl implements ClientSession {
     private ReferenceCounted transactionContext;
     @Nullable
     private TimeoutContext timeoutContext;
+
+    protected static boolean hasTimeoutMS(@Nullable final TimeoutContext timeoutContext) {
+        return timeoutContext != null && timeoutContext.hasTimeoutMS();
+    }
+
+    protected static boolean hasWTimeoutMS(@Nullable final WriteConcern writeConcern) {
+        return writeConcern != null && writeConcern.getWTimeout(TimeUnit.MILLISECONDS) != null;
+    }
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
@@ -227,5 +237,9 @@ public class BaseClientSessionImpl implements ClientSession {
         return timeoutSettings
                 .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS))
                 .withTimeout(timeoutMS, MILLISECONDS);
+    }
+
+    protected enum TransactionState {
+        NONE, IN, COMMITTED, ABORTED
     }
 }

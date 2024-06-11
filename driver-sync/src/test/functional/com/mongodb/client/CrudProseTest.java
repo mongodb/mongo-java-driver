@@ -82,8 +82,6 @@ public class CrudProseTest extends DatabaseTestCase {
      */
     @Test
     public void testWriteErrorDetailsIsPropagated() {
-        assumeTrue(serverVersionAtLeast(3, 2));
-
         getCollectionHelper().create(getCollectionName(),
                 new CreateCollectionOptions()
                         .validationOptions(new ValidationOptions()

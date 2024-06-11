@@ -37,9 +37,11 @@ public final class TimeoutHelper {
     public static <T> MongoCollection<T> collectionWithTimeout(final MongoCollection<T> collection,
                                                                final String message,
                                                                @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
-            long remainingMs = getRemainingMs(timeout, message);
-            return collection.withTimeout(remainingMs, MILLISECONDS);
+        if (timeout != null) {
+            return timeout.call(MILLISECONDS,
+                    () -> collection.withTimeout(0, MILLISECONDS),
+                    ms -> collection.withTimeout(ms, MILLISECONDS),
+                    () -> TimeoutContext.throwMongoTimeoutException(message));
         }
         return collection;
     }
@@ -52,9 +54,11 @@ public final class TimeoutHelper {
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     final String message,
                                                     @Nullable final Timeout timeout) {
-        if (shouldOverrideTimeout(timeout)) {
-            long remainingMs = getRemainingMs(timeout, message);
-            return database.withTimeout(remainingMs, MILLISECONDS);
+        if (timeout != null) {
+            return timeout.call(MILLISECONDS,
+                    () -> database.withTimeout(0, MILLISECONDS),
+                    ms -> database.withTimeout(ms, MILLISECONDS),
+                    () -> TimeoutContext.throwMongoTimeoutException(message));
         }
         return database;
     }
@@ -64,15 +68,4 @@ public final class TimeoutHelper {
         return databaseWithTimeout(database, DEFAULT_TIMEOUT_MESSAGE, timeout);
     }
 
-    private static long getRemainingMs(final Timeout timeout, final String message) {
-        long remainingMs = timeout.remaining(MILLISECONDS);
-        if (remainingMs <= 0) {
-            throw TimeoutContext.createMongoTimeoutException(message);
-        }
-        return remainingMs;
-    }
-
-    private static boolean shouldOverrideTimeout(@Nullable final Timeout timeout) {
-        return timeout != null && !timeout.isInfinite();
-    }
 }

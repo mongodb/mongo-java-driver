@@ -270,7 +270,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 new BsonArray(iterable.into(new ArrayList<>()).stream().map(BsonString::new).collect(toList())));
     }
 
-    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeListCollections(final BsonDocument operation) {
         MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
@@ -348,7 +347,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
-    @SuppressWarnings("deprecation") //maxTimeMS
     private ListIndexesIterable<BsonDocument> createListIndexesIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
@@ -397,7 +395,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     @NonNull
-    @SuppressWarnings("deprecation") //maxTimeMS
     private FindIterable<BsonDocument> createFindIterable(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
@@ -744,7 +741,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
-    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeAggregate(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
@@ -1210,6 +1206,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "readConcern":
                     optionsBuilder.readConcern(asReadConcern(cur.getValue().asDocument()));
+                    break;
+                case "timeoutMS":
+                    optionsBuilder.timeout(cur.getValue().asInt32().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 case "maxCommitTimeMS":
                     optionsBuilder.maxCommitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
@@ -1688,7 +1687,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
-    @SuppressWarnings("deprecation") //options.maxTime
     private static DropIndexOptions getDropIndexOptions(final BsonDocument arguments) {
         DropIndexOptions options = new DropIndexOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
@@ -1867,7 +1865,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
-    @SuppressWarnings("deprecation") //maxTimeMS
     public OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());

@@ -17,6 +17,8 @@ package com.mongodb.internal.time;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.function.CheckedFunction;
+import com.mongodb.internal.function.CheckedSupplier;
 import com.mongodb.lang.Nullable;
 
 import java.time.Clock;
@@ -24,6 +26,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -74,11 +77,34 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
         return at(null);
     }
 
+    @Override
+    public Timeout shortenBy(final long amount, final TimeUnit timeUnit) {
+        if (isInfinite()) {
+            return this; // shortening (lengthening) an infinite timeout does nothing
+        }
+        long durationNanos = NANOSECONDS.convert(amount, timeUnit);
+        return TimePoint.at(assertNotNull(nanos) - durationNanos);
+    }
+
+    @Override
+    public <T, E extends Exception> T checkedCall(final TimeUnit timeUnit,
+            final CheckedSupplier<T, E> onInfinite, final CheckedFunction<Long, T, E> onHasRemaining,
+            final CheckedSupplier<T, E> onExpired) throws E {
+        if (this.isInfinite()) {
+            return onInfinite.get();
+        }
+        long remaining = remaining(timeUnit);
+        if (remaining <= 0) {
+            return onExpired.get();
+        } else {
+            return onHasRemaining.apply(remaining);
+        }
+    }
+
     /**
      * @return true if this timepoint is infinite.
      */
-    @Override
-    public boolean isInfinite() {
+    private boolean isInfinite() {
         return nanos == null;
     }
 
@@ -92,7 +118,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     /**
      * The number of whole time units that remain until this TimePoint
-     * {@link #hasExpired()}. This should not be used to check for expiry,
+     * has expired. This should not be used to check for expiry,
      * but can be used to supply a remaining value, in the finest-grained
      * TimeUnit available, to some method that may time out.
      * This method must not be used with infinite TimePoints.
@@ -102,14 +128,13 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
      * @throws AssertionError if the timeout is infinite. Always check if the
      * timeout {@link #isInfinite()} before calling.
      */
-    @Override
-    public long remaining(final TimeUnit unit) {
-        if (nanos == null) {
+    private long remaining(final TimeUnit unit) {
+        if (isInfinite()) {
             throw new AssertionError("Infinite TimePoints have infinite remaining time");
         }
-        long remaining = nanos - currentNanos();
+        long remaining = assertNotNull(nanos) - currentNanos();
         remaining = unit.convert(remaining, NANOSECONDS);
-        return remaining < 0 ? 0 : remaining;
+        return remaining <= 0 ? 0 : remaining;
     }
 
     /**
@@ -121,22 +146,10 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
      * @see #durationSince(TimePoint)
      */
     public Duration elapsed() {
-        if (nanos == null) {
+        if (isInfinite()) {
             throw new AssertionError("No time can elapse since an infinite TimePoint");
         }
-        return Duration.ofNanos(currentNanos() - nanos);
-    }
-
-    /**
-     * @return true if this timepoint has passed / elapsed. Always false
-     * if this timepoint is infinite.
-     */
-    @Override
-    public boolean hasExpired() {
-        if (isInfinite()) {
-            return false;
-        }
-        return !elapsed().isNegative() && !elapsed().isZero();
+        return Duration.ofNanos(currentNanos() - assertNotNull(nanos));
     }
 
     /**
@@ -147,13 +160,13 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
      * @see #elapsed()
      */
     Duration durationSince(final TimePoint t) {
-        if (nanos == null) {
+        if (this.isInfinite()) {
             throw new AssertionError("this timepoint is infinite, with no duration since");
         }
-        if (t.nanos == null) {
+        if (t.isInfinite()) {
             throw new AssertionError("the other timepoint is infinite, with no duration until");
         }
-        return Duration.ofNanos(nanos - t.nanos);
+        return Duration.ofNanos(nanos - assertNotNull(t.nanos));
     }
 
     /**
@@ -176,11 +189,11 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
      * @param duration A duration that may also be {@linkplain Duration#isNegative() negative}.
      */
     TimePoint add(final Duration duration) {
-        if (nanos == null) {
+        if (isInfinite()) {
             throw new AssertionError("No time can be added to an infinite TimePoint");
         }
         long durationNanos = duration.toNanos();
-        return TimePoint.at(nanos + durationNanos);
+        return TimePoint.at(assertNotNull(nanos) + durationNanos);
     }
 
     /**
@@ -192,12 +205,12 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     public int compareTo(final TimePoint t) {
         if (Objects.equals(nanos, t.nanos)) {
             return 0;
-        } else if (nanos == null) {
+        } else if (this.isInfinite()) {
             return 1;
-        } else if (t.nanos == null) {
+        } else if (t.isInfinite()) {
             return -1;
         }
-        return Long.signum(nanos - t.nanos);
+        return Long.signum(nanos - assertNotNull(t.nanos));
     }
 
     @Override
@@ -219,9 +232,9 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     @Override
     public String toString() {
-        long remainingMs = nanos == null
-                ? -1
-                : TimeUnit.MILLISECONDS.convert(currentNanos() - nanos, NANOSECONDS);
+        String remainingMs = isInfinite()
+                ? "infinite"
+                : "" + TimeUnit.MILLISECONDS.convert(currentNanos() - assertNotNull(nanos), NANOSECONDS);
         return "TimePoint{"
                 + "nanos=" + nanos
                 + "remainingMs=" + remainingMs

@@ -16,8 +16,8 @@
 
 package com.mongodb.reactivestreams.client.internal.gridfs;
 
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoGridFSException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -57,6 +57,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Void> {
 
+    private static final String TIMEOUT_ERROR_MESSAGE = "Saving chunks exceeded the timeout limit.";
     private static final Document PROJECTION = new Document("_id", 1);
     private static final Document FILES_INDEX = new Document("filename", 1).append("uploadDate", 1);
     private static final Document CHUNKS_INDEX = new Document("files_id", 1).append("n", 1);
@@ -107,7 +108,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     public void subscribe(final Subscriber<? super Void> s) {
         Mono.defer(() -> {
             AtomicBoolean terminated = new AtomicBoolean(false);
-            Timeout timeout = TimeoutContext.calculateTimeout(timeoutMs);
+            Timeout timeout = TimeoutContext.startTimeout(timeoutMs);
             return createCheckAndCreateIndexesMono(timeout)
                     .then(createSaveChunksMono(terminated, timeout))
                     .flatMap(lengthInBytes -> createSaveFileDataMono(terminated, lengthInBytes, timeout))
@@ -251,8 +252,13 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                                 .append("n", chunkIndex.getAndIncrement())
                                 .append("data", data);
 
-                        return clientSession == null ? collectionWithTimeout(chunksCollection, timeout).insertOne(chunkDocument)
-                                : collectionWithTimeout(chunksCollection, timeout).insertOne(clientSession, chunkDocument);
+                        if (clientSession == null) {
+                            return collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).insertOne(chunkDocument);
+                        } else {
+                            return collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).insertOne(clientSession,
+                                    chunkDocument);
+                        }
+
                     })
                     .subscribe(null, sink::error, () -> sink.success(lengthInBytes.get()));
         });
@@ -265,12 +271,15 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
      * @return Mono that emits a {@link MongoOperationTimeoutException}.
      */
     private static Mono<MongoOperationTimeoutException> createMonoTimer(final @Nullable Timeout timeout) {
-        if (timeout != null && !timeout.isInfinite()) {
-            return Mono.delay(ofMillis(timeout.remaining(MILLISECONDS)))
-                    .then(Mono.error(TimeoutContext.createMongoTimeoutException("GridFS timeout out waiting for data"
-                            + " from provided source Publisher")));
-        }
-        return Mono.never();
+        return Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
+                () -> Mono.never(),
+                (ms) -> Mono.delay(ofMillis(ms)).then(createTimeoutMonoError()),
+                () -> createTimeoutMonoError());
+    }
+
+    private static Mono<MongoOperationTimeoutException> createTimeoutMonoError() {
+        return Mono.error(TimeoutContext.createMongoTimeoutException(
+                "GridFS timed out waiting for data from provided source Publisher"));
     }
 
     private Mono<InsertOneResult> createSaveFileDataMono(final AtomicBoolean terminated,

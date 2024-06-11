@@ -17,7 +17,6 @@
 
 package com.mongodb.assertions;
 
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
@@ -25,7 +24,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>
+ * <p>Design by contract assertions.</p>
  * All {@code assert...} methods throw {@link AssertionError} and should be used to check conditions which may be violated if and only if
  * the driver code is incorrect. The intended usage of this methods is the same as of the
  * <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/language/assert.html">Java {@code assert} statement</a>. The reason
@@ -81,25 +80,6 @@ public final class Assertions {
     }
 
     /**
-     * Throw IllegalArgumentException if the value is null.
-     *
-     * @param name  the parameter name
-     * @param value the value that should not be null
-     * @param callback  the callback that also is passed the exception if the value is null
-     * @param <T>   the value type
-     * @return the value
-     * @throws java.lang.IllegalArgumentException if value is null
-     */
-    public static <T> T notNull(final String name, final T value, final SingleResultCallback<?> callback) {
-        if (value == null) {
-            IllegalArgumentException exception = new IllegalArgumentException(name + " can not be null");
-            callback.completeExceptionally(exception);
-            throw exception;
-        }
-        return value;
-    }
-
-    /**
      * Throw IllegalStateException if the condition if false.
      *
      * @param name      the name of the state that is being checked
@@ -109,22 +89,6 @@ public final class Assertions {
     public static void isTrue(final String name, final boolean condition) {
         if (!condition) {
             throw new IllegalStateException("state should be: " + name);
-        }
-    }
-
-    /**
-     * Throw IllegalStateException if the condition if false.
-     *
-     * @param name      the name of the state that is being checked
-     * @param condition the condition about the parameter to check
-     * @param callback  the callback that also is passed the exception if the condition is not true
-     * @throws java.lang.IllegalStateException if the condition is false
-     */
-    public static void isTrue(final String name, final boolean condition, final SingleResultCallback<?> callback) {
-        if (!condition) {
-            IllegalStateException exception = new IllegalStateException("state should be: " + name);
-            callback.completeExceptionally(exception);
-            throw exception;
         }
     }
 

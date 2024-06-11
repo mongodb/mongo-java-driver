@@ -25,7 +25,6 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -84,8 +83,10 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                                                                        final OperationContext operationContext) {
         notNull("internalConnection", internalConnection);
         notNull("description", description);
-
-        authenticate(internalConnection, description.getConnectionDescription(), operationContext);
+        final ConnectionDescription connectionDescription = description.getConnectionDescription();
+        if (Authenticator.shouldAuthenticate(authenticator, connectionDescription)) {
+            authenticator.authenticate(internalConnection, connectionDescription, operationContext);
+        }
         return completeConnectionDescriptionInitialization(internalConnection, description, operationContext);
     }
 
@@ -109,11 +110,12 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                                      final InternalConnectionInitializationDescription description,
                                      final OperationContext operationContext,
                                      final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-        if (authenticator == null || description.getConnectionDescription().getServerType()
-                == ServerType.REPLICA_SET_ARBITER) {
+        ConnectionDescription connectionDescription = description.getConnectionDescription();
+
+        if (!Authenticator.shouldAuthenticate(authenticator, connectionDescription)) {
             completeConnectionDescriptionInitializationAsync(internalConnection, description, operationContext, callback);
         } else {
-            authenticator.authenticateAsync(internalConnection, description.getConnectionDescription(), operationContext,
+            authenticator.authenticateAsync(internalConnection, connectionDescription, operationContext,
                     (result1, t1) -> {
                         if (t1 != null) {
                             callback.onResult(null, t1);
@@ -206,13 +208,6 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                 new BsonDocument("getlasterror", new BsonInt32(1)), clusterConnectionMode, serverApi,
                 internalConnection, operationContext),
                 description);
-    }
-
-    private void authenticate(final InternalConnection internalConnection, final ConnectionDescription connectionDescription,
-            final OperationContext operationContext) {
-        if (authenticator != null && connectionDescription.getServerType() != ServerType.REPLICA_SET_ARBITER) {
-            authenticator.authenticate(internalConnection, connectionDescription, operationContext);
-        }
     }
 
     private void setSpeculativeAuthenticateResponse(final BsonDocument helloResult) {

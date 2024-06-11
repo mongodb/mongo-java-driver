@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 /**
@@ -23,7 +24,7 @@ import com.mongodb.annotations.Sealed;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface GaussSearchScoreExpression extends SearchScoreExpression {
     /**
      * Creates a new {@link GaussSearchScoreExpression} which does not decay, i.e., its output stays 1, if the value of the

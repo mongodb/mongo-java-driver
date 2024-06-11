@@ -24,7 +24,6 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 
@@ -42,6 +41,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
@@ -164,7 +164,7 @@ public class SocketStream implements Stream {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
             if (operationContext.getTimeoutContext().hasExpired()) {
-                throw TimeoutContext.createMongoTimeoutException("Timeout occurred during socket write.");
+                throwMongoTimeoutException("Timeout occurred during socket write.");
             }
         }
     }
@@ -178,9 +178,7 @@ public class SocketStream implements Stream {
                 byte[] bytes = buffer.array();
                 while (totalBytesRead < buffer.limit()) {
                     int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
-                    if (readTimeoutMS > 0) {
-                        socket.setSoTimeout(readTimeoutMS);
-                    }
+                    socket.setSoTimeout(readTimeoutMS);
                     int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
                     if (bytesRead == -1) {
                         throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());

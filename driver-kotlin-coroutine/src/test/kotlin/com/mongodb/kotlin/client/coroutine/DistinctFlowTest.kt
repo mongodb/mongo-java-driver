@@ -39,7 +39,6 @@ class DistinctFlowTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: DistinctPublisher<Document> = mock()
         val flow = DistinctFlow(wrapped)

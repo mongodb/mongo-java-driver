@@ -18,9 +18,9 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.SslHelper;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.connection.SslHelper;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +40,10 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 class KeyManagementService {
     private static final Logger LOGGER = Loggers.getLogger("client");
@@ -86,10 +87,7 @@ class KeyManagementService {
         }
 
         try {
-            if (operationTimeout != null && !operationTimeout.isInfinite()) {
-                return new OperationTimeoutAwareInputStream(socket, operationTimeout);
-            }
-            return socket.getInputStream();
+            return OperationTimeoutAwareInputStream.wrapIfNeeded(operationTimeout, socket);
         } catch (IOException e) {
             closeSocket(socket);
             throw e;
@@ -113,46 +111,52 @@ class KeyManagementService {
         }
     }
 
-    private static class OperationTimeoutAwareInputStream extends InputStream {
+    private static final class OperationTimeoutAwareInputStream extends InputStream {
         private final Socket socket;
         private final Timeout operationTimeout;
         private final InputStream wrapped;
 
         /**
-         *
          * @param socket - socket to set timeout on.
          * @param operationTimeout - non-infinite timeout.
          */
-        OperationTimeoutAwareInputStream(final Socket socket, final Timeout operationTimeout) throws IOException {
-            assertFalse(operationTimeout.isInfinite());
+        private OperationTimeoutAwareInputStream(final Socket socket, final Timeout operationTimeout) throws IOException {
             this.socket = socket;
             this.operationTimeout = operationTimeout;
             this.wrapped = socket.getInputStream();
         }
 
-        private void setSoTimeout(final Socket socket, final Timeout operationTimeout) throws SocketException {
-            int remainingMs = (int) operationTimeout.remaining(MILLISECONDS);
-            if (operationTimeout.hasExpired()) {
-                throw TimeoutContext.createMongoTimeoutException("Timeout has expired while reading from KMS server");
-            }
-            socket.setSoTimeout(remainingMs);
+        public static InputStream wrapIfNeeded(@Nullable final Timeout operationTimeout, final SSLSocket socket) throws IOException {
+            return Timeout.nullAsInfinite(operationTimeout).checkedCall(NANOSECONDS,
+                    () -> socket.getInputStream(),
+                    (ns) -> new OperationTimeoutAwareInputStream(socket, assertNotNull(operationTimeout)),
+                    () -> new OperationTimeoutAwareInputStream(socket, assertNotNull(operationTimeout)));
+        }
+
+        private void setSocketSoTimeoutToOperationTimeout() throws SocketException {
+            operationTimeout.checkedRun(MILLISECONDS,
+                    () -> {
+                        throw new AssertionError("operationTimeout cannot be infinite");
+                    },
+                    (ms) -> socket.setSoTimeout(Math.toIntExact(ms)),
+                    () -> TimeoutContext.throwMongoTimeoutException("Timeout has expired while reading from KMS server"));
         }
 
         @Override
         public int read() throws IOException {
-            setSoTimeout(socket, operationTimeout);
+            setSocketSoTimeoutToOperationTimeout();
             return wrapped.read();
         }
 
         @Override
         public int read(@NotNull final byte[] b) throws IOException {
-            setSoTimeout(socket, operationTimeout);
+            setSocketSoTimeoutToOperationTimeout();
             return wrapped.read(b);
         }
 
         @Override
         public int read(@NotNull final byte[] b, final int off, final int len) throws IOException {
-            setSoTimeout(socket, operationTimeout);
+            setSocketSoTimeoutToOperationTimeout();
             return wrapped.read(b, off, len);
         }
 
@@ -163,7 +167,7 @@ class KeyManagementService {
 
         @Override
         public long skip(final long n) throws IOException {
-            setSoTimeout(socket, operationTimeout);
+            setSocketSoTimeoutToOperationTimeout();
             return wrapped.skip(n);
         }
 

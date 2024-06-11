@@ -30,8 +30,6 @@ internal class SyncListDatabasesIterable<T : Any>(val wrapped: ListDatabasesIter
         wrapped.timeoutMode(timeoutMode)
     }
 
-    @Suppress("DEPRECATION")
-    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListDatabasesIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

@@ -48,7 +48,9 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             try {
-                executeCommand(binding, namespace.getDatabaseName(), buildCommand(), connection, writeConcernErrorTransformer());
+                executeCommand(binding, namespace.getDatabaseName(), buildCommand(),
+                        connection,
+                        writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
             } catch (MongoCommandException mongoCommandException) {
                 swallowOrThrow(mongoCommandException);
             }
@@ -61,7 +63,7 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
         withAsyncSourceAndConnection(binding::getWriteConnectionSource, false, callback,
                 (connectionSource, connection, cb) ->
                         executeCommandAsync(binding, namespace.getDatabaseName(), buildCommand(), connection,
-                                writeConcernErrorTransformerAsync(), (result, commandExecutionError) -> {
+                                writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
                                         callback.onResult(result, null);

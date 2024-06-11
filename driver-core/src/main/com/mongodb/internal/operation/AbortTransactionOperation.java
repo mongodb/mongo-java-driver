@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -49,7 +50,7 @@ public class AbortTransactionOperation extends TransactionOperation {
     @Override
     CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            operationContext.getTimeoutContext().resetToDefaultMaxTimeSupplier();
+            operationContext.getTimeoutContext().resetToDefaultMaxTime();
             BsonDocument command = AbortTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
             putIfNotNull(command, "recoveryToken", recoveryToken);
@@ -58,7 +59,7 @@ public class AbortTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
         return cmd -> cmd;
     }
 }

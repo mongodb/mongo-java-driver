@@ -15,6 +15,8 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListIndexesPublisher
 import java.util.concurrent.TimeUnit
@@ -50,27 +52,17 @@ public class ListIndexesFlow<T : Any>(private val wrapped: ListIndexesPublisher<
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListIndexesFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Sets the maximum execution time on the server for this operation.
      *
-     * **NOTE**: The maximum execution time option is deprecated. Prefer using the operation execution timeout
-     * configuration options available at the following levels:
-     * - [com.mongodb.MongoClientSettings.Builder.timeout]
-     * - [MongoDatabase.withTimeout]
-     * - [MongoCollection.withTimeout]
-     * - [ClientSession]
-     *
-     * When executing an operation, any explicitly set timeout at these levels takes precedence, rendering this maximum
-     * execution time irrelevant. If no timeout is specified at these levels, the maximum execution time will be used.
-     *
      * @param maxTime the max time
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return this
+     * @see [Max Time](https://www.mongodb.com/docs/manual/reference/operator/meta/maxTimeMS/)
      */
-    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.WARNING)
-    @Suppress("DEPRECATION")
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListIndexesFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

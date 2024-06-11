@@ -28,6 +28,7 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.reactivestreams.client.internal.BatchCursor;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -36,6 +37,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class SyncMongoClient implements MongoClient {
+
+    private static boolean waitForBatchCursorCreation;
 
     /**
      * Unfortunately this is the only way to wait for a query to be initiated, since Reactive Streams is asynchronous
@@ -73,6 +76,27 @@ public class SyncMongoClient implements MongoClient {
      */
     public static void enableSleepAfterSessionClose(final long sleepMS) {
         SyncMongoCluster.enableSleepAfterSessionClose(sleepMS);
+    }
+
+    /**
+     * Enables behavior for waiting until a reactive {@link BatchCursor} is created.
+     * <p>
+     * When enabled, {@link SyncMongoCursor} allows intercepting the result of the cursor creation process.
+     * If the creation fails, the resulting exception will be propagated; if successful, the
+     * process will proceed to issue getMore commands.
+     * <p>
+     * NOTE:  Do not enable when multiple cursors are being iterated concurrently.
+     */
+    public static void enableWaitForBatchCursorCreation() {
+        waitForBatchCursorCreation = true;
+    }
+
+    public static boolean isWaitForBatchCursorCreationEnabled() {
+        return waitForBatchCursorCreation;
+    }
+
+    public static void disableWaitForBatchCursorCreation() {
+        waitForBatchCursorCreation = false;
     }
 
     public static void disableSleep() {

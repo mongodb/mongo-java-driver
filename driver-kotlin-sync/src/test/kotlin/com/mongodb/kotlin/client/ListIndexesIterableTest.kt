@@ -38,7 +38,6 @@ class ListIndexesIterableTest {
     }
 
     @Test
-    @Suppress("DEPRECATION") // maxTime
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: JListIndexesIterable<Document> = mock()
         val iterable = ListIndexesIterable(wrapped)

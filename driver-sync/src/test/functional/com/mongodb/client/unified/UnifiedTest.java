@@ -109,6 +109,7 @@ public abstract class UnifiedTest {
     private final UnifiedClientEncryptionHelper clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
     private final List<FailPoint> failPoints = new ArrayList<>();
     private final UnifiedTestContext rootContext = new UnifiedTestContext();
+    private boolean ignoreExtraEvents;
     private BsonDocument startingClusterTime;
 
     private class UnifiedTestContext {
@@ -149,6 +150,10 @@ public abstract class UnifiedTest {
         this.definition = definition;
         this.rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         crudHelper = new UnifiedCrudHelper(entities, definition.getString("description").getValue());
+    }
+
+    protected void ignoreExtraEvents() {
+        ignoreExtraEvents = true;
     }
 
     public Entities getEntities() {
@@ -210,7 +215,9 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.14")
                         || schemaVersion.equals("1.15")
                         || schemaVersion.equals("1.16")
-                        || schemaVersion.equals("1.17"));
+                        || schemaVersion.equals("1.17")
+                        || schemaVersion.equals("1.18")
+                        || schemaVersion.equals("1.19"));
         if (runOnRequirements != null) {
             assumeTrue("Run-on requirements not met",
                     runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
@@ -277,7 +284,8 @@ public abstract class UnifiedTest {
         for (BsonValue cur : definition.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
             String client = curClientEvents.getString("client").getValue();
-            boolean ignoreExtraEvents = curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.FALSE).getValue();
+            boolean ignoreExtraEvents =
+                    curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.valueOf(this.ignoreExtraEvents)).getValue();
             String eventType = curClientEvents.getString("eventType", new BsonString("command")).getValue();
             BsonArray expectedEvents = curClientEvents.getArray("events");
             if (eventType.equals("command")) {

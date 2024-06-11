@@ -31,6 +31,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.inject.EmptyProvider;
 import com.mongodb.internal.inject.OptionalProvider;
 import com.mongodb.internal.inject.SameObjectProvider;
+import com.mongodb.internal.time.TimePointTest;
 import com.mongodb.internal.time.Timeout;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,6 +64,7 @@ import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.Long.MAX_VALUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -529,11 +531,14 @@ public class DefaultConnectionPoolTest {
             }
         };
         Collection<Future<?>> tasks = new ArrayList<>();
-        Timeout timeout = Timeout.expiresIn(durationNanos, NANOSECONDS);
+        Timeout timeout = Timeout.expiresIn(durationNanos, NANOSECONDS, ZERO_DURATION_MEANS_EXPIRED);
         for (int i = 0; i < concurrentUsersCount; i++) {
             if ((checkoutSync && checkoutAsync) ? i % 2 == 0 : checkoutSync) {//check out synchronously and check in
                 tasks.add(executor.submit(() -> {
-                    while (!(timeout.hasExpired() || Thread.currentThread().isInterrupted())) {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        if (timeout.call(NANOSECONDS, () -> false, (ns) -> false, () -> true)) {
+                            break;
+                        }
                         spontaneouslyInvalidateReady.run();
                         InternalConnection conn = null;
                         try {
@@ -549,7 +554,10 @@ public class DefaultConnectionPoolTest {
                 }));
             } else if (checkoutAsync) {//check out asynchronously and check in
                 tasks.add(executor.submit(() -> {
-                    while (!(timeout.hasExpired() || Thread.currentThread().isInterrupted())) {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        if (TimePointTest.hasExpired(timeout)) {
+                            break;
+                        }
                         spontaneouslyInvalidateReady.run();
                         CompletableFuture<InternalConnection> futureCheckOutCheckIn = new CompletableFuture<>();
                         pool.getAsync(createOperationContext(timeoutSettings), (conn, t) -> {

@@ -78,7 +78,6 @@ public class TimeoutSettings {
                 settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS));
     }
 
-    @SuppressWarnings("deprecation")
     public static TimeoutSettings createHeartbeatSettings(final MongoClientSettings settings) {
         return new TimeoutSettings(
                 settings.getClusterSettings().getServerSelectionTimeout(TimeUnit.MILLISECONDS),

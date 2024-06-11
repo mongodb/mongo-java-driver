@@ -121,13 +121,13 @@ public class CommitTransactionOperation extends TransactionOperation {
         CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
             BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
                     .create(operationContext, serverDescription, connectionDescription);
-            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            timeoutContext.setMaxTimeSupplier(timeoutContext::getMaxCommitTimeMS);
+            operationContext.getTimeoutContext().setMaxTimeOverrideToMaxCommitTime();
             return command;
         };
         if (alreadyCommitted) {
             return (operationContext, serverDescription, connectionDescription) ->
-                    getRetryCommandModifier().apply(creator.create(operationContext, serverDescription, connectionDescription));
+                    getRetryCommandModifier(operationContext.getTimeoutContext())
+                            .apply(creator.create(operationContext, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
                 return (operationContext, serverDescription, connectionDescription) ->
                         creator.create(operationContext, serverDescription, connectionDescription)
@@ -137,11 +137,10 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    @SuppressWarnings("deprecation") //wTimeout
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
         return command -> {
             WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null) {
+            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
                 retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
             }
             command.put("writeConcern", retryWriteConcern.asDocument());

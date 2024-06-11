@@ -27,8 +27,6 @@ data class SyncDistinctIterable<T : Any>(val wrapped: DistinctFlow<T>) :
     JDistinctIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncDistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
     override fun filter(filter: Bson?): SyncDistinctIterable<T> = apply { wrapped.filter(filter) }
-    @Suppress("DEPRECATION")
-    @Deprecated("Prefer using the operation execution timeout configuration option", level = DeprecationLevel.HIDDEN)
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncDistinctIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }

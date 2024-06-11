@@ -17,6 +17,7 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.assertions.Assertions;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import static com.mongodb.client.model.mql.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
  * @param <R> the type of the value produced.
  * @since 4.9.0
  */
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public final class BranchesIntermediary<T extends MqlValue, R extends MqlValue> extends BranchesTerminal<T, R> {
     BranchesIntermediary(final List<Function<T, SwitchCase<R>>> branches) {
         super(branches, null);

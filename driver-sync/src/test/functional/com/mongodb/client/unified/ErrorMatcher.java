@@ -20,11 +20,11 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
-import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
@@ -71,11 +71,9 @@ final class ErrorMatcher {
         }
 
         if (expectedError.containsKey("isTimeoutError")) {
-            // TODO (CSOT) JAVA-5248 Should only be MongoOperationTimeoutException.
             assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
                     expectedError.getBoolean("isTimeoutError").getValue(),
-                    e instanceof MongoOperationTimeoutException || e instanceof MongoExecutionTimeoutException
-                    || e instanceof MongoSocketReadTimeoutException
+                    e instanceof MongoOperationTimeoutException
             );
         }
 
@@ -88,12 +86,17 @@ final class ErrorMatcher {
             valueMatcher.assertValuesMatch(expectedError.getDocument("errorResponse"), ((MongoCommandException) e).getResponse());
         }
         if (expectedError.containsKey("errorCode")) {
-            assertTrue(context.getMessage("Exception must be of type MongoCommandException or MongoQueryException when checking"
-                            + " for error codes"),
-                    e instanceof MongoCommandException || e instanceof MongoWriteException);
-            int errorCode = (e instanceof MongoCommandException)
-                    ? ((MongoCommandException) e).getErrorCode()
-                    : ((MongoWriteException) e).getCode();
+            Exception errorCodeException = e;
+            if (e instanceof MongoSecurityException && e.getCause() instanceof MongoCommandException) {
+                errorCodeException = (Exception) e.getCause();
+            }
+            assertTrue(context.getMessage("Exception must be of type MongoCommandException or MongoWriteException when checking"
+                            + " for error codes, but was " + e.getClass().getSimpleName()),
+                    errorCodeException instanceof MongoCommandException
+                            || errorCodeException instanceof MongoWriteException);
+            int errorCode = (errorCodeException instanceof MongoCommandException)
+                    ? ((MongoCommandException) errorCodeException).getErrorCode()
+                    : ((MongoWriteException) errorCodeException).getCode();
 
             assertEquals(context.getMessage("Error codes must match"), expectedError.getNumber("errorCode").intValue(),
                     errorCode);

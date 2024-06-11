@@ -228,7 +228,6 @@ final class UnifiedGridFSHelper extends UnifiedHelper{
         return bucket;
     }
 
-    @SuppressWarnings("deprecation") //MaxTimeMS
     private GridFSFindIterable createGridFSFindIterable(final BsonDocument operation) {
         GridFSBucket bucket = getGridFsBucket(operation);
 

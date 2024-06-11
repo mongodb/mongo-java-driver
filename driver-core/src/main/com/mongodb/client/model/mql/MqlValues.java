@@ -17,6 +17,7 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.assertions.Assertions;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -46,7 +47,7 @@ import static com.mongodb.client.model.mql.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
  *
  * @since 4.9.0
  */
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public final class MqlValues {
 
     private MqlValues() {}

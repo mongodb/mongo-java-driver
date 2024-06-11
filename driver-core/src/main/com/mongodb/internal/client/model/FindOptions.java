@@ -17,6 +17,8 @@
 package com.mongodb.internal.client.model;
 
 import com.mongodb.CursorType;
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
@@ -149,9 +151,7 @@ public final class FindOptions {
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     * @deprecated This option is deprecated in favor of global operation timeout.
      */
-    @Deprecated
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
@@ -164,9 +164,7 @@ public final class FindOptions {
      * @param timeUnit the time unit, which may not be null
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     * @deprecated This option is deprecated in favor of global operation timeout.
      */
-    @Deprecated
     public FindOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         isTrueArgument("maxTime > = 0", maxTime >= 0);
@@ -251,6 +249,7 @@ public final class FindOptions {
      * @return this
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public FindOptions timeoutMode(final TimeoutMode timeoutMode) {
         this.timeoutMode = timeoutMode;
         return this;
@@ -260,6 +259,7 @@ public final class FindOptions {
      * @see #timeoutMode(TimeoutMode)
      * @return timeout mode
      */
+    @Alpha(Reason.CLIENT)
     @Nullable
     public TimeoutMode getTimeoutMode() {
         return timeoutMode;

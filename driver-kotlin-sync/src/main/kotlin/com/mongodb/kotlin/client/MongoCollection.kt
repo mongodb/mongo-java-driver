@@ -19,6 +19,8 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.MongoCollection as JMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
@@ -103,6 +105,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return the optional timeout duration
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
     /**
@@ -179,6 +182,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @see [MongoCollection.timeout]
      * @since CSOT
      */
+    @Alpha(Reason.CLIENT)
     public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCollection<T> =
         MongoCollection(wrapped.withTimeout(timeout, timeUnit))
 
@@ -1443,7 +1447,6 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1452,7 +1455,6 @@ public fun CreateIndexOptions.maxTime(maxTime: Long): CreateIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
  * maxTime extension function
@@ -1460,7 +1462,6 @@ public fun CountOptions.maxTime(maxTime: Long): CountOptions = this.apply { maxT
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun DropIndexOptions.maxTime(maxTime: Long): DropIndexOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1469,7 +1470,6 @@ public fun DropIndexOptions.maxTime(maxTime: Long): DropIndexOptions =
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocumentCountOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1478,7 +1478,6 @@ public fun EstimatedDocumentCountOptions.maxTime(maxTime: Long): EstimatedDocume
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1487,7 +1486,6 @@ public fun FindOneAndDeleteOptions.maxTime(maxTime: Long): FindOneAndDeleteOptio
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
@@ -1496,7 +1494,6 @@ public fun FindOneAndReplaceOptions.maxTime(maxTime: Long): FindOneAndReplaceOpt
  * @param maxTime time in milliseconds
  * @return the options
  */
-@Suppress("DEPRECATION")
 public fun FindOneAndUpdateOptions.maxTime(maxTime: Long): FindOneAndUpdateOptions =
     this.apply { maxTime(maxTime, TimeUnit.MILLISECONDS) }
 /**
