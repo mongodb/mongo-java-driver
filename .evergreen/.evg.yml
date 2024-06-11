@@ -895,7 +895,7 @@ tasks:
               ${PREPARE_SHELL}
               cd src
               git add .
-              git commit -m "add files"
+              git commit --allow-empty -m "add files"
               # uncompressed tar used to allow appending .git folder
               export AZUREOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
               git archive -o $AZUREOIDC_DRIVERS_TAR_FILE HEAD
@@ -913,7 +913,7 @@ tasks:
               ${PREPARE_SHELL}
               cd src
               git add .
-              git commit -m "add files"
+              git commit --allow-empty -m "add files"
               # uncompressed tar used to allow appending .git folder
               export GCPOIDC_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
               git archive -o $GCPOIDC_DRIVERS_TAR_FILE HEAD
