@@ -37,6 +37,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
@@ -54,8 +55,14 @@ final class CommandOperationHelper {
                 ConnectionDescription connectionDescription);
     }
 
+    static BinaryOperator<Throwable> onRetryableReadAttemptFailure(final OperationContext operationContext) {
+        return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
+            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            return chooseRetryableReadException(previouslyChosenException, mostRecentAttemptException);
+        };
+    }
 
-    static Throwable chooseRetryableReadException(
+    private static Throwable chooseRetryableReadException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
         assertFalse(mostRecentAttemptException instanceof ResourceSupplierInternalException);
         if (previouslyChosenException == null
@@ -67,7 +74,14 @@ final class CommandOperationHelper {
         }
     }
 
-    static Throwable chooseRetryableWriteException(
+    static BinaryOperator<Throwable> onRetryableWriteAttemptFailure(final OperationContext operationContext) {
+        return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
+            operationContext.getServerDeprioritization().onAttemptFailure(mostRecentAttemptException);
+            return chooseRetryableWriteException(previouslyChosenException, mostRecentAttemptException);
+        };
+    }
+
+    private static Throwable chooseRetryableWriteException(
             @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
         if (previouslyChosenException == null) {
             if (mostRecentAttemptException instanceof ResourceSupplierInternalException) {

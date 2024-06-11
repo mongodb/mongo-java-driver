@@ -51,6 +51,9 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
+/**
+ * Add new tests to {@link BaseClusterTest}.
+ */
 class BaseClusterSpecification extends Specification {
 
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')
@@ -71,10 +74,11 @@ class BaseClusterSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress,
-                                        Timeout serverSelectionTimeout,
-                                        TimeoutContext timeoutContext) {
-                throw new UnsupportedOperationException()
+            Cluster.ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout,  final TimeoutContext timeoutContext) {
+                Cluster.ServersSnapshot result = {
+                    serverAddress -> throw new UnsupportedOperationException()
+                }
+                result
             }
 
             @Override

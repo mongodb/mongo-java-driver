@@ -339,7 +339,9 @@ configure(javaCodeCheckedProjects) {
     }
 
     spotbugs {
-        excludeFilter = new File(configDir, 'spotbugs/exclude.xml')
+        if (!project.buildingWith('ssdlcReport.enabled')) {
+            excludeFilter = new File(configDir, 'spotbugs/exclude.xml')
+        }
     }
 
     codenarc {
@@ -351,6 +353,7 @@ configure(javaCodeCheckedProjects) {
         reports {
             xml.enabled = project.buildingWith('xmlReports.enabled')
             html.enabled = !project.buildingWith('xmlReports.enabled')
+            sarif.enabled = project.buildingWith('ssdlcReport.enabled')
         }
     }
 

@@ -77,25 +77,24 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, STANDALONE)
 
         then:
-        cluster.getServer(firstServer,
-                OPERATION_CONTEXT
+        cluster.getServersSnapshot(OPERATION_CONTEXT
                         .getTimeoutContext()
                         .computeServerSelectionTimeout(),
-                OPERATION_CONTEXT.getTimeoutContext()) == factory.getServer(firstServer)
+                OPERATION_CONTEXT.getTimeoutContext()).getServer(firstServer) == factory.getServer(firstServer)
 
         cleanup:
         cluster?.close()
     }
 
 
-    def 'should not get server when closed'() {
+    def 'should not get servers snapshot when closed'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(), factory)
         cluster.close()
 
         when:
-        cluster.getServer(firstServer, OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout(),
+        cluster.getServersSnapshot(OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout(),
                 OPERATION_CONTEXT.getTimeoutContext())
 
         then:

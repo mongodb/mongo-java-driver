@@ -662,17 +662,36 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext) {
         notNull("stream is open", stream);
-
         if (isClosed()) {
             throw new MongoSocketClosedException("Cannot write to a closed stream", getServerAddress());
         }
-
         try {
             stream.write(byteBuffers, operationContext);
         } catch (Exception e) {
             close();
-            throw translateWriteException(e, operationContext);
+            throwTranslatedWriteException(e, operationContext);
         }
+    }
+
+    @Override
+    public void sendMessageAsync(
+            final List<ByteBuf> byteBuffers,
+            final int lastRequestId,
+            final OperationContext operationContext,
+            final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun((c) -> {
+            notNull("stream is open", stream);
+            if (isClosed()) {
+                throw new MongoSocketClosedException("Cannot write to a closed stream", getServerAddress());
+            }
+            c.complete(c);
+        }).thenRunTryCatchAsyncBlocks(c -> {
+            stream.writeAsync(byteBuffers, operationContext, c.asHandler());
+        }, Exception.class, (e, c) -> {
+            close();
+            //TODO-m propably should be solved after merge
+            throwTranslatedWriteException(e, operationContext);
+        }).finish(errorHandlingCallback(callback, LOGGER));
     }
 
     @Override
@@ -683,39 +702,6 @@ public class InternalStreamConnection implements InternalConnection {
         }
 
         return receiveResponseBuffers(operationContext);
-    }
-
-    @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId,
-                                 final OperationContext operationContext, final SingleResultCallback<Void> callback) {
-        assertNotNull(stream);
-
-        if (isClosed()) {
-            callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
-            return;
-        }
-
-        writeAsync(operationContext, byteBuffers, errorHandlingCallback(callback, LOGGER));
-    }
-
-    private void writeAsync(final OperationContext operationContext, final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
-        try {
-            stream.writeAsync(byteBuffers, operationContext, new AsyncCompletionHandler<Void>() {
-                @Override
-                public void completed(@Nullable final Void v) {
-                    callback.onResult(null, null);
-                }
-
-                @Override
-                public void failed(final Throwable t) {
-                    close();
-                    callback.onResult(null, translateWriteException(t, operationContext));
-                }
-            });
-        } catch (Throwable t) {
-            close();
-            callback.onResult(null, t);
-        }
     }
 
     @Override
@@ -781,6 +767,10 @@ public class InternalStreamConnection implements InternalConnection {
                 sessionContext.setRecoveryToken(recoveryToken);
             }
         }
+    }
+
+    private void throwTranslatedWriteException(final Throwable e, final OperationContext operationContext) {
+        throw translateWriteException(e, operationContext);
     }
 
     private MongoException translateWriteException(final Throwable e, final OperationContext operationContext) {

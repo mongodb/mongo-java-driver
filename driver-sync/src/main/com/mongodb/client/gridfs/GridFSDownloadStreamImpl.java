@@ -26,9 +26,10 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.internal.TimeoutHelper;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonValue;
-import org.bson.Document;
-import org.bson.types.Binary;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -42,7 +43,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private static final String TIMEOUT_MESSAGE = "The GridFS download stream exceeded the timeout limit.";
     private final ClientSession clientSession;
     private final GridFSFile fileInfo;
-    private final MongoCollection<Document> chunksCollection;
+    private final MongoCollection<BsonDocument> chunksCollection;
     private final BsonValue fileId;
     /**
      * The length, in bytes of the file to download.
@@ -50,7 +51,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private final long length;
     private final int chunkSizeInBytes;
     private final int numberOfChunks;
-    private MongoCursor<Document> cursor;
+    private MongoCursor<BsonDocument> cursor;
     private int batchSize;
     private int chunkIndex;
     private int bufferOffset;
@@ -67,10 +68,10 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private boolean closed = false;
 
     GridFSDownloadStreamImpl(@Nullable final ClientSession clientSession, final GridFSFile fileInfo,
-                             final MongoCollection<Document> chunksCollection, @Nullable final Timeout timeout) {
+                             final MongoCollection<BsonDocument> chunksCollection, @Nullable final Timeout timeout) {
         this.clientSession = clientSession;
         this.fileInfo = notNull("file information", fileInfo);
-        this.chunksCollection = notNull("chunks collection", chunksCollection);
+        this.chunksCollection = notNull("chunks collection",  chunksCollection);
 
         fileId = fileInfo.getId();
         length = fileInfo.getLength();
@@ -235,17 +236,17 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     }
 
     @Nullable
-    private Document getChunk(final int startChunkIndex) {
+    private BsonDocument getChunk(final int startChunkIndex) {
         if (cursor == null) {
             cursor = getCursor(startChunkIndex);
         }
-        Document chunk = null;
+        BsonDocument chunk = null;
         if (cursor.hasNext()) {
             chunk = cursor.next();
             if (batchSize == 1) {
                 discardCursor();
             }
-            if (chunk.getInteger("n") != startChunkIndex) {
+            if (chunk.getInt32("n").getValue() != startChunkIndex) {
                 throw new MongoGridFSException(format("Could not find file chunk for file_id: %s at chunk index %s.",
                         fileId, startChunkIndex));
             }
@@ -254,9 +255,9 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         return chunk;
     }
 
-    private MongoCursor<Document> getCursor(final int startChunkIndex) {
-        FindIterable<Document> findIterable;
-        Document filter = new Document("files_id", fileId).append("n", new Document("$gte", startChunkIndex));
+    private MongoCursor<BsonDocument> getCursor(final int startChunkIndex) {
+        FindIterable<BsonDocument> findIterable;
+        BsonDocument filter = new BsonDocument("files_id", fileId).append("n", new BsonDocument("$gte", new BsonInt32(startChunkIndex)));
         if (clientSession != null) {
             findIterable = withNullableTimeout(chunksCollection, timeout).find(clientSession, filter);
         } else {
@@ -266,20 +267,20 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
              findIterable.timeoutMode(TimeoutMode.CURSOR_LIFETIME);
         }
         return findIterable.batchSize(batchSize)
-                .sort(new Document("n", 1)).iterator();
+                .sort(new BsonDocument("n", new BsonInt32(1))).iterator();
     }
 
-    private byte[] getBufferFromChunk(@Nullable final Document chunk, final int expectedChunkIndex) {
+    private byte[] getBufferFromChunk(@Nullable final BsonDocument chunk, final int expectedChunkIndex) {
 
-        if (chunk == null || chunk.getInteger("n") != expectedChunkIndex) {
+        if (chunk == null || chunk.getInt32("n").getValue() != expectedChunkIndex) {
             throw new MongoGridFSException(format("Could not find file chunk for file_id: %s at chunk index %s.",
                     fileId, expectedChunkIndex));
         }
 
-        if (!(chunk.get("data") instanceof Binary)) {
+        if (!(chunk.get("data") instanceof BsonBinary)) {
             throw new MongoGridFSException("Unexpected data format for the chunk");
         }
-        byte[] data = chunk.get("data", Binary.class).getData();
+        byte[] data = chunk.getBinary("data").getData();
 
         long expectedDataLength = 0;
         boolean extraChunk = false;
