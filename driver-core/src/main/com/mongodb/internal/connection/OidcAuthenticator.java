@@ -85,7 +85,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final List<String> ALLOWS_USERNAME = Arrays.asList(
             AZURE_ENVIRONMENT);
 
-    private static final Duration CALLBACK_TIMEOUT = Duration.ofMinutes(5);
+    private static final Duration CALLBACK_TIMEOUT = Duration.ofMinutes(1);
+    private static final Duration HUMAN_CALLBACK_TIMEOUT = Duration.ofMinutes(5);
 
     public static final String OIDC_TOKEN_FILE = "OIDC_TOKEN_FILE";
 
@@ -110,6 +111,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         if (getMongoCredential().getAuthenticationMechanism() != MONGODB_OIDC) {
             throw new MongoException("Incorrect mechanism: " + getMongoCredential().getMechanism());
         }
+    }
+
+    private Duration getCallbackTimeout() {
+        return isHumanCallback() ? HUMAN_CALLBACK_TIMEOUT : CALLBACK_TIMEOUT;
     }
 
     @Override
@@ -306,7 +311,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 // Invoke Callback using cached Refresh Token
                 fallbackState = FallbackState.PHASE_2_REFRESH_CALLBACK_TOKEN;
                 OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                        CALLBACK_TIMEOUT, cachedIdpInfo, cachedRefreshToken, userName));
+                        getCallbackTimeout(), cachedIdpInfo, cachedRefreshToken, userName));
                 jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(cachedIdpInfo, result);
             } else {
                 // cache is empty
@@ -315,7 +320,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                     // no principal request
                     fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
                     OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                            CALLBACK_TIMEOUT, userName));
+                            getCallbackTimeout(), userName));
                     jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(null, result);
                     if (result.getRefreshToken() != null) {
                         throw new MongoConfigurationException(
@@ -345,7 +350,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                         // there is no cached refresh token
                         fallbackState = FallbackState.PHASE_3B_CALLBACK_TOKEN;
                         OidcCallbackResult result = requestCallback.onRequest(new OidcCallbackContextImpl(
-                                CALLBACK_TIMEOUT, idpInfo, null, userName));
+                                getCallbackTimeout(), idpInfo, null, userName));
                         jwt[0] = populateCacheWithCallbackResultAndPrepareJwt(idpInfo, result);
                     }
                 }
@@ -606,6 +611,11 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             Object environmentName = credential.getMechanismProperty(ENVIRONMENT_KEY, null);
             Object machineCallback = credential.getMechanismProperty(OIDC_CALLBACK_KEY, null);
             Object humanCallback = credential.getMechanismProperty(OIDC_HUMAN_CALLBACK_KEY, null);
+            boolean allowedHostsIsSet = credential.getMechanismProperty(ALLOWED_HOSTS_KEY, null) != null;
+            if (humanCallback == null && allowedHostsIsSet) {
+                throw new IllegalArgumentException(ALLOWED_HOSTS_KEY + " must be specified only when "
+                        + OIDC_HUMAN_CALLBACK_KEY + " is specified");
+            }
             if (environmentName == null) {
                 // callback
                 if (machineCallback == null && humanCallback == null) {
