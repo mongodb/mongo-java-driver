@@ -18,7 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoServerUnavailableException;
-import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
@@ -197,7 +196,7 @@ class DefaultServer implements ClusterableServer {
         return serverId;
     }
 
-    private class DefaultServerProtocolExecutor implements ProtocolExecutor {
+    private class DefaultServerProtocolExecutor extends AbstractProtocolExecutor {
 
         @SuppressWarnings("unchecked")
         @Override
@@ -216,9 +215,9 @@ class DefaultServer implements ClusterableServer {
                 if (e instanceof MongoWriteConcernWithResponseException) {
                     return (T) ((MongoWriteConcernWithResponseException) e).getResponse();
                 } else {
-                    if (e instanceof MongoSocketException && sessionContext.hasSession()) {
+                    if (shouldMarkSessionDirty(e, sessionContext)) {
                         sessionContext.markSessionDirty();
-                    }
+                       }
                     throw e;
                 }
             }
@@ -239,7 +238,7 @@ class DefaultServer implements ClusterableServer {
                         if (t instanceof MongoWriteConcernWithResponseException) {
                             callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
                         } else {
-                            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+                            if (shouldMarkSessionDirty(t, sessionContext)) {
                                 sessionContext.markSessionDirty();
                             }
                             callback.onResult(null, t);

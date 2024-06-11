@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.client.unified.UnifiedSyncTest;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -71,6 +72,16 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
     }
 
     public static void checkSkipCSOTTest(final String fileDescription, final String testDescription) {
+        if (ClusterFixture.isServerlessTest()) {
+
+            // It is not possible to create capped collections on serverless instances.
+            assumeFalse(fileDescription.equals("timeoutMS behaves correctly for tailable awaitData cursors"));
+            assumeFalse(fileDescription.equals("timeoutMS behaves correctly for tailable non-awaitData cursors"));
+
+            /* Drivers MUST NOT execute a killCursors command because the pinned connection is no longer under a load balancer. */
+            assumeFalse(testDescription.equals("timeoutMS is refreshed for close"));
+        }
+
         assumeFalse("No maxTimeMS parameter for createIndex() method",
                 testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
         assumeFalse("TODO (CSOT) CRUD Failure",
