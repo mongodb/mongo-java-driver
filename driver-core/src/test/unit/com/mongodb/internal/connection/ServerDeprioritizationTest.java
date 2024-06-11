@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.connection;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -33,6 +32,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.ClusterFixture.createOperationContext;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -52,7 +53,7 @@ final class ServerDeprioritizationTest {
 
     @BeforeEach
     void beforeEach() {
-        serverDeprioritization = ClusterFixture.OPERATION_CONTEXT.getServerDeprioritization();
+        serverDeprioritization = createOperationContext(TIMEOUT_SETTINGS).getServerDeprioritization();
     }
 
     @Test

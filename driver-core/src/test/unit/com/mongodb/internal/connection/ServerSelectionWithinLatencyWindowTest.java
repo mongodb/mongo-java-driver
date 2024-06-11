@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
@@ -41,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.ClusterFixture.createOperationContext;
 import static com.mongodb.connection.ServerSelectionSelectionTest.buildClusterDescription;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
@@ -75,7 +76,8 @@ public class ServerSelectionWithinLatencyWindowTest {
     @Test
     public void shouldPassAllOutcomes() {
         ServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.nearest());
-        OperationContext.ServerDeprioritization emptyServerDeprioritization = ClusterFixture.OPERATION_CONTEXT.getServerDeprioritization();
+        OperationContext.ServerDeprioritization emptyServerDeprioritization = createOperationContext(TIMEOUT_SETTINGS)
+                .getServerDeprioritization();
         ClusterSettings defaultClusterSettings = ClusterSettings.builder().build();
         Map<ServerAddress, List<ServerTuple>> selectionResultsGroupedByServerAddress = IntStream.range(0, iterations)
                 .mapToObj(i -> BaseCluster.createCompleteSelectorAndSelectServer(selector, clusterDescription, serversSnapshot,
