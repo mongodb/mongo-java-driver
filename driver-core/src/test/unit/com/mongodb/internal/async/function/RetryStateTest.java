@@ -40,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 final class RetryStateTest {
     private static final TimeoutContext TIMEOUT_CONTEXT_NO_GLOBAL_TIMEOUT = new TimeoutContext(new TimeoutSettings(0L, 0L,
@@ -95,17 +94,6 @@ final class RetryStateTest {
                 () -> assertTrue(retryState.isLastAttempt()),
                 () -> assertEquals(0, retryState.attempts())
         );
-    }
-
-    @Test
-    void unlimitedAttemptsAndAdvanceWithTimeoutException() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
-        assertAll(
-                () -> assertTrue(retryState.isFirstAttempt()),
-                () -> assertEquals(0, retryState.attempt()),
-                () -> assertEquals(0, retryState.attempts())
-        );
-        Assertions.assertThrows(MongoOperationTimeoutException.class, () -> advance(retryState));
     }
 
     @Test
@@ -169,14 +157,6 @@ final class RetryStateTest {
         assertFalse(retryState.isLastAttempt());
     }
 
-    @Test
-    void breakAndThrowIfRetryAndFalseWithExpiredTimeout() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
-        retryState.breakAndThrowIfRetryAnd(() -> false);
-        assertTrue(retryState.isLastAttempt());
-        assertThrows(MongoOperationTimeoutException.class, () -> advance(retryState));
-    }
-
     @ParameterizedTest
     @MethodSource({"infiniteTimeout", "noTimeout"})
     void breakAndThrowIfRetryAndTrue() {
@@ -189,10 +169,6 @@ final class RetryStateTest {
     @Test
     void breakAndThrowIfRetryAndTrueWithExpiredTimeout() {
         TimeoutContext tContextMock = mock(TimeoutContext.class);
-        when(tContextMock.hasTimeoutMS()).thenReturn(true);
-        when(tContextMock.hasExpired())
-                .thenReturn(false)
-                .thenReturn(true);
 
         RetryState retryState = new RetryState(tContextMock);
         advance(retryState);
@@ -354,24 +330,6 @@ final class RetryStateTest {
         }));
     }
 
-    @Test
-    void advanceOrThrowPredicateThrowsTimeoutAfterFirstAttempt() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
-        RuntimeException predicateException = new RuntimeException() {
-        };
-        RuntimeException attemptException = new RuntimeException() {
-        };
-        MongoOperationTimeoutException mongoOperationTimeoutException = assertThrows(MongoOperationTimeoutException.class,
-                () -> retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> {
-                    assertTrue(rs.isFirstAttempt());
-                    assertEquals(attemptException, e);
-                    throw predicateException;
-                }));
-
-        assertEquals(EXPECTED_TIMEOUT_MESSAGE, mongoOperationTimeoutException.getMessage());
-        assertEquals(attemptException, mongoOperationTimeoutException.getCause());
-    }
-
     @ParameterizedTest
     @MethodSource({"infiniteTimeout", "noTimeout"})
     void advanceOrThrowPredicateThrows(final TimeoutContext timeoutContext) {
@@ -437,30 +395,6 @@ final class RetryStateTest {
                     assertEquals(attemptException, e);
                     return false;
                 }));
-    }
-
-    @Test
-    void advanceOrThrowTransformThrowsTimeoutExceptionAfterFirstAttempt() {
-        RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
-        RuntimeException attemptException = new RuntimeException() {
-        };
-        RuntimeException transformerResult = new RuntimeException() {
-        };
-        MongoOperationTimeoutException mongoOperationTimeoutException =
-                assertThrows(MongoOperationTimeoutException.class, () -> retryState.advanceOrThrow(attemptException,
-                        (e1, e2) -> {
-                            assertNull(e1);
-                            assertEquals(attemptException, e2);
-                            return transformerResult;
-                        },
-                        (rs, e) -> {
-                            assertEquals(attemptException, e);
-                            return false;
-                        }));
-
-        assertEquals(EXPECTED_TIMEOUT_MESSAGE, mongoOperationTimeoutException.getMessage());
-        assertEquals(transformerResult, mongoOperationTimeoutException.getCause());
-
     }
 
     @ParameterizedTest

@@ -135,15 +135,9 @@ public class TimeoutContext {
     }
 
     /**
-     * Checks the expiry of the timeout.
-     *
-     * @return true if the timeout has been set and it has expired
+     * Runs the runnable if the timeout is expired.
+     * @param onExpired the runnable to run
      */
-    public boolean hasExpired() {
-        // TODO (CSOT) this method leaks Timeout internals, should be removed (not inlined, but inverted using lambdas)
-        return Timeout.nullAsInfinite(timeout).call(NANOSECONDS, () -> false, (ns) -> false, () -> true);
-    }
-
     public void onExpired(final Runnable onExpired) {
         Timeout.nullAsInfinite(timeout).onExpired(onExpired);
     }
@@ -374,7 +368,6 @@ public class TimeoutContext {
         return checkoutStart.timeoutAfterOrInfiniteIfNegative(ms, MILLISECONDS);
     }
 
-    // TODO (CSOT) method not used in production;
     @Nullable
     public Timeout getTimeout() {
         return timeout;
