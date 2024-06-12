@@ -28,24 +28,18 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.List;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 @RunWith(Parameterized.class)
 public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
-    private final String testDescription;
+
     public ClientSideOperationTimeoutTest(final String fileDescription, final String testDescription,
             final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
-        this.testDescription = testDescription;
-        checkSkipCSOTTest(fileDescription, testDescription);
-
-        assumeFalse("TODO (CSOT) - JAVA-5104", fileDescription.equals("timeoutMS behaves correctly for non-tailable cursors")
-                &&  testDescription.equals("timeoutMS applied to find if timeoutMode is iteration"));
+        skipOperationTimeoutTests(fileDescription, testDescription);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
@@ -56,22 +50,11 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
     @Test
     @Override
     public void shouldPassAllOutcomes() {
-        try {
-            super.shouldPassAllOutcomes();
-        } catch (AssertionError e) {
-            if (racyTestAssertion(testDescription, e)) {
-                // Ignore failure - racy test often no time to do the getMore
-                return;
-            }
-            throw e;
-        }
+        super.shouldPassAllOutcomes();
     }
 
-    public static boolean racyTestAssertion(final String testDescription, final AssertionError e) {
-        return RACY_GET_MORE_TESTS.contains(testDescription) && e.getMessage().startsWith("Number of events must be the same");
-    }
+    public static void skipOperationTimeoutTests(final String fileDescription, final String testDescription) {
 
-    public static void checkSkipCSOTTest(final String fileDescription, final String testDescription) {
         if (ClusterFixture.isServerlessTest()) {
 
             // It is not possible to create capped collections on serverless instances.
@@ -81,33 +64,16 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
             /* Drivers MUST NOT execute a killCursors command because the pinned connection is no longer under a load balancer. */
             assumeFalse(testDescription.equals("timeoutMS is refreshed for close"));
         }
-
         assumeFalse("No maxTimeMS parameter for createIndex() method",
                 testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
-        assumeFalse("TODO (CSOT) CRUD Failure",
-                testDescription.contains("socketTimeoutMS is ignored if timeoutMS is set - deleteMany on collection"));
-
         assumeFalse("No run cursor command", fileDescription.startsWith("runCursorCommand"));
         assumeFalse("No special handling of runCommand", testDescription.contains("runCommand on database"));
-
         assumeFalse("No count command helper", testDescription.endsWith("count on collection"));
-
         assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS can be overridden for an operation"));
         assumeFalse("No operation session based overrides",
-                fileDescription.equals("timeoutMS can be overridden for individual session operations"));
-        assumeFalse("No operation session based overrides",
-                fileDescription.equals("operations ignore deprected timeout options if timeoutMS is set")
-                        && (testDescription.equals("abortTransaction ignores socketTimeoutMS if timeoutMS is set")
-                        || testDescription.equals("commitTransaction ignores socketTimeoutMS if timeoutMS is set")
-                        || testDescription.equals("commitTransaction ignores maxCommitTimeMS if timeoutMS is set")
-                ));
+                testDescription.equals("timeoutMS can be overridden for commitTransaction")
+                        || testDescription.equals("timeoutMS applied to abortTransaction"));
         assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS behaves correctly when closing cursors")
                 && testDescription.equals("timeoutMS can be overridden for close"));
-
-        assumeFalse("TODO (CSOT) - JAVA-5259 No client.withTimeout", testDescription.endsWith("on client"));
     }
-
-    private static final List<String> RACY_GET_MORE_TESTS = asList(
-            "remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime",
-            "remaining timeoutMS applied to getMore if timeoutMode is unset");
 }

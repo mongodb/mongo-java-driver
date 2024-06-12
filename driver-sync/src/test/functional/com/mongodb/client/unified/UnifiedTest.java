@@ -21,9 +21,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.UnixServerAddress;
-import com.mongodb.event.TestServerMonitorListener;
-import com.mongodb.internal.logging.LogMessage;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
@@ -37,10 +34,13 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
+import com.mongodb.logging.TestLoggingInterceptor;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -150,10 +150,6 @@ public abstract class UnifiedTest {
         this.definition = definition;
         this.rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         crudHelper = new UnifiedCrudHelper(entities, definition.getString("description").getValue());
-    }
-
-    protected void ignoreExtraEvents() {
-        ignoreExtraEvents = true;
     }
 
     public Entities getEntities() {
@@ -979,5 +975,13 @@ public abstract class UnifiedTest {
             }
         }
         return getCurrentClusterTime();
+    }
+
+    protected void ignoreExtraCommandEvents(final boolean ignoreExtraEvents) {
+        this.ignoreExtraEvents = ignoreExtraEvents;
+    }
+
+    protected void ignoreExtraEvents() {
+        this.ignoreExtraEvents = true;
     }
 }

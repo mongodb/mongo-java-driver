@@ -33,13 +33,14 @@ import reactor.core.publisher.Hooks;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.mongodb.client.ClientSideOperationTimeoutTest.checkSkipCSOTTest;
-import static com.mongodb.client.ClientSideOperationTimeoutTest.racyTestAssertion;
+import static com.mongodb.client.ClientSideOperationTimeoutTest.skipOperationTimeoutTests;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorError;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
@@ -53,7 +54,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
             final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
         this.testDescription = testDescription;
-        // Time sensitive - cannot just create a cursor with publishers
+        skipOperationTimeoutTests(fileDescription, testDescription);
 
         assumeFalse("No iterateOnce support. There is alternative prose test for it.",
                 testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set"));
@@ -74,17 +75,19 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         assumeFalse(testDescription.endsWith("createChangeStream on client"));
         assumeFalse(testDescription.endsWith("createChangeStream on database"));
         assumeFalse(testDescription.endsWith("createChangeStream on collection"));
-        assumeFalse("TODO (CSOT) - JAVA-5104", fileDescription.equals("timeoutMS behaves correctly during command execution")
-                &&  testDescription.equals("command is not sent if RTT is greater than timeoutMS"));
 
         // No withTransaction support
         assumeFalse(fileDescription.contains("withTransaction") || testDescription.contains("withTransaction"));
 
-        checkSkipCSOTTest(fileDescription, testDescription);
-
         if (testDescription.equals("timeoutMS is refreshed for close")) {
             enableSleepAfterCursorError(256);
         }
+
+        /*
+         * The test is occasionally racy. The "killCursors" command may appear as an additional event. This is unexpected in unified tests,
+         * but anticipated in reactive streams because an operation timeout error triggers the closure of the stream/publisher.
+         */
+        ignoreExtraCommandEvents(testDescription.contains("timeoutMS is refreshed for getMore - failure"));
 
         Hooks.onOperatorDebug();
         Hooks.onErrorDropped(atomicReferenceThrowable::set);
@@ -127,6 +130,14 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         Hooks.resetOnOperatorDebug();
         Hooks.resetOnErrorDropped();
     }
+
+    public static boolean racyTestAssertion(final String testDescription, final AssertionError e) {
+        return RACY_GET_MORE_TESTS.contains(testDescription) && e.getMessage().startsWith("Number of events must be the same");
+    }
+
+    private static final List<String> RACY_GET_MORE_TESTS = asList(
+            "remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime",
+            "remaining timeoutMS applied to getMore if timeoutMode is unset");
 
     private void assertNoDroppedError(final String message) {
         Throwable droppedError = atomicReferenceThrowable.get();

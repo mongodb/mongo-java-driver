@@ -253,10 +253,7 @@ final class NettyStream implements Stream {
         }
 
         long writeTimeoutMS = operationContext.getTimeoutContext().getWriteTimeoutMS();
-        Optional<WriteTimeoutHandler> writeTimeoutHandler = writeTimeoutMS != NO_SCHEDULE_TIME
-                ? Optional.of(new WriteTimeoutHandler(writeTimeoutMS, MILLISECONDS)) : Optional.empty();
-        writeTimeoutHandler.map(w -> channel.pipeline().addBefore("ChannelInboundHandlerAdapter", "WriteTimeoutHandler", w));
-
+        final Optional<WriteTimeoutHandler> writeTimeoutHandler = addWriteTimeoutHandler(writeTimeoutMS);
         channel.writeAndFlush(composite).addListener((ChannelFutureListener) future -> {
             writeTimeoutHandler.map(w -> channel.pipeline().remove(w));
             if (!future.isSuccess()) {
@@ -265,6 +262,15 @@ final class NettyStream implements Stream {
                 handler.completed(null);
             }
         });
+    }
+
+    private Optional<WriteTimeoutHandler> addWriteTimeoutHandler(final long writeTimeoutMS) {
+        if (writeTimeoutMS != NO_SCHEDULE_TIME) {
+            WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutMS, MILLISECONDS);
+            channel.pipeline().addBefore("ChannelInboundHandlerAdapter", "WriteTimeoutHandler", writeTimeoutHandler);
+            return Optional.of(writeTimeoutHandler);
+        }
+        return Optional.empty();
     }
 
     @Override

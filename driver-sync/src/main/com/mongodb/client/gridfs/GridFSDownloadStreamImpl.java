@@ -40,7 +40,7 @@ import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static java.lang.String.format;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
-    private static final String TIMEOUT_MESSAGE = "The GridFS download stream has timed out";
+    private static final String TIMEOUT_MESSAGE = "The GridFS download stream exceeded the timeout limit.";
     private final ClientSession clientSession;
     private final GridFSFile fileInfo;
     private final MongoCollection<BsonDocument> chunksCollection;

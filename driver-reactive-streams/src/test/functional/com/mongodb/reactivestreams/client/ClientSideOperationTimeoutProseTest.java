@@ -41,9 +41,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.test.StepVerifier;
@@ -107,7 +105,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         return true;
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
     @Test
     @Override
@@ -117,7 +114,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
         //given
         collectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
+                + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                 + "  mode: { times: 1 },"
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
@@ -164,7 +161,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         }
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
     @Test
     @Override
@@ -177,7 +173,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         Hooks.onErrorDropped(droppedErrorFuture::complete);
 
         collectionHelper.runAdminCommand("{"
-                + "  configureFailPoint: \"failCommand\","
+                + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                 + "  mode: { times: 1 },"
                 + "  data: {"
                 + "    failCommands: [\"delete\"],"
@@ -227,7 +223,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS applies to full resume attempt in a next call")
     @Test
     public void testTimeoutMSAppliesToFullResumeAttemptInNextCall() {
@@ -283,7 +278,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS applied to initial aggregate")
     @Test
     public void testTimeoutMSAppliedToInitialAggregate() {
@@ -332,7 +326,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS is refreshed for getMore if maxAwaitTimeMS is not set")
     @Test
     public void testTimeoutMsRefreshedForGetMoreWhenMaxAwaitTimeMsNotSet() {
@@ -402,7 +395,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS is refreshed for getMore if maxAwaitTimeMS is set")
     @Test
     public void testTimeoutMsRefreshedForGetMoreWhenMaxAwaitTimeMsSet() {
@@ -420,7 +412,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                 .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
-                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
+                    .getCollection(namespace.getCollectionName())
+                    .withReadPreference(ReadPreference.primary());
 
             collectionHelper.runAdminCommand("{"
                     + "    configureFailPoint: \"failCommand\","
@@ -449,6 +442,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                     .expectNextCount(2)
                     .thenAwait(Duration.ofMillis(600))
                     .thenRequest(2)
+                    .expectNextCount(2)
                     .thenCancel()
                     .verify();
 
@@ -463,7 +457,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("TimeoutMS is honored for next operation when several getMore executed internally")
     @Test
     public void testTimeoutMsISHonoredForNnextOperationWhenSeveralGetMoreExecutedInternally() {
@@ -528,8 +521,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
 
     @Override
     @AfterEach
-    public void tearDown(final TestInfo info) {
-        super.tearDown(info);
+    public void tearDown() {
+        super.tearDown();
         SyncMongoClient.disableSleep();
     }
 

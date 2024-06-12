@@ -164,7 +164,7 @@ public class SocketStream implements Stream {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
             if (operationContext.getTimeoutContext().hasExpired()) {
-                throwMongoTimeoutException("Timeout occurred during socket write.");
+                throwMongoTimeoutException("Socket write exceeded the timeout limit.");
             }
         }
     }

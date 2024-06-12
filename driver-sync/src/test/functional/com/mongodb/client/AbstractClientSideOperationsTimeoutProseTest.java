@@ -59,9 +59,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -87,6 +85,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -101,6 +100,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 @SuppressWarnings("checkstyle:VisibilityModifier")
 public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
+    protected static final String FAIL_COMMAND_NAME = "failCommand";
     protected static final String GRID_FS_BUCKET_NAME = "db.fs";
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
@@ -124,7 +124,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         return 0;
     }
 
-    @Tag("setsFailPoint")
     @SuppressWarnings("try")
     @FlakyTest(maxAttempts = 3)
     @DisplayName("4. Background Connection Pooling - timeoutMS used for handshake commands")
@@ -134,7 +133,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeFalse(isServerlessTest());
 
         collectionHelper.runAdminCommand("{"
-                + "    configureFailPoint: \"failCommand\","
+                + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                 + "    mode: {"
                 + "        times: 1"
                 + "    },"
@@ -162,7 +161,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @SuppressWarnings("try")
     @FlakyTest(maxAttempts = 3)
     @DisplayName("4. Background Connection Pooling - timeoutMS is refreshed for each handshake command")
@@ -172,7 +170,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assumeFalse(isServerlessTest());
 
         collectionHelper.runAdminCommand("{"
-                + "    configureFailPoint: \"failCommand\","
+                + "    configureFailPoint: \"" + FAIL_COMMAND_NAME + "\","
                 + "    mode: \"alwaysOn\","
                 + "    data: {"
                 + "        failCommands: [\"hello\", \"isMaster\", \"saslContinue\"],"
@@ -198,7 +196,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Tailable cursors")
     public void testBlockingIterationMethodsTailableCursor() {
@@ -236,7 +233,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @FlakyTest(maxAttempts = 3)
     @DisplayName("5. Blocking Iteration Methods - Change Streams")
     public void testBlockingIterationMethodsChangeStream() {
@@ -284,8 +280,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-
-    @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
     @Test
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
@@ -317,7 +311,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("6. GridFS Upload - Aborting an upload stream can be timed out")
     @Test
     public void testAbortingGridFsUploadStreamTimeout() throws Throwable {
@@ -349,7 +342,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("6. GridFS Download")
     @Test
     public void testGridFsDownloadStreamTimeout() {
@@ -426,7 +418,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("8. Server Selection 2 / 2")
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("test8ServerSelectionHandshakeArguments")
@@ -467,13 +458,14 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @SuppressWarnings("try")
-    @DisplayName("9. End Session 1 / 2")
+    @DisplayName("9. End Session. The timeout specified via the MongoClient timeoutMS option")
     @Test
     public void test9EndSessionClientTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
+        assumeFalse(isServerlessTest());
+
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: { times: 1 },"
@@ -499,16 +491,19 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
             }
         }
-        assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("abortTransaction"));
+        CommandFailedEvent abortTransactionEvent = assertDoesNotThrow(() ->
+                commandListener.getCommandFailedEvent("abortTransaction"));
+        assertInstanceOf(MongoOperationTimeoutException.class, abortTransactionEvent.getThrowable());
     }
 
-    @Tag("setsFailPoint")
     @SuppressWarnings("try")
-    @DisplayName("9. End Session 2 / 2")
+    @DisplayName("9. End Session. The timeout specified via the ClientSession defaultTimeoutMS option")
     @Test
     public void test9EndSessionSessionTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
+        assumeFalse(isServerlessTest());
+
         collectionHelper.runAdminCommand("{"
                 + "  configureFailPoint: \"failCommand\","
                 + "  mode: { times: 1 },"
@@ -534,11 +529,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
             }
         }
-
-        assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("abortTransaction"));
+        CommandFailedEvent abortTransactionEvent = assertDoesNotThrow(() ->
+                commandListener.getCommandFailedEvent("abortTransaction"));
+        assertInstanceOf(MongoOperationTimeoutException.class, abortTransactionEvent.getThrowable());
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("9. End Session - Custom Test: Each operation has its own timeout with commit")
     @Test
     public void test9EndSessionCustomTesEachOperationHasItsOwnTimeoutWithCommit() {
@@ -570,7 +565,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assertDoesNotThrow(() -> commandListener.getCommandSucceededEvent("commitTransaction"));
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("9. End Session - Custom Test: Each operation has its own timeout with abort")
     @Test
     public void test9EndSessionCustomTesEachOperationHasItsOwnTimeoutWithAbort() {
@@ -602,7 +596,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assertDoesNotThrow(() -> commandListener.getCommandSucceededEvent("abortTransaction"));
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("10. Convenient Transactions")
     @Test
     public void test10ConvenientTransactions() {
@@ -637,7 +630,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("10. Convenient Transactions - Custom Test: with transaction uses a single timeout")
     @Test
     public void test10CustomTestWithTransactionUsesASingleTimeout() {
@@ -671,7 +663,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
-    @Tag("setsFailPoint")
     @DisplayName("10. Convenient Transactions - Custom Test: with transaction uses a single timeout - lock")
     @Test
     public void test10CustomTestWithTransactionUsesASingleTimeoutWithLock() {
@@ -710,7 +701,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @Test
     @DisplayName("Should ignore wTimeoutMS of WriteConcern to initial and subsequent commitTransaction operations")
     public void shouldIgnoreWtimeoutMsOfWriteConcernToInitialAndSubsequentCommitTransactionOperations() {
@@ -743,7 +733,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             if (command.containsKey("writeConcern")) {
                 BsonDocument writeConcern = command.getDocument("writeConcern");
                 assertFalse(writeConcern.isEmpty());
-                assertFalse(writeConcern.containsKey("wTimeoutMS"));
+                assertFalse(writeConcern.containsKey("wtimeout"));
             }});
     }
 
@@ -751,7 +741,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
     @Test
     public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
@@ -799,7 +788,6 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
-    @Tag("setsFailPoint")
     @DisplayName("KillCursors is not executed after getMore network error")
     @Test
     public void testKillCursorsIsNotExecutedAfterGetMoreNetworkError() {
@@ -841,6 +829,49 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
         assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
 
+    }
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @Test
+    @DisplayName("Should throw timeout exception for subsequent commit transaction")
+    public void shouldThrowTimeoutExceptionForSubsequentCommitTransaction() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeFalse(isStandalone());
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName());
+
+            try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
+                    .defaultTimeout(200, TimeUnit.MILLISECONDS)
+                    .build())) {
+                session.startTransaction(TransactionOptions.builder().build());
+                collection.insertOne(session, new Document("x", 1));
+                sleep(200);
+
+                assertDoesNotThrow(session::commitTransaction);
+
+                collectionHelper.runAdminCommand("{"
+                        + "  configureFailPoint: \"failCommand\","
+                        + "  mode: { times: 1 },"
+                        + "  data: {"
+                        + "    failCommands: [\"commitTransaction\"],"
+                        + "    blockConnection: true,"
+                        + "    blockTimeMS: " + 500
+                        + "  }"
+                        + "}");
+
+                //repeat commit.
+                assertThrows(MongoOperationTimeoutException.class, session::commitTransaction);
+            }
+        }
+        List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents("commitTransaction");
+        assertEquals(2, commandStartedEvents.size());
+
+        List<CommandFailedEvent> failedEvents = commandListener.getCommandFailedEvents("commitTransaction");
+        assertEquals(1, failedEvents.size());
     }
 
     private static Stream<Arguments> test8ServerSelectionArguments() {
@@ -891,11 +922,9 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @AfterEach
-    public void tearDown(final TestInfo info) {
+    public void tearDown() {
+        ClusterFixture.disableFailPoint(FAIL_COMMAND_NAME);
         if (collectionHelper != null) {
-            if (info.getTags().contains("setsFailPoint") && serverVersionAtLeast(4, 4)) {
-                collectionHelper.runAdminCommand("{configureFailPoint: \"failCommand\", mode: \"off\"}");
-            }
             collectionHelper.drop();
             filesCollectionHelper.drop();
             chunksCollectionHelper.drop();

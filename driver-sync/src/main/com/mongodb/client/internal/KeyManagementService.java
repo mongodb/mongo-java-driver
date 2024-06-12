@@ -139,7 +139,7 @@ class KeyManagementService {
                         throw new AssertionError("operationTimeout cannot be infinite");
                     },
                     (ms) -> socket.setSoTimeout(Math.toIntExact(ms)),
-                    () -> TimeoutContext.throwMongoTimeoutException("Timeout has expired while reading from KMS server"));
+                    () -> TimeoutContext.throwMongoTimeoutException("Reading from KMS server exceeded the timeout limit."));
         }
 
         @Override

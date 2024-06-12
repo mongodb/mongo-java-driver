@@ -51,7 +51,7 @@ final class RetryStateTest {
 
     private static final TimeoutContext TIMEOUT_CONTEXT_INFINITE_GLOBAL_TIMEOUT = new TimeoutContext(new TimeoutSettings(0L, 0L,
             0L, 0L, 0L));
-    private static final String EXPECTED_TIMEOUT_MESSAGE = "Retry attempt timed out.";
+    private static final String EXPECTED_TIMEOUT_MESSAGE = "Retry attempt exceeded the timeout limit.";
 
     static Stream<Arguments> infiniteTimeout() {
         return Stream.of(
@@ -302,7 +302,7 @@ final class RetryStateTest {
                         (rs, e) -> false));
 
         Assertions.assertNotEquals(actualTimeoutException, expectedTimeoutException);
-        Assertions.assertEquals("Retry attempt timed out.", actualTimeoutException.getMessage());
+        Assertions.assertEquals(EXPECTED_TIMEOUT_MESSAGE, actualTimeoutException.getMessage());
         Assertions.assertEquals(previousAttemptException, actualTimeoutException.getCause(),
                 "Retry timeout exception should have a cause if transformer returned non-timeout exception.");
     }

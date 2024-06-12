@@ -38,7 +38,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
 
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
-    public static final String TIMEOUT_MESSAGE = "The GridFS upload stream has timed out";
+    public static final String TIMEOUT_MESSAGE = "The GridFS upload stream exceeded the timeout limit.";
     private final ClientSession clientSession;
     private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<BsonDocument> chunksCollection;

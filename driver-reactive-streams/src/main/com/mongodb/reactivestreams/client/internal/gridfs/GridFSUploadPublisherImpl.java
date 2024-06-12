@@ -279,7 +279,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
 
     private static Mono<MongoOperationTimeoutException> createTimeoutMonoError() {
         return Mono.error(TimeoutContext.createMongoTimeoutException(
-                "GridFS timed out waiting for data from provided source Publisher"));
+                "GridFS waiting for data from the source Publisher exceeded the timeout limit."));
     }
 
     private Mono<InsertOneResult> createSaveFileDataMono(final AtomicBoolean terminated,

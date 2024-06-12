@@ -166,7 +166,6 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                     .execute(
                             new CommitTransactionOperation(writeConcern, alreadyCommitted)
                                     .recoveryToken(getRecoveryToken()), readConcern, this)
-                    .doOnSuccess(ignored -> setTimeoutContext(null))
                     .doOnTerminate(() -> {
                         commitInProgress = false;
                         transactionState = TransactionState.COMMITTED;
