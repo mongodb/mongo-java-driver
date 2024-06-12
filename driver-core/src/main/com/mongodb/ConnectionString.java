@@ -368,16 +368,19 @@ public class ConnectionString {
 
         // Split out the user and host information
         String userAndHostInformation;
-        int idx = unprocessedConnectionString.indexOf("/");
-        if (idx == -1) {
-            if (unprocessedConnectionString.contains("?")) {
-                throw new IllegalArgumentException("The connection string contains options without trailing slash");
+        int firstForwardSlashIdx = unprocessedConnectionString.indexOf("/");
+        int firstQuestionMarkIdx = unprocessedConnectionString.indexOf("?");
+        if (firstForwardSlashIdx == -1 || (firstQuestionMarkIdx != -1 && firstQuestionMarkIdx < firstForwardSlashIdx)) {
+            if (firstQuestionMarkIdx == -1) {
+                userAndHostInformation = unprocessedConnectionString;
+                unprocessedConnectionString = "";
+            } else {
+                userAndHostInformation = unprocessedConnectionString.substring(0, firstQuestionMarkIdx);
+                unprocessedConnectionString = unprocessedConnectionString.substring(firstQuestionMarkIdx);
             }
-            userAndHostInformation = unprocessedConnectionString;
-            unprocessedConnectionString = "";
         } else {
-            userAndHostInformation = unprocessedConnectionString.substring(0, idx);
-            unprocessedConnectionString = unprocessedConnectionString.substring(idx + 1);
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstForwardSlashIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstForwardSlashIdx + 1);
         }
 
         // Split the user and host information
@@ -385,7 +388,7 @@ public class ConnectionString {
         String hostIdentifier;
         String userName = null;
         char[] password = null;
-        idx = userAndHostInformation.lastIndexOf("@");
+        int idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
             hostIdentifier = userAndHostInformation.substring(idx + 1);
