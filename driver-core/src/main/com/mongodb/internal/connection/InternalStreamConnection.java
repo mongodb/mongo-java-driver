@@ -76,6 +76,7 @@ import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
@@ -775,7 +776,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     private MongoException translateWriteException(final Throwable e, final OperationContext operationContext) {
         if (e instanceof MongoSocketWriteTimeoutException && operationContext.getTimeoutContext().hasExpired()) {
-            return TimeoutContext.createMongoTimeoutException(e);
+            return createMongoTimeoutException(e);
         }
 
         if (e instanceof MongoException) {
@@ -792,9 +793,12 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private MongoException translateReadException(final Throwable e, final OperationContext operationContext) {
-        if (operationContext.getTimeoutContext().hasTimeoutMS()
-                && (e instanceof SocketTimeoutException || e instanceof MongoSocketReadTimeoutException)) {
-            return TimeoutContext.createMongoTimeoutException(e);
+        if (operationContext.getTimeoutContext().hasTimeoutMS()) {
+            if (e instanceof SocketTimeoutException) {
+                return createMongoTimeoutException(createReadTimeoutException((SocketTimeoutException) e));
+            } else if (e instanceof MongoSocketReadTimeoutException) {
+                return createMongoTimeoutException((e));
+            }
         }
 
         if (e instanceof MongoException) {
@@ -804,7 +808,7 @@ public class InternalStreamConnection implements InternalConnection {
         if (interruptedException.isPresent()) {
             return interruptedException.get();
         } else if (e instanceof SocketTimeoutException) {
-            return new MongoSocketReadTimeoutException("Timeout while receiving message", getServerAddress(), e);
+            return createReadTimeoutException((SocketTimeoutException) e);
         } else if (e instanceof IOException) {
             return new MongoSocketReadException("Exception receiving message", getServerAddress(), e);
         } else if (e instanceof RuntimeException) {
@@ -812,6 +816,11 @@ public class InternalStreamConnection implements InternalConnection {
         } else {
             return new MongoInternalException("Unexpected exception", e);
         }
+    }
+
+    private  MongoSocketReadTimeoutException createReadTimeoutException(final SocketTimeoutException e) {
+        return new MongoSocketReadTimeoutException("Timeout while receiving message",
+                getServerAddress(), e);
     }
 
     private ResponseBuffers receiveResponseBuffers(final OperationContext operationContext) {

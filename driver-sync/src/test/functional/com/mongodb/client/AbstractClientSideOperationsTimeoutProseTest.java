@@ -24,6 +24,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -736,6 +737,100 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             }});
     }
 
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @DisplayName("KillCursors is not executed after getMore network error when timeout is not enabled")
+    @Test
+    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkErrorWhenTimeoutIsNotEnabled() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isServerlessTest());
+
+        long rtt = ClusterFixture.getPrimaryRTT();
+        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
+        collectionHelper.insertDocuments(new Document(), new Document());
+        collectionHelper.runAdminCommand("{"
+                + "    configureFailPoint: \"failCommand\","
+                + "    mode: { times: 1},"
+                + "    data: {"
+                + "        failCommands: [\"getMore\" ],"
+                + "        blockConnection: true,"
+                + "        blockTimeMS: " + (rtt + 600)
+                + "    }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .retryReads(true)
+                .applyToSocketSettings(builder -> builder.readTimeout(500, TimeUnit.MILLISECONDS)))) {
+
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
+
+            MongoCursor<Document> cursor = collection.find()
+                    .batchSize(1)
+                    .cursor();
+
+            cursor.next();
+            assertThrows(MongoSocketReadTimeoutException.class, cursor::next);
+            cursor.close();
+        }
+
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
+        assertEquals(2, events.size(), "Actual events: " + events.stream()
+                .map(CommandStartedEvent::getCommandName)
+                .collect(Collectors.toList()));
+        assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
+        assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
+
+    }
+
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @DisplayName("KillCursors is not executed after getMore network error")
+    @Test
+    public void testKillCursorsIsNotExecutedAfterGetMoreNetworkError() {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        assumeTrue(isServerlessTest());
+
+        long rtt = ClusterFixture.getPrimaryRTT();
+        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
+        collectionHelper.insertDocuments(new Document(), new Document());
+        collectionHelper.runAdminCommand("{"
+                + "    configureFailPoint: \"failCommand\","
+                + "    mode: { times: 1},"
+                + "    data: {"
+                + "        failCommands: [\"getMore\" ],"
+                + "        blockConnection: true,"
+                + "        blockTimeMS: " + (rtt + 600)
+                + "    }"
+                + "}");
+
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .timeout(500, TimeUnit.MILLISECONDS))) {
+
+            MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
+                    .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
+
+            MongoCursor<Document> cursor = collection.find()
+                    .batchSize(1)
+                    .cursor();
+
+            cursor.next();
+            assertThrows(MongoOperationTimeoutException.class, cursor::next);
+            cursor.close();
+        }
+
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
+        assertEquals(2, events.size(), "Actual events: " + events.stream()
+                .map(CommandStartedEvent::getCommandName)
+                .collect(Collectors.toList()));
+        assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("find")).count());
+        assertEquals(1, events.stream().filter(e -> e.getCommandName().equals("getMore")).count());
+
+    }
+
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
@@ -833,6 +928,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
             collectionHelper.drop();
             filesCollectionHelper.drop();
             chunksCollectionHelper.drop();
+            commandListener.reset();
             try {
                 ServerHelper.checkPool(getPrimary());
             } catch (InterruptedException e) {

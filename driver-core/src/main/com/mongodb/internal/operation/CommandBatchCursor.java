@@ -19,6 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -333,6 +334,12 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 action.accept(connection);
             } catch (MongoSocketException e) {
                 onCorruptedConnection(connection, e);
+                throw e;
+            } catch (MongoOperationTimeoutException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof MongoSocketException) {
+                    onCorruptedConnection(connection, (MongoSocketException) cause);
+                }
                 throw e;
             } finally {
                 connection.release();

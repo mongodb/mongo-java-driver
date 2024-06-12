@@ -17,6 +17,8 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.MongoSocketException;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -35,6 +37,15 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class ExceptionUtils {
+
+    public static boolean isMongoSocketException(final Throwable e) {
+        return e instanceof MongoSocketException;
+    }
+
+    public static boolean isOperationTimeoutFromSocketException(final Throwable e) {
+        return e instanceof MongoOperationTimeoutException && e.getCause() instanceof MongoSocketException;
+    }
+
     public static final class MongoCommandExceptionUtils {
         public static int extractErrorCode(final BsonDocument response) {
             return extractErrorCodeAsBson(response).intValue();

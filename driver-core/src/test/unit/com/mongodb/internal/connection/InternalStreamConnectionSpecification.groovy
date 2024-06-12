@@ -20,9 +20,11 @@ import com.mongodb.MongoCommandException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoInterruptedException
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoOperationTimeoutException
 import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketReadException
+import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
@@ -38,6 +40,7 @@ import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
 import com.mongodb.internal.ExceptionUtils.MongoCommandExceptionUtils
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
@@ -57,6 +60,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
@@ -452,6 +456,88 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         thrown(MongoSocketReadException)
+        connection.isClosed()
+    }
+
+    def 'Should throw timeout exception with underlying socket exception as a cause when Stream.read throws SocketException'() {
+        given:
+        stream.read(_, _) >> { throw new SocketTimeoutException() }
+        def connection = getOpenedConnection()
+
+        when:
+        connection.receiveMessage(1, OPERATION_CONTEXT.withTimeoutContext(
+                new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT)))
+
+        then:
+        def timeoutException = thrown(MongoOperationTimeoutException)
+        def mongoSocketReadTimeoutException = timeoutException.getCause()
+        mongoSocketReadTimeoutException instanceof MongoSocketReadTimeoutException
+        mongoSocketReadTimeoutException.getCause() instanceof SocketTimeoutException
+
+        connection.isClosed()
+    }
+
+    def 'Should wrap MongoSocketReadTimeoutException with MongoOperationTimeoutException'() {
+        given:
+        stream.read(_, _) >> { throw new MongoSocketReadTimeoutException("test", new ServerAddress(), null) }
+        def connection = getOpenedConnection()
+
+        when:
+        connection.receiveMessage(1, OPERATION_CONTEXT.withTimeoutContext(
+                new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT)))
+
+        then:
+        def timeoutException = thrown(MongoOperationTimeoutException)
+        def mongoSocketReadTimeoutException = timeoutException.getCause()
+        mongoSocketReadTimeoutException instanceof MongoSocketReadTimeoutException
+        mongoSocketReadTimeoutException.getCause() == null
+
+        connection.isClosed()
+    }
+
+
+    def 'Should wrap SocketException with timeout exception when Stream.read throws SocketException async'() {
+        given:
+        stream.readAsync(_ , _, _) >> { numBytes, operationContext, handler ->
+            handler.failed(new SocketTimeoutException())
+        }
+        def connection = getOpenedConnection()
+        def callback = new FutureResultCallback()
+        def operationContext = OPERATION_CONTEXT.withTimeoutContext(
+                new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
+        when:
+        connection.receiveMessageAsync(1, operationContext, callback)
+        callback.get()
+
+        then:
+        def timeoutException = thrown(MongoOperationTimeoutException)
+        def mongoSocketReadTimeoutException = timeoutException.getCause()
+        mongoSocketReadTimeoutException instanceof MongoSocketReadTimeoutException
+        mongoSocketReadTimeoutException.getCause() instanceof SocketTimeoutException
+
+        connection.isClosed()
+    }
+
+    def 'Should wrap MongoSocketReadTimeoutException with MongoOperationTimeoutException async'() {
+        given:
+        stream.readAsync(_, _, _) >> { numBytes, operationContext, handler ->
+            handler.failed(new MongoSocketReadTimeoutException("test", new ServerAddress(), null))
+        }
+
+        def connection = getOpenedConnection()
+        def callback = new FutureResultCallback()
+        def operationContext = OPERATION_CONTEXT.withTimeoutContext(
+                new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
+        when:
+        connection.receiveMessageAsync(1, operationContext, callback)
+        callback.get()
+
+        then:
+        def timeoutException = thrown(MongoOperationTimeoutException)
+        def mongoSocketReadTimeoutException = timeoutException.getCause()
+        mongoSocketReadTimeoutException instanceof MongoSocketReadTimeoutException
+        mongoSocketReadTimeoutException.getCause() == null
+
         connection.isClosed()
     }
 
