@@ -141,6 +141,28 @@ class ConnectionStringSpecification extends Specification {
                 .withWTimeout(5, MILLISECONDS).withJournal(true)
     }
 
+    @Unroll
+    def 'should treat trailing slash before query parameters as optional'() {
+        expect:
+        uri.getApplicationName() == appName
+        uri.getDatabase() == db
+
+        where:
+        uri                                                              | appName | db
+        new ConnectionString('mongodb://mongodb.com')                    | null    | null
+        new ConnectionString('mongodb://mongodb.com?')                   | null    | null
+        new ConnectionString('mongodb://mongodb.com/')                   | null    | null
+        new ConnectionString('mongodb://mongodb.com/?')                  | null    | null
+        new ConnectionString('mongodb://mongodb.com/test')               | null    | "test"
+        new ConnectionString('mongodb://mongodb.com/test?')              | null    | "test"
+        new ConnectionString('mongodb://mongodb.com/?appName=a1')        | "a1"    | null
+        new ConnectionString('mongodb://mongodb.com?appName=a1')         | "a1"    | null
+        new ConnectionString('mongodb://mongodb.com/?appName=a1/a2')     | "a1/a2" | null
+        new ConnectionString('mongodb://mongodb.com?appName=a1/a2')      | "a1/a2" | null
+        new ConnectionString('mongodb://mongodb.com/test?appName=a1')    | "a1"    | "test"
+        new ConnectionString('mongodb://mongodb.com/test?appName=a1/a2') | "a1/a2" | "test"
+    }
+
     def 'should correctly parse different UUID representations'() {
         expect:
         uri.getUuidRepresentation() == uuidRepresentation
@@ -473,7 +495,6 @@ class ConnectionStringSpecification extends Specification {
         'has an empty host'                             | 'mongodb://localhost:27017,,localhost:27019'
         'has an malformed IPv6 host'                    | 'mongodb://[::1'
         'has unescaped colons'                          | 'mongodb://locahost::1'
-        'is missing a slash'                            | 'mongodb://localhost?wTimeout=5'
         'contains an invalid port string'               | 'mongodb://localhost:twenty'
         'contains an invalid port negative'             | 'mongodb://localhost:-1'
         'contains an invalid port out of range'         | 'mongodb://localhost:1000000'
