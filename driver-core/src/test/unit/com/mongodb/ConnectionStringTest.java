@@ -39,6 +39,7 @@ public class ConnectionStringTest extends AbstractConnectionStringTest {
 
     @Test
     public void shouldPassAllOutcomes() {
+        // Java driver currently throws an IllegalArgumentException for these tests
         assumeFalse(getDescription().equals("Empty integer option values are ignored"));
         assumeFalse(getDescription().equals("Comma in a key value pair causes a warning"));
 
