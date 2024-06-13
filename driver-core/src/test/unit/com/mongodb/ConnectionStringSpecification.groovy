@@ -159,7 +159,6 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://mongodb.com?appName=a1')         | "a1"    | null
         new ConnectionString('mongodb://mongodb.com/?appName=a1/a2')     | "a1/a2" | null
         new ConnectionString('mongodb://mongodb.com?appName=a1/a2')      | "a1/a2" | null
-        new ConnectionString('mongodb://mongodb.com/test?appName=a1/a2') | "a1/a2" | "test"
         new ConnectionString('mongodb://mongodb.com/test?appName=a1')    | "a1"    | "test"
         new ConnectionString('mongodb://mongodb.com/test?appName=a1/a2') | "a1/a2" | "test"
     }

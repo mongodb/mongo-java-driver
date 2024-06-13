@@ -370,14 +370,13 @@ public class ConnectionString {
         String userAndHostInformation;
         int firstForwardSlashIdx = unprocessedConnectionString.indexOf("/");
         int firstQuestionMarkIdx = unprocessedConnectionString.indexOf("?");
-        if (firstForwardSlashIdx == -1 || (firstQuestionMarkIdx != -1 && firstQuestionMarkIdx < firstForwardSlashIdx)) {
-            if (firstQuestionMarkIdx == -1) {
-                userAndHostInformation = unprocessedConnectionString;
-                unprocessedConnectionString = "";
-            } else {
-                userAndHostInformation = unprocessedConnectionString.substring(0, firstQuestionMarkIdx);
-                unprocessedConnectionString = unprocessedConnectionString.substring(firstQuestionMarkIdx);
-            }
+        if (firstQuestionMarkIdx == -1 && firstForwardSlashIdx == -1) {
+            userAndHostInformation = unprocessedConnectionString;
+            unprocessedConnectionString = "";
+        } else if (firstQuestionMarkIdx != -1 && (firstForwardSlashIdx == -1 || firstQuestionMarkIdx < firstForwardSlashIdx)) {
+            // there is a question mark, and there is no slash or the question mark comes before any slash
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstQuestionMarkIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstQuestionMarkIdx);
         } else {
             userAndHostInformation = unprocessedConnectionString.substring(0, firstForwardSlashIdx);
             unprocessedConnectionString = unprocessedConnectionString.substring(firstForwardSlashIdx + 1);
