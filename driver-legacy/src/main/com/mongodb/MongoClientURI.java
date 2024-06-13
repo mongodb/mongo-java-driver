@@ -42,8 +42,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
@@ -62,8 +61,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
  * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
