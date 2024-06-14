@@ -26,8 +26,8 @@ jobs:
 
       - uses: mongodb-labs/drivers-github-tools/secure-checkout@v2
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app_id: ${{ vars.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: "Store version numbers in env variables"
         # The awk command to increase the version number was copied from
