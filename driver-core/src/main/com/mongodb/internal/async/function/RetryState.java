@@ -197,8 +197,7 @@ public final class RetryState {
          * A MongoOperationTimeoutException indicates that the operation timed out, either during command execution or server selection.
          * The timeout for server selection is determined by the computedServerSelectionMS = min(serverSelectionTimeoutMS, timeoutMS).
          *
-         * The isLastAttempt() method checks if the timeoutMS has expired, which could be greater than the computedServerSelectionMS.
-         * Therefore, it's important to check if the exception is an instance of MongoOperationTimeoutException to detect a timeout.
+         * It is important to check if the exception is an instance of MongoOperationTimeoutException to detect a timeout.
          */
         if (isLastAttempt() || attemptException instanceof MongoOperationTimeoutException) {
             previouslyChosenException = newlyChosenException;
