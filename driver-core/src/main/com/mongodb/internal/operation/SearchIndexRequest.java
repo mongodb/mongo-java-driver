@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.client.model.SearchIndexType;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -34,11 +35,21 @@ final class SearchIndexRequest {
     private final BsonDocument definition;
     @Nullable
     private final String indexName;
+    @Nullable
+    private final SearchIndexType searchIndexType;
+
+    SearchIndexRequest(final BsonDocument definition, @Nullable final String indexName, final SearchIndexType searchIndexType) {
+        assertNotNull(definition);
+        this.definition = definition;
+        this.indexName = indexName;
+        this.searchIndexType = searchIndexType;
+    }
 
     SearchIndexRequest(final BsonDocument definition, @Nullable final String indexName) {
         assertNotNull(definition);
         this.definition = definition;
         this.indexName = indexName;
+        this.searchIndexType = null;
     }
 
     public BsonDocument getDefinition() {
@@ -49,4 +60,9 @@ final class SearchIndexRequest {
     public String getIndexName() {
         return indexName;
     }
+    @Nullable
+    public SearchIndexType getSearchIndexType() {
+        return searchIndexType;
+    }
+
 }

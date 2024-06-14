@@ -19,7 +19,7 @@ package org.mongodb.scala
 import com.mongodb.annotations.{ Beta, Sealed }
 
 import scala.collection.JavaConverters._
-import com.mongodb.client.model.{ GeoNearOptions, MongoTimeUnit => JMongoTimeUnit, WindowOutputField }
+import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, SearchIndexType }
 import org.mongodb.scala.bson.conversions.Bson
 
 // scalastyle:off number.of.methods number.of.types
@@ -482,6 +482,11 @@ package object model {
   type SearchIndexModel = com.mongodb.client.model.SearchIndexModel
 
   /**
+   * Represents an Atlas Search Index type, which is utilized for creating specific types of indexes.
+   */
+  type SearchIndexType = com.mongodb.client.model.SearchIndexType
+
+  /**
    * A model describing the creation of a single Atlas Search index.
    */
   object SearchIndexModel {
@@ -499,6 +504,20 @@ package object model {
     def apply(definition: Bson): SearchIndexModel = new com.mongodb.client.model.SearchIndexModel(definition)
 
     /**
+     * Construct an instance with the given Atlas Search index mapping definition.
+     *
+     * After calling this constructor, the `name` field will be `null`. In that case, when passing this
+     * `SearchIndexModel` to the `createSearchIndexes` method, the default search index name `default`
+     * will be used to create the search index.
+     *
+     * @param definition the search index mapping definition.
+     * @param indexType  the search index type.
+     * @return the SearchIndexModel
+     */
+    def apply(definition: Bson, indexType: SearchIndexType): SearchIndexModel =
+      new com.mongodb.client.model.SearchIndexModel(definition, SearchIndexType)
+
+    /**
      * Construct an instance with the given search index name and definition.
      *
      * @param indexName the name of the search index to create.
@@ -507,6 +526,17 @@ package object model {
      */
     def apply(indexName: String, definition: Bson): SearchIndexModel =
       new com.mongodb.client.model.SearchIndexModel(indexName, definition)
+
+    /**
+     * Construct an instance with the given search index name and definition.
+     *
+     * @param indexName the name of the search index to create.
+     * @param definition the search index mapping definition.
+     * @param indexType  the search index type.
+     * @return the SearchIndexModel
+     */
+    def apply(indexName: String, definition: Bson, indexType: SearchIndexType): SearchIndexModel =
+      new com.mongodb.client.model.SearchIndexModel(indexName, definition, indexType)
   }
 
   /**
