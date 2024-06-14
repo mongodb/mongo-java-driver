@@ -16,6 +16,8 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT;
 import static com.mongodb.ClusterFixture.sleep;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -182,9 +185,13 @@ final class TimeoutContextTest {
                 new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(9999999L));
         TimeoutContext noTimeout = new TimeoutContext(TIMEOUT_SETTINGS);
         sleep(100);
-        assertFalse(noTimeout.hasExpired());
-        assertFalse(longTimeout.hasExpired());
-        assertTrue(smallTimeout.hasExpired());
+        assertFalse(hasExpired(noTimeout.getTimeout()));
+        assertFalse(hasExpired(longTimeout.getTimeout()));
+        assertTrue(hasExpired(smallTimeout.getTimeout()));
+    }
+
+    private static boolean hasExpired(@Nullable final Timeout timeout) {
+        return Timeout.nullAsInfinite(timeout).call(NANOSECONDS, () -> false, (ns) -> false, () -> true);
     }
 
     @Test

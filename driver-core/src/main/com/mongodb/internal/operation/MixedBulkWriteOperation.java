@@ -443,7 +443,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     public static final class BulkWriteTracker {
         private int attempt;
         private final int attempts;
-        private final TimeoutContext timeoutContext;
+        private final boolean retryUntilTimeoutThrowsException;
         @Nullable
         private final BulkWriteBatch batch;
 
@@ -475,12 +475,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             attempt = 0;
             attempts = retry ? RetryState.RETRIES + 1 : 1;
             this.batch = batch;
-            this.timeoutContext = timeoutContext;
+            this.retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();;
         }
 
         boolean lastAttempt() {
-            if (timeoutContext.hasTimeoutMS()){
-                return timeoutContext.hasExpired();
+            if (retryUntilTimeoutThrowsException){
+                return false;
             }
             return attempt == attempts - 1;
         }

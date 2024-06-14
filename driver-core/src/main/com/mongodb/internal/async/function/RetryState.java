@@ -51,8 +51,7 @@ public final class RetryState {
 
     private final LoopState loopState;
     private final int attempts;
-    @Nullable
-    private final TimeoutContext timeoutContext;
+    private final boolean retryUntilTimeoutThrowsException;
     @Nullable
     private Throwable previouslyChosenException;
 
@@ -63,7 +62,7 @@ public final class RetryState {
      * If a timeout is not specified in the {@link TimeoutContext#hasTimeoutMS()}, the specified {@code retries} param acts as a fallback
      * bound. Otherwise, retries are unbounded until the timeout is reached.
      * <p>
-     * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)} method,
+     * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow} method,
      * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
      * </p>
      *
@@ -87,7 +86,7 @@ public final class RetryState {
      * Creates a {@link RetryState} that does not limit the number of retries.
      * The number of attempts is limited iff {@link TimeoutContext#hasTimeoutMS()} is true and timeout has expired.
      * <p>
-     * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)} method,
+     * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow} method,
      * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
      * </p>
      *
@@ -107,7 +106,7 @@ public final class RetryState {
         assertTrue(retries >= 0);
         loopState = new LoopState();
         attempts = retries == INFINITE_ATTEMPTS ? INFINITE_ATTEMPTS : retries + 1;
-        this.timeoutContext = timeoutContext;
+        this.retryUntilTimeoutThrowsException = timeoutContext != null && timeoutContext.hasTimeoutMS();
     }
 
     /**
@@ -198,16 +197,16 @@ public final class RetryState {
          * A MongoOperationTimeoutException indicates that the operation timed out, either during command execution or server selection.
          * The timeout for server selection is determined by the computedServerSelectionMS = min(serverSelectionTimeoutMS, timeoutMS).
          *
-         * The isLastAttempt() method checks if the timeoutMS has expired, which could be greater than the computedServerSelectionMS.
-         * Therefore, it's important to check if the exception is an instance of MongoOperationTimeoutException to detect a timeout.
+         * It is important to check if the exception is an instance of MongoOperationTimeoutException to detect a timeout.
          */
         if (isLastAttempt() || attemptException instanceof MongoOperationTimeoutException) {
             previouslyChosenException = newlyChosenException;
             /*
-             * The function of isLastIteration() is to indicate if retrying has been explicitly halted. Such a stop is not interpreted as
+             * The function of isLastIteration() is to indicate if retrying has
+             * been explicitly halted. Such a stop is not interpreted as
              * a timeout exception but as a deliberate cessation of retry attempts.
              */
-            if (hasTimeoutMs() && !loopState.isLastIteration()) {
+            if (retryUntilTimeoutThrowsException && !loopState.isLastIteration()) {
                 previouslyChosenException = createMongoTimeoutException(
                         "Retry attempt exceeded the timeout limit.",
                         previouslyChosenException);
@@ -381,14 +380,10 @@ public final class RetryState {
         if (loopState.isLastIteration()){
             return true;
         }
-        if (hasTimeoutMs()) {
-           return assertNotNull(timeoutContext).hasExpired();
+        if (retryUntilTimeoutThrowsException) {
+           return false;
         }
         return attempt() == attempts - 1;
-    }
-
-    private boolean hasTimeoutMs() {
-        return timeoutContext != null && timeoutContext.hasTimeoutMS();
     }
 
     /**
