@@ -448,19 +448,16 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         private final BulkWriteBatch batch;
 
         static void attachNew(final RetryState retryState, final boolean retry, final TimeoutContext timeoutContext) {
-            boolean retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
-            retryState.attach(AttachmentKeys.bulkWriteTracker(), new BulkWriteTracker(retry, null, retryUntilTimeoutThrowsException), false);
+            retryState.attach(AttachmentKeys.bulkWriteTracker(), new BulkWriteTracker(retry, null, timeoutContext), false);
         }
 
         static void attachNew(final RetryState retryState, final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
-            boolean retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
-            attach(retryState, new BulkWriteTracker(batch.getRetryWrites(), batch, retryUntilTimeoutThrowsException));
+            attach(retryState, new BulkWriteTracker(batch.getRetryWrites(), batch, timeoutContext));
         }
 
         static BulkWriteTracker attachNext(final RetryState retryState, final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
-            boolean retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
             BulkWriteBatch nextBatch = batch.getNextBatch();
-            BulkWriteTracker nextTracker = new BulkWriteTracker(nextBatch.getRetryWrites(), nextBatch, retryUntilTimeoutThrowsException);
+            BulkWriteTracker nextTracker = new BulkWriteTracker(nextBatch.getRetryWrites(), nextBatch, timeoutContext);
             attach(retryState, nextTracker);
             return nextTracker;
         }
@@ -474,11 +471,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             }
         }
 
-        private BulkWriteTracker(final boolean retry, @Nullable final BulkWriteBatch batch, final boolean retryUntilTimeoutThrowsException) {
+        private BulkWriteTracker(final boolean retry, @Nullable final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
             attempt = 0;
             attempts = retry ? RetryState.RETRIES + 1 : 1;
             this.batch = batch;
-            this.retryUntilTimeoutThrowsException = retryUntilTimeoutThrowsException;
+            this.retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();;
         }
 
         boolean lastAttempt() {
