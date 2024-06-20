@@ -59,7 +59,7 @@ jobs:
 
       - name: "Ensure current snapshot version matches release version"
         run: |
-          grep -q "version = '${RELEASE_VERSION_WITHOUT_SUFFIX}-SNAPSHOT'" build.gradle
+          grep -q "version = '${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT'" build.gradle
           if [[ $? != 0 ]]; then
             echo '❌ Release failed: version in build.gradle is not a snapshot for release version ${{ inputs.version }}' >> $GITHUB_STEP_SUMMARY
             exit 1
@@ -67,7 +67,7 @@ jobs:
 
       - name: "Ensure release tag does not already exist"
         run: |
-          if [[ $(git tag -l r${RELEASE_VERSION}) == r${RELEASE_VERSION} ]]; then
+          if [[ $(git tag -l r${{ env.RELEASE_VERSION }}) == r${{ env.RELEASE_VERSION }} ]]; then
             echo '❌ Release failed: tag for version ${{ inputs.version }} already exists' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
@@ -117,7 +117,7 @@ jobs:
 
       - name: "Push release branch and tag"
         run: |
-          git push origin ${RELEASE_BRANCH}
+          git push origin ${{ env.RELEASE_BRANCH }}
           git push origin r${{ env.RELEASE_VERSION }}
 
       - name: "Create draft release with generated changelog"
