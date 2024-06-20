@@ -48,7 +48,7 @@ jobs:
         run: |
           echo RELEASE_VERSION=${{ inputs.version }} >> $GITHUB_ENV
           echo RELEASE_VERSION_WITHOUT_SUFFIX=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
-          if [[ "${{ inputs.version }}" =~ (alpha|beta)[0-9]+$ ]]; then
+          if [[ "${{ inputs.version }}" =~ (alpha|beta|rc)[0-9]+$ ]]; then
             echo NEXT_VERSION=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
           else
             echo NEXT_VERSION=$(echo ${{ inputs.version }} | awk -F. -v OFS=. '{$NF += 1 ; print}') >> $GITHUB_ENV
@@ -112,7 +112,7 @@ jobs:
 
       - name: "Create draft release with generated changelog"
         run: |
-          if [[ "${{ inputs.version }}" =~ (alpha|beta) ]]; then
+          if [[ "${{ inputs.version }}" =~ (alpha|beta|rc) ]]; then
             PRERELEASE="--prerelease --latest=false"
           fi
           echo "RELEASE_URL=$(\
