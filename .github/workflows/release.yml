@@ -103,7 +103,7 @@ jobs:
 
       # This step bumps version numbers in build.gradle and creates git artifacts for the release
       - name: "Bump version numbers and create release tag"
-        run: .github/workflows/bump-and-tag.sh
+        run: .github/workflows/bump-and-tag.sh "${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}" "${{ env.RELEASE_VERSION }}" "${{ env.NEXT_VERSION }}"
 
       - name: "Push release branch and tag"
         run: |
