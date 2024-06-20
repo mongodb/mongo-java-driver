@@ -55,6 +55,14 @@ jobs:
           fi
           echo RELEASE_BRANCH=$(echo ${{ inputs.version }} | awk -F. -v OFS=. '{$NF = "x" ; print}') >> $GITHUB_ENV
 
+      - name: "Ensure current snapshot version matches release version"
+        run: |
+          grep -q "version = '${RELEASE_VERSION_WITHOUT_SUFFIX}-SNAPSHOT'" build.gradle
+          if [[ $? != 0 ]]; then
+            echo '❌ Release failed: version in build.gradle is not a snapshot for release version ${{ inputs.version }}' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
       - name: "Ensure release tag does not already exist"
         run: |
           if [[ $(git tag -l r${RELEASE_VERSION}) == r${RELEASE_VERSION} ]]; then
