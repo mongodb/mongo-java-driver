@@ -36,9 +36,23 @@ jobs:
       - name: "Store version numbers in env variables"
         # The awk command to increase the version number was copied from
         # StackOverflow: https://stackoverflow.com/a/61921674/3959933
+        # Variables set here:
+        # RELEASE_VERSION: The version the deployment is expected to create
+        # RELEASE_VERSION_WITHOUT_SUFFIX: The version without any stability
+        #   suffixes. Example: 5.2.0-beta0 => 5.2.0
+        # NEXT_VERSION: The next version to be released. For pre-releases, the
+        #   next version is a snapshot of the pre-release version. Examples:
+        #   5.2.0 => 5.2.1; 5.2.0-beta0 => 5.2.0
+        # RELEASE_BRANCH: The name of the stable branch for this release series
+        #   Example: 5.2.0 => 5.2.x
         run: |
           echo RELEASE_VERSION=${{ inputs.version }} >> $GITHUB_ENV
-          echo NEXT_VERSION=$(echo ${{ inputs.version }} | awk -F. -v OFS=. '{$NF += 1 ; print}') >> $GITHUB_ENV
+          echo RELEASE_VERSION_WITHOUT_SUFFIX=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
+          if [[ "${{ inputs.version }}" =~ (alpha|beta)[0-9]+$ ]]; then
+            echo NEXT_VERSION=$(echo ${{ inputs.version }} | awk -F- '{print $1}') >> $GITHUB_ENV
+          else
+            echo NEXT_VERSION=$(echo ${{ inputs.version }} | awk -F. -v OFS=. '{$NF += 1 ; print}') >> $GITHUB_ENV
+          fi
           echo RELEASE_BRANCH=$(echo ${{ inputs.version }} | awk -F. -v OFS=. '{$NF = "x" ; print}') >> $GITHUB_ENV
 
       - name: "Ensure release tag does not already exist"
@@ -49,17 +63,19 @@ jobs:
           fi
 
       # For patch releases (A.B.C where C != 0), we expect the release to be
-      # triggered from the A.B.x maintenance branch
+      # triggered from the A.B.x maintenance branch. We use the release version
+      # without suffixes to avoid mistakes when making pre-releases
       - name: "Fail if patch release is created from wrong release branch"
-        if: ${{ !endsWith(inputs.version, '.0') && env.RELEASE_BRANCH != github.ref_name }}
+        if: ${{ !endsWith(env.RELEASE_VERSION_WITHOUT_SUFFIX, '.0') && env.RELEASE_BRANCH != github.ref_name }}
         run: |
           echo '❌ Release failed due to branch mismatch: expected ${{ inputs.version }} to be released from ${{ env.RELEASE_BRANCH }}, got ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
           exit 1
 
       # For non-patch releases (A.B.C where C == 0), we expect the release to
-      # be triggered from master or the A.B.x maintenance branch
+      # be triggered from master or the A.B.x maintenance branch. This includes
+      # pre-releases for any non-patch releases, e.g. 5.2.0-beta1
       - name: "Fail if non-patch release is created from wrong release branch"
-        if: ${{ endsWith(inputs.version, '.0') && env.RELEASE_BRANCH != github.ref_name && github.ref_name != 'master' }}
+        if: ${{ endsWith(env.RELEASE_VERSION_WITHOUT_SUFFIX, '.0') && env.RELEASE_BRANCH != github.ref_name && github.ref_name != 'master' }}
         run: |
           echo '❌ Release failed due to branch mismatch: expected ${{ inputs.version }} to be released from ${{ env.RELEASE_BRANCH }} or master, got ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
           exit 1
@@ -67,9 +83,9 @@ jobs:
       # If a non-patch release is created from a branch other than its
       # maintenance branch, create that branch from the current one and push it
       - name: "Create new release branch for non-patch release"
-        if: ${{ endsWith(inputs.version, '.0') && env.RELEASE_BRANCH != github.ref_name }}
+        if: ${{ endsWith(env.RELEASE_VERSION_WITHOUT_SUFFIX, '.0') && env.RELEASE_BRANCH != github.ref_name }}
         run: |
-          echo '🆕 Creating new release branch ${RELEASE_BRANCH} from ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
+          echo '🆕 Creating new release branch ${{ env.RELEASE_BRANCH }} from ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
           git checkout -b ${RELEASE_BRANCH}
 
       - name: "Set git author information"
@@ -88,8 +104,12 @@ jobs:
 
       - name: "Create draft release with generated changelog"
         run: |
+          if [[ "${{ inputs.version }}" =~ (alpha|beta) ]]; then
+            PRERELEASE="--prerelease --latest=false"
+          fi
           echo "RELEASE_URL=$(\
           gh release create r${RELEASE_VERSION} \
+            ${PRERELEASE} \
             --target ${{ env.RELEASE_BRANCH }} \
             --title "Java Driver ${{ env.RELEASE_VERSION }} ($(date '+%B %d, %Y'))" \
             --generate-notes \
