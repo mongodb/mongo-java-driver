@@ -18,13 +18,16 @@ package com.mongodb.client.unified;
 
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.vault.DataKeyOptions;
+import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.vault.ClientEncryption;
 import org.bson.BsonArray;
+import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import java.util.ArrayList;
@@ -60,8 +63,13 @@ public final class UnifiedClientEncryptionHelper {
             Map<String, Object> kmsProviderMap = new HashMap<>();
             switch (kmsProviderKey) {
                 case "aws":
+                case "aws:name1":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_ACCESS_KEY_ID");
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_SECRET_ACCESS_KEY");
+                    break;
+                case "aws:name2":
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_ACCESS_KEY_ID_2");
+                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_SECRET_ACCESS_KEY_2");
                     break;
                 case "awsTemporary":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "accessKeyId", "AWS_TEMP_ACCESS_KEY_ID");
@@ -73,20 +81,28 @@ public final class UnifiedClientEncryptionHelper {
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "secretAccessKey", "AWS_TEMP_SECRET_ACCESS_KEY");
                     break;
                 case "azure":
+                case "azure:name1":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "tenantId", "AZURE_TENANT_ID");
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientId", "AZURE_CLIENT_ID");
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "clientSecret", "AZURE_CLIENT_SECRET");
                     break;
                 case "gcp":
+                case "gcp:name1":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "email", "GCP_EMAIL");
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "privateKey", "GCP_PRIVATE_KEY");
                     break;
                 case "kmip":
+                case "kmip:name1":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "endpoint", () ->
                             getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
+                case "local:name1":
                     setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "key", UnifiedClientEncryptionHelper::localKmsProviderKey);
+                    break;
+                case "local:name2":
+                    String key = kmsProviderOptions.getString("key").getValue();
+                    setLocalKmsProviderPropertyOrRejectPlaceholder(kmsProviderMap, kmsProviderOptions, "key", () -> decodeLocalKmsProviderKey(key));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProviderKey);
@@ -97,10 +113,14 @@ public final class UnifiedClientEncryptionHelper {
     }
 
     public static byte[] localKmsProviderKey() {
-        return Base64.getDecoder().decode(
-                "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
-                        + "GJkTXVyZG9uSjFk");
+        return decodeLocalKmsProviderKey("Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
+                + "GJkTXVyZG9uSjFk");
     }
+
+    public static byte[] decodeLocalKmsProviderKey(final String key) {
+        return Base64.getDecoder().decode(key);
+    }
+
 
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
             final BsonDocument kmsProviderOptions, final String key, final String propertyName) {
@@ -119,6 +139,19 @@ public final class UnifiedClientEncryptionHelper {
                 kmsProviderMap.put(key, propertySupplier.get());
             } else {
                 throw new UnsupportedOperationException("Missing key handler for: " + key + " :: " + kmsProviderOptions.toJson());
+            }
+        }
+    }
+
+    private static void setLocalKmsProviderPropertyOrRejectPlaceholder(final Map<String, Object> kmsProviderMap,
+                                               final BsonDocument kmsProviderOptions,
+                                               final String key,
+                                               final Supplier<Object> propertySupplier) {
+        if (kmsProviderOptions.containsKey(key)) {
+            if (kmsProviderOptions.get(key).equals(PLACEHOLDER)) {
+                throw new UnsupportedOperationException("Placeholder is not supported for: " + key + " :: " + kmsProviderOptions.toJson());
+            } else {
+                kmsProviderMap.put(key, propertySupplier.get());
             }
         }
     }
@@ -205,6 +238,38 @@ public final class UnifiedClientEncryptionHelper {
             }
         }
         return resultOf(() ->  toExpected(clientEncryption.rewrapManyDataKey(filter, rewrapManyDataKeyOptions)));
+    }
+
+    OperationResult executeEncrypt(final BsonDocument operation) {
+        ClientEncryption clientEncryption = entities.getClientEncryption(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        BsonDocument options = arguments.getDocument("opts", new BsonDocument());
+
+        BsonString value = arguments.getString("value");
+        String algorithm =  options.remove("algorithm")
+                .asString()
+                .getValue();
+
+        EncryptOptions encryptOptions = new EncryptOptions(algorithm);
+        for (String key : options.keySet()) {
+            switch (key) {
+                case "keyAltName":
+                    encryptOptions.keyAltName(options.getString("keyAltName").getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Missing key handler for: " + key + " :: " + options.toJson());
+            }
+        }
+        return resultOf(() ->  clientEncryption.encrypt(value, encryptOptions));
+    }
+
+
+    OperationResult executeDecrypt(final BsonDocument operation) {
+        ClientEncryption clientEncryption = entities.getClientEncryption(operation.getString("object").getValue());
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        BsonBinary value = arguments.getBinary("value");
+
+        return resultOf(() ->  clientEncryption.decrypt(value));
     }
 
     private BsonDocument toExpected(final DeleteResult result) {

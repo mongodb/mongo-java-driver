@@ -264,6 +264,8 @@ functions:
         env:
           AWS_ACCESS_KEY_ID: ${aws_access_key_id}
           AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_ACCESS_KEY_ID_2: ${aws_access_key_id_2}
+          AWS_SECRET_ACCESS_KEY_2: ${aws_secret_access_key_2}
           AWS_DEFAULT_REGION: us-east-1
           AZURE_TENANT_ID: ${azure_tenant_id}
           AZURE_CLIENT_ID: ${azure_client_id}
@@ -695,6 +697,9 @@ functions:
         env:
           AWS_ACCESS_KEY_ID: ${aws_access_key_id}
           AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+           ##//TODO: Double check if these variables are needed here
+          AWS_ACCESS_KEY_ID_2: ${aws_access_key_id_2}
+          AWS_SECRET_ACCESS_KEY_2: ${aws_secret_access_key_2}
         script: |
           ${PREPARE_SHELL}
           set +o xtrace
@@ -708,6 +713,8 @@ functions:
         env:
           AWS_ACCESS_KEY_ID: ${aws_access_key_id}
           AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_ACCESS_KEY_ID_2: ${aws_access_key_id_2}
+          AWS_SECRET_ACCESS_KEY_2: ${aws_secret_access_key_2}
           AWS_DEFAULT_REGION: us-east-1
           AZURE_TENANT_ID: ${azure_tenant_id}
           AZURE_CLIENT_ID: ${azure_client_id}
