@@ -46,7 +46,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
+/**
+ * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#10-kms-tls-tests">
+ * 10. KMS TLS Tests</a>.
+ */
 public abstract class AbstractClientSideEncryptionKmsTlsTest {
 
     private static final String SYSTEM_PROPERTY_KEY = "org.mongodb.test.kms.tls.error.type";
@@ -120,6 +123,10 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
         }
     }
 
+    /**
+     * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#11-kms-tls-options-tests">
+     * 11. KMS TLS Options Tests</a>.
+     */
     @Test()
     public void testThatCustomSslContextIsUsed() {
         assumeTrue(serverVersionAtLeast(4, 2));
