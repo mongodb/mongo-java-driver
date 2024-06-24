@@ -105,7 +105,7 @@ jobs:
           echo '🆕 Creating new release branch ${{ env.RELEASE_BRANCH }} from ${{ github.ref_name }}' >> $GITHUB_STEP_SUMMARY
           git checkout -b ${{ env.RELEASE_BRANCH }}
           NEXT_MINOR_VERSION=$(echo "${{ env.RELEASE_VERSION }}" | awk -F. -v OFS=. '{$2 += 1 ; $NF = 0 ; print}')
-          echo '➡️ Bumping version for ${{ github.ref_name }} branch to ${NEXT_MINOR_VERSION}' >> $GITHUB_STEP_SUMMARY
+          echo "➡️ Bumping version for ${{ github.ref_name }} branch to ${NEXT_MINOR_VERSION}" >> $GITHUB_STEP_SUMMARY
           git checkout ${{ github.ref_name }}
           .github/workflows/bump-version.sh "${{ env.RELEASE_VERSION_WITHOUT_SUFFIX }}-SNAPSHOT" "${NEXT_MINOR_VERSION}-SNAPSHOT"
           git push origin ${{ github.ref_name }}
