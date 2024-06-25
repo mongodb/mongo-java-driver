@@ -28,6 +28,28 @@ declare -r SSDLC_STATIC_ANALYSIS_REPORTS_PATH="${SSDLC_PATH}/static-analysis-rep
 mkdir "${SSDLC_PATH}"
 mkdir "${SSDLC_STATIC_ANALYSIS_REPORTS_PATH}"
 
+declare -r EVERGREEN_PROJECT_NAME_PREFIX="${PRODUCT_NAME//-/_}"
+declare -r EVERGREEN_BUILD_URL_PREFIX="https://spruce.mongodb.com/version"
+declare -r GIT_TAG="r${PRODUCT_VERSION}"
+GIT_COMMIT_HASH="$(git rev-list -n 1 "${GIT_TAG}")"
+set +e
+    GIT_BRANCH_MASTER="$(git branch -a --contains "${GIT_TAG}" | grep 'master$')"
+    GIT_BRANCH_PATCH="$(git branch -a --contains "${GIT_TAG}" | grep '\.x$')"
+set -e
+if [ -n "${GIT_BRANCH_MASTER}" ]; then
+    declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${GIT_COMMIT_HASH}"
+elif [ -n "${GIT_BRANCH_PATCH}" ]; then
+    declare -r EVERGREEN_PROJECT_NAME_SUFFIX="${PRODUCT_VERSION:0:3}"
+    declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${EVERGREEN_PROJECT_NAME_SUFFIX}_${GIT_COMMIT_HASH}"
+else
+    echo "Failed to compute EVERGREEN_BUILD_URL"
+    exit 1
+fi
+printf "\nEvergreen build URL: %s\n" "${EVERGREEN_BUILD_URL}"
+
+PRODUCT_RELEASE_CREATOR="$(git log "${GIT_TAG}"^.."${GIT_TAG}" --simplify-by-decoration --pretty='format:%aN')"
+printf "\nProduct release creator: %s\n" "${PRODUCT_RELEASE_CREATOR}"
+
 printf "\nCreating SpotBugs SARIF reports\n"
 ./gradlew -version
 set +e
@@ -52,14 +74,16 @@ declare -r SSDLC_REPORT_PATH="${SSDLC_PATH}/ssdlc_compliance_report.md"
 cp "${TEMPLATE_SSDLC_REPORT_PATH}" "${SSDLC_REPORT_PATH}"
 declare -a SED_EDIT_IN_PLACE_OPTION
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  SED_EDIT_IN_PLACE_OPTION=(-i '')
+    SED_EDIT_IN_PLACE_OPTION=(-i '')
 else
-  SED_EDIT_IN_PLACE_OPTION=(-i)
+    SED_EDIT_IN_PLACE_OPTION=(-i)
 fi
 sed "${SED_EDIT_IN_PLACE_OPTION[@]}" \
     -e "s/\${product_name}/${PRODUCT_NAME}/g" \
     -e "s/\${product_version}/${PRODUCT_VERSION}/g" \
     -e "s/\${report_date_utc}/$(date -u +%Y-%m-%d)/g" \
+    -e "s/\${product_release_creator}/${PRODUCT_RELEASE_CREATOR}/g" \
+    -e "s>\${evergreen_build_url}>${EVERGREEN_BUILD_URL}>g" \
     "${SSDLC_REPORT_PATH}"
 printf "%s\n" "${SSDLC_REPORT_PATH}"
 
