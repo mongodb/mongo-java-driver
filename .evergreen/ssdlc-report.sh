@@ -7,11 +7,11 @@ set -eu
 # PRODUCT_VERSION
 
 if [ -z "${PRODUCT_NAME}" ]; then
-    echo "PRODUCT_NAME must be set to a non-empty string"
+    printf "\nPRODUCT_NAME must be set to a non-empty string\n"
     exit 1
 fi
 if [ -z "${PRODUCT_VERSION}" ]; then
-    echo "PRODUCT_VERSION must be set to a non-empty string"
+    printf "\nPRODUCT_VERSION must be set to a non-empty string\n"
     exit 1
 fi
 
@@ -22,6 +22,8 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 source "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 printf "\nCreating SSDLC reports\n"
+printf "\nProduct name: %s\n" "${PRODUCT_NAME}"
+printf "\nProduct version: %s\n" "${PRODUCT_VERSION}"
 
 declare -r SSDLC_PATH="${RELATIVE_DIR_PATH}/../build/ssdlc"
 declare -r SSDLC_STATIC_ANALYSIS_REPORTS_PATH="${SSDLC_PATH}/static-analysis-reports"
@@ -42,8 +44,10 @@ elif [ -n "${GIT_BRANCH_PATCH}" ]; then
     # strip out the patch version
     declare -r EVERGREEN_PROJECT_NAME_SUFFIX="${PRODUCT_VERSION%.*}"
     declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${EVERGREEN_PROJECT_NAME_SUFFIX}_${GIT_COMMIT_HASH}"
+elif [[ "${PRODUCT_VERSION}" == *'-'* ]]; then
+    declare -r EVERGREEN_BUILD_URL="https://no-url-for-patch-builds"
 else
-    echo "Failed to compute EVERGREEN_BUILD_URL"
+    printf "\nFailed to compute EVERGREEN_BUILD_URL\n"
     exit 1
 fi
 printf "\nEvergreen build URL: %s\n" "${EVERGREEN_BUILD_URL}"
