@@ -475,7 +475,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             attempt = 0;
             attempts = retry ? RetryState.RETRIES + 1 : 1;
             this.batch = batch;
-            this.retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();;
+            this.retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
         }
 
         boolean lastAttempt() {
