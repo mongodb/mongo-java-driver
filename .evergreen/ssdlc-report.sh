@@ -45,7 +45,7 @@ elif [ -n "${GIT_BRANCH_PATCH}" ]; then
     declare -r EVERGREEN_PROJECT_NAME_SUFFIX="${PRODUCT_VERSION%.*}"
     declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${EVERGREEN_PROJECT_NAME_SUFFIX}_${GIT_COMMIT_HASH}"
 elif [[ "${PRODUCT_NAME}" == *'-snapshot' ]]; then
-    declare -r EVERGREEN_BUILD_URL="https://no-url-for-snapshot-builds"
+    declare -r EVERGREEN_BUILD_URL="cannot-compute-evergreen-url-for-snapshot-builds"
 else
     printf "\nFailed to compute EVERGREEN_BUILD_URL\n"
     exit 1
