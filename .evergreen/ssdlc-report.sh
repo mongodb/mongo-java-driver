@@ -5,6 +5,8 @@ set -eu
 # Supported/used environment variables:
 # PRODUCT_NAME
 # PRODUCT_VERSION
+# PRODUCT_RELEASE_CREATOR
+# EVERGREEN_VERSION_ID
 
 if [ -z "${PRODUCT_NAME}" ]; then
     printf "\nPRODUCT_NAME must be set to a non-empty string\n"
@@ -12,6 +14,14 @@ if [ -z "${PRODUCT_NAME}" ]; then
 fi
 if [ -z "${PRODUCT_VERSION}" ]; then
     printf "\nPRODUCT_VERSION must be set to a non-empty string\n"
+    exit 1
+fi
+if [ -z "${PRODUCT_RELEASE_CREATOR}" ]; then
+    printf "\PRODUCT_RELEASE_CREATOR must be set to a non-empty string\n"
+    exit 1
+fi
+if [ -z "${EVERGREEN_VERSION_ID}" ]; then
+    printf "\EVERGREEN_VERSION_ID must be set to a non-empty string\n"
     exit 1
 fi
 
@@ -24,36 +34,13 @@ source "${RELATIVE_DIR_PATH}/javaConfig.bash"
 printf "\nCreating SSDLC reports\n"
 printf "\nProduct name: %s\n" "${PRODUCT_NAME}"
 printf "\nProduct version: %s\n" "${PRODUCT_VERSION}"
-
+printf "\nProduct release creator: %s\n" "${PRODUCT_RELEASE_CREATOR}"
+declare -r EVERGREEN_BUILD_URL="https://spruce.mongodb.com/version/${EVERGREEN_VERSION_ID}"
+printf "\nEvergreen build URL: %s\n" "${EVERGREEN_BUILD_URL}"
 declare -r SSDLC_PATH="${RELATIVE_DIR_PATH}/../build/ssdlc"
 declare -r SSDLC_STATIC_ANALYSIS_REPORTS_PATH="${SSDLC_PATH}/static-analysis-reports"
 mkdir "${SSDLC_PATH}"
 mkdir "${SSDLC_STATIC_ANALYSIS_REPORTS_PATH}"
-
-declare -r EVERGREEN_PROJECT_NAME_PREFIX="${PRODUCT_NAME//-/_}"
-declare -r EVERGREEN_BUILD_URL_PREFIX="https://spruce.mongodb.com/version"
-declare -r GIT_TAG="r${PRODUCT_VERSION}"
-GIT_COMMIT_HASH="$(git rev-list -n 1 "${GIT_TAG}")"
-set +e
-    GIT_BRANCH_MASTER="$(git branch -a --contains "${GIT_TAG}" | grep 'master$')"
-    GIT_BRANCH_PATCH="$(git branch -a --contains "${GIT_TAG}" | grep '\.x$')"
-set -e
-if [ -n "${GIT_BRANCH_MASTER}" ]; then
-    declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${GIT_COMMIT_HASH}"
-elif [ -n "${GIT_BRANCH_PATCH}" ]; then
-    # strip out the patch version
-    declare -r EVERGREEN_PROJECT_NAME_SUFFIX="${PRODUCT_VERSION%.*}"
-    declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${EVERGREEN_PROJECT_NAME_SUFFIX}_${GIT_COMMIT_HASH}"
-elif [[ "${PRODUCT_NAME}" == *'-snapshot' ]]; then
-    declare -r EVERGREEN_BUILD_URL="cannot-compute-evergreen-url-for-snapshot-builds"
-else
-    printf "\nFailed to compute EVERGREEN_BUILD_URL\n"
-    exit 1
-fi
-printf "\nEvergreen build URL: %s\n" "${EVERGREEN_BUILD_URL}"
-
-PRODUCT_RELEASE_CREATOR="$(git log "${GIT_TAG}"^.."${GIT_TAG}" --simplify-by-decoration --pretty='format:%aN')"
-printf "\nProduct release creator: %s\n" "${PRODUCT_RELEASE_CREATOR}"
 
 printf "\nCreating SpotBugs SARIF reports\n"
 ./gradlew -version
