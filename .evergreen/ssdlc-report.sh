@@ -5,13 +5,23 @@ set -eu
 # Supported/used environment variables:
 # PRODUCT_NAME
 # PRODUCT_VERSION
+# PRODUCT_RELEASE_CREATOR
+# EVERGREEN_VERSION_ID
 
 if [ -z "${PRODUCT_NAME}" ]; then
-    echo "PRODUCT_NAME must be set to a non-empty string"
+    printf "\nPRODUCT_NAME must be set to a non-empty string\n"
     exit 1
 fi
 if [ -z "${PRODUCT_VERSION}" ]; then
-    echo "PRODUCT_VERSION must be set to a non-empty string"
+    printf "\nPRODUCT_VERSION must be set to a non-empty string\n"
+    exit 1
+fi
+if [ -z "${PRODUCT_RELEASE_CREATOR}" ]; then
+    printf "\PRODUCT_RELEASE_CREATOR must be set to a non-empty string\n"
+    exit 1
+fi
+if [ -z "${EVERGREEN_VERSION_ID}" ]; then
+    printf "\EVERGREEN_VERSION_ID must be set to a non-empty string\n"
     exit 1
 fi
 
@@ -22,7 +32,11 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 source "${RELATIVE_DIR_PATH}/javaConfig.bash"
 
 printf "\nCreating SSDLC reports\n"
-
+printf "\nProduct name: %s\n" "${PRODUCT_NAME}"
+printf "\nProduct version: %s\n" "${PRODUCT_VERSION}"
+printf "\nProduct release creator: %s\n" "${PRODUCT_RELEASE_CREATOR}"
+declare -r EVERGREEN_BUILD_URL="https://spruce.mongodb.com/version/${EVERGREEN_VERSION_ID}"
+printf "\nEvergreen build URL: %s\n" "${EVERGREEN_BUILD_URL}"
 declare -r SSDLC_PATH="${RELATIVE_DIR_PATH}/../build/ssdlc"
 declare -r SSDLC_STATIC_ANALYSIS_REPORTS_PATH="${SSDLC_PATH}/static-analysis-reports"
 mkdir "${SSDLC_PATH}"
@@ -52,14 +66,16 @@ declare -r SSDLC_REPORT_PATH="${SSDLC_PATH}/ssdlc_compliance_report.md"
 cp "${TEMPLATE_SSDLC_REPORT_PATH}" "${SSDLC_REPORT_PATH}"
 declare -a SED_EDIT_IN_PLACE_OPTION
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  SED_EDIT_IN_PLACE_OPTION=(-i '')
+    SED_EDIT_IN_PLACE_OPTION=(-i '')
 else
-  SED_EDIT_IN_PLACE_OPTION=(-i)
+    SED_EDIT_IN_PLACE_OPTION=(-i)
 fi
 sed "${SED_EDIT_IN_PLACE_OPTION[@]}" \
     -e "s/\${product_name}/${PRODUCT_NAME}/g" \
     -e "s/\${product_version}/${PRODUCT_VERSION}/g" \
     -e "s/\${report_date_utc}/$(date -u +%Y-%m-%d)/g" \
+    -e "s/\${product_release_creator}/${PRODUCT_RELEASE_CREATOR}/g" \
+    -e "s>\${evergreen_build_url}>${EVERGREEN_BUILD_URL}>g" \
     "${SSDLC_REPORT_PATH}"
 printf "%s\n" "${SSDLC_REPORT_PATH}"
 
