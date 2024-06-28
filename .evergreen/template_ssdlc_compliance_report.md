@@ -35,7 +35,7 @@ Blocked on <https://jira.mongodb.org/browse/JAVA-5429>.
 The MongoDB SSDLC policy is available at
 <https://docs.google.com/document/d/1u0m4Kj2Ny30zU74KoEFCN4L6D_FbEYCaJ3CQdCYXTMc>.
 
-## Third-darty dependency information
+## Third-party dependency information
 
 There are no dependencies to report vulnerabilities of.
 Our [SBOM](https://docs.devprod.prod.corp.mongodb.com/mms/python/src/sbom/silkbomb/docs/CYCLONEDX/) lite
