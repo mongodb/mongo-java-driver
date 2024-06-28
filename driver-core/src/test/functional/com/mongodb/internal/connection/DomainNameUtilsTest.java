@@ -32,23 +32,25 @@ class DomainNameUtilsTest {
             "123numbers.com",
             "mixed-123domain.net",
             "longdomainnameabcdefghijk.com",
+            "i-0123456789abcdef.ec2.internal",
+            "ip-10-24-34-0.ec2.internal",
             "xn--frosch-6ya.com",
             "xn--emoji-grinning-3s0b.org",
             "xn--bcher-kva.ch",
             "localhost",
-            "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyz.com",
+            "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyz.com", //63 characters label name.
+            "a.abcdefghijklmnopqrstuvwxyzabcdefghjklabcdefghijklmnopqrstuvwxyz", //63 characters TLD.
             "xn--weihnachten-uzb.org",
             "sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain."
                     + "com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain."
                     + "com.domain.com.sub.domain.subb.com"  //255 characters
     })
     void shouldReturnTrueWithValidHostName(final String hostname) {
-        Assertions.assertTrue(isDomainName(hostname));
+        Assertions.assertTrue(isDomainName(hostname), hostname + " is not a valid domain name");
     }
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "xn--tst-0qa.example",
             "xn--frosch-6ya.w23",
             "-special_chars_$$.net",
             "special_chars_$$.net",
@@ -60,7 +62,8 @@ class DomainNameUtilsTest {
             "notlocalhost",
             "домен.com", //NON-ASCII
             "ẞẞ.com", //NON-ASCII
-            "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyzl.com",
+            "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyzl.com", //64 characters label name.
+            "a.abcdefghijklmnopqrstuvwxyzabcdefghjklabcdefghijklmnopqrstuvwxyza", //64 characters TLD.
             "this-domain-is-really-long-because-it-just-keeps-going-and-going-and-its-still-not-done-yet-because-theres-more.net",
             "verylongsubdomainnamethatisreallylongandmaycausetroubleforparsing.example",
             "sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain.com.sub.domain."
