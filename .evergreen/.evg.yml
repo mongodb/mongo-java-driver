@@ -150,8 +150,6 @@ functions:
         env:
           PRODUCT_NAME: ${product_name}
           PRODUCT_VERSION: ${product_version}
-          PRODUCT_RELEASE_CREATOR: ${author}
-          EVERGREEN_VERSION_ID: ${version_id}
         script: .evergreen/ssdlc-report.sh
     - command: ec2.assume_role
       params:
