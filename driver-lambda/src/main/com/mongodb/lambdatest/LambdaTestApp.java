@@ -32,6 +32,7 @@ import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerHeartbeatFailedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.NonNull;
@@ -45,8 +46,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test App for AWS lambda functions
@@ -58,6 +62,7 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
     private long totalHeartbeatDurationMs = 0;
     private long totalCommandCount = 0;
     private long totalCommandDurationMs = 0;
+    private final CopyOnWriteArrayList<Throwable> failedAssertions = new CopyOnWriteArrayList<>();
 
     public LambdaTestApp() {
         String connectionString = System.getenv("MONGODB_URI");
@@ -78,12 +83,19 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
                 })
                 .applyToServerSettings(builder -> builder.addServerMonitorListener(new ServerMonitorListener() {
                     @Override
+                    public void serverHearbeatStarted(@NonNull final ServerHeartbeatStartedEvent event) {
+                        checkAssertion(() -> assertFalse(event.isAwaited(), event::toString));
+                    }
+
+                    @Override
                     public void serverHeartbeatSucceeded(@NonNull final ServerHeartbeatSucceededEvent event) {
+                        checkAssertion(() -> assertFalse(event.isAwaited(), event::toString));
                         totalHeartbeatCount++;
                         totalHeartbeatDurationMs += event.getElapsedTime(MILLISECONDS);
                     }
                     @Override
                     public void serverHeartbeatFailed(@NonNull final ServerHeartbeatFailedEvent event) {
+                        checkAssertion(() -> assertFalse(event.isAwaited(), event::toString));
                         totalHeartbeatCount++;
                         totalHeartbeatDurationMs += event.getElapsedTime(MILLISECONDS);
                     }
@@ -110,6 +122,7 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
             BsonValue id = collection.insertOne(new Document("n", 1)).getInsertedId();
             collection.deleteOne(new Document("_id", id));
 
+            assertTrue(failedAssertions.isEmpty(), failedAssertions.toString());
             BsonDocument responseBody = getBsonDocument();
 
             return templateResponse()
@@ -150,5 +163,13 @@ public class LambdaTestApp implements RequestHandler<APIGatewayProxyRequestEvent
         headers.put("X-Custom-Header", "application/json");
         return new APIGatewayProxyResponseEvent()
                 .withHeaders(headers);
+    }
+
+    private void checkAssertion(final Runnable assertion) {
+        try {
+            assertion.run();
+        } catch (Throwable t) {
+            failedAssertions.add(t);
+        }
     }
 }

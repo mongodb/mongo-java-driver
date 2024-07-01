@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assume.assumeFalse;
 
 public class UnifiedCrudTest extends UnifiedSyncTest {
@@ -34,12 +36,25 @@ public class UnifiedCrudTest extends UnifiedSyncTest {
                            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
                            final BsonArray initialData, final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);
+        customSkips(fileDescription, testDescription);
+    }
+
+    public static void customSkips(final String fileDescription, final String testDescription) {
+        assumeFalse(testDescription.equals("Deprecated count with empty collection"));
+        assumeFalse(testDescription.equals("Deprecated count with collation"));
+        assumeFalse(testDescription.equals("Deprecated count without a filter"));
+        assumeFalse(testDescription.equals("Deprecated count with a filter"));
+        assumeFalse(testDescription.equals("Deprecated count with skip and limit"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint string on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint document on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint string on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint document on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint string on 4.4+ server"));
         assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint document on 4.4+ server"));
+        if (isDiscoverableReplicaSet() && serverVersionAtLeast(8, 0)) {
+            assumeFalse(testDescription.equals("Aggregate with $out includes read preference for 5.0+ server"));
+            assumeFalse(testDescription.equals("Database-level aggregate with $out includes read preference for 5.0+ server"));
+        }
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

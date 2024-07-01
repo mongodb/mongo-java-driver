@@ -16,6 +16,9 @@
 
 package org.bson.codecs.pojo;
 
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
@@ -268,16 +271,19 @@ abstract class PojoTestCase {
     private static CollectionNestedPojoModel getCollectionNestedPojoModel(final boolean useNulls) {
         List<SimpleModel> listSimple;
         Set<SimpleModel> setSimple;
+        SortedSet<SimpleModel> sortedSetSimple;
         Map<String, SimpleModel> mapSimple;
 
         if (useNulls) {
             listSimple = null;
             setSimple = null;
+            sortedSetSimple = null;
             mapSimple = null;
         } else {
             SimpleModel simpleModel = getSimpleModel();
             listSimple = singletonList(simpleModel);
             setSimple = new HashSet<>(listSimple);
+            sortedSetSimple = new TreeSet<>(listSimple);
             mapSimple = new HashMap<>();
             mapSimple.put("s", simpleModel);
         }
@@ -301,8 +307,8 @@ abstract class PojoTestCase {
         List<Map<String, List<SimpleModel>>> listMapListSimple = singletonList(mapListSimple);
         List<Map<String, Set<SimpleModel>>> listMapSetSimple = singletonList(mapSetSimple);
 
-        return new CollectionNestedPojoModel(listSimple, listListSimple, setSimple, setSetSimple, mapSimple, mapMapSimple, mapListSimple,
-                mapListMapSimple, mapSetSimple, listMapSimple, listMapListSimple, listMapSetSimple);
+        return new CollectionNestedPojoModel(listSimple, listListSimple, setSimple, setSetSimple, sortedSetSimple,
+                mapSimple, mapMapSimple, mapListSimple, mapListMapSimple, mapSetSimple, listMapSimple, listMapListSimple, listMapSetSimple);
     }
 
     static ConventionModel getConventionModel() {

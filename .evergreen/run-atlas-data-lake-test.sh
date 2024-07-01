@@ -23,4 +23,4 @@ DATA_LAKE_URI="mongodb://mhuser:pencil@localhost"
 echo "Running Atlas Data Lake tests with Java ${JAVA_VERSION}"
 ./gradlew -version
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.data.lake=true -Dorg.mongodb.test.uri=${DATA_LAKE_URI} \
-  --info driver-sync:test --tests AtlasDataLake*Test
+  --info driver-sync:test --tests *AtlasDataLake*Test

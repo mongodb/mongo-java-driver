@@ -198,10 +198,11 @@ public final class ClusterFixture {
     }
 
     public static boolean hasEncryptionTestsEnabled() {
-        List<String> requiredSystemProperties = asList("awsAccessKeyId", "awsSecretAccessKey", "azureTenantId", "azureClientId",
-                "azureClientSecret", "gcpEmail", "gcpPrivateKey", "tmpAwsAccessKeyId", "tmpAwsSecretAccessKey", "tmpAwsSessionToken");
+        List<String> requiredSystemProperties = asList("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AZURE_TENANT_ID", "AZURE_CLIENT_ID",
+                "AZURE_CLIENT_SECRET", "GCP_EMAIL", "GCP_PRIVATE_KEY", "AWS_TEMP_ACCESS_KEY_ID", "AWS_TEMP_SECRET_ACCESS_KEY",
+                "AWS_TEMP_SESSION_TOKEN");
         return requiredSystemProperties.stream()
-                        .map(name -> System.getProperty("org.mongodb.test." + name, ""))
+                        .map(name -> getEnv(name, ""))
                         .filter(s -> !s.isEmpty())
                         .count() == requiredSystemProperties.size();
     }
@@ -226,6 +227,16 @@ public final class ClusterFixture {
                 cluster.close();
             }
         }
+    }
+
+    public static String getEnv(final String name, final String defaultValue) {
+        String value = getEnv(name);
+        return value == null ? defaultValue : value;
+    }
+
+    @Nullable
+    public static String getEnv(final String name) {
+        return System.getenv(name);
     }
 
     public static boolean getOcspShouldSucceed() {
@@ -319,11 +330,8 @@ public final class ClusterFixture {
 
     private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
         if (!BINDING_MAP.containsKey(readPreference)) {
-            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(),
-                    IgnorableRequestContext.INSTANCE);
-            if (serverVersionAtLeast(3, 6)) {
-                binding = new SessionBinding(binding);
-            }
+            ReadWriteBinding binding = new SessionBinding(new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(),
+                    IgnorableRequestContext.INSTANCE));
             BINDING_MAP.put(readPreference, binding);
         }
         return BINDING_MAP.get(readPreference);
@@ -356,11 +364,8 @@ public final class ClusterFixture {
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
         if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
-            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(),
-                    IgnorableRequestContext.INSTANCE);
-            if (serverVersionAtLeast(3, 6)) {
-                binding = new AsyncSessionBinding(binding);
-            }
+            AsyncReadWriteBinding binding = new AsyncSessionBinding(new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT,
+                    getServerApi(), IgnorableRequestContext.INSTANCE));
             ASYNC_BINDING_MAP.put(readPreference, binding);
         }
         return ASYNC_BINDING_MAP.get(readPreference);
@@ -541,7 +546,7 @@ public final class ClusterFixture {
     }
 
     public static boolean isClientSideEncryptionTest() {
-        return !System.getProperty("org.mongodb.test.awsAccessKeyId", "").isEmpty();
+        return !getEnv("AWS_ACCESS_KEY_ID", "").isEmpty();
     }
 
     public static boolean isAtlasSearchTest() {

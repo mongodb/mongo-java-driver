@@ -18,6 +18,7 @@
 package reactivestreams.tour;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -64,7 +65,10 @@ public class ClientSideEncryptionSimpleTour {
                 .kmsProviders(kmsProviders)
                 .build();
 
-        MongoClientSettings clientSettings = MongoClientSettings.builder()
+        MongoClientSettings clientSettings = (
+                args.length == 0
+                        ? MongoClientSettings.builder()
+                        : MongoClientSettings.builder().applyConnectionString(new ConnectionString(args[0])))
                 .autoEncryptionSettings(autoEncryptionSettings)
                 .build();
 

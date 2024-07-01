@@ -155,7 +155,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         when:
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), bsonDocumentCodec)
-        def expectedCommand = new BsonDocument('mapreduce', new BsonString(helper.namespace.getCollectionName()))
+        def expectedCommand = new BsonDocument('mapReduce', new BsonString(helper.namespace.getCollectionName()))
             .append('map', operation.getMapFunction())
             .append('reduce', operation.getReduceFunction())
             .append('out', new BsonDocument('inline', new BsonInt32(1)))
@@ -235,7 +235,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         source.retain() >> source
         source.getServerApi() >> null
         def commandDocument = BsonDocument.parse('''
-            { "mapreduce" : "coll",
+            { "mapReduce" : "coll",
               "map" : { "$code" : "function(){ }" },
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },
@@ -284,7 +284,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = BsonDocument.parse('''
-            { "mapreduce" : "coll",
+            { "mapReduce" : "coll",
               "map" : { "$code" : "function(){ }" },
               "reduce" : { "$code" : "function(key, values){ }" },
               "out" : { "inline" : 1 },

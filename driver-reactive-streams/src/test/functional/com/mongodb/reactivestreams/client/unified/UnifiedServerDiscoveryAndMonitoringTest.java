@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.unified;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.junit.Before;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
@@ -37,5 +38,10 @@ public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStre
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/server-discovery-and-monitoring");
+    }
+
+    @Before
+    public void before() {
+        com.mongodb.client.unified.UnifiedServerDiscoveryAndMonitoringTest.skipTests(getDefinition());
     }
 }

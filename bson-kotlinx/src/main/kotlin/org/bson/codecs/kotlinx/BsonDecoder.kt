@@ -31,6 +31,7 @@ import kotlinx.serialization.modules.SerializersModule
 import org.bson.AbstractBsonReader
 import org.bson.BsonInvalidOperationException
 import org.bson.BsonReader
+import org.bson.BsonReaderMark
 import org.bson.BsonType
 import org.bson.BsonValue
 import org.bson.codecs.BooleanCodec
@@ -88,6 +89,20 @@ internal open class DefaultBsonDecoder(
         val stingCodec = StringCodec()
         val objectIdCodec = ObjectIdCodec()
         const val UNKNOWN_INDEX = -10
+        fun validateCurrentBsonType(
+            reader: AbstractBsonReader,
+            expectedType: BsonType,
+            descriptor: SerialDescriptor,
+            actualType: (descriptor: SerialDescriptor) -> String = { it.kind.toString() }
+        ) {
+            reader.currentBsonType?.let {
+                if (it != expectedType) {
+                    throw SerializationException(
+                        "Invalid data for `${actualType(descriptor)}` expected a bson " +
+                            "${expectedType.name.lowercase()} found: ${reader.currentBsonType}")
+                }
+            }
+        }
     }
 
     private fun initElementMetadata(descriptor: SerialDescriptor) {
@@ -139,29 +154,14 @@ internal open class DefaultBsonDecoder(
 
     @Suppress("ReturnCount")
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        when (descriptor.kind) {
-            is StructureKind.LIST -> {
-                reader.readStartArray()
-                return BsonArrayDecoder(reader, serializersModule, configuration)
-            }
-            is PolymorphicKind -> {
-                reader.readStartDocument()
-                return PolymorphicDecoder(reader, serializersModule, configuration)
-            }
+        return when (descriptor.kind) {
+            is StructureKind.LIST -> BsonArrayDecoder(descriptor, reader, serializersModule, configuration)
+            is PolymorphicKind -> PolymorphicDecoder(descriptor, reader, serializersModule, configuration)
             is StructureKind.CLASS,
-            StructureKind.OBJECT -> {
-                val current = reader.currentBsonType
-                if (current == null || current == BsonType.DOCUMENT) {
-                    reader.readStartDocument()
-                }
-            }
-            is StructureKind.MAP -> {
-                reader.readStartDocument()
-                return BsonDocumentDecoder(reader, serializersModule, configuration)
-            }
+            StructureKind.OBJECT -> BsonDocumentDecoder(descriptor, reader, serializersModule, configuration)
+            is StructureKind.MAP -> MapDecoder(descriptor, reader, serializersModule, configuration)
             else -> throw SerializationException("Primitives are not supported at top-level")
         }
-        return DefaultBsonDecoder(reader, serializersModule, configuration)
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {
@@ -214,10 +214,17 @@ internal open class DefaultBsonDecoder(
 
 @OptIn(ExperimentalSerializationApi::class)
 private class BsonArrayDecoder(
+    descriptor: SerialDescriptor,
     reader: AbstractBsonReader,
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
 ) : DefaultBsonDecoder(reader, serializersModule, configuration) {
+
+    init {
+        validateCurrentBsonType(reader, BsonType.ARRAY, descriptor)
+        reader.readStartArray()
+    }
+
     private var index = 0
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
         val nextType = reader.readBsonType()
@@ -228,18 +235,46 @@ private class BsonArrayDecoder(
 
 @OptIn(ExperimentalSerializationApi::class)
 private class PolymorphicDecoder(
+    descriptor: SerialDescriptor,
     reader: AbstractBsonReader,
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
 ) : DefaultBsonDecoder(reader, serializersModule, configuration) {
     private var index = 0
+    private var mark: BsonReaderMark?
 
-    override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>): T =
-        deserializer.deserialize(DefaultBsonDecoder(reader, serializersModule, configuration))
+    init {
+        mark = reader.mark
+        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor) { it.serialName }
+        reader.readStartDocument()
+    }
+
+    override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>): T {
+        mark?.let {
+            it.reset()
+            mark = null
+        }
+        return deserializer.deserialize(DefaultBsonDecoder(reader, serializersModule, configuration))
+    }
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
+        var found = false
         return when (index) {
-            0 -> index++
+            0 -> {
+                while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                    if (reader.readName() == configuration.classDiscriminator) {
+                        found = true
+                        break
+                    }
+                    reader.skipValue()
+                }
+                if (!found) {
+                    throw SerializationException(
+                        "Missing required discriminator field `${configuration.classDiscriminator}` " +
+                            "for polymorphic class: `${descriptor.serialName}`.")
+                }
+                index++
+            }
             1 -> index++
             else -> DECODE_DONE
         }
@@ -248,6 +283,20 @@ private class PolymorphicDecoder(
 
 @OptIn(ExperimentalSerializationApi::class)
 private class BsonDocumentDecoder(
+    descriptor: SerialDescriptor,
+    reader: AbstractBsonReader,
+    serializersModule: SerializersModule,
+    configuration: BsonConfiguration
+) : DefaultBsonDecoder(reader, serializersModule, configuration) {
+    init {
+        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor) { it.serialName }
+        reader.readStartDocument()
+    }
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+private class MapDecoder(
+    descriptor: SerialDescriptor,
     reader: AbstractBsonReader,
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
@@ -255,6 +304,11 @@ private class BsonDocumentDecoder(
 
     private var index = 0
     private var isKey = false
+
+    init {
+        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor)
+        reader.readStartDocument()
+    }
 
     override fun decodeString(): String {
         return if (isKey) {

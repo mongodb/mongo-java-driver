@@ -25,7 +25,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:7.0.0'
-        classpath "com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.13"
+        classpath "com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.15"
         classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
 
         // Scala plugins
@@ -55,9 +55,10 @@ ext {
     zstdVersion = '1.5.5-3'
     awsSdkV2Version = '2.18.9'
     awsSdkV1Version = '1.12.337'
-    mongoCryptVersion = '1.8.0'
+    mongoCryptVersion = '1.10.0-SNAPSHOT'
     projectReactorVersion = '2022.0.0'
     junitBomVersion = '5.8.2'
+    logbackVersion = '1.3.14'
     gitVersion = getGitVersion()
 }
 
@@ -74,7 +75,7 @@ configure(coreProjects) {
     apply plugin: 'idea'
 
     group = 'org.mongodb'
-    version = '5.0.0-SNAPSHOT'
+    version = '5.2.0-SNAPSHOT'
 
     repositories {
         mavenLocal()
@@ -125,7 +126,7 @@ configure(scalaProjects) {
         testImplementation('org.scalatest:scalatest-shouldmatchers_%%:3.2.9')
         testImplementation('org.scalatestplus:junit-4-13_%%:3.2.9.0')
         testImplementation('org.scalatestplus:mockito-3-12_%%:3.2.10.0')
-        testImplementation('ch.qos.logback:logback-classic:1.1.3')
+        testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
         testImplementation('org.reflections:reflections:0.9.10')
     }
 
@@ -256,12 +257,16 @@ configure(javaCodeCheckedProjects) {
         testImplementation platform('org.spockframework:spock-bom:2.1-groovy-3.0')
         testImplementation 'org.spockframework:spock-core'
         testImplementation 'org.spockframework:spock-junit4'
-        testImplementation("org.mockito:mockito-core:3.8.0")
-        testImplementation("org.mockito:mockito-inline:3.8.0")
+        if ('8'.equals(findProperty("javaVersion"))) {
+            testImplementation("org.mockito:mockito-core:4.6.1")
+            testImplementation("org.mockito:mockito-inline:4.6.1")
+        } else {
+            testImplementation("org.mockito:mockito-core:5.11.0")
+        }
         testImplementation 'cglib:cglib-nodep:2.2.2'
         testImplementation 'org.objenesis:objenesis:1.3'
         testImplementation 'org.hamcrest:hamcrest-all:1.3'
-        testImplementation 'ch.qos.logback:logback-classic:1.1.1'
+        testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
         testImplementation project(':util:spock') //Adding categories to classpath
     }
 
@@ -333,7 +338,9 @@ configure(javaCodeCheckedProjects) {
     }
 
     spotbugs {
-        excludeFilter = new File(configDir, 'spotbugs/exclude.xml')
+        if (!project.buildingWith('ssdlcReport.enabled')) {
+            excludeFilter = new File(configDir, 'spotbugs/exclude.xml')
+        }
     }
 
     codenarc {
@@ -345,6 +352,7 @@ configure(javaCodeCheckedProjects) {
         reports {
             xml.enabled = project.buildingWith('xmlReports.enabled')
             html.enabled = !project.buildingWith('xmlReports.enabled')
+            sarif.enabled = project.buildingWith('ssdlcReport.enabled')
         }
     }
 

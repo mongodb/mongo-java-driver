@@ -18,12 +18,15 @@ package com.mongodb;
 
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerMonitoringMode;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.event.ConnectionCheckOutStartedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
@@ -44,7 +47,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -71,8 +78,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
@@ -91,8 +97,7 @@ import static java.util.Collections.unmodifiableList;
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
  * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
@@ -111,6 +116,13 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code heartbeatFrequencyMS=ms}: The frequency that the driver will attempt to determine the current state of each server in the
  * cluster.</li>
+ * <li>{@code serverMonitoringMode=enum}: The server monitoring mode, which defines the monitoring protocol to use. Enumerated values:
+ *  <ul>
+ *      <li>{@code stream};</li>
+ *      <li>{@code poll};</li>
+ *      <li>{@code auto} - the default.</li>
+ *  </ul>
+ * </li>
  * </ul>
  * <p>Replica set configuration:</p>
  * <ul>
@@ -215,9 +227,9 @@ import static java.util.Collections.unmodifiableList;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509|MONGODB-OIDC}: The authentication mechanism to use if a credential was supplied.
  * The default is unspecified, in which case the client will pick the most secure mechanism available based on the sever version.  For the
- * GSSAPI and MONGODB-X509 mechanisms, no password is accepted, only the username.
+ * GSSAPI, MONGODB-X509, and MONGODB-OIDC mechanisms, no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the connection string.
@@ -271,6 +283,9 @@ public class ConnectionString {
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
             new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
+    private static final List<String> MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING = Stream.of(ALLOWED_HOSTS_KEY)
+            .map(k -> k.toLowerCase())
+            .collect(Collectors.toList());
 
     private final MongoCredential credential;
     private final boolean isSrvProtocol;
@@ -307,6 +322,7 @@ public class ConnectionString {
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
     private Integer heartbeatFrequency;
+    private ServerMonitoringMode serverMonitoringMode;
     private String applicationName;
     private List<MongoCompressor> compressorList;
     private UuidRepresentation uuidRepresentation;
@@ -350,16 +366,18 @@ public class ConnectionString {
 
         // Split out the user and host information
         String userAndHostInformation;
-        int idx = unprocessedConnectionString.indexOf("/");
-        if (idx == -1) {
-            if (unprocessedConnectionString.contains("?")) {
-                throw new IllegalArgumentException("The connection string contains options without trailing slash");
-            }
+        int firstForwardSlashIdx = unprocessedConnectionString.indexOf("/");
+        int firstQuestionMarkIdx = unprocessedConnectionString.indexOf("?");
+        if (firstQuestionMarkIdx == -1 && firstForwardSlashIdx == -1) {
             userAndHostInformation = unprocessedConnectionString;
             unprocessedConnectionString = "";
+        } else if (firstQuestionMarkIdx != -1 && (firstForwardSlashIdx == -1 || firstQuestionMarkIdx < firstForwardSlashIdx)) {
+            // there is a question mark, and there is no slash or the question mark comes before any slash
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstQuestionMarkIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstQuestionMarkIdx);
         } else {
-            userAndHostInformation = unprocessedConnectionString.substring(0, idx);
-            unprocessedConnectionString = unprocessedConnectionString.substring(idx + 1);
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstForwardSlashIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstForwardSlashIdx + 1);
         }
 
         // Split the user and host information
@@ -367,7 +385,7 @@ public class ConnectionString {
         String hostIdentifier;
         String userName = null;
         char[] password = null;
-        idx = userAndHostInformation.lastIndexOf("@");
+        int idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
             hostIdentifier = userAndHostInformation.substring(idx + 1);
@@ -529,6 +547,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("serverselectiontimeoutms");
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
         GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
+        GENERAL_OPTIONS_KEYS.add("servermonitoringmode");
         GENERAL_OPTIONS_KEYS.add("retrywrites");
         GENERAL_OPTIONS_KEYS.add("retryreads");
 
@@ -664,6 +683,9 @@ public class ConnectionString {
                     break;
                 case "heartbeatfrequencyms":
                     heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
+                    break;
+                case "servermonitoringmode":
+                    serverMonitoringMode = ServerMonitoringModeUtil.fromString(value);
                     break;
                 case "appname":
                     applicationName = value;
@@ -883,7 +905,6 @@ public class ConnectionString {
             }
         }
 
-
         MongoCredential credential = null;
         if (mechanism != null) {
             credential = createMongoCredentialWithMechanism(mechanism, userName, password, authSource, gssapiServiceName);
@@ -894,13 +915,18 @@ public class ConnectionString {
 
         if (credential != null && authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
-                String[] mechanismPropertyKeyValue = part.split(":");
+                String[] mechanismPropertyKeyValue = part.split(":", 2);
                 if (mechanismPropertyKeyValue.length != 2) {
                     throw new IllegalArgumentException(format("The connection string contains invalid authentication properties. "
                             + "'%s' is not a key value pair", part));
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
+                if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
+                    throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
+                            + "'%s' must be set on the credential programmatically.", key));
+                }
+
                 if (key.equals("canonicalize_host_name")) {
                     credential = credential.withMechanismProperty(key, Boolean.valueOf(value));
                 } else {
@@ -960,6 +986,10 @@ public class ConnectionString {
             case MONGODB_AWS:
                 credential = MongoCredential.createAwsCredential(userName, password);
                 break;
+            case MONGODB_OIDC:
+                validateCreateOidcCredential(password);
+                credential = MongoCredential.createOidcCredential(userName);
+                break;
             default:
                 throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
                                                                        + "'%s' is not a supported authentication mechanism",
@@ -987,12 +1017,12 @@ public class ConnectionString {
 
     private Map<String, List<String>> parseOptions(final String optionsPart) {
         Map<String, List<String>> optionsMap = new HashMap<>();
-        if (optionsPart.length() == 0) {
+        if (optionsPart.isEmpty()) {
             return optionsMap;
         }
 
         for (final String part : optionsPart.split("&|;")) {
-            if (part.length() == 0) {
+            if (part.isEmpty()) {
                 continue;
             }
             int idx = part.indexOf("=");
@@ -1624,6 +1654,20 @@ public class ConnectionString {
     }
 
     /**
+     * The server monitoring mode, which defines the monitoring protocol to use.
+     * <p>
+     * Default is {@link ServerMonitoringMode#AUTO}.</p>
+     *
+     * @return The {@link ServerMonitoringMode}, or {@code null} if unset and the default is to be used.
+     * @see ServerSettings#getServerMonitoringMode()
+     * @since 5.1
+     */
+    @Nullable
+    public ServerMonitoringMode getServerMonitoringMode() {
+        return serverMonitoringMode;
+    }
+
+    /**
      * Gets the logical name of the application.  The application name may be used by the client to identify the application to the server,
      * for use in server logs, slow query logs, and profile collection.
      *
@@ -1704,6 +1748,7 @@ public class ConnectionString {
                 && Objects.equals(serverSelectionTimeout, that.serverSelectionTimeout)
                 && Objects.equals(localThreshold, that.localThreshold)
                 && Objects.equals(heartbeatFrequency, that.heartbeatFrequency)
+                && Objects.equals(serverMonitoringMode, that.serverMonitoringMode)
                 && Objects.equals(applicationName, that.applicationName)
                 && Objects.equals(compressorList, that.compressorList)
                 && Objects.equals(uuidRepresentation, that.uuidRepresentation)
@@ -1717,7 +1762,7 @@ public class ConnectionString {
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
-                applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost, proxyPort,
-                proxyUsername, proxyPassword);
+                serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,
+                proxyPort, proxyUsername, proxyPassword);
     }
 }

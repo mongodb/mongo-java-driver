@@ -15,11 +15,11 @@
  */
 package com.mongodb.kotlin.client
 
+import com.mongodb.client.unified.UnifiedCrudTest.customSkips
 import java.io.IOException
 import java.net.URISyntaxException
 import org.bson.BsonArray
 import org.bson.BsonDocument
-import org.junit.Assume.assumeFalse
 import org.junit.runners.Parameterized
 
 internal class UnifiedCrudTest(
@@ -33,12 +33,7 @@ internal class UnifiedCrudTest(
 ) : UnifiedTest(fileDescription, schemaVersion, runOnRequirements, entitiesArray, initialData, definition) {
 
     init {
-        assumeFalse(testDescription == "Unacknowledged findOneAndReplace with hint string on 4.4+ server")
-        assumeFalse(testDescription == "Unacknowledged findOneAndReplace with hint document on 4.4+ server")
-        assumeFalse(testDescription == "Unacknowledged findOneAndUpdate with hint string on 4.4+ server")
-        assumeFalse(testDescription == "Unacknowledged findOneAndUpdate with hint document on 4.4+ server")
-        assumeFalse(testDescription == "Unacknowledged findOneAndDelete with hint string on 4.4+ server")
-        assumeFalse(testDescription == "Unacknowledged findOneAndDelete with hint document on 4.4+ server")
+        customSkips(fileDescription, testDescription)
     }
 
     companion object {

@@ -18,16 +18,16 @@ package com.mongodb.client.unified;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.internal.connection.TestClusterListener;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -56,11 +56,15 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.event.TestServerMonitorListener;
+import com.mongodb.internal.connection.ServerMonitoringModeUtil;
+import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
+import com.mongodb.logging.TestLoggingInterceptor;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -84,9 +88,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getMultiMongosMongoClientSettingsBuilder;
 import static com.mongodb.client.unified.EventMatcher.getReasonString;
@@ -95,6 +102,7 @@ import static com.mongodb.client.unified.UnifiedCrudHelper.asReadConcern;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asReadPreference;
 import static com.mongodb.client.unified.UnifiedCrudHelper.asWriteConcern;
 import static com.mongodb.internal.connection.AbstractConnectionPoolTest.waitForPoolAsyncWorkManagerStart;
+import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedList;
 import static org.junit.Assume.assumeTrue;
@@ -120,6 +128,7 @@ public final class Entities {
     private final Map<String, TestConnectionPoolListener> clientConnectionPoolListeners = new HashMap<>();
     private final Map<String, TestServerListener> clientServerListeners = new HashMap<>();
     private final Map<String, TestClusterListener> clientClusterListeners = new HashMap<>();
+    private final Map<String, TestServerMonitorListener> serverMonitorListeners = new HashMap<>();
     private final Map<String, MongoCursor<BsonDocument>> cursors = new HashMap<>();
     private final Map<String, ClusterDescription> topologyDescriptions = new HashMap<>();
     private final Map<String, Long> successCounts = new HashMap<>();
@@ -284,6 +293,10 @@ public final class Entities {
         return getEntity(id + "-cluster-listener", clientClusterListeners, "cluster listener");
     }
 
+    public TestServerMonitorListener getServerMonitorListener(final String id) {
+        return getEntity(id + "-server-monitor-listener", serverMonitorListeners, "server monitor listener");
+    }
+
     private <T> T getEntity(final String id, final Map<String, T> entities, final String type) {
         T entity = entities.get(id);
         if (entity == null) {
@@ -300,6 +313,7 @@ public final class Entities {
     }
 
     public void init(final BsonArray entitiesArray,
+                     final BsonDocument startingClusterTime,
                      final boolean waitForPoolAsyncWorkManagerStart,
                      final Function<MongoClientSettings, MongoClient> mongoClientSupplier,
                      final Function<MongoDatabase, GridFSBucket> gridFSBucketSupplier,
@@ -324,7 +338,7 @@ public final class Entities {
                     break;
                 }
                 case "session": {
-                    initSession(entity, id);
+                    initSession(entity, id, startingClusterTime);
                     break;
                 }
                 case "bucket": {
@@ -376,23 +390,27 @@ public final class Entities {
         putEntity(id + "-cluster-listener", testClusterListener, clientClusterListeners);
 
         if (entity.containsKey("observeEvents")) {
+            List<String> observeEvents = entity.getArray("observeEvents").stream()
+                    .map(type -> type.asString().getValue()).collect(Collectors.toList());
             List<String> ignoreCommandMonitoringEvents = entity
                     .getArray("ignoreCommandMonitoringEvents", new BsonArray()).stream()
                     .map(type -> type.asString().getValue()).collect(Collectors.toList());
             ignoreCommandMonitoringEvents.add("configureFailPoint");
             TestCommandListener testCommandListener = new TestCommandListener(
-                    entity.getArray("observeEvents").stream()
-                            .map(type -> type.asString().getValue()).collect(Collectors.toList()),
-                    ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue());
+                    observeEvents,
+                    ignoreCommandMonitoringEvents, entity.getBoolean("observeSensitiveCommands", BsonBoolean.FALSE).getValue(),
+                    null);
             clientSettingsBuilder.addCommandListener(testCommandListener);
             putEntity(id + "-command-listener", testCommandListener, clientCommandListeners);
 
-            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(
-                    entity.getArray("observeEvents").stream()
-                            .map(type -> type.asString().getValue()).collect(Collectors.toList()));
+            TestConnectionPoolListener testConnectionPoolListener = new TestConnectionPoolListener(observeEvents);
             clientSettingsBuilder.applyToConnectionPoolSettings(builder ->
                     builder.addConnectionPoolListener(testConnectionPoolListener));
             putEntity(id + "-connection-pool-listener", testConnectionPoolListener, clientConnectionPoolListeners);
+
+            TestServerMonitorListener testServerMonitorListener = new TestServerMonitorListener(observeEvents);
+            clientSettingsBuilder.applyToServerSettings(builder -> builder.addServerMonitorListener(testServerMonitorListener));
+            putEntity(id + "-server-monitor-listener", testServerMonitorListener, serverMonitorListeners);
         } else {
             // Regardless of whether events are observed, we still need to track some info about the pool in order to implement
             // the assertNumberConnectionsCheckedOut operation
@@ -443,6 +461,9 @@ public final class Entities {
                         break;
                     case "retryWrites":
                         clientSettingsBuilder.retryWrites(value.asBoolean().getValue());
+                        break;
+                    case "readPreference":
+                        clientSettingsBuilder.readPreference(ReadPreference.valueOf(value.asString().getValue()));
                         break;
                     case "readConcernLevel":
                         clientSettingsBuilder.readConcern(
@@ -498,6 +519,52 @@ public final class Entities {
                     case "appName":
                         clientSettingsBuilder.applicationName(value.asString().getValue());
                         break;
+                    case "serverMonitoringMode":
+                        clientSettingsBuilder.applyToServerSettings(builder -> builder.serverMonitoringMode(
+                                ServerMonitoringModeUtil.fromString(value.asString().getValue())));
+                        break;
+                    case "authMechanism":
+                        if (value.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
+                            // authMechanismProperties depends on authMechanism
+                            BsonDocument authMechanismProperties = entity
+                                    .getDocument("uriOptions")
+                                    .getDocument("authMechanismProperties");
+                            boolean hasPlaceholder = authMechanismProperties.equals(
+                                    new BsonDocument("$$placeholder", new BsonInt32(1)));
+                            if (!hasPlaceholder) {
+                                throw new UnsupportedOperationException(
+                                        "Unsupported authMechanismProperties for authMechanism: " + value);
+                            }
+
+                            // override the org.mongodb.test.uri connection string
+                            String uri = getenv("MONGODB_URI");
+                            ConnectionString cs = new ConnectionString(uri);
+                            clientSettingsBuilder.applyConnectionString(cs);
+
+                            String env = assertNotNull(getenv("OIDC_ENV"));
+                            MongoCredential oidcCredential = MongoCredential
+                                    .createOidcCredential(null)
+                                    .withMechanismProperty("ENVIRONMENT", env);
+                            if (env.equals("azure")) {
+                                oidcCredential = oidcCredential.withMechanismProperty(
+                                        MongoCredential.TOKEN_RESOURCE_KEY, getenv("AZUREOIDC_RESOURCE"));
+                            } else if (env.equals("gcp")) {
+                                oidcCredential = oidcCredential.withMechanismProperty(
+                                        MongoCredential.TOKEN_RESOURCE_KEY, getenv("GCPOIDC_RESOURCE"));
+                            }
+                            clientSettingsBuilder.credential(oidcCredential);
+                            break;
+                        }
+                        throw new UnsupportedOperationException("Unsupported authMechanism: " + value);
+                    case "authMechanismProperties":
+                        // authMechanismProperties are handled as part of authMechanism, above
+                        BsonValue authMechanism = entity
+                                .getDocument("uriOptions")
+                                .get("authMechanism");
+                        if (authMechanism.equals(new BsonString(MONGODB_OIDC.getMechanismName()))) {
+                            break;
+                        }
+                        throw new UnsupportedOperationException("Failure to apply authMechanismProperties: " + value);
                     default:
                         throw new UnsupportedOperationException("Unsupported uri option: " + key);
                 }
@@ -596,7 +663,7 @@ public final class Entities {
         putEntity(id, collection, collections);
     }
 
-    private void initSession(final BsonDocument entity, final String id) {
+    private void initSession(final BsonDocument entity, final String id, final BsonDocument startingClusterTime) {
         MongoClient client = clients.get(entity.getString("client").getValue());
         ClientSessionOptions.Builder optionsBuilder = ClientSessionOptions.builder();
         if (entity.containsKey("sessionOptions")) {
@@ -608,12 +675,16 @@ public final class Entities {
                     case "snapshot":
                         optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
                         break;
+                    case "causalConsistency":
+                        optionsBuilder.causallyConsistent(entry.getValue().asBoolean().getValue());
+                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported session option: " + entry.getKey());
                 }
             }
         }
         ClientSession session = client.startSession(optionsBuilder.build());
+        session.advanceClusterTime(startingClusterTime);
         putEntity(id, session, sessions);
         putEntity(id + "-identifier", session.getServerSession().getIdentifier(), sessionIdentifiers);
     }
@@ -657,7 +728,7 @@ public final class Entities {
             }
         }
 
-        putEntity(id, clientEncryptionSupplier.apply(Assertions.notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
+        putEntity(id, clientEncryptionSupplier.apply(notNull("mongoClient", mongoClient), builder.build()), clientEncryptions);
     }
 
     private TransactionOptions getTransactionOptions(final BsonDocument options) {
@@ -669,6 +740,12 @@ public final class Entities {
                     break;
                 case "writeConcern":
                     transactionOptionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                case "readPreference":
+                    transactionOptionsBuilder.readPreference(asReadPreference(entry.getValue().asDocument()));
+                    break;
+                case "maxCommitTimeMS":
+                    transactionOptionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported transaction option: " + entry.getKey());

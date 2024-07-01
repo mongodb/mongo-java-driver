@@ -72,7 +72,7 @@ class AsynchronousClusterEventListenerTest {
         listener.clusterDescriptionChanged(clusterDescriptionChangedEvent);
         assertEquals(clusterDescriptionChangedEvent, targetListener.take());
 
-        ServerHeartbeatStartedEvent serverHeartbeatStartedEvent = new ServerHeartbeatStartedEvent(connectionId);
+        ServerHeartbeatStartedEvent serverHeartbeatStartedEvent = new ServerHeartbeatStartedEvent(connectionId, false);
         listener.serverHearbeatStarted(serverHeartbeatStartedEvent);
         assertEquals(serverHeartbeatStartedEvent, targetListener.take());
 

@@ -41,7 +41,7 @@ import spock.lang.Specification
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
-import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
+import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION
 
 class LoggingCommandEventSenderSpecification extends Specification {
 
@@ -49,7 +49,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         given:
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()))
         def namespace = new MongoNamespace('test.driver')
-        def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+            def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandListener = new TestCommandListener()
         def commandDocument = new BsonDocument('ping', new BsonInt32(1))
         def replyDocument = new BsonDocument('ok', new BsonInt32(1))
@@ -95,7 +95,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def connectionDescription = new ConnectionDescription(serverId)
                 .withConnectionId(new ConnectionId(serverId, 42, 1000))
         def namespace = new MongoNamespace('test.driver')
-        def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+        def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('ping', new BsonInt32(1))
         def replyDocument = new BsonDocument('ok', new BsonInt32(42))
         def failureException = new MongoInternalException('failure!')
@@ -153,7 +153,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def connectionDescription = new ConnectionDescription(serverId)
                 .withConnectionId(new ConnectionId(serverId, 42, 1000))
         def namespace = new MongoNamespace('test.driver')
-        def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+        def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('fake', new BsonBinary(new byte[2048]))
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
                 messageSettings, SINGLE, null)
@@ -186,7 +186,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def connectionDescription = new ConnectionDescription(serverId)
                 .withConnectionId(new ConnectionId(serverId, 42, 1000))
         def namespace = new MongoNamespace('test.driver')
-        def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+        def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('createUser', new BsonString('private'))
         def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
                 messageSettings, SINGLE, null)
