@@ -21,7 +21,6 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -331,14 +330,12 @@ final class RetryStateTest {
         }));
     }
 
-    @Ignore // TODO (CSOT) update this
     @Test
     void advanceOrThrowPredicateThrowsTimeoutAfterFirstAttempt() {
         RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
         RuntimeException predicateException = new RuntimeException() {
         };
-        RuntimeException attemptException = new RuntimeException() {
-        };
+        RuntimeException attemptException = new MongoOperationTimeoutException(EXPECTED_TIMEOUT_MESSAGE);
         MongoOperationTimeoutException mongoOperationTimeoutException = assertThrows(MongoOperationTimeoutException.class,
                 () -> retryState.advanceOrThrow(attemptException, (e1, e2) -> e2, (rs, e) -> {
                     assertTrue(rs.isFirstAttempt());
@@ -347,7 +344,7 @@ final class RetryStateTest {
                 }));
 
         assertEquals(EXPECTED_TIMEOUT_MESSAGE, mongoOperationTimeoutException.getMessage());
-        assertEquals(attemptException, mongoOperationTimeoutException.getCause());
+        assertNull(mongoOperationTimeoutException.getCause());
     }
 
     @ParameterizedTest
@@ -417,14 +414,13 @@ final class RetryStateTest {
                 }));
     }
 
-    @Ignore // TODO (CSOT) update this
     @Test
     void advanceOrThrowTransformThrowsTimeoutExceptionAfterFirstAttempt() {
         RetryState retryState = new RetryState(TIMEOUT_CONTEXT_EXPIRED_GLOBAL_TIMEOUT);
-        RuntimeException attemptException = new RuntimeException() {
-        };
-        RuntimeException transformerResult = new RuntimeException() {
-        };
+
+        RuntimeException attemptException = new MongoOperationTimeoutException(EXPECTED_TIMEOUT_MESSAGE);
+        RuntimeException transformerResult = new RuntimeException();
+
         MongoOperationTimeoutException mongoOperationTimeoutException =
                 assertThrows(MongoOperationTimeoutException.class, () -> retryState.advanceOrThrow(attemptException,
                         (e1, e2) -> {
@@ -439,7 +435,6 @@ final class RetryStateTest {
 
         assertEquals(EXPECTED_TIMEOUT_MESSAGE, mongoOperationTimeoutException.getMessage());
         assertEquals(transformerResult, mongoOperationTimeoutException.getCause());
-
     }
 
     @ParameterizedTest
