@@ -294,3 +294,7 @@ data class DataClassWithFailingInit(val id: String) {
 }
 
 @Serializable data class DataClassWithSequence(val value: Sequence<String>)
+
+@Serializable data class Box<T>(val boxed: T)
+
+@Serializable data class DataClassWithNullableGeneric(val box: Box<String?>)

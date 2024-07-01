@@ -33,6 +33,7 @@ import org.bson.BsonUndefined
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.kotlinx.samples.Box
 import org.bson.codecs.kotlinx.samples.DataClassBsonValues
 import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
 import org.bson.codecs.kotlinx.samples.DataClassContainsValueClass
@@ -76,6 +77,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterizedDataClass
+import org.bson.codecs.kotlinx.samples.DataClassWithNullableGeneric
 import org.bson.codecs.kotlinx.samples.DataClassWithNulls
 import org.bson.codecs.kotlinx.samples.DataClassWithPair
 import org.bson.codecs.kotlinx.samples.DataClassWithParameterizedDataClass
@@ -200,6 +202,27 @@ class KotlinSerializerCodecTest {
         val dataClass = DataClassWithNulls(null, null, null)
         assertRoundTrips(emptyDocument, dataClass)
         assertRoundTrips(expectedNulls, dataClass, altConfiguration)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNotNull() {
+        val expected =
+            """{
+            | "box": {"boxed": "String"}
+            |}"""
+                .trimMargin()
+
+        val dataClass = DataClassWithNullableGeneric(Box("String"))
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNull() {
+        val expectedDefault = """{"box": {}}"""
+        val dataClass = DataClassWithNullableGeneric(Box(null))
+        assertRoundTrips(expectedDefault, dataClass)
+        val expectedNull = """{"box": {"boxed": null}}"""
+        assertRoundTrips(expectedNull, dataClass, altConfiguration)
     }
 
     @Test
