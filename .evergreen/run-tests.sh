@@ -4,28 +4,30 @@ set -o xtrace   # Write all commands first to stderr
 set -o errexit  # Exit the script with error if any of the commands fail
 
 # Supported/used environment variables:
-#       AUTH                        Set to enable authentication. Values are: "auth" / "noauth" (default)
-#       SSL                         Set to enable SSL. Values are "ssl" / "nossl" (default)
-#       NETTY_SSL_PROVIDER          The Netty TLS/SSL protocol provider. Ignored unless SSL is "ssl" and STREAM_TYPE is "netty". Values are "JDK", "OPENSSL", null (a.k.a. "" or '') (default).
-#       MONGODB_URI                 Set the suggested connection MONGODB_URI (including credentials and topology info)
-#       TOPOLOGY                    Allows you to modify variables and the MONGODB_URI based on test topology
-#                                   Supported values: "server", "replica_set", "sharded_cluster"
-#       COMPRESSOR                  Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
-#       STREAM_TYPE                 Set the stream type.  Values are "nio2" or "netty".  Defaults to "nio2".
-#       JDK                         Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#       SLOW_TESTS_ONLY             Set to true to only run the slow tests
-#       AWS_ACCESS_KEY_ID           The AWS access key identifier for client-side encryption
-#       AWS_SECRET_ACCESS_KEY       The AWS secret access key for client-side encryption
-#       AWS_TEMP_ACCESS_KEY_ID      The temporary AWS access key identifier for client-side encryption
-#       AWS_TEMP_SECRET_ACCESS_KEY  The temporary AWS secret access key for client-side encryption
-#       AWS_TEMP_SESSION_TOKEN      The temporary AWS session token for client-side encryption
-#       AZURE_TENANT_ID             The Azure tenant identifier for client-side encryption
-#       AZURE_CLIENT_ID             The Azure client identifier for client-side encryption
-#       AZURE_CLIENT_SECRET         The Azure client secret for client-side encryption
-#       GCP_EMAIL                   The GCP email for client-side encryption
-#       GCP_PRIVATE_KEY             The GCP private key for client-side encryption
-#       AZUREKMS_KEY_VAULT_ENDPOINT The Azure key vault endpoint for integration tests
-#       AZUREKMS_KEY_NAME           The Azure key name endpoint for integration tests
+#   AUTH                                 Set to enable authentication. Values are: "auth" / "noauth" (default)
+#   SSL                                  Set to enable SSL. Values are "ssl" / "nossl" (default)
+#   NETTY_SSL_PROVIDER                   The Netty TLS/SSL protocol provider. Ignored unless SSL is "ssl" and STREAM_TYPE is "netty". Values are "JDK", "OPENSSL", null (a.k.a. "" or '') (default).
+#   MONGODB_URI                          Set the suggested connection MONGODB_URI (including credentials and topology info)
+#   TOPOLOGY                             Allows you to modify variables and the MONGODB_URI based on test topology
+#                                        Supported values: "server", "replica_set", "sharded_cluster"
+#   COMPRESSOR                           Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
+#   STREAM_TYPE                          Set the stream type.  Values are "nio2" or "netty".  Defaults to "nio2".
+#   JDK                                  Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
+#   SLOW_TESTS_ONLY                      Set to true to only run the slow tests
+#   AWS_ACCESS_KEY_ID                    The AWS access key identifier for client-side encryption
+#   AWS_SECRET_ACCESS_KEY                The AWS secret access key for client-side encryption
+#   AWS_ACCESS_KEY_ID_AWS_KMS_NAMED      The AWS access key identifier for client-side encryption's named KMS provider.
+#   AWS_SECRET_ACCESS_KEY_AWS_KMS_NAMED  The AWS secret access key for client-side encryption's named KMS provider.
+#   AWS_TEMP_ACCESS_KEY_ID               The temporary AWS access key identifier for client-side encryption
+#   AWS_TEMP_SECRET_ACCESS_KEY           The temporary AWS secret access key for client-side encryption
+#   AWS_TEMP_SESSION_TOKEN               The temporary AWS session token for client-side encryption
+#   AZURE_TENANT_ID                      The Azure tenant identifier for client-side encryption
+#   AZURE_CLIENT_ID                      The Azure client identifier for client-side encryption
+#   AZURE_CLIENT_SECRET                  The Azure client secret for client-side encryption
+#   GCP_EMAIL                            The GCP email for client-side encryption
+#   GCP_PRIVATE_KEY                      The GCP private key for client-side encryption
+#   AZUREKMS_KEY_VAULT_ENDPOINT          The Azure key vault endpoint for integration tests
+#   AZUREKMS_KEY_NAME                    The Azure key name endpoint for integration tests
 
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}

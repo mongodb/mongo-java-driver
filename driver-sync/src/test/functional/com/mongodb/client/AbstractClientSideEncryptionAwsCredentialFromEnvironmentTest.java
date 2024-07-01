@@ -22,6 +22,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -47,8 +49,10 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTest {
 
@@ -191,6 +195,60 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             }
         }
     }
+
+    @Test
+    public void shouldThrowMongoCryptIfNamedKmsProviderHasEmptyParametersInEncryptionSettings() {
+        assumeTrue(serverVersionAtLeast(4, 2));
+        assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
+        assumeTrue(isClientSideEncryptionTest());
+
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
+            put("aws:name", new HashMap<>());
+        }};
+
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = Mockito.mock(Map.class);
+        ClientEncryptionSettings settings = ClientEncryptionSettings.builder()
+                .keyVaultNamespace("test.datakeys")
+                .kmsProviders(kmsProviders)
+                .kmsProviderPropertySuppliers(kmsProviderPropertySuppliers)
+                .keyVaultMongoClientSettings(Fixture.getMongoClientSettings())
+                .build();
+
+        MongoCryptException e = assertThrows(MongoCryptException.class, () -> {
+            try (ClientEncryption ignore = createClientEncryption(settings)) {//NOP
+            }
+        });
+        assertTrue(e.getMessage().contains("On-demand credentials are not supported for named KMS providers."));
+        verifyNoInteractions(kmsProviderPropertySuppliers);
+    }
+
+    @Test
+    public void shouldThrowMongoCryptIfNamedKmsProviderHasEmptyParametersInAutoSettings() {
+        assumeTrue(serverVersionAtLeast(4, 2));
+        assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
+        assumeTrue(isClientSideEncryptionTest());
+
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
+            put("aws:name", new HashMap<>());
+        }};
+
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = Mockito.mock(Map.class);
+        AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
+                .kmsProviders(kmsProviders)
+                .keyVaultNamespace("test.datakeys")
+                .build();
+
+        MongoCryptException e = assertThrows(MongoCryptException.class, () -> {
+            try (MongoClient ignore = createMongoClient(getMongoClientSettingsBuilder()
+                    .autoEncryptionSettings(autoEncryptionSettings)
+                    .build())) {//NOP
+                 }
+        });
+        assertTrue(e.getMessage().contains("On-demand credentials are not supported for named KMS providers."));
+        verifyNoInteractions(kmsProviderPropertySuppliers);
+    }
+
+
 
     @Test
     public void shouldIgnoreSupplierIfKmsProviderMapValueIsNotEmpty() {

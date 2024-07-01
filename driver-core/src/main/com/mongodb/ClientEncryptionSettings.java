@@ -169,9 +169,14 @@ public final class ClientEncryptionSettings {
     /**
      * Gets the map of KMS provider properties.
      *
+     * <p> Multiple KMS providers can be specified within this map. Each KMS provider is identified by a unique key.
+     * Keys are formatted as either {@code "KMS provider type"} or {@code "KMS provider type:KMS provider name"} (e.g., "aws" or "aws:myname").
      * <p>
-     * Multiple KMS providers may be specified. The following KMS providers are supported: "aws", "azure", "gcp" and "local". The
-     * kmsProviders map values differ by provider:
+     * Supported KMS provider types include "aws", "azure", "gcp", and "local". The provider name is optional and allows
+     * for the configuration of multiple providers of the same type under different names (e.g., "aws:name1" and
+     * "aws:name2" could represent different AWS accounts).
+     * <p>
+     * The kmsProviders map values differ by provider type. The following properties are supported for each provider type:
      * </p>
      * <p>
      * For "aws", the properties are:
@@ -218,6 +223,8 @@ public final class ClientEncryptionSettings {
      *  <li>use the {@link Supplier} configured in {@link #getKmsProviderPropertySuppliers()} to obtain a non-empty map</li>
      *  <li>attempt to obtain the properties from the environment</li>
      * </ul>
+     * However, KMS providers containing a name (e.g., "aws:myname") does not support dynamically obtaining KMS properties from the {@link Supplier}
+     * or environment.
      * @return map of KMS provider properties
      * @see #getKmsProviderPropertySuppliers()
      */
