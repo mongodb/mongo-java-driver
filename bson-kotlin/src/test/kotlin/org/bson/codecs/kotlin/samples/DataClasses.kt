@@ -15,6 +15,7 @@
  */
 package org.bson.codecs.kotlin.samples
 
+import kotlin.time.Duration
 import org.bson.BsonDocument
 import org.bson.BsonMaxKey
 import org.bson.BsonType
@@ -159,3 +160,9 @@ data class DataClassWithFailingInit(val id: String) {
 }
 
 data class DataClassWithSequence(val value: Sequence<String>)
+
+data class DataClassWithJVMErasure(val duration: Duration, val ints: List<Int>)
+
+data class Box<T>(val boxed: T)
+
+data class DataClassWithNullableGeneric(val box: Box<String?>)
