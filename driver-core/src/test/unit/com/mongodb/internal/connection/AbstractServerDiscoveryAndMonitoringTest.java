@@ -27,7 +27,9 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
+import com.mongodb.internal.time.Timeout;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -42,6 +44,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
@@ -73,26 +77,29 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         if (helloResult.isEmpty()) {
             serverDescription = ServerDescription.builder().type(ServerType.UNKNOWN).state(CONNECTING).address(serverAddress).build();
         } else {
-            serverDescription = createServerDescription(serverAddress, helloResult, 5000000);
+            serverDescription = createServerDescription(serverAddress, helloResult, 5000000, 0);
         }
         factory.sendNotification(serverAddress, serverDescription);
     }
 
     protected void applyApplicationError(final BsonDocument applicationError) {
+        Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout();
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
+        TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
         int errorGeneration = applicationError.getNumber("generation",
-                new BsonInt32(((DefaultServer) getCluster().getServersSnapshot().getServer(serverAddress))
+                new BsonInt32(((DefaultServer) getCluster().getServersSnapshot(serverSelectionTimeout, timeoutContext).getServer(serverAddress))
                         .getConnectionPool().getGeneration())).intValue();
         int maxWireVersion = applicationError.getNumber("maxWireVersion").intValue();
         String when = applicationError.getString("when").getValue();
         String type = applicationError.getString("type").getValue();
 
-        DefaultServer server = (DefaultServer) cluster.getServersSnapshot().getServer(serverAddress);
+        DefaultServer server = (DefaultServer) cluster.getServersSnapshot(serverSelectionTimeout, timeoutContext).getServer(serverAddress);
         RuntimeException exception;
 
         switch (type) {
             case "command":
-                exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress);
+                exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress,
+                        OPERATION_CONTEXT.getTimeoutContext());
                 break;
             case "network":
                 exception = new MongoSocketReadException("Read error", serverAddress, new IOException());

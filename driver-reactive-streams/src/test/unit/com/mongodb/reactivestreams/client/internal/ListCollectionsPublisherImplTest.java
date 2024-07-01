@@ -28,7 +28,7 @@ import reactor.core.publisher.Flux;
 
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ListCollectionsPublisherImplTest extends TestHelper {
@@ -56,12 +56,14 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
         // Should apply settings
         publisher
                 .filter(new Document("filter", 1))
-                .maxTime(10, SECONDS)
+                .maxTime(100, MILLISECONDS)
                 .batchSize(100);
 
-        expectedOperation
+        expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
+                                                           getDefaultCodecRegistry().get(String.class))
+                .nameOnly(true)
+                .retryReads(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)))
-                .maxTime(10, SECONDS)
                 .batchSize(100);
 
         Flux.from(publisher).blockFirst();

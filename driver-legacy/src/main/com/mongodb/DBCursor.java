@@ -36,6 +36,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoClient.getDefaultCodecRegistry;
+import static com.mongodb.TimeoutSettingsHelper.createTimeoutSettings;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -370,9 +371,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.server.release 3.0
      */
     public DBObject explain() {
-        return executor.execute(getQueryOperation(collection.getObjectCodec())
-                        .asExplainableOperation(null, getDefaultCodecRegistry().get(DBObject.class)),
-                getReadPreference(), getReadConcern());
+        return executor.execute(
+                getQueryOperation(collection.getObjectCodec())
+                                .asExplainableOperation(null, getDefaultCodecRegistry().get(DBObject.class)), getReadPreference(), getReadConcern(), null);
     }
 
     /**
@@ -413,31 +414,29 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
-
-        return new FindOperation<>(collection.getNamespace(), decoder)
-                                                .filter(collection.wrapAllowNull(filter))
-                                                .batchSize(findOptions.getBatchSize())
-                                                .skip(findOptions.getSkip())
-                                                .limit(findOptions.getLimit())
-                                                .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                                                .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                .projection(collection.wrapAllowNull(findOptions.getProjection()))
-                                                .sort(collection.wrapAllowNull(findOptions.getSort()))
-                                                .collation(findOptions.getCollation())
-                                                .comment(findOptions.getComment() != null
-                                                        ? new BsonString(findOptions.getComment()) : null)
-                                                .hint(findOptions.getHint() != null
-                                                        ? collection.wrapAllowNull(findOptions.getHint())
-                                                        : (findOptions.getHintString() != null
-                                                        ? new BsonString(findOptions.getHintString()) : null))
-                                                .min(collection.wrapAllowNull(findOptions.getMin()))
-                                                .max(collection.wrapAllowNull(findOptions.getMax()))
-                                                .cursorType(findOptions.getCursorType())
-                                                .noCursorTimeout(findOptions.isNoCursorTimeout())
-                                                .partial(findOptions.isPartial())
-                                                .returnKey(findOptions.isReturnKey())
-                                                .showRecordId(findOptions.isShowRecordId())
-                                                .retryReads(retryReads);
+        return new FindOperation<>(
+                collection.getNamespace(), decoder)
+                .filter(collection.wrapAllowNull(filter))
+                .batchSize(findOptions.getBatchSize())
+                .skip(findOptions.getSkip())
+                .limit(findOptions.getLimit())
+                .projection(collection.wrapAllowNull(findOptions.getProjection()))
+                .sort(collection.wrapAllowNull(findOptions.getSort()))
+                .collation(findOptions.getCollation())
+                .comment(findOptions.getComment() != null
+                        ? new BsonString(findOptions.getComment()) : null)
+                .hint(findOptions.getHint() != null
+                        ? collection.wrapAllowNull(findOptions.getHint())
+                        : (findOptions.getHintString() != null
+                        ? new BsonString(findOptions.getHintString()) : null))
+                .min(collection.wrapAllowNull(findOptions.getMin()))
+                .max(collection.wrapAllowNull(findOptions.getMax()))
+                .cursorType(findOptions.getCursorType())
+                .noCursorTimeout(findOptions.isNoCursorTimeout())
+                .partial(findOptions.isPartial())
+                .returnKey(findOptions.isReturnKey())
+                .showRecordId(findOptions.isShowRecordId())
+                .retryReads(retryReads);
     }
 
     /**
@@ -787,7 +786,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private void initializeCursor(final FindOperation<DBObject> operation) {
-        cursor = new MongoBatchCursorAdapter<>(executor.execute(operation, getReadPreference(), getReadConcern()));
+        cursor =
+                new MongoBatchCursorAdapter<>(executor
+                        .withTimeoutSettings(createTimeoutSettings(collection.getTimeoutSettings(), findOptions))
+                        .execute(operation, getReadPreference(), getReadConcern(), null));
         ServerCursor serverCursor = cursor.getServerCursor();
         if (isCursorFinalizerEnabled() && serverCursor != null) {
             optionalCleaner = DBCursorCleaner.create(collection.getDB().getMongoClient(), collection.getNamespace(),

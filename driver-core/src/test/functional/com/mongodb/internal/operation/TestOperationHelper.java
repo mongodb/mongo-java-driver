@@ -23,19 +23,15 @@ import com.mongodb.MongoQueryException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.internal.IgnorableRequestContext;
-import com.mongodb.internal.binding.StaticBindingContext;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 
-import static com.mongodb.ClusterFixture.getServerApi;
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 
 final class TestOperationHelper {
 
@@ -60,10 +56,7 @@ final class TestOperationHelper {
                 connection.command(namespace.getDatabaseName(),
                         new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                                 .append("collection", new BsonString(namespace.getCollectionName())),
-                        new NoOpFieldNameValidator(), ReadPreference.primary(),
-                        new BsonDocumentCodec(),
-                        new StaticBindingContext(new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE,
-                                new OperationContext())));
+                        new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT));
     }
 
     static void makeAdditionalGetMoreCall(final MongoNamespace namespace, final ServerCursor serverCursor,
@@ -73,9 +66,7 @@ final class TestOperationHelper {
             connection.commandAsync(namespace.getDatabaseName(),
                     new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                             .append("collection", new BsonString(namespace.getCollectionName())),
-                    new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                    new StaticBindingContext(new NoOpSessionContext(), getServerApi(), IgnorableRequestContext.INSTANCE,
-                            new OperationContext()), callback);
+                    new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT, callback);
             callback.get();
         });
     }

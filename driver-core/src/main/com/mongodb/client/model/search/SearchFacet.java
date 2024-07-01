@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import org.bson.BsonDocument;
 import org.bson.BsonType;
@@ -43,7 +44,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Sealed
-@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
+@Beta({Reason.CLIENT, Reason.SERVER})
 public interface SearchFacet extends Bson {
     /**
      * Returns a {@link SearchFacet} that allows narrowing down search results based on the most frequent

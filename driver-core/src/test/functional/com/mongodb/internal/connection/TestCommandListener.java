@@ -43,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.internal.connection.InternalStreamConnection.getSecuritySensitiveCommands;
@@ -178,29 +180,50 @@ public class TestCommandListener implements CommandListener {
                 .orElseThrow(() -> new IllegalArgumentException(commandName + " not found in command failed event list"));
     }
 
-    public List<CommandEvent> getCommandStartedEvents() {
-        return getCommandStartedEvents(Integer.MAX_VALUE);
+    public List<CommandFailedEvent> getCommandFailedEvents() {
+        return getEvents(CommandFailedEvent.class, Integer.MAX_VALUE);
     }
 
-    private List<CommandEvent> getCommandStartedEvents(final int maxEvents) {
+    public List<CommandFailedEvent> getCommandFailedEvents(final String commandName) {
+        return getEvents(CommandFailedEvent.class,
+                commandEvent -> commandEvent.getCommandName().equals(commandName),
+                Integer.MAX_VALUE);
+    }
+
+    public List<CommandStartedEvent> getCommandStartedEvents() {
+        return getEvents(CommandStartedEvent.class, Integer.MAX_VALUE);
+    }
+
+    public List<CommandStartedEvent> getCommandStartedEvents(final String commandName) {
+        return getEvents(CommandStartedEvent.class,
+                commandEvent -> commandEvent.getCommandName().equals(commandName),
+                Integer.MAX_VALUE);
+    }
+
+    public List<CommandSucceededEvent> getCommandSucceededEvents() {
+        return getEvents(CommandSucceededEvent.class, Integer.MAX_VALUE);
+    }
+
+    private <T extends CommandEvent> List<T> getEvents(final Class<T> type, final int maxEvents) {
+      return getEvents(type, e -> true, maxEvents);
+    }
+
+    private <T extends CommandEvent> List<T> getEvents(final Class<T> type,
+                                                       final Predicate<? super CommandEvent> filter,
+                                                       final int maxEvents) {
         lock.lock();
         try {
-            List<CommandEvent> commandStartedEvents = new ArrayList<>();
-            for (CommandEvent cur : getEvents()) {
-                if (cur instanceof CommandStartedEvent) {
-                    commandStartedEvents.add(cur);
-                }
-                if (commandStartedEvents.size() == maxEvents) {
-                    break;
-                }
-            }
-            return commandStartedEvents;
+            return getEvents().stream()
+                    .filter(e -> e.getClass() == type)
+                    .filter(filter)
+                    .map(type::cast)
+                    .limit(maxEvents).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
     }
 
-    public List<CommandEvent> waitForStartedEvents(final int numEvents) {
+    public List<CommandStartedEvent> waitForStartedEvents(final int numEvents) {
         lock.lock();
         try {
             while (!hasCompletedEvents(numEvents)) {
@@ -212,7 +235,7 @@ public class TestCommandListener implements CommandListener {
                     throw interruptAndCreateMongoInterruptedException("Interrupted waiting for event", e);
                 }
             }
-            return getCommandStartedEvents(numEvents);
+            return getEvents(CommandStartedEvent.class, numEvents);
         } finally {
             lock.unlock();
         }

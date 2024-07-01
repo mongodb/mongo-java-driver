@@ -17,6 +17,7 @@
 package com.mongodb.client.model.vault;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
@@ -33,7 +34,7 @@ import org.bson.BsonValue;
  * @mongodb.server.release 6.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
  */
-@Beta(Beta.Reason.SERVER)
+@Beta(Reason.SERVER)
 public class RangeOptions {
 
     private BsonValue min;

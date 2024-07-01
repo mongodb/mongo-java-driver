@@ -32,7 +32,6 @@ import org.bson.codecs.Decoder;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
@@ -49,7 +48,7 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     private Boolean bypassDocumentValidation;
 
     public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                   final Decoder<T> decoder, final BsonDocument replacement) {
+            final Decoder<T> decoder, final BsonDocument replacement) {
         super(namespace, writeConcern, retryWrites, decoder);
         this.replacement = notNull("replacement", replacement);
     }
@@ -94,12 +93,6 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     @Override
     public FindAndReplaceOperation<T> projection(@Nullable final BsonDocument projection) {
         super.projection(projection);
-        return this;
-    }
-
-    @Override
-    public FindAndReplaceOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        super.maxTime(maxTime, timeUnit);
         return this;
     }
 

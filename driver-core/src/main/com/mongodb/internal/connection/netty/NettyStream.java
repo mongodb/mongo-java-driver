@@ -27,6 +27,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.Stream;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -48,6 +49,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
@@ -59,6 +61,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -67,7 +70,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
@@ -80,7 +82,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * A Stream implementation based on Netty 4.0.
  * Just like it is for the {@link java.nio.channels.AsynchronousSocketChannel},
  * concurrent pending<sup>1</sup> readers
- * (whether {@linkplain #read(int, int) synchronous} or {@linkplain #readAsync(int, AsyncCompletionHandler) asynchronous})
+ * (whether {@linkplain #read(int, OperationContext) synchronous} or
+ * {@linkplain #readAsync(int, OperationContext, AsyncCompletionHandler) asynchronous})
  * are not supported by {@link NettyStream}.
  * However, this class does not have a fail-fast mechanism checking for such situations.
  * <hr>
@@ -105,7 +108,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * int1 -> inv2 -> ret2
  *      \--------> ret1
  * }</pre>
- * As shown on the diagram, the method {@link #readAsync(int, AsyncCompletionHandler)} runs concurrently with
+ * As shown on the diagram, the method {@link #readAsync(int, OperationContext, AsyncCompletionHandler)} runs concurrently with
  * itself in the example above. However, there are no concurrent pending readers because the second operation
  * is invoked after the first operation has completed reading despite the method has not returned yet.
  */
@@ -137,7 +140,6 @@ final class NettyStream implements Stream {
      * these fields can be plain.*/
     @Nullable
     private ReadTimeoutTask readTimeoutTask;
-    private long readTimeoutMillis = NO_SCHEDULE_TIME;
 
     NettyStream(final ServerAddress address, final InetAddressResolver inetAddressResolver, final SocketSettings settings,
             final SslSettings sslSettings, final EventLoopGroup workerGroup,
@@ -159,15 +161,14 @@ final class NettyStream implements Stream {
     }
 
     @Override
-    public void open() throws IOException {
+    public void open(final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<>();
-        openAsync(handler);
+        openAsync(operationContext, handler);
         handler.get();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
         Queue<SocketAddress> socketAddressQueue;
 
         try {
@@ -177,10 +178,11 @@ final class NettyStream implements Stream {
             return;
         }
 
-        initializeChannel(handler, socketAddressQueue);
+        initializeChannel(operationContext, handler, socketAddressQueue);
     }
 
-    private void initializeChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
+    private void initializeChannel(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler,
+            final Queue<SocketAddress> socketAddressQueue) {
         if (socketAddressQueue.isEmpty()) {
             handler.failed(new MongoSocketException("Exception opening socket", getAddress()));
         } else {
@@ -189,8 +191,8 @@ final class NettyStream implements Stream {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(workerGroup);
             bootstrap.channel(socketChannelClass);
-
-            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                    operationContext.getTimeoutContext().getConnectTimeoutMs());
             bootstrap.option(ChannelOption.TCP_NODELAY, true);
             bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
 
@@ -210,46 +212,36 @@ final class NettyStream implements Stream {
                         addSslHandler(ch);
                     }
 
-                    int readTimeout = settings.getReadTimeout(MILLISECONDS);
-                    if (readTimeout > NO_SCHEDULE_TIME) {
-                        readTimeoutMillis = readTimeout;
-                        /* We need at least one handler before (in the inbound evaluation order) the InboundBufferHandler,
-                         * so that we can fire exception events (they are inbound events) using its context and the InboundBufferHandler
-                         * receives them. SslHandler is not always present, so adding a NOOP handler.*/
-                        pipeline.addLast(new ChannelInboundHandlerAdapter());
-                        readTimeoutTask = new ReadTimeoutTask(pipeline.lastContext());
-                    }
-
-                    pipeline.addLast(new InboundBufferHandler());
+                    /* We need at least one handler before (in the inbound evaluation order) the InboundBufferHandler,
+                     * so that we can fire exception events (they are inbound events) using its context and the InboundBufferHandler
+                     * receives them. SslHandler is not always present, so adding a NOOP handler.*/
+                    pipeline.addLast("ChannelInboundHandlerAdapter",  new ChannelInboundHandlerAdapter());
+                    readTimeoutTask = new ReadTimeoutTask(pipeline.lastContext());
+                    pipeline.addLast("InboundBufferHandler", new InboundBufferHandler());
                 }
             });
             ChannelFuture channelFuture = bootstrap.connect(nextAddress);
-            channelFuture.addListener(new OpenChannelFutureListener(socketAddressQueue, channelFuture, handler));
+            channelFuture.addListener(new OpenChannelFutureListener(operationContext, socketAddressQueue, channelFuture, handler));
         }
     }
 
     @Override
-    public void write(final List<ByteBuf> buffers) throws IOException {
+    public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<>();
-        writeAsync(buffers, future);
+        writeAsync(buffers, operationContext, future);
         future.get();
     }
 
     @Override
-    public ByteBuf read(final int numBytes) throws IOException {
-        return read(numBytes, 0);
-    }
-
-    @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeoutMillis) throws IOException {
-        isTrueArgument("additionalTimeoutMillis must not be negative", additionalTimeoutMillis >= 0);
+    public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
         FutureAsyncCompletionHandler<ByteBuf> future = new FutureAsyncCompletionHandler<>();
-        readAsync(numBytes, future, combinedTimeout(readTimeoutMillis, additionalTimeoutMillis));
+        readAsync(numBytes, future, operationContext.getTimeoutContext().getReadTimeoutMS());
         return future.get();
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
+    public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
+            final AsyncCompletionHandler<Void> handler) {
         CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
         for (ByteBuf cur : buffers) {
             // The Netty framework releases `CompositeByteBuf` after writing
@@ -260,7 +252,10 @@ final class NettyStream implements Stream {
             composite.addComponent(true, ((NettyByteBuf) cur).asByteBuf().retain());
         }
 
+        long writeTimeoutMS = operationContext.getTimeoutContext().getWriteTimeoutMS();
+        final Optional<WriteTimeoutHandler> writeTimeoutHandler = addWriteTimeoutHandler(writeTimeoutMS);
         channel.writeAndFlush(composite).addListener((ChannelFutureListener) future -> {
+            writeTimeoutHandler.map(w -> channel.pipeline().remove(w));
             if (!future.isSuccess()) {
                 handler.failed(future.cause());
             } else {
@@ -269,9 +264,18 @@ final class NettyStream implements Stream {
         });
     }
 
+    private Optional<WriteTimeoutHandler> addWriteTimeoutHandler(final long writeTimeoutMS) {
+        if (writeTimeoutMS != NO_SCHEDULE_TIME) {
+            WriteTimeoutHandler writeTimeoutHandler = new WriteTimeoutHandler(writeTimeoutMS, MILLISECONDS);
+            channel.pipeline().addBefore("ChannelInboundHandlerAdapter", "WriteTimeoutHandler", writeTimeoutHandler);
+            return Optional.of(writeTimeoutHandler);
+        }
+        return Optional.empty();
+    }
+
     @Override
-    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        readAsync(numBytes, handler, readTimeoutMillis);
+    public void readAsync(final int numBytes, final OperationContext operationContext, final AsyncCompletionHandler<ByteBuf> handler) {
+        readAsync(numBytes, handler, operationContext.getTimeoutContext().getReadTimeoutMS());
     }
 
     /**
@@ -501,9 +505,12 @@ final class NettyStream implements Stream {
         private final Queue<SocketAddress> socketAddressQueue;
         private final ChannelFuture channelFuture;
         private final AsyncCompletionHandler<Void> handler;
+        private final OperationContext operationContext;
 
-        OpenChannelFutureListener(final Queue<SocketAddress> socketAddressQueue, final ChannelFuture channelFuture,
-                                  final AsyncCompletionHandler<Void> handler) {
+        OpenChannelFutureListener(final OperationContext operationContext,
+                final Queue<SocketAddress> socketAddressQueue, final ChannelFuture channelFuture,
+                final AsyncCompletionHandler<Void> handler) {
+            this.operationContext = operationContext;
             this.socketAddressQueue = socketAddressQueue;
             this.channelFuture = channelFuture;
             this.handler = handler;
@@ -526,7 +533,7 @@ final class NettyStream implements Stream {
                     } else if (socketAddressQueue.isEmpty()) {
                         handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
                     } else {
-                        initializeChannel(handler, socketAddressQueue);
+                        initializeChannel(operationContext, handler, socketAddressQueue);
                     }
                 }
             });
@@ -536,14 +543,6 @@ final class NettyStream implements Stream {
     private static void cancel(@Nullable final Future<?> f) {
         if (f != null) {
             f.cancel(false);
-        }
-    }
-
-    private static long combinedTimeout(final long timeout, final int additionalTimeout) {
-        if (timeout == NO_SCHEDULE_TIME) {
-            return NO_SCHEDULE_TIME;
-        } else {
-            return Math.addExact(timeout, additionalTimeout);
         }
     }
 
@@ -576,9 +575,9 @@ final class NettyStream implements Stream {
             }
         }
 
+        @Nullable
         private ScheduledFuture<?> schedule(final long timeoutMillis) {
-            //assert timeoutMillis > 0 : timeoutMillis;
-            return ctx.executor().schedule(this, timeoutMillis, MILLISECONDS);
+            return timeoutMillis > 0 ? ctx.executor().schedule(this, timeoutMillis, MILLISECONDS) : null;
         }
     }
 }

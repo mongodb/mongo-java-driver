@@ -15,7 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.search.{ SearchCollector => JSearchCollector }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Projections
@@ -30,7 +30,7 @@ import scala.collection.JavaConverters._
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
  * @since 4.7
  */
-@Beta(Array(Beta.Reason.CLIENT))
+@Beta(Array(Reason.CLIENT))
 object SearchCollector {
 
   /**
@@ -42,7 +42,7 @@ object SearchCollector {
    * @return The requested `SearchCollector`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/ facet collector]]
    */
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   def facet(operator: SearchOperator, facets: Iterable[_ <: SearchFacet]): FacetSearchCollector =
     JSearchCollector.facet(operator, facets.asJava)
 

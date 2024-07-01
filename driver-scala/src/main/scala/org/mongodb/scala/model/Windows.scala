@@ -15,7 +15,7 @@
  */
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, Windows => JWindows }
 import org.bson.types.Decimal128
 import org.mongodb.scala.bson.conversions.Bson
@@ -56,7 +56,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 4.3
  * @note Requires MongoDB 5.0 or greater.
  */
-@Beta(Array(Beta.Reason.SERVER))
+@Beta(Array(Reason.SERVER))
 object Windows {
 
   /**
@@ -248,7 +248,7 @@ object Windows {
    * @since 4.3
    * @note Requires MongoDB 5.0 or greater.
    */
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   object Bound {
 
     /**

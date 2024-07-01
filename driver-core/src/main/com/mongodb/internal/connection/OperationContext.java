@@ -16,10 +16,17 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoConnectionPoolClearedException;
+import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -27,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -36,15 +44,92 @@ public class OperationContext {
     private static final AtomicLong NEXT_ID = new AtomicLong(0);
     private final long id;
     private final ServerDeprioritization serverDeprioritization;
+    private final SessionContext sessionContext;
+    private final RequestContext requestContext;
+    private final TimeoutContext timeoutContext;
+    @Nullable
+    private final ServerApi serverApi;
 
-    public OperationContext() {
-        id = NEXT_ID.incrementAndGet();
-        serverDeprioritization = new ServerDeprioritization();
+    public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            @Nullable final ServerApi serverApi) {
+        this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(), serverApi);
+    }
+
+    public static OperationContext simpleOperationContext(
+            final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
+        return new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                NoOpSessionContext.INSTANCE,
+                new TimeoutContext(timeoutSettings),
+                serverApi);
+    }
+
+    public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
+        return new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                NoOpSessionContext.INSTANCE,
+                timeoutContext,
+                null);
+    }
+
+    public OperationContext withSessionContext(final SessionContext sessionContext) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
+    }
+
+    public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, serverApi);
     }
 
     public long getId() {
         return id;
     }
+
+    public SessionContext getSessionContext() {
+        return sessionContext;
+    }
+
+    public RequestContext getRequestContext() {
+        return requestContext;
+    }
+
+    public TimeoutContext getTimeoutContext() {
+        return timeoutContext;
+    }
+
+    @Nullable
+    public ServerApi getServerApi() {
+        return serverApi;
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public OperationContext(final long id,
+                            final RequestContext requestContext,
+                            final SessionContext sessionContext,
+                            final TimeoutContext timeoutContext,
+                            final ServerDeprioritization serverDeprioritization,
+                            @Nullable final ServerApi serverApi) {
+        this.id = id;
+        this.serverDeprioritization = serverDeprioritization;
+        this.requestContext = requestContext;
+        this.sessionContext = sessionContext;
+        this.timeoutContext = timeoutContext;
+        this.serverApi = serverApi;
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    public OperationContext(final long id,
+                            final RequestContext requestContext,
+                            final SessionContext sessionContext,
+                            final TimeoutContext timeoutContext,
+                            @Nullable final ServerApi serverApi) {
+        this.id = id;
+        this.serverDeprioritization = new ServerDeprioritization();
+        this.requestContext = requestContext;
+        this.sessionContext = sessionContext;
+        this.timeoutContext = timeoutContext;
+        this.serverApi = serverApi;
+    }
+
 
     /**
      * @return The same {@link ServerDeprioritization} if called on the same {@link OperationContext}.
@@ -114,3 +199,4 @@ public class OperationContext {
         }
     }
 }
+

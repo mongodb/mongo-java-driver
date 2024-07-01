@@ -19,8 +19,9 @@
  * @see com.mongodb.client.model.mql.MqlValues
  * @since 4.9.0
  */
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 @NonNullApi
 package com.mongodb.client.model.mql;
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.NonNullApi;

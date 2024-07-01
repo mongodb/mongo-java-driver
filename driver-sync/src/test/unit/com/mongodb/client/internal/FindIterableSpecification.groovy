@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal
 
-
 import com.mongodb.CursorType
 import com.mongodb.Function
 import com.mongodb.MongoException
@@ -39,10 +38,10 @@ import spock.lang.Specification
 
 import java.util.function.Consumer
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -59,11 +58,9 @@ class FindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), true)
+                executor, new Document('filter', 1), true, TIMEOUT_SETTINGS)
                 .sort(new Document('sort', 1))
                 .projection(new Document('projection', 1))
-                .maxTime(10, SECONDS)
-                .maxAwaitTime(20, SECONDS)
                 .batchSize(100)
                 .limit(100)
                 .skip(10)
@@ -90,8 +87,6 @@ class FindIterableSpecification extends Specification {
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .projection(new BsonDocument('projection', new BsonInt32(1)))
-                .maxTime(10000, MILLISECONDS)
-                .maxAwaitTime(20000, MILLISECONDS)
                 .batchSize(100)
                 .limit(100)
                 .skip(10)
@@ -111,8 +106,8 @@ class FindIterableSpecification extends Specification {
         findIterable.filter(new Document('filter', 2))
                 .sort(new Document('sort', 2))
                 .projection(new Document('projection', 2))
-                .maxTime(9, SECONDS)
-                .maxAwaitTime(18, SECONDS)
+                .maxTime(101, MILLISECONDS)
+                .maxAwaitTime(1001, MILLISECONDS)
                 .batchSize(99)
                 .limit(99)
                 .skip(9)
@@ -132,32 +127,31 @@ class FindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(2)))
-                .sort(new BsonDocument('sort', new BsonInt32(2)))
-                .projection(new BsonDocument('projection', new BsonInt32(2)))
-                .maxTime(9000, MILLISECONDS)
-                .maxAwaitTime(18000, MILLISECONDS)
-                .batchSize(99)
-                .limit(99)
-                .skip(9)
-                .cursorType(CursorType.Tailable)
-                .noCursorTimeout(true)
-                .partial(true)
-                .collation(collation)
-                .comment(new BsonString('alt comment'))
-                .hint(new BsonDocument('hint', new BsonInt32(2)))
-                .min(new BsonDocument('min', new BsonInt32(2)))
-                .max(new BsonDocument('max', new BsonInt32(2)))
-                .returnKey(true)
-                .showRecordId(true)
-                .allowDiskUse(true)
-                .retryReads(true)
+        expect operation, isTheSameAs(
+                new FindOperation<Document>(namespace, new DocumentCodec())
+                        .filter(new BsonDocument('filter', new BsonInt32(2)))
+                        .sort(new BsonDocument('sort', new BsonInt32(2)))
+                        .projection(new BsonDocument('projection', new BsonInt32(2)))
+                        .batchSize(99)
+                        .limit(99)
+                        .skip(9)
+                        .cursorType(CursorType.Tailable)
+                        .noCursorTimeout(true)
+                        .partial(true)
+                        .collation(collation)
+                        .comment(new BsonString('alt comment'))
+                        .hint(new BsonDocument('hint', new BsonInt32(2)))
+                        .min(new BsonDocument('min', new BsonInt32(2)))
+                        .max(new BsonDocument('max', new BsonInt32(2)))
+                        .returnKey(true)
+                        .showRecordId(true)
+                        .allowDiskUse(true)
+                        .retryReads(true)
         )
 
         when: 'passing nulls to nullable methods'
         new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), true)
+                executor, new Document('filter', 1), true, TIMEOUT_SETTINGS)
                 .filter(null as Bson)
                 .collation(null)
                 .projection(null)
@@ -182,7 +176,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def findIterable = new FindIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1))
+                executor, new Document('filter', 1), true, TIMEOUT_SETTINGS)
 
         when:
         findIterable.first()
@@ -204,7 +198,7 @@ class FindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), true)
+                executor, new Document('filter', 1), true, TIMEOUT_SETTINGS)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -244,7 +238,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document())
+                executor, new Document(), true, TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -288,7 +282,7 @@ class FindIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, Stub(OperationExecutor), new Document())
+                readConcern, Stub(OperationExecutor), new Document(), true, TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null
@@ -310,7 +304,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor])
         def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document())
+                executor, new Document(), true, TIMEOUT_SETTINGS)
 
         when:
         mongoIterable.forEach(new Consumer<Document>() {

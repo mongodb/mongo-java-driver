@@ -195,11 +195,11 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
     }
 
     private void assertEventEquality(final TestCommandListener commandListener, final List<ExpectedEvent> expectedStartEvents) {
-        List<CommandEvent> actualStartedEvents = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> actualStartedEvents = commandListener.getCommandStartedEvents();
         assertEquals(expectedStartEvents.size(), actualStartedEvents.size());
         for (int i = 0; i < expectedStartEvents.size(); i++) {
             ExpectedEvent expectedEvent = expectedStartEvents.get(i);
-            CommandStartedEvent actualEvent = (CommandStartedEvent) actualStartedEvents.get(i);
+            CommandStartedEvent actualEvent = actualStartedEvents.get(i);
             assertEquals(expectedEvent.getDatabase(), actualEvent.getDatabaseName(), "Database name");
             assertEquals(expectedEvent.getCommandName(), actualEvent.getCommandName(), "Command name");
         }

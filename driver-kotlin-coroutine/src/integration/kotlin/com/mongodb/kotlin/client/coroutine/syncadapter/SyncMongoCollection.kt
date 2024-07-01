@@ -55,6 +55,7 @@ import com.mongodb.client.result.InsertManyResult
 import com.mongodb.client.result.InsertOneResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.kotlin.client.coroutine.MongoCollection
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.toCollection
 import kotlinx.coroutines.runBlocking
 import org.bson.Document
@@ -74,6 +75,7 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
     override fun getWriteConcern(): WriteConcern = wrapped.writeConcern
 
     override fun getReadConcern(): ReadConcern = wrapped.readConcern
+    override fun getTimeout(timeUnit: TimeUnit): Long? = wrapped.timeout(timeUnit)
 
     override fun <R : Any> withDocumentClass(clazz: Class<R>): SyncMongoCollection<R> =
         SyncMongoCollection(wrapped.withDocumentClass(clazz))
@@ -89,6 +91,9 @@ data class SyncMongoCollection<T : Any>(val wrapped: MongoCollection<T>) : JMong
 
     override fun withReadConcern(readConcern: ReadConcern): SyncMongoCollection<T> =
         SyncMongoCollection(wrapped.withReadConcern(readConcern))
+
+    override fun withTimeout(timeout: Long, timeUnit: TimeUnit): com.mongodb.client.MongoCollection<T> =
+        SyncMongoCollection(wrapped.withTimeout(timeout, timeUnit))
 
     override fun countDocuments(): Long = runBlocking { wrapped.countDocuments() }
 

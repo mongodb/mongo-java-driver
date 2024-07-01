@@ -46,10 +46,6 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     private final String databaseName;
     private final WriteConcern writeConcern;
 
-    public DropDatabaseOperation(final String databaseName) {
-        this(databaseName, null);
-    }
-
     public DropDatabaseOperation(final String databaseName, @Nullable final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.writeConcern = writeConcern;
@@ -62,7 +58,8 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
-            executeCommand(binding, databaseName, getCommand(), connection, writeConcernErrorTransformer());
+            executeCommand(binding, databaseName, getCommand(), connection, writeConcernErrorTransformer(binding.getOperationContext()
+                    .getTimeoutContext()));
             return null;
         });
     }
@@ -75,7 +72,8 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
                 errHandlingCallback.onResult(null, t);
             } else {
                 executeCommandAsync(binding, databaseName, getCommand(), connection,
-                        writeConcernErrorTransformerAsync(), releasingCallback(errHandlingCallback, connection));
+                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
+                        releasingCallback(errHandlingCallback, connection));
 
             }
         });

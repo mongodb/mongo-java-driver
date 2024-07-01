@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal;
+package com.mongodb.client.unified;
 
-/**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- */
-@FunctionalInterface
-public interface CheckedSupplier<T, E extends Exception> {
+import org.bson.BsonDocument;
 
-    /**
-     * Gets a result.
-     *
-     * @return a result
-     * @throws E the checked exception to throw
-     */
-    T get() throws E;
+abstract class UnifiedHelper {
+
+    static Long getAndRemoveTimeoutMS(final BsonDocument arguments) {
+        Long timeoutMS = null;
+        if (arguments.containsKey("timeoutMS")) {
+            timeoutMS = arguments.getNumber("timeoutMS").longValue();
+            arguments.remove("timeoutMS");
+        }
+        return timeoutMS;
+    }
 }

@@ -28,8 +28,7 @@ import java.util.Collection;
 
 public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
     public UnifiedServerDiscoveryAndMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
-            @SuppressWarnings("unused") final String testDescription,
-            final String schemaVersion,
+            final String testDescription, final String schemaVersion,
             @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
             final BsonDocument definition) {
         super(schemaVersion, runOnRequirements, entities, initialData, definition);

@@ -17,6 +17,7 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.assertions.Assertions;
 
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import static com.mongodb.client.model.mql.MqlUnchecked.Unchecked.TYPE_ARGUMENT;
  * @param <T> the type of the values that may be checked.
  * @since 4.9.0
  */
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public final class Branches<T extends MqlValue> {
 
     Branches() {

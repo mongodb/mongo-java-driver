@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
@@ -40,7 +41,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface SearchOperator extends Bson {
     /**
      * Creates a new {@link SearchOperator} with the scoring modifier specified.

@@ -16,23 +16,18 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface BindingContext {
-    SessionContext getSessionContext();
 
-    @Nullable
-    ServerApi getServerApi();
-
-    RequestContext getRequestContext();
-
+    /**
+     * Note: Will return the same operation context if called multiple times.
+     *
+     * @return the operation context for the binding context.
+     */
     OperationContext getOperationContext();
 }

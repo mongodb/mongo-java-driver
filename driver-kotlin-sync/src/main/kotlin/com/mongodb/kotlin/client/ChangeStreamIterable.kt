@@ -37,6 +37,11 @@ import org.bson.BsonValue
 public class ChangeStreamIterable<T : Any>(private val wrapped: JChangeStreamIterable<T>) :
     MongoIterable<ChangeStreamDocument<T>>(wrapped) {
 
+    public override fun batchSize(batchSize: Int): ChangeStreamIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
     /**
      * Returns a cursor used for iterating over elements of type {@code ChangeStreamDocument<TResult>}. The cursor has a
      * covariant return type to additionally provide a method to access the resume token in change stream batches.
@@ -76,15 +81,6 @@ public class ChangeStreamIterable<T : Any>(private val wrapped: JChangeStreamIte
     public fun resumeAfter(resumeToken: BsonDocument): ChangeStreamIterable<T> = apply {
         wrapped.resumeAfter(resumeToken)
     }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public override fun batchSize(batchSize: Int): ChangeStreamIterable<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the maximum await execution time on the server for this operation.

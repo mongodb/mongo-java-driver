@@ -87,6 +87,7 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "AggregatePrimer",
       "RemovePrimer",
       "SyncMongoClient",
+      "SyncMongoCluster",
       "SyncGridFSBucket",
       "SyncMongoDatabase",
       "SyncClientEncryption"
@@ -104,7 +105,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "package",
       "ReadConcernLevel",
       "SingleObservable",
-      "Subscription"
+      "Subscription",
+      "TimeoutMode"
     )
 
     val classFilter = (f: Class[_ <: Object]) => {

@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import org.bson.conversions.Bson;
 
@@ -27,7 +28,7 @@ import org.bson.conversions.Bson;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface FuzzySearchOptions extends Bson {
     /**
      * Creates a new {@link FuzzySearchOptions} with the maximum

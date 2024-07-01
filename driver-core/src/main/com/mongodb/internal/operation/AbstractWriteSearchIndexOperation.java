@@ -25,12 +25,12 @@ import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
-import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
+import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
+import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 
 /**
  * An abstract class for defining operations for managing Atlas Search indexes.
@@ -40,15 +40,17 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
 
-    AbstractWriteSearchIndexOperation(final MongoNamespace mongoNamespace) {
-        this.namespace = mongoNamespace;
+    AbstractWriteSearchIndexOperation(final MongoNamespace namespace) {
+        this.namespace = namespace;
     }
 
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             try {
-                executeCommand(binding, namespace.getDatabaseName(), buildCommand(), connection, writeConcernErrorTransformer());
+                executeCommand(binding, namespace.getDatabaseName(), buildCommand(),
+                        connection,
+                        writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
             } catch (MongoCommandException mongoCommandException) {
                 swallowOrThrow(mongoCommandException);
             }
@@ -61,7 +63,7 @@ abstract class AbstractWriteSearchIndexOperation implements AsyncWriteOperation<
         withAsyncSourceAndConnection(binding::getWriteConnectionSource, false, callback,
                 (connectionSource, connection, cb) ->
                         executeCommandAsync(binding, namespace.getDatabaseName(), buildCommand(), connection,
-                                writeConcernErrorTransformerAsync(), (result, commandExecutionError) -> {
+                                writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), (result, commandExecutionError) -> {
                                     try {
                                         swallowOrThrow(commandExecutionError);
                                         callback.onResult(result, null);

@@ -46,10 +46,11 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
     }
 
     @Override
-    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
+                      final OperationContext operationContext) {
         try {
             setDelegate(connectionDescription);
-            delegate.authenticate(connection, connectionDescription);
+            delegate.authenticate(connection, connectionDescription, operationContext);
         } catch (Exception e) {
             throw wrapException(e);
         }
@@ -57,9 +58,9 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
-                           final SingleResultCallback<Void> callback) {
+                           final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         setDelegate(connectionDescription);
-        delegate.authenticateAsync(connection, connectionDescription, callback);
+        delegate.authenticateAsync(connection, connectionDescription, operationContext, callback);
     }
 
     @Override

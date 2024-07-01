@@ -16,11 +16,9 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.RequestContext;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -50,15 +48,18 @@ public interface InternalConnection extends BufferProvider {
 
     /**
      * Opens the connection so its ready for use. Will perform a handshake.
+     *
+     * @param operationContext the operation context
      */
-    void open();
+    void open(OperationContext operationContext);
 
     /**
      * Opens the connection so its ready for use
      *
-     * @param callback the callback to be called once the connection has been opened
+     * @param operationContext the operation context
+     * @param callback         the callback to be called once the connection has been opened
      */
-    void openAsync(SingleResultCallback<Void> callback);
+    void openAsync(OperationContext operationContext, SingleResultCallback<Void> callback);
 
     /**
      * Closes the connection.
@@ -90,22 +91,14 @@ public interface InternalConnection extends BufferProvider {
      * Send a command message to the server.
      *
      * @param message          the command message to send
-     * @param sessionContext   the session context
-     * @param requestContext   the request context
      * @param operationContext the operation context
      */
     @Nullable
-    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext, RequestContext requestContext,
-            OperationContext operationContext);
+    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, OperationContext operationContext);
 
-    <T> void send(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);
+    <T> void send(CommandMessage message, Decoder<T> decoder, OperationContext operationContext);
 
-    <T> T receive(Decoder<T> decoder, SessionContext sessionContext);
-
-
-    default <T> T receive(Decoder<T> decoder, SessionContext sessionContext, int additionalTimeout) {
-        throw new UnsupportedOperationException();
-    }
+    <T> T receive(Decoder<T> decoder, OperationContext operationContext);
 
     boolean hasMoreToCome();
 
@@ -113,45 +106,47 @@ public interface InternalConnection extends BufferProvider {
      * Send a command message to the server.
      *
      * @param message          the command message to send
-     * @param sessionContext   the session context
-     * @param operationContext the operation context
      * @param callback         the callback
      */
-    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext, RequestContext requestContext,
-            OperationContext operationContext, SingleResultCallback<T> callback);
+    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, OperationContext operationContext, SingleResultCallback<T> callback);
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers   the list of byte buffers to send.
      * @param lastRequestId the request id of the last message in byteBuffers
+     * @param operationContext the operation context
      */
-    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId);
+    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId, OperationContext operationContext);
 
     /**
      * Receive a response to a sent message from the server.
      *
      * @param responseTo the request id that this message is a response to
+     * @param operationContext the operation context
      * @return the response
      */
-    ResponseBuffers receiveMessage(int responseTo);
+    ResponseBuffers receiveMessage(int responseTo, OperationContext operationContext);
 
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers   the list of byte buffers to send
      * @param lastRequestId the request id of the last message in byteBuffers
+     * @param operationContext the operation context
      * @param callback      the callback to invoke on completion
      */
-    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, SingleResultCallback<Void> callback);
+    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, OperationContext operationContext,
+            SingleResultCallback<Void> callback);
 
     /**
      * Asynchronously receive a response to a sent message from the server.
      *
      * @param responseTo the request id that this message is a response to
+     * @param operationContext the operation context
      * @param callback the callback to invoke on completion
      */
-    void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
+    void receiveMessageAsync(int responseTo, OperationContext operationContext, SingleResultCallback<ResponseBuffers> callback);
 
     default void markAsPinned(Connection.PinningMode pinningMode) {
     }

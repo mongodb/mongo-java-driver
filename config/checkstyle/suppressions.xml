@@ -29,6 +29,7 @@
     <suppress checks="MethodLength" files="QuickTour"/>
     <suppress checks="Regexp" files="Tour"/>
 
+    <suppress checks="FileLength" files="UnifiedCrudHelper"/>
     <suppress checks="MethodLength" files="PojoRoundTripTest"/>
     <suppress checks="MethodLength" files="AbstractUnifiedTest"/>
     <suppress checks="MethodLength" files="AbstractClientSideEncryptionTest"/>
@@ -87,6 +88,7 @@
     <suppress checks="ParameterNumber" files="Operations"/>
     <suppress checks="ParameterNumber" files="ChangeStreamDocument"/>
     <suppress checks="ParameterNumber" files="StructuredLogger"/>
+    <suppress checks="ParameterNumber" files="MongoClusterImpl"/>
 
     <!--Legacy code that has not yet been cleaned-->
     <suppress checks="FinalClass" files="AggregationOptions"/>

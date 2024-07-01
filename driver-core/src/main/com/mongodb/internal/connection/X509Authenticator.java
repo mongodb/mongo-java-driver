@@ -44,13 +44,14 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
     }
 
     @Override
-    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext) {
         if (this.speculativeAuthenticateResponse != null) {
             return;
         }
         try {
             BsonDocument authCommand = getAuthCommand(getMongoCredential().getUserName());
-            executeCommand(getMongoCredential().getSource(), authCommand, getClusterConnectionMode(), getServerApi(), connection);
+            executeCommand(getMongoCredential().getSource(), authCommand, getClusterConnectionMode(), getServerApi(), connection, operationContext);
         } catch (MongoCommandException e) {
             throw new MongoSecurityException(getMongoCredential(), "Exception authenticating", e);
         }
@@ -58,14 +59,14 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
-                           final SingleResultCallback<Void> callback) {
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         if (speculativeAuthenticateResponse != null) {
             callback.onResult(null, null);
         } else {
             SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             try {
                 executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()),
-                        getClusterConnectionMode(), getServerApi(), connection,
+                        getClusterConnectionMode(), getServerApi(), connection, operationContext,
                         (nonceResult, t) -> {
                             if (t != null) {
                                 errHandlingCallback.onResult(null, translateThrowable(t));

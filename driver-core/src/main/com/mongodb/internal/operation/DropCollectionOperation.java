@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
@@ -66,10 +67,6 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     private BsonDocument encryptedFields;
     private boolean autoEncryptedFields;
 
-    public DropCollectionOperation(final MongoNamespace namespace) {
-        this(namespace, null);
-    }
-
     public DropCollectionOperation(final MongoNamespace namespace, @Nullable final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = writeConcern;
@@ -96,7 +93,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             getCommands(localEncryptedFields).forEach(command -> {
                 try {
                     executeCommand(binding, namespace.getDatabaseName(), command.get(),
-                            connection, writeConcernErrorTransformer());
+                            connection, writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
                 } catch (MongoCommandException e) {
                     rethrowIfNotNamespaceError(e);
                 }
@@ -251,8 +248,12 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             if (nextCommandFunction == null) {
                 finalCallback.onResult(null, null);
             } else {
-                executeCommandAsync(binding, namespace.getDatabaseName(), nextCommandFunction.get(),
-                        connection, writeConcernErrorTransformerAsync(), this);
+                try {
+                    executeCommandAsync(binding, namespace.getDatabaseName(), nextCommandFunction.get(),
+                            connection, writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), this);
+                } catch (MongoOperationTimeoutException operationTimeoutException) {
+                    finalCallback.onResult(null, operationTimeoutException);
+                }
             }
         }
     }

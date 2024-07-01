@@ -17,19 +17,13 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -47,8 +41,6 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     private final ServerDescription readServerDescription;
     private final ServerDescription writeServerDescription;
     private int count = 1;
-    @Nullable
-    private final ServerApi serverApi;
     private final OperationContext operationContext;
 
     /**
@@ -56,12 +48,12 @@ public class SingleConnectionBinding implements ReadWriteBinding {
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
+     *
      */
-    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, @Nullable final ServerApi serverApi) {
-        this.serverApi = serverApi;
-        operationContext = new OperationContext();
+    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, final OperationContext operationContext) {
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
+        this.operationContext = operationContext;
         ServerTuple writeServerTuple = cluster.selectServer(new WritableServerSelector(), operationContext);
         writeServerDescription = writeServerTuple.getServerDescription();
         writeConnection = writeServerTuple.getServer().getConnection(operationContext);
@@ -113,22 +105,6 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return NoOpSessionContext.INSTANCE;
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return serverApi;
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return IgnorableRequestContext.INSTANCE;
-    }
-
-    @Override
     public OperationContext getOperationContext() {
         return operationContext;
     }
@@ -156,23 +132,8 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return NoOpSessionContext.INSTANCE;
-        }
-
-        @Override
         public OperationContext getOperationContext() {
             return operationContext;
-        }
-
-        @Override
-        public ServerApi getServerApi() {
-            return serverApi;
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return IgnorableRequestContext.INSTANCE;
         }
 
         @Override

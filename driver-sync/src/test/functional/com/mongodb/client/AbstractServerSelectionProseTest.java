@@ -18,7 +18,7 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
-import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -133,7 +133,7 @@ public abstract class AbstractServerSelectionProseTest {
         for (Future<Boolean> result : results) {
             result.get();
         }
-        List<CommandEvent> commandStartedEvents = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> commandStartedEvents = commandListener.getCommandStartedEvents();
         assertEquals(tasks * opsPerTask, commandStartedEvents.size());
         return commandStartedEvents.stream()
                 .collect(groupingBy(event -> event.getConnectionDescription().getServerAddress()))

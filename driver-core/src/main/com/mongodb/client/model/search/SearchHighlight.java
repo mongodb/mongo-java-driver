@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Projections;
 import org.bson.BsonDocument;
@@ -37,7 +38,7 @@ import static com.mongodb.internal.client.model.Util.combineToBsonValue;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface SearchHighlight extends Bson {
     /**
      * Creates a new {@link SearchHighlight} with the maximum number of characters to examine on a document

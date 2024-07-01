@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.TransactionOptions
 import com.mongodb.client.ClientSession as JClientSession
 import com.mongodb.client.TransactionBody
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.session.ServerSession
 import kotlinx.coroutines.runBlocking
@@ -86,4 +87,6 @@ class SyncClientSession(internal val wrapped: ClientSession, private val origina
 
     override fun <T : Any> withTransaction(transactionBody: TransactionBody<T>, options: TransactionOptions): T =
         throw UnsupportedOperationException()
+
+    override fun getTimeoutContext(): TimeoutContext? = wrapped.getTimeoutContext()
 }

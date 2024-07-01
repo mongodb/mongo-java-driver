@@ -58,6 +58,7 @@ dependencies {
     implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
 
     testImplementation project(':bson').sourceSets.test.output
+    testImplementation('org.junit.jupiter:junit-jupiter-api')
     testRuntimeOnly "io.netty:netty-tcnative-boringssl-static"
 
     classifiers.forEach {

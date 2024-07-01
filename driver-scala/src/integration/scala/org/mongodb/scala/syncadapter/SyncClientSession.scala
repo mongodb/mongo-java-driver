@@ -18,6 +18,7 @@ package org.mongodb.scala.syncadapter
 
 import com.mongodb.{ ClientSessionOptions, MongoInterruptedException, ServerAddress, TransactionOptions }
 import com.mongodb.client.{ ClientSession => JClientSession, TransactionBody }
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.session.ServerSession
 import org.bson.{ BsonDocument, BsonTimestamp }
 import org.mongodb.scala._
@@ -93,4 +94,6 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
         throw new MongoInterruptedException(null, e)
     }
   }
+
+  override def getTimeoutContext: TimeoutContext = wrapped.getTimeoutContext
 }

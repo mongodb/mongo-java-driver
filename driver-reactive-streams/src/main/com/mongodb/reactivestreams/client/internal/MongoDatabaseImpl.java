@@ -38,10 +38,12 @@ import org.reactivestreams.Publisher;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 /**
@@ -82,6 +84,12 @@ public final class MongoDatabaseImpl implements MongoDatabase {
         return mongoOperationPublisher.getReadConcern();
     }
 
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        Long timeoutMS = mongoOperationPublisher.getTimeoutSettings().getTimeoutMS();
+        return timeoutMS == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
+    }
+
     MongoOperationPublisher<Document> getMongoOperationPublisher() {
         return mongoOperationPublisher;
     }
@@ -104,6 +112,11 @@ public final class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
         return new MongoDatabaseImpl(mongoOperationPublisher.withReadConcern(readConcern));
+    }
+
+    @Override
+    public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return new MongoDatabaseImpl(mongoOperationPublisher.withTimeout(timeout, timeUnit));
     }
 
     @Override

@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
@@ -30,7 +31,7 @@ import org.bson.conversions.Bson;
  * @since 4.11
  */
 @Sealed
-@Beta(Beta.Reason.SERVER)
+@Beta(Reason.SERVER)
 public interface VectorSearchOptions extends Bson {
     /**
      * Creates a new {@link VectorSearchOptions} with the filter specified.

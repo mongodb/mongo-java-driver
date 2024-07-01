@@ -17,6 +17,7 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.assertions.Assertions;
 
@@ -35,7 +36,7 @@ import static com.mongodb.client.model.mql.MqlUnchecked.Unchecked.PRESENT;
  * @since 4.9.0
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface MqlMap<T extends MqlValue> extends MqlValue {
 
     /**

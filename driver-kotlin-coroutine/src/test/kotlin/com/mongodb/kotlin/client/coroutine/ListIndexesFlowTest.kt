@@ -15,6 +15,7 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListIndexesPublisher
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
@@ -50,12 +51,14 @@ class ListIndexesFlowTest {
         flow.comment(comment)
         flow.maxTime(1)
         flow.maxTime(1, TimeUnit.SECONDS)
+        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

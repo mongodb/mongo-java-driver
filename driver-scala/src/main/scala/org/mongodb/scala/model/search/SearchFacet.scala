@@ -15,7 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.search.{ SearchFacet => JSearchFacet }
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -28,7 +28,7 @@ import collection.JavaConverters._
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#facet-definition Facet definition]]
  * @since 4.7
  */
-@Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+@Beta(Array(Reason.CLIENT, Reason.SERVER))
 object SearchFacet {
 
   /**

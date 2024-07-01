@@ -57,6 +57,7 @@ public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
 
     @After
     public void cleanUp() {
+        super.cleanUp();
         if (mongoClient != null) {
             mongoClient.close();
         }

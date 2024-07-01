@@ -25,20 +25,16 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Arrays.asList;
@@ -52,7 +48,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class CommitTransactionOperation extends TransactionOperation {
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
-    private Long maxCommitTimeMS;
 
     public CommitTransactionOperation(final WriteConcern writeConcern) {
         this(writeConcern, false);
@@ -66,26 +61,6 @@ public class CommitTransactionOperation extends TransactionOperation {
     public CommitTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {
         this.recoveryToken = recoveryToken;
         return this;
-    }
-
-    public CommitTransactionOperation maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
-        if (maxCommitTime == null) {
-            this.maxCommitTimeMS = null;
-        } else {
-            notNull("timeUnit", timeUnit);
-            isTrueArgument("maxCommitTime > 0", maxCommitTime > 0);
-            this.maxCommitTimeMS = MILLISECONDS.convert(maxCommitTime, timeUnit);
-        }
-        return this;
-    }
-
-    @Nullable
-    public Long getMaxCommitTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        if (maxCommitTimeMS == null) {
-            return null;
-        }
-        return timeUnit.convert(maxCommitTimeMS, MILLISECONDS);
     }
 
     @Override
@@ -143,29 +118,29 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     CommandCreator getCommandCreator() {
-        CommandCreator creator = (serverDescription, connectionDescription) -> {
-            BsonDocument command = CommitTransactionOperation.super.getCommandCreator().create(serverDescription,
-                    connectionDescription);
-            if (maxCommitTimeMS != null) {
-                command.append("maxTimeMS",
-                        maxCommitTimeMS > Integer.MAX_VALUE
-                        ? new BsonInt64(maxCommitTimeMS) : new BsonInt32(maxCommitTimeMS.intValue()));
-            }
+        CommandCreator creator = (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument command = CommitTransactionOperation.super.getCommandCreator()
+                    .create(operationContext, serverDescription, connectionDescription);
+            operationContext.getTimeoutContext().setMaxTimeOverrideToMaxCommitTime();
             return command;
         };
         if (alreadyCommitted) {
-            return (serverDescription, connectionDescription) -> getRetryCommandModifier().apply(creator.create(serverDescription, connectionDescription));
+            return (operationContext, serverDescription, connectionDescription) ->
+                    getRetryCommandModifier(operationContext.getTimeoutContext())
+                            .apply(creator.create(operationContext, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
-                return (serverDescription, connectionDescription) -> creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);
+                return (operationContext, serverDescription, connectionDescription) ->
+                        creator.create(operationContext, serverDescription, connectionDescription)
+                                .append("recoveryToken", recoveryToken);
         }
         return creator;
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
         return command -> {
             WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null) {
+            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
                 retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
             }
             command.put("writeConcern", retryWriteConcern.asDocument());

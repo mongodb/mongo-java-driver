@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
@@ -28,6 +29,7 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
@@ -186,12 +188,18 @@ final class OperationHelper {
         return true;
     }
 
-    static boolean canRetryRead(final ServerDescription serverDescription, final SessionContext sessionContext) {
-        if (sessionContext.hasActiveTransaction()) {
+    static boolean canRetryRead(final ServerDescription serverDescription, final OperationContext operationContext) {
+        if (operationContext.getSessionContext().hasActiveTransaction()) {
             LOGGER.debug("retryReads set to true but in an active transaction.");
             return false;
         }
         return true;
+    }
+
+    static void setNonTailableCursorMaxTimeSupplier(final TimeoutMode timeoutMode, final OperationContext operationContext) {
+        if (timeoutMode == TimeoutMode.ITERATION) {
+            operationContext.getTimeoutContext().setMaxTimeOverride(0L);
+        }
     }
 
     /**

@@ -44,6 +44,7 @@ import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorClose;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorError;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.getSleepAfterCursorOpen;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.isWaitForBatchCursorCreationEnabled;
 
@@ -91,6 +92,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             @Override
             public void onError(final Throwable t) {
                 results.addLast(t);
+                sleep(getSleepAfterCursorError());
             }
 
             @Override
@@ -155,6 +157,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
                 throw new MongoTimeoutException("Time out waiting for result from cursor");
             } else if (next instanceof Throwable) {
                 error = translateError((Throwable) next);
+                sleep(getSleepAfterCursorError());
                 throw error;
             } else if (next == COMPLETED) {
                 completed = true;

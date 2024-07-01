@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.vault
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.{ CreateCollectionOptions, CreateEncryptedCollectionParams }
 
 import java.io.Closeable
@@ -91,7 +91,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @return a Publisher containing the queryable encrypted range expression
    * @since 4.9
    */
-  @Beta(Array(Beta.Reason.SERVER)) def encryptExpression(
+  @Beta(Array(Reason.SERVER)) def encryptExpression(
       expression: Document,
       options: EncryptOptions
   ): SingleObservable[Document] =
@@ -126,7 +126,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @note Requires MongoDB 7.0 or greater.
    * @see [[https://www.mongodb.com/docs/manual/reference/command/create/ Create Command]]
    */
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   def createEncryptedCollection(
       database: MongoDatabase,
       collectionName: String,

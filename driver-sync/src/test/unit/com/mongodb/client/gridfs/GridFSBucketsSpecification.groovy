@@ -16,6 +16,7 @@
 
 package com.mongodb.client.gridfs
 
+import com.mongodb.ClusterFixture
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
@@ -35,7 +36,7 @@ class GridFSBucketsSpecification extends Specification {
     def 'should create a GridFSBucket with default bucket name'() {
         given:
         def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), false, true, readConcern,
-                JAVA_LEGACY, null, Stub(OperationExecutor))
+                JAVA_LEGACY, null, ClusterFixture.TIMEOUT_SETTINGS, Stub(OperationExecutor))
 
         when:
         def gridFSBucket = GridFSBuckets.create(database)
@@ -48,7 +49,7 @@ class GridFSBucketsSpecification extends Specification {
     def 'should create a GridFSBucket with custom bucket name'() {
         given:
         def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), false, true, readConcern,
-                JAVA_LEGACY, null, Stub(OperationExecutor))
+                JAVA_LEGACY, null, ClusterFixture.TIMEOUT_SETTINGS, Stub(OperationExecutor))
         def customName = 'custom'
 
         when:

@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 import java.time.Instant;
@@ -29,7 +30,7 @@ import java.time.Instant;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface DateRangeSearchOperatorBase {
     /**
      * Creates a new {@link DateRangeSearchOperator} that tests if values are within (l; ∞).

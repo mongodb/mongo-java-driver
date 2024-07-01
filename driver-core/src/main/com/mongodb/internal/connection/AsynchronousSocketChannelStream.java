@@ -56,7 +56,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     }
 
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
         isTrue("unopened", getChannel() == null);
         Queue<SocketAddress> socketAddressQueue;
 

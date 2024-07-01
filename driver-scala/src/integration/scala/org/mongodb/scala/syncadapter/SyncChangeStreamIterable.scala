@@ -16,12 +16,13 @@
 
 package org.mongodb.scala.syncadapter
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.{ ChangeStreamDocument, FullDocument, FullDocumentBeforeChange }
 import com.mongodb.client.{ ChangeStreamIterable, MongoChangeStreamCursor }
 import com.mongodb.{ ServerAddress, ServerCursor }
 import org.bson.{ BsonDocument, BsonTimestamp, BsonValue }
-import org.mongodb.scala.ChangeStreamObservable
+import org.mongodb.scala.{ ChangeStreamObservable, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
 

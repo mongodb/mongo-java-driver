@@ -17,6 +17,7 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Sealed;
+import com.mongodb.annotations.Reason;
 import com.mongodb.internal.client.model.Util;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -37,7 +38,7 @@ import static com.mongodb.internal.client.model.Util.SEARCH_PATH_VALUE_KEY;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface SearchPath extends Bson {
     /**
      * Returns a {@link SearchPath} for the given {@code path}.

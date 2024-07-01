@@ -33,6 +33,7 @@ import com.mongodb.client.internal.OperationExecutor
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonBinary
@@ -46,6 +47,9 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.TimeUnit
+
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
@@ -61,7 +65,7 @@ class GridFSBucketSpecification extends Specification {
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
         new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern,
-                JAVA_LEGACY, null, executor)
+                JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
     }
 
     def 'should return the correct bucket name'() {
@@ -156,7 +160,9 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                false, false, readConcern, JAVA_LEGACY, null, new TestOperationExecutor([]))
+                false, false, readConcern, JAVA_LEGACY, null,
+                new TimeoutSettings(0, 0, 0, null, 0),
+                new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)
@@ -172,6 +178,9 @@ class GridFSBucketSpecification extends Specification {
         given:
         def filesCollection = Stub(MongoCollection)
         def chunksCollection = Stub(MongoCollection)
+        filesCollection.getTimeout(TimeUnit.MILLISECONDS) >> null
+        chunksCollection.getTimeout(TimeUnit.MILLISECONDS) >> null
+
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
 
         when:
@@ -184,7 +193,7 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         expect stream, isTheSameAs(new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, stream.getId(), 'filename',
-                255, null), ['closeLock'])
+                255, null, null), ['closeLock'])
 
         where:
         clientSession << [null, Stub(ClientSession)]
@@ -291,7 +300,9 @@ class GridFSBucketSpecification extends Specification {
         def fileInfo = new GridFSFile(fileId, 'File 1', 10, 255, new Date(), new Document())
         def findIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
+        filesCollection.getTimeout(TimeUnit.MILLISECONDS) >> null
         def chunksCollection = Stub(MongoCollection)
+        chunksCollection.getTimeout(TimeUnit.MILLISECONDS) >> null
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
 
         when:
@@ -312,7 +323,8 @@ class GridFSBucketSpecification extends Specification {
         1 * findIterable.first() >> fileInfo
 
         then:
-        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(clientSession, fileInfo, chunksCollection), ['closeLock', 'cursorLock'])
+        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(clientSession, fileInfo, chunksCollection,
+                null), ['closeLock', 'cursorLock'])
 
 
         where:
@@ -522,7 +534,9 @@ class GridFSBucketSpecification extends Specification {
         def fileInfo = new GridFSFile(bsonFileId, filename, 10, 255, new Date(), new Document())
         def findIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
+        filesCollection.getTimeout(TimeUnit.MILLISECONDS) >> null
         def chunksCollection = Stub(MongoCollection)
+        chunksCollection.getTimeout(TimeUnit.MILLISECONDS) >> null
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
 
         when:
@@ -540,7 +554,7 @@ class GridFSBucketSpecification extends Specification {
         1 * findIterable.first() >> fileInfo
 
         then:
-        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(null, fileInfo, chunksCollection), ['closeLock', 'cursorLock'])
+        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(null, fileInfo, chunksCollection, null), ['closeLock', 'cursorLock'])
 
         where:
         version | skip | sortOrder
@@ -600,8 +614,8 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == secondary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(filter))
+        expect executor.getReadOperation(), isTheSameAs(
+                new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder).filter(filter))
     }
 
     def 'should throw an exception if file not found when opening by name'() {

@@ -92,10 +92,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private String clusteredIndexName;
     private BsonDocument encryptedFields;
 
-    public CreateCollectionOperation(final String databaseName, final String collectionName) {
-        this(databaseName, collectionName, null);
-    }
-
     public CreateCollectionOperation(final String databaseName, final String collectionName, @Nullable final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
@@ -241,7 +237,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             checkEncryptedFieldsSupported(connection.getDescription());
             getCommandFunctions().forEach(commandCreator ->
                executeCommand(binding, databaseName, commandCreator.get(), connection,
-                      writeConcernErrorTransformer())
+                      writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()))
             );
             return null;
         });
@@ -425,7 +421,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 finalCallback.onResult(null, null);
             } else {
                 executeCommandAsync(binding, databaseName, nextCommandFunction.get(),
-                        connection, writeConcernErrorTransformerAsync(), this);
+                        connection, writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()), this);
             }
         }
     }

@@ -22,7 +22,8 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
-import com.mongodb.internal.binding.StaticBindingContext;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
@@ -59,21 +60,26 @@ public class ServerSessionPool {
     private final Cluster cluster;
     private final ServerSessionPool.Clock clock;
     private volatile boolean closed;
-    @Nullable
-    private final ServerApi serverApi;
+    private final OperationContext operationContext;
     private final LongAdder inUseCount = new LongAdder();
 
     interface Clock {
         long millis();
     }
 
-    public ServerSessionPool(final Cluster cluster, @Nullable final ServerApi serverApi) {
-        this(cluster, serverApi, System::currentTimeMillis);
+    public ServerSessionPool(final Cluster cluster, final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
+        this(cluster,
+                new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                        new TimeoutContext(timeoutSettings.connectionOnly()), serverApi));
     }
 
-    public ServerSessionPool(final Cluster cluster, @Nullable final ServerApi serverApi, final Clock clock) {
+    public ServerSessionPool(final Cluster cluster, final OperationContext operationContext) {
+        this(cluster, operationContext, System::currentTimeMillis);
+    }
+
+    public ServerSessionPool(final Cluster cluster, final OperationContext operationContext, final Clock clock) {
         this.cluster = cluster;
-        this.serverApi = serverApi;
+        this.operationContext = operationContext;
         this.clock = clock;
     }
 
@@ -128,8 +134,6 @@ public class ServerSessionPool {
 
         Connection connection = null;
         try {
-            StaticBindingContext context = new StaticBindingContext(NoOpSessionContext.INSTANCE, serverApi,
-                    IgnorableRequestContext.INSTANCE, new OperationContext());
             connection = cluster.selectServer(
                     new ServerSelector() {
                         @Override
@@ -149,11 +153,11 @@ public class ServerSessionPool {
                                     + '}';
                         }
                     },
-                    context.getOperationContext()).getServer().getConnection(context.getOperationContext());
+                    operationContext).getServer().getConnection(operationContext);
 
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
-                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), context);
+                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), operationContext);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {

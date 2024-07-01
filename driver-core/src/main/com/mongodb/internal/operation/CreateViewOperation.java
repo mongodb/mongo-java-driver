@@ -55,7 +55,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     private Collation collation;
 
     public CreateViewOperation(final String databaseName, final String viewName, final String viewOn, final List<BsonDocument> pipeline,
-                               final WriteConcern writeConcern) {
+            final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.viewName = notNull("viewName", viewName);
         this.viewOn = notNull("viewOn", viewOn);
@@ -127,7 +127,7 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, connection -> {
             executeCommand(binding, databaseName, getCommand(), new BsonDocumentCodec(),
-                    writeConcernErrorTransformer());
+                    writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext()));
             return null;
         });
     }
@@ -140,7 +140,8 @@ public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOper
                 errHandlingCallback.onResult(null, t);
             } else {
                 SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                executeCommandAsync(binding, databaseName, getCommand(), connection, writeConcernErrorTransformerAsync(),
+                executeCommandAsync(binding, databaseName, getCommand(), connection,
+                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
                         wrappedCallback);
             }
         });

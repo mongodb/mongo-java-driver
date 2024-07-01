@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
@@ -47,7 +48,7 @@ final class BaseClusterTest {
                 new ServerAddressSelector(serverAddressA),
                 clusterDescriptionAB,
                 serversSnapshotB,
-                new OperationContext().getServerDeprioritization(),
+                ClusterFixture.OPERATION_CONTEXT.getServerDeprioritization(),
                 ClusterSettings.builder().build()));
     }
 

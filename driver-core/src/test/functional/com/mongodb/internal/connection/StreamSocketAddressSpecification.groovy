@@ -1,18 +1,19 @@
 package com.mongodb.internal.connection
 
-import com.mongodb.spi.dns.InetAddressResolver
-import util.spock.annotations.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.spi.dns.InetAddressResolver
 import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
+import util.spock.annotations.Slow
 
 import javax.net.SocketFactory
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getSslSettings
 
 class StreamSocketAddressSpecification extends Specification {
@@ -43,7 +44,7 @@ class StreamSocketAddressSpecification extends Specification {
         def socketStream = new SocketStream(serverAddress, null, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
-        socketStream.open()
+        socketStream.open(OPERATION_CONTEXT)
 
         then:
         !socket0.isConnected()
@@ -82,7 +83,7 @@ class StreamSocketAddressSpecification extends Specification {
         def socketStream = new SocketStream(serverAddress, inetAddressResolver, socketSettings, sslSettings, socketFactory, bufferProvider)
 
         when:
-        socketStream.open()
+        socketStream.open(OPERATION_CONTEXT)
 
         then:
         thrown(MongoSocketOpenException)

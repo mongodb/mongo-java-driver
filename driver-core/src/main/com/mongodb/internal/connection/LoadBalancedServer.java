@@ -154,13 +154,13 @@ public class LoadBalancedServer implements ClusterableServer {
         return connectionPool;
     }
 
-    private class LoadBalancedServerProtocolExecutor implements ProtocolExecutor {
+    private class LoadBalancedServerProtocolExecutor extends AbstractProtocolExecutor {
         @SuppressWarnings("unchecked")
         @Override
         public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection, final SessionContext sessionContext) {
             try {
-                protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-                return protocol.execute(connection);
+                return protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                        .execute(connection);
             } catch (MongoWriteConcernWithResponseException e) {
                 return (T) e.getResponse();
             } catch (MongoException e) {
@@ -173,8 +173,8 @@ public class LoadBalancedServer implements ClusterableServer {
         @Override
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
-            protocol.executeAsync(connection, errorHandlingCallback((result, t) -> {
+            protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
+                    .executeAsync(connection, errorHandlingCallback((result, t) -> {
                 if (t != null) {
                     if (t instanceof MongoWriteConcernWithResponseException) {
                         callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
@@ -191,7 +191,7 @@ public class LoadBalancedServer implements ClusterableServer {
         private void handleExecutionException(final InternalConnection connection, final SessionContext sessionContext,
                                               final Throwable t) {
             invalidate(t, connection.getDescription().getServiceId(), connection.getGeneration());
-            if (t instanceof MongoSocketException && sessionContext.hasSession()) {
+            if (shouldMarkSessionDirty(t, sessionContext)) {
                 sessionContext.markSessionDirty();
             }
         }

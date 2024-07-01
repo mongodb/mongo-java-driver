@@ -135,6 +135,10 @@ public class TestSubscriber<T> implements Subscriber<T> {
         return onNextEvents;
     }
 
+    public void cancelSubscription() {
+        subscription.cancel();
+    }
+
     /**
      * Assert that a particular sequence of items was received by this {@link Subscriber} in order.
      *

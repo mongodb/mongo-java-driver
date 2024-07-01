@@ -24,8 +24,10 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
@@ -125,7 +127,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     @Override
-    public ServersSnapshot getServersSnapshot() {
+    public ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout,
+                                              final TimeoutContext timeoutContext) {
         isTrue("is open", !isClosed());
         Map<ServerAddress, ServerTuple> nonAtomicSnapshot = new HashMap<>(addressToServerTupleMap);
         return serverAddress -> {

@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.densify.DensifyOptions;
 import com.mongodb.client.model.densify.DensifyRange;
 import com.mongodb.client.model.fill.FillOptions;
@@ -955,7 +956,7 @@ public final class Aggregates {
      * @mongodb.server.release 6.0.10
      * @since 4.11
      */
-    @Beta(Beta.Reason.SERVER)
+    @Beta(Reason.SERVER)
     public static Bson vectorSearch(
             final FieldSearchPath path,
             final Iterable<Double> queryVector,
@@ -984,7 +985,7 @@ public final class Aggregates {
      * @mongodb.server.release 6.0.10
      * @since 4.11
      */
-    @Beta(Beta.Reason.SERVER)
+    @Beta(Reason.SERVER)
     public static Bson vectorSearch(
             final FieldSearchPath path,
             final Iterable<Double> queryVector,

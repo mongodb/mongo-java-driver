@@ -40,7 +40,7 @@ import java.util.List;
 import static com.mongodb.reactivestreams.client.MongoClients.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -57,7 +57,8 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                                                                                     Document.class, pipeline, ChangeStreamLevel.COLLECTION);
 
         ChangeStreamOperation<ChangeStreamDocument<Document>> expectedOperation =
-                new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline, codec)
+                new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
+                        codec)
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
@@ -72,16 +73,17 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
                 .batchSize(100)
                 .collation(COLLATION)
                 .comment("comment")
-                .maxAwaitTime(20, SECONDS)
+                .maxAwaitTime(101, MILLISECONDS)
                 .fullDocument(FullDocument.UPDATE_LOOKUP);
 
-        expectedOperation = new ChangeStreamOperation<>(NAMESPACE, FullDocument.UPDATE_LOOKUP, FullDocumentBeforeChange.DEFAULT, pipeline,
-                codec).retryReads(true);
+        expectedOperation = new ChangeStreamOperation<>(NAMESPACE, FullDocument.UPDATE_LOOKUP,
+                FullDocumentBeforeChange.DEFAULT,
+                pipeline,
+                                                        codec).retryReads(true);
         expectedOperation
                 .batchSize(100)
                 .collation(COLLATION)
-                .comment(new BsonString("comment"))
-                .maxAwaitTime(20, SECONDS);
+                .comment(new BsonString("comment"));
 
         Flux.from(publisher).blockFirst();
         assertEquals(ReadPreference.primary(), executor.getReadPreference());
@@ -103,7 +105,7 @@ public class ChangeStreamPublisherImplTest extends TestHelper {
 
         ChangeStreamOperation<BsonDocument> expectedOperation =
                 new ChangeStreamOperation<>(NAMESPACE, FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, pipeline,
-                        getDefaultCodecRegistry().get(BsonDocument.class))
+                                            getDefaultCodecRegistry().get(BsonDocument.class))
                         .batchSize(batchSize)
                         .comment(new BsonInt32(1))
                         .retryReads(true);

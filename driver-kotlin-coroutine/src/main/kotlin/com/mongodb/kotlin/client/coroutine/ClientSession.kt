@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client.coroutine
 import com.mongodb.ClientSessionOptions
 import com.mongodb.ServerAddress
 import com.mongodb.TransactionOptions
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.reactivestreams.client.ClientSession as reactiveClientSession
 import com.mongodb.session.ClientSession as jClientSession
 import com.mongodb.session.ServerSession
@@ -214,6 +215,18 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
     public suspend fun abortTransaction() {
         wrapped.abortTransaction().awaitFirstOrNull()
     }
+
+    /**
+     * Gets the timeout context to use with this session:
+     * * `MongoClientSettings#getTimeoutMS`
+     * * `ClientSessionOptions#getDefaultTimeout`
+     *
+     * Note: For internal use only
+     *
+     * @return the timeout to use
+     * @since CSOT
+     */
+    public override fun getTimeoutContext(): TimeoutContext? = wrapped.timeoutContext
 }
 
 /**

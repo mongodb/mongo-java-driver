@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation
 
 
-import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -42,14 +41,10 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
-import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.isSharded
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
 
@@ -116,8 +111,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)])
-                .execute(getBinding())
+        new CreateIndexesOperation(namespace,
+                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(getBinding())
 
         when:
         BatchCursor cursor = operation.execute(getBinding())
@@ -136,8 +131,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)])
-                .execute(getBinding())
+        new CreateIndexesOperation(namespace,
+                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(getBinding())
 
         when:
         def cursor = executeAsync(operation)
@@ -212,56 +207,18 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor?.close()
     }
 
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from execute'() {
-        given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS)
-        collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
-
-        enableMaxTimeFailPoint()
-
-        when:
-        operation.execute(getBinding())
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-    }
-
-
-    @IgnoreIf({ isSharded() })
-    def 'should throw execution timeout exception from executeAsync'() {
-        given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS)
-        collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
-
-        enableMaxTimeFailPoint()
-
-        when:
-        executeAsync(operation)
-
-        then:
-        thrown(MongoExecutionTimeoutException)
-
-        cleanup:
-        disableMaxTimeFailPoint()
-    }
-
-
     def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
-            getServerApi() >> null
-            getReadPreference() >> readPreference
             getConnection() >> connection
+            getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
-            getServerApi() >> null
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getOperationContext() >> OPERATION_CONTEXT
         }
         def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
 
@@ -270,7 +227,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, readBinding) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -285,7 +242,6 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {
-            getServerApi() >> null
             getReadPreference() >> readPreference
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }

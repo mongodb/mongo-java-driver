@@ -15,6 +15,7 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
@@ -55,6 +56,7 @@ class ListDatabasesFlowTest {
         flow.maxTime(1)
         flow.maxTime(1, TimeUnit.SECONDS)
         flow.nameOnly(true)
+        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).authorizedDatabasesOnly(true)
         verify(wrapped).batchSize(batchSize)
@@ -64,6 +66,7 @@ class ListDatabasesFlowTest {
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).nameOnly(true)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

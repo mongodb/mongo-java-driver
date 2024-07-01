@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchCount;
@@ -223,7 +224,7 @@ public final class Projections {
      * @mongodb.server.release 6.0.10
      * @since 4.11
      */
-    @Beta(Beta.Reason.SERVER)
+    @Beta(Reason.SERVER)
     public static Bson metaVectorSearchScore(final String fieldName) {
         return meta(fieldName, "vectorSearchScore");
     }

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
@@ -267,10 +268,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * @see RetryingAsyncCallbackSupplier
      */
     default AsyncRunnable thenRunRetryingWhile(
-            final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
+            final TimeoutContext timeoutContext, final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryState(),
+                    new RetryState(timeoutContext),
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of

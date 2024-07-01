@@ -17,23 +17,19 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
+import com.mongodb.internal.connection.OperationContext;
 
 import static org.bson.assertions.Assertions.notNull;
 
 public class SessionBinding implements ReadWriteBinding {
     private final ReadWriteBinding wrapped;
-    private final SessionContext sessionContext;
+    private final OperationContext operationContext;
 
     public SessionBinding(final ReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.sessionContext = new SimpleSessionContext();
+        this.operationContext = wrapped.getOperationContext().withSessionContext(new SimpleSessionContext());
     }
 
     @Override
@@ -68,24 +64,8 @@ public class SessionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public SessionContext getSessionContext() {
-        return sessionContext;
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return wrapped.getServerApi();
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return wrapped.getRequestContext();
-    }
-
-    @Override
     public OperationContext getOperationContext() {
-        return wrapped.getOperationContext();
+        return operationContext;
     }
 
     @Override
@@ -106,23 +86,8 @@ public class SessionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return sessionContext;
-        }
-
-        @Override
         public OperationContext getOperationContext() {
-            return wrapped.getOperationContext();
-        }
-
-        @Override
-        public ServerApi getServerApi() {
-            return wrapped.getServerApi();
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return wrapped.getRequestContext();
+            return operationContext;
         }
 
         @Override

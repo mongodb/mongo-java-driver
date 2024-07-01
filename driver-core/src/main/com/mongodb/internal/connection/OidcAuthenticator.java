@@ -226,31 +226,35 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    public void reauthenticate(final InternalConnection connection) {
+    public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
         assertTrue(connection.opened());
-        authenticationLoop(connection, connection.getDescription());
+        authenticationLoop(connection, connection.getDescription(), operationContext);
     }
 
     @Override
-    public void reauthenticateAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
+    public void reauthenticateAsync(final InternalConnection connection,
+                                    final OperationContext operationContext,
+                                    final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
             assertTrue(connection.opened());
-            authenticationLoopAsync(connection, connection.getDescription(), c);
+            authenticationLoopAsync(connection, connection.getDescription(), operationContext, c);
         }).finish(callback);
     }
 
     @Override
-    public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+    public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
+                             final OperationContext operationContext) {
         assertFalse(connection.opened());
-        authenticationLoop(connection, connectionDescription);
+        authenticationLoop(connection, connectionDescription, operationContext);
     }
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext,
             final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
             assertFalse(connection.opened());
-            authenticationLoopAsync(connection, connectionDescription, c);
+            authenticationLoopAsync(connection, connectionDescription, operationContext, c);
         }).finish(callback);
     }
 
@@ -266,11 +270,12 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return false;
     }
 
-    private void authenticationLoop(final InternalConnection connection, final ConnectionDescription description) {
+    private void authenticationLoop(final InternalConnection connection, final ConnectionDescription description,
+                                    final OperationContext operationContext) {
         fallbackState = FallbackState.INITIAL;
         while (true) {
             try {
-                super.authenticate(connection, description);
+                super.authenticate(connection, description, operationContext);
                 break;
                 } catch (Exception e) {
                 if (triggersRetry(e) && shouldRetryHandler()) {
@@ -282,10 +287,12 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     }
 
     private void authenticationLoopAsync(final InternalConnection connection, final ConnectionDescription description,
+            final OperationContext operationContext,
             final SingleResultCallback<Void> callback) {
         fallbackState = FallbackState.INITIAL;
         beginAsync().thenRunRetryingWhile(
-                c -> super.authenticateAsync(connection, description, c),
+                operationContext.getTimeoutContext(),
+                c -> super.authenticateAsync(connection, description, operationContext, c),
                 e -> triggersRetry(e) && shouldRetryHandler()
         ).finish(callback);
     }

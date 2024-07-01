@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.AggregateIterable as JAggregateIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
@@ -79,6 +80,7 @@ class AggregateIterableTest {
         iterable.maxAwaitTime(1, TimeUnit.SECONDS)
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
+        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).allowDiskUse(true)
         verify(wrapped).batchSize(batchSize)
@@ -96,6 +98,7 @@ class AggregateIterableTest {
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).let(bson)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         iterable.toCollection()
         verify(wrapped).toCollection()
