@@ -97,7 +97,7 @@ public final class PojoCodecProvider implements CodecProvider {
             final List<PropertyCodecProvider> propertyCodecProviders, final DiscriminatorLookup discriminatorLookup) {
         return shouldSpecialize(classModel)
                 ? new PojoCodecImpl<>(classModel, codecRegistry, propertyCodecProviders, discriminatorLookup)
-                : new LazyPropertyModelCodec.NeedSpecializationCodec<>(classModel, discriminatorLookup);
+                : new LazyPropertyModelCodec.NeedSpecializationCodec<>(classModel, discriminatorLookup, codecRegistry);
     }
 
     /**

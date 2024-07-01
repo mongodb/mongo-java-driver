@@ -90,8 +90,12 @@ abstract class PojoTestCase {
     }
 
     <T> void roundTrip(final PojoCodecProvider.Builder builder, final T value, final String json) {
-        encodesTo(getCodecRegistry(builder), value, json);
-        decodesTo(getCodecRegistry(builder), json, value);
+        roundTrip(builder, value.getClass(), value, json);
+    }
+
+    <T> void roundTrip(final PojoCodecProvider.Builder builder, final Class<?> clazz, final T value, final String json) {
+        encodesTo(getCodecRegistry(builder), clazz, value, json);
+        decodesTo(getCodecRegistry(builder), clazz, json, value);
     }
 
     <T> void threadedRoundTrip(final PojoCodecProvider.Builder builder, final T value, final String json) {
@@ -109,21 +113,30 @@ abstract class PojoTestCase {
         decodesTo(registry, json, value);
     }
 
+    <T> void roundTrip(final CodecRegistry registry, final Class<T> clazz, final T value, final String json) {
+        encodesTo(registry, clazz, value, json);
+        decodesTo(registry, clazz, json, value);
+    }
+
     <T> void encodesTo(final PojoCodecProvider.Builder builder, final T value, final String json) {
         encodesTo(builder, value, json, false);
     }
 
     <T> void encodesTo(final PojoCodecProvider.Builder builder, final T value, final String json, final boolean collectible) {
-        encodesTo(getCodecRegistry(builder), value, json, collectible);
+        encodesTo(getCodecRegistry(builder), value.getClass(), value, json, collectible);
     }
 
     <T> void encodesTo(final CodecRegistry registry, final T value, final String json) {
-        encodesTo(registry, value, json, false);
+        encodesTo(registry, value.getClass(), value, json, false);
+    }
+
+    <T> void encodesTo(final CodecRegistry registry, final Class<?> clazz, final T value, final String json) {
+        encodesTo(registry, clazz, value, json, false);
     }
 
     @SuppressWarnings("unchecked")
-    <T> void encodesTo(final CodecRegistry registry, final T value, final String json, final boolean collectible) {
-        Codec<T> codec = (Codec<T>) registry.get(value.getClass());
+    <T> void encodesTo(final CodecRegistry registry, final Class<?> clazz, final T value, final String json, final boolean collectible) {
+        Codec<T> codec = (Codec<T>) registry.get(clazz);
         encodesTo(codec, value, json, collectible);
     }
 
@@ -144,7 +157,12 @@ abstract class PojoTestCase {
 
     @SuppressWarnings("unchecked")
     <T> void decodesTo(final CodecRegistry registry, final String json, final T expected) {
-        Codec<T> codec = (Codec<T>) registry.get(expected.getClass());
+        decodesTo(registry, expected.getClass(), json, expected);
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> void decodesTo(final CodecRegistry registry, final Class<?> clazz, final String json, final T expected) {
+        Codec<T> codec = (Codec<T>) registry.get(clazz);
         decodesTo(codec, json, expected);
     }
 
