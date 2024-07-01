@@ -15,7 +15,6 @@
  */
 package org.bson.codecs.kotlin.samples
 
-import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import org.bson.BsonDocument
 import org.bson.BsonMaxKey
