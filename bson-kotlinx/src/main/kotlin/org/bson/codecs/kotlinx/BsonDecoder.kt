@@ -84,7 +84,7 @@ internal open class DefaultBsonDecoder(
         val floatCodec = FloatCodec()
         val byteCodec = ByteCodec()
         val booleanCodec = BooleanCodec()
-        val chatCodec = CharacterCodec()
+        val charCodec = CharacterCodec()
         val stingCodec = StringCodec()
         val objectIdCodec = ObjectIdCodec()
         const val UNKNOWN_INDEX = -10
@@ -175,7 +175,7 @@ internal open class DefaultBsonDecoder(
     }
 
     override fun decodeByte(): Byte = byteCodec.decode(reader, DecoderContext.builder().build())
-    override fun decodeChar(): Char = chatCodec.decode(reader, DecoderContext.builder().build())
+    override fun decodeChar(): Char = charCodec.decode(reader, DecoderContext.builder().build())
     override fun decodeFloat(): Float = floatCodec.decode(reader, DecoderContext.builder().build())
     override fun decodeShort(): Short = shortCodec.decode(reader, DecoderContext.builder().build())
     override fun decodeBoolean(): Boolean = booleanCodec.decode(reader, DecoderContext.builder().build())
