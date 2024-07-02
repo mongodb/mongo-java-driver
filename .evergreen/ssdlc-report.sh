@@ -5,6 +5,7 @@ set -eu
 # Supported/used environment variables:
 # PRODUCT_NAME
 # PRODUCT_VERSION
+# EVERGREEN_VERSION_ID
 
 if [ -z "${PRODUCT_NAME}" ]; then
     printf "\nPRODUCT_NAME must be set to a non-empty string\n"
@@ -12,6 +13,10 @@ if [ -z "${PRODUCT_NAME}" ]; then
 fi
 if [ -z "${PRODUCT_VERSION}" ]; then
     printf "\nPRODUCT_VERSION must be set to a non-empty string\n"
+    exit 1
+fi
+if [ -z "${EVERGREEN_VERSION_ID}" ]; then
+    printf "\EVERGREEN_VERSION_ID must be set to a non-empty string\n"
     exit 1
 fi
 
@@ -30,14 +35,13 @@ declare -r SSDLC_STATIC_ANALYSIS_REPORTS_PATH="${SSDLC_PATH}/static-analysis-rep
 mkdir "${SSDLC_PATH}"
 mkdir "${SSDLC_STATIC_ANALYSIS_REPORTS_PATH}"
 
-printf "\nVAKOTODO git version: %s\n" "$(git --version)"
 declare -r EVERGREEN_PROJECT_NAME_PREFIX="${PRODUCT_NAME//-/_}"
 declare -r EVERGREEN_BUILD_URL_PREFIX="https://spruce.mongodb.com/version"
 declare -r GIT_TAG="r${PRODUCT_VERSION}"
 GIT_COMMIT_HASH="$(git rev-list --ignore-missing -n 1 "${GIT_TAG}")"
 set +e
-    GIT_BRANCH_MASTER="$(git branch -a --omit-empty --contains "${GIT_TAG}" | grep 'master$')"
-    GIT_BRANCH_PATCH="$(git branch -a --omit-empty --contains "${GIT_TAG}" | grep '\.x$')"
+    GIT_BRANCH_MASTER="$(git branch -a --contains "${GIT_TAG}" | grep 'master$')"
+    GIT_BRANCH_PATCH="$(git branch -a --contains "${GIT_TAG}" | grep '\.x$')"
 set -e
 if [ -n "${GIT_BRANCH_MASTER}" ]; then
     declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${GIT_COMMIT_HASH}"
@@ -46,7 +50,7 @@ elif [ -n "${GIT_BRANCH_PATCH}" ]; then
     declare -r EVERGREEN_PROJECT_NAME_SUFFIX="${PRODUCT_VERSION%.*}"
     declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${EVERGREEN_PROJECT_NAME_SUFFIX}_${GIT_COMMIT_HASH}"
 elif [[ "${PRODUCT_NAME}" == *'-snapshot' ]]; then
-    declare -r EVERGREEN_BUILD_URL="cannot-compute-evergreen-url-for-snapshot-builds"
+    declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_VERSION_ID}"
 else
     printf "\nFailed to compute EVERGREEN_BUILD_URL\n"
     exit 1
