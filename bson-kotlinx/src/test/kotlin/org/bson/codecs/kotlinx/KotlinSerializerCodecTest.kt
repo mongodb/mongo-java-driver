@@ -15,6 +15,7 @@
  */
 package org.bson.codecs.kotlinx
 
+import java.util.stream.Stream
 import kotlin.test.assertEquals
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
@@ -97,12 +98,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import java.util.stream.Stream
 
 @OptIn(ExperimentalSerializationApi::class)
 @Suppress("LargeClass")
 class KotlinSerializerCodecTest {
-    private val numberLong = "\$numberLong"
     private val oid = "\$oid"
     private val emptyDocument = "{}"
     private val altConfiguration =
@@ -142,12 +141,12 @@ class KotlinSerializerCodecTest {
 
     private val allBsonTypesDocument = BsonDocument.parse(allBsonTypesJson)
 
-
     companion object {
         @JvmStatic
         fun testTypesCastingDataClassWithSimpleValues(): Stream<BsonDocument> {
             return Stream.of(
-                BsonDocument().append("char", BsonString("c"))
+                BsonDocument()
+                    .append("char", BsonString("c"))
                     .append("byte", BsonInt32(1))
                     .append("short", BsonInt32(2))
                     .append("int", BsonInt32(10))
@@ -156,37 +155,36 @@ class KotlinSerializerCodecTest {
                     .append("double", BsonInt32(3))
                     .append("boolean", BsonBoolean.TRUE)
                     .append("string", BsonString("String")),
-
-                BsonDocument().append("char", BsonString("c"))
+                BsonDocument()
+                    .append("char", BsonString("c"))
                     .append("byte", BsonDouble(1.0))
                     .append("short", BsonDouble(2.0))
                     .append("int", BsonDouble(9.9999999999999992))
-                    .append("long",  BsonDouble(9.9999999999999992))
+                    .append("long", BsonDouble(9.9999999999999992))
                     .append("float", BsonDouble(2.0))
                     .append("double", BsonDouble(3.0))
                     .append("boolean", BsonBoolean.TRUE)
                     .append("string", BsonString("String")),
-
-                BsonDocument().append("char", BsonString("c"))
+                BsonDocument()
+                    .append("char", BsonString("c"))
                     .append("byte", BsonDouble(1.0))
                     .append("short", BsonDouble(2.0))
                     .append("int", BsonDouble(10.0))
-                    .append("long",  BsonDouble(10.0))
+                    .append("long", BsonDouble(10.0))
                     .append("float", BsonDouble(2.0))
                     .append("double", BsonDouble(3.0))
                     .append("boolean", BsonBoolean.TRUE)
                     .append("string", BsonString("String")),
-
-                BsonDocument().append("char", BsonString("c"))
+                BsonDocument()
+                    .append("char", BsonString("c"))
                     .append("byte", BsonInt64(1))
                     .append("short", BsonInt64(2))
                     .append("int", BsonInt64(10))
-                    .append("long",  BsonInt64(10))
+                    .append("long", BsonInt64(10))
                     .append("float", BsonInt64(2))
                     .append("double", BsonInt64(3))
                     .append("boolean", BsonBoolean.TRUE)
-                    .append("string", BsonString("String"))
-            )
+                    .append("string", BsonString("String")))
         }
     }
 
