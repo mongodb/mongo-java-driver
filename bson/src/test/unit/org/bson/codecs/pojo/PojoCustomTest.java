@@ -559,7 +559,6 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
 
-    // TODO: this now fails with a StackOverflowError, which is not desirable
     @Test
     public void testCannotEncodeUnspecializedClasses() {
         CodecRegistry registry = fromProviders(getPojoCodecProviderBuilder(GenericTreeModel.class).build());
