@@ -173,7 +173,7 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
 
         @Override
         public void encode(final BsonWriter writer, final T value, final EncoderContext encoderContext) {
-            if(value.getClass().equals(classModel.getType())) {
+            if (value.getClass().equals(classModel.getType())) {
                 throw exception();
             }
             tryEncode(codecRegistry.get(value.getClass()), writer, value, encoderContext);
