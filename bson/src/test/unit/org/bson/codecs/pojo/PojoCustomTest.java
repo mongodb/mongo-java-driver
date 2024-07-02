@@ -563,7 +563,7 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testCannotEncodeUnspecializedClasses() {
         CodecRegistry registry = fromProviders(getPojoCodecProviderBuilder(GenericTreeModel.class).build());
-        assertThrows(StackOverflowError.class, () ->
+        assertThrows(CodecConfigurationException.class, () ->
                 encode(registry.get(GenericTreeModel.class), getGenericTreeModel(), false));
     }
 
