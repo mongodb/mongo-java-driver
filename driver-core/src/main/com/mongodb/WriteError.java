@@ -18,6 +18,8 @@ package com.mongodb;
 
 import org.bson.BsonDocument;
 
+import java.io.Serializable;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -25,7 +27,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public class WriteError {
+public class WriteError implements Serializable {
+
+    private static final long serialVersionUID = 5582035144266419294L;
     private final int code;
     private final String message;
     private final BsonDocument details;

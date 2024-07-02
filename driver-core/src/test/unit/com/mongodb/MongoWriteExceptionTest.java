@@ -19,13 +19,22 @@ package com.mongodb;
 
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MongoWriteExceptionTest {
+
+    @TempDir
+    Path tempDir;
 
     @Test
     public void testExceptionProperties() {
@@ -37,5 +46,24 @@ public class MongoWriteExceptionTest {
                 e.getMessage());
         assertEquals(writeError.getCode(), e.getCode());
         assertEquals(writeError, e.getError());
+    }
+
+    @Test
+    public void testExceptionSerializable() throws Exception {
+        WriteError writeError = new WriteError(11000, "Duplicate key", new BsonDocument("x", new BsonInt32(1)));
+        MongoWriteException writeException = new MongoWriteException(writeError, new ServerAddress("host1"), Collections.emptySet());
+
+
+        Path tempPath = tempDir.resolve("testFile");
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempPath.toFile());
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
+            objectOutputStream.writeObject(writeException);
+        }
+
+        try (FileInputStream fileInputStream = new FileInputStream(tempPath.toFile());
+             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+            MongoWriteException deserializedException = (MongoWriteException) objectInputStream.readObject();
+            assertEquals(writeException.getError(), deserializedException.getError());
+        }
     }
 }
