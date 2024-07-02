@@ -25,19 +25,9 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.internal.ClientEncryptionImpl;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
 
 public abstract class UnifiedSyncTest extends UnifiedTest {
-    public UnifiedSyncTest(@Nullable final String fileDescription, final String schemaVersion, final BsonArray runOnRequirements,
-            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
-        super(fileDescription, schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
-    }
-
-    public UnifiedSyncTest(final String schemaVersion, final BsonArray runOnRequirements,
-            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
-        this(null, schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+    protected UnifiedSyncTest() {
     }
 
     @Override
