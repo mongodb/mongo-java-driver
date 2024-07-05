@@ -71,8 +71,9 @@ jobs:
       # Set commit author information to the user that triggered the release workflow
       - name: "Set git author information"
         run: |
+          GITHUB_USER_NAME=$(gh api users/${{ github.actor }} --jq '.name')
           GITHUB_USER_ID=$(gh api users/${{ github.actor }} --jq '.id')
-          git config user.name "${{ github.actor }}"
+          git config user.name "${GITHUB_USER_NAME}}"
           git config user.email "${GITHUB_USER_ID}+${{ github.actor }}@users.noreply.github.com"
 
       # This step bumps version numbers in build.gradle and creates git artifacts for the release
