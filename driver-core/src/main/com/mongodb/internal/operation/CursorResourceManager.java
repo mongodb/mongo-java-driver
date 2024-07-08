@@ -27,9 +27,7 @@ import com.mongodb.lang.Nullable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
-import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CONCURRENT_OPERATION;
@@ -220,15 +218,15 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
         return serverCursor;
     }
 
-    void setServerCursor(@Nullable final ServerCursor serverCursor) {
-        assertTrue(state.inProgress());
-        assertNotNull(this.serverCursor);
-        // without `connectionSource` we will not be able to kill `serverCursor` later
-        assertNotNull(connectionSource);
-        this.serverCursor = serverCursor;
-        if (serverCursor == null) {
-            releaseClientResources();
-        }
+    void setServerCursor(@Nullable final ServerCursor nextServerCursor) {
+        withLock(lock, () -> {
+            if (state.inProgress() && serverCursor != null) {
+                serverCursor = nextServerCursor;
+            }
+            if (serverCursor == null) {
+                releaseClientResources();
+            }
+        });
     }
 
     void unsetServerCursor() {
