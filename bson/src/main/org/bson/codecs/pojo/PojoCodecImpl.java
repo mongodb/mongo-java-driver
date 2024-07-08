@@ -101,7 +101,8 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             return instanceCreator.getInstance();
         } else {
             return getCodecFromDocument(reader, classModel.useDiscriminator(), classModel.getDiscriminatorKey(), registry,
-                    discriminatorLookup, this).decode(reader, DecoderContext.builder().checkedDiscriminator(true).build());
+                    discriminatorLookup, this, classModel.getName())
+                    .decode(reader, DecoderContext.builder().checkedDiscriminator(true).build());
         }
     }
 
@@ -275,10 +276,11 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private Codec<T> getCodecFromDocument(final BsonReader reader, final boolean useDiscriminator, final String discriminatorKey,
-                                          final CodecRegistry registry, final DiscriminatorLookup discriminatorLookup,
-                                          final Codec<T> defaultCodec) {
-        Codec<T> codec = defaultCodec;
+    @Nullable
+    static <C> Codec<C> getCodecFromDocument(final BsonReader reader, final boolean useDiscriminator, final String discriminatorKey,
+            final CodecRegistry registry, final DiscriminatorLookup discriminatorLookup, @Nullable final Codec<C> defaultCodec,
+            final String simpleClassName) {
+        Codec<C> codec = defaultCodec;
         if (useDiscriminator) {
             BsonReaderMark mark = reader.getMark();
             reader.readStartDocument();
@@ -289,12 +291,12 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                     discriminatorKeyFound = true;
                     try {
                         Class<?> discriminatorClass = discriminatorLookup.lookup(reader.readString());
-                        if (!codec.getEncoderClass().equals(discriminatorClass)) {
-                            codec = (Codec<T>) registry.get(discriminatorClass);
+                        if (codec == null || !codec.getEncoderClass().equals(discriminatorClass)) {
+                            codec = (Codec<C>) registry.get(discriminatorClass);
                         }
                     } catch (Exception e) {
                         throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding errored with: %s",
-                                classModel.getName(), e.getMessage()), e);
+                                simpleClassName, e.getMessage()), e);
                     }
                 } else {
                     reader.skipValue();

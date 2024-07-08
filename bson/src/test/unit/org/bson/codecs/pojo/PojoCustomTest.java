@@ -38,11 +38,14 @@ import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
 import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
+import org.bson.codecs.pojo.entities.ConcreteModel;
+import org.bson.codecs.pojo.entities.ConcreteField;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
+import org.bson.codecs.pojo.entities.GenericBaseModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
@@ -546,6 +549,17 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test
+    public void testGenericBaseClass() {
+        CodecRegistry registry = fromProviders(new ValueCodecProvider(), PojoCodecProvider.builder().automatic(true).build());
+
+        ConcreteModel model = new ConcreteModel(new ConcreteField("name1"));
+
+        String json = "{\"_t\": \"org.bson.codecs.pojo.entities.ConcreteModel\", \"field\": {\"name\": \"name1\"}}";
+        roundTrip(PojoCodecProvider.builder().automatic(true), GenericBaseModel.class, model, json);
+    }
+
+
+    @Test
     public void testCannotEncodeUnspecializedClasses() {
         CodecRegistry registry = fromProviders(getPojoCodecProviderBuilder(GenericTreeModel.class).build());
         assertThrows(CodecConfigurationException.class, () ->
@@ -553,7 +567,7 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test
-    public void testCannotDecodeUnspecializedClasses() {
+    public void testCannotDecodeUnspecializedClassesWithoutADiscriminator() {
         assertThrows(CodecConfigurationException.class, () ->
                 decodingShouldFail(getCodec(GenericTreeModel.class),
                         "{'field1': 'top', 'field2': 1, "
