@@ -24,9 +24,9 @@ import static java.lang.String.format;
 /**
  * This class is not part of the public API. It may be removed or changed at any time.
  */
-public final class StringCodeHelper {
+public final class StringCodecHelper {
 
-    private StringCodeHelper(){
+    private StringCodecHelper(){
         //NOP
     }
 

@@ -37,7 +37,7 @@ import org.bson.BsonValue
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.DecoderContext
 import org.bson.internal.NumberCodecHelper
-import org.bson.internal.StringCodeHelper
+import org.bson.internal.StringCodecHelper
 import org.bson.types.ObjectId
 
 /**
@@ -158,7 +158,7 @@ internal open class DefaultBsonDecoder(
 
     override fun decodeByte(): Byte = NumberCodecHelper.decodeByte(reader)
 
-    override fun decodeChar(): Char = StringCodeHelper.decodeChar(reader)
+    override fun decodeChar(): Char = StringCodecHelper.decodeChar(reader)
     override fun decodeFloat(): Float = NumberCodecHelper.decodeFloat(reader)
 
     override fun decodeShort(): Short = NumberCodecHelper.decodeShort(reader)

@@ -18,7 +18,7 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.internal.StringCodeHelper;
+import org.bson.internal.StringCodecHelper;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -37,7 +37,7 @@ public class CharacterCodec implements Codec<Character> {
 
     @Override
     public Character decode(final BsonReader reader, final DecoderContext decoderContext) {
-        return StringCodeHelper.decodeChar(reader);
+        return StringCodecHelper.decodeChar(reader);
     }
 
     @Override
