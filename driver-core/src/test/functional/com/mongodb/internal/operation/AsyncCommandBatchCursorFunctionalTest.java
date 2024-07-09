@@ -45,7 +45,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -298,24 +297,6 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
 
         assertDoesNotThrow(() -> checkReferenceCountReachesTarget(connectionSource, 1));
         assertTrue(cursor.isClosed());
-    }
-
-    @Test
-    void attemptJava5516() {
-        BsonDocument commandResult = executeFindCommand(5, 2);
-        cursor = new AsyncCommandBatchCursor<>(commandResult, 2, 0, DOCUMENT_DECODER,
-                                               null, connectionSource, connection);
-        assertNotNull(cursorNext());
-        // Calling `close` twice is the key to reproducing.
-        // It does not matter whether we call `close` twice from the same thread or not.
-        ForkJoinPool.commonPool().execute(() -> cursor.close());
-        ForkJoinPool.commonPool().execute(() -> cursor.close());
-        try {
-            assertNotNull(cursorNext());
-            assertNotNull(cursorNext());
-        } catch (IllegalStateException e) {
-            // one of the expected outcomes, because we call `cursorNext` concurrently with `close`
-        }
     }
 
     @Test
