@@ -515,7 +515,7 @@ package object model {
      * @return the SearchIndexModel
      */
     def apply(definition: Bson, indexType: SearchIndexType): SearchIndexModel =
-      new com.mongodb.client.model.SearchIndexModel(definition, SearchIndexType)
+      new com.mongodb.client.model.SearchIndexModel(definition, indexType)
 
     /**
      * Construct an instance with the given search index name and definition.
