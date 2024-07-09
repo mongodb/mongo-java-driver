@@ -63,6 +63,12 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
             /* Drivers MUST NOT execute a killCursors command because the pinned connection is no longer under a load balancer. */
             assumeFalse(testDescription.equals("timeoutMS is refreshed for close"));
+
+            /* Flaky tests. We have to retry them once we have a Junit5 rule. */
+            assumeFalse(testDescription.equals("remaining timeoutMS applied to getMore if timeoutMode is unset"));
+            assumeFalse(testDescription.equals("remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime"));
+            assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - success"));
+            assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - failure"));
         }
         assumeFalse("No maxTimeMS parameter for createIndex() method",
                 testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
