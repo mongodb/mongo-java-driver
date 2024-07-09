@@ -162,3 +162,7 @@ data class DataClassWithFailingInit(val id: String) {
 data class DataClassWithSequence(val value: Sequence<String>)
 
 data class DataClassWithJVMErasure(val duration: Duration, val ints: List<Int>)
+
+data class Box<T>(val boxed: T)
+
+data class DataClassWithNullableGeneric(val box: Box<String?>)

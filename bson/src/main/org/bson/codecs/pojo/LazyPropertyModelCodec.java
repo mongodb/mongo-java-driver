@@ -163,19 +163,44 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
     static final class NeedSpecializationCodec<T> extends PojoCodec<T> {
         private final ClassModel<T> classModel;
         private final DiscriminatorLookup discriminatorLookup;
+        private final CodecRegistry codecRegistry;
 
-        NeedSpecializationCodec(final ClassModel<T> classModel, final DiscriminatorLookup discriminatorLookup) {
+        NeedSpecializationCodec(final ClassModel<T> classModel, final DiscriminatorLookup discriminatorLookup, final CodecRegistry codecRegistry) {
             this.classModel = classModel;
             this.discriminatorLookup = discriminatorLookup;
-        }
-
-        @Override
-        public T decode(final BsonReader reader, final DecoderContext decoderContext) {
-            throw exception();
+            this.codecRegistry = codecRegistry;
         }
 
         @Override
         public void encode(final BsonWriter writer, final T value, final EncoderContext encoderContext) {
+            if (value.getClass().equals(classModel.getType())) {
+                throw exception();
+            }
+            tryEncode(codecRegistry.get(value.getClass()), writer, value, encoderContext);
+        }
+
+        @Override
+        public T decode(final BsonReader reader, final DecoderContext decoderContext) {
+            return tryDecode(reader, decoderContext);
+        }
+
+        @SuppressWarnings("unchecked")
+        private <A> void tryEncode(final Codec<A> codec,  final BsonWriter writer, final T value, final EncoderContext encoderContext) {
+            try {
+                codec.encode(writer, (A) value, encoderContext);
+            } catch (Exception e) {
+                throw exception();
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        public T tryDecode(final BsonReader reader, final DecoderContext decoderContext) {
+            Codec<T> codec = PojoCodecImpl.<T>getCodecFromDocument(reader, classModel.useDiscriminator(), classModel.getDiscriminatorKey(),
+                    codecRegistry, discriminatorLookup, null, classModel.getName());
+            if (codec != null) {
+                return codec.decode(reader, decoderContext);
+            }
+
             throw exception();
         }
 

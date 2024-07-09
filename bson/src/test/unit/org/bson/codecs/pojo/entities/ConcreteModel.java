@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.connection;
 
-import java.util.regex.Pattern;
+package org.bson.codecs.pojo.entities;
 
-/**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- */
-public class DomainNameUtils {
-    private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,63}|localhost))$");
+public class ConcreteModel extends GenericBaseModel<ConcreteField> {
 
-    static boolean isDomainName(final String domainName) {
-        return DOMAIN_PATTERN.matcher(domainName).matches();
+    public ConcreteModel() {
+    }
+
+    public ConcreteModel(final ConcreteField field) {
+        super(field);
     }
 }
