@@ -830,4 +830,11 @@ public final class ClusterFixture {
     public static ClusterSettings.Builder setDirectConnection(final ClusterSettings.Builder builder) {
         return builder.mode(ClusterConnectionMode.SINGLE).hosts(singletonList(getPrimary()));
     }
+
+    public static int applyTimeoutMultiplierForServerless(final int timeoutMs) {
+        if (ClusterFixture.isServerlessTest()) {
+            return timeoutMs * 2;
+        }
+        return timeoutMs;
+    }
 }
