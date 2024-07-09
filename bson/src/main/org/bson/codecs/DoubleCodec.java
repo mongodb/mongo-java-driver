@@ -19,7 +19,7 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
-import static org.bson.codecs.NumberCodecHelper.decodeDouble;
+import static org.bson.internal.NumberCodecHelper.decodeDouble;
 
 /**
  * Encodes and decodes {@code Double} objects.

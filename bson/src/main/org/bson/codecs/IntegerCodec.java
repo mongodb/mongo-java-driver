@@ -19,7 +19,7 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
-import static org.bson.codecs.NumberCodecHelper.decodeInt;
+import static org.bson.internal.NumberCodecHelper.decodeInt;
 
 /**
  * Encodes and decodes {@code Integer} objects.

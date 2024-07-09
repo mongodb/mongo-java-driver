@@ -14,33 +14,28 @@
  * limitations under the License.
  */
 
-package org.bson.codecs;
+package org.bson.internal;
 
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
-import org.bson.BsonWriter;
 
-import static org.bson.internal.NumberCodecHelper.decodeLong;
+import static java.lang.String.format;
 
 /**
- * Encodes and decodes {@code Long} objects.
- *
- * @since 3.0
+ * This class is not part of the public API. It may be removed or changed at any time.
  */
+public final class StringCodeHelper {
 
-public class LongCodec implements Codec<Long> {
-
-    @Override
-    public void encode(final BsonWriter writer, final Long value, final EncoderContext encoderContext) {
-        writer.writeInt64(value);
+    private StringCodeHelper(){
+        //NOP
     }
 
-    @Override
-    public Long decode(final BsonReader reader, final DecoderContext decoderContext) {
-        return decodeLong(reader);
-    }
-
-    @Override
-    public Class<Long> getEncoderClass() {
-        return Long.class;
+    public static char decodeChar(final BsonReader reader) {
+        String string = reader.readString();
+        if (string.length() != 1) {
+            throw new BsonInvalidOperationException(format("Attempting to decode the string '%s' to a character, but its length is not "
+                    + "equal to one", string));
+        }
+        return string.charAt(0);
     }
 }
