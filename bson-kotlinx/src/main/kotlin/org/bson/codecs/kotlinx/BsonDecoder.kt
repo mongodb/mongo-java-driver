@@ -167,7 +167,7 @@ internal open class DefaultBsonDecoder(
     override fun decodeDouble(): Double = NumberCodecHelper.decodeDouble(reader)
     override fun decodeInt(): Int = NumberCodecHelper.decodeInt(reader)
     override fun decodeLong(): Long = NumberCodecHelper.decodeLong(reader)
-    override fun decodeString(): String = reader.readString()
+    override fun decodeString(): String = readOrThrow({ reader.readString() }, BsonType.STRING)
 
     override fun decodeNull(): Nothing? {
         if (reader.state == AbstractBsonReader.State.VALUE) {
@@ -181,7 +181,7 @@ internal open class DefaultBsonDecoder(
         return reader.state != AbstractBsonReader.State.END_OF_DOCUMENT && reader.currentBsonType != BsonType.NULL
     }
 
-    override fun decodeObjectId(): ObjectId = reader.readObjectId()
+    override fun decodeObjectId(): ObjectId = readOrThrow({ reader.readObjectId() }, BsonType.STRING)
     override fun decodeBsonValue(): BsonValue = bsonValueCodec.decode(reader, DecoderContext.builder().build())
     override fun reader(): BsonReader = reader
 
