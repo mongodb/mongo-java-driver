@@ -181,7 +181,7 @@ internal open class DefaultBsonDecoder(
         return reader.state != AbstractBsonReader.State.END_OF_DOCUMENT && reader.currentBsonType != BsonType.NULL
     }
 
-    override fun decodeObjectId(): ObjectId = readOrThrow({ reader.readObjectId() }, BsonType.STRING)
+    override fun decodeObjectId(): ObjectId = readOrThrow({ reader.readObjectId() }, BsonType.OBJECT_ID)
     override fun decodeBsonValue(): BsonValue = bsonValueCodec.decode(reader, DecoderContext.builder().build())
     override fun reader(): BsonReader = reader
 
