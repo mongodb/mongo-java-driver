@@ -16,30 +16,23 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-public class CommandMonitoringTest extends UnifiedReactiveStreamsTest {
-    public CommandMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
-                                 @SuppressWarnings("unused") final String testDescription,
-                                 final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-                                 final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
+final class CommandMonitoringTest extends UnifiedReactiveStreamsTest {
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
         // The driver has a hack where getLastError command is executed as part of the handshake in order to get a connectionId
         // even when the hello command response doesn't contain it.
         assumeFalse(fileDescription.equals("pre-42-server-connection-id"));
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/command-monitoring");
     }
 }
