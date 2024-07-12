@@ -52,8 +52,8 @@ public class EncryptOptions {
      *     <li>Indexed</li>
      *     <li>Unindexed</li>
      *     <li>Range</li>
-     *     Note: The Range algorithm is experimental only. It is subject to breaking changes.
      * </ul>
+     * Note: The Range algorithm is experimental only. It is subject to breaking changes.
      *
      * @return the encryption algorithm
      */
