@@ -58,6 +58,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.ClusterFixture.applyTimeoutMultiplierForServerless;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -119,12 +120,12 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 405)
+                + "    blockTimeMS: " + (rtt + applyTimeoutMultiplierForServerless(405))
                 + "  }"
                 + "}");
 
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 400, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + applyTimeoutMultiplierForServerless(400), TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(gridFsFileNamespace.getDatabaseName());
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
@@ -178,12 +179,12 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
                 + "  data: {"
                 + "    failCommands: [\"delete\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 405)
+                + "    blockTimeMS: " + (rtt + applyTimeoutMultiplierForServerless(405))
                 + "  }"
                 + "}");
 
         try (MongoClient client = createReactiveClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 400, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + applyTimeoutMultiplierForServerless(400), TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(gridFsFileNamespace.getDatabaseName());
             GridFSBucket gridFsBucket = createReaciveGridFsBucket(database, GRID_FS_BUCKET_NAME);
 

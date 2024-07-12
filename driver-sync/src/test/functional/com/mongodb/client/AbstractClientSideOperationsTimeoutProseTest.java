@@ -71,6 +71,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.applyTimeoutMultiplierForServerless;
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -153,7 +154,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     builder.minSize(1);
                     builder.addConnectionPoolListener(connectionPoolListener);
                 })
-                .timeout(100, TimeUnit.MILLISECONDS))) {
+                .timeout(applyTimeoutMultiplierForServerless(100), TimeUnit.MILLISECONDS))) {
 
             assertDoesNotThrow(() ->
                     connectionPoolListener.waitForEvents(asList(ConnectionCreatedEvent.class, ConnectionClosedEvent.class),
@@ -188,7 +189,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     builder.minSize(1);
                     builder.addConnectionPoolListener(connectionPoolListener);
                 })
-                .timeout(250, TimeUnit.MILLISECONDS))) {
+                .timeout(applyTimeoutMultiplierForServerless(250), TimeUnit.MILLISECONDS))) {
 
             assertDoesNotThrow(() ->
                     connectionPoolListener.waitForEvents(asList(ConnectionCreatedEvent.class, ConnectionReadyEvent.class),
@@ -211,12 +212,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"getMore\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 150
+                + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(150)
                 + "  }"
                 + "}");
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(250, TimeUnit.MILLISECONDS))) {
+                .timeout(applyTimeoutMultiplierForServerless(250), TimeUnit.MILLISECONDS))) {
             MongoCollection<Document> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
@@ -243,7 +244,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
         BsonTimestamp startTime = new BsonTimestamp((int) Instant.now().getEpochSecond(), 0);
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions());
-        sleep(2000);
+        sleep(applyTimeoutMultiplierForServerless(2000));
         collectionHelper.insertDocuments(singletonList(BsonDocument.parse("{x: 1}")), WriteConcern.MAJORITY);
 
         collectionHelper.runAdminCommand("{"
@@ -252,12 +253,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"getMore\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 150
+                + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(150)
                 + "  }"
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(250, TimeUnit.MILLISECONDS))) {
+                .timeout(applyTimeoutMultiplierForServerless(250), TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
@@ -292,7 +293,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 205)
+                + "    blockTimeMS: " + (rtt + applyTimeoutMultiplierForServerless(205))
                 + "  }"
                 + "}");
 
@@ -300,7 +301,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         filesCollectionHelper.create();
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 200, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + applyTimeoutMultiplierForServerless(200), TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME);
 
@@ -323,7 +324,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"delete\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 305)
+                + "    blockTimeMS: " + (rtt + applyTimeoutMultiplierForServerless(305))
                 + "  }"
                 + "}");
 
@@ -331,7 +332,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         filesCollectionHelper.create();
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 300, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + applyTimeoutMultiplierForServerless(300), TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
 
@@ -374,12 +375,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"find\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + (rtt + 95)
+                + "    blockTimeMS: " + (rtt + applyTimeoutMultiplierForServerless(95))
                 + "  }"
                 + "}");
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(rtt + 100, TimeUnit.MILLISECONDS))) {
+                .timeout(rtt + applyTimeoutMultiplierForServerless(100), TimeUnit.MILLISECONDS))) {
             MongoDatabase database = client.getDatabase(namespace.getDatabaseName());
             GridFSBucket gridFsBucket = createGridFsBucket(database, GRID_FS_BUCKET_NAME).withChunkSizeBytes(2);
 
@@ -472,12 +473,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"abortTransaction\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 150
+                + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(150)
                 + "  }"
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder().retryWrites(false)
-                .timeout(100, TimeUnit.MILLISECONDS))) {
+                .timeout(applyTimeoutMultiplierForServerless(100), TimeUnit.MILLISECONDS))) {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
@@ -488,7 +489,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 long start = System.nanoTime();
                 session.close();
                 long elapsed = msElapsedSince(start) - postSessionCloseSleep();
-                assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
+                assertTrue(elapsed <= applyTimeoutMultiplierForServerless(150), "Took too long to time out, elapsedMS: " + elapsed);
             }
         }
         CommandFailedEvent abortTransactionEvent = assertDoesNotThrow(() ->
@@ -510,7 +511,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"abortTransaction\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 150
+                + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(150)
                 + "  }"
                 + "}");
 
@@ -519,14 +520,14 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(100, TimeUnit.MILLISECONDS).build())) {
+                    .defaultTimeout(applyTimeoutMultiplierForServerless((100)), TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
                 collection.insertOne(session, new Document("x", 1));
 
                 long start = System.nanoTime();
                 session.close();
                 long elapsed = msElapsedSince(start) - postSessionCloseSleep();
-                assertTrue(elapsed <= 150, "Took too long to time out, elapsedMS: " + elapsed);
+                assertTrue(elapsed <= applyTimeoutMultiplierForServerless(150), "Took too long to time out, elapsedMS: " + elapsed);
             }
         }
         CommandFailedEvent abortTransactionEvent = assertDoesNotThrow(() ->
@@ -554,10 +555,10 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                    .defaultTimeout(applyTimeoutMultiplierForServerless(200), TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
                 collection.insertOne(session, new Document("x", 1));
-                sleep(200);
+                sleep(applyTimeoutMultiplierForServerless(200));
 
                 assertDoesNotThrow(session::commitTransaction);
             }
@@ -585,10 +586,10 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                    .defaultTimeout(applyTimeoutMultiplierForServerless(200), TimeUnit.MILLISECONDS).build())) {
                 session.startTransaction();
                 collection.insertOne(session, new Document("x", 1));
-                sleep(200);
+                sleep(applyTimeoutMultiplierForServerless(200));
 
                 assertDoesNotThrow(session::close);
             }
@@ -608,11 +609,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"insert\", \"abortTransaction\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 150
+                + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(150)
                 + "  }"
                 + "}");
 
-        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder().timeout(100, TimeUnit.MILLISECONDS))) {
+        try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
+                .timeout(applyTimeoutMultiplierForServerless(100), TimeUnit.MILLISECONDS))) {
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName());
 
@@ -642,7 +644,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 25
+                + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(25)
                 + "  }"
                 + "}");
 
@@ -651,11 +653,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                    .defaultTimeout(applyTimeoutMultiplierForServerless(200), TimeUnit.MILLISECONDS).build())) {
                 assertThrows(MongoOperationTimeoutException.class,
                         () -> session.withTransaction(() -> {
                             collection.insertOne(session, new Document("x", 1));
-                            sleep(200);
+                            sleep(applyTimeoutMultiplierForServerless(200));
                             return true;
                         })
                 );
@@ -675,7 +677,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  data: {"
                 + "    failCommands: [\"insert\"],"
                 + "    blockConnection: true,"
-                + "    blockTimeMS: " + 25
+                + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(25)
                 + "    errorCode: " + 24
                 + "    errorLabels: [\"TransientTransactionError\"]"
                 + "  }"
@@ -686,11 +688,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(200, TimeUnit.MILLISECONDS).build())) {
+                    .defaultTimeout(applyTimeoutMultiplierForServerless(200), TimeUnit.MILLISECONDS).build())) {
                 assertThrows(MongoOperationTimeoutException.class,
                         () -> session.withTransaction(() -> {
                             collection.insertOne(session, new Document("x", 1));
-                            sleep(200);
+                            sleep(applyTimeoutMultiplierForServerless(200));
                             return true;
                         })
                 );
@@ -712,13 +714,13 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(200, TimeUnit.MILLISECONDS)
+                    .defaultTimeout(applyTimeoutMultiplierForServerless(200), TimeUnit.MILLISECONDS)
                     .build())) {
                 session.startTransaction(TransactionOptions.builder()
-                        .writeConcern(WriteConcern.ACKNOWLEDGED.withWTimeout(100, TimeUnit.MILLISECONDS))
+                        .writeConcern(WriteConcern.ACKNOWLEDGED.withWTimeout(applyTimeoutMultiplierForServerless(100), TimeUnit.MILLISECONDS))
                         .build());
                 collection.insertOne(session, new Document("x", 1));
-                sleep(200);
+                sleep(applyTimeoutMultiplierForServerless(200));
 
                 assertDoesNotThrow(session::commitTransaction);
                 //repeat commit.
@@ -756,13 +758,13 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "    data: {"
                 + "        failCommands: [\"getMore\" ],"
                 + "        blockConnection: true,"
-                + "        blockTimeMS: " + (rtt + 600)
+                + "        blockTimeMS: " + (rtt + applyTimeoutMultiplierForServerless(600))
                 + "    }"
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
                 .retryReads(true)
-                .applyToSocketSettings(builder -> builder.readTimeout(500, TimeUnit.MILLISECONDS)))) {
+                .applyToSocketSettings(builder -> builder.readTimeout(applyTimeoutMultiplierForServerless(500), TimeUnit.MILLISECONDS)))) {
 
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
@@ -803,12 +805,12 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "    data: {"
                 + "        failCommands: [\"getMore\" ],"
                 + "        blockConnection: true,"
-                + "        blockTimeMS: " + (rtt + 600)
+                + "        blockTimeMS: " + (rtt + applyTimeoutMultiplierForServerless(600))
                 + "    }"
                 + "}");
 
         try (MongoClient mongoClient = createMongoClient(getMongoClientSettingsBuilder()
-                .timeout(500, TimeUnit.MILLISECONDS))) {
+                .timeout(applyTimeoutMultiplierForServerless(500), TimeUnit.MILLISECONDS))) {
 
             MongoCollection<Document> collection = mongoClient.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName()).withReadPreference(ReadPreference.primary());
@@ -845,11 +847,11 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     .getCollection(namespace.getCollectionName());
 
             try (ClientSession session = mongoClient.startSession(ClientSessionOptions.builder()
-                    .defaultTimeout(200, TimeUnit.MILLISECONDS)
+                    .defaultTimeout(applyTimeoutMultiplierForServerless(200), TimeUnit.MILLISECONDS)
                     .build())) {
                 session.startTransaction(TransactionOptions.builder().build());
                 collection.insertOne(session, new Document("x", 1));
-                sleep(200);
+                sleep(applyTimeoutMultiplierForServerless(200));
 
                 assertDoesNotThrow(session::commitTransaction);
 
@@ -859,7 +861,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                         + "  data: {"
                         + "    failCommands: [\"commitTransaction\"],"
                         + "    blockConnection: true,"
-                        + "    blockTimeMS: " + 500
+                        + "    blockTimeMS: " + applyTimeoutMultiplierForServerless(500)
                         + "  }"
                         + "}");
 
