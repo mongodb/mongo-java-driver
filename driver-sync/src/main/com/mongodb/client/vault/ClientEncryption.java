@@ -97,14 +97,14 @@ public interface ClientEncryption extends Closeable {
      *     </ul>
      *     {@code $gt} may also be {@code $gte}. {@code $lt} may also be {@code $lte}.
      *
-     * <p>Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
+     * <p>Only supported when queryType is "range" and algorithm is "Range".
      * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
      *
      * @param expression the Match Expression or Aggregate Expression
      * @param options    the options
      * @return the encrypted queryable range expression
      * @since 4.9
-     * @mongodb.server.release 6.2
+     * @mongodb.server.release 8.0
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      * @mongodb.driver.manual reference/operator/aggregation/match/ $match
      */

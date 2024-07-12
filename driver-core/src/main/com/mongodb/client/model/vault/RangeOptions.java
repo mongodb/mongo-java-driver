@@ -21,14 +21,14 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
 /**
- * Range options specifies index options for a Queryable Encryption field supporting "rangePreview" queries.
+ * Range options specifies index options for a Queryable Encryption field supporting "range" queries.
  *
  * <p>{@code min}, {@code max}, {@code sparsity}, and {@code precision} must match the values set in the {@code encryptedFields}
  * of the destination collection.
  *
  * <p>For {@code double} and {@code decimal128}, {@code min}/{@code max}/{@code precision} must all be set, or all be unset.
  *
- * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
+ * <p>Note: The "Range" algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
  * @since 4.9
  * @mongodb.server.release 6.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
@@ -38,6 +38,7 @@ public class RangeOptions {
 
     private BsonValue min;
     private BsonValue max;
+    private Integer trimFactor;
     private Long sparsity;
     private Integer precision;
 
@@ -72,6 +73,24 @@ public class RangeOptions {
      */
     public RangeOptions max(@Nullable final BsonValue max) {
         this.max = max;
+        return this;
+    }
+
+    /**
+     * @return the trim factor value if set
+     */
+    public Integer getTrimFactor() {
+        return trimFactor;
+    }
+
+    /**
+     * Set the number of top-level edges stored per record by setting a trim factor, reducing write conflicts during simultaneous inserts
+     * and optimizing queries by excluding seldom-used high-level edges.
+     * @param trimFactor the trim factor
+     * @return this
+     */
+    public RangeOptions setTrimFactor(final Integer trimFactor) {
+        this.trimFactor = trimFactor;
         return this;
     }
 
@@ -124,6 +143,7 @@ public class RangeOptions {
         return "RangeOptions{"
                 + "min=" + min
                 + ", max=" + max
+                + ", trimFactor=" + trimFactor
                 + ", sparsity=" + sparsity
                 + ", precision=" + precision
                 + '}';

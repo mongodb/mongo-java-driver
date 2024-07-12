@@ -60,7 +60,6 @@ import java.util.Map;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
@@ -92,8 +91,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
 
     @BeforeEach
     public void setUp(final Type type) {
-        assumeTrue(serverVersionLessThan(8, 0));
-        assumeTrue(serverVersionAtLeast(6, 2));
+        assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isStandalone());
         assumeFalse(isServerlessTest());
 
@@ -139,7 +137,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
                                 .build())
                 .build());
 
-        encryptOptions = new EncryptOptions("RangePreview")
+        encryptOptions = new EncryptOptions("Range")
                 .keyId(key1Id)
                 .contentionFactor(0L)
                 .rangeOptions(type.getRangeOptions());
@@ -149,9 +147,9 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
         BsonBinary encryptedValue30 = clientEncryption.encrypt(type.convertNumber(30), encryptOptions);
         BsonBinary encryptedValue200 = clientEncryption.encrypt(type.convertNumber(200), encryptOptions);
 
-        encryptQueryOptions = new EncryptOptions("RangePreview")
+        encryptQueryOptions = new EncryptOptions("Range")
                 .keyId(key1Id)
-                .queryType("rangePreview")
+                .queryType("range")
                 .contentionFactor(0L)
                 .rangeOptions(type.getRangeOptions());
 
@@ -292,7 +290,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
     void testSettingPrecisionErrorsIfTheTypeIsNotADouble(final Type type) {
         BsonValue originalValue = type == Type.INT ? new BsonDouble(6) : new BsonInt32(6);
 
-        EncryptOptions precisionEncryptOptions = new EncryptOptions("RangePreview")
+        EncryptOptions precisionEncryptOptions = new EncryptOptions("Range")
                 .keyId(key1Id)
                 .contentionFactor(0L)
                 .rangeOptions(type.getRangeOptions().precision(2));
@@ -319,7 +317,9 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
         }
 
         RangeOptions getRangeOptions() {
-            RangeOptions rangeOptions = new RangeOptions().sparsity(1L);
+            RangeOptions rangeOptions = new RangeOptions()
+                    .setTrimFactor(1)
+                    .sparsity(1L);
             switch (this) {
                 case DECIMAL_NO_PRECISION:
                 case DOUBLE_NO_PRECISION:

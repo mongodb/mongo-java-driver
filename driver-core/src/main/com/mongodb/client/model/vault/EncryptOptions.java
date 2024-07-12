@@ -51,7 +51,8 @@ public class EncryptOptions {
      *     <li>AEAD_AES_256_CBC_HMAC_SHA_512-Random</li>
      *     <li>Indexed</li>
      *     <li>Unindexed</li>
-     *     <li>RangePreview</li>
+     *     <li>Range</li>
+     *     Note: The Range algorithm is experimental only. It is subject to breaking changes.
      * </ul>
      *
      * @return the encryption algorithm
@@ -115,7 +116,7 @@ public class EncryptOptions {
     /**
      * The contention factor.
      *
-     * <p>It is an error to set contentionFactor when algorithm is not "Indexed" or "RangePreview".
+     * <p>It is an error to set contentionFactor when algorithm is not "Indexed" or "Range".
      * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.</p>
      * @param contentionFactor the contention factor, which must be {@code >= 0} or null.
      * @return this
@@ -143,8 +144,8 @@ public class EncryptOptions {
     /**
      * The QueryType.
      *
-     * <p>Currently, we support only "equality" or "RangePreview" queryType.</p>
-     * <p>It is an error to set queryType when the algorithm is not "Indexed" or "RangePreview".</p>
+     * <p>Currently, we support only "equality" or "range" queryType.</p>
+     * <p>It is an error to set queryType when the algorithm is not "Indexed" or "Range".</p>
      * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.</p>
      * @param queryType the query type
      * @return this
@@ -159,7 +160,8 @@ public class EncryptOptions {
     /**
      * Gets the QueryType.
      *
-     * <p>Currently, we support only "equality" or "RangePreview" queryType.</p>
+     * <p>Currently, we support only "equality" or "range" queryType.</p>
+     * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
      * @see #queryType(String)
      * @return the queryType or null
      * @since 4.7
@@ -173,12 +175,12 @@ public class EncryptOptions {
     /**
      * The RangeOptions
      *
-     * <p>It is an error to set RangeOptions when the algorithm is not "RangePreview".
+     * <p>It is an error to set RangeOptions when the algorithm is not "Range".
      * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
      * @param rangeOptions the range options
      * @return this
      * @since 4.9
-     * @mongodb.server.release 6.2
+     * @mongodb.server.release 8.0
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
     @Beta(Beta.Reason.SERVER)
@@ -191,7 +193,7 @@ public class EncryptOptions {
      * Gets the RangeOptions
      * @return the range options or null if not set
      * @since 4.9
-     * @mongodb.server.release 6.2
+     * @mongodb.server.release 8.0
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
     @Nullable
