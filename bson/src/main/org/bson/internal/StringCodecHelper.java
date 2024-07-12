@@ -18,6 +18,7 @@ package org.bson.internal;
 
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
+import org.bson.BsonType;
 
 import static java.lang.String.format;
 
@@ -31,6 +32,10 @@ public final class StringCodecHelper {
     }
 
     public static char decodeChar(final BsonReader reader) {
+        BsonType currentBsonType = reader.getCurrentBsonType();
+        if (currentBsonType != BsonType.STRING) {
+            throw new BsonInvalidOperationException(format("Invalid string type, found: %s", currentBsonType));
+        }
         String string = reader.readString();
         if (string.length() != 1) {
             throw new BsonInvalidOperationException(format("Attempting to decode the string '%s' to a character, but its length is not "
