@@ -267,6 +267,9 @@ public final class MongoCredential {
      * Mechanism property key for specifying he URI of the target resource (sometimes called the audience),
      * used in some OIDC environments.
      *
+     * <p>A TOKEN_RESOURCE with a comma character must be given as a `MongoClient` configuration and not as
+     * part of the connection string. The TOKEN_RESOURCE value can contain a colon character.
+     *
      * @see MongoCredential#ENVIRONMENT_KEY
      * @see #createOidcCredential(String)
      * @since 5.1

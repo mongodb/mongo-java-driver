@@ -38,7 +38,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,8 +78,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
@@ -99,8 +97,7 @@ import static java.util.Collections.unmodifiableList;
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
  * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
@@ -240,9 +237,7 @@ import static java.util.Collections.unmodifiableList;
  * mechanism (the default).
  * </li>
  * <li>{@code authMechanismProperties=PROPERTY_NAME:PROPERTY_VALUE,PROPERTY_NAME2:PROPERTY_VALUE2}: This option allows authentication
- * mechanism properties to be set on the connection string. Property values must be percent-encoded individually, when
- * special characters are used, including {@code ,} (comma), {@code =}, {@code +}, {@code &}, and {@code %}. The
- * entire substring following the {@code =} should not itself be encoded.
+ * mechanism properties to be set on the connection string.
  * </li>
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
  *   Deprecated, please use {@code authMechanismProperties=SERVICE_NAME:string} instead.
@@ -371,16 +366,18 @@ public class ConnectionString {
 
         // Split out the user and host information
         String userAndHostInformation;
-        int idx = unprocessedConnectionString.indexOf("/");
-        if (idx == -1) {
-            if (unprocessedConnectionString.contains("?")) {
-                throw new IllegalArgumentException("The connection string contains options without trailing slash");
-            }
+        int firstForwardSlashIdx = unprocessedConnectionString.indexOf("/");
+        int firstQuestionMarkIdx = unprocessedConnectionString.indexOf("?");
+        if (firstQuestionMarkIdx == -1 && firstForwardSlashIdx == -1) {
             userAndHostInformation = unprocessedConnectionString;
             unprocessedConnectionString = "";
+        } else if (firstQuestionMarkIdx != -1 && (firstForwardSlashIdx == -1 || firstQuestionMarkIdx < firstForwardSlashIdx)) {
+            // there is a question mark, and there is no slash or the question mark comes before any slash
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstQuestionMarkIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstQuestionMarkIdx);
         } else {
-            userAndHostInformation = unprocessedConnectionString.substring(0, idx);
-            unprocessedConnectionString = unprocessedConnectionString.substring(idx + 1);
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstForwardSlashIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstForwardSlashIdx + 1);
         }
 
         // Split the user and host information
@@ -388,7 +385,7 @@ public class ConnectionString {
         String hostIdentifier;
         String userName = null;
         char[] password = null;
-        idx = userAndHostInformation.lastIndexOf("@");
+        int idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
             hostIdentifier = userAndHostInformation.substring(idx + 1);
@@ -908,7 +905,6 @@ public class ConnectionString {
             }
         }
 
-
         MongoCredential credential = null;
         if (mechanism != null) {
             credential = createMongoCredentialWithMechanism(mechanism, userName, password, authSource, gssapiServiceName);
@@ -926,9 +922,6 @@ public class ConnectionString {
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
-                if (decodeValueOfKeyValuePair(credential.getMechanism())) {
-                    value = urldecode(value);
-                }
                 if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
                     throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
                             + "'%s' must be set on the credential programmatically.", key));
@@ -942,27 +935,6 @@ public class ConnectionString {
             }
         }
         return credential;
-    }
-
-    private static boolean decodeWholeOptionValue(final boolean isOidc, final String key) {
-        // The "whole option value" is the entire string following = in an option,
-        // including separators when the value is a list or list of key-values.
-        // This is the original parsing behaviour, but implies that users can
-        // encode separators (much like they might with URL parameters). This
-        // behaviour implies that users cannot encode "key-value" values that
-        // contain a comma, because this will (after this "whole value decoding)
-        // be parsed as a key-value separator, rather than part of a value.
-        return !(isOidc && key.equals("authmechanismproperties"));
-    }
-
-    private static boolean decodeValueOfKeyValuePair(@Nullable final String mechanismName) {
-        // Only authMechanismProperties should be individually decoded, and only
-        // when the mechanism is OIDC. These will not have been decoded.
-        return AuthenticationMechanism.MONGODB_OIDC.getMechanismName().equals(mechanismName);
-    }
-
-    private static boolean isOidc(final List<String> options) {
-        return options.contains("authMechanism=" + AuthenticationMechanism.MONGODB_OIDC.getMechanismName());
     }
 
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
@@ -1049,9 +1021,7 @@ public class ConnectionString {
             return optionsMap;
         }
 
-        List<String> options = Arrays.asList(optionsPart.split("&|;"));
-        boolean isOidc = isOidc(options);
-        for (final String part : options) {
+        for (final String part : optionsPart.split("&|;")) {
             if (part.isEmpty()) {
                 continue;
             }
@@ -1063,10 +1033,7 @@ public class ConnectionString {
                 if (valueList == null) {
                     valueList = new ArrayList<>(1);
                 }
-                if (decodeWholeOptionValue(isOidc, key)) {
-                    value = urldecode(value);
-                }
-                valueList.add(value);
+                valueList.add(urldecode(value));
                 optionsMap.put(key, valueList);
             } else {
                 throw new IllegalArgumentException(format("The connection string contains an invalid option '%s'. "

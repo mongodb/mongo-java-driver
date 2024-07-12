@@ -35,12 +35,13 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.FindOperation
+import org.bson.BsonBinary
 import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodecProvider
-import org.bson.types.Binary
 import org.bson.types.ObjectId
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -327,7 +328,9 @@ class GridFSBucketSpecification extends Specification {
         def findIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def tenBytes = new byte[10]
-        def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(tenBytes))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(tenBytes))
         def chunksCollection = Mock(MongoCollection)
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         def outputStream = new ByteArrayOutputStream(10)
@@ -346,7 +349,7 @@ class GridFSBucketSpecification extends Specification {
         } else {
             1 * filesCollection.find() >> findIterable
         }
-        1 * findIterable.filter(new Document('_id', bsonFileId)) >> findIterable
+        1 * findIterable.filter(new BsonDocument('_id', bsonFileId)) >> findIterable
         1 * findIterable.first() >> fileInfo
 
         then:
@@ -376,7 +379,9 @@ class GridFSBucketSpecification extends Specification {
         def findIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def tenBytes = new byte[10]
-        def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(tenBytes))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(tenBytes))
         def chunksCollection = Mock(MongoCollection)
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         def outputStream = new ByteArrayOutputStream(10)
@@ -395,7 +400,7 @@ class GridFSBucketSpecification extends Specification {
         } else {
             1 * filesCollection.find() >> findIterable
         }
-        1 * findIterable.filter(new Document('_id', bsonFileId)) >> findIterable
+        1 * findIterable.filter(new BsonDocument('_id', bsonFileId)) >> findIterable
         1 * findIterable.first() >> fileInfo
 
         then:
@@ -424,11 +429,13 @@ class GridFSBucketSpecification extends Specification {
         def bsonFileId = new BsonObjectId(fileId)
         def fileInfo = new GridFSFile(bsonFileId, filename, 10, 255, new Date(), new Document())
         def mongoCursor =  Mock(MongoCursor)
-        def findIterable =  Mock(FindIterable)
+        def gridFsFileFindIterable =  Mock(FindIterable)
         def findChunkIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def tenBytes = new byte[10]
-        def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(tenBytes))
+        def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
+                .append('n', new BsonInt32(0))
+                .append('data', new BsonBinary(tenBytes))
         def chunksCollection = Mock(MongoCollection)
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         def outputStream = new ByteArrayOutputStream(10)
@@ -443,14 +450,14 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         if (clientSession != null) {
-            1 * filesCollection.find(clientSession) >> findIterable
+            1 * filesCollection.find(clientSession) >> gridFsFileFindIterable
         } else {
-            1 * filesCollection.find() >> findIterable
+            1 * filesCollection.find() >> gridFsFileFindIterable
         }
-        1 * findIterable.filter(new Document('filename', filename)) >> findIterable
-        1 * findIterable.skip(_) >> findIterable
-        1 * findIterable.sort(_) >> findIterable
-        1 * findIterable.first() >> fileInfo
+        1 * gridFsFileFindIterable.filter(new Document('filename', filename)) >> gridFsFileFindIterable
+        1 * gridFsFileFindIterable.skip(_) >> gridFsFileFindIterable
+        1 * gridFsFileFindIterable.sort(_) >> gridFsFileFindIterable
+        1 * gridFsFileFindIterable.first() >> fileInfo
 
         if (clientSession != null) {
             1 * chunksCollection.find(clientSession, _) >> findChunkIterable
