@@ -23,7 +23,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.unified.UnifiedTest;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl;
@@ -31,18 +30,9 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoDatabase;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
 
 public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
-    public UnifiedReactiveStreamsTest(@Nullable final String fileDescription, final String schemaVersion, final BsonArray runOnRequirements,
-            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
-        super(fileDescription, schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
-    }
-
-    public UnifiedReactiveStreamsTest(final String schemaVersion, final BsonArray runOnRequirements,
-            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
-        this(null, schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+    protected UnifiedReactiveStreamsTest() {
     }
 
     @Override
