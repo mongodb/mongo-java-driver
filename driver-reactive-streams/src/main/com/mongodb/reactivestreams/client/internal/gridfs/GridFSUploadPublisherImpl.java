@@ -103,21 +103,25 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
             sink.onCancel(() -> createCancellationMono(terminated).subscribe());
 
             Consumer<Throwable> errorHandler = e -> createCancellationMono(terminated)
+                    .contextWrite(sink.contextView())
                     .doOnError(i -> sink.error(e))
                     .doOnSuccess(i -> sink.error(e))
                     .subscribe();
 
             Consumer<Long> saveFileDataMono = l -> createSaveFileDataMono(terminated, l)
+                    .contextWrite(sink.contextView())
                     .doOnError(errorHandler)
                     .doOnSuccess(i -> sink.success())
                     .subscribe();
 
             Consumer<Void> saveChunksMono = i -> createSaveChunksMono(terminated)
+                    .contextWrite(sink.contextView())
                     .doOnError(errorHandler)
                     .doOnSuccess(saveFileDataMono)
                     .subscribe();
 
             createCheckAndCreateIndexesMono()
+                    .contextWrite(sink.contextView())
                     .doOnError(errorHandler)
                     .doOnSuccess(saveChunksMono)
                     .subscribe();
@@ -159,6 +163,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
         AtomicBoolean collectionExists = new AtomicBoolean(false);
 
         return Mono.create(sink -> Mono.from(findPublisher.projection(PROJECTION).first())
+                .contextWrite(sink.contextView())
                 .subscribe(
                         d -> collectionExists.set(true),
                         sink::error,
@@ -167,6 +172,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                                 sink.success();
                             } else {
                                 checkAndCreateIndex(filesCollection.withReadPreference(primary()), FILES_INDEX)
+                                        .contextWrite(sink.contextView())
                                         .doOnError(sink::error)
                                         .doOnSuccess(i -> {
                                             checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX)
@@ -227,6 +233,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
             AtomicLong lengthInBytes = new AtomicLong(0);
             AtomicInteger chunkIndex = new AtomicInteger(0);
             new ResizingByteBufferFlux(source, chunkSizeBytes)
+                    .contextWrite(sink.contextView())
                     .flatMap((Function<ByteBuffer, Publisher<InsertOneResult>>) byteBuffer -> {
                         if (terminated.get()) {
                             return Mono.empty();
