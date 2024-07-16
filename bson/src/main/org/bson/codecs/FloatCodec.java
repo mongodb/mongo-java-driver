@@ -16,12 +16,10 @@
 
 package org.bson.codecs;
 
-import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
-import static java.lang.String.format;
-import static org.bson.codecs.NumberCodecHelper.decodeDouble;
+import static org.bson.internal.NumberCodecHelper.decodeFloat;
 
 /**
  * Encodes and decodes {@code Float} objects.
@@ -37,11 +35,7 @@ public class FloatCodec implements Codec<Float> {
 
     @Override
     public Float decode(final BsonReader reader, final DecoderContext decoderContext) {
-        double value = decodeDouble(reader);
-        if (value < -Float.MAX_VALUE || value > Float.MAX_VALUE) {
-            throw new BsonInvalidOperationException(format("%s can not be converted into a Float.", value));
-        }
-        return (float) value;
+        return decodeFloat(reader);
     }
 
     @Override

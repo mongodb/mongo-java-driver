@@ -21,7 +21,7 @@ import org.bson.BsonWriter;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.bson.codecs.NumberCodecHelper.decodeLong;
+import static org.bson.internal.NumberCodecHelper.decodeLong;
 
 /**
  * Encodes and decodes {@code AtomicLong} objects.
