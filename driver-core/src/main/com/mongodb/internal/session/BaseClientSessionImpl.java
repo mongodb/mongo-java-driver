@@ -221,8 +221,8 @@ public class BaseClientSessionImpl implements ClientSession {
     }
 
     protected void resetTimeout() {
-        if (timeoutContext != null && timeoutContext.hasTimeoutMS()) {
-            timeoutContext.resetTimeout();
+        if (timeoutContext != null) {
+            timeoutContext.resetTimeoutIfPresent();
         }
     }
 

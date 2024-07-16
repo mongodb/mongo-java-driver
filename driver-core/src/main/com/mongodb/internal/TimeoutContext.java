@@ -31,7 +31,6 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Timeout Context.
@@ -139,7 +138,7 @@ public class TimeoutContext {
      * @param onExpired the runnable to run
      */
     public void onExpired(final Runnable onExpired) {
-        Timeout.nullAsInfinite(timeout).onExpired(onExpired);
+        Timeout.nullAsInfinite(timeout).onExpired(onExpired, MILLISECONDS);
     }
 
     /**
@@ -253,9 +252,11 @@ public class TimeoutContext {
                 () -> throwMongoTimeoutException("The operation exceeded the timeout limit.")));
     }
 
-    public void resetTimeout() {
-        assertNotNull(timeout);
-        timeout = startTimeout(timeoutSettings.getTimeoutMS());
+    public void resetTimeoutIfPresent() {
+        if (hasTimeoutMS()) {
+            assertNotNull(timeout);
+            timeout = startTimeout(timeoutSettings.getTimeoutMS());
+        }
     }
 
     /**
@@ -265,7 +266,7 @@ public class TimeoutContext {
         if (!isMaintenanceContext) {
             return;
         }
-        timeout = Timeout.nullAsInfinite(timeout).call(NANOSECONDS,
+        timeout = Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> timeout,
                 (ms) -> startTimeout(timeoutSettings.getTimeoutMS()),
                 () -> startTimeout(timeoutSettings.getTimeoutMS()));

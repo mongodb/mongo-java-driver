@@ -224,14 +224,22 @@ public interface Timeout {
     }
 
     default void onExpired(final Runnable onExpired) {
-        onExistsAndExpired(this, onExpired);
+        onExistsAndExpired(this, onExpired, NANOSECONDS);
+    }
+
+    default void onExpired(final Runnable onExpired, final TimeUnit timeUnit) {
+        onExistsAndExpired(this, onExpired, timeUnit);
     }
 
     static void onExistsAndExpired(@Nullable final Timeout t, final Runnable onExpired) {
+       onExistsAndExpired(t, onExpired, NANOSECONDS);
+    }
+
+    static void onExistsAndExpired(@Nullable final Timeout t, final Runnable onExpired, final TimeUnit timeUnit) {
         if (t == null) {
             return;
         }
-        t.run(NANOSECONDS,
+        t.run(timeUnit,
                 () -> {},
                 (ns) -> {},
                 () -> onExpired.run());

@@ -142,8 +142,8 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     }
 
     void resetTimeout() {
-        if (!closeWithoutTimeoutReset && timeoutContext.hasTimeoutMS()) {
-            timeoutContext.resetTimeout();
+        if (!closeWithoutTimeoutReset) {
+            timeoutContext.resetTimeoutIfPresent();
         }
     }
 
