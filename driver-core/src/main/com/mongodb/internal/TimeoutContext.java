@@ -31,6 +31,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Timeout Context.
@@ -138,7 +139,7 @@ public class TimeoutContext {
      * @param onExpired the runnable to run
      */
     public void onExpired(final Runnable onExpired) {
-        Timeout.nullAsInfinite(timeout).onExpired(onExpired, MILLISECONDS);
+        Timeout.nullAsInfinite(timeout).onExpired(onExpired);
     }
 
     /**
@@ -266,7 +267,7 @@ public class TimeoutContext {
         if (!isMaintenanceContext) {
             return;
         }
-        timeout = Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
+        timeout = Timeout.nullAsInfinite(timeout).call(NANOSECONDS,
                 () -> timeout,
                 (ms) -> startTimeout(timeoutSettings.getTimeoutMS()),
                 () -> startTimeout(timeoutSettings.getTimeoutMS()));
