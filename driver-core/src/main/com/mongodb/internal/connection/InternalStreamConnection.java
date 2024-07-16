@@ -690,7 +690,6 @@ public class InternalStreamConnection implements InternalConnection {
             stream.writeAsync(byteBuffers, operationContext, c.asHandler());
         }, Exception.class, (e, c) -> {
             close();
-            //TODO-m propably should be solved after merge
             throwTranslatedWriteException(e, operationContext);
         }).finish(errorHandlingCallback(callback, LOGGER));
     }

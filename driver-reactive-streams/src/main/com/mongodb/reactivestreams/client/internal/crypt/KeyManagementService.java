@@ -52,6 +52,7 @@ import java.util.Map;
 
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.bson.assertions.Assertions.assertTrue;
 
 class KeyManagementService implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("client");
@@ -61,6 +62,7 @@ class KeyManagementService implements Closeable {
     private final TlsChannelStreamFactoryFactory tlsChannelStreamFactoryFactory;
 
     KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, final int timeoutMillis) {
+        assertTrue("timeoutMillis > 0", timeoutMillis > 0);
         this.kmsProviderSslContextMap = kmsProviderSslContextMap;
         this.tlsChannelStreamFactoryFactory = new TlsChannelStreamFactoryFactory(new DefaultInetAddressResolver());
         this.timeoutMillis = timeoutMillis;
@@ -166,7 +168,6 @@ class KeyManagementService implements Closeable {
             timeoutSettings = createTimeoutSettings(socketSettings, null);
         } else {
             timeoutSettings = operationTimeout.call(MILLISECONDS,
-                    // TODO (CSOT) JAVA-5104 correct that cannot be infinite? Possibly a path here from: Timeout operationTimeout = operationContext.getTimeoutContext().getTimeout();
                     () -> {
                         throw new AssertionError("operationTimeout cannot be infinite");
                     },

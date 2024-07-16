@@ -84,7 +84,6 @@ public interface Timeout {
      */
     @NotNull
     static Timeout expiresIn(final long duration, final TimeUnit unit, final ZeroSemantics zeroSemantics) {
-        // TODO (CSOT) confirm that all usages in final PR always supply a non-negative duration
         if (duration < 0) {
             throw new AssertionError("Timeouts must not be in the past");
         } else if (duration == 0) {
