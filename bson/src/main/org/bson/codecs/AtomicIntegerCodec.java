@@ -21,7 +21,7 @@ import org.bson.BsonWriter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.bson.codecs.NumberCodecHelper.decodeInt;
+import static org.bson.internal.NumberCodecHelper.decodeInt;
 
 /**
  * Encodes and decodes {@code AtomicInteger} objects.
