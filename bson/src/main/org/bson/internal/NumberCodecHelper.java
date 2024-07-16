@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.codecs;
+package org.bson.internal;
 
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
@@ -25,9 +25,28 @@ import java.math.BigDecimal;
 
 import static java.lang.String.format;
 
-final class NumberCodecHelper {
+/**
+ * This class is not part of the public API. It may be removed or changed at any time.
+ */
+public final class NumberCodecHelper {
 
-    static int decodeInt(final BsonReader reader) {
+    public static byte decodeByte(final BsonReader reader) {
+        int value = decodeInt(reader);
+        if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
+            throw new BsonInvalidOperationException(format("%s can not be converted into a Byte.", value));
+        }
+        return (byte) value;
+    }
+
+    public static short decodeShort(final BsonReader reader) {
+        int value = decodeInt(reader);
+        if (value < Short.MIN_VALUE || value > Short.MAX_VALUE) {
+            throw new BsonInvalidOperationException(format("%s can not be converted into a Short.", value));
+        }
+        return (short) value;
+    }
+
+    public static int decodeInt(final BsonReader reader) {
         int intValue;
         BsonType bsonType = reader.getCurrentBsonType();
         switch (bsonType) {
@@ -61,7 +80,7 @@ final class NumberCodecHelper {
         return intValue;
     }
 
-    static long decodeLong(final BsonReader reader) {
+    public static long decodeLong(final BsonReader reader) {
         long longValue;
         BsonType bsonType = reader.getCurrentBsonType();
         switch (bsonType) {
@@ -91,7 +110,15 @@ final class NumberCodecHelper {
         return longValue;
     }
 
-    static double decodeDouble(final BsonReader reader) {
+    public static float decodeFloat(final BsonReader reader) {
+        double value = decodeDouble(reader);
+        if (value < -Float.MAX_VALUE || value > Float.MAX_VALUE) {
+            throw new BsonInvalidOperationException(format("%s can not be converted into a Float.", value));
+        }
+        return (float) value;
+    }
+
+   public static double decodeDouble(final BsonReader reader) {
         double doubleValue;
         BsonType bsonType = reader.getCurrentBsonType();
         switch (bsonType) {
