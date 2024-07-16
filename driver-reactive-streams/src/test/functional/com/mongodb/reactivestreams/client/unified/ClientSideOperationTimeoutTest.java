@@ -25,9 +25,10 @@ import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.junit.After;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Hooks;
 
 import java.io.IOException;
@@ -41,36 +42,37 @@ import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.dis
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorError;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
-@RunWith(Parameterized.class)
 public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
-    private final String testDescription;
+
     private final AtomicReference<Throwable> atomicReferenceThrowable = new AtomicReference<>();
 
-    public ClientSideOperationTimeoutTest(final String fileDescription, final String testDescription,
-            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-            final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
-        this.testDescription = testDescription;
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
+        return getTestData("unified-test-format/client-side-operation-timeout");
+    }
+
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
         skipOperationTimeoutTests(fileDescription, testDescription);
 
-        assumeFalse("No iterateOnce support. There is alternative prose test for it.",
-                testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set"));
-        assumeFalse("No iterateOnce support. There is alternative prose test for it.",
-                testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is set"));
+        assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set"),
+                "No iterateOnce support. There is alternative prose test for it.");
+        assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if maxAwaitTimeMS is set"),
+                "No iterateOnce support. There is alternative prose test for it.");
         /*
            The Reactive Streams specification prevents us from allowing a subsequent next call (event in reactive terms) after a timeout error,
            conflicting with the CSOT spec requirement not to invalidate the change stream and to try resuming and establishing a new change
            stream on the server. We immediately let users know about a timeout error, which then closes the stream/publisher.
          */
-        assumeFalse("It is not possible due to a conflict with the Reactive Streams specification .",
-                testDescription.equals("change stream can be iterated again if previous iteration times out"));
-        assumeFalse("Flaky and racy due to asynchronous behaviour. There is alternative prose test for it.",
-                testDescription.equals("timeoutMS applies to full resume attempt in a next call"));
-        assumeFalse("No way to catch an error on BarchCursor creation. There is alternative prose test for it.",
-                testDescription.equals("timeoutMS applied to initial aggregate"));
+        assumeFalse(testDescription.equals("change stream can be iterated again if previous iteration times out"),
+                "It is not possible due to a conflict with the Reactive Streams specification .");
+        assumeFalse(testDescription.equals("timeoutMS applies to full resume attempt in a next call"),
+                "Flaky and racy due to asynchronous behaviour. There is alternative prose test for it.");
+        assumeFalse(testDescription.equals("timeoutMS applied to initial aggregate"),
+                "No way to catch an error on BarchCursor creation. There is alternative prose test for it.");
 
         assumeFalse(testDescription.endsWith("createChangeStream on client"));
         assumeFalse(testDescription.endsWith("createChangeStream on database"));
@@ -93,15 +95,26 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         Hooks.onErrorDropped(atomicReferenceThrowable::set);
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/client-side-operation-timeout");
-    }
-
+    @ParameterizedTest(name = "{0}: {1}")
+    @MethodSource("data")
     @Override
-    public void shouldPassAllOutcomes() {
+    public void shouldPassAllOutcomes(
+            @Nullable final String fileDescription,
+            @Nullable final String testDescription,
+            final String schemaVersion,
+            @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray,
+            final BsonArray initialData,
+            final BsonDocument definition) {
         try {
-            super.shouldPassAllOutcomes();
+            super.shouldPassAllOutcomes(fileDescription,
+                    testDescription,
+                    schemaVersion,
+                    runOnRequirements,
+                    entitiesArray,
+                    initialData,
+                    definition);
+
         } catch (AssertionError e) {
             assertNoDroppedError(format("%s failed due to %s.\n"
                             + "The test also caused a dropped error; `onError` called with no handler.",
@@ -114,7 +127,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         }
         assertNoDroppedError(format("%s passed but there was a dropped error; `onError` called with no handler.", testDescription));
     }
-
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
         TransportSettings overriddenTransportSettings = ClusterFixture.getOverriddenTransportSettings();
@@ -123,7 +135,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         return new SyncMongoClient(MongoClients.create(clientSettings));
     }
 
-    @After
+    @AfterEach
     public void cleanUp() {
         super.cleanUp();
         disableSleep();

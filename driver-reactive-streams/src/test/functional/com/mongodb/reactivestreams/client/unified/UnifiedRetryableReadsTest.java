@@ -16,24 +16,45 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.junit.After;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.client.unified.UnifiedRetryableReadsTest.customSkips;
+import static com.mongodb.client.unified.UnifiedRetryableReadsTest.doSkips;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableWaitForBatchCursorCreation;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableWaitForBatchCursorCreation;
 
-public class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
-    public UnifiedRetryableReadsTest(final String fileDescription, final String testDescription, final String schemaVersion,
-            final BsonArray runOnRequirements, final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
-        customSkips(fileDescription, testDescription);
+final class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
+        doSkips(fileDescription, testDescription);
+    }
+
+    @Override
+    @BeforeEach
+    public void setUp(
+            final String fileDescription,
+            final String testDescription,
+            final String schemaVersion,
+            @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray,
+            final BsonArray initialData,
+            final BsonDocument definition) {
+        super.setUp(
+                fileDescription,
+                testDescription,
+                schemaVersion,
+                runOnRequirements,
+                entitiesArray,
+                initialData,
+                definition);
         if (fileDescription.startsWith("changeStreams") || testDescription.contains("ChangeStream")) {
             // Several reactive change stream tests fail if we don't block waiting for batch cursor creation.
             enableWaitForBatchCursorCreation();
@@ -42,14 +63,14 @@ public class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
         }
     }
 
-    @After
+    @Override
+    @AfterEach
     public void cleanUp() {
         super.cleanUp();
         disableWaitForBatchCursorCreation();
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/retryable-reads");
     }
 }

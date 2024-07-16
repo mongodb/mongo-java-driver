@@ -16,31 +16,19 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.Before;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
-    public UnifiedServerDiscoveryAndMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
-            final String testDescription, final String schemaVersion,
-            @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
-            final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/server-discovery-and-monitoring");
     }
 
-    @Before
-    public void before() {
-        com.mongodb.client.unified.UnifiedServerDiscoveryAndMonitoringTest.skipTests(getDefinition());
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
+        com.mongodb.client.unified.UnifiedServerDiscoveryAndMonitoringTest.doSkips(getDefinition());
     }
 }

@@ -23,17 +23,8 @@ import com.mongodb.client.gridfs.GridFSBucket
 import com.mongodb.client.unified.UnifiedTest as JUnifiedTest
 import com.mongodb.client.vault.ClientEncryption
 import com.mongodb.kotlin.client.syncadapter.SyncMongoClient
-import org.bson.BsonArray
-import org.bson.BsonDocument
 
-internal abstract class UnifiedTest(
-    fileDescription: String?,
-    schemaVersion: String,
-    runOnRequirements: BsonArray?,
-    entitiesArray: BsonArray,
-    initialData: BsonArray,
-    definition: BsonDocument
-) : JUnifiedTest(fileDescription, schemaVersion, runOnRequirements, entitiesArray, initialData, definition) {
+internal abstract class UnifiedTest() : JUnifiedTest() {
 
     override fun createMongoClient(settings: MongoClientSettings): JMongoClient =
         SyncMongoClient(MongoClient.create(settings))

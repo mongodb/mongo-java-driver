@@ -18,39 +18,25 @@ package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.client.unified.UnifiedSyncTest;
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
-@RunWith(Parameterized.class)
 public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
 
-    public ClientSideOperationTimeoutTest(final String fileDescription, final String testDescription,
-            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-            final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
-        skipOperationTimeoutTests(fileDescription, testDescription);
-    }
-
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/client-side-operation-timeout");
     }
 
-    @Test
     @Override
-    public void shouldPassAllOutcomes() {
-        super.shouldPassAllOutcomes();
+    protected void skips(final String fileDescription, final String testDescription) {
+        skipOperationTimeoutTests(fileDescription, testDescription);
     }
 
     public static void skipOperationTimeoutTests(final String fileDescription, final String testDescription) {
@@ -70,16 +56,16 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
             assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - success"));
             assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - failure"));
         }
-        assumeFalse("No maxTimeMS parameter for createIndex() method",
-                testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"));
-        assumeFalse("No run cursor command", fileDescription.startsWith("runCursorCommand"));
-        assumeFalse("No special handling of runCommand", testDescription.contains("runCommand on database"));
-        assumeFalse("No count command helper", testDescription.endsWith("count on collection"));
-        assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS can be overridden for an operation"));
-        assumeFalse("No operation session based overrides",
-                testDescription.equals("timeoutMS can be overridden for commitTransaction")
-                        || testDescription.equals("timeoutMS applied to abortTransaction"));
-        assumeFalse("No operation based overrides", fileDescription.equals("timeoutMS behaves correctly when closing cursors")
-                && testDescription.equals("timeoutMS can be overridden for close"));
+        assumeFalse(testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"),
+                "No maxTimeMS parameter for createIndex() method");
+        assumeFalse(fileDescription.startsWith("runCursorCommand"), "No run cursor command");
+        assumeFalse(testDescription.contains("runCommand on database"), "No special handling of runCommand");
+        assumeFalse(testDescription.endsWith("count on collection"), "No count command helper");
+        assumeFalse(fileDescription.equals("timeoutMS can be overridden for an operation"), "No operation based overrides");
+        assumeFalse(testDescription.equals("timeoutMS can be overridden for commitTransaction")
+                        || testDescription.equals("timeoutMS applied to abortTransaction"),
+                "No operation session based overrides");
+        assumeFalse(fileDescription.equals("timeoutMS behaves correctly when closing cursors")
+                && testDescription.equals("timeoutMS can be overridden for close"), "No operation based overrides");
     }
 }

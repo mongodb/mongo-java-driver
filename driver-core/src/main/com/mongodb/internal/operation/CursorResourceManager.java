@@ -208,7 +208,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     void close() {
         boolean doClose = withLock(lock, () -> {
             State localState = state;
-            if (localState == State.OPERATION_IN_PROGRESS) {
+            if (localState.inProgress()) {
                 state = State.CLOSE_PENDING;
             } else if (localState != State.CLOSED) {
                 state = State.CLOSED;
