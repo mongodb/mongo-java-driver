@@ -18,17 +18,19 @@ package org.bson.codecs.kotlin
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
-import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
+import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.findAnnotations
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaType
+import kotlin.reflect.jvm.jvmErasure
 import org.bson.BsonReader
 import org.bson.BsonType
 import org.bson.BsonWriter
@@ -140,7 +142,9 @@ internal data class DataClassCodec<T : Any>(
                 val primaryConstructor =
                     kClass.primaryConstructor ?: throw CodecConfigurationException("No primary constructor for $kClass")
                 val typeMap =
-                    types.mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType() to k }.toMap()
+                    types
+                        .mapIndexed { i, k -> primaryConstructor.typeParameters[i].createType().classifier!! to k }
+                        .toMap()
 
                 val propertyModels =
                     primaryConstructor.parameters.map { kParameter ->
@@ -191,7 +195,7 @@ internal data class DataClassCodec<T : Any>(
         @Suppress("UNCHECKED_CAST")
         private fun getCodec(
             kParameter: KParameter,
-            typeMap: Map<KType, Type>,
+            typeMap: Map<KClassifier, Type>,
             codecRegistry: CodecRegistry
         ): Codec<Any> {
             return when (kParameter.type.classifier) {
@@ -199,10 +203,12 @@ internal data class DataClassCodec<T : Any>(
                     codecRegistry.getCodec(
                         kParameter,
                         (kParameter.type.classifier as KClass<Any>).javaObjectType,
-                        kParameter.type.arguments.mapNotNull { typeMap[it.type] ?: it.type?.javaType }.toList())
+                        kParameter.type.arguments
+                            .mapNotNull { typeMap[it.type?.classifier] ?: computeJavaType(it) }
+                            .toList())
                 }
                 is KTypeParameter -> {
-                    when (val pType = typeMap[kParameter.type] ?: kParameter.type.javaType) {
+                    when (val pType = typeMap[kParameter.type.classifier] ?: kParameter.type.javaType) {
                         is Class<*> ->
                             codecRegistry.getCodec(kParameter, (pType as Class<Any>).kotlin.javaObjectType, emptyList())
                         is ParameterizedType ->
@@ -217,6 +223,13 @@ internal data class DataClassCodec<T : Any>(
             }
                 ?: throw CodecConfigurationException(
                     "Could not find codec for ${kParameter.name} with type ${kParameter.type}")
+        }
+
+        private fun computeJavaType(kTypeProjection: KTypeProjection): Type? {
+            val javaType: Type = kTypeProjection.type?.javaType!!
+            return if (javaType == Any::class.java) {
+                kTypeProjection.type?.jvmErasure?.javaObjectType
+            } else javaType
         }
 
         @Suppress("UNCHECKED_CAST")
