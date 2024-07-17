@@ -178,7 +178,8 @@ data class DataClassWithNestedParameterizedDataClass(
 
 data class DataClassWithNestedParameterized<A, B, C : Number>(
     val parameterizedDataClass: DataClassParameterized<C, A>,
-    val other: B
+    val other: B,
+    val optionalOther: B?
 )
 
 data class DataClassWithPair(val pair: Pair<String, Int>)
