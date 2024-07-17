@@ -108,7 +108,7 @@ public final class RewrapManyDataKeyOptions {
      *   defaults to the required endpoint from the KMS providers map.</li>
      * </ul>
      * <p>
-     * If the kmsProvider is type "local" the masterKey is not applicable.
+     * If the kmsProvider type is "local" the masterKey is not applicable.
      * </p>
      * @return the master key document
      */

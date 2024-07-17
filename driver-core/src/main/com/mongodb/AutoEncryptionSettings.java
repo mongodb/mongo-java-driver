@@ -347,7 +347,7 @@ public final class AutoEncryptionSettings {
      *  <li>use the {@link Supplier} configured in {@link #getKmsProviderPropertySuppliers()} to obtain a non-empty map</li>
      *  <li>attempt to obtain the properties from the environment</li>
      * </ul>
-     * However, KMS providers containing a name (e.g., "aws:myname") does not support dynamically obtaining KMS properties from the {@link Supplier}
+     * However, KMS providers containing a name (e.g., "aws:myname") do not support dynamically obtaining KMS properties from the {@link Supplier}
      * or environment.
      * @return map of KMS provider properties
      * @see #getKmsProviderPropertySuppliers()
