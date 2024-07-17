@@ -366,6 +366,10 @@ public final class ClusterFixture {
         return getBinding(getCluster(), ReadPreference.primary(), createNewOperationContext(timeoutSettings));
     }
 
+    public static ReadWriteBinding getBinding(final OperationContext operationContext) {
+       return getBinding(getCluster(), ReadPreference.primary(), operationContext);
+    }
+
     public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
         return getBinding(getCluster(), readPreference, OPERATION_CONTEXT);
     }

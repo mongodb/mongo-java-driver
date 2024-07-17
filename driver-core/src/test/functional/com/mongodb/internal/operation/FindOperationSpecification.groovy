@@ -25,10 +25,12 @@ import com.mongodb.ReadPreference
 import com.mongodb.ReadPreferenceHedgeOptions
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -53,13 +55,16 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.executeSync
+import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ClusterFixture.serverVersionLessThan
+import static com.mongodb.CursorType.NonTailable
 import static com.mongodb.CursorType.Tailable
+import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION
@@ -643,22 +648,26 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     }
 
     //  sanity check that the server accepts tailable and await data flags
-    // TODO (CSOT) JAVA-4058
-    /*
     def 'should pass tailable and await data flags through'() {
         given:
-        def (cursorType, maxAwaitTimeMS, maxTimeMSForCursor) = cursorDetails
+        def (cursorType, long maxAwaitTimeMS, long maxTimeMSForCursor) = cursorDetails
+        def timeoutSettings = ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT.withMaxAwaitTimeMS(maxAwaitTimeMS)
+        def timeoutContext = Spy(TimeoutContext, constructorArgs: [timeoutSettings])
+        def operationContext = OPERATION_CONTEXT.withTimeoutContext(timeoutContext)
+
         collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
-        def operation = new FindOperation<BsonDocument>(TIMEOUT_SETTINGS_WITH_MAX_TIME, namespace, new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
                 .cursorType(cursorType)
 
         when:
-        def cursor = execute(operation, async)
+        if (async) {
+            execute(operation, getBinding(operationContext))
+        } else {
+            execute(operation, getAsyncBinding(operationContext))
+        }
 
         then:
-        println cursor
-        // TODO (CSOT) JAVA-4058
-        cursor.maxTimeMS == maxTimeMSForCursor
+        timeoutContext.setMaxTimeOverride(maxTimeMSForCursor)
 
         where:
         [async, cursorDetails] << [
@@ -666,7 +675,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 [[NonTailable, 100, 0], [Tailable, 100, 0], [TailableAwait, 100, 100]]
         ].combinations()
     }
-    */
 
     // sanity check that the server accepts the miscallaneous flags
     def 'should pass miscallaneous flags through'() {

@@ -690,7 +690,6 @@ public class InternalStreamConnection implements InternalConnection {
             stream.writeAsync(byteBuffers, operationContext, c.asHandler());
         }, Exception.class, (e, c) -> {
             close();
-            //TODO-m propably should be solved after merge
             throwTranslatedWriteException(e, operationContext);
         }).finish(errorHandlingCallback(callback, LOGGER));
     }
@@ -771,10 +770,8 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private void throwTranslatedWriteException(final Throwable e, final OperationContext operationContext) {
-        if (e instanceof MongoSocketWriteTimeoutException) {
-            operationContext.getTimeoutContext().onExpired(() -> {
-                throw createMongoTimeoutException(e);
-            });
+        if (e instanceof MongoSocketWriteTimeoutException && operationContext.getTimeoutContext().hasTimeoutMS()) {
+            throw createMongoTimeoutException(e);
         }
 
         if (e instanceof MongoException) {

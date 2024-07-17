@@ -173,7 +173,6 @@ abstract class BaseCluster implements Cluster {
             final SingleResultCallback<ServerTuple> callback) {
         isTrue("open", !isClosed());
 
-        //TODO (CSOT) is it safe to put this before  phase.get()? P.S it was after in pre-CSOT state.
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerSelectionRequest request = new ServerSelectionRequest(
                 serverSelector, operationContext, computedServerSelectionTimeout, callback);

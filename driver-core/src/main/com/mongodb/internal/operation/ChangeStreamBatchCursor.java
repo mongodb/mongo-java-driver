@@ -133,7 +133,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     @Override
     public void close() {
         if (!closed.getAndSet(true)) {
-            resetTimeout();
+            timeoutContext.resetTimeoutIfPresent();
             wrapped.close();
             binding.release();
         }
@@ -211,7 +211,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     }
 
     <R> R resumeableOperation(final Function<AggregateResponseBatchCursor<RawBsonDocument>, R> function) {
-        resetTimeout();
+        timeoutContext.resetTimeoutIfPresent();
         try {
             R result = execute(function);
             lastOperationTimedOut = false;
@@ -252,12 +252,6 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     private boolean hasPreviousNextTimedOut() {
         return lastOperationTimedOut && !closed.get();
-    }
-
-    private void resetTimeout() {
-        if (timeoutContext.hasTimeoutMS()) {
-            timeoutContext.resetTimeout();
-        }
     }
 
     private static boolean isTimeoutException(final Throwable exception) {

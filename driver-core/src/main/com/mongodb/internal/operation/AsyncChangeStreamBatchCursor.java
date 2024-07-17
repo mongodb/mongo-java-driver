@@ -83,7 +83,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     @Override
     public void close() {
-        resetTimeout();
+        timeoutContext.resetTimeoutIfPresent();
         if (isClosed.compareAndSet(false, true)) {
             try {
                 nullifyAndCloseWrapped();
@@ -181,7 +181,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     }
 
     private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<T>> callback, final boolean tryNext) {
-        resetTimeout();
+        timeoutContext.resetTimeoutIfPresent();
         SingleResultCallback<List<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (isClosed()) {
             errHandlingCallback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
@@ -241,11 +241,5 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                 });
             }
         });
-    }
-
-    private void resetTimeout() {
-        if (timeoutContext.hasTimeoutMS()) {
-            timeoutContext.resetTimeout();
-        }
     }
 }

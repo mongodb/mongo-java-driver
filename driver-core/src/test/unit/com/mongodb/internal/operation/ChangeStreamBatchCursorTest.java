@@ -81,7 +81,7 @@ final class ChangeStreamBatchCursorTest {
 
         //then
         assertEquals(RESULT_FROM_NEW_CURSOR, next);
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verify(commandBatchCursor, times(1)).next();
         verify(commandBatchCursor, atLeastOnce()).getPostBatchResumeToken();
         verifyNoMoreInteractions(commandBatchCursor);
@@ -98,7 +98,7 @@ final class ChangeStreamBatchCursorTest {
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
 
         //then
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verify(commandBatchCursor, times(1)).next();
         verify(commandBatchCursor, atLeastOnce()).getPostBatchResumeToken();
         verifyNoMoreInteractions(commandBatchCursor);
@@ -115,7 +115,7 @@ final class ChangeStreamBatchCursorTest {
 
         //then
         assertEquals(RESULT_FROM_NEW_CURSOR, next);
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verify(commandBatchCursor, times(1)).next();
         verify(commandBatchCursor, atLeastOnce()).getPostBatchResumeToken();
         verifyResumeAttemptCalled();
@@ -136,7 +136,7 @@ final class ChangeStreamBatchCursorTest {
         assertThrows(MongoOperationTimeoutException.class, cursor::next);
 
         //then
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verify(commandBatchCursor, times(1)).next();
         verify(commandBatchCursor, atLeastOnce()).getPostBatchResumeToken();
         verifyNoMoreInteractions(commandBatchCursor);
@@ -148,7 +148,7 @@ final class ChangeStreamBatchCursorTest {
 
         //then
         assertEquals(Collections.emptyList(), next);
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verify(commandBatchCursor, times(1)).close();
         verifyNoMoreInteractions(commandBatchCursor);
         verify(changeStreamOperation).setChangeStreamOptionsForResume(resumeToken, maxWireVersion);
@@ -165,7 +165,7 @@ final class ChangeStreamBatchCursorTest {
         //then
         assertEquals(Collections.emptyList(), next2);
         verifyNoInteractions(commandBatchCursor);
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verify(newCommandBatchCursor, times(1)).next();
         verify(newCommandBatchCursor, atLeastOnce()).getPostBatchResumeToken();
         verifyNoMoreInteractions(newCommandBatchCursor);
@@ -189,7 +189,7 @@ final class ChangeStreamBatchCursorTest {
         assertThrows(MongoNotPrimaryException.class, cursor::next);
 
         //then
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verifyResumeAttemptCalled();
         verifyNoMoreInteractions(changeStreamOperation);
         verifyNoInteractions(newCommandBatchCursor);
@@ -219,7 +219,7 @@ final class ChangeStreamBatchCursorTest {
 
         //then
         assertEquals(RESULT_FROM_NEW_CURSOR, next);
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
 
         verifyResumeAttemptCalled();
         verify(changeStreamOperation, times(1)).getDecoder();
@@ -246,7 +246,7 @@ final class ChangeStreamBatchCursorTest {
         assertThrows(MongoNotPrimaryException.class, cursor::next);
 
         //then
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verifyResumeAttemptCalled();
         verifyNoMoreInteractions(changeStreamOperation);
         verifyNoInteractions(newCommandBatchCursor);
@@ -259,7 +259,7 @@ final class ChangeStreamBatchCursorTest {
 
         //then
         assertEquals(MESSAGE_IF_CLOSED_AS_CURSOR, mongoException.getMessage());
-        verify(timeoutContext, times(1)).resetTimeout();
+        verify(timeoutContext, times(1)).resetTimeoutIfPresent();
         verifyNoResumeAttemptCalled();
     }
 
@@ -293,7 +293,7 @@ final class ChangeStreamBatchCursorTest {
 
         timeoutContext = mock(TimeoutContext.class);
         when(timeoutContext.hasTimeoutMS()).thenReturn(true);
-        doNothing().when(timeoutContext).resetTimeout();
+        doNothing().when(timeoutContext).resetTimeoutIfPresent();
 
         operationContext = mock(OperationContext.class);
         when(operationContext.getTimeoutContext()).thenReturn(timeoutContext);
