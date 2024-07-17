@@ -28,11 +28,12 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mockito;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -52,7 +53,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTest {
 
@@ -196,17 +196,32 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
         }
     }
 
+
+    /**
+     * This is a custom prose tests to enhance coverage.
+     * <p>
+     * This test specifically verifies the following part of the specification:
+     * <ul>
+     *     <li>KMS providers that include a name (e.g., "aws:myname") do not support automatic credentials.</li>
+     *     <li>Configuring a named KMS provider for automatic credentials will result in a runtime error from libmongocrypt.</li>
+     * </ul>
+     * <p>
+     * Detailed specification reference:
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.md#automatic-credentials">Client-Side Encryption Spec</a>
+     */
     @Test
-    public void shouldThrowMongoCryptIfNamedKmsProviderHasEmptyParametersInEncryptionSettings() {
+    @DisplayName("Throw MongoCryptException when configured for automatic/on-demand credentials in ClientEncryptionSettings")
+    void shouldThrowMongoCryptExceptionWhenNamedKMSProviderUsesEmptyOnDemandCredentialsWithEncryptionSettings() {
         assumeTrue(serverVersionAtLeast(4, 2));
-        assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
         assumeTrue(isClientSideEncryptionTest());
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws:name", new HashMap<>());
         }};
 
-        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = Mockito.mock(Map.class);
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
+        kmsProviderPropertySuppliers.put("aws:name", () -> Assertions.fail("Supplier should not be called"));
+
         ClientEncryptionSettings settings = ClientEncryptionSettings.builder()
                 .keyVaultNamespace("test.datakeys")
                 .kmsProviders(kmsProviders)
@@ -219,20 +234,33 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
             }
         });
         assertTrue(e.getMessage().contains("On-demand credentials are not supported for named KMS providers."));
-        verifyNoInteractions(kmsProviderPropertySuppliers);
     }
 
+    /**
+     * This is a custom prose tests to enhance coverage.
+     * <p>
+     * This test specifically verifies the following part of the specification:
+     * <ul>
+     *     <li>KMS providers that include a name (e.g., "aws:myname") do not support automatic credentials.</li>
+     *     <li>Configuring a named KMS provider for automatic credentials will result in a runtime error from libmongocrypt.</li>
+     * </ul>
+     * <p>
+     * Detailed specification reference:
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.md#automatic-credentials">Client-Side Encryption Spec</a>
+     */
     @Test
-    public void shouldThrowMongoCryptIfNamedKmsProviderHasEmptyParametersInAutoSettings() {
+    @DisplayName("Throw MongoCryptException when configured for automatic/on-demand credentials in AutoEncryptionSettings")
+    public void shouldThrowMongoCryptExceptionWhenNamedKMSProviderUsesEmptyOnDemandCredentialsWithAutoEncryptionSettings() {
         assumeTrue(serverVersionAtLeast(4, 2));
-        assumeFalse(System.getenv().containsKey("AWS_ACCESS_KEY_ID"));
         assumeTrue(isClientSideEncryptionTest());
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
             put("aws:name", new HashMap<>());
         }};
 
-        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = Mockito.mock(Map.class);
+        Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
+        kmsProviderPropertySuppliers.put("aws:name", () -> Assertions.fail("Supplier should not be called"));
+
         AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
                 .kmsProviders(kmsProviders)
                 .keyVaultNamespace("test.datakeys")
@@ -245,7 +273,6 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
                  }
         });
         assertTrue(e.getMessage().contains("On-demand credentials are not supported for named KMS providers."));
-        verifyNoInteractions(kmsProviderPropertySuppliers);
     }
 
 

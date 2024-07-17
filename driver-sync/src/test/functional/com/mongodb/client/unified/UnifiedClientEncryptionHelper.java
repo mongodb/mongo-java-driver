@@ -23,6 +23,7 @@ import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -98,11 +99,21 @@ public final class UnifiedClientEncryptionHelper {
                     break;
                 case "local":
                 case "local:name1":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "key", UnifiedClientEncryptionHelper::localKmsProviderKey);
+                    setKmsProviderProperty(
+                            kmsProviderMap,
+                            kmsProviderOptions,
+                            "key",
+                            UnifiedClientEncryptionHelper::localKmsProviderKey,
+                            null);
                     break;
                 case "local:name2":
                     String key = kmsProviderOptions.getString("key").getValue();
-                    setLocalKmsProviderPropertyOrRejectPlaceholder(kmsProviderMap, kmsProviderOptions, "key", () -> decodeLocalKmsProviderKey(key));
+                    setKmsProviderProperty(
+                            kmsProviderMap,
+                            kmsProviderOptions,
+                            "key",
+                            null,
+                            () -> decodeLocalKmsProviderKey(key));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProviderKey);
@@ -143,16 +154,24 @@ public final class UnifiedClientEncryptionHelper {
         }
     }
 
-    private static void setLocalKmsProviderPropertyOrRejectPlaceholder(final Map<String, Object> kmsProviderMap,
-                                               final BsonDocument kmsProviderOptions,
-                                               final String key,
-                                               final Supplier<Object> propertySupplier) {
+    private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
+                                               final BsonDocument kmsProviderOptions, final String key,
+                                               @Nullable final Supplier<Object> placeholderPropertySupplier,
+                                               @Nullable final Supplier<Object> explicitPropertySupplier) {
         if (kmsProviderOptions.containsKey(key)) {
-            if (kmsProviderOptions.get(key).equals(PLACEHOLDER)) {
-                throw new UnsupportedOperationException("Placeholder is not supported for: " + key + " :: " + kmsProviderOptions.toJson());
-            } else {
-                kmsProviderMap.put(key, propertySupplier.get());
+            boolean isPlaceholderValue = kmsProviderOptions.get(key).equals(PLACEHOLDER);
+            if (isPlaceholderValue) {
+                if (placeholderPropertySupplier == null) {
+                    throw new UnsupportedOperationException("Placeholder is not supported for: " + key + " :: " + kmsProviderOptions.toJson());
+                }
+                kmsProviderMap.put(key, placeholderPropertySupplier.get());
+                return;
             }
+
+            if (explicitPropertySupplier == null) {
+                throw new UnsupportedOperationException("Non-placeholder value is not supported for: " + key + " :: " + kmsProviderOptions.toJson());
+            }
+            kmsProviderMap.put(key, explicitPropertySupplier.get());
         }
     }
 
@@ -242,7 +261,7 @@ public final class UnifiedClientEncryptionHelper {
 
     OperationResult executeEncrypt(final BsonDocument operation) {
         ClientEncryption clientEncryption = entities.getClientEncryption(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        BsonDocument arguments = operation.getDocument("arguments");
         BsonDocument options = arguments.getDocument("opts", new BsonDocument());
 
         BsonString value = arguments.getString("value");
@@ -266,7 +285,7 @@ public final class UnifiedClientEncryptionHelper {
 
     OperationResult executeDecrypt(final BsonDocument operation) {
         ClientEncryption clientEncryption = entities.getClientEncryption(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        BsonDocument arguments = operation.getDocument("arguments");
         BsonBinary value = arguments.getBinary("value");
 
         return resultOf(() ->  clientEncryption.decrypt(value));

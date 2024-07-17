@@ -171,6 +171,7 @@ public final class ClientEncryptionSettings {
      *
      * <p> Multiple KMS providers can be specified within this map. Each KMS provider is identified by a unique key.
      * Keys are formatted as either {@code "KMS provider type"} or {@code "KMS provider type:KMS provider name"} (e.g., "aws" or "aws:myname").
+     * The KMS provider name must only contain alphanumeric characters (a-z, A-Z, 0-9), underscores (_), and must not be empty.
      * <p>
      * Supported KMS provider types include "aws", "azure", "gcp", and "local". The provider name is optional and allows
      * for the configuration of multiple providers of the same type under different names (e.g., "aws:name1" and
