@@ -262,7 +262,7 @@ public final class UnifiedClientEncryptionHelper {
     OperationResult executeEncrypt(final BsonDocument operation) {
         ClientEncryption clientEncryption = entities.getClientEncryption(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments");
-        BsonDocument options = arguments.getDocument("opts", new BsonDocument());
+        BsonDocument options = arguments.getDocument("opts");
 
         BsonString value = arguments.getString("value");
         String algorithm =  options.remove("algorithm")
