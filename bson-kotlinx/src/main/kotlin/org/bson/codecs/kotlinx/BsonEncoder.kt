@@ -156,6 +156,8 @@ internal class DefaultBsonEncoder(
             if (value != null || configuration.explicitNulls) {
                 encodeName(it)
                 super.encodeNullableSerializableValue(serializer, value)
+            } else {
+                deferredElementName = null
             }
         }
             ?: super.encodeNullableSerializableValue(serializer, value)
