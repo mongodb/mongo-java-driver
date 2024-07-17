@@ -34,14 +34,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientURISpecification extends Specification {
 
-    def 'should throw Exception if URI does not have a trailing slash'() {
-        when:
-        new MongoClientURI('mongodb://localhost?wtimeoutMS=5')
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
     def 'should not throw an Exception if URI contains an unknown option'() {
         when:
         new MongoClientURI('mongodb://localhost/?unknownOption=5')

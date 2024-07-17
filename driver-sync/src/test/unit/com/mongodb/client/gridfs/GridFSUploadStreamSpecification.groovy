@@ -20,10 +20,11 @@ import com.mongodb.MongoGridFSException
 import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.gridfs.model.GridFSFile
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
-import org.bson.types.Binary
 import spock.lang.Specification
 
 class GridFSUploadStreamSpecification extends Specification {
@@ -110,18 +111,18 @@ class GridFSUploadStreamSpecification extends Specification {
         then:
         if (clientSession != null) {
             1 * chunksCollection.insertOne(clientSession) {
-                verifyAll(it, Document) {
+                verifyAll(it, BsonDocument) {
                     it.get('files_id') == filesId
-                    it.getInteger('n') == 0
-                    it.get('data', Binary).getData() == content
+                    it.getInt32('n') == new BsonInt32(0)
+                    it.getBinary('data').getData() == content
                 }
             }
         } else {
             1 * chunksCollection.insertOne {
-                verifyAll(it, Document) {
+                verifyAll(it, BsonDocument) {
                     it.get('files_id') == filesId
-                    it.getInteger('n') == 0
-                    it.get('data', Binary).getData() == content
+                    it.getInt32('n') == new BsonInt32(0)
+                    it.getBinary('data').getData() == content
                 }
             }
         }

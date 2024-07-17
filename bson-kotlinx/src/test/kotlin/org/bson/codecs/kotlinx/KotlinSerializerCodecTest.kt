@@ -15,6 +15,7 @@
  */
 package org.bson.codecs.kotlinx
 
+import java.util.stream.Stream
 import kotlin.test.assertEquals
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
@@ -23,16 +24,22 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.plus
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonDouble
+import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonInvalidOperationException
 import org.bson.BsonMaxKey
 import org.bson.BsonMinKey
+import org.bson.BsonString
 import org.bson.BsonUndefined
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.kotlinx.samples.Box
 import org.bson.codecs.kotlinx.samples.DataClassBsonValues
 import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
 import org.bson.codecs.kotlinx.samples.DataClassContainsValueClass
@@ -76,6 +83,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterizedDataClass
+import org.bson.codecs.kotlinx.samples.DataClassWithNullableGeneric
 import org.bson.codecs.kotlinx.samples.DataClassWithNulls
 import org.bson.codecs.kotlinx.samples.DataClassWithPair
 import org.bson.codecs.kotlinx.samples.DataClassWithParameterizedDataClass
@@ -84,20 +92,24 @@ import org.bson.codecs.kotlinx.samples.DataClassWithSequence
 import org.bson.codecs.kotlinx.samples.DataClassWithSimpleValues
 import org.bson.codecs.kotlinx.samples.DataClassWithTriple
 import org.bson.codecs.kotlinx.samples.Key
+import org.bson.codecs.kotlinx.samples.SealedInterface
 import org.bson.codecs.kotlinx.samples.ValueClass
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 @OptIn(ExperimentalSerializationApi::class)
+@Suppress("LargeClass")
 class KotlinSerializerCodecTest {
-    private val numberLong = "\$numberLong"
+    private val oid = "\$oid"
     private val emptyDocument = "{}"
     private val altConfiguration =
         BsonConfiguration(encodeDefaults = false, classDiscriminator = "_t", explicitNulls = true)
 
     private val allBsonTypesJson =
         """{
-    | "id": {"${'$'}oid": "111111111111111111111111"},
+    | "id": {"$oid": "111111111111111111111111"},
     | "arrayEmpty": [],
     | "arraySimple": [{"${'$'}numberInt": "1"}, {"${'$'}numberInt": "2"}, {"${'$'}numberInt": "3"}],
     | "arrayComplex": [{"a": {"${'$'}numberInt": "1"}}, {"a": {"${'$'}numberInt": "2"}}],
@@ -129,15 +141,59 @@ class KotlinSerializerCodecTest {
 
     private val allBsonTypesDocument = BsonDocument.parse(allBsonTypesJson)
 
-    @Test
-    fun testDataClassWithSimpleValues() {
-        val expected =
-            """{"char": "c", "byte": 0, "short": 1, "int": 22, "long": {"$numberLong": "42"}, "float": 4.0,
-                | "double": 4.2, "boolean": true, "string": "String"}"""
-                .trimMargin()
-        val dataClass = DataClassWithSimpleValues('c', 0, 1, 22, 42L, 4.0f, 4.2, true, "String")
+    companion object {
+        @JvmStatic
+        fun testTypesCastingDataClassWithSimpleValues(): Stream<BsonDocument> {
+            return Stream.of(
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonInt32(1))
+                    .append("short", BsonInt32(2))
+                    .append("int", BsonInt32(10))
+                    .append("long", BsonInt32(10))
+                    .append("float", BsonInt32(2))
+                    .append("double", BsonInt32(3))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")),
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonDouble(1.0))
+                    .append("short", BsonDouble(2.0))
+                    .append("int", BsonDouble(9.9999999999999992))
+                    .append("long", BsonDouble(9.9999999999999992))
+                    .append("float", BsonDouble(2.0))
+                    .append("double", BsonDouble(3.0))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")),
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonDouble(1.0))
+                    .append("short", BsonDouble(2.0))
+                    .append("int", BsonDouble(10.0))
+                    .append("long", BsonDouble(10.0))
+                    .append("float", BsonDouble(2.0))
+                    .append("double", BsonDouble(3.0))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")),
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonInt64(1))
+                    .append("short", BsonInt64(2))
+                    .append("int", BsonInt64(10))
+                    .append("long", BsonInt64(10))
+                    .append("float", BsonInt64(2))
+                    .append("double", BsonInt64(3))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")))
+        }
+    }
 
-        assertRoundTrips(expected, dataClass)
+    @ParameterizedTest
+    @MethodSource("testTypesCastingDataClassWithSimpleValues")
+    fun testTypesCastingDataClassWithSimpleValues(data: BsonDocument) {
+        val expectedDataClass = DataClassWithSimpleValues('c', 1, 2, 10, 10L, 2.0f, 3.0, true, "String")
+
+        assertDecodesTo(data, expectedDataClass)
     }
 
     @Test
@@ -197,6 +253,27 @@ class KotlinSerializerCodecTest {
         val dataClass = DataClassWithNulls(null, null, null)
         assertRoundTrips(emptyDocument, dataClass)
         assertRoundTrips(expectedNulls, dataClass, altConfiguration)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNotNull() {
+        val expected =
+            """{
+            | "box": {"boxed": "String"}
+            |}"""
+                .trimMargin()
+
+        val dataClass = DataClassWithNullableGeneric(Box("String"))
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNull() {
+        val expectedDefault = """{"box": {}}"""
+        val dataClass = DataClassWithNullableGeneric(Box(null))
+        assertRoundTrips(expectedDefault, dataClass)
+        val expectedNull = """{"box": {"boxed": null}}"""
+        assertRoundTrips(expectedNull, dataClass, altConfiguration)
     }
 
     @Test
@@ -668,17 +745,49 @@ class KotlinSerializerCodecTest {
             codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
         }
 
-        assertThrows<MissingFieldException>("Invalid complex types") {
-            val data = BsonDocument.parse("""{"_id": "myId", "embedded": 123}""")
-            val codec = KotlinSerializerCodec.create<DataClassWithEmbedded>()
-            codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
-        }
-
         assertThrows<IllegalArgumentException>("Failing init") {
             val data = BsonDocument.parse("""{"id": "myId"}""")
             val codec = KotlinSerializerCodec.create<DataClassWithFailingInit>()
             codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
         }
+
+        var exception =
+            assertThrows<SerializationException>("Invalid complex types - document") {
+                val data = BsonDocument.parse("""{"_id": "myId", "embedded": 123}""")
+                val codec = KotlinSerializerCodec.create<DataClassWithEmbedded>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals(
+            "Invalid data for `org.bson.codecs.kotlinx.samples.DataClassEmbedded` " +
+                "expected a bson document found: INT32",
+            exception.message)
+
+        exception =
+            assertThrows<SerializationException>("Invalid complex types - list") {
+                val data = BsonDocument.parse("""{"_id": "myId", "nested": 123}""")
+                val codec = KotlinSerializerCodec.create<DataClassListOfDataClasses>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals("Invalid data for `LIST` expected a bson array found: INT32", exception.message)
+
+        exception =
+            assertThrows<SerializationException>("Invalid complex types - map") {
+                val data = BsonDocument.parse("""{"_id": "myId", "nested": 123}""")
+                val codec = KotlinSerializerCodec.create<DataClassMapOfDataClasses>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals("Invalid data for `MAP` expected a bson document found: INT32", exception.message)
+
+        exception =
+            assertThrows<SerializationException>("Missing discriminator") {
+                val data = BsonDocument.parse("""{"_id": {"$oid": "111111111111111111111111"}, "name": "string"}""")
+                val codec = KotlinSerializerCodec.create<SealedInterface>()
+                codec?.decode(BsonDocumentReader(data), DecoderContext.builder().build())
+            }
+        assertEquals(
+            "Missing required discriminator field `_t` for polymorphic class: " +
+                "`org.bson.codecs.kotlinx.samples.SealedInterface`.",
+            exception.message)
     }
 
     @Test

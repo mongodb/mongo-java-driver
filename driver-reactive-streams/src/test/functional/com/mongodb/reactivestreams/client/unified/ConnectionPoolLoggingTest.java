@@ -16,33 +16,23 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-public class ConnectionPoolLoggingTest extends UnifiedReactiveStreamsTest {
-
-
-    public ConnectionPoolLoggingTest(@SuppressWarnings("unused") final String fileDescription,
-                                     @SuppressWarnings("unused") final String testDescription,
-                                     final String schemaVersion,
-                                     @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
-                                     final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
+final class ConnectionPoolLoggingTest extends UnifiedReactiveStreamsTest {
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
         // The implementation of the functionality related to clearing the connection pool before closing the connection
         // will be carried out once the specification is finalized and ready.
         assumeFalse(testDescription.equals("Connection checkout fails due to error establishing connection"));
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/connection-monitoring-and-pooling/logging");
     }
 }

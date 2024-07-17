@@ -20,8 +20,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 /**
@@ -41,31 +41,34 @@ import java.util.function.Supplier;
 public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupplier<R> {
     private final RetryState state;
     private final BiPredicate<RetryState, Throwable> retryPredicate;
-    private final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer;
+    private final BinaryOperator<Throwable> onAttemptFailureOperator;
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
      * @param state The {@link RetryState} to be deemed as initial for the purpose of the new {@link RetryingAsyncCallbackSupplier}.
-     * @param failedResultTransformer A function that chooses which failed result of the {@code asyncFunction} to preserve as a prospective
-     * failed result of this {@link RetryingAsyncCallbackSupplier} and may also transform or mutate the exceptions.
-     * The choice is between
+     * @param onAttemptFailureOperator The action that is called once per failed attempt before (in the happens-before order) the
+     * {@code retryPredicate}, regardless of whether the {@code retryPredicate} is called.
+     * This action is allowed to have side effects.
+     * <p>
+     * It also has to choose which exception to preserve as a prospective failed result of this {@link RetryingAsyncCallbackSupplier}.
+     * The {@code onAttemptFailureOperator} may mutate its arguments, choose from the arguments, or return a different exception,
+     * but it must return a {@code @}{@link NonNull} value.
+     * The choice is between</p>
      * <ul>
      *     <li>the previously chosen failed result or {@code null} if none has been chosen
-     *     (the first argument of the {@code failedResultTransformer})</li>
-     *     <li>and the failed result from the most recent attempt (the second argument of the {@code failedResultTransformer}).</li>
+     *     (the first argument of the {@code onAttemptFailureOperator})</li>
+     *     <li>and the failed result from the most recent attempt (the second argument of the {@code onAttemptFailureOperator}).</li>
      * </ul>
-     * The {@code failedResultTransformer} may either choose from its arguments, or return a different exception, a.k.a. transform,
-     * but it must return a {@code @}{@link NonNull} value.
-     * If it completes abruptly, then the {@code asyncFunction} cannot be retried and the exception thrown by
-     * the {@code failedResultTransformer} is used as a failed result of this {@link RetryingAsyncCallbackSupplier}.
-     * The {@code failedResultTransformer} is called before (in the happens-before order) the {@code retryPredicate}.
-     * The result of the {@code failedResultTransformer} does not affect what exception is passed to the {@code retryPredicate}.
+     * The result of the {@code onAttemptFailureOperator} does not affect the exception passed to the {@code retryPredicate}.
+     * <p>
+     * If {@code onAttemptFailureOperator} completes abruptly, then the {@code asyncFunction} cannot be retried and the exception thrown by
+     * the {@code onAttemptFailureOperator} is used as a failed result of this {@link RetryingAsyncCallbackSupplier}.</p>
      * @param retryPredicate {@code true} iff another attempt needs to be made. If it completes abruptly,
      * then the {@code asyncFunction} cannot be retried and the exception thrown by the {@code retryPredicate}
      * is used as a failed result of this {@link RetryingAsyncCallbackSupplier}. The {@code retryPredicate} is called not more than once
      * per attempt and only if all the following is true:
      * <ul>
-     *     <li>{@code failedResultTransformer} completed normally;</li>
+     *     <li>{@code onAttemptFailureOperator} completed normally;</li>
      *     <li>the most recent attempt is not the {@linkplain RetryState#isLastAttempt() last} one.</li>
      * </ul>
      * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
@@ -75,12 +78,12 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
      */
     public RetryingAsyncCallbackSupplier(
             final RetryState state,
-            final BiFunction<Throwable, Throwable, Throwable> failedResultTransformer,
+            final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final AsyncCallbackSupplier<R> asyncFunction) {
         this.state = state;
         this.retryPredicate = retryPredicate;
-        this.failedResultTransformer = failedResultTransformer;
+        this.onAttemptFailureOperator = onAttemptFailureOperator;
         this.asyncFunction = asyncFunction;
     }
 
@@ -113,7 +116,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
         public void onResult(@Nullable final R result, @Nullable final Throwable t) {
             if (t != null) {
                 try {
-                    state.advanceOrThrow(t, failedResultTransformer, retryPredicate);
+                    state.advanceOrThrow(t, onAttemptFailureOperator, retryPredicate);
                 } catch (Throwable failedResult) {
                     wrapped.onResult(null, failedResult);
                     return;

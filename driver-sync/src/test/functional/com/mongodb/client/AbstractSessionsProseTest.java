@@ -79,8 +79,6 @@ public abstract class AbstractSessionsProseTest {
     // Test 13 from #13-existing-sessions-are-not-checked-into-a-cleared-pool-after-forking
     @Test
     public void shouldCreateServerSessionOnlyAfterConnectionCheckout() throws InterruptedException {
-        assumeTrue(serverVersionAtLeast(3, 6));
-
         Set<BsonDocument> lsidSet = ConcurrentHashMap.newKeySet();
         MongoCollection<Document> collection;
         try (MongoClient client = getMongoClient(

@@ -69,7 +69,19 @@ final class RunOnRequirementsMatcher {
                         }
                         break;
                     case "auth":
-                        if (curRequirement.getValue().asBoolean().getValue() == (clientSettings.getCredential() == null)) {
+                        boolean authRequired = curRequirement.getValue().asBoolean().getValue();
+                        boolean credentialPresent = clientSettings.getCredential() != null;
+
+                        if (authRequired != credentialPresent) {
+                            requirementMet = false;
+                            break requirementLoop;
+                        }
+                        break;
+                    case "authMechanism":
+                        boolean containsMechanism = getServerParameters()
+                                .getArray("authenticationMechanisms")
+                                .contains(curRequirement.getValue());
+                        if (!containsMechanism) {
                             requirementMet = false;
                             break requirementLoop;
                         }

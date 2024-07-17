@@ -16,26 +16,14 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class LoadBalancerTest extends UnifiedSyncTest {
-
-    public LoadBalancerTest(final String fileDescription,
-                            @SuppressWarnings("unused") final String testDescription,
-                            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-                            final BsonArray initialData, final BsonDocument definition) {
-        super(fileDescription, schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+final class LoadBalancerTest extends UnifiedSyncTest {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/load-balancers");
     }
 }

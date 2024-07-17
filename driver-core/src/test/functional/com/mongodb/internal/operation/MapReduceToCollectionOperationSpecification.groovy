@@ -247,7 +247,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
 
         when:
         def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
-        def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
+        def expectedCommand = new BsonDocument('mapReduce', new BsonString(getCollectionName()))
                 .append('map', mapF)
                 .append('reduce', reduceF)
                 .append('out', BsonDocument.parse('{replace: "outCollection"}'))
