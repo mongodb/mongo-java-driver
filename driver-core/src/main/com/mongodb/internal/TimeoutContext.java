@@ -25,7 +25,6 @@ import com.mongodb.session.ClientSession;
 import java.util.Objects;
 import java.util.function.LongConsumer;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
@@ -255,7 +254,6 @@ public class TimeoutContext {
 
     public void resetTimeoutIfPresent() {
         if (hasTimeoutMS()) {
-            assertNotNull(timeout);
             timeout = startTimeout(timeoutSettings.getTimeoutMS());
         }
     }
