@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  * </p>
  *
  * @see MongoClient
- * @since CSOT
+ * @since 5.2
  */
 @Immutable
 public interface MongoCluster {
@@ -50,7 +50,7 @@ public interface MongoCluster {
      * Get the codec registry for the MongoCluster.
      *
      * @return the {@link org.bson.codecs.configuration.CodecRegistry}
-     * @since CSOT
+     * @since 5.2
      */
     CodecRegistry getCodecRegistry();
 
@@ -58,7 +58,7 @@ public interface MongoCluster {
      * Get the read preference for the MongoCluster.
      *
      * @return the {@link com.mongodb.ReadPreference}
-     * @since CSOT
+     * @since 5.2
      */
     ReadPreference getReadPreference();
 
@@ -66,7 +66,7 @@ public interface MongoCluster {
      * Get the write concern for the MongoCluster.
      *
      * @return the {@link com.mongodb.WriteConcern}
-     * @since CSOT
+     * @since 5.2
      */
     WriteConcern getWriteConcern();
 
@@ -74,7 +74,7 @@ public interface MongoCluster {
      * Get the read concern for the MongoCluster.
      *
      * @return the {@link com.mongodb.ReadConcern}
-     * @since CSOT
+     * @since 5.2
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     ReadConcern getReadConcern();
@@ -104,7 +104,7 @@ public interface MongoCluster {
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     @Nullable
@@ -121,7 +121,7 @@ public interface MongoCluster {
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the database
      * @return a new MongoCluster instance with the different codec registry
      * @see org.bson.codecs.configuration.CodecRegistries
-     * @since CSOT
+     * @since 5.2
      */
     MongoCluster withCodecRegistry(CodecRegistry codecRegistry);
 
@@ -130,7 +130,7 @@ public interface MongoCluster {
      *
      * @param readPreference the new {@link ReadPreference} for the database
      * @return a new MongoCluster instance with the different readPreference
-     * @since CSOT
+     * @since 5.2
      */
     MongoCluster withReadPreference(ReadPreference readPreference);
 
@@ -139,7 +139,7 @@ public interface MongoCluster {
      *
      * @param writeConcern the new {@link WriteConcern} for the database
      * @return a new MongoCluster instance with the different writeConcern
-     * @since CSOT
+     * @since 5.2
      */
     MongoCluster withWriteConcern(WriteConcern writeConcern);
 
@@ -148,7 +148,7 @@ public interface MongoCluster {
      *
      * @param readConcern the new {@link ReadConcern} for the database
      * @return a new MongoCluster instance with the different ReadConcern
-     * @since CSOT
+     * @since 5.2
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     MongoCluster withReadConcern(ReadConcern readConcern);
@@ -164,7 +164,7 @@ public interface MongoCluster {
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
      * @return a new MongoCluster instance with the set time limit for the full execution of an operation.
-     * @since CSOT
+     * @since 5.2
      * @see #getTimeout
      */
     @Alpha(Reason.CLIENT)

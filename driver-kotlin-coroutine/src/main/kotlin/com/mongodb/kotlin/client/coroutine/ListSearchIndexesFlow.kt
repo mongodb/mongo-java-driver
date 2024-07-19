@@ -56,7 +56,7 @@ public class ListSearchIndexesFlow<T : Any>(private val wrapped: ListSearchIndex
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesFlow<T> = apply {

@@ -50,7 +50,7 @@ object MongoCluster {
  * If the originator [[MongoClient]] is closed, then any operations will fail.
  *
  * @see MongoClient
- * @since CSOT
+ * @since 5.2
  */
 class MongoCluster(private val wrapped: JMongoCluster) {
 
@@ -156,7 +156,7 @@ class MongoCluster(private val wrapped: JMongoCluster) {
    *
    * @param timeout the timeout, which must be greater than or equal to 0
    * @return a new MongoCluster instance with the set time limit for operations
-   * @since CSOT
+   * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))
   def withTimeout(timeout: Duration): MongoCluster =

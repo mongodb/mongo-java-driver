@@ -281,7 +281,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     FindIterable<TResult> timeoutMode(TimeoutMode timeoutMode);

@@ -94,7 +94,7 @@ public final class ClientSessionOptions {
      * </ul>
      * @param timeUnit the time unit
      * @return the default timeout
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     @Nullable
@@ -223,7 +223,7 @@ public final class ClientSessionOptions {
          * @param defaultTimeout the timeout
          * @param timeUnit the time unit
          * @return this
-         * @since CSOT
+         * @since 5.2
          * @see #getDefaultTimeout
          */
         @Alpha(Reason.CLIENT)

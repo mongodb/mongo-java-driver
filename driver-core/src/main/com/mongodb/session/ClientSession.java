@@ -179,7 +179,7 @@ public interface ClientSession extends Closeable {
      * </ul>
      * <p>For internal use only </p>
      * @return the timeout to use
-     * @since CSOT
+     * @since 5.2
      */
     @Nullable
     TimeoutContext getTimeoutContext();

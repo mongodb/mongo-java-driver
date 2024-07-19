@@ -230,7 +230,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since CSOT
+   * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): MapReduceObservable[TResult] = {

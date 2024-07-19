@@ -32,7 +32,7 @@ public class MongoExecutionTimeoutException extends MongoException {
      * Construct a new instance.
      *
      * @param message the error message
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public MongoExecutionTimeoutException(final String message) {

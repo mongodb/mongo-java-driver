@@ -114,7 +114,7 @@ public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     ListDatabasesIterable<TResult> timeoutMode(TimeoutMode timeoutMode);

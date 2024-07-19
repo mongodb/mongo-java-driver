@@ -576,7 +576,7 @@ public class MongoClientOptions {
      * </ul>
      *
      * @return the timeout in milliseconds
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     @Nullable
@@ -1372,7 +1372,7 @@ public class MongoClientOptions {
          *
          * @param timeoutMS the timeout in milliseconds
          * @return this
-         * @since CSOT
+         * @since 5.2
          * @see #getTimeout
          */
         @Alpha(Reason.CLIENT)

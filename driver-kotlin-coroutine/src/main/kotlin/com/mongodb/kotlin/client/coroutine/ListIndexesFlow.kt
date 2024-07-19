@@ -50,7 +50,7 @@ public class ListIndexesFlow<T : Any>(private val wrapped: ListIndexesPublisher<
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListIndexesFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }

@@ -56,7 +56,7 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): AggregateFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }

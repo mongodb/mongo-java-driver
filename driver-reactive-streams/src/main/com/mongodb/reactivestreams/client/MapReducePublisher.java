@@ -200,7 +200,7 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      *     </ul>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     MapReducePublisher<TResult> timeoutMode(TimeoutMode timeoutMode);

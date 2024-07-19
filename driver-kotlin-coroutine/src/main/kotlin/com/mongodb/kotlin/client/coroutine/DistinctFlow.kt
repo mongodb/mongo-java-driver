@@ -52,7 +52,7 @@ public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : 
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): DistinctFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }

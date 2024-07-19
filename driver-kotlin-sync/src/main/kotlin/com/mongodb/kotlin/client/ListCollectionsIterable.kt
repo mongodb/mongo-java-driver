@@ -45,7 +45,7 @@ public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollecti
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListCollectionsIterable<T> {

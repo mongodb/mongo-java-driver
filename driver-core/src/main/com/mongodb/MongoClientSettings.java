@@ -702,7 +702,7 @@ public final class MongoClientSettings {
          * @param timeout the timeout
          * @param timeUnit the time unit
          * @return this
-         * @since CSOT
+         * @since 5.2
          * @see #getTimeout
          */
         @Alpha(Reason.CLIENT)
@@ -916,7 +916,7 @@ public final class MongoClientSettings {
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     @Nullable

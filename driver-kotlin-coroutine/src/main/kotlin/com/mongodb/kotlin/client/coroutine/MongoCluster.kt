@@ -37,7 +37,7 @@ import org.bson.conversions.Bson
  * then any operations will fail.
  *
  * @see MongoClient
- * @since CSOT
+ * @since 5.2
  */
 public open class MongoCluster protected constructor(private val wrapped: JMongoCluster) {
 
@@ -130,7 +130,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return a new MongoCluster instance with the set time limit for operations
      * @see [MongoDatabase.timeout]
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCluster =

@@ -137,7 +137,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since CSOT
+   * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesObservable[TResult] = {

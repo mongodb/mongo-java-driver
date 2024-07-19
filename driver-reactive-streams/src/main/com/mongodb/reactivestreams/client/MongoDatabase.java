@@ -103,7 +103,7 @@ public interface MongoDatabase {
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     @Nullable
@@ -160,7 +160,7 @@ public interface MongoDatabase {
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
      * @return a new MongoDatabase instance with the set time limit for the full execution of an operation.
-     * @since CSOT
+     * @since 5.2
      * @see #getTimeout
      */
     @Alpha(Reason.CLIENT)

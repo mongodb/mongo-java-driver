@@ -106,7 +106,7 @@ public interface DistinctPublisher<TResult> extends Publisher<TResult> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     DistinctPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);

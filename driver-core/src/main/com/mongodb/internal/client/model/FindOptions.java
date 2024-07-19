@@ -247,7 +247,7 @@ public final class FindOptions {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public FindOptions timeoutMode(final TimeoutMode timeoutMode) {

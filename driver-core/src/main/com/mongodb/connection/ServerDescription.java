@@ -354,7 +354,7 @@ public class ServerDescription {
          * @param minRoundTripTime the minimum time taken
          * @param timeUnit         the units of the time taken
          * @return this
-         * @since CSOT
+         * @since 5.2
          */
         @Alpha(Reason.CLIENT)
         public Builder minRoundTripTime(final long minRoundTripTime, final TimeUnit timeUnit) {
@@ -881,7 +881,7 @@ public class ServerDescription {
      * Get the recent min time it took to make the round trip for requesting this information from the server in nanoseconds.
      *
      * @return the recent min time taken to request the information, in nano seconds
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public long getMinRoundTripTimeNanos() {

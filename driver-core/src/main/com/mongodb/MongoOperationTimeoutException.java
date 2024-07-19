@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @see MongoClientSettings.Builder#timeout(long, TimeUnit)
  * @see MongoClientSettings#getTimeout(TimeUnit)
- * @since CSOT
+ * @since 5.2
  */
 @Alpha(Reason.CLIENT)
 public final class MongoOperationTimeoutException extends MongoTimeoutException {
@@ -48,7 +48,6 @@ public final class MongoOperationTimeoutException extends MongoTimeoutException 
      * @param message the message
      */
     public MongoOperationTimeoutException(final String message) {
-        // TODO (CSOT) - JAVA-5248 move all messages here as constants to ensure consistency?
         super(message);
     }
 

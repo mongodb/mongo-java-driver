@@ -119,7 +119,7 @@ public interface ListDatabasesPublisher<TResult> extends Publisher<TResult> {
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     ListDatabasesPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);

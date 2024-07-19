@@ -92,7 +92,7 @@ public interface ListCollectionsIterable<TResult> extends MongoIterable<TResult>
      * </p>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     ListCollectionsIterable<TResult> timeoutMode(TimeoutMode timeoutMode);

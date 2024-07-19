@@ -111,7 +111,7 @@ public final class TransactionOptions {
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
-     * @since CSOT
+     * @since 5.2
      */
     @Nullable
     @Alpha(Reason.CLIENT)
@@ -295,7 +295,7 @@ public final class TransactionOptions {
          * @param timeout the timeout
          * @param timeUnit the time unit
          * @return this
-         * @since CSOT
+         * @since 5.2
          */
         @Alpha(Reason.CLIENT)
         public Builder timeout(@Nullable final Long timeout, final TimeUnit timeUnit) {

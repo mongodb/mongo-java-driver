@@ -43,7 +43,7 @@ public class ListIndexesIterable<T : Any>(private val wrapped: JListIndexesItera
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListIndexesIterable<T> {

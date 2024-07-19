@@ -288,7 +288,7 @@ public interface FindPublisher<TResult> extends Publisher<TResult> {
      *     </ul>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     FindPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);

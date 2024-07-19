@@ -1590,7 +1590,7 @@ public class ConnectionString {
      * </ul>
      *
      * @return the time limit for the full execution of an operation in milliseconds or null.
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     @Nullable

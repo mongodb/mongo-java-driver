@@ -224,7 +224,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      * Note: For internal use only
      *
      * @return the timeout to use
-     * @since CSOT
+     * @since 5.2
      */
     public override fun getTimeoutContext(): TimeoutContext? = wrapped.timeoutContext
 }

@@ -104,7 +104,7 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    *
    * @param timeoutMode the timeout mode
    * @return this
-   * @since CSOT
+   * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))
   def timeoutMode(timeoutMode: TimeoutMode): ListCollectionsObservable[TResult] = {

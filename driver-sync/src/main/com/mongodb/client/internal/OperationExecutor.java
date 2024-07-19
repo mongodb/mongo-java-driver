@@ -80,7 +80,7 @@ public interface OperationExecutor {
      *
      * @param timeoutSettings the TimeoutContext to use for the operations
      * @return the new operation executor with the set timeout context
-     * @since CSOT
+     * @since 5.2
      */
     OperationExecutor withTimeoutSettings(TimeoutSettings timeoutSettings);
 
@@ -88,7 +88,7 @@ public interface OperationExecutor {
      * Returns the current timeout settings
      *
      * @return the timeout settings
-     * @since CSOT
+     * @since 5.2
      */
     TimeoutSettings getTimeoutSettings();
 }

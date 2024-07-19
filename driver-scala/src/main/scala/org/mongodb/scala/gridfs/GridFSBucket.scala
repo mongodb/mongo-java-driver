@@ -121,7 +121,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *   - `> 0` The time limit to use for the full execution of an operation.
    *
    * @return the optional timeout duration
-   * @since CSOT
+   * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))
   lazy val timeout: Option[Duration] =
@@ -170,7 +170,7 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *
    * @param timeout the timeout, which must be greater than or equal to 0
    * @return a new GridFSBucket instance with the set time limit for operations
-   * @since CSOT
+   * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))
   def withTimeout(timeout: Duration): GridFSBucket =

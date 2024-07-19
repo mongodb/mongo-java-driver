@@ -191,7 +191,7 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      *     </ul>
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     AggregatePublisher<TResult> timeoutMode(TimeoutMode timeoutMode);

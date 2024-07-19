@@ -52,7 +52,7 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
      *
      * @param timeoutMode the timeout mode
      * @return this
-     * @since CSOT
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeoutMode(timeoutMode: TimeoutMode): ListCollectionsFlow<T> = apply {

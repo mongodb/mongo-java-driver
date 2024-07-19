@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  * original operation and all next calls.
  * </p>
  * @see com.mongodb.MongoClientSettings#getTimeout(TimeUnit)
- * @since CSOT
+ * @since 5.2
  */
 @Alpha(Reason.CLIENT)
 public enum TimeoutMode {

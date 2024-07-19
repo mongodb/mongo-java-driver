@@ -136,7 +136,6 @@ public abstract class AbstractClientSideEncryptionTest {
         assumeTrue("Client side encryption tests disabled", hasEncryptionTestsEnabled());
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse("Skipping count tests", filename.startsWith("count."));
-        assumeFalse("TODO CSOT - JAVA-5406", filename.equals("timeoutMS.json"));
 
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
