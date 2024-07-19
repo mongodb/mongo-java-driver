@@ -30,12 +30,14 @@ import org.bson.BsonDocument;
 import org.bson.BsonElement;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
@@ -46,6 +48,8 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
+import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
+import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
@@ -107,30 +111,49 @@ public final class CommandMessage extends RequestMessage {
         this.serverApi = serverApi;
     }
 
+    // Create a BsonDocument representing the logical document encoded by an OP_MSG.
+    // The returned document will contain all the fields, including ones represented by
+    // OP_MSG Sections of type Kind 1: Document Sequence
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
-        ByteBufBsonDocument byteBufBsonDocument = ByteBufBsonDocument.createOne(bsonOutput,
-                getEncodingMetadata().getFirstDocumentPosition());
-        BsonDocument commandBsonDocument;
+        List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
+        try {
+            CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
+            outputByteBuf.position(getEncodingMetadata().getFirstDocumentPosition());
+            ByteBufBsonDocument byteBufBsonDocument = createOne(outputByteBuf);
 
-        if (containsPayload()) {
-            commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
+            if (outputByteBuf.hasRemaining()) {
+                BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
-            int payloadStartPosition = getEncodingMetadata().getFirstDocumentPosition()
-                    + byteBufBsonDocument.getSizeInBytes()
-                    + 1 // payload type
-                    + 4 // payload size
-                    + payload.getPayloadName().getBytes(StandardCharsets.UTF_8).length + 1;  // null-terminated UTF-8 payload name
-            commandBsonDocument.append(payload.getPayloadName(),
-                    new BsonArray(ByteBufBsonDocument.createList(bsonOutput, payloadStartPosition)));
-        } else {
-            commandBsonDocument = byteBufBsonDocument;
+                while (outputByteBuf.hasRemaining()) {
+                    outputByteBuf.position(outputByteBuf.position() + 1 /* payload type */ + 4 /* payload size */);
+                    String payloadName = getPayloadName(outputByteBuf);
+                    assertFalse(payloadName.contains("."));
+                    commandBsonDocument.append(payloadName, new BsonArray(createList(outputByteBuf)));
+                }
+                return commandBsonDocument;
+            } else {
+                return byteBufBsonDocument;
+            }
+        } finally {
+            duplicateByteBuffers.forEach(ByteBuf::release);
         }
-
-       return commandBsonDocument;
     }
 
-    boolean containsPayload() {
-        return payload != null;
+    // Get the field name from a ByteBuf positioned at the start of the document sequence identifier of an OP_MSG Section of type
+    // Kind 1: Document Sequence.
+    // Upon normal completion of the method, the ByteBuf will be positioned at the start of the first BSON object in the sequence.
+    private String getPayloadName(final ByteBuf outputByteBuf) {
+        List<Byte> payloadNameBytes = new ArrayList<>();
+        byte curByte = outputByteBuf.get();
+        while (curByte != 0) {
+            payloadNameBytes.add(curByte);
+            curByte = outputByteBuf.get();
+        }
+
+        // Convert List<Byte> to byte[]
+        byte[] byteArray = new byte[payloadNameBytes.size()];
+        IntStream.range(0, payloadNameBytes.size()).forEachOrdered(i -> byteArray[i] = payloadNameBytes.get(i));
+        return new String(byteArray, StandardCharsets.UTF_8);
     }
 
     boolean isResponseExpected() {
