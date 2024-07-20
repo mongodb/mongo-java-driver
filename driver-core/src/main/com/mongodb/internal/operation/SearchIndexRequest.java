@@ -38,7 +38,7 @@ final class SearchIndexRequest {
     @Nullable
     private final SearchIndexType searchIndexType;
 
-    SearchIndexRequest(final BsonDocument definition, @Nullable final String indexName, final SearchIndexType searchIndexType) {
+    SearchIndexRequest(final BsonDocument definition, @Nullable final String indexName, @Nullable final SearchIndexType searchIndexType) {
         assertNotNull(definition);
         this.definition = definition;
         this.indexName = indexName;

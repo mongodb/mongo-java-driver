@@ -45,7 +45,7 @@ public interface SearchIndexType {
     }
 
     /**
-     * Returns a {@link SearchIndexType} instance representing the "verctorSearch" index type.
+     * Returns a {@link SearchIndexType} instance representing the "vectorSearch" index type.
      *
      * @return The requested {@link SearchIndexType}.
      */
@@ -62,8 +62,8 @@ public interface SearchIndexType {
      * The following code creates two functionally equivalent {@link SearchIndexType}s,
      * though they may not be {@linkplain Object#equals(Object) equal}.
      * <pre>{@code
-     *  SearchIndexType method1 = SearchIndexType.vectorSearch();
-     *  SearchIndexType method2 = SearchIndexType.of(new BsonString("vectorSearch"));
+     *  SearchIndexType type1 = SearchIndexType.vectorSearch();
+     *  SearchIndexType type2 = SearchIndexType.of(new BsonString("vectorSearch"));
      * }</pre>
      *
      * @param indexType A {@link BsonValue} representing the required {@link SearchIndexType}.
