@@ -25,7 +25,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A model describing the creation of a single Atlas Search index.
  *
  * @since 4.11
- * @mongodb.server.release 7.0
+ * @mongodb.server.release 6.0
  */
 public final class SearchIndexModel {
     @Nullable

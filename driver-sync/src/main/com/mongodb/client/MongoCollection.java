@@ -1700,7 +1700,7 @@ public interface MongoCollection<TDocument> {
      * @param indexName  the name of the search index to create.
      * @param definition the search index mapping definition.
      * @return the search index name.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
      */
@@ -1711,7 +1711,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param definition the search index mapping definition.
      * @return the search index name.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
      */
@@ -1725,7 +1725,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param searchIndexModels the search index models.
      * @return the search index names in the order specified by the given list of {@link SearchIndexModel}s.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
      */
@@ -1736,7 +1736,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param indexName  the name of the search index to update.
      * @param definition the search index mapping definition.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/updateSearchIndex/ Update Search index
      * @since 4.11
      */
@@ -1746,7 +1746,7 @@ public interface MongoCollection<TDocument> {
      * Drop an Atlas Search index given its name.
      *
      * @param indexName the name of the search index to drop.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/dropSearchIndex/ Drop Search index
      * @since 4.11
      */
@@ -1757,7 +1757,7 @@ public interface MongoCollection<TDocument> {
      *
      * @return the list search indexes iterable interface.
      * @since 4.11
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      */
     ListSearchIndexesIterable<Document> listSearchIndexes();
 
@@ -1768,7 +1768,7 @@ public interface MongoCollection<TDocument> {
      * @param <TResult>   the target document type of the iterable.
      * @return the list search indexes iterable interface.
      * @since 4.11
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      */
     <TResult> ListSearchIndexesIterable<TResult> listSearchIndexes(Class<TResult> resultClass);
 

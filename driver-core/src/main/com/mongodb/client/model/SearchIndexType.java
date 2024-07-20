@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * It provides methods for creating and converting Atlas Search Index types to {@link BsonValue}.
  * </p>
  *
- * @mongodb.server.release 7.0
+ * @mongodb.server.release 6.0
  * @see SearchIndexModel The model class that utilizes this index type.
  * @since 5.2
  */

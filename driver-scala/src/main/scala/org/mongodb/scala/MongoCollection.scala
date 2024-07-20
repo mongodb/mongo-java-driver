@@ -1375,7 +1375,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param definition the search index mapping definition.
    * @return an Observable with the search index name.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
    */
   def createSearchIndex(indexName: String, definition: Bson): SingleObservable[String] =
@@ -1387,7 +1387,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param definition the search index mapping definition.
    * @return an Observable with search index name.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
    */
   def createSearchIndex(definition: Bson): SingleObservable[String] = wrapped.createSearchIndex(definition)
@@ -1402,7 +1402,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @return an Observable with the names of the search indexes
    *         in the order specified by the given list of [[org.mongodb.scala.model.SearchIndexModel]]s.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
    */
   def createSearchIndexes(searchIndexModels: List[SearchIndexModel]): Observable[String] =
@@ -1415,7 +1415,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param definition the search index mapping definition.
    * @return an Observable that indicates when the operation has completed.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/updateSearchIndex/ Update Search Index]]
    */
   def updateSearchIndex(indexName: String, definition: Bson): SingleObservable[Unit] =
@@ -1427,7 +1427,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param indexName the name of the search index to drop.
    * @return an Observable that indicates when the operation has completed.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/dropSearchIndex/ Drop Search Index]]
    */
   def dropSearchIndex(indexName: String): SingleObservable[Unit] = wrapped.dropSearchIndex(indexName)
@@ -1438,7 +1438,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @tparam C the target document type of the observable.
    * @return the fluent list search indexes interface
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes List Search Indexes]]
    */
   def listSearchIndexes[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ListSearchIndexesObservable[C] =

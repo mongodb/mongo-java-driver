@@ -40,7 +40,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * Sets an Atlas Search index name for this operation.
    *
    * @param indexName Atlas Search index name.
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    */
   def name(indexName: String): ListSearchIndexesObservable[TResult] = {
     wrapped.name(indexName)
