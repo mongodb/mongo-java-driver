@@ -121,9 +121,12 @@ public final class CommandMessage extends RequestMessage {
             outputByteBuf.position(getEncodingMetadata().getFirstDocumentPosition());
             ByteBufBsonDocument byteBufBsonDocument = createOne(outputByteBuf);
 
+            // If true, it means there is at least one Document Sequence in the OP_MSG
             if (outputByteBuf.hasRemaining()) {
                 BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
+                // Each loop iteration processes one Document Sequence
+                // When there are no more bytes remaining, there are no more Document Sequences
                 while (outputByteBuf.hasRemaining()) {
                     outputByteBuf.position(outputByteBuf.position() + 1 /* payload type */ + 4 /* payload size */);
                     String payloadName = getPayloadName(outputByteBuf);
