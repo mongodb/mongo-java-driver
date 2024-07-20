@@ -94,8 +94,12 @@ public final class UnifiedClientEncryptionHelper {
                     break;
                 case "kmip":
                 case "kmip:name1":
-                    setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, "endpoint", () ->
-                            getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
+                    setKmsProviderProperty(
+                            kmsProviderMap,
+                            kmsProviderOptions,
+                            "endpoint",
+                            () -> getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"),
+                            null);
                     break;
                 case "local":
                 case "local:name1":
@@ -107,13 +111,12 @@ public final class UnifiedClientEncryptionHelper {
                             null);
                     break;
                 case "local:name2":
-                    String key = kmsProviderOptions.getString("key").getValue();
                     setKmsProviderProperty(
                             kmsProviderMap,
                             kmsProviderOptions,
                             "key",
                             null,
-                            () -> decodeLocalKmsProviderKey(key));
+                            () -> decodeLocalKmsProviderKey(kmsProviderOptions.getString("key").getValue()));
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProviderKey);
@@ -135,23 +138,17 @@ public final class UnifiedClientEncryptionHelper {
 
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
             final BsonDocument kmsProviderOptions, final String key, final String propertyName) {
-        setKmsProviderProperty(kmsProviderMap, kmsProviderOptions, key, () -> {
-            if (getEnv(propertyName) != null) {
-                return getEnv(propertyName);
-            }
-            throw new UnsupportedOperationException("Missing system property for: " + key);
-        });
-    }
-
-    private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
-            final BsonDocument kmsProviderOptions, final String key, final Supplier<Object> propertySupplier) {
-        if (kmsProviderOptions.containsKey(key)) {
-            if (kmsProviderOptions.get(key).equals(PLACEHOLDER)) {
-                kmsProviderMap.put(key, propertySupplier.get());
-            } else {
-                throw new UnsupportedOperationException("Missing key handler for: " + key + " :: " + kmsProviderOptions.toJson());
-            }
-        }
+        setKmsProviderProperty(
+                kmsProviderMap,
+                kmsProviderOptions,
+                key,
+                () -> {
+                    if (getEnv(propertyName) != null) {
+                        return getEnv(propertyName);
+                    }
+                    throw new UnsupportedOperationException("Missing system property for: " + key);
+                },
+                null);
     }
 
     private static void setKmsProviderProperty(final Map<String, Object> kmsProviderMap,
