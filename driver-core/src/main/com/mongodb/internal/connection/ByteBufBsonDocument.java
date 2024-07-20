@@ -53,9 +53,12 @@ final class ByteBufBsonDocument extends BsonDocument {
 
     private final transient ByteBuf byteBuf;
 
-    // Create a list of ByteBufBsonDocument from a ByteBuf positioned at the start of the first document of an OP_MSG Section
-    // of type Kind 1: Document Sequence
-    // The provided ByteBuf will be positioned at the end of the section upon normal completion of the method
+    /**
+     * Create a list of ByteBufBsonDocument from a buffer positioned at the start of the first document of an OP_MSG Section
+     * of type Document Sequence (Kind 1).
+     * <p>
+     * The provided buffer will be positioned at the end of the section upon normal completion of the method
+     */
     static List<ByteBufBsonDocument> createList(final ByteBuf outputByteBuf) {
         List<ByteBufBsonDocument> documents = new ArrayList<>();
         while (outputByteBuf.hasRemaining()) {
@@ -65,8 +68,10 @@ final class ByteBufBsonDocument extends BsonDocument {
         return documents;
     }
 
-    // Create a ByteBufBsonDocument from a ByteBuf positioned at the start of a BSON document.
-    // The provided ByteBuf will be positioned at the end of the section upon normal completion of the method
+    /**
+     * Create a ByteBufBsonDocument from a buffer positioned at the start of a BSON document.
+     * The provided buffer will be positioned at the end of the document upon normal completion of the method
+     */
     static ByteBufBsonDocument createOne(final ByteBuf outputByteBuf) {
         int documentSizeInBytes = outputByteBuf.getInt();
         ByteBuf slice = outputByteBuf.duplicate();

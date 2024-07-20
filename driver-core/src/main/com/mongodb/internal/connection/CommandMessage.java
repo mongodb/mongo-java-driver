@@ -111,40 +111,50 @@ public final class CommandMessage extends RequestMessage {
         this.serverApi = serverApi;
     }
 
-    // Create a BsonDocument representing the logical document encoded by an OP_MSG.
-    // The returned document will contain all the fields, including ones represented by
-    // OP_MSG Sections of type Kind 1: Document Sequence
+    /**
+     * Create a BsonDocument representing the logical document encoded by an OP_MSG.
+     * <p>
+     * The returned document will contain all the fields from the Body (Kind 0) Section, as well as all fields represented by
+     * OP_MSG Document Sequence (Kind 1) Sections.
+     */
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
-        List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
+        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
-            CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
-            outputByteBuf.position(getEncodingMetadata().getFirstDocumentPosition());
-            ByteBufBsonDocument byteBufBsonDocument = createOne(outputByteBuf);
+            CompositeByteBuf byteBuf = new CompositeByteBuf(byteBuffers);
+            try {
+                byteBuf.position(getEncodingMetadata().getFirstDocumentPosition());
+                ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
-            // If true, it means there is at least one Document Sequence in the OP_MSG
-            if (outputByteBuf.hasRemaining()) {
-                BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
+                // If true, it means there is at least one Kind 1:Document Sequence in the OP_MSG
+                if (byteBuf.hasRemaining()) {
+                    BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
-                // Each loop iteration processes one Document Sequence
-                // When there are no more bytes remaining, there are no more Document Sequences
-                while (outputByteBuf.hasRemaining()) {
-                    outputByteBuf.position(outputByteBuf.position() + 1 /* payload type */ + 4 /* payload size */);
-                    String payloadName = getPayloadName(outputByteBuf);
-                    assertFalse(payloadName.contains("."));
-                    commandBsonDocument.append(payloadName, new BsonArray(createList(outputByteBuf)));
+                    // Each loop iteration processes one Document Sequence
+                    // When there are no more bytes remaining, there are no more Document Sequences
+                    while (byteBuf.hasRemaining()) {
+                        byteBuf.position(byteBuf.position() + 1 /* payload type */ + 4 /* payload size */);
+                        String payloadName = getPayloadName(byteBuf);
+                        assertFalse(payloadName.contains("."));
+                        commandBsonDocument.append(payloadName, new BsonArray(createList(byteBuf)));
+                    }
+                    return commandBsonDocument;
+                } else {
+                    return byteBufBsonDocument;
                 }
-                return commandBsonDocument;
-            } else {
-                return byteBufBsonDocument;
+            } finally {
+                byteBuf.release();
             }
         } finally {
-            duplicateByteBuffers.forEach(ByteBuf::release);
+            byteBuffers.forEach(ByteBuf::release);
         }
     }
 
-    // Get the field name from a ByteBuf positioned at the start of the document sequence identifier of an OP_MSG Section of type
-    // Kind 1: Document Sequence.
-    // Upon normal completion of the method, the ByteBuf will be positioned at the start of the first BSON object in the sequence.
+    /**
+     * Get the field name from a buffer positioned at the start of the document sequence identifier of an OP_MSG Section of type
+     * Document Sequence (Kind 1).
+     * <p>
+     * Upon normal completion of the method, the buffer will be positioned at the start of the first BSON object in the sequence.
+    */
     private String getPayloadName(final ByteBuf outputByteBuf) {
         List<Byte> payloadNameBytes = new ArrayList<>();
         byte curByte = outputByteBuf.get();
