@@ -84,10 +84,6 @@ public class OperationExecutorImpl implements OperationExecutor {
                 clientSessionHelper.withClientSession(session, this)
                         .map(clientSession -> getReadWriteBinding(getContext(subscriber),
                                 readPreference, readConcern, clientSession, session == null))
-                        // TODO (CSOT) - does this get called - can the above return empty?
-                        .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(subscriber),
-                                        readPreference, readConcern, session, false)))
                         .flatMap(binding -> {
                             if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
@@ -122,10 +118,6 @@ public class OperationExecutorImpl implements OperationExecutor {
                 clientSessionHelper.withClientSession(session, this)
                         .map(clientSession -> getReadWriteBinding(getContext(subscriber),
                                 primary(), readConcern, clientSession, session == null))
-                        // TODO (CSOT) - does this get called - can the above return empty?
-                        .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(subscriber), primary(),
-                                        readConcern, session, false)))
                         .flatMap(binding ->
                                 Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
                                     try {
