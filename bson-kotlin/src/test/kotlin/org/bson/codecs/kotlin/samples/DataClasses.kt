@@ -49,6 +49,91 @@ data class DataClassWithCollections(
     val mapMap: Map<String, Map<String, Int>>
 )
 
+data class DataClassWithArrays(
+    val arraySimple: Array<String>,
+    val nestedArrays: Array<Array<String>>,
+    val arrayOfMaps: Array<Map<String, Array<String>>>
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DataClassWithArrays
+
+        if (!arraySimple.contentEquals(other.arraySimple)) return false
+        if (!nestedArrays.contentDeepEquals(other.nestedArrays)) return false
+
+        if (arrayOfMaps.size != other.arrayOfMaps.size) return false
+        arrayOfMaps.forEachIndexed { i, map ->
+            val otherMap = other.arrayOfMaps[i]
+            if (map.keys != otherMap.keys) return false
+            map.keys.forEach { key -> if (!map[key].contentEquals(otherMap[key])) return false }
+        }
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = arraySimple.contentHashCode()
+        result = 31 * result + nestedArrays.contentDeepHashCode()
+        result = 31 * result + arrayOfMaps.contentHashCode()
+        return result
+    }
+}
+
+data class DataClassWithNativeArrays(
+    val booleanArray: BooleanArray,
+    val byteArray: ByteArray,
+    val charArray: CharArray,
+    val doubleArray: DoubleArray,
+    val floatArray: FloatArray,
+    val intArray: IntArray,
+    val longArray: LongArray,
+    val shortArray: ShortArray,
+    val listOfArrays: List<BooleanArray>,
+    val mapOfArrays: Map<String, IntArray>
+) {
+
+    @SuppressWarnings("ComplexMethod")
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DataClassWithNativeArrays
+
+        if (!booleanArray.contentEquals(other.booleanArray)) return false
+        if (!byteArray.contentEquals(other.byteArray)) return false
+        if (!charArray.contentEquals(other.charArray)) return false
+        if (!doubleArray.contentEquals(other.doubleArray)) return false
+        if (!floatArray.contentEquals(other.floatArray)) return false
+        if (!intArray.contentEquals(other.intArray)) return false
+        if (!longArray.contentEquals(other.longArray)) return false
+        if (!shortArray.contentEquals(other.shortArray)) return false
+
+        if (listOfArrays.size != other.listOfArrays.size) return false
+        listOfArrays.forEachIndexed { i, value -> if (!value.contentEquals(other.listOfArrays[i])) return false }
+
+        if (mapOfArrays.keys != other.mapOfArrays.keys) return false
+        mapOfArrays.keys.forEach { key -> if (!mapOfArrays[key].contentEquals(other.mapOfArrays[key])) return false }
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = booleanArray.contentHashCode()
+        result = 31 * result + byteArray.contentHashCode()
+        result = 31 * result + charArray.contentHashCode()
+        result = 31 * result + doubleArray.contentHashCode()
+        result = 31 * result + floatArray.contentHashCode()
+        result = 31 * result + intArray.contentHashCode()
+        result = 31 * result + longArray.contentHashCode()
+        result = 31 * result + shortArray.contentHashCode()
+        result = 31 * result + listOfArrays.hashCode()
+        result = 31 * result + mapOfArrays.hashCode()
+        return result
+    }
+}
+
 data class DataClassWithDefaults(
     val boolean: Boolean = false,
     val string: String = "String",

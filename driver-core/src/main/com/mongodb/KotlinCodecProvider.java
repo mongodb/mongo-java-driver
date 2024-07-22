@@ -19,12 +19,16 @@ import com.mongodb.lang.Nullable;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.kotlin.ArrayCodecProvider;
 import org.bson.codecs.kotlin.DataClassCodecProvider;
 import org.bson.codecs.kotlinx.KotlinSerializerCodecProvider;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
+
+
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A CodecProvider for Kotlin data classes.
@@ -56,7 +60,7 @@ public class KotlinCodecProvider implements CodecProvider {
         possibleCodecProvider = null;
         try {
             Class.forName("org.bson.codecs.kotlin.DataClassCodecProvider"); // Kotlin bson canary test
-            possibleCodecProvider = new DataClassCodecProvider();
+            possibleCodecProvider = fromProviders(new ArrayCodecProvider(), new DataClassCodecProvider());
         } catch (ClassNotFoundException e) {
             // No kotlin data class support
         }
