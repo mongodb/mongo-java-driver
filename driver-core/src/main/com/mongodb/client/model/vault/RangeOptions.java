@@ -78,6 +78,7 @@ public class RangeOptions {
 
     /**
      * @return the trim factor value if set
+     * @since 5.2
      */
     public Integer getTrimFactor() {
         return trimFactor;
@@ -88,6 +89,7 @@ public class RangeOptions {
      * and optimizing queries by excluding seldom-used high-level edges.
      * @param trimFactor the trim factor
      * @return this
+     * @since 5.2
      */
     public RangeOptions setTrimFactor(final Integer trimFactor) {
         this.trimFactor = trimFactor;
