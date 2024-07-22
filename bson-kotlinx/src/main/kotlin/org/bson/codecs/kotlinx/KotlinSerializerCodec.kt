@@ -172,13 +172,13 @@ private constructor(
     }
 
     override fun encode(writer: BsonWriter, value: T, encoderContext: EncoderContext) {
-        serializer.serialize(DefaultBsonEncoder(writer, serializersModule, bsonConfiguration), value)
+        serializer.serialize(BsonEncoder.createBsonEncoder(writer, serializersModule, bsonConfiguration), value)
     }
 
     override fun getEncoderClass(): Class<T> = kClass.java
 
     override fun decode(reader: BsonReader, decoderContext: DecoderContext): T {
         require(reader is AbstractBsonReader)
-        return serializer.deserialize(DefaultBsonDecoder(reader, serializersModule, bsonConfiguration))
+        return serializer.deserialize(BsonDecoder.createBsonDecoder(reader, serializersModule, bsonConfiguration))
     }
 }

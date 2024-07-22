@@ -20,6 +20,8 @@ import kotlin.test.assertEquals
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.plus
 import kotlinx.serialization.modules.polymorphic
@@ -78,9 +80,11 @@ import org.bson.codecs.kotlinx.samples.DataClassWithEncodeDefault
 import org.bson.codecs.kotlinx.samples.DataClassWithEnum
 import org.bson.codecs.kotlinx.samples.DataClassWithEnumMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithFailingInit
+import org.bson.codecs.kotlinx.samples.DataClassWithJsonElement
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableList
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
+import org.bson.codecs.kotlinx.samples.DataClassWithNestedJsonElements
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterizedDataClass
 import org.bson.codecs.kotlinx.samples.DataClassWithNullableGeneric
@@ -103,6 +107,7 @@ import org.junit.jupiter.params.provider.MethodSource
 @Suppress("LargeClass")
 class KotlinSerializerCodecTest {
     private val oid = "\$oid"
+    private val numberLong = "\$numberLong"
     private val emptyDocument = "{}"
     private val altConfiguration =
         BsonConfiguration(encodeDefaults = false, classDiscriminator = "_t", explicitNulls = true)
@@ -727,6 +732,67 @@ class KotlinSerializerCodecTest {
         val dataClass = DataClassContainsValueClass(valueClass)
 
         assertThrows<BsonInvalidOperationException>() { serialize(valueClass) }
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithJsonElement() {
+
+        /*
+         * We need to encode all integer values as longs because the JsonElementSerializer
+         *  doesn't actually use our JsonEncoder instead it uses an inferior
+         *  JsonPrimitiveSerializer and ignores ours altogether encoding all integers as longs
+         *
+         * On the other hand, BsonDocument decodes everything as integers unless it's explicitly
+         * set as a long, and therefore we get a type mismatch
+         */
+
+        val expected =
+            """{"value": {
+            |"char": "c",
+            |"byte": {"$numberLong": "0"},
+            |"short": {"$numberLong": "1"},
+            |"int": {"$numberLong": "22"},
+            |"long": {"$numberLong": "42"},
+            |"float": 4.0,
+            |"double": 4.2,
+            |"boolean": true,
+            |"string": "String"
+            |}}"""
+                .trimMargin()
+        val dataClass =
+            DataClassWithJsonElement(
+                buildJsonObject {
+                    put("char", "c")
+                    put("byte", 0)
+                    put("short", 1)
+                    put("int", 22)
+                    put("long", 42L)
+                    put("float", 4.0)
+                    put("double", 4.2)
+                    put("boolean", true)
+                    put("string", "String")
+                })
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNestedJsonElements() {
+        val expected =
+            """{"dataClass": {"value": {"string": "String"}},
+                | "valueList": [{"string": "String"}, {"long": {"$numberLong": "42"}}],
+                | "valueMap": {"nestedString": {"string": "String"}, "nestedLong": {"long": {"$numberLong": "42"}}}}
+                | """
+                .trimMargin()
+        val dataClass =
+            DataClassWithNestedJsonElements(
+                DataClassWithJsonElement(buildJsonObject { put("string", "String") }),
+                listOf(buildJsonObject { put("string", "String") }, buildJsonObject { put("long", 42L) }),
+                mapOf(
+                    Pair("nestedString", buildJsonObject { put("string", "String") }),
+                    Pair("nestedLong", buildJsonObject { put("long", 42L) })))
+
         assertRoundTrips(expected, dataClass)
     }
 

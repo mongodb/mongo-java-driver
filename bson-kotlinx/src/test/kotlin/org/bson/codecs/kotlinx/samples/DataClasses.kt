@@ -21,6 +21,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
@@ -299,3 +300,12 @@ data class DataClassWithFailingInit(val id: String) {
 @Serializable data class Box<T>(val boxed: T)
 
 @Serializable data class DataClassWithNullableGeneric(val box: Box<String?>)
+
+@Serializable data class DataClassWithJsonElement(val value: JsonElement)
+
+@Serializable
+data class DataClassWithNestedJsonElements(
+    val dataClass: DataClassWithJsonElement,
+    val valueList: List<JsonElement>,
+    val valueMap: Map<String, JsonElement>
+)

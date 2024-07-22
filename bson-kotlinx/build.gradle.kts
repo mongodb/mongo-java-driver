@@ -38,6 +38,12 @@ description = "Bson Kotlinx Codecs"
 
 ext.set("pomName", "Bson Kotlinx")
 
+java {
+    registerFeature("jsonSupport") {
+        usingSourceSet(sourceSets["main"])
+    }
+}
+
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
@@ -45,12 +51,14 @@ dependencies {
 
     implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.5.0"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core")
+    "jsonSupportImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json")
 
     api(project(path = ":bson", configuration = "default"))
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     testImplementation(project(path = ":driver-core", configuration = "default"))
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
 }
 
 kotlin { explicitApi() }

@@ -27,6 +27,7 @@ import kotlinx.serialization.encoding.AbstractDecoder
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
 import kotlinx.serialization.encoding.CompositeDecoder.Companion.UNKNOWN_NAME
+import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.AbstractBsonReader
 import org.bson.BsonInvalidOperationException
@@ -36,6 +37,10 @@ import org.bson.BsonType
 import org.bson.BsonValue
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.DecoderContext
+import org.bson.codecs.kotlinx.BsonDecoder.Companion.createBsonArrayDecoder
+import org.bson.codecs.kotlinx.BsonDecoder.Companion.createBsonDocumentDecoder
+import org.bson.codecs.kotlinx.BsonDecoder.Companion.createBsonMapDecoder
+import org.bson.codecs.kotlinx.BsonDecoder.Companion.createBsonPolymorphicDecoder
 import org.bson.internal.NumberCodecHelper
 import org.bson.internal.StringCodecHelper
 import org.bson.types.ObjectId
@@ -45,34 +50,93 @@ import org.bson.types.ObjectId
  *
  * For custom serialization handlers
  */
-public sealed interface BsonDecoder {
+@ExperimentalSerializationApi
+internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
+
+    /** Factory helper for creating concrete BsonDecoder implementations */
+    companion object {
+
+        @Suppress("SwallowedException")
+        private val hasJsonDecoder: Boolean by lazy {
+            try {
+                Class.forName("kotlinx.serialization.json.JsonDecoder")
+                true
+            } catch (e: ClassNotFoundException) {
+                false
+            }
+        }
+
+        fun createBsonDecoder(
+            reader: AbstractBsonReader,
+            serializersModule: SerializersModule,
+            configuration: BsonConfiguration
+        ): BsonDecoder {
+            return if (hasJsonDecoder) JsonBsonDecoderImpl(reader, serializersModule, configuration)
+            else BsonDecoderImpl(reader, serializersModule, configuration)
+        }
+
+        fun createBsonArrayDecoder(
+            descriptor: SerialDescriptor,
+            reader: AbstractBsonReader,
+            serializersModule: SerializersModule,
+            configuration: BsonConfiguration
+        ): BsonArrayDecoder {
+            return if (hasJsonDecoder) JsonBsonArrayDecoder(descriptor, reader, serializersModule, configuration)
+            else BsonArrayDecoder(descriptor, reader, serializersModule, configuration)
+        }
+
+        fun createBsonDocumentDecoder(
+            descriptor: SerialDescriptor,
+            reader: AbstractBsonReader,
+            serializersModule: SerializersModule,
+            configuration: BsonConfiguration
+        ): BsonDocumentDecoder {
+            return if (hasJsonDecoder) JsonBsonDocumentDecoder(descriptor, reader, serializersModule, configuration)
+            else BsonDocumentDecoder(descriptor, reader, serializersModule, configuration)
+        }
+
+        fun createBsonPolymorphicDecoder(
+            descriptor: SerialDescriptor,
+            reader: AbstractBsonReader,
+            serializersModule: SerializersModule,
+            configuration: BsonConfiguration
+        ): BsonPolymorphicDecoder {
+            return if (hasJsonDecoder) JsonBsonPolymorphicDecoder(descriptor, reader, serializersModule, configuration)
+            else BsonPolymorphicDecoder(descriptor, reader, serializersModule, configuration)
+        }
+
+        fun createBsonMapDecoder(
+            descriptor: SerialDescriptor,
+            reader: AbstractBsonReader,
+            serializersModule: SerializersModule,
+            configuration: BsonConfiguration
+        ): BsonMapDecoder {
+            return if (hasJsonDecoder) JsonBsonMapDecoder(descriptor, reader, serializersModule, configuration)
+            else BsonMapDecoder(descriptor, reader, serializersModule, configuration)
+        }
+    }
 
     /** @return the decoded ObjectId */
-    public fun decodeObjectId(): ObjectId
+    fun decodeObjectId(): ObjectId
     /** @return the decoded BsonValue */
-    public fun decodeBsonValue(): BsonValue
-
-    /** @return the BsonReader */
-    public fun reader(): BsonReader
+    fun decodeBsonValue(): BsonValue
 }
 
-@ExperimentalSerializationApi
-internal open class DefaultBsonDecoder(
-    internal val reader: AbstractBsonReader,
+@OptIn(ExperimentalSerializationApi::class)
+internal sealed class AbstractBsonDecoder(
+    val reader: AbstractBsonReader,
     override val serializersModule: SerializersModule,
-    internal val configuration: BsonConfiguration
+    val configuration: BsonConfiguration
 ) : BsonDecoder, AbstractDecoder() {
 
-    private data class ElementMetadata(val name: String, val nullable: Boolean, var processed: Boolean = false)
-    private var elementsMetadata: Array<ElementMetadata>? = null
-    private var currentIndex: Int = UNKNOWN_INDEX
-
     companion object {
-        val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
+
         val bsonValueCodec = BsonValueCodec()
         const val UNKNOWN_INDEX = -10
+        val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
+
         fun validateCurrentBsonType(
-            reader: AbstractBsonReader,
+            reader: BsonReader,
             expectedType: BsonType,
             descriptor: SerialDescriptor,
             actualType: (descriptor: SerialDescriptor) -> String = { it.kind.toString() }
@@ -86,6 +150,10 @@ internal open class DefaultBsonDecoder(
             }
         }
     }
+
+    private data class ElementMetadata(val name: String, val nullable: Boolean, var processed: Boolean = false)
+    private var elementsMetadata: Array<ElementMetadata>? = null
+    private var currentIndex: Int = UNKNOWN_INDEX
 
     private fun initElementMetadata(descriptor: SerialDescriptor) {
         if (this.elementsMetadata != null) return
@@ -134,14 +202,13 @@ internal open class DefaultBsonDecoder(
             ?: UNKNOWN_NAME
     }
 
-    @Suppress("ReturnCount")
     override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
         return when (descriptor.kind) {
-            is StructureKind.LIST -> BsonArrayDecoder(descriptor, reader, serializersModule, configuration)
-            is PolymorphicKind -> PolymorphicDecoder(descriptor, reader, serializersModule, configuration)
+            is PolymorphicKind -> createBsonPolymorphicDecoder(descriptor, reader, serializersModule, configuration)
+            is StructureKind.LIST -> createBsonArrayDecoder(descriptor, reader, serializersModule, configuration)
             is StructureKind.CLASS,
-            StructureKind.OBJECT -> BsonDocumentDecoder(descriptor, reader, serializersModule, configuration)
-            is StructureKind.MAP -> MapDecoder(descriptor, reader, serializersModule, configuration)
+            StructureKind.OBJECT -> createBsonDocumentDecoder(descriptor, reader, serializersModule, configuration)
+            is StructureKind.MAP -> createBsonMapDecoder(descriptor, reader, serializersModule, configuration)
             else -> throw SerializationException("Primitives are not supported at top-level")
         }
     }
@@ -152,18 +219,15 @@ internal open class DefaultBsonDecoder(
             is StructureKind.MAP,
             StructureKind.CLASS,
             StructureKind.OBJECT -> reader.readEndDocument()
-            else -> super.endStructure(descriptor)
+            else -> {}
         }
     }
 
     override fun decodeByte(): Byte = NumberCodecHelper.decodeByte(reader)
-
     override fun decodeChar(): Char = StringCodecHelper.decodeChar(reader)
     override fun decodeFloat(): Float = NumberCodecHelper.decodeFloat(reader)
-
     override fun decodeShort(): Short = NumberCodecHelper.decodeShort(reader)
     override fun decodeBoolean(): Boolean = reader.readBoolean()
-
     override fun decodeDouble(): Double = NumberCodecHelper.decodeDouble(reader)
     override fun decodeInt(): Int = NumberCodecHelper.decodeInt(reader)
     override fun decodeLong(): Long = NumberCodecHelper.decodeLong(reader)
@@ -183,7 +247,6 @@ internal open class DefaultBsonDecoder(
 
     override fun decodeObjectId(): ObjectId = readOrThrow({ reader.readObjectId() }, BsonType.OBJECT_ID)
     override fun decodeBsonValue(): BsonValue = bsonValueCodec.decode(reader, DecoderContext.builder().build())
-    override fun reader(): BsonReader = reader
 
     private inline fun <T> readOrThrow(action: () -> T, bsonType: BsonType): T {
         return try {
@@ -197,13 +260,20 @@ internal open class DefaultBsonDecoder(
     }
 }
 
-@OptIn(ExperimentalSerializationApi::class)
-private class BsonArrayDecoder(
+/** The default Bson Decoder implementation */
+internal open class BsonDecoderImpl(
+    reader: AbstractBsonReader,
+    serializersModule: SerializersModule,
+    configuration: BsonConfiguration
+) : AbstractBsonDecoder(reader, serializersModule, configuration)
+
+/** The Bson array decoder */
+internal open class BsonArrayDecoder(
     descriptor: SerialDescriptor,
     reader: AbstractBsonReader,
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
-) : DefaultBsonDecoder(reader, serializersModule, configuration) {
+) : AbstractBsonDecoder(reader, serializersModule, configuration) {
 
     init {
         validateCurrentBsonType(reader, BsonType.ARRAY, descriptor)
@@ -218,13 +288,29 @@ private class BsonArrayDecoder(
     }
 }
 
+/** The Bson document decoder */
 @OptIn(ExperimentalSerializationApi::class)
-private class PolymorphicDecoder(
+internal open class BsonDocumentDecoder(
     descriptor: SerialDescriptor,
     reader: AbstractBsonReader,
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
-) : DefaultBsonDecoder(reader, serializersModule, configuration) {
+) : AbstractBsonDecoder(reader, serializersModule, configuration) {
+
+    init {
+        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor) { it.serialName }
+        reader.readStartDocument()
+    }
+}
+
+/** The Bson polymorphic class decoder */
+@OptIn(ExperimentalSerializationApi::class)
+internal open class BsonPolymorphicDecoder(
+    descriptor: SerialDescriptor,
+    reader: AbstractBsonReader,
+    serializersModule: SerializersModule,
+    configuration: BsonConfiguration
+) : AbstractBsonDecoder(reader, serializersModule, configuration) {
     private var index = 0
     private var mark: BsonReaderMark?
 
@@ -239,7 +325,7 @@ private class PolymorphicDecoder(
             it.reset()
             mark = null
         }
-        return deserializer.deserialize(DefaultBsonDecoder(reader, serializersModule, configuration))
+        return deserializer.deserialize(BsonDecoder.createBsonDecoder(reader, serializersModule, configuration))
     }
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
@@ -266,27 +352,14 @@ private class PolymorphicDecoder(
     }
 }
 
+/** The Bson map decoder */
 @OptIn(ExperimentalSerializationApi::class)
-private class BsonDocumentDecoder(
+internal open class BsonMapDecoder(
     descriptor: SerialDescriptor,
     reader: AbstractBsonReader,
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
-) : DefaultBsonDecoder(reader, serializersModule, configuration) {
-    init {
-        validateCurrentBsonType(reader, BsonType.DOCUMENT, descriptor) { it.serialName }
-        reader.readStartDocument()
-    }
-}
-
-@OptIn(ExperimentalSerializationApi::class)
-private class MapDecoder(
-    descriptor: SerialDescriptor,
-    reader: AbstractBsonReader,
-    serializersModule: SerializersModule,
-    configuration: BsonConfiguration
-) : DefaultBsonDecoder(reader, serializersModule, configuration) {
-
+) : AbstractBsonDecoder(reader, serializersModule, configuration) {
     private var index = 0
     private var isKey = false
 
