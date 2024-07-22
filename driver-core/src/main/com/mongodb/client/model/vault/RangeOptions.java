@@ -28,7 +28,7 @@ import org.bson.BsonValue;
  *
  * <p>For {@code double} and {@code decimal128}, {@code min}/{@code max}/{@code precision} must all be set, or all be unset.
  *
- * <p>Note: The "Range" algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
+ * <p>Note: The "Range" algorithm is unstable. It is subject to breaking changes.
  * @since 4.9
  * @mongodb.server.release 6.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
