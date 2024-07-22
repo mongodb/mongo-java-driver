@@ -130,7 +130,7 @@ public final class SyncOperations<TDocument> {
         return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
     }
 
-    // TODO (CSOT) @SuppressWarnings("deprecation") // MaxTime
+    @SuppressWarnings("deprecation") // MaxTime
     public TimeoutSettings createTimeoutSettings(final CreateIndexOptions options) {
         return timeoutSettings.withMaxTimeMS(options.getMaxTime(MILLISECONDS));
     }
