@@ -21,13 +21,13 @@ import com.mongodb.client.model.bulk.ClientWriteModel;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientInsertOneModel<T> implements ClientWriteModel<T> {
+public final class ClientInsertOneModel implements ClientWriteModel {
     private final MongoNamespace namespace;
-    private final T document;
+    private final Object document;
 
     public ClientInsertOneModel(
             final MongoNamespace namespace,
-            final T document) {
+            final Object document) {
         this.namespace = namespace;
         this.document = document;
     }

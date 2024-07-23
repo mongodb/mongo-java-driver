@@ -24,16 +24,16 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientReplaceOneModel<T> implements ClientWriteModel<T> {
+public final class ClientReplaceOneModel implements ClientWriteModel {
     private final MongoNamespace namespace;
     private final Bson filter;
-    private final T replacement;
+    private final Object replacement;
     private final ConcreteClientReplaceOptions options;
 
     public ClientReplaceOneModel(
             final MongoNamespace namespace,
             final Bson filter,
-            final T replacement,
+            final Object replacement,
             @Nullable final ClientReplaceOptions options) {
         this.namespace = namespace;
         this.filter = filter;

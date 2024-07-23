@@ -114,34 +114,28 @@ internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoClu
     ): ChangeStreamIterable<T> =
         SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
 
-    override fun <TDocument : Any?> bulkWrite(
-        models: MutableList<out ClientWriteModel<out TDocument>>,
-        documentClass: Class<TDocument>
+    override fun bulkWrite(models: MutableList<out ClientWriteModel>): ClientBulkWriteResult {
+        TODO("BULK-TODO implement")
+    }
+
+    override fun bulkWrite(
+        models: MutableList<out ClientWriteModel>,
+        options: ClientBulkWriteOptions
     ): ClientBulkWriteResult {
         TODO("BULK-TODO implement")
     }
 
-    override fun <TDocument : Any?> bulkWrite(
-        models: MutableList<out ClientWriteModel<out TDocument>>,
-        options: ClientBulkWriteOptions,
-        documentClass: Class<TDocument>
-    ): ClientBulkWriteResult {
-        TODO("BULK-TODO implement")
-    }
-
-    override fun <TDocument : Any?> bulkWrite(
+    override fun bulkWrite(
         clientSession: ClientSession,
-        models: MutableList<out ClientWriteModel<out TDocument>>,
-        documentClass: Class<TDocument>
+        models: MutableList<out ClientWriteModel>
     ): ClientBulkWriteResult {
         TODO("BULK-TODO implement")
     }
 
-    override fun <TDocument : Any?> bulkWrite(
+    override fun bulkWrite(
         clientSession: ClientSession,
-        models: MutableList<out ClientWriteModel<out TDocument>>,
-        options: ClientBulkWriteOptions,
-        documentClass: Class<TDocument>
+        models: MutableList<out ClientWriteModel>,
+        options: ClientBulkWriteOptions
     ): ClientBulkWriteResult {
         TODO("BULK-TODO implement")
     }

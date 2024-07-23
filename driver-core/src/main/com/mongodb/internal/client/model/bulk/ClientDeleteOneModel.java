@@ -24,7 +24,7 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientDeleteOneModel<T> implements ClientWriteModel<T> {
+public final class ClientDeleteOneModel implements ClientWriteModel {
     private final MongoNamespace namespace;
     private final Bson filter;
     private final ConcreteClientDeleteOptions options;

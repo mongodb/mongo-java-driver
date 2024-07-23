@@ -313,46 +313,38 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
-    public <TDocument> ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
-            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientWriteModel> clientWriteModels) throws ClientBulkWriteException {
         notNull("clientWriteModels", clientWriteModels);
-        notNull("tDocumentClass", tDocumentClass);
         throw Assertions.fail("BULK-TODO implement");
     }
 
     @Override
-    public <TDocument> ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
-            final ClientBulkWriteOptions options,
-            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         notNull("clientWriteModels", clientWriteModels);
         notNull("options", options);
-        notNull("tDocumentClass", tDocumentClass);
         throw Assertions.fail("BULK-TODO implement");
     }
 
     @Override
-    public <TDocument> ClientBulkWriteResult bulkWrite(
+    public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
-            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+            final List<? extends ClientWriteModel> clientWriteModels) throws ClientBulkWriteException {
         notNull("clientSession", clientSession);
         notNull("clientWriteModels", clientWriteModels);
-        notNull("tDocumentClass", tDocumentClass);
         throw Assertions.fail("BULK-TODO implement");
     }
 
     @Override
-    public <TDocument> ClientBulkWriteResult bulkWrite(
+    public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
-            final ClientBulkWriteOptions options,
-            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+            final List<? extends ClientWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         notNull("clientSession", clientSession);
         notNull("clientWriteModels", clientWriteModels);
         notNull("options", options);
-        notNull("tDocumentClass", tDocumentClass);
         throw Assertions.fail("BULK-TODO implement");
     }
 

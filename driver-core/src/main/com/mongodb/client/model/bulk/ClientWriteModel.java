@@ -33,27 +33,25 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An individual write operation to be executed as part of a client-level bulk write operation.
  *
- * @param <T> The document type, for example {@link Document}.
  * @since 5.3
  */
-// BULK-TODO I don't think T is needed
 @Sealed
-public interface ClientWriteModel<T> {
+public interface ClientWriteModel {
     /**
      * Creates a model for inserting the {@code document} into the {@code namespace}.
      *
      * @param namespace The namespace.
      * @param document The document.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
+     * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <T> ClientWriteModel<T> insertOne(
+    static <TDocument> ClientWriteModel insertOne(
             final MongoNamespace namespace,
-            final T document) {
+            final TDocument document) {
         notNull("namespace", namespace);
         notNull("document", document);
-        return new ClientInsertOneModel<>(namespace, document);
+        return new ClientInsertOneModel(namespace, document);
     }
 
     /**
@@ -65,18 +63,17 @@ public interface ClientWriteModel<T> {
      * @param filter The filter.
      * @param update The update.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateOne(
+    static ClientWriteModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
-        return new ClientUpdateOneModel<>(namespace, filter, update, null, null);
+        return new ClientUpdateOneModel(namespace, filter, update, null, null);
     }
 
     /**
@@ -87,11 +84,10 @@ public interface ClientWriteModel<T> {
      * @param update The update.
      * @param options The options.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateOne(
+    static ClientWriteModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update,
@@ -100,7 +96,7 @@ public interface ClientWriteModel<T> {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ClientUpdateOneModel<>(namespace, filter, update, null, options);
+        return new ClientUpdateOneModel(namespace, filter, update, null, options);
     }
 
     /**
@@ -112,18 +108,17 @@ public interface ClientWriteModel<T> {
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateOne(
+    static ClientWriteModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ClientUpdateOneModel<>(namespace, filter, null, updatePipeline, null);
+        return new ClientUpdateOneModel(namespace, filter, null, updatePipeline, null);
     }
 
     /**
@@ -134,11 +129,10 @@ public interface ClientWriteModel<T> {
      * @param updatePipeline The update pipeline.
      * @param options The options.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateOne(
+    static ClientWriteModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline,
@@ -147,7 +141,7 @@ public interface ClientWriteModel<T> {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ClientUpdateOneModel<>(namespace, filter, null, updatePipeline, options);
+        return new ClientUpdateOneModel(namespace, filter, null, updatePipeline, options);
     }
 
     /**
@@ -159,18 +153,17 @@ public interface ClientWriteModel<T> {
      * @param filter The filter.
      * @param update The update.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateMany(
+    static ClientWriteModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
-        return new ClientUpdateManyModel<>(namespace, filter, update, null, null);
+        return new ClientUpdateManyModel(namespace, filter, update, null, null);
     }
 
     /**
@@ -181,11 +174,10 @@ public interface ClientWriteModel<T> {
      * @param update The update.
      * @param options The options.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateMany(
+    static ClientWriteModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update,
@@ -194,7 +186,7 @@ public interface ClientWriteModel<T> {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ClientUpdateManyModel<>(namespace, filter, update, null, options);
+        return new ClientUpdateManyModel(namespace, filter, update, null, options);
     }
 
     /**
@@ -206,18 +198,17 @@ public interface ClientWriteModel<T> {
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateMany(
+    static ClientWriteModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ClientUpdateManyModel<>(namespace, filter, null, updatePipeline, null);
+        return new ClientUpdateManyModel(namespace, filter, null, updatePipeline, null);
     }
 
     /**
@@ -228,11 +219,10 @@ public interface ClientWriteModel<T> {
      * @param updatePipeline The update pipeline.
      * @param options The options.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      * @see Updates
      */
-    static <T> ClientWriteModel<T> updateMany(
+    static ClientWriteModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline,
@@ -241,7 +231,7 @@ public interface ClientWriteModel<T> {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ClientUpdateManyModel<>(namespace, filter, null, updatePipeline, options);
+        return new ClientUpdateManyModel(namespace, filter, null, updatePipeline, options);
     }
 
     /**
@@ -253,17 +243,17 @@ public interface ClientWriteModel<T> {
      * @param filter The filter.
      * @param replacement The replacement.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
+     * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <T> ClientWriteModel<T> replaceOne(
+    static <TDocument> ClientWriteModel replaceOne(
             final MongoNamespace namespace,
             final Bson filter,
-            final T replacement) {
+            final TDocument replacement) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("replacement", replacement);
-        return new ClientReplaceOneModel<>(namespace, filter, replacement, null);
+        return new ClientReplaceOneModel(namespace, filter, replacement, null);
     }
 
     /**
@@ -274,19 +264,19 @@ public interface ClientWriteModel<T> {
      * @param replacement The replacement.
      * @param options The options.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
+     * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <T> ClientWriteModel<T> replaceOne(
+    static <TDocument> ClientWriteModel replaceOne(
             final MongoNamespace namespace,
             final Bson filter,
-            final T replacement,
+            final TDocument replacement,
             final ClientReplaceOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("replacement", replacement);
         notNull("options", options);
-        return new ClientReplaceOneModel<>(namespace, filter, replacement, options);
+        return new ClientReplaceOneModel(namespace, filter, replacement, options);
     }
 
     /**
@@ -297,15 +287,14 @@ public interface ClientWriteModel<T> {
      * @param namespace The namespace.
      * @param filter The filter.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <T> ClientWriteModel<T> deleteOne(
+    static ClientWriteModel deleteOne(
             final MongoNamespace namespace,
             final Bson filter) {
         notNull("namespace", namespace);
         notNull("filter", filter);
-        return new ClientDeleteOneModel<>(namespace, filter, null);
+        return new ClientDeleteOneModel(namespace, filter, null);
     }
 
     /**
@@ -315,17 +304,16 @@ public interface ClientWriteModel<T> {
      * @param filter The filter.
      * @param options The options.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <T> ClientWriteModel<T> deleteOne(
+    static ClientWriteModel deleteOne(
             final MongoNamespace namespace,
             final Bson filter,
             final ClientDeleteOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);
-        return new ClientDeleteOneModel<>(namespace, filter, options);
+        return new ClientDeleteOneModel(namespace, filter, options);
     }
 
     /**
@@ -336,15 +324,14 @@ public interface ClientWriteModel<T> {
      * @param namespace The namespace.
      * @param filter The filter.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <T> ClientWriteModel<T> deleteMany(
+    static ClientWriteModel deleteMany(
             final MongoNamespace namespace,
             final Bson filter) {
         notNull("namespace", namespace);
         notNull("filter", filter);
-        return new ClientDeleteManyModel<>(namespace, filter, null);
+        return new ClientDeleteManyModel(namespace, filter, null);
     }
 
     /**
@@ -354,16 +341,15 @@ public interface ClientWriteModel<T> {
      * @param filter The filter.
      * @param options The options.
      * @return The requested model.
-     * @param <T> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <T> ClientWriteModel<T> deleteMany(
+    static ClientWriteModel deleteMany(
             final MongoNamespace namespace,
             final Bson filter,
             final ClientDeleteOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);
-        return new ClientDeleteManyModel<>(namespace, filter, options);
+        return new ClientDeleteManyModel(namespace, filter, options);
     }
 }

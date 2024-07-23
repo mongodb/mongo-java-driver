@@ -128,31 +128,27 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
   private def unwrap(clientSession: ClientSession): org.mongodb.scala.ClientSession =
     clientSession.asInstanceOf[SyncClientSession].wrapped
 
-  override def bulkWrite[TDocument](
-      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
-      documentClass: Class[TDocument]
+  override def bulkWrite(
+      models: util.List[_ <: ClientWriteModel]
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
 
-  override def bulkWrite[TDocument](
-      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
-      options: ClientBulkWriteOptions,
-      documentClass: Class[TDocument]
+  override def bulkWrite(
+      models: util.List[_ <: ClientWriteModel],
+      options: ClientBulkWriteOptions
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
 
-  override def bulkWrite[TDocument](
+  override def bulkWrite(
       clientSession: ClientSession,
-      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
-      documentClass: Class[TDocument]
+      models: util.List[_ <: ClientWriteModel]
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
 
-  override def bulkWrite[TDocument](
+  override def bulkWrite(
       clientSession: ClientSession,
-      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
-      options: ClientBulkWriteOptions,
-      documentClass: Class[TDocument]
+      models: util.List[_ <: ClientWriteModel],
+      options: ClientBulkWriteOptions
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
 }

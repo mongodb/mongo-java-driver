@@ -26,7 +26,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientUpdateManyModel<T> implements ClientWriteModel<T> {
+public final class ClientUpdateManyModel implements ClientWriteModel {
     private final MongoNamespace namespace;
     private final Bson filter;
     @Nullable
