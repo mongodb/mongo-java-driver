@@ -16,10 +16,12 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -39,10 +41,10 @@ import org.bson.codecs.RawBsonDocumentCodec;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.cursor.TimeoutMode.CURSOR_LIFETIME;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -69,10 +71,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     }
 
     public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
-            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline,
-            final Decoder<T> decoder, final ChangeStreamLevel changeStreamLevel) {
-        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC,
-                getAggregateTarget(), getPipelineCreator());
+            final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+            final ChangeStreamLevel changeStreamLevel) {
+        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC, getAggregateTarget(),
+                getPipelineCreator()).cursorType(CursorType.TailableAwait);
         this.fullDocument = notNull("fullDocument", fullDocument);
         this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
         this.decoder = notNull("decoder", decoder);
@@ -122,15 +124,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return this;
     }
 
-    public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        return wrapped.getMaxAwaitTime(timeUnit);
-    }
-
-    public ChangeStreamOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
-        return this;
-    }
-
     public Collation getCollation() {
         return wrapped.getCollation();
     }
@@ -177,9 +170,34 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return this;
     }
 
+    /**
+     * Gets an aggregate operation with consideration for timeout settings.
+     * <p>
+     * Change streams act similarly to tailable awaitData cursors, with identical timeoutMS option behavior.
+     * Key distinctions include:
+     * - The timeoutMS option must be applied at the start of the aggregate operation for change streams.
+     * - Change streams support resumption on next() calls. The driver handles automatic resumption for transient errors.
+     * <p>
+     *
+     * As a result, when {@code timeoutContext.hasTimeoutMS()} the CURSOR_LIFETIME setting is utilized to manage the underlying cursor's
+     * lifespan in change streams.
+     *
+     * @param timeoutContext
+     * @return An AggregateOperationImpl
+     */
+    private AggregateOperationImpl<RawBsonDocument> getAggregateOperation(final TimeoutContext timeoutContext) {
+        if (timeoutContext.hasTimeoutMS()) {
+            return wrapped.timeoutMode(CURSOR_LIFETIME);
+        }
+        return wrapped;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        CommandBatchCursor<RawBsonDocument> cursor = (CommandBatchCursor<RawBsonDocument>) wrapped.execute(binding);
+        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+        CommandBatchCursor<RawBsonDocument> cursor = (CommandBatchCursor<RawBsonDocument>) getAggregateOperation(timeoutContext).execute(binding);
+        cursor.setCloseWithoutTimeoutReset(true);
+
             return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                     setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
                             cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion());
@@ -187,11 +205,14 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        wrapped.executeAsync(binding, (result, t) -> {
+        TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
+        getAggregateOperation(timeoutContext).executeAsync(binding, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
                 AsyncCommandBatchCursor<RawBsonDocument> cursor = (AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result);
+                cursor.setCloseWithoutTimeoutReset(true);
+
                 callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                         setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
                                 cursor.getMaxWireVersion(), cursor.isFirstBatchEmpty()), cursor.getMaxWireVersion()), null);

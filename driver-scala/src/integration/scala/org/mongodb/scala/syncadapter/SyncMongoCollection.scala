@@ -34,7 +34,9 @@ import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.result.{ InsertManyResult, InsertOneResult }
 
 import java.util
+import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCollection[T] {
@@ -52,6 +54,13 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
   override def getWriteConcern: WriteConcern = wrapped.writeConcern
 
   override def getReadConcern: ReadConcern = wrapped.readConcern
+
+  override def getTimeout(timeUnit: TimeUnit): java.lang.Long = {
+    wrapped.timeout match {
+      case Some(value) => timeUnit.convert(value.toMillis, MILLISECONDS)
+      case None        => null
+    }
+  }
 
   override def withDocumentClass[NewTDocument](clazz: Class[NewTDocument]): JMongoCollection[NewTDocument] =
     SyncMongoCollection[NewTDocument](
@@ -72,6 +81,9 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
 
   override def withReadConcern(readConcern: ReadConcern): JMongoCollection[T] =
     SyncMongoCollection[T](wrapped.withReadConcern(readConcern))
+
+  override def withTimeout(timeout: Long, timeUnit: TimeUnit): JMongoCollection[T] =
+    SyncMongoCollection[T](wrapped.withTimeout(Duration(timeout, timeUnit)))
 
   override def countDocuments: Long = wrapped.countDocuments().toFuture().get()
 
@@ -556,7 +568,7 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
 
   override def createSearchIndex(definition: Bson): String = wrapped.createSearchIndex(definition).toFuture().get()
 
-  override def createSearchIndexes(searchIndexModels: util.List[SearchIndexModel]): util.List[String] =
+  override def createSearchIndexes(searchIndexModels: java.util.List[SearchIndexModel]): java.util.List[String] =
     wrapped.createSearchIndexes(searchIndexModels.asScala.toList).toFuture().get().asJava
 
   override def updateSearchIndex(indexName: String, definition: Bson): Unit =

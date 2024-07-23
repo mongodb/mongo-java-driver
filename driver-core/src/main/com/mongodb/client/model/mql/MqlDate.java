@@ -17,6 +17,7 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 import java.util.function.Function;
@@ -30,7 +31,7 @@ import java.util.function.Function;
  * @since 4.9.0
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface MqlDate extends MqlValue {
 
     /**

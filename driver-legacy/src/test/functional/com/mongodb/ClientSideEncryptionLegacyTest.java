@@ -47,6 +47,7 @@ public class ClientSideEncryptionLegacyTest extends AbstractClientSideEncryption
 
     @After
     public void cleanUp() {
+        super.cleanUp();
         if (mongoClient != null) {
             mongoClient.close();
         }

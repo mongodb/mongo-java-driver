@@ -32,6 +32,7 @@ import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
@@ -46,6 +47,7 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.UuidRepresentation.C_SHARP_LEGACY
 import static org.bson.UuidRepresentation.UNSPECIFIED
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -54,7 +56,8 @@ import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
 
-    private static CodecRegistry codecRegistry = fromProviders(new ValueCodecProvider())
+    private static final CodecRegistry CODEC_REGISTRY = fromProviders(new ValueCodecProvider())
+    private static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(120))
 
     def 'should pass the correct settings to getDatabase'() {
         given:
@@ -63,7 +66,7 @@ class MongoClientSpecification extends Specification {
                 .writeConcern(WriteConcern.MAJORITY)
                 .readConcern(ReadConcern.MAJORITY)
                 .retryWrites(true)
-                .codecRegistry(codecRegistry)
+                .codecRegistry(CODEC_REGISTRY)
                 .build()
         def client = new MongoClientImpl(Stub(Cluster), null, settings, new TestOperationExecutor([]))
 
@@ -74,8 +77,9 @@ class MongoClientSpecification extends Specification {
         expect database, isTheSameAs(expectedDatabase)
 
         where:
-        expectedDatabase << new MongoDatabaseImpl('name', withUuidRepresentation(codecRegistry, UNSPECIFIED), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, null, new TestOperationExecutor([]))
+        expectedDatabase << new MongoDatabaseImpl('name', withUuidRepresentation(CODEC_REGISTRY, UNSPECIFIED), secondary(),
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, null,
+                TIMEOUT_SETTINGS, new TestOperationExecutor([]))
     }
 
     def 'should use ListDatabasesIterableImpl correctly'() {
@@ -90,14 +94,14 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, Document,
-                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, TIMEOUT_SETTINGS))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, TIMEOUT_SETTINGS))
 
         when:
         def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session) as MongoIterable<String>
@@ -105,7 +109,8 @@ class MongoClientSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true).nameOnly(true))
+                withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED), primary(), executor, true, TIMEOUT_SETTINGS)
+                .nameOnly(true))
 
         cleanup:
         client?.close()
@@ -134,7 +139,7 @@ class MongoClientSpecification extends Specification {
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
                 withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
-                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true),
+                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true, TIMEOUT_SETTINGS),
                 ['codec'])
 
         when:
@@ -144,7 +149,7 @@ class MongoClientSpecification extends Specification {
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
                 withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
                 readPreference, readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT,
-                true), ['codec'])
+                true, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
@@ -153,7 +158,7 @@ class MongoClientSpecification extends Specification {
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace,
                 withUuidRepresentation(getDefaultCodecRegistry(), UNSPECIFIED),
                 readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
-                ChangeStreamLevel.CLIENT, true), ['codec'])
+                ChangeStreamLevel.CLIENT, true, TIMEOUT_SETTINGS), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]

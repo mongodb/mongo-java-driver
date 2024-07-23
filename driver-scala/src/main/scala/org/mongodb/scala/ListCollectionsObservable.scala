@@ -16,6 +16,8 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
+
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
 import org.mongodb.scala.bson.BsonValue
@@ -91,6 +93,22 @@ case class ListCollectionsObservable[TResult](wrapped: ListCollectionsPublisher[
    */
   def comment(comment: BsonValue): ListCollectionsObservable[TResult] = {
     wrapped.comment(comment)
+    this
+  }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): ListCollectionsObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

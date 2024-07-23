@@ -18,6 +18,8 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncOperations;
@@ -29,9 +31,12 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
@@ -39,6 +44,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     private final ClientSession clientSession;
     private final MongoOperationPublisher<T> mongoOperationPublisher;
     private Integer batchSize;
+    private TimeoutMode timeoutMode;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
         this(clientSession, mongoOperationPublisher, null);
@@ -52,6 +58,7 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     abstract AsyncReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(int initialBatchSize);
+    abstract Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings();
 
     AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
         return asAsyncReadOperation(1);
@@ -101,6 +108,19 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
         return this;
     }
 
+    public Publisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        if (mongoOperationPublisher.getTimeoutSettings().getTimeoutMS() == null) {
+            throw new IllegalArgumentException("TimeoutMode requires timeoutMS to be set.");
+        }
+        this.timeoutMode = timeoutMode;
+        return this;
+    }
+
+    @Nullable
+    public TimeoutMode getTimeoutMode() {
+        return timeoutMode;
+    }
+
     public Publisher<T> first() {
         return batchCursor(this::asAsyncFirstReadOperation)
                 .flatMap(batchCursor -> Mono.create(sink -> {
@@ -130,7 +150,18 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     }
 
     Mono<BatchCursor<T>> batchCursor(final Supplier<AsyncReadOperation<AsyncBatchCursor<T>>> supplier) {
-        return mongoOperationPublisher.createReadOperationMono(supplier, clientSession).map(BatchCursor::new);
+        return mongoOperationPublisher.createReadOperationMono(getTimeoutSettings(), supplier, clientSession).map(BatchCursor::new);
     }
 
+
+    protected long validateMaxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        Long timeoutMS = mongoOperationPublisher.getTimeoutSettings().getTimeoutMS();
+        long maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+
+        isTrueArgument("maxAwaitTimeMS must be less than timeoutMS", timeoutMS == null || timeoutMS == 0
+                || timeoutMS > maxAwaitTimeMS);
+
+        return maxAwaitTimeMS;
+    }
 }

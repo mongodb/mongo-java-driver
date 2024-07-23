@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
@@ -66,6 +67,16 @@ public class TestOperationExecutor implements OperationExecutor {
         writeOperations.add(operation);
         readConcerns.add(readConcern);
         return getResponse();
+    }
+
+    @Override
+    public OperationExecutor withTimeoutSettings(final TimeoutSettings timeoutSettings) {
+        return this;
+    }
+
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @SuppressWarnings("unchecked")

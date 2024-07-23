@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import org.bson.conversions.Bson;
@@ -29,7 +30,7 @@ import org.bson.conversions.Bson;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface SearchOptions extends Bson {
     /**
      * Creates a new {@link SearchOptions} with the index name specified.
@@ -53,7 +54,7 @@ public interface SearchOptions extends Bson {
      * @param option The counting option.
      * @return A new {@link SearchOptions}.
      */
-    @Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
+    @Beta({Reason.CLIENT, Reason.SERVER})
     SearchOptions count(SearchCount option);
 
     /**
@@ -63,7 +64,7 @@ public interface SearchOptions extends Bson {
      * @return A new {@link SearchOptions}.
      * @mongodb.atlas.manual atlas-search/return-stored-source/ Return stored source fields
      */
-    @Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
+    @Beta({Reason.CLIENT, Reason.SERVER})
     SearchOptions returnStoredSource(boolean returnStoredSource);
 
     /**

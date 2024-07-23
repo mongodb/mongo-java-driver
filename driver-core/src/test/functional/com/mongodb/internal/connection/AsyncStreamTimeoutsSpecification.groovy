@@ -18,7 +18,6 @@ package com.mongodb.internal.connection
 
 import com.mongodb.LoggerSettings
 import com.mongodb.MongoSocketOpenException
-import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterConnectionMode
@@ -26,26 +25,20 @@ import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.internal.connection.netty.NettyStreamFactory
-import org.bson.BsonDocument
-import org.bson.BsonInt32
-import org.bson.BsonString
 import spock.lang.IgnoreIf
 import util.spock.annotations.Slow
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.getClusterConnectionMode
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getCredentialWithCache
-import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.internal.connection.CommandHelper.executeCommand
 
 @Slow
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build()
-    static SocketSettings readSocketSettings = SocketSettings.builder().readTimeout(5, TimeUnit.SECONDS).build()
 
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw a MongoSocketOpenException when the AsynchronousSocket Stream fails to open'() {
@@ -56,33 +49,10 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 .create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         thrown(MongoSocketOpenException)
-    }
-
-    @IgnoreIf({ getSslSettings().isEnabled() })
-    def 'should throw a MongoSocketReadTimeoutException with the AsynchronousSocket stream'() {
-        given:
-        def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
-                new AsynchronousSocketChannelStreamFactory(new DefaultInetAddressResolver(), readSocketSettings, getSslSettings()),
-                getCredentialWithCache(), null, null,
-                [], LoggerSettings.builder().build(), null, getServerApi()).create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open()
-
-        getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
-        def countCommand = new BsonDocument('count', new BsonString(getCollectionName()))
-        countCommand.put('query', new BsonDocument('$where', new BsonString('sleep(5050); return true;')))
-
-        when:
-        executeCommand(getDatabaseName(), countCommand,  getClusterConnectionMode(), getServerApi(), connection)
-
-        then:
-        thrown(MongoSocketReadTimeoutException)
-
-        cleanup:
-        connection?.close()
     }
 
     def 'should throw a MongoSocketOpenException when the Netty Stream fails to open'() {
@@ -93,32 +63,10 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
                 new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
 
         then:
         thrown(MongoSocketOpenException)
-    }
-
-
-    def 'should throw a MongoSocketReadTimeoutException with the Netty stream'() {
-        given:
-        def connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
-                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialWithCache(), null, null,
-                [], LoggerSettings.builder().build(), null, getServerApi()).create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open()
-
-        getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)))
-        def countCommand = new BsonDocument('count', new BsonString(getCollectionName()))
-        countCommand.put('query', new BsonDocument('$where', new BsonString('sleep(5050); return true;')))
-
-        when:
-        executeCommand(getDatabaseName(), countCommand, getClusterConnectionMode(), getServerApi(), connection)
-
-        then:
-        thrown(MongoSocketReadTimeoutException)
-
-        cleanup:
-        connection?.close()
     }
 
 }

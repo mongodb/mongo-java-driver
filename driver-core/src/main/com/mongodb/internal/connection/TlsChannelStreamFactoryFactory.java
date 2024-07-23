@@ -180,7 +180,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
         }
 
         @Override
-        public void openAsync(final AsyncCompletionHandler<Void> handler) {
+        public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
             isTrue("unopened", getChannel() == null);
             try {
                 SocketChannel socketChannel = SocketChannel.open();

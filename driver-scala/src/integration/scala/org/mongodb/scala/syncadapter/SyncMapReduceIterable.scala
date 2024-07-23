@@ -16,12 +16,12 @@
 
 package org.mongodb.scala.syncadapter
 
-import java.util.concurrent.TimeUnit
-
 import com.mongodb.client.MapReduceIterable
 import com.mongodb.client.model.{ Collation, MapReduceAction }
 import org.bson.conversions.Bson
-import org.mongodb.scala.MapReduceObservable
+import org.mongodb.scala.{ MapReduceObservable, TimeoutMode }
+
+import java.util.concurrent.TimeUnit
 
 case class SyncMapReduceIterable[T](wrapped: MapReduceObservable[T])
     extends SyncMongoIterable[T]
@@ -88,6 +88,11 @@ case class SyncMapReduceIterable[T](wrapped: MapReduceObservable[T])
     this
   }
 
+  override def timeoutMode(timeoutMode: TimeoutMode): MapReduceIterable[T] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
+
   override def bypassDocumentValidation(bypassDocumentValidation: java.lang.Boolean): MapReduceIterable[T] = {
     wrapped.bypassDocumentValidation(bypassDocumentValidation)
     this
@@ -97,4 +102,5 @@ case class SyncMapReduceIterable[T](wrapped: MapReduceObservable[T])
     wrapped.collation(collation)
     this
   }
+
 }

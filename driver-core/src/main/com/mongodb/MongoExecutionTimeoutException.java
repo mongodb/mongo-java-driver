@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import org.bson.BsonDocument;
 
 /**
@@ -25,6 +27,18 @@ import org.bson.BsonDocument;
  */
 public class MongoExecutionTimeoutException extends MongoException {
     private static final long serialVersionUID = 5955669123800274594L;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param message the error message
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public MongoExecutionTimeoutException(final String message) {
+        super(message);
+
+    }
 
     /**
      * Construct a new instance.

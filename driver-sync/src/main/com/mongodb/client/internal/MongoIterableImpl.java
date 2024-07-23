@@ -22,13 +22,17 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -40,15 +44,18 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     private final OperationExecutor executor;
     private final ReadPreference readPreference;
     private final boolean retryReads;
+    private final TimeoutSettings timeoutSettings;
     private Integer batchSize;
+    private TimeoutMode timeoutMode;
 
     public MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
-                             final ReadPreference readPreference, final boolean retryReads) {
+                             final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
         this.clientSession = clientSession;
         this.executor = notNull("executor", executor);
         this.readConcern = notNull("readConcern", readConcern);
         this.readPreference = notNull("readPreference", readPreference);
-        this.retryReads = notNull("retryReads", retryReads);
+        this.retryReads = retryReads;
+        this.timeoutSettings = timeoutSettings;
     }
 
     public abstract ReadOperation<BatchCursor<TResult>> asReadOperation();
@@ -58,8 +65,10 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return clientSession;
     }
 
-    OperationExecutor getExecutor() {
-        return executor;
+    protected abstract OperationExecutor getExecutor();
+
+    OperationExecutor getExecutor(final TimeoutSettings timeoutSettings) {
+        return executor.withTimeoutSettings(timeoutSettings);
     }
 
     ReadPreference getReadPreference() {
@@ -74,6 +83,10 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return retryReads;
     }
 
+    protected TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
+    }
+
     @Nullable
     public Integer getBatchSize() {
         return batchSize;
@@ -82,6 +95,19 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     @Override
     public MongoIterable<TResult> batchSize(final int batchSize) {
         this.batchSize = batchSize;
+        return this;
+    }
+
+    @Nullable
+    public TimeoutMode getTimeoutMode() {
+        return timeoutMode;
+    }
+
+    public MongoIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        if (timeoutSettings.getTimeoutMS() == null) {
+            throw new IllegalArgumentException("TimeoutMode requires timeoutMS to be set.");
+        }
+        this.timeoutMode = timeoutMode;
         return this;
     }
 
@@ -127,6 +153,18 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     }
 
     private BatchCursor<TResult> execute() {
-        return executor.execute(asReadOperation(), readPreference, readConcern, clientSession);
+        return getExecutor().execute(asReadOperation(), readPreference, readConcern, clientSession);
+    }
+
+
+    protected long validateMaxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        Long timeoutMS = timeoutSettings.getTimeoutMS();
+        long maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+
+        isTrueArgument("maxAwaitTimeMS must be less than timeoutMS", timeoutMS == null || timeoutMS == 0
+                || timeoutMS > maxAwaitTimeMS);
+
+        return maxAwaitTimeMS;
     }
 }

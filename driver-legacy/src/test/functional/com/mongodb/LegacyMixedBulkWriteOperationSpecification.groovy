@@ -167,7 +167,8 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should return correct result for replace'() {
         given:
         def replacement = new UpdateRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)), REPLACE)
-        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED,
+                false, asList(replacement))
 
         when:
         def result = execute(operation)
@@ -182,11 +183,13 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
     def 'should replace a single document'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
+        createBulkWriteOperationForInsert(getNamespace(), true, ACKNOWLEDGED, false, asList(insert))
+                .execute(getBinding())
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                 new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
-        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED,
+                false, asList(replacement))
 
         when:
         def result = execute(operation)
@@ -205,7 +208,8 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                 new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
                 .upsert(true)
-        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
+        def operation = createBulkWriteOperationForReplace(getNamespace(), true, ACKNOWLEDGED,
+                false, asList(replacement))
 
         when:
         execute(operation)
@@ -216,9 +220,9 @@ class LegacyMixedBulkWriteOperationSpecification extends OperationFunctionalSpec
 
     def 'should update nothing if no documents match'() {
         given:
-        def operation = createBulkWriteOperationForUpdate(getNamespace(), true, ACKNOWLEDGED, false,
-                asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
-                        new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(false)))
+        def operation = createBulkWriteOperationForUpdate(getNamespace(), true, ACKNOWLEDGED,
+                false, asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
+                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))), UPDATE).multi(false)))
 
         when:
         WriteConcernResult result = execute(operation)

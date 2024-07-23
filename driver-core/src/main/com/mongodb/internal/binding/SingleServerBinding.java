@@ -17,18 +17,13 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
 import com.mongodb.ServerAddress;
-import com.mongodb.ServerApi;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ServerTuple;
 import com.mongodb.internal.selector.ServerAddressSelector;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -40,25 +35,18 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class SingleServerBinding extends AbstractReferenceCounted implements ReadWriteBinding {
     private final Cluster cluster;
     private final ServerAddress serverAddress;
-    @Nullable
-    private final ServerApi serverApi;
-    private final RequestContext requestContext;
     private final OperationContext operationContext;
 
     /**
      * Creates an instance, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
      * @param cluster       a non-null  Cluster which will be used to select a server to bind to
      * @param serverAddress a non-null  address of the server to bind to
-     * @param serverApi     the server API, which may be null
-     * @param requestContext the request context, which may not be null
+     * @param operationContext the operation context
      */
-    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, @Nullable final ServerApi serverApi,
-            final RequestContext requestContext) {
+    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final OperationContext operationContext) {
         this.cluster = notNull("cluster", cluster);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.serverApi = serverApi;
-        this.requestContext = notNull("requestContext", requestContext);
-        operationContext = new OperationContext();
+        this.operationContext = notNull("operationContext", operationContext);
     }
 
     @Override
@@ -79,22 +67,6 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     @Override
     public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public SessionContext getSessionContext() {
-        return NoOpSessionContext.INSTANCE;
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return serverApi;
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return requestContext;
     }
 
     @Override
@@ -123,23 +95,8 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         }
 
         @Override
-        public SessionContext getSessionContext() {
-            return NoOpSessionContext.INSTANCE;
-        }
-
-        @Override
         public OperationContext getOperationContext() {
             return operationContext;
-        }
-
-        @Override
-        public ServerApi getServerApi() {
-            return serverApi;
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return requestContext;
         }
 
         @Override
@@ -149,8 +106,10 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         @Override
         public Connection getConnection() {
-            return cluster.selectServer(new ServerAddressSelector(serverAddress), operationContext)
-                    .getServer().getConnection(operationContext);
+            return cluster
+                    .selectServer(new ServerAddressSelector(serverAddress), operationContext)
+                    .getServer()
+                    .getConnection(operationContext);
         }
 
         @Override

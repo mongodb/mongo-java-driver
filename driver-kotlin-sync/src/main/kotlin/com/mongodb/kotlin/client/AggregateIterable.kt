@@ -16,7 +16,10 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.AggregateIterable as JAggregateIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -30,14 +33,32 @@ import org.bson.conversions.Bson
  * @see [Aggregation command](https://www.mongodb.com/docs/manual/reference/command/aggregate)
  */
 public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<T>) : MongoIterable<T>(wrapped) {
+
+    public override fun batchSize(batchSize: Int): AggregateIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
     /**
-     * Sets the number of documents to return per batch.
+     * Sets the timeoutMode for the cursor.
      *
-     * @param batchSize the batch size
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * If the `timeout` is set then:
+     * * For non-tailable cursors, the default value of timeoutMode is [TimeoutMode.CURSOR_LIFETIME]
+     * * For tailable cursors, the default value of timeoutMode is [TimeoutMode.ITERATION] and its an error to configure
+     *   it as: [TimeoutMode.CURSOR_LIFETIME]
+     *
+     * @param timeoutMode the timeout mode
      * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     * @since 5.2
      */
-    public override fun batchSize(batchSize: Int): AggregateIterable<T> = apply { wrapped.batchSize(batchSize) }
+    @Alpha(Reason.CLIENT)
+    public fun timeoutMode(timeoutMode: TimeoutMode): AggregateIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
 
     /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.

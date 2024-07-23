@@ -29,10 +29,10 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.inject.Provider;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
@@ -73,6 +73,7 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ServerId serverId;
     private final ServerMonitorListener serverMonitorListener;
     private final Provider<SdamServerDescriptionManager> sdamProvider;
+    private final InternalOperationContextFactory operationContextFactory;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ClusterConnectionMode clusterConnectionMode;
     @Nullable
@@ -85,22 +86,24 @@ class DefaultServerMonitor implements ServerMonitor {
      */
     @Nullable
     private RoundTripTimeMonitor roundTripTimeMonitor;
-    private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
+    private final RoundTripTimeSampler roundTripTimeSampler = new RoundTripTimeSampler();
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile boolean isClosed;
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
             final InternalConnectionFactory internalConnectionFactory,
-                         final ClusterConnectionMode clusterConnectionMode,
-                         @Nullable final ServerApi serverApi,
-                         final boolean isFunctionAsAServiceEnvironment,
-                         final Provider<SdamServerDescriptionManager> sdamProvider) {
+            final ClusterConnectionMode clusterConnectionMode,
+            @Nullable final ServerApi serverApi,
+            final boolean isFunctionAsAServiceEnvironment,
+            final Provider<SdamServerDescriptionManager> sdamProvider,
+            final InternalOperationContextFactory operationContextFactory) {
         this.serverSettings = notNull("serverSettings", serverSettings);
         this.serverId = notNull("serverId", serverId);
         this.serverMonitorListener = singleServerMonitorListener(serverSettings);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
+        this.operationContextFactory = assertNotNull(operationContextFactory);
         this.serverApi = serverApi;
         this.isFunctionAsAServiceEnvironment = isFunctionAsAServiceEnvironment;
         this.sdamProvider = sdamProvider;
@@ -135,7 +138,7 @@ class DefaultServerMonitor implements ServerMonitor {
             isClosed = true;
             //noinspection EmptyTryBlock
             try (ServerMonitor ignoredAutoClosed = monitor;
-                RoundTripTimeMonitor ignoredAutoClose2 = roundTripTimeMonitor) {
+                 RoundTripTimeMonitor ignoredAutoClose2 = roundTripTimeMonitor) {
                 // we are automatically closing resources here
             }
         });
@@ -213,9 +216,9 @@ class DefaultServerMonitor implements ServerMonitor {
                 if (connection == null || connection.isClosed()) {
                     currentCheckCancelled = false;
                     InternalConnection newConnection = internalConnectionFactory.create(serverId);
-                    newConnection.open();
+                    newConnection.open(operationContextFactory.create());
                     connection = newConnection;
-                    averageRoundTripTime.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+                    roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
                     return connection.getInitialServerDescription();
                 }
 
@@ -228,7 +231,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
                 long start = System.nanoTime();
                 try {
-                    SessionContext sessionContext = NoOpSessionContext.INSTANCE;
+                    OperationContext operationContext = operationContextFactory.create();
                     if (!connection.hasMoreToCome()) {
                         BsonDocument helloDocument = new BsonDocument(getHandshakeCommandName(currentServerDescription), new BsonInt32(1))
                                 .append("helloOk", BsonBoolean.TRUE);
@@ -238,26 +241,26 @@ class DefaultServerMonitor implements ServerMonitor {
                         }
 
                         connection.send(createCommandMessage(helloDocument, connection, currentServerDescription), new BsonDocumentCodec(),
-                                sessionContext);
+                                operationContext);
                     }
 
                     BsonDocument helloResult;
                     if (shouldStreamResponses) {
-                        helloResult = connection.receive(new BsonDocumentCodec(), sessionContext,
-                                Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+                        helloResult = connection.receive(new BsonDocumentCodec(), operationContextWithAdditionalTimeout(operationContext));
                     } else {
-                        helloResult = connection.receive(new BsonDocumentCodec(), sessionContext);
+                        helloResult = connection.receive(new BsonDocumentCodec(), operationContext);
                     }
 
                     long elapsedTimeNanos = System.nanoTime() - start;
                     if (!shouldStreamResponses) {
-                        averageRoundTripTime.addSample(elapsedTimeNanos);
+                        roundTripTimeSampler.addSample(elapsedTimeNanos);
                     }
                     serverMonitorListener.serverHeartbeatSucceeded(
                             new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), helloResult,
                                     elapsedTimeNanos, shouldStreamResponses));
 
-                    return createServerDescription(serverId.getAddress(), helloResult, averageRoundTripTime.getAverage());
+                    return createServerDescription(serverId.getAddress(), helloResult, roundTripTimeSampler.getAverage(),
+                            roundTripTimeSampler.getMin());
                 } catch (Exception e) {
                     serverMonitorListener.serverHeartbeatFailed(
                             new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start,
@@ -265,7 +268,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     throw e;
                 }
             } catch (Throwable t) {
-                averageRoundTripTime.reset();
+                roundTripTimeSampler.reset();
                 InternalConnection localConnection = withLock(lock, () -> {
                     InternalConnection result = connection;
                     connection = null;
@@ -276,6 +279,12 @@ class DefaultServerMonitor implements ServerMonitor {
                 }
                 return unknownConnectingServerDescription(serverId, t);
             }
+        }
+
+        private OperationContext operationContextWithAdditionalTimeout(final OperationContext originalOperationContext) {
+            TimeoutContext newTimeoutContext = originalOperationContext.getTimeoutContext()
+                    .withAdditionalReadTimeout(Math.toIntExact(serverSettings.getHeartbeatFrequency(MILLISECONDS)));
+            return originalOperationContext.withTimeoutContext(newTimeoutContext);
         }
 
         private boolean shouldStreamResponses(final ServerDescription currentServerDescription) {
@@ -297,7 +306,7 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,
-                                                    final ServerDescription currentServerDescription) {
+                final ServerDescription currentServerDescription) {
             return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), command,
                     new NoOpFieldNameValidator(), primary(),
                     MessageSettings.builder()
@@ -307,7 +316,7 @@ class DefaultServerMonitor implements ServerMonitor {
         }
 
         private void logStateChange(final ServerDescription previousServerDescription,
-                                    final ServerDescription currentServerDescription) {
+                final ServerDescription currentServerDescription) {
             if (shouldLogStageChange(previousServerDescription, currentServerDescription)) {
                 if (currentServerDescription.getException() != null) {
                     LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverId.getAddress()),
@@ -395,12 +404,12 @@ class DefaultServerMonitor implements ServerMonitor {
         }
         ObjectId previousElectionId = previous.getElectionId();
         if (previousElectionId != null
-                    ? !previousElectionId.equals(current.getElectionId()) : current.getElectionId() != null) {
+                ? !previousElectionId.equals(current.getElectionId()) : current.getElectionId() != null) {
             return true;
         }
         Integer setVersion = previous.getSetVersion();
         if (setVersion != null
-                    ? !setVersion.equals(current.getSetVersion()) : current.getSetVersion() != null) {
+                ? !setVersion.equals(current.getSetVersion()) : current.getSetVersion() != null) {
             return true;
         }
 
@@ -470,17 +479,18 @@ class DefaultServerMonitor implements ServerMonitor {
         private void initialize() {
             connection = null;
             connection = internalConnectionFactory.create(serverId);
-            connection.open();
-            averageRoundTripTime.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
+            connection.open(operationContextFactory.create());
+            roundTripTimeSampler.addSample(connection.getInitialServerDescription().getRoundTripTimeNanos());
         }
 
         private void pingServer(final InternalConnection connection) {
             long start = System.nanoTime();
+            OperationContext operationContext = operationContextFactory.create();
             executeCommand("admin",
                     new BsonDocument(getHandshakeCommandName(connection.getInitialServerDescription()), new BsonInt32(1)),
-                    clusterConnectionMode, serverApi, connection);
+                    clusterConnectionMode, serverApi, connection, operationContext);
             long elapsedTimeNanos = System.nanoTime() - start;
-            averageRoundTripTime.addSample(elapsedTimeNanos);
+            roundTripTimeSampler.addSample(elapsedTimeNanos);
         }
     }
 

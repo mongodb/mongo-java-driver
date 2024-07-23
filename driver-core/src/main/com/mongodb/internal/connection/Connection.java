@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -47,11 +46,11 @@ public interface Connection extends ReferenceCounted {
 
     @Nullable
     <T> T command(String database, BsonDocument command, FieldNameValidator fieldNameValidator, @Nullable ReadPreference readPreference,
-            Decoder<T> commandResultDecoder, BindingContext context);
+            Decoder<T> commandResultDecoder, OperationContext operationContext);
 
     @Nullable
     <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
-            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, BindingContext context,
+            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, OperationContext operationContext,
             boolean responseExpected, @Nullable SplittablePayload payload, @Nullable FieldNameValidator payloadFieldNameValidator);
 
 

@@ -17,6 +17,7 @@
 
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
@@ -71,6 +72,7 @@ class MapReduceFlowTest {
         flow.sort(bson)
         flow.verbose(true)
         flow.action(MapReduceAction.MERGE)
+        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).bypassDocumentValidation(true)
@@ -87,6 +89,7 @@ class MapReduceFlowTest {
         verify(wrapped).sort(bson)
         verify(wrapped).verbose(true)
         verify(wrapped).action(MapReduceAction.MERGE)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         whenever(wrapped.toCollection()).doReturn(Mono.empty())
         runBlocking { flow.toCollection() }

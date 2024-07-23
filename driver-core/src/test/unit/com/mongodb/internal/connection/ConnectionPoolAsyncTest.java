@@ -45,7 +45,7 @@ public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
             FutureResultCallback<InternalConnection> callback = new FutureResultCallback<>();
             return () -> {
                 try {
-                    getPool().getAsync(new OperationContext(), (connection, t) -> {
+                    getPool().getAsync(createOperationContext(), (connection, t) -> {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {

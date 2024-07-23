@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
@@ -36,7 +37,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface SearchScoreExpression extends Bson {
     /**
      * Returns a {@link SearchScoreExpression} that evaluates into the relevance score of a document.

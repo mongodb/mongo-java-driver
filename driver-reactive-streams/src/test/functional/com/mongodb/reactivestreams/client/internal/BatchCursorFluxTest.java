@@ -373,7 +373,7 @@ public class BatchCursorFluxTest {
 
         BsonDocument getMoreCommand = commandListener.getCommandStartedEvents().stream()
                 .filter(e -> e.getCommandName().equals("getMore"))
-                .map(e -> ((CommandStartedEvent) e).getCommand())
+                .map(CommandStartedEvent::getCommand)
                 .findFirst()
                 .get();
 

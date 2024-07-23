@@ -30,5 +30,5 @@ public interface CommandProtocol<T> {
 
     void executeAsync(InternalConnection connection, SingleResultCallback<T> callback);
 
-    CommandProtocol<T> sessionContext(SessionContext sessionContext);
+    CommandProtocol<T> withSessionContext(SessionContext sessionContext);
 }
