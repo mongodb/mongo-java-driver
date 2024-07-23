@@ -504,20 +504,6 @@ package object model {
     def apply(definition: Bson): SearchIndexModel = new com.mongodb.client.model.SearchIndexModel(definition)
 
     /**
-     * Construct an instance with the given Atlas Search index mapping definition.
-     *
-     * After calling this constructor, the `name` field will be `null`. In that case, when passing this
-     * `SearchIndexModel` to the `createSearchIndexes` method, the default search index name `default`
-     * will be used to create the search index.
-     *
-     * @param definition the search index mapping definition.
-     * @param indexType  the search index type.
-     * @return the SearchIndexModel
-     */
-    def apply(definition: Bson, indexType: SearchIndexType): SearchIndexModel =
-      new com.mongodb.client.model.SearchIndexModel(definition, indexType)
-
-    /**
      * Construct an instance with the given search index name and definition.
      *
      * @param indexName the name of the search index to create.
