@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -27,6 +28,9 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.reactivestreams.client.internal.BatchCursor;
 import org.bson.Document;
@@ -273,6 +277,38 @@ public class SyncMongoClient implements MongoClient {
         wrapped.close();
     }
 
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels, tDocumentClass);
+    }
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final ClientBulkWriteOptions options,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels, options, tDocumentClass);
+    }
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels, tDocumentClass);
+    }
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final ClientBulkWriteOptions options,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels, options, tDocumentClass);
+    }
 
     @Override
     public ClusterDescription getClusterDescription() {

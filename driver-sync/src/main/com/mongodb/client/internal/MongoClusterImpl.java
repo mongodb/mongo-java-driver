@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
@@ -30,6 +31,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
@@ -37,6 +39,9 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
@@ -305,6 +310,50 @@ final class MongoClusterImpl implements MongoCluster {
             final Class<TResult> clazz) {
         notNull("clientSession", clientSession);
         return createChangeStreamIterable(clientSession, pipeline, clazz);
+    }
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        notNull("clientWriteModels", clientWriteModels);
+        notNull("tDocumentClass", tDocumentClass);
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final ClientBulkWriteOptions options,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        notNull("clientWriteModels", clientWriteModels);
+        notNull("options", options);
+        notNull("tDocumentClass", tDocumentClass);
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        notNull("clientSession", clientSession);
+        notNull("clientWriteModels", clientWriteModels);
+        notNull("tDocumentClass", tDocumentClass);
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public <TDocument> ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientWriteModel<? extends TDocument>> clientWriteModels,
+            final ClientBulkWriteOptions options,
+            final Class<TDocument> tDocumentClass) throws ClientBulkWriteException {
+        notNull("clientSession", clientSession);
+        notNull("clientWriteModels", clientWriteModels);
+        notNull("options", options);
+        notNull("tDocumentClass", tDocumentClass);
+        throw Assertions.fail("BULK-TODO implement");
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {

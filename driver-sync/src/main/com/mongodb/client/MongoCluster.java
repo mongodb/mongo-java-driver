@@ -16,7 +16,9 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -24,6 +26,9 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.Reason;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -352,4 +357,96 @@ public interface MongoCluster {
      * @mongodb.driver.dochub core/changestreams Change Streams
      */
     <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
+
+    /**
+     * Executes a client-level bulk write operation.
+     * This method is functionally equivalent to {@link #bulkWrite(List, ClientBulkWriteOptions, Class)}
+     * with the {@linkplain ClientBulkWriteOptions#clientBulkWriteOptions() default options}.
+     *
+     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param documentClass The document class.
+     * @return The {@link ClientBulkWriteResult} if the operation is successful.
+     * @param <TDocument> The document type, for example {@link Document}.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
+     * and there is at least one of the following pieces of information to report:
+     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     * {@link ClientBulkWriteException#getPartialResult()}.
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3
+     * @mongodb.server.release 8.0
+     * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    <TDocument> ClientBulkWriteResult bulkWrite(
+            List<? extends ClientWriteModel<? extends TDocument>> models,
+            Class<TDocument> documentClass) throws ClientBulkWriteException;
+
+    /**
+     * Executes a client-level bulk write operation.
+     *
+     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param options The options.
+     * @param documentClass The document class.
+     * @return The {@link ClientBulkWriteResult} if the operation is successful.
+     * @param <TDocument> The document type, for example {@link Document}.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
+     * and there is at least one of the following pieces of information to report:
+     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     * {@link ClientBulkWriteException#getPartialResult()}.
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3
+     * @mongodb.server.release 8.0
+     * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    <TDocument> ClientBulkWriteResult bulkWrite(
+            List<? extends ClientWriteModel<? extends TDocument>> models,
+            ClientBulkWriteOptions options,
+            Class<TDocument> documentClass) throws ClientBulkWriteException;
+
+    /**
+     * Executes a client-level bulk write operation.
+     * This method is functionally equivalent to {@link #bulkWrite(ClientSession, List, ClientBulkWriteOptions, Class)}
+     * with the {@linkplain ClientBulkWriteOptions#clientBulkWriteOptions() default options}.
+     *
+     * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
+     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param documentClass The document class.
+     * @return The {@link ClientBulkWriteResult} if the operation is successful.
+     * @param <TDocument> The document type, for example {@link Document}.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
+     * and there is at least one of the following pieces of information to report:
+     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     * {@link ClientBulkWriteException#getPartialResult()}.
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3
+     * @mongodb.server.release 8.0
+     * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    <TDocument> ClientBulkWriteResult bulkWrite(
+            ClientSession clientSession,
+            List<? extends ClientWriteModel<? extends TDocument>> models,
+            Class<TDocument> documentClass) throws ClientBulkWriteException;
+
+    /**
+     * Executes a client-level bulk write operation.
+     *
+     * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
+     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param options The options.
+     * @param documentClass The document class.
+     * @return The {@link ClientBulkWriteResult} if the operation is successful.
+     * @param <TDocument> The document type, for example {@link Document}.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
+     * and there is at least one of the following pieces of information to report:
+     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     * {@link ClientBulkWriteException#getPartialResult()}.
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3
+     * @mongodb.server.release 8.0
+     * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    <TDocument> ClientBulkWriteResult bulkWrite(
+            ClientSession clientSession,
+            List<? extends ClientWriteModel<? extends TDocument>> models,
+            ClientBulkWriteOptions options,
+            Class<TDocument> documentClass) throws ClientBulkWriteException;
 }

@@ -1,5 +1,8 @@
 package org.mongodb.scala.syncadapter
 
+import com.mongodb.assertions.Assertions
+import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientWriteModel }
+import com.mongodb.client.result.bulk.ClientBulkWriteResult
 import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.{ ClientSession, MongoCluster => JMongoCluster, MongoDatabase => JMongoDatabase }
 import org.bson.Document
@@ -8,6 +11,7 @@ import org.bson.conversions.Bson
 import org.mongodb.scala.MongoCluster
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 
+import java.util
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
@@ -123,4 +127,32 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
 
   private def unwrap(clientSession: ClientSession): org.mongodb.scala.ClientSession =
     clientSession.asInstanceOf[SyncClientSession].wrapped
+
+  override def bulkWrite[TDocument](
+      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
+      documentClass: Class[TDocument]
+  ): ClientBulkWriteResult =
+    throw Assertions.fail("BULK-TODO implement")
+
+  override def bulkWrite[TDocument](
+      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
+      options: ClientBulkWriteOptions,
+      documentClass: Class[TDocument]
+  ): ClientBulkWriteResult =
+    throw Assertions.fail("BULK-TODO implement")
+
+  override def bulkWrite[TDocument](
+      clientSession: ClientSession,
+      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
+      documentClass: Class[TDocument]
+  ): ClientBulkWriteResult =
+    throw Assertions.fail("BULK-TODO implement")
+
+  override def bulkWrite[TDocument](
+      clientSession: ClientSession,
+      models: util.List[_ <: ClientWriteModel[_ <: TDocument]],
+      options: ClientBulkWriteOptions,
+      documentClass: Class[TDocument]
+  ): ClientBulkWriteResult =
+    throw Assertions.fail("BULK-TODO implement")
 }

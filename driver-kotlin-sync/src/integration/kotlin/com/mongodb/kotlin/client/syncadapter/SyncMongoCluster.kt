@@ -25,6 +25,9 @@ import com.mongodb.client.ListDatabasesIterable
 import com.mongodb.client.MongoCluster as JMongoCluster
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.MongoIterable
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions
+import com.mongodb.client.model.bulk.ClientWriteModel
+import com.mongodb.client.result.bulk.ClientBulkWriteResult
 import com.mongodb.kotlin.client.MongoCluster
 import java.util.concurrent.TimeUnit
 import org.bson.Document
@@ -109,6 +112,38 @@ internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoClu
         resultClass: Class<T>
     ): ChangeStreamIterable<T> =
         SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
+
+    override fun <TDocument : Any?> bulkWrite(
+        models: MutableList<out ClientWriteModel<out TDocument>>,
+        documentClass: Class<TDocument>
+    ): ClientBulkWriteResult {
+        TODO("BULK-TODO implement")
+    }
+
+    override fun <TDocument : Any?> bulkWrite(
+        models: MutableList<out ClientWriteModel<out TDocument>>,
+        options: ClientBulkWriteOptions,
+        documentClass: Class<TDocument>
+    ): ClientBulkWriteResult {
+        TODO("BULK-TODO implement")
+    }
+
+    override fun <TDocument : Any?> bulkWrite(
+        clientSession: ClientSession,
+        models: MutableList<out ClientWriteModel<out TDocument>>,
+        documentClass: Class<TDocument>
+    ): ClientBulkWriteResult {
+        TODO("BULK-TODO implement")
+    }
+
+    override fun <TDocument : Any?> bulkWrite(
+        clientSession: ClientSession,
+        models: MutableList<out ClientWriteModel<out TDocument>>,
+        options: ClientBulkWriteOptions,
+        documentClass: Class<TDocument>
+    ): ClientBulkWriteResult {
+        TODO("BULK-TODO implement")
+    }
 
     private fun ClientSession.unwrapped() = (this as SyncClientSession).wrapped
 }
