@@ -1881,11 +1881,6 @@ axes:
         variables:
           VAULT_NAME: "serverless"
         batchtime: 10080  # 7 days
-      - id: "terminating"
-        display_name: "Serverless Terminating Proxy"
-        variables:
-          VAULT_NAME: "serverless_next"
-        batchtime: 10080  # 7 days
 
 task_groups:
   - name: test_atlas_task_group_search_indexes

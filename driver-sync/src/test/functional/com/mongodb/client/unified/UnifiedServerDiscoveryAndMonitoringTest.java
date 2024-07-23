@@ -16,43 +16,31 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.junit.Before;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-public class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
-
-    public UnifiedServerDiscoveryAndMonitoringTest(@SuppressWarnings("unused") final String fileDescription,
-            @SuppressWarnings("unused") final String testDescription,
-            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-            final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/server-discovery-and-monitoring");
     }
 
-    @Before
-    public void before() {
-        skipTests(getDefinition());
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
+        doSkips(getDefinition());
     }
 
-    public static void skipTests(final BsonDocument definition) {
+    public static void doSkips(final BsonDocument definition) {
         String description = definition.getString("description", new BsonString("")).getValue();
-        assumeFalse("Skipping because our server monitoring events behave differently for now",
-                description.equals("connect with serverMonitoringMode=auto >=4.4"));
-        assumeFalse("Skipping because our server monitoring events behave differently for now",
-                description.equals("connect with serverMonitoringMode=stream >=4.4"));
+        assumeFalse(description.equals("connect with serverMonitoringMode=auto >=4.4"),
+                "Skipping because our server monitoring events behave differently for now");
+        assumeFalse(description.equals("connect with serverMonitoringMode=stream >=4.4"),
+                "Skipping because our server monitoring events behave differently for now");
     }
 }

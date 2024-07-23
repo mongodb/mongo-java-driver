@@ -16,30 +16,22 @@
 
 package com.mongodb.client.unified;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.mongodb.ClusterFixture.isDataLakeTest;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public class UnifiedAtlasDataLakeTest extends UnifiedSyncTest {
-
-    public UnifiedAtlasDataLakeTest(@SuppressWarnings("unused") final String fileDescription,
-            @SuppressWarnings("unused") final String testDescription, final String schemaVersion,
-            @Nullable final BsonArray runOnRequirements, final BsonArray entities, final BsonArray initialData,
-            final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
+final class UnifiedAtlasDataLakeTest extends UnifiedSyncTest {
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
         assumeTrue(isDataLakeTest());
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/atlas-data-lake-testing");
     }
 }
