@@ -1453,18 +1453,9 @@ final class UnifiedCrudHelper {
         MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument model = arguments.getDocument("model");
-        BsonDocument definition = model.getDocument("definition");
-        SearchIndexType type = getSearchIndexType(model.getString("type"));
 
         return resultOf(() -> {
-            if (model.containsKey("name")) {
-                String name = model.getString("name").getValue();
-                SearchIndexModel searchIndexModel = new SearchIndexModel(name, definition, type);
-                collection.createSearchIndexes(Collections.singletonList(searchIndexModel));
-            } else {
-                SearchIndexModel searchIndexModel = new SearchIndexModel(definition, type);
-                collection.createSearchIndexes(Collections.singletonList(searchIndexModel));
-            }
+            collection.createSearchIndexes(Collections.singletonList(toIndexSearchModel(model)));
             return null;
         });
     }
@@ -1520,15 +1511,12 @@ final class UnifiedCrudHelper {
 
     private static SearchIndexModel toIndexSearchModel(final BsonValue bsonValue) {
         BsonDocument model = bsonValue.asDocument();
-        String name;
         BsonDocument definition = model.getDocument("definition");
-        SearchIndexType type  = getSearchIndexType(model.getString("type"));
-        if (model.containsKey("name")) {
-            name = model.getString("name").getValue();
-            return new SearchIndexModel(name, definition, type);
-        } else {
-            return new SearchIndexModel(definition, type);
-        }
+        SearchIndexType type  = getSearchIndexType(model.getString("type", null));
+        String name = Optional.of(model.getString("name", null))
+                .map(BsonString::getValue).
+                orElse(null);
+        return new SearchIndexModel(name, definition, type);
     }
 
 

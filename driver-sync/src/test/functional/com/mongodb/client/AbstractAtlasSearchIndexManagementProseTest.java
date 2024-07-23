@@ -55,7 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * See <a href="https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.rst#search-index-management-helpers">Search Index Management Tests</a>
+ * See <a href="https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.md#search-index-management-helpers">Search Index Management Tests</a>
  */
 public abstract class AbstractAtlasSearchIndexManagementProseTest {
     /**

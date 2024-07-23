@@ -46,10 +46,7 @@ final class SearchIndexRequest {
     }
 
     SearchIndexRequest(final BsonDocument definition, @Nullable final String indexName) {
-        assertNotNull(definition);
-        this.definition = definition;
-        this.indexName = indexName;
-        this.searchIndexType = null;
+        this(definition, indexName, null);
     }
 
     public BsonDocument getDefinition() {

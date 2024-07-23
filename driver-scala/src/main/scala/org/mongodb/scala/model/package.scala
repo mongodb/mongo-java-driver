@@ -19,7 +19,7 @@ package org.mongodb.scala
 import com.mongodb.annotations.{ Beta, Sealed }
 
 import scala.collection.JavaConverters._
-import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit, SearchIndexType }
+import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
 import org.mongodb.scala.bson.conversions.Bson
 
 // scalastyle:off number.of.methods number.of.types
@@ -535,8 +535,8 @@ package object model {
      * @param indexType  the search index type.
      * @return the SearchIndexModel
      */
-    def apply(indexName: String, definition: Bson, indexType: SearchIndexType): SearchIndexModel =
-      new com.mongodb.client.model.SearchIndexModel(indexName, definition, indexType)
+    def apply(indexName: Option[String], definition: Bson, indexType: Option[SearchIndexType]): SearchIndexModel =
+      new com.mongodb.client.model.SearchIndexModel(indexName.orNull, definition, indexType.orNull)
   }
 
   /**

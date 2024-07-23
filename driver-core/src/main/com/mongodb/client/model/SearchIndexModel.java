@@ -44,26 +44,7 @@ public final class SearchIndexModel {
      * @param definition the search index mapping definition.
      */
     public SearchIndexModel(final Bson definition) {
-        this.definition = notNull("definition", definition);
-        this.name = null;
-        this.type = null;
-    }
-
-    /**
-     * Construct an instance with the given Atlas Search index mapping definition.
-     *
-     * <p>After calling this constructor, the {@code name} field will be {@code null}. In that case, when passing this
-     * {@code SearchIndexModel} to the {@code createSearchIndexes} method, the default search index name 'default'
-     * will be used to create the search index.</p>
-     *
-     * @param definition the search index mapping definition.
-     * @param type       the search index type.
-     * @since 5.2
-     */
-    public SearchIndexModel(final Bson definition, final SearchIndexType type) {
-        this.definition = notNull("definition", definition);
-        this.type = notNull("type", type);
-        this.name = null;
+        this(null, definition, null);
     }
 
     /**
@@ -73,9 +54,7 @@ public final class SearchIndexModel {
      * @param definition the search index mapping definition.
      */
     public SearchIndexModel(final String name, final Bson definition) {
-        this.definition = notNull("definition", definition);
-        this.name = notNull("name", name);
-        this.type = null;
+        this(name, definition, null);
     }
 
     /**
@@ -83,13 +62,13 @@ public final class SearchIndexModel {
      *
      * @param name       the search index name.
      * @param definition the search index mapping definition.
-     * @param type the search index type.
+     * @param type       the search index type.
      * @since 5.2
      */
-    public SearchIndexModel(final String name, final Bson definition, final SearchIndexType type) {
+    public SearchIndexModel(@Nullable final String name, final Bson definition, @Nullable final SearchIndexType type) {
         this.definition = notNull("definition", definition);
-        this.name = notNull("name", name);
-        this.type = notNull("type", type);
+        this.name = name;
+        this.type = type;
     }
 
     /**
