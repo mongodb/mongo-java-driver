@@ -1512,7 +1512,7 @@ final class UnifiedCrudHelper {
     private static SearchIndexModel toIndexSearchModel(final BsonValue bsonValue) {
         BsonDocument model = bsonValue.asDocument();
         BsonDocument definition = model.getDocument("definition");
-        SearchIndexType type  = getSearchIndexType(model.getString("type", null));
+        SearchIndexType type = model.containsKey("type") ? getSearchIndexType(model.getString("type")) : null;
         String name = Optional.ofNullable(model.getString("name", null))
                 .map(BsonString::getValue).
                 orElse(null);
