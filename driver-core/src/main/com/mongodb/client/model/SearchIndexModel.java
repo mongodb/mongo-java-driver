@@ -94,6 +94,7 @@ public final class SearchIndexModel {
      * Get the Atlas Search index type.
      *
      * @return the search index type.
+     * @since 5.2
      */
     @Nullable
     public SearchIndexType getType() {
