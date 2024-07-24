@@ -28,7 +28,6 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 
 import static com.mongodb.CursorType.TailableAwait
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class FindOperationUnitSpecification extends OperationUnitSpecification {
 
@@ -41,7 +40,8 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         testOperation(operation, [3, 2, 0], expectedCommand, async, commandResult)
         // Overrides
         when:
-        operation.filter(new BsonDocument('a', BsonBoolean.TRUE))
+        operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+                .filter(new BsonDocument('a', BsonBoolean.TRUE))
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .skip(2)
                 .limit(limit)
@@ -49,7 +49,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .cursorType(TailableAwait)
                 .noCursorTimeout(true)
                 .partial(true)
-                .maxTime(10, MILLISECONDS)
+
                 .comment(new BsonString('my comment'))
                 .hint(BsonDocument.parse('{ hint : 1}'))
                 .min(BsonDocument.parse('{ abc: 99 }'))
@@ -68,7 +68,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .append('awaitData', BsonBoolean.TRUE)
                 .append('allowPartialResults', BsonBoolean.TRUE)
                 .append('noCursorTimeout', BsonBoolean.TRUE)
-                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
                 .append('comment', operation.getComment())
                 .append('hint', operation.getHint())
                 .append('min', operation.getMin())

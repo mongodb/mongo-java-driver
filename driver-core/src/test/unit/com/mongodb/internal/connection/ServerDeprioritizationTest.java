@@ -32,6 +32,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
+import static com.mongodb.ClusterFixture.createOperationContext;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -51,7 +53,7 @@ final class ServerDeprioritizationTest {
 
     @BeforeEach
     void beforeEach() {
-        serverDeprioritization = new OperationContext().getServerDeprioritization();
+        serverDeprioritization = createOperationContext(TIMEOUT_SETTINGS).getServerDeprioritization();
     }
 
     @Test

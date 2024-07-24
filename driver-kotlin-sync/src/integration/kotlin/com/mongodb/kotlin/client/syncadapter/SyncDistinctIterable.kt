@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.syncadapter
 
 import com.mongodb.client.DistinctIterable as JDistinctIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.DistinctIterable
 import java.util.concurrent.TimeUnit
@@ -25,6 +26,9 @@ import org.bson.conversions.Bson
 internal class SyncDistinctIterable<T : Any>(val wrapped: DistinctIterable<T>) :
     JDistinctIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncDistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncDistinctIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
     override fun filter(filter: Bson?): SyncDistinctIterable<T> = apply { wrapped.filter(filter) }
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncDistinctIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)

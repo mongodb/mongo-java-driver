@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.annotations.{ Beta, Sealed }
+import com.mongodb.annotations.{ Beta, Reason, Sealed }
 
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ MongoTimeUnit => JMongoTimeUnit }
@@ -173,7 +173,7 @@ package object model {
    *
    * @since 4.9
    */
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   type CreateEncryptedCollectionParams = com.mongodb.client.model.CreateEncryptedCollectionParams
 
   /**
@@ -181,7 +181,7 @@ package object model {
    *
    * @since 4.9
    */
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   object CreateEncryptedCollectionParams {
     def apply(kmsProvider: String) =
       new com.mongodb.client.model.CreateEncryptedCollectionParams(kmsProvider)

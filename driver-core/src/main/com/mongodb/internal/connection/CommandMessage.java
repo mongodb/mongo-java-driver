@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -142,7 +143,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final SessionContext sessionContext) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final OperationContext operationContext) {
         int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
         int commandStartPosition;
         if (useOpMsg()) {
@@ -151,7 +152,7 @@ public final class CommandMessage extends RequestMessage {
             bsonOutput.writeByte(0);    // payload type
             commandStartPosition = bsonOutput.getPosition();
 
-            addDocument(command, bsonOutput, commandFieldNameValidator, getExtraElements(sessionContext));
+            addDocument(command, bsonOutput, commandFieldNameValidator, getExtraElements(operationContext));
 
             if (payload != null) {
                 bsonOutput.writeByte(1);          // payload type
@@ -214,8 +215,16 @@ public final class CommandMessage extends RequestMessage {
         return getOpCode().equals(OpCode.OP_MSG);
     }
 
-    private List<BsonElement> getExtraElements(final SessionContext sessionContext) {
+    private List<BsonElement> getExtraElements(final OperationContext operationContext) {
+        SessionContext sessionContext = operationContext.getSessionContext();
+        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+
         List<BsonElement> extraElements = new ArrayList<>();
+        if (!getSettings().isCryptd()) {
+           timeoutContext.runMaxTimeMS(maxTimeMS ->
+                   extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)))
+           );
+        }
         extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
         if (sessionContext.getClusterTime() != null) {
             extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));

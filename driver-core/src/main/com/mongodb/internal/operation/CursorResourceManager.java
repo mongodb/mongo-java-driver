@@ -20,6 +20,8 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.lang.Nullable;
@@ -54,6 +56,8 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF
 @ThreadSafe
 abstract class CursorResourceManager<CS extends ReferenceCounted, C extends ReferenceCounted> {
     private final Lock lock;
+    private final TimeoutContext timeoutContext;
+    private final TimeoutMode timeoutMode;
     private final MongoNamespace namespace;
     private volatile State state;
     @Nullable
@@ -63,13 +67,18 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
     @Nullable
     private volatile ServerCursor serverCursor;
     private volatile boolean skipReleasingServerResourcesOnClose;
+    private boolean closeWithoutTimeoutReset;
 
     CursorResourceManager(
+            final TimeoutContext timeoutContext,
+            final TimeoutMode timeoutMode,
             final MongoNamespace namespace,
             final CS connectionSource,
             @Nullable final C connectionToPin,
             @Nullable final ServerCursor serverCursor) {
         this.lock = new ReentrantLock();
+        this.timeoutContext = timeoutContext;
+        this.timeoutMode = timeoutMode;
         this.namespace = namespace;
         this.state = State.IDLE;
         if (serverCursor != null) {
@@ -83,6 +92,7 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
         }
         this.skipReleasingServerResourcesOnClose = false;
         this.serverCursor = serverCursor;
+        this.closeWithoutTimeoutReset = false;
     }
 
     /**
@@ -124,6 +134,22 @@ abstract class CursorResourceManager<CS extends ReferenceCounted, C extends Refe
 
     @SuppressWarnings("SameParameterValue")
     abstract void markAsPinned(C connectionToPin, Connection.PinningMode pinningMode);
+
+    void checkTimeoutModeAndResetTimeoutContextIfIteration() {
+        if (timeoutMode == TimeoutMode.ITERATION) {
+            resetTimeout();
+        }
+    }
+
+    void resetTimeout() {
+        if (!closeWithoutTimeoutReset) {
+            timeoutContext.resetTimeoutIfPresent();
+        }
+    }
+
+    void setCloseWithoutTimeoutReset(final boolean closeImmediately) {
+        this.closeWithoutTimeoutReset = closeImmediately;
+    }
 
     /**
      * Thread-safe.

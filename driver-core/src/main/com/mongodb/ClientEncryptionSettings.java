@@ -16,15 +16,21 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
+import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.Collections.unmodifiableMap;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * The client-side settings for data key creation and explicit encryption.
@@ -42,6 +48,8 @@ public final class ClientEncryptionSettings {
     private final Map<String, Map<String, Object>> kmsProviders;
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
+    @Nullable
+    private final Long timeoutMS;
     /**
      * A builder for {@code ClientEncryptionSettings} so that {@code ClientEncryptionSettings} can be immutable, and to support easier
      * construction through chaining.
@@ -53,6 +61,8 @@ public final class ClientEncryptionSettings {
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        @Nullable
+        private Long timeoutMS;
 
         /**
          * Sets the {@link MongoClientSettings} that will be used to access the key vault.
@@ -117,6 +127,43 @@ public final class ClientEncryptionSettings {
          */
         public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
             this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
+            return this;
+        }
+
+        /**
+         * Sets the time limit for the full execution of an operation.
+         *
+         * <ul>
+         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+         *    <ul>
+         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+         *        available</li>
+         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+         *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+         *   </ul>
+         *   </li>
+         *   <li>{@code 0} means infinite timeout.</li>
+         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+         * </ul>
+         *
+         * <p><strong>Note:</strong> The timeout set through this method overrides the timeout defined in the key vault client settings
+         * specified in {@link #keyVaultMongoClientSettings(MongoClientSettings)}.
+         * Essentially, for operations that require accessing the key vault, the remaining timeout from the initial operation
+         * determines the duration allowed for key vault access.</p>
+         *
+         * @param timeout the timeout
+         * @param timeUnit the time unit
+         * @return this
+         * @since 5.2
+         * @see #getTimeout
+         */
+        @Alpha(Reason.CLIENT)
+        public ClientEncryptionSettings.Builder timeout(final long timeout, final TimeUnit timeUnit) {
+            this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
             return this;
         }
 
@@ -253,12 +300,46 @@ public final class ClientEncryptionSettings {
         return unmodifiableMap(kmsProviderSslContextMap);
     }
 
+    /**
+     * The time limit for the full execution of an operation.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
+    }
+
     private ClientEncryptionSettings(final Builder builder) {
         this.keyVaultMongoClientSettings = notNull("keyVaultMongoClientSettings", builder.keyVaultMongoClientSettings);
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.timeoutMS = builder.timeoutMS;
     }
 
 }

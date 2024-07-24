@@ -16,20 +16,15 @@
 
 package com.mongodb.internal.operation;
 
-
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonInt64;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -48,13 +43,9 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-
     private static final String DATABASES = "databases";
-
     private final Decoder<T> decoder;
     private boolean retryReads;
-
-    private long maxTimeMS;
     private BsonDocument filter;
     private Boolean nameOnly;
     private Boolean authorizedDatabasesOnly;
@@ -62,17 +53,6 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     public ListDatabasesOperation(final Decoder<T> decoder) {
         this.decoder = notNull("decoder", decoder);
-    }
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    public ListDatabasesOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
     }
 
     public ListDatabasesOperation<T> filter(@Nullable final BsonDocument filter) {
@@ -123,38 +103,24 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, "admin", getCommandCreator(),
-                CommandResultDocumentCodec.create(decoder, DATABASES),
+        return executeRetryableRead(binding, "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
                 singleBatchCursorTransformer(DATABASES), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, "admin", getCommandCreator(),
-                CommandResultDocumentCodec.create(decoder, DATABASES),
-                asyncSingleBatchCursorTransformer(DATABASES), retryReads,
-                errorHandlingCallback(callback, LOGGER));
+        executeRetryableReadAsync(binding, "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
+                asyncSingleBatchCursorTransformer(DATABASES), retryReads, errorHandlingCallback(callback, LOGGER));
     }
 
     private CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> getCommand();
-    }
-
-    private BsonDocument getCommand() {
-        BsonDocument command = new BsonDocument("listDatabases", new BsonInt32(1));
-        if (maxTimeMS > 0) {
-            command.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        if (filter != null) {
-            command.put("filter", filter);
-        }
-        if (nameOnly != null) {
-            command.put("nameOnly", new BsonBoolean(nameOnly));
-        }
-        if (authorizedDatabasesOnly != null) {
-            command.put("authorizedDatabases", new BsonBoolean(authorizedDatabasesOnly));
-        }
-        putIfNotNull(command, "comment", comment);
-        return command;
+        return (operationContext, serverDescription, connectionDescription) -> {
+            BsonDocument commandDocument = new BsonDocument("listDatabases", new BsonInt32(1));
+            putIfNotNull(commandDocument, "filter", filter);
+            putIfNotNull(commandDocument, "nameOnly", nameOnly);
+            putIfNotNull(commandDocument, "authorizedDatabases", authorizedDatabasesOnly);
+            putIfNotNull(commandDocument, "comment", comment);
+            return commandDocument;
+        };
     }
 }

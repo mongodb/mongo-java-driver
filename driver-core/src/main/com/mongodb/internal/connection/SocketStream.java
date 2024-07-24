@@ -38,15 +38,14 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
 import static com.mongodb.internal.thread.InterruptionUtil.translateInterruptedException;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -75,9 +74,9 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public void open() {
+    public void open(final OperationContext operationContext) {
         try {
-            socket = initializeSocket();
+            socket = initializeSocket(operationContext);
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
         } catch (IOException e) {
@@ -87,22 +86,22 @@ public class SocketStream implements Stream {
         }
     }
 
-    protected Socket initializeSocket() throws IOException {
+    protected Socket initializeSocket(final OperationContext operationContext) throws IOException {
         ProxySettings proxySettings = settings.getProxySettings();
         if (proxySettings.isProxyEnabled()) {
             if (sslSettings.isEnabled()) {
                 assertTrue(socketFactory instanceof SSLSocketFactory);
                 SSLSocketFactory sslSocketFactory = (SSLSocketFactory) socketFactory;
-                return initializeSslSocketOverSocksProxy(sslSocketFactory);
+                return initializeSslSocketOverSocksProxy(operationContext, sslSocketFactory);
             }
-            return initializeSocketOverSocksProxy();
+            return initializeSocketOverSocksProxy(operationContext);
         }
 
         Iterator<InetSocketAddress> inetSocketAddresses = getSocketAddresses(address, inetAddressResolver).iterator();
         while (inetSocketAddresses.hasNext()) {
             Socket socket = socketFactory.createSocket();
             try {
-                SocketStreamHelper.initialize(socket, inetSocketAddresses.next(), settings, sslSettings);
+                SocketStreamHelper.initialize(operationContext, socket, inetSocketAddresses.next(), settings, sslSettings);
                 return socket;
             } catch (SocketTimeoutException e) {
                 if (!inetSocketAddresses.hasNext()) {
@@ -114,14 +113,15 @@ public class SocketStream implements Stream {
         throw new MongoSocketException("Exception opening socket", getAddress());
     }
 
-    private SSLSocket initializeSslSocketOverSocksProxy(final SSLSocketFactory sslSocketFactory) throws IOException {
+    private SSLSocket initializeSslSocketOverSocksProxy(final OperationContext operationContext,
+            final SSLSocketFactory sslSocketFactory) throws IOException {
         final String serverHost = address.getHost();
         final int serverPort = address.getPort();
 
         SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
-        configureSocket(socksProxy, settings);
+        configureSocket(socksProxy, operationContext, settings);
         InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
-        socksProxy.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
+        socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
 
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
         //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
@@ -139,9 +139,9 @@ public class SocketStream implements Stream {
         return InetSocketAddress.createUnresolved(serverHost, serverPort);
     }
 
-    private Socket initializeSocketOverSocksProxy() throws IOException {
+    private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {
         Socket createdSocket = socketFactory.createSocket();
-        configureSocket(createdSocket, settings);
+        configureSocket(createdSocket, operationContext, settings);
         /*
           Wrap the configured socket with SocksSocket to add extra functionality.
           Reason for separate steps: We can't directly extend Java 11 methods within 'SocksSocket'
@@ -150,7 +150,7 @@ public class SocketStream implements Stream {
         SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
 
         socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
-                settings.getConnectTimeout(TimeUnit.MILLISECONDS));
+                operationContext.getTimeoutContext().getConnectTimeoutMs());
         return socksProxy;
     }
 
@@ -160,60 +160,58 @@ public class SocketStream implements Stream {
     }
 
     @Override
-    public void write(final List<ByteBuf> buffers) throws IOException {
+    public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
+            operationContext.getTimeoutContext().onExpired(() -> {
+                throwMongoTimeoutException("Socket write exceeded the timeout limit.");
+            });
         }
     }
 
     @Override
-    public ByteBuf read(final int numBytes) throws IOException {
-        ByteBuf buffer = bufferProvider.getBuffer(numBytes);
+    public ByteBuf read(final int numBytes, final OperationContext operationContext) throws IOException {
         try {
-            int totalBytesRead = 0;
-            byte[] bytes = buffer.array();
-            while (totalBytesRead < buffer.limit()) {
-                int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
-                if (bytesRead == -1) {
-                    throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
+            ByteBuf buffer = bufferProvider.getBuffer(numBytes);
+            try {
+                int totalBytesRead = 0;
+                byte[] bytes = buffer.array();
+                while (totalBytesRead < buffer.limit()) {
+                    int readTimeoutMS = (int) operationContext.getTimeoutContext().getReadTimeoutMS();
+                    socket.setSoTimeout(readTimeoutMS);
+                    int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
+                    if (bytesRead == -1) {
+                        throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
+                    }
+                    totalBytesRead += bytesRead;
                 }
-                totalBytesRead += bytesRead;
+                return buffer;
+            } catch (Exception e) {
+                buffer.release();
+                throw e;
             }
-            return buffer;
-        } catch (Exception e) {
-            buffer.release();
-            throw e;
-        }
-    }
-
-    @Override
-    public ByteBuf read(final int numBytes, final int additionalTimeout) throws IOException {
-        int curTimeout = socket.getSoTimeout();
-        if (curTimeout > 0 && additionalTimeout > 0) {
-            socket.setSoTimeout(curTimeout + additionalTimeout);
-        }
-        try {
-            return read(numBytes);
         } finally {
             if (!socket.isClosed()) {
                 // `socket` may be closed if the current thread is virtual, and it is interrupted while reading
-                socket.setSoTimeout(curTimeout);
+                socket.setSoTimeout(0);
             }
         }
     }
 
     @Override
-    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+    public void openAsync(final OperationContext operationContext, final AsyncCompletionHandler<Void> handler) {
         throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
+    public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
+            final AsyncCompletionHandler<Void> handler) {
         throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override
-    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+    public void readAsync(final int numBytes, final OperationContext operationContext,
+            final AsyncCompletionHandler<ByteBuf> handler) {
         throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 

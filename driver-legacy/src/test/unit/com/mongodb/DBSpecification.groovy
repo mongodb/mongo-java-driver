@@ -36,6 +36,7 @@ import spock.lang.Specification
 
 import static Fixture.getMongoClient
 import static com.mongodb.ClusterFixture.serverVersionLessThan
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static org.junit.Assume.assumeTrue
@@ -76,6 +77,7 @@ class DBSpecification extends Specification {
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         mongo.codecRegistry >> getDefaultCodecRegistry()
+        mongo.timeoutSettings >> TIMEOUT_SETTINGS
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -134,7 +136,8 @@ class DBSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()).collation(collation))
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern())
+                .collation(collation))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
@@ -144,6 +147,7 @@ class DBSpecification extends Specification {
             getCodecRegistry() >> MongoClient.defaultCodecRegistry
         }
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        mongo.timeoutSettings >> TIMEOUT_SETTINGS
         def executor = new TestOperationExecutor([1L, 2L, 3L])
 
         def databaseName = 'test'
@@ -180,6 +184,7 @@ class DBSpecification extends Specification {
         given:
         def mongo = Stub(MongoClient)
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        mongo.timeoutSettings >> TIMEOUT_SETTINGS
         def executor = new TestOperationExecutor([Stub(BatchCursor), Stub(BatchCursor)])
 
         def databaseName = 'test'
@@ -191,7 +196,8 @@ class DBSpecification extends Specification {
         def operation = executor.getReadOperation() as ListCollectionsOperation
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, new DBObjectCodec(getDefaultCodecRegistry()))
+        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName,
+                new DBObjectCodec(getDefaultCodecRegistry()))
                 .nameOnly(true))
 
         when:
@@ -199,7 +205,8 @@ class DBSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, new DBObjectCodec(getDefaultCodecRegistry()))
+        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName,
+                new DBObjectCodec(getDefaultCodecRegistry()))
                 .nameOnly(true))
     }
 

@@ -27,7 +27,6 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -40,10 +39,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static java.util.Collections.emptyList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentCaptor.forClass;
@@ -68,13 +67,11 @@ final class ListCollectionsOperationTest {
         boolean nameOnly = true;
         boolean authorizedCollections = true;
         int batchSize = 123;
-        long maxTime = 1234;
         BsonValue comment = new BsonString("comment");
         operation.filter(filter)
                 .nameOnly(nameOnly)
                 .authorizedCollections(authorizedCollections)
                 .batchSize(batchSize)
-                .maxTime(maxTime, MILLISECONDS)
                 .comment(comment);
         assertEquals(
                 new BsonDocument()
@@ -85,7 +82,6 @@ final class ListCollectionsOperationTest {
                         .append("cursor", new BsonDocument()
                                 .append("batchSize", new BsonInt32(batchSize))
                         )
-                        .append("maxTimeMS", new BsonInt64(maxTime))
                         .append("comment", comment),
                 executeOperationAndCaptureCommand()
         );
@@ -112,9 +108,9 @@ final class ListCollectionsOperationTest {
     private static Mocks mocks(final MongoNamespace namespace) {
         Mocks result = new Mocks();
         result.readBinding(mock(ReadBinding.class, bindingMock -> {
-            OperationContext operationContext = new OperationContext();
-            when(bindingMock.getOperationContext()).thenReturn(operationContext);
+            when(bindingMock.getOperationContext()).thenReturn(OPERATION_CONTEXT);
             ConnectionSource connectionSource = mock(ConnectionSource.class, connectionSourceMock -> {
+                when(connectionSourceMock.getOperationContext()).thenReturn(OPERATION_CONTEXT);
                 when(connectionSourceMock.release()).thenReturn(1);
                 ServerAddress serverAddress = new ServerAddress();
                 result.connection(mock(Connection.class, connectionMock -> {

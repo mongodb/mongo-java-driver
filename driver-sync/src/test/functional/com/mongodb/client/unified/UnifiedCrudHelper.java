@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
@@ -37,11 +38,12 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.ListSearchIndexesIterable;
 import com.mongodb.client.MongoChangeStreamCursor;
-import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
@@ -52,6 +54,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
@@ -94,6 +97,8 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -108,7 +113,8 @@ import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
-final class UnifiedCrudHelper {
+@SuppressWarnings("deprecation")
+final class UnifiedCrudHelper extends UnifiedHelper {
     private final Entities entities;
     private final String testDescription;
     private final AtomicInteger uniqueIdGenerator = new AtomicInteger();
@@ -219,13 +225,13 @@ final class UnifiedCrudHelper {
 
 
     OperationResult executeListDatabases(final BsonDocument operation) {
-        MongoClient client = entities.getClient(operation.getString("object").getValue());
+        MongoCluster mongoCluster = getMongoCluster(operation);
 
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         ListDatabasesIterable<BsonDocument> iterable = session == null
-                ? client.listDatabases(BsonDocument.class)
-                : client.listDatabases(session, BsonDocument.class);
+                ? mongoCluster.listDatabases(BsonDocument.class)
+                : mongoCluster.listDatabases(session, BsonDocument.class);
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
@@ -244,13 +250,13 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeListDatabaseNames(final BsonDocument operation) {
-        MongoClient client = entities.getClient(operation.getString("object").getValue());
+        MongoCluster mongoCluster = getMongoCluster(operation);
 
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         MongoIterable<String> iterable = session == null
-                ? client.listDatabaseNames()
-                : client.listDatabaseNames(session);
+                ? mongoCluster.listDatabaseNames()
+                : mongoCluster.listDatabaseNames(session);
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             //noinspection SwitchStatementWithTooFewBranches
@@ -267,34 +273,40 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeListCollections(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         ListCollectionsIterable<BsonDocument> iterable = session == null
                 ? database.listCollections(BsonDocument.class)
                 : database.listCollections(session, BsonDocument.class);
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "session":
-                    break;
-                case "filter":
-                    iterable.filter(cur.getValue().asDocument());
-                    break;
-                case "batchSize":
-                    iterable.batchSize(cur.getValue().asNumber().intValue());
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+        return resultOf(() -> {
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "session":
+                        break;
+                    case "filter":
+                        iterable.filter(cur.getValue().asDocument());
+                        break;
+                    case "batchSize":
+                        iterable.batchSize(cur.getValue().asNumber().intValue());
+                        break;
+                    case "timeoutMode":
+                        setTimeoutMode(iterable, cur);
+                        break;
+                    case "maxTimeMS":
+                        iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
             }
-        }
 
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+            return new BsonArray(iterable.into(new ArrayList<>()));
+        });
     }
 
     OperationResult executeListCollectionNames(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
 
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
@@ -324,21 +336,21 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeListIndexes(final BsonDocument operation) {
-        ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
-
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+        return resultOf(() -> {
+            ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
+            return new BsonArray(iterable.into(new ArrayList<>()));
+        });
     }
 
     OperationResult executeListIndexNames(final BsonDocument operation) {
-        ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
-
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>()).stream().map(document -> document.getString("name")).collect(toList())));
+        return resultOf(() -> {
+            ListIndexesIterable<BsonDocument> iterable = createListIndexesIterable(operation);
+            return new BsonArray(iterable.into(new ArrayList<>()).stream().map(document -> document.getString("name")).collect(toList()));
+        });
     }
 
     private ListIndexesIterable<BsonDocument> createListIndexesIterable(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         ListIndexesIterable<BsonDocument> iterable = session == null
@@ -351,6 +363,12 @@ final class UnifiedCrudHelper {
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());
                     break;
+                case "timeoutMode":
+                    setTimeoutMode(iterable, cur);
+                    break;
+                case "maxTimeMS":
+                    iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -359,19 +377,19 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeFind(final BsonDocument operation) {
-        FindIterable<BsonDocument> iterable = createFindIterable(operation);
-        return resultOf(() ->
-                new BsonArray(iterable.into(new ArrayList<>())));
+        return resultOf(() -> {
+            FindIterable<BsonDocument> iterable = createFindIterable(operation);
+            return new BsonArray(iterable.into(new ArrayList<>()));
+        });
     }
 
     OperationResult executeFindOne(final BsonDocument operation) {
-        FindIterable<BsonDocument> iterable = createFindIterable(operation);
-        return resultOf(iterable::first);
+        return resultOf(() ->  createFindIterable(operation).first());
     }
 
     OperationResult createFindCursor(final BsonDocument operation) {
-        FindIterable<BsonDocument> iterable = createFindIterable(operation);
         return resultOf(() -> {
+            FindIterable<BsonDocument> iterable = createFindIterable(operation);
             entities.addCursor(operation.getString("saveResultAsEntity", new BsonString(createRandomEntityId())).getValue(),
                     iterable.cursor());
             return null;
@@ -380,7 +398,7 @@ final class UnifiedCrudHelper {
 
     @NonNull
     private FindIterable<BsonDocument> createFindIterable(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter");
@@ -401,6 +419,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "maxTimeMS":
                     iterable.maxTime(cur.getValue().asInt32().longValue(), TimeUnit.MILLISECONDS);
+                    break;
+                case "maxAwaitTimeMS":
+                    iterable.maxAwaitTime(cur.getValue().asInt32().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 case "skip":
                     iterable.skip(cur.getValue().asInt32().intValue());
@@ -439,6 +460,12 @@ final class UnifiedCrudHelper {
                 case "showRecordId":
                     iterable.showRecordId(cur.getValue().asBoolean().getValue());
                     break;
+                case "cursorType":
+                    setCursorType(iterable, cur);
+                    break;
+                case "timeoutMode":
+                    setTimeoutMode(iterable, cur);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -446,8 +473,9 @@ final class UnifiedCrudHelper {
         return iterable;
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeDistinct(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
 
@@ -467,6 +495,9 @@ final class UnifiedCrudHelper {
                 case "filter":
                     iterable.filter(cur.getValue().asDocument());
                     break;
+                case "maxTimeMS":
+                    iterable.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 case "collation":
                     iterable.collation(asCollation(cur.getValue().asDocument()));
                     break;
@@ -481,8 +512,8 @@ final class UnifiedCrudHelper {
 
     @SuppressWarnings("deprecation")
     OperationResult executeMapReduce(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        BsonDocument arguments = operation.getDocument("arguments");
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
 
         String mapFunction = arguments.get("map").asJavaScript().getCode();
@@ -511,8 +542,9 @@ final class UnifiedCrudHelper {
                 new BsonArray(iterable.into(new ArrayList<>())));
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeFindOneAndUpdate(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 
         BsonDocument filter = arguments.getDocument("filter").asDocument();
@@ -560,6 +592,9 @@ final class UnifiedCrudHelper {
                 case "let":
                     options.let(cur.getValue().asDocument());
                     break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 case "collation":
                     options.collation(asCollation(cur.getValue().asDocument()));
                     break;
@@ -587,8 +622,9 @@ final class UnifiedCrudHelper {
         });
     }
 
+    @SuppressWarnings("deprecation")
     OperationResult executeFindOneAndReplace(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter").asDocument();
@@ -635,6 +671,9 @@ final class UnifiedCrudHelper {
                 case "let":
                     options.let(cur.getValue().asDocument());
                     break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 case "collation":
                     options.collation(asCollation(cur.getValue().asDocument()));
                     break;
@@ -652,8 +691,9 @@ final class UnifiedCrudHelper {
         });
     }
 
+    @SuppressWarnings("deprecation") //maxTimeMS
     OperationResult executeFindOneAndDelete(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter").asDocument();
@@ -686,6 +726,9 @@ final class UnifiedCrudHelper {
                 case "let":
                     options.let(cur.getValue().asDocument());
                     break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asInt32().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
@@ -702,53 +745,61 @@ final class UnifiedCrudHelper {
 
     OperationResult executeAggregate(final BsonDocument operation) {
         String entityName = operation.getString("object").getValue();
-
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         AggregateIterable<BsonDocument> iterable;
         if (entities.hasDatabase(entityName)) {
+            Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments"));
+            MongoDatabase database = entities.getDatabaseWithTimeoutMS(entityName, timeoutMS);
             iterable = session == null
-                    ? entities.getDatabase(entityName).aggregate(requireNonNull(pipeline), BsonDocument.class)
-                    : entities.getDatabase(entityName).aggregate(session, requireNonNull(pipeline), BsonDocument.class);
+                    ? database.aggregate(requireNonNull(pipeline), BsonDocument.class)
+                    : database.aggregate(session, requireNonNull(pipeline), BsonDocument.class);
         } else if (entities.hasCollection(entityName)) {
+            Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments"));
+            MongoCollection<BsonDocument> collection = entities.getCollectionWithTimeoutMS(entityName, timeoutMS);
             iterable = session == null
-                    ? entities.getCollection(entityName).aggregate(requireNonNull(pipeline))
-                    : entities.getCollection(entityName).aggregate(session, requireNonNull(pipeline));
+                    ? collection.aggregate(requireNonNull(pipeline))
+                    : collection.aggregate(session, requireNonNull(pipeline));
         } else {
             throw new UnsupportedOperationException("Unsupported entity type with name: " + entityName);
         }
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "pipeline":
-                case "session":
-                    break;
-                case "batchSize":
-                    iterable.batchSize(cur.getValue().asNumber().intValue());
-                    break;
-                case "allowDiskUse":
-                    iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
-                    break;
-                case "let":
-                    iterable.let(cur.getValue().asDocument());
-                    break;
-                case "comment":
-                    iterable.comment(cur.getValue());
-                    break;
-                case "maxTimeMS":
-                    iterable.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
-                    break;
-                case "collation":
-                    iterable.collation(asCollation(cur.getValue().asDocument()));
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
-            }
-        }
-        String lastStageName = pipeline.isEmpty() ? null : pipeline.get(pipeline.size() - 1).getFirstKey();
-        boolean useToCollection = Objects.equals(lastStageName, "$out") || Objects.equals(lastStageName, "$merge");
-
         return resultOf(() -> {
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "pipeline":
+                    case "session":
+                        break;
+                    case "batchSize":
+                        iterable.batchSize(cur.getValue().asNumber().intValue());
+                        break;
+                    case "allowDiskUse":
+                        iterable.allowDiskUse(cur.getValue().asBoolean().getValue());
+                        break;
+                    case "let":
+                        iterable.let(cur.getValue().asDocument());
+                        break;
+                    case "collation":
+                        iterable.collation(asCollation(cur.getValue().asDocument()));
+                        break;
+                    case "comment":
+                        iterable.comment(cur.getValue());
+                        break;
+                    case "timeoutMode":
+                        setTimeoutMode(iterable, cur);
+                        break;
+                    case "maxTimeMS":
+                        iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "maxAwaitTimeMS":
+                        iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
+            }
+            String lastStageName = pipeline.isEmpty() ? null : pipeline.get(pipeline.size() - 1).getFirstKey();
+            boolean useToCollection = Objects.equals(lastStageName, "$out") || Objects.equals(lastStageName, "$merge");
             if (!pipeline.isEmpty() && useToCollection) {
                 iterable.toCollection();
                 return null;
@@ -759,7 +810,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeDeleteOne(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         ClientSession session = getSession(arguments);
@@ -775,7 +826,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeDeleteMany(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         ClientSession session = getSession(arguments);
@@ -799,7 +850,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeUpdateOne(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter");
@@ -823,7 +874,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeUpdateMany(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         BsonValue update = arguments.get("update");
@@ -846,7 +897,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeReplaceOne(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument filter = arguments.getDocument("filter");
@@ -879,7 +930,7 @@ final class UnifiedCrudHelper {
 
 
     OperationResult executeInsertOne(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument document = arguments.getDocument("document").asDocument();
@@ -913,7 +964,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeInsertMany(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         List<BsonDocument> documents = arguments.getArray("documents").stream().map(BsonValue::asDocument).collect(toList());
         ClientSession session = getSession(arguments);
@@ -954,7 +1005,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeBulkWrite(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         List<WriteModel<BsonDocument>> requests = arguments.getArray("requests").stream()
@@ -1158,6 +1209,9 @@ final class UnifiedCrudHelper {
                 case "readConcern":
                     optionsBuilder.readConcern(asReadConcern(cur.getValue().asDocument()));
                     break;
+                case "timeoutMS":
+                    optionsBuilder.timeout(cur.getValue().asInt32().longValue(), TimeUnit.MILLISECONDS);
+                    break;
                 case "maxCommitTimeMS":
                     optionsBuilder.maxCommitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
@@ -1176,7 +1230,7 @@ final class UnifiedCrudHelper {
         ClientSession session = entities.getSession(operation.getString("object").getValue());
 
         if (operation.containsKey("arguments")) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
         }
 
         return resultOf(() -> {
@@ -1189,7 +1243,7 @@ final class UnifiedCrudHelper {
         ClientSession session = entities.getSession(operation.getString("object").getValue());
 
         if (operation.containsKey("arguments")) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+            throw new UnsupportedOperationException("Unexpected arguments: " + operation.get("arguments"));
         }
 
         return resultOf(() -> {
@@ -1211,6 +1265,9 @@ final class UnifiedCrudHelper {
                     break;
                 case "writeConcern":
                     optionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
+                    break;
+                case "timeoutMS":
+                    optionsBuilder.timeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 case "maxCommitTimeMS":
                     optionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
@@ -1234,12 +1291,12 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeDropCollection(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.getString("collection").getValue();
 
-        if (operation.getDocument("arguments", new BsonDocument()).size() > 1) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+        if (operation.getDocument("arguments").size() > 1) {
+            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
         }
 
         return resultOf(() -> {
@@ -1249,7 +1306,7 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeCreateCollection(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
@@ -1319,7 +1376,7 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeModifyCollection(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.getString("collection").getValue();
         ClientSession session = getSession(arguments);
@@ -1352,7 +1409,7 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeRenameCollection(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String newCollectionName = arguments.getString("to").getValue();
         ClientSession session = getSession(arguments);
@@ -1450,7 +1507,7 @@ final class UnifiedCrudHelper {
 
 
     OperationResult executeCreateSearchIndex(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument model = arguments.getDocument("model");
 
@@ -1472,7 +1529,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeCreateSearchIndexes(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonArray models = arguments.getArray("models");
 
@@ -1487,7 +1544,7 @@ final class UnifiedCrudHelper {
 
 
     OperationResult executeUpdateSearchIndex(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument definition = arguments.getDocument("definition");
         String name = arguments.getString("name").getValue();
@@ -1499,7 +1556,7 @@ final class UnifiedCrudHelper {
     }
 
     OperationResult executeDropSearchIndex(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String name = arguments.getString("name").getValue();
 
@@ -1521,7 +1578,7 @@ final class UnifiedCrudHelper {
 
 
     OperationResult executeListSearchIndexes(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         Optional<BsonDocument> arguments = Optional.ofNullable(operation.getOrDefault("arguments", null)).map(BsonValue::asDocument);
 
         if (arguments.isPresent()) {
@@ -1560,7 +1617,7 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeCreateIndex(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument keys = arguments.getDocument("keys").asDocument();
         ClientSession session = getSession(arguments);
@@ -1593,27 +1650,63 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeDropIndex(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         String indexName = arguments.get("name").asString().getValue();
+
+        if (!arguments.containsKey("name")) {
+            throw new UnsupportedOperationException("Drop index without name is not supported");
+        }
+
+        DropIndexOptions options = getDropIndexOptions(arguments);
+        return resultOf(() -> {
+            if (session == null) {
+                collection.dropIndex(indexName, options);
+            } else {
+                collection.dropIndex(session, indexName, options);
+            }
+            return null;
+        });
+    }
+
+    public OperationResult executeDropIndexes(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
+
+        if (operation.containsKey("arguments")) {
+            BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+            ClientSession session = getSession(arguments);
+            DropIndexOptions options = getDropIndexOptions(arguments);
+            return resultOf(() -> {
+                if (session == null) {
+                    collection.dropIndexes(options);
+                } else {
+                    collection.dropIndexes(session, options);
+                }
+                return null;
+            });
+        }
+        return resultOf(() -> {
+            collection.dropIndexes();
+            return null;
+        });
+    }
+
+    private static DropIndexOptions getDropIndexOptions(final BsonDocument arguments) {
+        DropIndexOptions options = new DropIndexOptions();
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
                 case "session":
                 case "name":
                     break;
+                case "maxTimeMS":
+                    options.maxTime(cur.getValue().asNumber().intValue(), TimeUnit.MILLISECONDS);
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
-        return resultOf(() -> {
-            if (session == null) {
-                collection.dropIndex(indexName);
-            } else {
-                collection.dropIndex(session, indexName);
-            }
-            return null;
-        });
+        return options;
     }
 
     public OperationResult createChangeStreamCursor(final BsonDocument operation) {
@@ -1621,43 +1714,48 @@ final class UnifiedCrudHelper {
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         ChangeStreamIterable<BsonDocument> iterable;
+
+        Long timeoutMS = arguments.containsKey("timeoutMS") ? arguments.remove("timeoutMS").asNumber().longValue() : null;
         if (entities.hasCollection(entityName)) {
-            iterable = entities.getCollection(entityName).watch(pipeline);
+            iterable = entities.getCollectionWithTimeoutMS(entityName, timeoutMS).watch(pipeline);
         } else if (entities.hasDatabase(entityName)) {
-            iterable = entities.getDatabase(entityName).watch(pipeline, BsonDocument.class);
+            iterable = entities.getDatabaseWithTimeoutMS(entityName, timeoutMS).watch(pipeline, BsonDocument.class);
         } else if (entities.hasClient(entityName)) {
-            iterable = entities.getClient(entityName).watch(pipeline, BsonDocument.class);
+            iterable = entities.getMongoClusterWithTimeoutMS(entityName, timeoutMS).watch(pipeline, BsonDocument.class);
         } else {
             throw new UnsupportedOperationException("No entity found for id: " + entityName);
         }
 
-        for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
-            switch (cur.getKey()) {
-                case "batchSize":
-                    iterable.batchSize(cur.getValue().asNumber().intValue());
-                    break;
-                case "pipeline":
-                    break;
-                case "comment":
-                    iterable.comment(cur.getValue());
-                    break;
-                case "fullDocument":
-                    iterable.fullDocument(FullDocument.fromString(cur.getValue().asString().getValue()));
-                    break;
-                case "fullDocumentBeforeChange":
-                    iterable.fullDocumentBeforeChange(FullDocumentBeforeChange.fromString(cur.getValue().asString().getValue()));
-                    break;
-                case "showExpandedEvents":
-                    iterable.showExpandedEvents(cur.getValue().asBoolean().getValue());
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
-            }
-        }
-
         return resultOf(() -> {
+            for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
+                switch (cur.getKey()) {
+                    case "batchSize":
+                        iterable.batchSize(cur.getValue().asNumber().intValue());
+                        break;
+                    case "pipeline":
+                        break;
+                    case "comment":
+                        iterable.comment(cur.getValue());
+                        break;
+                    case "fullDocument":
+                        iterable.fullDocument(FullDocument.fromString(cur.getValue().asString().getValue()));
+                        break;
+                    case "fullDocumentBeforeChange":
+                        iterable.fullDocumentBeforeChange(FullDocumentBeforeChange.fromString(cur.getValue().asString().getValue()));
+                        break;
+                    case "maxAwaitTimeMS":
+                        iterable.maxAwaitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
+                        break;
+                    case "showExpandedEvents":
+                        iterable.showExpandedEvents(cur.getValue().asBoolean().getValue());
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
+                }
+            }
+            MongoCursor<BsonDocument> changeStreamWrappingCursor = createChangeStreamWrappingCursor(iterable);
             entities.addCursor(operation.getString("saveResultAsEntity",
-                    new BsonString(createRandomEntityId())).getValue(), createChangeStreamWrappingCursor(iterable));
+                    new BsonString(createRandomEntityId())).getValue(), changeStreamWrappingCursor);
             return null;
         });
     }
@@ -1667,10 +1765,22 @@ final class UnifiedCrudHelper {
         MongoCursor<BsonDocument> cursor = entities.getCursor(id);
 
         if (operation.containsKey("arguments")) {
-            throw new UnsupportedOperationException("Unexpected arguments");
+            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
         }
 
         return resultOf(cursor::next);
+    }
+
+
+    public OperationResult executeIterateOnce(final BsonDocument operation) {
+        String id = operation.getString("object").getValue();
+        MongoCursor<BsonDocument> cursor = entities.getCursor(id);
+
+        if (operation.containsKey("arguments")) {
+            throw new UnsupportedOperationException("Unexpected arguments " + operation.get("arguments"));
+        }
+
+        return resultOf(cursor::tryNext);
     }
 
     public OperationResult close(final BsonDocument operation) {
@@ -1687,7 +1797,7 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeRunCommand(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         ClientSession session = getSession(arguments);
         BsonDocument command = arguments.getDocument("command");
@@ -1723,7 +1833,7 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeCountDocuments(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument filter = arguments.getDocument("filter");
         ClientSession session = getSession(arguments);
@@ -1761,7 +1871,7 @@ final class UnifiedCrudHelper {
     }
 
     public OperationResult executeEstimatedDocumentCount(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 
         EstimatedDocumentCountOptions options = new EstimatedDocumentCountOptions();
@@ -1854,6 +1964,87 @@ final class UnifiedCrudHelper {
                     return writer.getDocument();
                 }
             };
+        }
+    }
+
+    private MongoCollection<BsonDocument> getMongoCollection(final BsonDocument operation) {
+        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
+        Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments", new BsonDocument()));
+        if (timeoutMS != null) {
+            collection = collection.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
+        }
+        return collection;
+    }
+    private MongoDatabase getMongoDatabase(final BsonDocument operation) {
+        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
+        if (operation.containsKey("arguments")) {
+            BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+            Long timeoutMS = getAndRemoveTimeoutMS(arguments);
+            if (timeoutMS != null) {
+                database = database.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
+                arguments.remove("timeoutMS");
+            }
+        }
+        return database;
+    }
+
+    private MongoCluster getMongoCluster(final BsonDocument operation) {
+        MongoCluster mongoCluster = entities.getClient(operation.getString("object").getValue());
+        if (operation.containsKey("arguments")) {
+            BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+            Long timeoutMS = getAndRemoveTimeoutMS(arguments);
+            if (timeoutMS != null) {
+                mongoCluster = mongoCluster.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
+                arguments.remove("timeoutMS");
+            }
+        }
+        return mongoCluster;
+    }
+
+    private static void setCursorType(final FindIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {
+        switch (cur.getValue().asString().getValue()) {
+            case "tailable":
+                iterable.cursorType(CursorType.Tailable);
+                break;
+            case "nonTailable":
+                iterable.cursorType(CursorType.NonTailable);
+                break;
+            case "tailableAwait":
+                iterable.cursorType(CursorType.TailableAwait);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported cursorType: " + cur.getValue());
+        }
+    }
+
+    private static void setTimeoutMode(final MongoIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {
+         switch (cur.getValue().asString().getValue()) {
+            case "cursorLifetime":
+                invokeTimeoutMode(iterable, TimeoutMode.CURSOR_LIFETIME);
+                break;
+            case "iteration":
+                invokeTimeoutMode(iterable, TimeoutMode.ITERATION);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported timeoutMode: " + cur.getValue());
+        }
+    }
+
+    private static void invokeTimeoutMode(final MongoIterable<BsonDocument> iterable, final TimeoutMode timeoutMode) {
+        try {
+            Method timeoutModeMethod = iterable.getClass().getDeclaredMethod("timeoutMode", TimeoutMode.class);
+            timeoutModeMethod.setAccessible(true);
+            timeoutModeMethod.invoke(iterable, timeoutMode);
+        } catch (NoSuchMethodException e) {
+            throw new UnsupportedOperationException("Unsupported timeoutMode method for class: " + iterable.getClass(), e);
+        } catch (IllegalAccessException e) {
+            throw new UnsupportedOperationException("Unable to set timeoutMode method for class: " + iterable.getClass(), e);
+        } catch (InvocationTargetException e) {
+            Throwable targetException = e.getTargetException();
+            if (targetException instanceof IllegalArgumentException) {
+                throw (IllegalArgumentException) targetException;
+            }
+            throw new UnsupportedOperationException("Unable to set timeoutMode method for class: " + iterable.getClass(), targetException);
         }
     }
 }

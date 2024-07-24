@@ -34,8 +34,6 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
-import java.util.concurrent.TimeUnit
-
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.disableFailPoint
 import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailPoint
@@ -63,7 +61,6 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         operation.getFilter() == null
         operation.getSort() == null
         operation.getProjection() == null
-        operation.getMaxTime(TimeUnit.MILLISECONDS) == 0
         operation.getCollation() == null
     }
 
@@ -78,14 +75,12 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
             .filter(filter)
             .sort(sort)
             .projection(projection)
-            .maxTime(10, TimeUnit.MILLISECONDS)
             .collation(defaultCollation)
 
         then:
         operation.getFilter() == filter
         operation.getSort() == sort
         operation.getProjection() == projection
-        operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
         operation.getCollation() == defaultCollation
     }
 
@@ -118,8 +113,8 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Worker>(getNamespace(), ACKNOWLEDGED, false,
-                workerCodec).filter(new BsonDocument('name', new BsonString('Pete')))
+        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Worker>(getNamespace(),
+                ACKNOWLEDGED, false, workerCodec).filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = execute(operation, async)
 
         then:
@@ -220,12 +215,10 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         operation.filter(filter)
                 .sort(sort)
                 .projection(projection)
-                .maxTime(10, TimeUnit.MILLISECONDS)
 
         expectedCommand.append('query', filter)
                 .append('sort', sort)
                 .append('fields', projection)
-                .append('maxTimeMS', new BsonInt64(10))
 
         operation.collation(defaultCollation)
         expectedCommand.append('collation', defaultCollation.asDocument())

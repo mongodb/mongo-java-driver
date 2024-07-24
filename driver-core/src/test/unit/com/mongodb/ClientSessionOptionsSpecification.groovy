@@ -18,6 +18,8 @@ package com.mongodb
 
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
+
 class ClientSessionOptionsSpecification extends Specification {
 
     def 'should have correct defaults'() {
@@ -43,6 +45,23 @@ class ClientSessionOptionsSpecification extends Specification {
         where:
         causallyConsistent << [true, false]
         transactionOptions << [TransactionOptions.builder().build(), TransactionOptions.builder().readConcern(ReadConcern.LOCAL).build()]
+    }
+
+    def 'should throw an exception if the defaultTimeout is set and negative'() {
+        given:
+        def builder = ClientSessionOptions.builder()
+
+        when:
+        builder.defaultTimeout(500, TimeUnit.NANOSECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        builder.defaultTimeout(-1, TimeUnit.SECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should apply options to builder'() {

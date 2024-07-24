@@ -38,6 +38,7 @@ class ListCollectionNamesFlowTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun shouldCallTheUnderlyingMethods() {
         val wrapped: ListCollectionNamesPublisher = mock()
         val flow = ListCollectionNamesFlow(wrapped)
