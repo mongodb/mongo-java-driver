@@ -72,7 +72,7 @@ internal class DefaultBsonEncoder(
     private var isPolymorphic = false
     private var state = STATE.VALUE
     private var mapState = MapState()
-    private var deferredElementName: String? = null
+    private val deferredElementHandler: DeferredElementHandler = DeferredElementHandler()
 
     override fun shouldEncodeElementDefault(descriptor: SerialDescriptor, index: Int): Boolean =
         configuration.encodeDefaults
@@ -117,8 +117,7 @@ internal class DefaultBsonEncoder(
             is StructureKind.CLASS -> {
                 val elementName = descriptor.getElementName(index)
                 if (descriptor.getElementDescriptor(index).isNullable) {
-                    assert(deferredElementName == null) { -> "Overwriting an existing deferred name" }
-                    deferredElementName = elementName
+                    deferredElementHandler.set(elementName)
                 } else {
                     encodeName(elementName)
                 }
@@ -141,25 +140,25 @@ internal class DefaultBsonEncoder(
     }
 
     override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
-        deferredElementName?.let {
-            deferredElementName = null
-            if (value != null || configuration.explicitNulls) {
-                encodeName(it)
-                super.encodeSerializableValue(serializer, value)
-            }
-        }
-            ?: super.encodeSerializableValue(serializer, value)
+        deferredElementHandler.with(
+            {
+                if (value != null || configuration.explicitNulls) {
+                    encodeName(it)
+                    super.encodeSerializableValue(serializer, value)
+                }
+            },
+            { super.encodeSerializableValue(serializer, value) })
     }
 
     override fun <T : Any> encodeNullableSerializableValue(serializer: SerializationStrategy<T>, value: T?) {
-        deferredElementName?.let {
-            deferredElementName = null
-            if (value != null || configuration.explicitNulls) {
-                encodeName(it)
-                super.encodeNullableSerializableValue(serializer, value)
-            }
-        }
-            ?: super.encodeNullableSerializableValue(serializer, value)
+        deferredElementHandler.with(
+            {
+                if (value != null || configuration.explicitNulls) {
+                    encodeName(it)
+                    super.encodeNullableSerializableValue(serializer, value)
+                }
+            },
+            { super.encodeNullableSerializableValue(serializer, value) })
     }
 
     override fun encodeByte(value: Byte) = encodeInt(value.toInt())
@@ -220,6 +219,27 @@ internal class DefaultBsonEncoder(
                     STATE.NAME -> STATE.VALUE
                 }
             return getState()
+        }
+    }
+
+    private class DeferredElementHandler {
+        private var deferredElementName: String? = null
+
+        fun set(name: String) {
+            assert(deferredElementName == null) { -> "Overwriting an existing deferred name" }
+            deferredElementName = name
+        }
+
+        fun with(actionWithDeferredElement: (String) -> Unit, actionWithoutDeferredElement: () -> Unit): Unit {
+            deferredElementName?.let {
+                reset()
+                actionWithDeferredElement(it)
+            }
+                ?: actionWithoutDeferredElement()
+        }
+
+        private fun reset() {
+            deferredElementName = null
         }
     }
 }
