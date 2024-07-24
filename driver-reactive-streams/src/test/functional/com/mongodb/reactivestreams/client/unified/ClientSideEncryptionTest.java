@@ -16,27 +16,14 @@
 
 package com.mongodb.reactivestreams.client.unified;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class ClientSideEncryptionTest extends UnifiedReactiveStreamsTest {
-    public ClientSideEncryptionTest(@SuppressWarnings("unused") final String fileDescription,
-            @SuppressWarnings("unused") final String testDescription,
-            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-            final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entities, initialData, definition);
-    }
-
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+final class ClientSideEncryptionTest extends UnifiedReactiveStreamsTest {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/client-side-encryption");
     }
-
 }
-

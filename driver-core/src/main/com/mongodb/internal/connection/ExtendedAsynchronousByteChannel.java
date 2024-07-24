@@ -171,7 +171,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void write(
             ByteBuffer src,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Integer, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Integer, ? super A> handler);
 
     /**
      * Writes a sequence of bytes to this channel from a subsequence of the given
@@ -233,5 +233,5 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
     <A> void write(
             ByteBuffer[] srcs, int offset, int length,
             long timeout, TimeUnit unit,
-            A attach, CompletionHandler<Long, ? super A> handler);
+            @Nullable A attach, CompletionHandler<Long, ? super A> handler);
 }

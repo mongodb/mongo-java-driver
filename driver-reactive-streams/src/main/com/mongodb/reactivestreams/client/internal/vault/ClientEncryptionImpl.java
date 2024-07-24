@@ -32,7 +32,10 @@ import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.time.Timeout;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -61,15 +64,22 @@ import java.util.stream.Collectors;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.databaseWithTimeout;
+import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.databaseWithTimeoutDeferred;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.internal.BsonUtil.mutableDeepCopy;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ClientEncryptionImpl implements ClientEncryption {
+    private static final String TIMEOUT_ERROR_MESSAGE_CREATE_DATA_KEY = "Creating data key exceeded the timeout limit.";
+    private static final String TIMEOUT_ERROR_MESSAGE_REWRAP_DATA_KEY = "Rewrapping data key exceeded the timeout limit.";
+    private static final String TIMEOUT_ERROR_MESSAGE_CREATE_COLLECTION = "Encryption collection creation exceeded the timeout limit.";
     private final Crypt crypt;
     private final ClientEncryptionSettings options;
     private final MongoClient keyVaultClient;
@@ -85,10 +95,22 @@ public class ClientEncryptionImpl implements ClientEncryption {
         this.crypt = Crypts.create(keyVaultClient, options);
         this.options = options;
         MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
-        this.collection = keyVaultClient.getDatabase(namespace.getDatabaseName())
+        this.collection = getVaultCollection(keyVaultClient, options, namespace);
+    }
+
+    private static MongoCollection<BsonDocument> getVaultCollection(final MongoClient keyVaultClient,
+                                                                                final ClientEncryptionSettings options,
+                                                                                final MongoNamespace namespace) {
+        MongoCollection<BsonDocument> vaultCollection = keyVaultClient.getDatabase(namespace.getDatabaseName())
                 .getCollection(namespace.getCollectionName(), BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY)
                 .withReadConcern(ReadConcern.MAJORITY);
+
+        Long timeoutMs = options.getTimeout(MILLISECONDS);
+        if (timeoutMs != null){
+            vaultCollection = vaultCollection.withTimeout(timeoutMs, MILLISECONDS);
+        }
+        return vaultCollection;
     }
 
     @Override
@@ -98,30 +120,47 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public Publisher<BsonBinary> createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions) {
-        return crypt.createDataKey(kmsProvider, dataKeyOptions)
+        return Mono.defer(() -> {
+            Timeout operationTimeout = startTimeout();
+             return createDataKey(kmsProvider, dataKeyOptions, operationTimeout);
+        });
+    }
+
+    public Mono<BsonBinary> createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions, @Nullable final Timeout operationTimeout) {
+        return crypt.createDataKey(kmsProvider, dataKeyOptions, operationTimeout)
                 .flatMap(dataKeyDocument -> {
                     MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
-                    return Mono.from(keyVaultClient.getDatabase(namespace.getDatabaseName())
-                                             .getCollection(namespace.getCollectionName(), BsonDocument.class)
-                                             .withWriteConcern(WriteConcern.MAJORITY)
-                                             .insertOne(dataKeyDocument))
+
+                    MongoCollection<BsonDocument> vaultCollection = keyVaultClient
+                            .getDatabase(namespace.getDatabaseName())
+                            .getCollection(namespace.getCollectionName(), BsonDocument.class)
+                            .withWriteConcern(WriteConcern.MAJORITY);
+                    return Mono.from(collectionWithTimeout(vaultCollection, operationTimeout, TIMEOUT_ERROR_MESSAGE_CREATE_DATA_KEY)
+                                    .insertOne(dataKeyDocument))
                             .map(i -> dataKeyDocument.getBinary("_id"));
                 });
     }
 
     @Override
     public Publisher<BsonBinary> encrypt(final BsonValue value, final EncryptOptions options) {
-        return crypt.encryptExplicitly(value, options);
+        notNull("value", value);
+        notNull("options", options);
+
+        return Mono.defer(() -> crypt.encryptExplicitly(value, options, startTimeout()));
     }
 
     @Override
     public Publisher<BsonDocument> encryptExpression(final Bson expression, final EncryptOptions options) {
-        return crypt.encryptExpression(expression.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options);
+        return Mono.defer(() -> crypt.encryptExpression(
+                expression.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()),
+                options,
+                startTimeout()));
     }
 
     @Override
     public Publisher<BsonValue> decrypt(final BsonBinary value) {
-        return crypt.decryptExplicitly(value);
+        notNull("value", value);
+        return Mono.defer(() -> crypt.decryptExplicitly(value, startTimeout()));
     }
 
     @Override
@@ -180,8 +219,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public Publisher<RewrapManyDataKeyResult> rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
-        return Mono.fromRunnable(() -> validateRewrapManyDataKeyOptions(options)).then(
-                crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options)
+        return Mono.fromRunnable(() -> validateRewrapManyDataKeyOptions(options))
+                .then(Mono.defer(()-> {
+                    Timeout operationTimeout = startTimeout();
+                    return  crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options, operationTimeout)
                         .flatMap(results -> {
                             if (results.isEmpty()) {
                                 return Mono.fromCallable(RewrapManyDataKeyResult::new);
@@ -195,8 +236,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
                                                 Updates.currentDate("updateDate"))
                                 );
                             }).collect(Collectors.toList());
-                            return Mono.from(collection.bulkWrite(updateModels)).map(RewrapManyDataKeyResult::new);
-                        }));
+                            return Mono.from(collectionWithTimeout(collection, operationTimeout, TIMEOUT_ERROR_MESSAGE_REWRAP_DATA_KEY)
+                                            .bulkWrite(updateModels)).map(RewrapManyDataKeyResult::new);
+                        });
+                }));
     }
 
     @Override
@@ -222,6 +265,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
             }
             String keyIdBsonKey = "keyId";
             return Mono.defer(() -> {
+                Timeout operationTimeout = startTimeout();
                 // `Mono.defer` results in `maybeUpdatedEncryptedFields` and `dataKeyMightBeCreated` (mutable state)
                 // being created once per `Subscriber`, which allows the produced `Mono` to support multiple `Subscribers`.
                 BsonDocument maybeUpdatedEncryptedFields = mutableDeepCopy(encryptedFields);
@@ -233,7 +277,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         .filter(field -> field.containsKey(keyIdBsonKey))
                         .filter(field -> Objects.equals(field.get(keyIdBsonKey), BsonNull.VALUE))
                         // here we rely on the `createDataKey` publisher being cold, i.e., doing nothing until it is subscribed to
-                        .map(field -> Mono.fromDirect(createDataKey(kmsProvider, dataKeyOptions))
+                        .map(field -> Mono.fromDirect(createDataKey(kmsProvider, dataKeyOptions, operationTimeout))
                                 // This is the closest we can do with reactive streams to setting the `dataKeyMightBeCreated` flag
                                 // immediately before calling `createDataKey`.
                                 .doOnSubscribe(subscription -> dataKeyMightBeCreated.set(true))
@@ -255,8 +299,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         //
                         // Similarly, the `Subscriber` of the returned `Publisher` is guaranteed to observe all those write actions
                         // via the `maybeUpdatedEncryptedFields` reference, which is emitted as a result of `thenReturn`.
-                        .thenEmpty(Mono.defer(() -> Mono.fromDirect(database.createCollection(collectionName,
-                                new CreateCollectionOptions(createCollectionOptions).encryptedFields(maybeUpdatedEncryptedFields))))
+                        .thenEmpty(Mono.defer(() -> Mono.fromDirect(databaseWithTimeout(database,
+                                TIMEOUT_ERROR_MESSAGE_CREATE_COLLECTION, operationTimeout)
+                                .createCollection(collectionName, new CreateCollectionOptions(createCollectionOptions)
+                                        .encryptedFields(maybeUpdatedEncryptedFields))))
                         )
                         .onErrorMap(e -> dataKeyMightBeCreated.get(), e ->
                                 new MongoUpdatedEncryptedFieldsException(maybeUpdatedEncryptedFields,
@@ -265,7 +311,9 @@ public class ClientEncryptionImpl implements ClientEncryption {
                         .thenReturn(maybeUpdatedEncryptedFields);
             });
         } else {
-            return Mono.fromDirect(database.createCollection(collectionName, createCollectionOptions))
+            return databaseWithTimeoutDeferred(database, startTimeout())
+                    .flatMap(wrappedDatabase -> Mono.fromDirect(wrappedDatabase
+                            .createCollection(collectionName, createCollectionOptions)))
                     .thenReturn(encryptedFields);
         }
     }
@@ -274,5 +322,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
     public void close() {
         keyVaultClient.close();
         crypt.close();
+    }
+
+    @Nullable
+    private Timeout startTimeout() {
+        return TimeoutContext.startTimeout(options.getTimeout(MILLISECONDS));
     }
 }

@@ -217,13 +217,19 @@
         <Method name="~.*validateAnnotations.*"/>
         <Bug pattern="UC_USELESS_OBJECT"/>
     </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="org.bson.codecs.kotlinx.KotlinSerializerCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
 
     <!-- Spotbugs reports false positives for suspendable operations with default params
          see: https://github.com/Kotlin/kotlinx.coroutines/issues/3099
     -->
     <Match>
         <!-- MongoDB status: "False Positive", SpotBugs rank: 13 -->
-        <Class name="com.mongodb.kotlin.client.coroutine.MongoClient"/>
+        <Class name="com.mongodb.kotlin.client.coroutine.MongoCluster"/>
         <Method name="startSession"/>
         <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
     </Match>
@@ -231,6 +237,27 @@
         <!-- MongoDB status: "False Positive", SpotBugs rank: 16 -->
         <Class name="~com.mongodb.kotlin.client.coroutine.*"/>
         <Bug pattern="NP_NONNULL_PARAM_VIOLATION"/>
+    </Match>
+
+    <!-- Ignoring await return; intended to be used in a loop -->
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+    <Match>
+        <Class name="com.mongodb.internal.time.Timeout"/>
+        <Bug pattern="WA_AWAIT_NOT_IN_LOOP"/>
+    </Match>
+
+    <!-- Void method returning null but @NotNull API -->
+    <Match>
+        <Class name="com.mongodb.internal.operation.DropIndexOperation"/>
+        <Method name="execute"/>
+        <Bug pattern="NP_NONNULL_RETURN_VIOLATION"/>
     </Match>
 
 </FindBugsFilter>

@@ -17,6 +17,9 @@
 
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
@@ -37,6 +40,7 @@ import org.bson.conversions.Bson
  */
 @Deprecated("Map Reduce has been deprecated. Use Aggregation instead", replaceWith = ReplaceWith(""))
 public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) : Flow<T> by wrapped.asFlow() {
+
     /**
      * Sets the number of documents to return per batch.
      *
@@ -45,6 +49,19 @@ public class MapReduceFlow<T : Any>(private val wrapped: MapReducePublisher<T>) 
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
     public fun batchSize(batchSize: Int): MapReduceFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun timeoutMode(timeoutMode: TimeoutMode): MapReduceFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which

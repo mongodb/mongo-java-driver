@@ -19,8 +19,9 @@ package com.mongodb.reactivestreams.client.unified;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.junit.After;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,9 +32,9 @@ import java.util.List;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorClose;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-public class LoadBalancerTest extends UnifiedReactiveStreamsTest {
+final class LoadBalancerTest extends UnifiedReactiveStreamsTest {
 
     private static final List<String> CURSOR_OPEN_TIMING_SENSITIVE_TESTS =
             Arrays.asList(
@@ -52,11 +53,8 @@ public class LoadBalancerTest extends UnifiedReactiveStreamsTest {
                     "pinned connections are returned after a network error during a killCursors request",
                     "a connection can be shared by a transaction and a cursor");
 
-    public LoadBalancerTest(final String fileDescription,
-                            final String testDescription,
-                            final String schemaVersion, @Nullable final BsonArray runOnRequirements, final BsonArray entities,
-                            final BsonArray initialData, final BsonDocument definition) {
-        super(fileDescription, schemaVersion, runOnRequirements, entities, initialData, definition);
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
         // Reactive streams driver can't implement these tests because the underlying cursor is closed on error, which
         // breaks assumption in the tests that closing the cursor is something that happens under user control
         assumeFalse(testDescription.equals("pinned connections are not returned after an network error during getMore"));
@@ -64,7 +62,26 @@ public class LoadBalancerTest extends UnifiedReactiveStreamsTest {
         // Reactive streams driver can't implement this test because there is no way to tell that a change stream cursor
         // that has not yet received any results has even initiated the change stream
         assumeFalse(testDescription.equals("change streams pin to a connection"));
+    }
 
+    @Override
+    @BeforeEach
+    public void setUp(
+            @Nullable final String fileDescription,
+            @Nullable final String testDescription,
+            final String schemaVersion,
+            @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray,
+            final BsonArray initialData,
+            final BsonDocument definition) {
+        super.setUp(
+                fileDescription,
+                testDescription,
+                schemaVersion,
+                runOnRequirements,
+                entitiesArray,
+                initialData,
+                definition);
         if (CURSOR_OPEN_TIMING_SENSITIVE_TESTS.contains(testDescription)) {
             enableSleepAfterCursorOpen(256);
         }
@@ -74,14 +91,14 @@ public class LoadBalancerTest extends UnifiedReactiveStreamsTest {
         }
     }
 
-    @After
+    @Override
+    @AfterEach
     public void cleanUp() {
         super.cleanUp();
         disableSleep();
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/load-balancers");
     }
 }

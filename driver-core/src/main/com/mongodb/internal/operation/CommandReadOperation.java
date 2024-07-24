@@ -34,27 +34,28 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  */
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
     private final String databaseName;
-    private final BsonDocument command;
+    private final CommandCreator commandCreator;
     private final Decoder<T> decoder;
 
     public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
+        this(databaseName, (operationContext, serverDescription, connectionDescription) -> command, decoder);
+    }
+
+    public CommandReadOperation(final String databaseName, final CommandCreator commandCreator, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
-        this.command = notNull("command", command);
+        this.commandCreator = notNull("commandCreator", commandCreator);
         this.decoder = notNull("decoder", decoder);
     }
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result, false);
+        return executeRetryableRead(binding, databaseName, commandCreator, decoder,
+                                    (result, source, connection) -> result, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, databaseName, getCommandCreator(), decoder, (result, source, connection) -> result,
-                false, callback);
-    }
-
-    private CommandCreator getCommandCreator() {
-        return (serverDescription, connectionDescription) -> command;
+        executeRetryableReadAsync(binding, databaseName, commandCreator, decoder,
+                                  (result, source, connection) -> result, false, callback);
     }
 }

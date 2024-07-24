@@ -59,6 +59,12 @@ final class DocumentHelper {
         }
     }
 
+    static void putIfNotNull(final BsonDocument command, final String key, @Nullable final Boolean value) {
+        if (value != null) {
+            command.put(key, new BsonBoolean(value));
+        }
+    }
+
     static void putIfNotZero(final BsonDocument command, final String key, final int value) {
         if (value != 0) {
             command.put(key, new BsonInt32(value));

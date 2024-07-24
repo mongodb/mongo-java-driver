@@ -18,6 +18,8 @@ package com.mongodb.kotlin.client
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.MongoDatabase as JMongoDatabase
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
@@ -52,6 +54,28 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /** The write concern for the database. */
     public val writeConcern: WriteConcern
         get() = wrapped.writeConcern
+
+    /**
+     * The time limit for the full execution of an operation.
+     *
+     * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+     * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
+     * - `null` means that the timeout mechanism for operations will defer to using:
+     *     - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to
+     *       become available
+     *     - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+     *     - `wTimeoutMS`: How long the server will wait for the write concern to be fulfilled before timing out.
+     *     - `maxTimeMS`: The time limit for processing operations on a cursor. See:
+     *       [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+     *     - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+     * - `0` means infinite timeout.
+     * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * @return the optional timeout duration
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
 
     /**
      * Create a new MongoDatabase instance with a different codec registry.
@@ -97,6 +121,21 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
         MongoDatabase(wrapped.withWriteConcern(newWriteConcern))
 
     /**
+     * Create a new MongoDatabase instance with the set time limit for the full execution of an operation.
+     * - `0` means an infinite timeout
+     * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit, defaults to Milliseconds
+     * @return a new MongoDatabase instance with the set time limit for operations
+     * @see [MongoDatabase.timeout]
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoDatabase =
+        MongoDatabase(wrapped.withTimeout(timeout, timeUnit))
+
+    /**
      * Gets a collection.
      *
      * @param T the default class to covert documents returned from the collection into.
@@ -120,6 +159,9 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
+     *
      * @param command the command to be run
      * @param readPreference the [ReadPreference] to be used when executing the command, defaults to
      *   [MongoDatabase.readPreference]
@@ -130,6 +172,9 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
+     *
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
      *
      * @param clientSession the client session with which to associate this operation
      * @param command the command to be run
@@ -146,6 +191,9 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
+     *
      * @param T the class to decode each document into
      * @param command the command to be run
      * @param readPreference the [ReadPreference] to be used when executing the command, defaults to
@@ -161,6 +209,9 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
+     *
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
      *
      * @param T the class to decode each document into
      * @param clientSession the client session with which to associate this operation
@@ -180,6 +231,9 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
     /**
      * Executes the given command in the context of the current database with the given read preference.
      *
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
+     *
      * @param T the class to decode each document into
      * @param command the command to be run
      * @param readPreference the [ReadPreference] to be used when executing the command, defaults to
@@ -193,6 +247,9 @@ public class MongoDatabase(private val wrapped: JMongoDatabase) {
 
     /**
      * Executes the given command in the context of the current database with the given read preference.
+     *
+     * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and
+     * the `timeoutMS` setting has been set.
      *
      * @param T the class to decode each document into
      * @param clientSession the client session with which to associate this operation

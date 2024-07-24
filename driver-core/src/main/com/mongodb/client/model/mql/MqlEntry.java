@@ -17,6 +17,7 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 /**
@@ -34,7 +35,7 @@ import com.mongodb.annotations.Sealed;
  * @since 4.9.0
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface MqlEntry<T extends MqlValue> extends MqlValue {
 
     /**

@@ -18,8 +18,6 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
@@ -42,16 +40,12 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final Decoder<T> commandResultDecoder;
     private final boolean responseExpected;
     private final ClusterConnectionMode clusterConnectionMode;
-    private final RequestContext requestContext;
-    private SessionContext sessionContext;
-    private final ServerApi serverApi;
     private final OperationContext operationContext;
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
             @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
-            final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi, final RequestContext requestContext,
-            final OperationContext operationContext) {
+            final ClusterConnectionMode clusterConnectionMode, final OperationContext operationContext) {
         notNull("database", database);
         this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
@@ -62,8 +56,6 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
-        this.serverApi = serverApi;
-        this.requestContext = notNull("requestContext", requestContext);
         this.operationContext = operationContext;
 
         isTrueArgument("payloadFieldNameValidator cannot be null if there is a payload.",
@@ -73,15 +65,14 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     @Nullable
     @Override
     public T execute(final InternalConnection connection) {
-        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext, requestContext,
-                operationContext);
+        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, operationContext);
     }
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
         try {
-            connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, sessionContext, requestContext,
-                    operationContext, (result, t) -> {
+            connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, operationContext,
+                    (result, t) -> {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
@@ -94,14 +85,15 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     }
 
     @Override
-    public CommandProtocolImpl<T> sessionContext(final SessionContext sessionContext) {
-        this.sessionContext = sessionContext;
-        return this;
+    public CommandProtocolImpl<T> withSessionContext(final SessionContext sessionContext) {
+        return new CommandProtocolImpl<>(namespace.getDatabaseName(), command, commandFieldNameValidator, readPreference,
+                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
+                operationContext.withSessionContext(sessionContext));
     }
 
     private CommandMessage getCommandMessage(final InternalConnection connection) {
         return new CommandMessage(namespace, command, commandFieldNameValidator, readPreference,
-                    getMessageSettings(connection.getDescription()), responseExpected, payload,
-                payloadFieldNameValidator, clusterConnectionMode, serverApi);
+                    getMessageSettings(connection.getDescription(), connection.getInitialServerDescription()), responseExpected, payload,
+                payloadFieldNameValidator, clusterConnectionMode, operationContext.getServerApi());
     }
 }

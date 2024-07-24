@@ -117,6 +117,19 @@ public final class Assertions {
     }
 
     /**
+     * Throw AssertionError if the condition if false.
+     *
+     * @param name      the name of the state that is being checked
+     * @param condition the condition about the parameter to check
+     * @throws AssertionError if the condition is false
+     */
+    public static void assertTrue(final String name, final boolean condition) {
+        if (!condition) {
+            throw new AssertionError("state should be: " + assertNotNull(name));
+        }
+    }
+
+    /**
      * Cast an object to the given class and return it, or throw IllegalArgumentException if it's not assignable to that class.
      *
      * @param clazz        the class to cast to

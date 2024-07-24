@@ -20,8 +20,8 @@ import com.mongodb.ExplainVerbosity
 import com.mongodb.client.ListSearchIndexesIterable
 import com.mongodb.client.model.Collation
 import org.bson.{ BsonValue, Document }
-import org.mongodb.scala.ListSearchIndexesObservable
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.{ ListSearchIndexesObservable, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
 import scala.reflect.ClassTag
@@ -42,6 +42,11 @@ case class SyncListSearchIndexesIterable[T](wrapped: ListSearchIndexesObservable
 
   override def batchSize(batchSize: Int): ListSearchIndexesIterable[T] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  override def timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesIterable[T] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

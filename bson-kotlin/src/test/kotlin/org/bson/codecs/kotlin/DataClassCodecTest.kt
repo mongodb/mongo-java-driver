@@ -23,6 +23,7 @@ import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
+import org.bson.codecs.kotlin.samples.Box
 import org.bson.codecs.kotlin.samples.DataClassEmbedded
 import org.bson.codecs.kotlin.samples.DataClassListOfDataClasses
 import org.bson.codecs.kotlin.samples.DataClassListOfListOfDataClasses
@@ -55,6 +56,7 @@ import org.bson.codecs.kotlin.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlin.samples.DataClassWithMutableSet
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterizedDataClass
+import org.bson.codecs.kotlin.samples.DataClassWithNullableGeneric
 import org.bson.codecs.kotlin.samples.DataClassWithNulls
 import org.bson.codecs.kotlin.samples.DataClassWithObjectIdAndBsonDocument
 import org.bson.codecs.kotlin.samples.DataClassWithPair
@@ -129,6 +131,25 @@ class DataClassCodecTest {
 
         val withStoredNulls = BsonDocument.parse("""{"boolean": null, "string": null, "listSimple": null}""")
         assertDecodesTo(withStoredNulls, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNotNull() {
+        val expected =
+            """{
+            | "box": {"boxed": "String"}
+            |}"""
+                .trimMargin()
+
+        val dataClass = DataClassWithNullableGeneric(Box("String"))
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNull() {
+        val expected = """{"box": {}}"""
+        val dataClass = DataClassWithNullableGeneric(Box(null))
+        assertRoundTrips(expected, dataClass)
     }
 
     @Test
@@ -228,7 +249,7 @@ class DataClassCodecTest {
             |"nestedParameterized": {
             |  "parameterizedDataClass":
             |  {"number": 4.2, "string": "myString", "parameterizedList": [{"name": "embedded1"}]},
-            |  "other": "myOtherString"
+            |  "other": "myOtherString", "optionalOther": "myOptionalOtherString"
             | }
             |}"""
                 .trimMargin()
@@ -236,7 +257,9 @@ class DataClassCodecTest {
             DataClassWithNestedParameterizedDataClass(
                 "myId",
                 DataClassWithNestedParameterized(
-                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))), "myOtherString"))
+                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))),
+                    "myOtherString",
+                    "myOptionalOtherString"))
 
         assertRoundTrips(expected, dataClass)
     }

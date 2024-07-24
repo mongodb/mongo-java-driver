@@ -120,7 +120,8 @@ data class DataClassWithNestedParameterizedDataClass(
 @Serializable
 data class DataClassWithNestedParameterized<A, B, C : Number>(
     val parameterizedDataClass: DataClassParameterized<C, A>,
-    val other: B
+    val other: B,
+    val optionalOther: B?
 )
 
 @Serializable data class DataClassWithPair(val pair: Pair<String, Int>)
@@ -294,3 +295,7 @@ data class DataClassWithFailingInit(val id: String) {
 }
 
 @Serializable data class DataClassWithSequence(val value: Sequence<String>)
+
+@Serializable data class Box<T>(val boxed: T)
+
+@Serializable data class DataClassWithNullableGeneric(val box: Box<String?>)

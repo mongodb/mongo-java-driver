@@ -19,20 +19,14 @@ package com.mongodb.internal.binding;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
-import com.mongodb.RequestContext;
-import com.mongodb.ServerApi;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.selector.WritableServerSelector;
-import com.mongodb.internal.session.SessionContext;
-import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -54,35 +48,18 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     private volatile Server writeServer;
     private volatile ServerDescription readServerDescription;
     private volatile ServerDescription writeServerDescription;
-    @Nullable
-    private final ServerApi serverApi;
-    private final OperationContext operationContext = new OperationContext();
+    private final OperationContext operationContext;
 
     /**
      * Create a new binding with the given cluster.
-     *  @param cluster     a non-null Cluster which will be used to select a server to bind to
-     * @param maxWaitTime the maximum time to wait for a connection to become available.
-     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
-     * @param serverApi   the server api, which may be null
-     */
-    public AsyncSingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit,
-                                        @Nullable final ServerApi serverApi) {
-        this(cluster, primary(), maxWaitTime, timeUnit, serverApi);
-    }
-
-    /**
-     * Create a new binding with the given cluster.
-     *  @param cluster        a non-null Cluster which will be used to select a server to bind to
+     *
+     * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
-     * @param maxWaitTime    the maximum time to wait for a connection to become available.
-     * @param timeUnit       a non-null TimeUnit for the maxWaitTime
-     * @param serverApi      the server api, which may be null
+     * @param operationContext the operation context
      */
-    public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
-                                        final long maxWaitTime, final TimeUnit timeUnit, @Nullable final ServerApi serverApi) {
-        this.serverApi = serverApi;
-
+    public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, final OperationContext operationContext) {
         notNull("cluster", cluster);
+        this.operationContext = operationContext;
         this.readPreference = notNull("readPreference", readPreference);
         CountDownLatch latch = new CountDownLatch(2);
         cluster.selectServerAsync(new WritableServerSelector(), operationContext, (result, t) -> {
@@ -100,7 +77,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             }
         });
 
-        awaitLatch(maxWaitTime, timeUnit, latch);
+        awaitLatch(latch);
 
         if (writeServer == null || readServer == null) {
             throw new MongoInternalException("Failure to select server");
@@ -112,7 +89,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             writeServerLatch.countDown();
         });
 
-        awaitLatch(maxWaitTime, timeUnit, writeServerLatch);
+        awaitLatch(writeServerLatch);
 
         if (writeConnection == null) {
             throw new MongoInternalException("Failure to get connection");
@@ -124,16 +101,16 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             readConnection = result;
             readServerLatch.countDown();
         });
-        awaitLatch(maxWaitTime, timeUnit, readServerLatch);
+        awaitLatch(readServerLatch);
 
         if (readConnection == null) {
             throw new MongoInternalException("Failure to get connection");
         }
     }
 
-    private void awaitLatch(final long maxWaitTime, final TimeUnit timeUnit, final CountDownLatch latch) {
+    private void awaitLatch(final CountDownLatch latch) {
         try {
-            if (!latch.await(maxWaitTime, timeUnit)) {
+            if (!latch.await(operationContext.getTimeoutContext().timeoutOrAlternative(10000), TimeUnit.MILLISECONDS)) {
                 throw new MongoTimeoutException("Failed to get servers");
             }
         } catch (InterruptedException e) {
@@ -150,22 +127,6 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     @Override
     public ReadPreference getReadPreference() {
         return readPreference;
-    }
-
-    @Override
-    public SessionContext getSessionContext() {
-        return NoOpSessionContext.INSTANCE;
-    }
-
-    @Override
-    @Nullable
-    public ServerApi getServerApi() {
-        return serverApi;
-    }
-
-    @Override
-    public RequestContext getRequestContext() {
-        return IgnorableRequestContext.INSTANCE;
     }
 
     @Override
@@ -219,22 +180,6 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         @Override
         public ServerDescription getServerDescription() {
             return serverDescription;
-        }
-
-        @Override
-        public SessionContext getSessionContext() {
-            return NoOpSessionContext.INSTANCE;
-        }
-
-        @Override
-        @Nullable
-        public ServerApi getServerApi() {
-            return serverApi;
-        }
-
-        @Override
-        public RequestContext getRequestContext() {
-            return IgnorableRequestContext.INSTANCE;
         }
 
         @Override

@@ -23,7 +23,9 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ExplainableReadOperation;
@@ -49,16 +51,11 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     private Bson filter;
 
     FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
-                     final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter) {
-        this(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern, executor, filter, true);
-    }
-
-    FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
-                     final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads) {
-        super(clientSession, executor, readConcern, readPreference, retryReads);
-        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, retryReads);
+            final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+            final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads,
+            final TimeoutSettings timeoutSettings) {
+        super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
+        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, retryReads, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
         this.findOptions = new FindOptions();
@@ -92,7 +89,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
 
     @Override
     public FindIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
+        validateMaxAwaitTime(maxAwaitTime, timeUnit);
         findOptions.maxAwaitTime(maxAwaitTime, timeUnit);
         return this;
     }
@@ -101,6 +98,13 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     public FindIterable<TResult> batchSize(final int batchSize) {
         super.batchSize(batchSize);
         findOptions.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        findOptions.timeoutMode(timeoutMode);
         return this;
     }
 
@@ -203,8 +207,8 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     @Nullable
     @Override
     public TResult first() {
-        try (BatchCursor<TResult> batchCursor = getExecutor().execute(operations.findFirst(filter, resultClass, findOptions),
-                getReadPreference(), getReadConcern(), getClientSession())) {
+        try (BatchCursor<TResult> batchCursor = getExecutor().execute(
+                operations.findFirst(filter, resultClass, findOptions), getReadPreference(), getReadConcern(), getClientSession())) {
             return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
         }
     }
@@ -229,10 +233,15 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+
+    protected OperationExecutor getExecutor() {
+        return getExecutor(operations.createTimeoutSettings(findOptions));
+    }
+
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
-        return getExecutor().execute(asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)),
-                getReadPreference(), getReadConcern(), getClientSession());
+        return getExecutor().execute(
+                asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
     }
 
     public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {

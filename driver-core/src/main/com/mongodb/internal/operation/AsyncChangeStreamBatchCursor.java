@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -42,6 +43,7 @@ import static java.lang.String.format;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AsyncReadBinding binding;
+    private final TimeoutContext timeoutContext;
     private final ChangeStreamOperation<T> changeStreamOperation;
     private final int maxWireVersion;
 
@@ -63,6 +65,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
         this.wrapped = new AtomicReference<>(assertNotNull(wrapped));
         this.binding = binding;
         binding.retain();
+        this.timeoutContext = binding.getOperationContext().getTimeoutContext();
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
         isClosed = new AtomicBoolean();
@@ -80,6 +83,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     @Override
     public void close() {
+        timeoutContext.resetTimeoutIfPresent();
         if (isClosed.compareAndSet(false, true)) {
             try {
                 nullifyAndCloseWrapped();
@@ -177,6 +181,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     }
 
     private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<T>> callback, final boolean tryNext) {
+        timeoutContext.resetTimeoutIfPresent();
         SingleResultCallback<List<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (isClosed()) {
             errHandlingCallback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
@@ -219,12 +224,12 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                 changeStreamOperation.setChangeStreamOptionsForResume(resumeToken,
                         assertNotNull(source).getServerDescription().getMaxWireVersion());
                 source.release();
-                changeStreamOperation.executeAsync(binding, (result, t1) -> {
+                changeStreamOperation.executeAsync(binding, (asyncBatchCursor, t1) -> {
                     if (t1 != null) {
                         callback.onResult(null, t1);
                     } else {
                         try {
-                            setWrappedOrCloseIt(assertNotNull((AsyncChangeStreamBatchCursor<T>) result).getWrapped());
+                            setWrappedOrCloseIt(assertNotNull((AsyncChangeStreamBatchCursor<T>) asyncBatchCursor).getWrapped());
                         } finally {
                             try {
                                 binding.release(); // release the new change stream batch cursor's reference to the binding

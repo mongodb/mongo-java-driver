@@ -150,6 +150,7 @@ functions:
         env:
           PRODUCT_NAME: ${product_name}
           PRODUCT_VERSION: ${product_version}
+          EVERGREEN_VERSION_ID: ${version_id}
         script: .evergreen/ssdlc-report.sh
     - command: ec2.assume_role
       params:
@@ -1883,11 +1884,6 @@ axes:
         display_name: "Serverless Passthrough Proxy"
         variables:
           VAULT_NAME: "serverless"
-        batchtime: 10080  # 7 days
-      - id: "terminating"
-        display_name: "Serverless Terminating Proxy"
-        variables:
-          VAULT_NAME: "serverless_next"
         batchtime: 10080  # 7 days
 
 task_groups:

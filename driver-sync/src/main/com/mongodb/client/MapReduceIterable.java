@@ -16,6 +16,9 @@
 
 package com.mongodb.client;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -179,4 +182,18 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.4
      */
     MapReduceIterable<TResult> collation(@Nullable Collation collation);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    MapReduceIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 }

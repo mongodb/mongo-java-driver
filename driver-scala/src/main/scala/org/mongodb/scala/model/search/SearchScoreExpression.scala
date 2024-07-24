@@ -15,7 +15,7 @@
  */
 package org.mongodb.scala.model.search
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.search.{ SearchScoreExpression => JSearchScoreExpression }
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -26,7 +26,7 @@ import collection.JavaConverters._
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#expressions Expressions for the function score modifier]]
  * @since 4.7
  */
-@Beta(Array(Beta.Reason.CLIENT))
+@Beta(Array(Reason.CLIENT))
 object SearchScoreExpression {
 
   /**

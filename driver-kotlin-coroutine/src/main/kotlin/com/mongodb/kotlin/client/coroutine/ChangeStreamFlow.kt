@@ -40,6 +40,15 @@ import org.bson.BsonValue
 public class ChangeStreamFlow<T : Any>(private val wrapped: ChangeStreamPublisher<T>) : Flow<ChangeStreamDocument<T>> {
 
     /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     */
+    public fun batchSize(batchSize: Int): ChangeStreamFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
      * Sets the fullDocument value.
      *
      * @param fullDocument the fullDocument
@@ -67,15 +76,6 @@ public class ChangeStreamFlow<T : Any>(private val wrapped: ChangeStreamPublishe
      * @return this
      */
     public fun resumeAfter(resumeToken: BsonDocument): ChangeStreamFlow<T> = apply { wrapped.resumeAfter(resumeToken) }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public fun batchSize(batchSize: Int): ChangeStreamFlow<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the maximum await execution time on the server for this operation.

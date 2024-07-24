@@ -20,7 +20,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -46,12 +45,12 @@ public interface AsyncConnection extends ReferenceCounted {
     ConnectionDescription getDescription();
 
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator fieldNameValidator,
-            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, BindingContext context,
+            @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, OperationContext operationContext,
             SingleResultCallback<T> callback);
 
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
             @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder,
-            BindingContext context, boolean responseExpected, @Nullable SplittablePayload payload,
+            OperationContext operationContext, boolean responseExpected, @Nullable SplittablePayload payload,
             @Nullable FieldNameValidator payloadFieldNameValidator, SingleResultCallback<T> callback);
 
     void markAsPinned(Connection.PinningMode pinningMode);

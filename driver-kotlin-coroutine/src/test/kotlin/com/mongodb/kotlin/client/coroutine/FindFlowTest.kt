@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.FindPublisher
 import java.util.concurrent.TimeUnit
@@ -78,6 +79,7 @@ class FindFlowTest {
         flow.showRecordId(true)
         flow.skip(1)
         flow.sort(bson)
+        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).allowDiskUse(true)
         verify(wrapped).batchSize(batchSize)
@@ -103,6 +105,7 @@ class FindFlowTest {
         verify(wrapped).showRecordId(true)
         verify(wrapped).skip(1)
         verify(wrapped).sort(bson)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         whenever(wrapped.explain(Document::class.java)).doReturn(Mono.fromCallable { Document() })
         whenever(wrapped.explain(Document::class.java, verbosity)).doReturn(Mono.fromCallable { Document() })

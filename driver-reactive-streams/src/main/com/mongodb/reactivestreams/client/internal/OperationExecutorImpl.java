@@ -15,7 +15,6 @@
  */
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.ContextProvider;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -26,9 +25,12 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.RequestContext;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
@@ -39,10 +41,13 @@ import com.mongodb.reactivestreams.client.internal.crypt.CryptBinding;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 
 /**
@@ -52,17 +57,16 @@ public class OperationExecutorImpl implements OperationExecutor {
 
     private final MongoClientImpl mongoClient;
     private final ClientSessionHelper clientSessionHelper;
+    @Nullable
     private final ReactiveContextProvider contextProvider;
+    private final TimeoutSettings timeoutSettings;
 
-    OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper) {
+    OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper,
+            final TimeoutSettings timeoutSettings, @Nullable final ReactiveContextProvider contextProvider) {
         this.mongoClient = mongoClient;
         this.clientSessionHelper = clientSessionHelper;
-        ContextProvider contextProvider = mongoClient.getSettings().getContextProvider();
-        if (contextProvider != null && !(contextProvider instanceof ReactiveContextProvider)) {
-            throw new IllegalArgumentException("The contextProvider must be an instance of "
-                    + ReactiveContextProvider.class.getName() + " when using the Reactive Streams driver");
-        }
-        this.contextProvider = (ReactiveContextProvider) contextProvider;
+        this.timeoutSettings = timeoutSettings;
+        this.contextProvider = contextProvider;
     }
 
     @Override
@@ -78,10 +82,8 @@ public class OperationExecutorImpl implements OperationExecutor {
 
         return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, this)
-                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), readPreference, readConcern, clientSession,
-                                session == null && clientSession != null))
-                        .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(subscriber), readPreference, readConcern, session, false)))
+                        .map(clientSession -> getReadWriteBinding(getContext(subscriber),
+                                readPreference, readConcern, clientSession, session == null))
                         .flatMap(binding -> {
                             if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
@@ -114,10 +116,8 @@ public class OperationExecutorImpl implements OperationExecutor {
 
         return Mono.from(subscriber ->
                 clientSessionHelper.withClientSession(session, this)
-                        .map(clientSession -> getReadWriteBinding(getContext(subscriber), primary(), readConcern,
-                                clientSession, session == null && clientSession != null))
-                        .switchIfEmpty(Mono.fromCallable(() ->
-                                getReadWriteBinding(getContext(subscriber), primary(), readConcern, session, false)))
+                        .map(clientSession -> getReadWriteBinding(getContext(subscriber),
+                                primary(), readConcern, clientSession, session == null))
                         .flatMap(binding ->
                                 Mono.<T>create(sink -> operation.executeAsync(binding, (result, t) -> {
                                     try {
@@ -131,6 +131,19 @@ public class OperationExecutorImpl implements OperationExecutor {
                                 })
                         ).subscribe(subscriber)
         );
+    }
+
+    @Override
+    public OperationExecutor withTimeoutSettings(final TimeoutSettings newTimeoutSettings) {
+        if (Objects.equals(timeoutSettings, newTimeoutSettings)) {
+            return this;
+        }
+        return new OperationExecutorImpl(mongoClient, clientSessionHelper, newTimeoutSettings, contextProvider);
+    }
+
+    @Override
+    public TimeoutSettings getTimeoutSettings() {
+        return timeoutSettings;
     }
 
     private <T> RequestContext getContext(final Subscriber<T> subscriber) {
@@ -158,11 +171,14 @@ public class OperationExecutorImpl implements OperationExecutor {
         }
     }
 
-    private AsyncReadWriteBinding getReadWriteBinding(final RequestContext requestContext, final ReadPreference readPreference,
-            final ReadConcern readConcern, @Nullable final ClientSession session, final boolean ownsSession) {
+    private AsyncReadWriteBinding getReadWriteBinding(final RequestContext requestContext,
+            final ReadPreference readPreference, final ReadConcern readConcern, final ClientSession session,
+            final boolean ownsSession) {
         notNull("readPreference", readPreference);
         AsyncClusterAwareReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
-            getReadPreferenceForBinding(readPreference, session), readConcern, mongoClient.getSettings().getServerApi(), requestContext);
+                getReadPreferenceForBinding(readPreference, session), readConcern,
+                getOperationContext(requestContext, session, readConcern));
+
         Crypt crypt = mongoClient.getCrypt();
         if (crypt != null) {
             readWriteBinding = new CryptBinding(readWriteBinding, crypt);
@@ -174,6 +190,15 @@ public class OperationExecutorImpl implements OperationExecutor {
         } else {
             return asyncReadWriteBinding;
         }
+    }
+
+    private OperationContext getOperationContext(final RequestContext requestContext, final ClientSession session,
+            final ReadConcern readConcern) {
+        return new OperationContext(
+                requestContext,
+                new ReadConcernAwareNoOpSessionContext(readConcern),
+                createTimeoutContext(session, timeoutSettings),
+                mongoClient.getSettings().getServerApi());
     }
 
     private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {

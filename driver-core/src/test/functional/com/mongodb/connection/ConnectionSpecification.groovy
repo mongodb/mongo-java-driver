@@ -66,6 +66,6 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
     }
    private static BsonDocument getHelloResult() {
         new CommandReadOperation<BsonDocument>('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)),
-                                               new BsonDocumentCodec()).execute(getBinding())
+                new BsonDocumentCodec()).execute(getBinding())
     }
 }

@@ -30,16 +30,20 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.IgnorableRequestContext;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
+import com.mongodb.internal.binding.AsyncOperationContextBinding;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncSessionBinding;
 import com.mongodb.internal.binding.AsyncSingleConnectionBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ClusterBinding;
+import com.mongodb.internal.binding.OperationContextBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.binding.SessionBinding;
@@ -50,7 +54,10 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.connection.InternalOperationContextFactory;
 import com.mongodb.internal.connection.MongoCredentialWithCache;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.connection.SocketStreamFactory;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
@@ -94,9 +101,10 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimar
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
-import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assume.assumeThat;
@@ -118,7 +126,20 @@ public final class ClusterFixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
-    public static final Duration TIMEOUT_DURATION = Duration.ofMinutes(1);
+    public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
+
+    public static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(5));
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_TIMEOUT = TIMEOUT_SETTINGS.withTimeout(TIMEOUT, SECONDS);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeout(0L, MILLISECONDS);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME = TIMEOUT_SETTINGS.withMaxTimeMS(100);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME = TIMEOUT_SETTINGS.withMaxAwaitTimeMS(101);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME =
+            TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001);
+
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_LEGACY_SETTINGS =
+            TIMEOUT_SETTINGS.withMaxTimeAndMaxAwaitTimeMS(101, 1001).withMaxCommitMS(999L);
+    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_COMMIT = TIMEOUT_SETTINGS.withMaxCommitMS(999L);
+
     public static final String LEGACY_HELLO = "isMaster";
 
     private static ConnectionString connectionString;
@@ -164,10 +185,26 @@ public final class ClusterFixture {
         if (serverVersion == null) {
             serverVersion = getVersion(new CommandReadOperation<>("admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
-                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(),
-                            IgnorableRequestContext.INSTANCE)));
+                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT, OPERATION_CONTEXT)));
         }
         return serverVersion;
+    }
+
+    public static final OperationContext OPERATION_CONTEXT = new OperationContext(
+            IgnorableRequestContext.INSTANCE,
+            new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
+            new TimeoutContext(TIMEOUT_SETTINGS),
+            getServerApi());
+
+    public static final InternalOperationContextFactory OPERATION_CONTEXT_FACTORY =
+            new InternalOperationContextFactory(TIMEOUT_SETTINGS, getServerApi());
+
+    public static OperationContext createOperationContext(final TimeoutSettings timeoutSettings) {
+        return new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
+                new TimeoutContext(timeoutSettings),
+                getServerApi());
     }
 
     private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
@@ -208,7 +245,8 @@ public final class ClusterFixture {
     }
 
     public static Document getServerStatus() {
-        return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
+        return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)),
+                new DocumentCodec())
                 .execute(getBinding());
     }
 
@@ -272,8 +310,8 @@ public final class ClusterFixture {
                 new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), SslSettings.builder().build()));
         try {
             BsonDocument helloResult = new CommandReadOperation<>("admin",
-                    new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
-                    ReadPreference.nearest(), ReadConcern.DEFAULT, getServerApi(), IgnorableRequestContext.INSTANCE));
+                    new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec())
+                    .execute(new ClusterBinding(cluster, ReadPreference.nearest(), ReadConcern.DEFAULT, OPERATION_CONTEXT));
             if (helloResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
                         + helloResult.getString("setName").getValue());
@@ -316,29 +354,49 @@ public final class ClusterFixture {
         return null;
     }
 
-    public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(), IgnorableRequestContext.INSTANCE);
+    public static ReadWriteBinding getBinding() {
+        return getBinding(getCluster());
     }
 
-    public static ReadWriteBinding getBinding() {
-        return getBinding(getCluster(), ReadPreference.primary());
+    public static ReadWriteBinding getBinding(final Cluster cluster) {
+        return new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, OPERATION_CONTEXT);
+    }
+
+    public static ReadWriteBinding getBinding(final TimeoutSettings timeoutSettings) {
+        return getBinding(getCluster(), ReadPreference.primary(), createNewOperationContext(timeoutSettings));
+    }
+
+    public static ReadWriteBinding getBinding(final OperationContext operationContext) {
+       return getBinding(getCluster(), ReadPreference.primary(), operationContext);
     }
 
     public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
-        return getBinding(getCluster(), readPreference);
+        return getBinding(getCluster(), readPreference, OPERATION_CONTEXT);
     }
 
-    private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
+    public static OperationContext createNewOperationContext(final TimeoutSettings timeoutSettings) {
+        return new OperationContext(OPERATION_CONTEXT.getId(),
+                OPERATION_CONTEXT.getRequestContext(),
+                OPERATION_CONTEXT.getSessionContext(),
+                new TimeoutContext(timeoutSettings),
+                OPERATION_CONTEXT.getServerApi());
+    }
+
+    private static ReadWriteBinding getBinding(final Cluster cluster,
+            final ReadPreference readPreference,
+            final OperationContext operationContext) {
         if (!BINDING_MAP.containsKey(readPreference)) {
-            ReadWriteBinding binding = new SessionBinding(new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT, getServerApi(),
-                    IgnorableRequestContext.INSTANCE));
+            ReadWriteBinding binding = new SessionBinding(new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT,
+                    operationContext));
             BINDING_MAP.put(readPreference, binding);
         }
-        return BINDING_MAP.get(readPreference);
+        ReadWriteBinding readWriteBinding = BINDING_MAP.get(readPreference);
+        return new OperationContextBinding(readWriteBinding,
+                operationContext.withSessionContext(readWriteBinding.getOperationContext().getSessionContext()));
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
-        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), getServerApi());
+        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), OPERATION_CONTEXT);
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {
@@ -346,29 +404,41 @@ public final class ClusterFixture {
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding(final Cluster cluster) {
-        return new AsyncSingleConnectionBinding(cluster, 20, SECONDS, getServerApi());
+        return new AsyncSingleConnectionBinding(cluster,  ReadPreference.primary(), OPERATION_CONTEXT);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
-        return new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, getServerApi(),
-                IgnorableRequestContext.INSTANCE);
+        return new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, OPERATION_CONTEXT);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {
-        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary());
+        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary(), OPERATION_CONTEXT);
+    }
+
+    public static AsyncReadWriteBinding getAsyncBinding(final TimeoutSettings timeoutSettings) {
+        return getAsyncBinding(createNewOperationContext(timeoutSettings));
+    }
+
+    public static AsyncReadWriteBinding getAsyncBinding(final OperationContext operationContext) {
+        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary(), operationContext);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final ReadPreference readPreference) {
-        return getAsyncBinding(getAsyncCluster(), readPreference);
+        return getAsyncBinding(getAsyncCluster(), readPreference, OPERATION_CONTEXT);
     }
 
-    public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
+    public static AsyncReadWriteBinding getAsyncBinding(
+            final Cluster cluster,
+            final ReadPreference readPreference,
+            final OperationContext operationContext) {
         if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
             AsyncReadWriteBinding binding = new AsyncSessionBinding(new AsyncClusterBinding(cluster, readPreference, ReadConcern.DEFAULT,
-                    getServerApi(), IgnorableRequestContext.INSTANCE));
+                    operationContext));
             ASYNC_BINDING_MAP.put(readPreference, binding);
         }
-        return ASYNC_BINDING_MAP.get(readPreference);
+        AsyncReadWriteBinding readWriteBinding = ASYNC_BINDING_MAP.get(readPreference);
+        return new AsyncOperationContextBinding(readWriteBinding,
+                operationContext.withSessionContext(readWriteBinding.getOperationContext().getSessionContext()));
     }
 
     public static synchronized Cluster getCluster() {
@@ -402,16 +472,17 @@ public final class ClusterFixture {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
-                streamFactory, streamFactory, credential, LoggerSettings.builder().build(), null, null, null,
-                Collections.emptyList(), getServerApi(), null);
+                TIMEOUT_SETTINGS.connectionOnly(), streamFactory, TIMEOUT_SETTINGS.connectionOnly(), streamFactory, credential,
+                LoggerSettings.builder().build(), null, null, null, Collections.emptyList(), getServerApi(), null);
     }
 
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
-        return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
-                ServerSettings.builder().build(),
-                ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
-                InternalConnectionPoolSettings.builder().build(),
-                streamFactory,
+        MongoClientSettings mongoClientSettings = MongoClientSettings.builder().applyConnectionString(connectionString).build();
+
+        return new DefaultClusterFactory().createCluster(mongoClientSettings.getClusterSettings(),
+                mongoClientSettings.getServerSettings(), mongoClientSettings.getConnectionPoolSettings(),
+                InternalConnectionPoolSettings.builder().build(), TimeoutSettings.create(mongoClientSettings).connectionOnly(),
+                streamFactory, TimeoutSettings.createHeartbeatSettings(mongoClientSettings).connectionOnly(),
                 new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().readTimeout(5, SECONDS).build(),
                         getSslSettings(connectionString)),
                 connectionString.getCredential(),
@@ -475,30 +546,38 @@ public final class ClusterFixture {
         return SslSettings.builder().applyConnectionString(connectionString).build();
     }
 
-    public static ServerAddress getPrimary() {
+    public static ServerDescription getPrimaryServerDescription() {
         List<ServerDescription> serverDescriptions = getPrimaries(getClusterDescription(getCluster()));
         while (serverDescriptions.isEmpty()) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            sleep(100);
             serverDescriptions = getPrimaries(getClusterDescription(getCluster()));
         }
-        return serverDescriptions.get(0).getAddress();
+        return serverDescriptions.get(0);
+    }
+
+    public static ServerAddress getPrimary() {
+        return getPrimaryServerDescription().getAddress();
+    }
+
+    public static long getPrimaryRTT() {
+        return MILLISECONDS.convert(getPrimaryServerDescription().getRoundTripTimeNanos(), NANOSECONDS);
     }
 
     public static ServerAddress getSecondary() {
         List<ServerDescription> serverDescriptions = getSecondaries(getClusterDescription(getCluster()));
         while (serverDescriptions.isEmpty()) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            sleep(100);
             serverDescriptions = getSecondaries(getClusterDescription(getCluster()));
         }
         return serverDescriptions.get(0).getAddress();
+    }
+
+    public static void sleep(final int sleepMS) {
+        try {
+            Thread.sleep(sleepMS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Nullable
@@ -518,8 +597,7 @@ public final class ClusterFixture {
     public static BsonDocument getServerParameters() {
         if (serverParameters == null) {
             serverParameters = new CommandReadOperation<>("admin",
-                    new BsonDocument("getParameter", new BsonString("*")),
-                    new BsonDocumentCodec())
+                    new BsonDocument("getParameter", new BsonString("*")), new BsonDocumentCodec())
                     .execute(getBinding());
         }
         return serverParameters;
@@ -599,7 +677,8 @@ public final class ClusterFixture {
             BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString(failPoint))
                     .append("mode", new BsonString("off"));
             try {
-                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec()).execute(getBinding());
+                new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
+                        .execute(getBinding());
             } catch (MongoCommandException e) {
                 // ignore
             }
@@ -743,7 +822,7 @@ public final class ClusterFixture {
                 if (System.currentTimeMillis() > startTime + TIMEOUT_DURATION.toMillis()) {
                     return count;
                 }
-                sleep(10);
+                Thread.sleep(10);
                 count = referenceCounted.getCount();
             } catch (InterruptedException e) {
                 throw interruptAndCreateMongoInterruptedException("Interrupted", e);
@@ -754,5 +833,12 @@ public final class ClusterFixture {
 
     public static ClusterSettings.Builder setDirectConnection(final ClusterSettings.Builder builder) {
         return builder.mode(ClusterConnectionMode.SINGLE).hosts(singletonList(getPrimary()));
+    }
+
+    public static int applyTimeoutMultiplierForServerless(final int timeoutMs) {
+        if (ClusterFixture.isServerlessTest()) {
+            return timeoutMs * 2;
+        }
+        return timeoutMs;
     }
 }
