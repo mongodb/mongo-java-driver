@@ -142,6 +142,8 @@ internal class DefaultBsonEncoder(
     override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
         deferredElementHandler.with(
             {
+                // When using generics its possible for `value` to be null
+                // See: https://youtrack.jetbrains.com/issue/KT-66206
                 if (value != null || configuration.explicitNulls) {
                     encodeName(it)
                     super.encodeSerializableValue(serializer, value)
