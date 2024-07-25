@@ -84,7 +84,7 @@ class MongoIterableTest {
         val cursor: JMongoCursor<Document> = mock()
         val iterable = MongoIterable(delegate)
 
-        val documents = listOf(Document("a", 1), Document("b", 2), Document("c", 3))
+        val documents = listOf(Document("a", 1), Document("b", 2), Document("c", 3), Document("d", 4))
 
         whenever(cursor.hasNext()).thenReturn(true, true, true, false)
         whenever(cursor.next()).thenReturn(documents[0], documents[1], documents[2])
@@ -93,7 +93,7 @@ class MongoIterableTest {
         assertContentEquals(documents.subList(0, 2), iterable.use { it.take(2) }.toList())
 
         verify(delegate, times(1)).cursor()
-        verify(cursor, times(2)).hasNext()
+        verify(cursor, times(3)).hasNext()
         verify(cursor, times(2)).next()
         verify(cursor, times(1)).close()
 
