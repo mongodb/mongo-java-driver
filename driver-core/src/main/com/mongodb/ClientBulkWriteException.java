@@ -48,50 +48,45 @@ public final class ClientBulkWriteException extends MongoServerException {
     @Nullable
     private final ClientBulkWriteResult partialResult;
 
-    private ClientBulkWriteException(
-            final String message,
-            @Nullable final MongoException error,
-            @Nullable final List<WriteConcernError> writeConcernErrors,
-            @Nullable final Map<Long, WriteError> writeErrors,
-            @Nullable final ClientBulkWriteResult partialResult,
-            final ServerAddress serverAddress) {
-        super(message, serverAddress);
-        // BULK-TODO Should ClientBulkWriteException.getCode be the same as error.getCode,
-        // and getErrorLabels/hasErrorLabel contain the same labels as error.getErrorLabels?
-        this.error = error;
-        this.writeConcernErrors = writeConcernErrors == null ? emptyList() : unmodifiableList(writeConcernErrors);
-        this.writeErrors = writeErrors == null ? emptyMap() : unmodifiableMap(writeErrors);
-        this.partialResult = partialResult;
-    }
-
     /**
-     * Creates a {@link ClientBulkWriteException}.
-     * At least one of {@code error}, {@code writeConcernErrors}, {@code writeErrors}, {@code partialResult}
-     * must be non-{@code null} or non-empty.
+     * Constructs a new instance.
      *
      * @param error The {@linkplain #getError() top-level error}.
      * @param writeConcernErrors The {@linkplain #getWriteConcernErrors() write concern errors}.
      * @param writeErrors The {@linkplain #getWriteErrors() write errors}.
      * @param partialResult The {@linkplain #getPartialResult() partial result}.
      * @param serverAddress The {@linkplain MongoServerException#getServerAddress() server address}.
-     * @return The requested {@link ClientBulkWriteException}.
      */
-    public static ClientBulkWriteException create(
+    public ClientBulkWriteException(
             @Nullable final MongoException error,
             @Nullable final List<WriteConcernError> writeConcernErrors,
             @Nullable final Map<Long, WriteError> writeErrors,
             @Nullable final ClientBulkWriteResult partialResult,
             final ServerAddress serverAddress) {
+        super(message(error, writeConcernErrors, writeErrors, partialResult, serverAddress), serverAddress);
+        // BULK-TODO Should ClientBulkWriteException.getCode be the same as error.getCode,
+        // and getErrorLabels/hasErrorLabel contain the same labels as error.getErrorLabels?
         isTrueArgument("At least one of `writeConcernErrors`, `writeErrors`, `partialResult` must be non-null or non-empty",
                 !(writeConcernErrors == null || writeConcernErrors.isEmpty())
-                || !(writeErrors == null || writeErrors.isEmpty())
-                || partialResult != null);
-        String message = "Client-level bulk write operation error on server " + serverAddress + "."
+                        || !(writeErrors == null || writeErrors.isEmpty())
+                        || partialResult != null);
+        this.error = error;
+        this.writeConcernErrors = writeConcernErrors == null ? emptyList() : unmodifiableList(writeConcernErrors);
+        this.writeErrors = writeErrors == null ? emptyMap() : unmodifiableMap(writeErrors);
+        this.partialResult = partialResult;
+    }
+
+    private static String message(
+            @Nullable final MongoException error,
+            @Nullable final List<WriteConcernError> writeConcernErrors,
+            @Nullable final Map<Long, WriteError> writeErrors,
+            @Nullable final ClientBulkWriteResult partialResult,
+            final ServerAddress serverAddress) {
+        return "Client-level bulk write operation error on server " + serverAddress + "."
                 + (error == null ? "" : " Top-level error: " + error + ".")
                 + (writeErrors == null || writeErrors.isEmpty() ? "" : " Write errors: " + writeErrors + ".")
                 + (writeConcernErrors == null || writeConcernErrors.isEmpty() ? "" : " Write concern errors: " + writeConcernErrors + ".")
                 + (partialResult == null ? "" : " Partial result: " + partialResult + ".");
-        return new ClientBulkWriteException(message, error, writeConcernErrors, writeErrors, partialResult, serverAddress);
     }
 
     /**
