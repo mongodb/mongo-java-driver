@@ -38,11 +38,7 @@ description = "Bson Kotlinx Codecs"
 
 ext.set("pomName", "Bson Kotlinx")
 
-java {
-    registerFeature("jsonSupport") {
-        usingSourceSet(sourceSets["main"])
-    }
-}
+java { registerFeature("jsonSupport") { usingSourceSet(sourceSets["main"]) } }
 
 dependencies {
     // Align versions of all Kotlin components
