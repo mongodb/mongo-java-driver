@@ -24,9 +24,11 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.time.Timeout;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -68,7 +70,9 @@ public final class SingleServerCluster extends BaseCluster {
     }
 
     @Override
-    public ServersSnapshot getServersSnapshot() {
+    public ServersSnapshot getServersSnapshot(
+            final Timeout serverSelectionTimeout,
+            final TimeoutContext timeoutContext) {
         isTrue("open", !isClosed());
         ClusterableServer server = assertNotNull(this.server.get());
         return serverAddress -> server;

@@ -19,7 +19,7 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
-import static org.bson.codecs.NumberCodecHelper.decodeLong;
+import static org.bson.internal.NumberCodecHelper.decodeLong;
 
 /**
  * Encodes and decodes {@code Long} objects.

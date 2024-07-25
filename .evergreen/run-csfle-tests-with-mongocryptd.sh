@@ -4,20 +4,22 @@ set -o xtrace   # Write all commands first to stderr
 set -o errexit  # Exit the script with error if any of the commands fail
 
 # Supported/used environment variables:
-#       MONGODB_URI                 Set the suggested connection MONGODB_URI (including credentials and topology info)
-#       JAVA_VERSION                Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#       AWS_ACCESS_KEY_ID           The AWS access key identifier for client-side encryption
-#       AWS_SECRET_ACCESS_KEY       The AWS secret access key for client-side encryption
-#       AWS_TEMP_ACCESS_KEY_ID      The temporary AWS access key identifier for client-side encryption
-#       AWS_TEMP_SECRET_ACCESS_KEY  The temporary AWS secret access key for client-side encryption
-#       AWS_TEMP_SESSION_TOKEN      The temporary AWS session token for client-side encryption
-#       AZURE_TENANT_ID             The Azure tenant identifier for client-side encryption
-#       AZURE_CLIENT_ID             The Azure client identifier for client-side encryption
-#       AZURE_CLIENT_SECRET         The Azure client secret for client-side encryption
-#       GCP_EMAIL                   The GCP email for client-side encryption
-#       GCP_PRIVATE_KEY             The GCP private key for client-side encryption
-#       AZUREKMS_KEY_VAULT_ENDPOINT The Azure key vault endpoint for integration tests
-#       AZUREKMS_KEY_NAME           The Azure key name endpoint for integration tests
+#   MONGODB_URI                         Set the suggested connection MONGODB_URI (including credentials and topology info)
+#   JAVA_VERSION                        Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
+#   AWS_ACCESS_KEY_ID                   The AWS access key identifier for client-side encryption
+#   AWS_SECRET_ACCESS_KEY               The AWS secret access key for client-side encryption
+#   AWS_ACCESS_KEY_ID_AWS_KMS_NAMED     The AWS access key identifier for client-side encryption's named KMS provider.
+#   AWS_SECRET_ACCESS_KEY_AWS_KMS_NAMED The AWS secret access key for client-side encryption's named KMS provider.
+#   AWS_TEMP_ACCESS_KEY_ID              The temporary AWS access key identifier for client-side encryption
+#   AWS_TEMP_SECRET_ACCESS_KEY          The temporary AWS secret access key for client-side encryption
+#   AWS_TEMP_SESSION_TOKEN              The temporary AWS session token for client-side encryption
+#   AZURE_TENANT_ID                     The Azure tenant identifier for client-side encryption
+#   AZURE_CLIENT_ID                     The Azure client identifier for client-side encryption
+#   AZURE_CLIENT_SECRET                 The Azure client secret for client-side encryption
+#   GCP_EMAIL                           The GCP email for client-side encryption
+#   GCP_PRIVATE_KEY                     The GCP private key for client-side encryption
+#   AZUREKMS_KEY_VAULT_ENDPOINT         The Azure key vault endpoint for integration tests
+#   AZUREKMS_KEY_NAME                   The Azure key name endpoint for integration tests
 
 MONGODB_URI=${MONGODB_URI:-}
 

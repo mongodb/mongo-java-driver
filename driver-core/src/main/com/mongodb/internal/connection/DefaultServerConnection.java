@@ -20,7 +20,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
@@ -70,39 +69,38 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, context, true, null, null);
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext) {
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, null, null);
     }
 
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final BindingContext context, final boolean responseExpected,
+            final OperationContext operationContext, final boolean responseExpected,
             @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
-        return executeProtocol(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
-                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
-                        context.getServerApi(), context.getRequestContext(), context.getOperationContext()),
-                context.getSessionContext());
+        return executeProtocol(
+                new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference, commandResultDecoder,
+                        responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, operationContext),
+                operationContext.getSessionContext());
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
             final SingleResultCallback<T> callback) {
         commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                context, true, null, null, callback);
+                operationContext, true, null, null, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
-            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final BindingContext context,
+            @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
             final boolean responseExpected, @Nullable final SplittablePayload payload,
             @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
-                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode,
-                        context.getServerApi(), context.getRequestContext(), context.getOperationContext()),
-                context.getSessionContext(), callback);
+                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, operationContext),
+                operationContext.getSessionContext(), callback);
     }
 
     @Override

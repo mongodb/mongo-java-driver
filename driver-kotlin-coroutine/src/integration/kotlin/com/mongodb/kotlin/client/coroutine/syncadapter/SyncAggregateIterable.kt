@@ -17,6 +17,7 @@ package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.AggregateIterable as JAggregateIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.coroutine.AggregateFlow
 import java.util.concurrent.TimeUnit
@@ -28,7 +29,6 @@ import org.bson.conversions.Bson
 data class SyncAggregateIterable<T : Any>(val wrapped: AggregateFlow<T>) :
     JAggregateIterable<T>, SyncMongoIterable<T>(wrapped) {
     override fun batchSize(batchSize: Int): SyncAggregateIterable<T> = apply { wrapped.batchSize(batchSize) }
-
     override fun toCollection() = runBlocking { wrapped.toCollection() }
 
     override fun allowDiskUse(allowDiskUse: Boolean?): SyncAggregateIterable<T> = apply {
@@ -58,6 +58,10 @@ data class SyncAggregateIterable<T : Any>(val wrapped: AggregateFlow<T>) :
     override fun hintString(hint: String?): SyncAggregateIterable<T> = apply { wrapped.hintString(hint) }
 
     override fun let(variables: Bson?): SyncAggregateIterable<T> = apply { wrapped.let(variables) }
+
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncAggregateIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
 
     override fun explain(): Document = runBlocking { wrapped.explain() }
 

@@ -30,6 +30,7 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.LEGACY_HELLO
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
@@ -45,7 +46,7 @@ class CommandHelperSpecification extends Specification {
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open()
+        connection.open(OPERATION_CONTEXT)
     }
 
     def cleanup() {
@@ -58,7 +59,7 @@ class CommandHelperSpecification extends Specification {
         Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
         executeCommandAsync('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), getClusterConnectionMode(),
-                getServerApi(), connection)
+                getServerApi(), connection, OPERATION_CONTEXT)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
         latch1.await()
 
@@ -70,7 +71,7 @@ class CommandHelperSpecification extends Specification {
         when:
         def latch2 = new CountDownLatch(1)
         executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), getClusterConnectionMode(),
-                getServerApi(), connection)
+                getServerApi(), connection, OPERATION_CONTEXT)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch2.countDown() }
         latch2.await()
 

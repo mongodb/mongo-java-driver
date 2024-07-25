@@ -15,16 +15,15 @@
  */
 
 package org.mongodb.scala
-import java.util.concurrent.TimeUnit
-
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
 import org.reactivestreams.Publisher
 import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
-
 class DistinctObservableSpec extends BaseSpec with MockitoSugar {
 
   "DistinctObservable" should "have the same methods as the wrapped DistinctObservable" in {
@@ -51,11 +50,14 @@ class DistinctObservableSpec extends BaseSpec with MockitoSugar {
     observable.maxTime(duration)
     observable.collation(collation)
     observable.batchSize(batchSize)
+    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).filter(filter)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).collation(collation)
     verify(wrapper).batchSize(batchSize)
+    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
+
     verifyNoMoreInteractions(wrapper)
   }
 }

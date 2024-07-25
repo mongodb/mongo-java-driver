@@ -265,6 +265,8 @@ functions:
         env:
           AWS_ACCESS_KEY_ID: ${aws_access_key_id}
           AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_ACCESS_KEY_ID_AWS_KMS_NAMED: ${aws_access_key_id_2}
+          AWS_SECRET_ACCESS_KEY_AWS_KMS_NAMED: ${aws_secret_access_key_2}
           AWS_DEFAULT_REGION: us-east-1
           AZURE_TENANT_ID: ${azure_tenant_id}
           AZURE_CLIENT_ID: ${azure_client_id}
@@ -709,6 +711,8 @@ functions:
         env:
           AWS_ACCESS_KEY_ID: ${aws_access_key_id}
           AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+          AWS_ACCESS_KEY_ID_AWS_KMS_NAMED: ${aws_access_key_id_2}
+          AWS_SECRET_ACCESS_KEY_AWS_KMS_NAMED: ${aws_secret_access_key_2}
           AWS_DEFAULT_REGION: us-east-1
           AZURE_TENANT_ID: ${azure_tenant_id}
           AZURE_CLIENT_ID: ${azure_client_id}
@@ -1880,11 +1884,6 @@ axes:
         display_name: "Serverless Passthrough Proxy"
         variables:
           VAULT_NAME: "serverless"
-        batchtime: 10080  # 7 days
-      - id: "terminating"
-        display_name: "Serverless Terminating Proxy"
-        variables:
-          VAULT_NAME: "serverless_next"
         batchtime: 10080  # 7 days
 
 task_groups:

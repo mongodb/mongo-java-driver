@@ -15,6 +15,7 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import java.util.concurrent.TimeUnit
@@ -55,6 +56,7 @@ class DistinctFlowTest {
         flow.filter(filter)
         flow.maxTime(1)
         flow.maxTime(1, TimeUnit.SECONDS)
+        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).collation(collation)
@@ -63,6 +65,7 @@ class DistinctFlowTest {
         verify(wrapped).filter(filter)
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

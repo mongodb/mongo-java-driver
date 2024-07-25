@@ -32,6 +32,8 @@ import org.bson.BsonDocument
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.getServerApi
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
@@ -69,7 +71,7 @@ class ServerSessionPoolSpecification extends Specification {
         def cluster = Stub(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster, getServerApi())
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
 
         when:
         def session = pool.get()
@@ -83,7 +85,7 @@ class ServerSessionPoolSpecification extends Specification {
         def cluster = Stub(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster, getServerApi())
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
         pool.close()
 
         when:
@@ -98,7 +100,7 @@ class ServerSessionPoolSpecification extends Specification {
         def cluster = Stub(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster, getServerApi())
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
         def session = pool.get()
 
         when:
@@ -118,7 +120,7 @@ class ServerSessionPoolSpecification extends Specification {
             millis() >>> [0, MINUTES.toMillis(29) + 1,
             ]
         }
-        def pool = new ServerSessionPool(cluster, getServerApi(), clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
         def sessionOne = pool.get()
 
         when:
@@ -144,7 +146,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >>> [0, 0, 0]
         }
-        def pool = new ServerSessionPool(cluster, getServerApi(), clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
         def session = pool.get()
 
         when:
@@ -163,7 +165,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
         }
-        def pool = new ServerSessionPool(cluster, getServerApi(), clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
 
         when:
         def session = pool.get() as ServerSessionPool.ServerSessionImpl
@@ -185,7 +187,7 @@ class ServerSessionPoolSpecification extends Specification {
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
         }
-        def pool = new ServerSessionPool(cluster, getServerApi(), clock)
+        def pool = new ServerSessionPool(cluster, OPERATION_CONTEXT, clock)
 
         when:
         def session = pool.get() as ServerSessionPool.ServerSessionImpl
@@ -205,7 +207,7 @@ class ServerSessionPoolSpecification extends Specification {
         def cluster = Mock(Cluster) {
             getCurrentDescription() >> connectedDescription
         }
-        def pool = new ServerSessionPool(cluster, getServerApi())
+        def pool = new ServerSessionPool(cluster, TIMEOUT_SETTINGS, getServerApi())
         def sessions = []
         10.times { sessions.add(pool.get()) }
 

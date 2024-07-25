@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation
 
-
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
@@ -36,6 +35,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync
@@ -54,7 +54,7 @@ class AsyncOperationHelperSpecification extends Specification {
             getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0, 0])
             getServerType() >> ServerType.REPLICA_SET_PRIMARY
         }
-        def commandCreator = { serverDesc, connectionDesc -> command }
+        def commandCreator = { csot, serverDesc, connectionDesc -> command }
         def callback = new SingleResultCallback() {
             def result
             def throwable
@@ -73,24 +73,26 @@ class AsyncOperationHelperSpecification extends Specification {
             _ * getDescription() >> connectionDescription
         }
 
+        def operationContext = OPERATION_CONTEXT.withSessionContext(
+                Stub(SessionContext) {
+                    hasSession() >> true
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
         def connectionSource = Stub(AsyncConnectionSource) {
-            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
-            _ * getServerDescription() >> serverDescription
+            getServerDescription() >> serverDescription
+            getOperationContext() >> operationContext
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
 
         when:
-        executeRetryableWriteAsync(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
-                commandCreator, FindAndModifyHelper.asyncTransformer(), { cmd -> cmd }, callback)
+        executeRetryableWriteAsync(asyncWriteBinding, dbName, primary(),
+                new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.asyncTransformer(),
+                { cmd -> cmd }, callback)
 
         then:
         2 * connection.commandAsync(dbName, command, _, primary(), decoder, *_) >> { it.last().onResult(results.poll(), null) }
@@ -107,11 +109,9 @@ class AsyncOperationHelperSpecification extends Specification {
         def callback = Stub(SingleResultCallback)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
-            getServerApi() >> null
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
         def connectionDescription = Stub(ConnectionDescription)
@@ -129,18 +129,18 @@ class AsyncOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = new BsonDocument('fakeCommandName', BsonNull.VALUE)
-        def commandCreator = { serverDescription, connectionDescription -> command }
+        def commandCreator = { csot, serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
         def function = Stub(CommandReadTransformerAsync)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
             getConnection(_) >> { it[0].onResult(connection, null) }
             getReadPreference() >> readPreference
         }
         def asyncReadBinding = Stub(AsyncReadBinding) {
-            getServerApi() >> null
+            getOperationContext() >> OPERATION_CONTEXT
             getReadConnectionSource(_)  >> { it[0].onResult(connectionSource, null) }
         }
         def connectionDescription = Stub(ConnectionDescription)

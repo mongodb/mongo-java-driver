@@ -36,8 +36,8 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.internal.connection.DescriptionHelper.createConnectionDescription
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription
-import static org.bson.BsonDocument.parse
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
+import static org.bson.BsonDocument.parse
 
 class DescriptionHelperSpecification extends Specification {
     private final ServerAddress serverAddress = new ServerAddress('localhost', 27018)
@@ -150,7 +150,7 @@ class DescriptionHelperSpecification extends Specification {
     def 'server description should reflect not ok legacy hello result'() {
         expect:
         createServerDescription(serverAddress,
-                                parse('{ok : 0}'), roundTripTime) ==
+                                parse('{ok : 0}'), roundTripTime, 0) ==
                 ServerDescription.builder()
                          .ok(false)
                          .address(serverAddress)
@@ -162,7 +162,7 @@ class DescriptionHelperSpecification extends Specification {
     def 'server description should reflect last update time'() {
         expect:
         createServerDescription(serverAddress,
-                parse('{ ok : 1 }'), roundTripTime).getLastUpdateTime(TimeUnit.NANOSECONDS) == Time.CONSTANT_TIME
+                parse('{ ok : 1 }'), roundTripTime, 0).getLastUpdateTime(TimeUnit.NANOSECONDS) == Time.CONSTANT_TIME
     }
 
     def 'server description should reflect roundTripNanos'() {
@@ -177,7 +177,7 @@ class DescriptionHelperSpecification extends Specification {
                                       maxWireVersion : 3,
                                       minWireVersion : 0,
                                       ok : 1
-                                      }"""), roundTripTime).roundTripTimeNanos ==
+                                      }"""), roundTripTime, 0).roundTripTimeNanos ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -201,7 +201,7 @@ class DescriptionHelperSpecification extends Specification {
                         maxWireVersion : 3,
                         minWireVersion : 0,
                         ok : 1
-                        }"""), roundTripTime) ==
+                        }"""), roundTripTime, 0) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -235,7 +235,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }"""), roundTripTime) ==
+                        }"""), roundTripTime, 0) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(new ServerAddress('localhost', 27018))
@@ -274,7 +274,7 @@ class DescriptionHelperSpecification extends Specification {
                         "minWireVersion" : 0,
                         "lastWrite" : { "lastWriteDate" : ISODate("2016-03-04T23:14:07.338Z") }
                         "ok" : 1
-                        }"""), roundTripTime) ==
+                        }"""), roundTripTime, 0) ==
                 ServerDescription.builder()
                         .ok(true)
                         .address(new ServerAddress('localhost', 27018))
@@ -326,7 +326,7 @@ class DescriptionHelperSpecification extends Specification {
                         "setVersion" : 2,
                         tags : { "dc" : "east", "use" : "production" }
                         "ok" : 1
-                        }"""), roundTripTime)
+                        }"""), roundTripTime, 0)
 
         then:
         serverDescription ==
@@ -374,7 +374,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }"""), roundTripTime) ==
+                        }"""), roundTripTime, 0) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -418,7 +418,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }"""), roundTripTime)
+                        }"""), roundTripTime, 0)
 
         then:
         serverDescription ==
@@ -466,7 +466,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }"""), roundTripTime) ==
+                        }"""), roundTripTime, 0) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddressOfHidden)
@@ -499,7 +499,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }"""), roundTripTime) ==
+                        }"""), roundTripTime, 0) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)
@@ -525,7 +525,7 @@ class DescriptionHelperSpecification extends Specification {
                         "maxWireVersion" : 3,
                         "minWireVersion" : 0,
                         "ok" : 1
-                        }"""), roundTripTime) ==
+                        }"""), roundTripTime, 0) ==
         ServerDescription.builder()
                          .ok(true)
                          .address(serverAddress)

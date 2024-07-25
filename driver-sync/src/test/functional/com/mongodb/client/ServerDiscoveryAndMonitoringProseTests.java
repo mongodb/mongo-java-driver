@@ -26,9 +26,10 @@ import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.TimePointTest;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -56,6 +57,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -267,21 +269,14 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required)
             throws InterruptedException {
-        assertPoll(queue, allowed, required, Timeout.startNow(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS));
+        assertPoll(queue, allowed, required, Timeout.expiresIn(TEST_WAIT_TIMEOUT_MILLIS, MILLISECONDS, ZERO_DURATION_MEANS_EXPIRED));
     }
 
     private static void assertPoll(final BlockingQueue<?> queue, @Nullable final Class<?> allowed, final Set<Class<?>> required,
                                    final Timeout timeout) throws InterruptedException {
         Set<Class<?>> encountered = new HashSet<>();
         while (true) {
-            Object element;
-            if (timeout.isImmediate()) {
-                element = queue.poll();
-            } else if (timeout.isInfinite()) {
-                element = queue.take();
-            } else {
-                element = queue.poll(timeout.remaining(NANOSECONDS), NANOSECONDS);
-            }
+            Object element = poll(queue, timeout);
             if (element != null) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Polled " + element);
@@ -299,10 +294,27 @@ public class ServerDiscoveryAndMonitoringProseTests {
                     return;
                 }
             }
-            if (timeout.expired()) {
+            if (TimePointTest.hasExpired(timeout)) {
                 fail(format("encountered %s, required %s", encountered, required));
             }
         }
+    }
+
+    @Nullable
+    private static Object poll(final BlockingQueue<?> queue, final Timeout timeout) throws InterruptedException {
+        long remainingNs = timeout.call(NANOSECONDS,
+                () -> -1L,
+                (ns) -> ns,
+                () -> 0L);
+        Object element;
+        if (remainingNs == -1) {
+            element = queue.take();
+        } else if (remainingNs == 0) {
+            element = queue.poll();
+        } else {
+            element = queue.poll(remainingNs, NANOSECONDS);
+        }
+        return element;
     }
 
     private static Optional<Class<?>> findAssignable(final Class<?> from, final Set<Class<?>> toAnyOf) {

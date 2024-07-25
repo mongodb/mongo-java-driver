@@ -17,6 +17,7 @@
 package org.mongodb.scala
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.{ Alpha, Reason }
 
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.AggregatePublisher
@@ -197,6 +198,28 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * @return an Observable that indicates when the operation has completed.
    */
   def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   *   to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): AggregateObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
+    this
+  }
 
   /**
    * Helper to return a single observable limited to the first result.

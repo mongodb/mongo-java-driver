@@ -22,8 +22,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -31,8 +29,6 @@ import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -45,10 +41,8 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
-import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -71,11 +65,10 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private int limit;
     private boolean jsMode;
     private boolean verbose;
-    private long maxTimeMS;
     private Collation collation;
 
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final BsonJavaScript mapFunction,
-                                               final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
+            final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -170,31 +163,18 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return this;
     }
 
-
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, MILLISECONDS);
-    }
-
-
-    public MapReduceWithInlineResultsOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-
     @Override
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+        return executeRetryableRead(binding, namespace.getDatabaseName(),
+                getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
         SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
-                CommandResultDocumentCodec.create(decoder, "results"),
+        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+                getCommandCreator(), CommandResultDocumentCodec.create(decoder, "results"),
                 asyncTransformer(), false, errHandlingCallback);
     }
 
@@ -208,7 +188,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<>(namespace.getDatabaseName(),
-                asExplainCommand(getCommand(NoOpSessionContext.INSTANCE, MIN_WIRE_VERSION),
+                (operationContext, serverDescription, connectionDescription) ->
+                        asExplainCommand(getCommandCreator().create(operationContext, serverDescription, connectionDescription),
                         explainVerbosity), new BsonDocumentCodec());
     }
 
@@ -226,28 +207,26 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                 MapReduceHelper.createStatistics(result));
     }
 
-    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
-        return (serverDescription, connectionDescription) -> getCommand(sessionContext, connectionDescription.getMaxWireVersion());
-    }
+    private CommandCreator getCommandCreator() {
+        return (operationContext, serverDescription, connectionDescription) -> {
 
-    private BsonDocument getCommand(final SessionContext sessionContext, final int maxWireVersion) {
-        BsonDocument commandDocument = new BsonDocument("mapReduce", new BsonString(namespace.getCollectionName()))
-                                           .append("map", getMapFunction())
-                                           .append("reduce", getReduceFunction())
-                                           .append("out", new BsonDocument("inline", new BsonInt32(1)));
+            BsonDocument commandDocument = new BsonDocument("mapReduce", new BsonString(namespace.getCollectionName()))
+                    .append("map", getMapFunction())
+                    .append("reduce", getReduceFunction())
+                    .append("out", new BsonDocument("inline", new BsonInt32(1)));
 
-        putIfNotNull(commandDocument, "query", getFilter());
-        putIfNotNull(commandDocument, "sort", getSort());
-        putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
-        putIfNotNull(commandDocument, "scope", getScope());
-        putIfTrue(commandDocument, "verbose", isVerbose());
-        appendReadConcernToCommand(sessionContext, maxWireVersion, commandDocument);
-        putIfNotZero(commandDocument, "limit", getLimit());
-        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
-        putIfTrue(commandDocument, "jsMode", isJsMode());
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
-        }
-        return commandDocument;
+            putIfNotNull(commandDocument, "query", getFilter());
+            putIfNotNull(commandDocument, "sort", getSort());
+            putIfNotNull(commandDocument, "finalize", getFinalizeFunction());
+            putIfNotNull(commandDocument, "scope", getScope());
+            putIfTrue(commandDocument, "verbose", isVerbose());
+            appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), commandDocument);
+            putIfNotZero(commandDocument, "limit", getLimit());
+            putIfTrue(commandDocument, "jsMode", isJsMode());
+            if (collation != null) {
+                commandDocument.put("collation", collation.asDocument());
+            }
+            return commandDocument;
+        };
     }
 }

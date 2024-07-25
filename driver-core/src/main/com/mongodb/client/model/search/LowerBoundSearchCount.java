@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 /**
@@ -23,7 +24,7 @@ import com.mongodb.annotations.Sealed;
  * @since 4.7
  */
 @Sealed
-@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
+@Beta({Reason.CLIENT, Reason.SERVER})
 public interface LowerBoundSearchCount extends SearchCount {
     /**
      * Creates a new {@link LowerBoundSearchCount} that instructs to count documents up to the {@code threshold} exactly,

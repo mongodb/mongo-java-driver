@@ -53,12 +53,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private final WriteConcern writeConcern;
     private boolean dropTarget;
 
-    public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace) {
-        this(originalNamespace, newNamespace, null);
-    }
-
     public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace,
-                                     @Nullable final WriteConcern writeConcern) {
+            @Nullable final WriteConcern writeConcern) {
         this.originalNamespace = notNull("originalNamespace", originalNamespace);
         this.newNamespace = notNull("newNamespace", newNamespace);
         this.writeConcern = writeConcern;
@@ -79,7 +75,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection, writeConcernErrorTransformer()));
+        return withConnection(binding, connection -> executeCommand(binding, "admin", getCommand(), connection,
+                writeConcernErrorTransformer(binding.getOperationContext().getTimeoutContext())));
     }
 
     @Override
@@ -90,7 +87,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 errHandlingCallback.onResult(null, t);
             } else {
                 executeCommandAsync(binding, "admin", getCommand(), assertNotNull(connection),
-                        writeConcernErrorTransformerAsync(), releasingCallback(errHandlingCallback, connection));
+                        writeConcernErrorTransformerAsync(binding.getOperationContext().getTimeoutContext()),
+                        releasingCallback(errHandlingCallback, connection));
             }
         });
     }

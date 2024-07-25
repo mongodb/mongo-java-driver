@@ -15,7 +15,7 @@
  */
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.{ Beta, Sealed }
+import com.mongodb.annotations.{ Beta, Reason, Sealed }
 
 /**
  * Query building API for MongoDB Atlas full-text search.
@@ -40,7 +40,7 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#operators Search operators]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type SearchOperator = com.mongodb.client.model.search.SearchOperator
 
   /**
@@ -50,14 +50,14 @@ package object search {
    * @see `SearchOperator.compound()`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type CompoundSearchOperatorBase = com.mongodb.client.model.search.CompoundSearchOperatorBase
 
   /**
    * @see `SearchOperator.compound()`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type CompoundSearchOperator = com.mongodb.client.model.search.CompoundSearchOperator
 
   /**
@@ -68,7 +68,7 @@ package object search {
    * @see `CompoundSearchOperatorBase.must(Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type MustCompoundSearchOperator = com.mongodb.client.model.search.MustCompoundSearchOperator
 
   /**
@@ -79,7 +79,7 @@ package object search {
    * @see `CompoundSearchOperatorBase.mustNot(Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type MustNotCompoundSearchOperator = com.mongodb.client.model.search.MustNotCompoundSearchOperator
 
   /**
@@ -90,7 +90,7 @@ package object search {
    * @see `CompoundSearchOperatorBase.should(Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type ShouldCompoundSearchOperator = com.mongodb.client.model.search.ShouldCompoundSearchOperator
 
   /**
@@ -101,14 +101,14 @@ package object search {
    * @see `CompoundSearchOperatorBase.filter(Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type FilterCompoundSearchOperator = com.mongodb.client.model.search.FilterCompoundSearchOperator
 
   /**
    * @see `SearchOperator.exists(FieldSearchPath)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type ExistsSearchOperator = com.mongodb.client.model.search.ExistsSearchOperator
 
   /**
@@ -116,7 +116,7 @@ package object search {
    * @see `SearchOperator.text(Iterable, Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type TextSearchOperator = com.mongodb.client.model.search.TextSearchOperator
 
   /**
@@ -124,7 +124,7 @@ package object search {
    * @see `SearchOperator.autocomplete(Iterable, FieldSearchPath)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type AutocompleteSearchOperator = com.mongodb.client.model.search.AutocompleteSearchOperator
 
   /**
@@ -134,7 +134,7 @@ package object search {
    * @see `SearchOperator.numberRange`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type NumberRangeSearchOperatorBase = com.mongodb.client.model.search.NumberRangeSearchOperatorBase
 
   /**
@@ -144,42 +144,42 @@ package object search {
    * @see `SearchOperator.dateRange`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type DateRangeSearchOperatorBase = com.mongodb.client.model.search.DateRangeSearchOperatorBase
 
   /**
    * @see `SearchOperator.numberRange`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type NumberRangeSearchOperator = com.mongodb.client.model.search.NumberRangeSearchOperator
 
   /**
    * @see `SearchOperator.dateRange`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type DateRangeSearchOperator = com.mongodb.client.model.search.DateRangeSearchOperator
 
   /**
    * @see `SearchOperator.near`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type NumberNearSearchOperator = com.mongodb.client.model.search.NumberNearSearchOperator
 
   /**
    * @see `SearchOperator.near`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type DateNearSearchOperator = com.mongodb.client.model.search.DateNearSearchOperator
 
   /**
    * @see `SearchOperator.near`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type GeoNearSearchOperator = com.mongodb.client.model.search.GeoNearSearchOperator
 
   /**
@@ -189,7 +189,7 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/text/ text operator]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type FuzzySearchOptions = com.mongodb.client.model.search.FuzzySearchOptions
 
   /**
@@ -200,14 +200,14 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/operators-and-collectors/#collectors Search collectors]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type SearchCollector = com.mongodb.client.model.search.SearchCollector
 
   /**
    * @see `SearchCollector.facet(SearchOperator, Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type FacetSearchCollector = com.mongodb.client.model.search.FacetSearchCollector
 
   /**
@@ -216,7 +216,7 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/query-syntax/#-search \$search syntax]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type SearchOptions = com.mongodb.client.model.search.SearchOptions
 
   /**
@@ -227,7 +227,7 @@ package object search {
    * @since 4.11
    */
   @Sealed
-  @Beta(Array(Beta.Reason.SERVER))
+  @Beta(Array(Reason.SERVER))
   type VectorSearchOptions = com.mongodb.client.model.search.VectorSearchOptions
 
   /**
@@ -238,7 +238,7 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/highlighting/ Highlighting]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type SearchHighlight = com.mongodb.client.model.search.SearchHighlight
 
   /**
@@ -250,21 +250,21 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/counting/ Counting]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type SearchCount = com.mongodb.client.model.search.SearchCount
 
   /**
    * @see `SearchCount.total()`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type TotalSearchCount = com.mongodb.client.model.search.TotalSearchCount
 
   /**
    * @see `SearchCount.lowerBound()`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type LowerBoundSearchCount = com.mongodb.client.model.search.LowerBoundSearchCount
 
   /**
@@ -273,28 +273,28 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#facet-definition Facet definition]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type SearchFacet = com.mongodb.client.model.search.SearchFacet
 
   /**
    * @see `SearchFacet.stringFacet(String, FieldSearchPath)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type StringSearchFacet = com.mongodb.client.model.search.StringSearchFacet
 
   /**
    * @see `SearchFacet.numberFacet(String, FieldSearchPath, Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type NumberSearchFacet = com.mongodb.client.model.search.NumberSearchFacet
 
   /**
    * @see `SearchFacet.dateFacet(String, FieldSearchPath, Iterable)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT, Beta.Reason.SERVER))
+  @Beta(Array(Reason.CLIENT, Reason.SERVER))
   type DateSearchFacet = com.mongodb.client.model.search.DateSearchFacet
 
   /**
@@ -306,21 +306,21 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/path-construction/ Path]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type SearchPath = com.mongodb.client.model.search.SearchPath
 
   /**
    * @see `SearchPath.fieldPath(String)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type FieldSearchPath = com.mongodb.client.model.search.FieldSearchPath
 
   /**
    * @see `SearchPath.wildcardPath(String)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type WildcardSearchPath = com.mongodb.client.model.search.WildcardSearchPath
 
   /**
@@ -331,35 +331,35 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/ Scoring]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type SearchScore = com.mongodb.client.model.search.SearchScore
 
   /**
    * @see `SearchScore.boost(float)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type ValueBoostSearchScore = com.mongodb.client.model.search.ValueBoostSearchScore
 
   /**
    * @see `SearchScore.boost(FieldSearchPath)`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type PathBoostSearchScore = com.mongodb.client.model.search.PathBoostSearchScore
 
   /**
    * @see `SearchScore.constant`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type ConstantSearchScore = com.mongodb.client.model.search.ConstantSearchScore
 
   /**
    * @see `SearchScore.function`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type FunctionSearchScore = com.mongodb.client.model.search.FunctionSearchScore
 
   /**
@@ -367,62 +367,62 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/scoring/#expressions Expressions for the function score modifier]]
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type SearchScoreExpression = com.mongodb.client.model.search.SearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.relevanceExpression`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type RelevanceSearchScoreExpression = com.mongodb.client.model.search.RelevanceSearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.pathExpression`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type PathSearchScoreExpression = com.mongodb.client.model.search.PathSearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.constantExpression`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type ConstantSearchScoreExpression = com.mongodb.client.model.search.ConstantSearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.gaussExpression`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type GaussSearchScoreExpression = com.mongodb.client.model.search.GaussSearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.log`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type LogSearchScoreExpression = com.mongodb.client.model.search.LogSearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.log1p`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type Log1pSearchScoreExpression = com.mongodb.client.model.search.Log1pSearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.addExpression`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type AddSearchScoreExpression = com.mongodb.client.model.search.AddSearchScoreExpression
 
   /**
    * @see `SearchScoreExpression.multiplyExpression`
    */
   @Sealed
-  @Beta(Array(Beta.Reason.CLIENT))
+  @Beta(Array(Reason.CLIENT))
   type MultiplySearchScoreExpression = com.mongodb.client.model.search.MultiplySearchScoreExpression
 }

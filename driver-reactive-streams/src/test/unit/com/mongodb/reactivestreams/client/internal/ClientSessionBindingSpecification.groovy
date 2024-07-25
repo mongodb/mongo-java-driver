@@ -23,7 +23,6 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
@@ -34,15 +33,19 @@ import com.mongodb.internal.session.ClientSessionContext
 import com.mongodb.reactivestreams.client.ClientSession
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Stub(AsyncClusterAwareReadWriteBinding)
+        def wrappedBinding = Stub(AsyncClusterAwareReadWriteBinding) {
+            getOperationContext() >> OPERATION_CONTEXT
+        }
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
-        def context = binding.getSessionContext()
+        def context = binding.getOperationContext().getSessionContext()
 
         then:
         (context as ClientSessionContext).getClientSession() == session
@@ -51,7 +54,9 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding)
+        def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding) {
+            getOperationContext() >> OPERATION_CONTEXT
+        }
         wrappedBinding.retain() >> wrappedBinding
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
@@ -65,7 +70,7 @@ class ClientSessionBindingSpecification extends Specification {
         }
 
         when:
-        def context = futureResultCallback.get().getSessionContext()
+        def context = futureResultCallback.get().getOperationContext().getSessionContext()
 
         then:
         (context as ClientSessionContext).getClientSession() == session
@@ -80,7 +85,7 @@ class ClientSessionBindingSpecification extends Specification {
         }
 
         when:
-        context = futureResultCallback.get().getSessionContext()
+        context = futureResultCallback.get().getOperationContext().getSessionContext()
 
         then:
         (context as ClientSessionContext).getClientSession() == session
@@ -166,7 +171,7 @@ class ClientSessionBindingSpecification extends Specification {
         def binding = new ClientSessionBinding(session, ownsSession, wrappedBinding)
 
         then:
-        binding.getSessionContext().isImplicitSession() == ownsSession
+        binding.getOperationContext().getSessionContext().isImplicitSession() == ownsSession
 
         where:
         ownsSession << [true, false]
@@ -182,6 +187,6 @@ class ClientSessionBindingSpecification extends Specification {
                         .build()), null)
             }
         }
-        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, null, IgnorableRequestContext.INSTANCE)
+        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT, OPERATION_CONTEXT)
     }
 }

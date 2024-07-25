@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
@@ -32,6 +33,7 @@ import com.mongodb.crypt.capi.MongoRewrapManyDataKeyOptions;
 import com.mongodb.internal.capi.MongoCryptHelper;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import org.bson.BsonBinary;
@@ -128,14 +130,14 @@ public class Crypt implements Closeable {
      * @param databaseName the namespace
      * @param command      the unencrypted command
      */
-    public Mono<RawBsonDocument> encrypt(final String databaseName, final RawBsonDocument command) {
+    public Mono<RawBsonDocument> encrypt(final String databaseName, final RawBsonDocument command, @Nullable final Timeout operationTimeout) {
         notNull("databaseName", databaseName);
         notNull("command", command);
 
         if (bypassAutoEncryption) {
             return Mono.fromCallable(() -> command);
         }
-        return executeStateMachine(() -> mongoCrypt.createEncryptionContext(databaseName, command), databaseName);
+        return executeStateMachine(() -> mongoCrypt.createEncryptionContext(databaseName, command), databaseName, operationTimeout);
     }
 
     /**
@@ -143,9 +145,10 @@ public class Crypt implements Closeable {
      *
      * @param commandResponse the encrypted command response
      */
-    public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse) {
+    public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse, @Nullable final Timeout operationTimeout) {
         notNull("commandResponse", commandResponse);
-        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse)).onErrorMap(this::wrapInClientException);
+        return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse), operationTimeout)
+                .onErrorMap(this::wrapInClientException);
     }
 
     /**
@@ -154,7 +157,7 @@ public class Crypt implements Closeable {
      * @param kmsProvider the KMS provider to create the data key for
      * @param options     the data key options
      */
-    public Mono<RawBsonDocument> createDataKey(final String kmsProvider, final DataKeyOptions options) {
+    public Mono<RawBsonDocument> createDataKey(final String kmsProvider, final DataKeyOptions options, @Nullable final Timeout operationTimeout) {
         notNull("kmsProvider", kmsProvider);
         notNull("options", options);
         return executeStateMachine(() ->
@@ -163,7 +166,7 @@ public class Crypt implements Closeable {
                                                     .keyAltNames(options.getKeyAltNames())
                                                     .masterKey(options.getMasterKey())
                                                     .keyMaterial(options.getKeyMaterial())
-                                                    .build()));
+                                                    .build()), operationTimeout);
     }
 
     /**
@@ -172,13 +175,11 @@ public class Crypt implements Closeable {
      * @param value   the value to encrypt
      * @param options the options
      */
-    public Mono<BsonBinary> encryptExplicitly(final BsonValue value, final EncryptOptions options) {
-        notNull("value", value);
-        notNull("options", options);
-
+    public Mono<BsonBinary> encryptExplicitly(final BsonValue value, final EncryptOptions options, @Nullable final Timeout operationTimeout) {
         return executeStateMachine(() ->
-            mongoCrypt.createExplicitEncryptionContext(new BsonDocument("v", value), asMongoExplicitEncryptOptions(options))
-        ).map(result -> result.getBinary("v"));
+            mongoCrypt.createExplicitEncryptionContext(new BsonDocument("v", value), asMongoExplicitEncryptOptions(options)),
+                operationTimeout)
+                .map(result -> result.getBinary("v"));
     }
 
     /**
@@ -190,10 +191,10 @@ public class Crypt implements Closeable {
      * @since 4.9
      * @mongodb.server.release 6.2
      */
-    @Beta(Beta.Reason.SERVER)
-    public Mono<BsonDocument> encryptExpression(final BsonDocument expression, final EncryptOptions options) {
+    @Beta(Reason.SERVER)
+    public Mono<BsonDocument> encryptExpression(final BsonDocument expression, final EncryptOptions options, @Nullable final Timeout operationTimeout) {
         return executeStateMachine(() ->
-                mongoCrypt.createEncryptExpressionContext(new BsonDocument("v", expression), asMongoExplicitEncryptOptions(options))
+                mongoCrypt.createEncryptExpressionContext(new BsonDocument("v", expression), asMongoExplicitEncryptOptions(options)), operationTimeout
         ).map(result -> result.getDocument("v"));
     }
 
@@ -202,9 +203,8 @@ public class Crypt implements Closeable {
      *
      * @param value the encrypted value
      */
-    public Mono<BsonValue> decryptExplicitly(final BsonBinary value) {
-        notNull("value", value);
-        return executeStateMachine(() -> mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value)))
+    public Mono<BsonValue> decryptExplicitly(final BsonBinary value, @Nullable final Timeout operationTimeout) {
+        return executeStateMachine(() -> mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value)), operationTimeout)
                 .map(result -> result.get("v"));
     }
 
@@ -214,14 +214,14 @@ public class Crypt implements Closeable {
      * @param options the rewrap many data key options
      * @return the decrypted value
      */
-    public Mono<RawBsonDocument> rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options) {
+    public Mono<RawBsonDocument> rewrapManyDataKey(final BsonDocument filter, final RewrapManyDataKeyOptions options, @Nullable final Timeout operationTimeout) {
         return executeStateMachine(() ->
                 mongoCrypt.createRewrapManyDatakeyContext(filter,
                         MongoRewrapManyDataKeyOptions
                                 .builder()
                                 .provider(options.getProvider())
                                 .masterKey(options.getMasterKey())
-                                .build())
+                                .build()), operationTimeout
         );
     }
 
@@ -240,15 +240,16 @@ public class Crypt implements Closeable {
         }
     }
 
-    private Mono<RawBsonDocument> executeStateMachine(final Supplier<MongoCryptContext> cryptContextSupplier) {
-        return executeStateMachine(cryptContextSupplier, null);
+    private Mono<RawBsonDocument> executeStateMachine(final Supplier<MongoCryptContext> cryptContextSupplier,
+                                                      @Nullable final Timeout operationTimeout) {
+        return executeStateMachine(cryptContextSupplier, null, operationTimeout);
     }
 
     private Mono<RawBsonDocument> executeStateMachine(final Supplier<MongoCryptContext> cryptContextSupplier,
-                                                      @Nullable final String databaseName) {
+                                                      @Nullable final String databaseName, @Nullable final Timeout operationTimeout) {
         try {
             MongoCryptContext cryptContext = cryptContextSupplier.get();
-            return Mono.<RawBsonDocument>create(sink -> executeStateMachineWithSink(cryptContext, databaseName, sink))
+            return Mono.<RawBsonDocument>create(sink -> executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout))
                     .onErrorMap(this::wrapInClientException)
                     .doFinally(s -> cryptContext.close());
         } catch (MongoCryptException e) {
@@ -257,23 +258,23 @@ public class Crypt implements Closeable {
     }
 
     private void executeStateMachineWithSink(final MongoCryptContext cryptContext, @Nullable final String databaseName,
-            final MonoSink<RawBsonDocument> sink) {
+            final MonoSink<RawBsonDocument> sink, @Nullable final Timeout operationTimeout) {
         State state = cryptContext.getState();
         switch (state) {
             case NEED_MONGO_COLLINFO:
-                collInfo(cryptContext, databaseName, sink);
+                collInfo(cryptContext, databaseName, sink, operationTimeout);
                 break;
             case NEED_MONGO_MARKINGS:
-                mark(cryptContext, databaseName, sink);
+                mark(cryptContext, databaseName, sink, operationTimeout);
                 break;
             case NEED_KMS_CREDENTIALS:
-                fetchCredentials(cryptContext, databaseName, sink);
+                fetchCredentials(cryptContext, databaseName, sink, operationTimeout);
                 break;
             case NEED_MONGO_KEYS:
-                fetchKeys(cryptContext, databaseName, sink);
+                fetchKeys(cryptContext, databaseName, sink, operationTimeout);
                 break;
             case NEED_KMS:
-                decryptKeys(cryptContext, databaseName, sink);
+                decryptKeys(cryptContext, databaseName, sink, operationTimeout);
                 break;
             case READY:
                 sink.success(cryptContext.finish());
@@ -287,10 +288,10 @@ public class Crypt implements Closeable {
     }
 
     private void fetchCredentials(final MongoCryptContext cryptContext, @Nullable final String databaseName,
-            final MonoSink<RawBsonDocument> sink) {
+            final MonoSink<RawBsonDocument> sink, @Nullable final Timeout operationTimeout) {
         try {
             cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders, kmsProviderPropertySuppliers));
-            executeStateMachineWithSink(cryptContext, databaseName, sink);
+            executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
         } catch (Exception e) {
             sink.error(e);
         }
@@ -298,20 +299,20 @@ public class Crypt implements Closeable {
 
     private void collInfo(final MongoCryptContext cryptContext,
                           @Nullable final String databaseName,
-                          final MonoSink<RawBsonDocument> sink) {
+                          final MonoSink<RawBsonDocument> sink, @Nullable final Timeout operationTimeout) {
         if (collectionInfoRetriever == null) {
             sink.error(new IllegalStateException("Missing collection Info retriever"));
         } else if (databaseName == null) {
             sink.error(new IllegalStateException("Missing database name"));
         } else {
-            collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation())
+            collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation(), operationTimeout)
                     .contextWrite(sink.contextView())
                     .doOnSuccess(result -> {
                         if (result != null) {
                             cryptContext.addMongoOperationResult(result);
                         }
                         cryptContext.completeMongoOperation();
-                        executeStateMachineWithSink(cryptContext, databaseName, sink);
+                        executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                     })
                     .doOnError(t -> sink.error(MongoException.fromThrowableNonNull(t)))
                     .subscribe();
@@ -320,18 +321,19 @@ public class Crypt implements Closeable {
 
     private void mark(final MongoCryptContext cryptContext,
                       @Nullable final String databaseName,
-                      final MonoSink<RawBsonDocument> sink) {
+                      final MonoSink<RawBsonDocument> sink,
+                      @Nullable final Timeout operationTimeout) {
         if (commandMarker == null) {
             sink.error(wrapInClientException(new MongoInternalException("Missing command marker")));
         } else if (databaseName == null) {
             sink.error(wrapInClientException(new IllegalStateException("Missing database name")));
         } else {
-            commandMarker.mark(databaseName, cryptContext.getMongoOperation())
+            commandMarker.mark(databaseName, cryptContext.getMongoOperation(), operationTimeout)
                     .contextWrite(sink.contextView())
                     .doOnSuccess(result -> {
                         cryptContext.addMongoOperationResult(result);
                         cryptContext.completeMongoOperation();
-                        executeStateMachineWithSink(cryptContext, databaseName, sink);
+                        executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                     })
                     .doOnError(e -> sink.error(wrapInClientException(e)))
                     .subscribe();
@@ -340,15 +342,16 @@ public class Crypt implements Closeable {
 
     private void fetchKeys(final MongoCryptContext cryptContext,
                            @Nullable final String databaseName,
-                           final MonoSink<RawBsonDocument> sink) {
-        keyRetriever.find(cryptContext.getMongoOperation())
+                           final MonoSink<RawBsonDocument> sink,
+                           @Nullable final Timeout operationTimeout) {
+        keyRetriever.find(cryptContext.getMongoOperation(), operationTimeout)
                 .contextWrite(sink.contextView())
                 .doOnSuccess(results -> {
                     for (BsonDocument result : results) {
                         cryptContext.addMongoOperationResult(result);
                     }
                     cryptContext.completeMongoOperation();
-                    executeStateMachineWithSink(cryptContext, databaseName, sink);
+                    executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                 })
                 .doOnError(t -> sink.error(MongoException.fromThrowableNonNull(t)))
                 .subscribe();
@@ -356,18 +359,19 @@ public class Crypt implements Closeable {
 
     private void decryptKeys(final MongoCryptContext cryptContext,
                              @Nullable final String databaseName,
-                             final MonoSink<RawBsonDocument> sink) {
+                             final MonoSink<RawBsonDocument> sink,
+                             @Nullable final Timeout operationTimeout) {
         MongoKeyDecryptor keyDecryptor = cryptContext.nextKeyDecryptor();
         if (keyDecryptor != null) {
-            keyManagementService.decryptKey(keyDecryptor)
+            keyManagementService.decryptKey(keyDecryptor, operationTimeout)
                     .contextWrite(sink.contextView())
-                    .doOnSuccess(r -> decryptKeys(cryptContext, databaseName, sink))
+                    .doOnSuccess(r -> decryptKeys(cryptContext, databaseName, sink, operationTimeout))
                     .doOnError(e -> sink.error(wrapInClientException(e)))
                     .subscribe();
         } else {
             Mono.fromRunnable(cryptContext::completeKeyDecryptors)
+                    .doOnSuccess(r -> executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout))
                     .contextWrite(sink.contextView())
-                    .doOnSuccess(r -> executeStateMachineWithSink(cryptContext, databaseName, sink))
                     .doOnError(e -> sink.error(wrapInClientException(e)))
                     .subscribe();
         }

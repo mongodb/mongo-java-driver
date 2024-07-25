@@ -16,14 +16,14 @@
 
 package org.mongodb.scala
 
-import java.util.concurrent.TimeUnit
-
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
 import org.scalatestplus.mockito.MockitoSugar
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 
 class MapReduceObservableSpec extends BaseSpec with MockitoSugar {
@@ -63,6 +63,7 @@ class MapReduceObservableSpec extends BaseSpec with MockitoSugar {
     observable.bypassDocumentValidation(true)
     observable.collation(collation)
     observable.batchSize(batchSize)
+    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).filter(filter)
     verify(wrapper).scope(scope)
@@ -78,6 +79,8 @@ class MapReduceObservableSpec extends BaseSpec with MockitoSugar {
     verify(wrapper).bypassDocumentValidation(true)
     verify(wrapper).collation(collation)
     verify(wrapper).batchSize(batchSize)
+    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
+    verifyNoMoreInteractions(wrapper)
 
     observable.toCollection()
     verify(wrapper).toCollection

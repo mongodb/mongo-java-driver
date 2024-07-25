@@ -43,9 +43,11 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final InternalConnectionPoolSettings internalConnectionPoolSettings;
+    private final InternalOperationContextFactory clusterOperationContextFactory;
     private final StreamFactory streamFactory;
-    private final MongoCredentialWithCache credential;
+    private final InternalOperationContextFactory heartbeatOperationContextFactory;
     private final StreamFactory heartbeatStreamFactory;
+    private final MongoCredentialWithCache credential;
     private final LoggerSettings loggerSettings;
     private final CommandListener commandListener;
     private final String applicationName;
@@ -58,18 +60,20 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
     public DefaultClusterableServerFactory(
             final ServerSettings serverSettings, final ConnectionPoolSettings connectionPoolSettings,
             final InternalConnectionPoolSettings internalConnectionPoolSettings,
-            final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
-            @Nullable final MongoCredential credential,
-            final LoggerSettings loggerSettings,
-            @Nullable final CommandListener commandListener,
-            @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
+            final InternalOperationContextFactory clusterOperationContextFactory, final StreamFactory streamFactory,
+            final InternalOperationContextFactory heartbeatOperationContextFactory, final StreamFactory heartbeatStreamFactory,
+            @Nullable final MongoCredential credential, final LoggerSettings loggerSettings,
+            @Nullable final CommandListener commandListener, @Nullable final String applicationName,
+            @Nullable final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi, final boolean isFunctionAsAServiceEnvironment) {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.internalConnectionPoolSettings = internalConnectionPoolSettings;
+        this.clusterOperationContextFactory = clusterOperationContextFactory;
         this.streamFactory = streamFactory;
-        this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
+        this.heartbeatOperationContextFactory = heartbeatOperationContextFactory;
         this.heartbeatStreamFactory = heartbeatStreamFactory;
+        this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
         this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
         this.applicationName = applicationName;
@@ -88,11 +92,11 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                 // no credentials, compressor list, or command listener for the server monitor factory
                 new InternalStreamConnectionFactory(clusterMode, true, heartbeatStreamFactory, null, applicationName,
                         mongoDriverInformation, emptyList(), loggerSettings, null, serverApi),
-                clusterMode, serverApi, isFunctionAsAServiceEnvironment, sdamProvider);
+                clusterMode, serverApi, isFunctionAsAServiceEnvironment, sdamProvider, heartbeatOperationContextFactory);
         ConnectionPool connectionPool = new DefaultConnectionPool(serverId,
                 new InternalStreamConnectionFactory(clusterMode, streamFactory, credential, applicationName,
                         mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
-                connectionPoolSettings, internalConnectionPoolSettings, sdamProvider);
+                connectionPoolSettings, internalConnectionPoolSettings, sdamProvider, clusterOperationContextFactory);
         ServerListener serverListener = singleServerListener(serverSettings);
         SdamServerDescriptionManager sdam = new DefaultSdamServerDescriptionManager(cluster, serverId, serverListener, serverMonitor,
                 connectionPool, clusterMode);

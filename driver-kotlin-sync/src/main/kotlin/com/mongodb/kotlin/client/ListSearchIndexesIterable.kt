@@ -16,7 +16,10 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.client.ListSearchIndexesIterable as JListSearchIndexesIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -31,6 +34,27 @@ import org.bson.Document
 public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearchIndexesIterable<T>) :
     MongoIterable<T>(wrapped) {
 
+    public override fun batchSize(batchSize: Int): ListSearchIndexesIterable<T> {
+        super.batchSize(batchSize)
+        return this
+    }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesIterable<T> {
+        wrapped.timeoutMode(timeoutMode)
+        return this
+    }
+
     /**
      * Sets an Atlas Search index name for this operation.
      *
@@ -38,15 +62,6 @@ public class ListSearchIndexesIterable<T : Any>(private val wrapped: JListSearch
      * @return this.
      */
     public fun name(indexName: String): ListSearchIndexesIterable<T> = apply { wrapped.name(indexName) }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size.
-     * @return this.
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public override fun batchSize(batchSize: Int): ListSearchIndexesIterable<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.
