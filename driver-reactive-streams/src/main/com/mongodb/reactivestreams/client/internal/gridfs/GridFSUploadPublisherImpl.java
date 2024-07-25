@@ -100,7 +100,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     public void subscribe(final Subscriber<? super Void> s) {
         Mono.<Void>create(sink -> {
             AtomicBoolean terminated = new AtomicBoolean(false);
-            sink.onCancel(() -> createCancellationMono(terminated).subscribe());
+            sink.onCancel(() -> createCancellationMono(terminated).contextWrite(sink.contextView()).subscribe());
 
             Consumer<Throwable> errorHandler = e -> createCancellationMono(terminated)
                     .contextWrite(sink.contextView())
@@ -163,7 +163,6 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
         AtomicBoolean collectionExists = new AtomicBoolean(false);
 
         return Mono.create(sink -> Mono.from(findPublisher.projection(PROJECTION).first())
-                .contextWrite(sink.contextView())
                 .subscribe(
                         d -> collectionExists.set(true),
                         sink::error,

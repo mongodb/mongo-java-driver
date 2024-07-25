@@ -106,7 +106,6 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
                 .flatMap(batchCursor -> Mono.create(sink -> {
                     batchCursor.setBatchSize(1);
                     Mono.from(batchCursor.next())
-                            .contextWrite(sink.contextView())
                             .doOnTerminate(batchCursor::close)
                             .doOnError(sink::error)
                             .doOnSuccess(results -> {
