@@ -252,8 +252,10 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                                 .append("n", chunkIndex.getAndIncrement())
                                 .append("data", data);
 
-                        return clientSession == null ? chunksCollection.insertOne(chunkDocument)
-                                : chunksCollection.insertOne(clientSession, chunkDocument);
+                        Mono<InsertOneResult> insertMono = clientSession == null
+                                ? Mono.from(chunksCollection.insertOne(chunkDocument))
+                                : Mono.from(chunksCollection.insertOne(clientSession, chunkDocument));
+                        return insertMono.contextWrite(sink.contextView());
                     })
                     .subscribe(null, sink::error, () -> sink.success(lengthInBytes.get()));
         });
