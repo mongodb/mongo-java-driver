@@ -40,9 +40,6 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -149,39 +146,15 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     }
 
     private Mono<Void> createCheckAndCreateIndexesMono(@Nullable final Timeout timeout) {
-        AtomicBoolean collectionExists = new AtomicBoolean(false);
-        return Mono.create(sink -> findAllInCollection(filesCollection, timeout).subscribe(
-                        d -> collectionExists.set(true),
-                        sink::error,
-                        () -> {
-                            if (collectionExists.get()) {
-                                sink.success();
-                            } else {
-                                checkAndCreateIndex(filesCollection.withReadPreference(primary()), FILES_INDEX, timeout)
-                                        .contextWrite(sink.contextView())
-                                        .doOnSuccess(i -> checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX, timeout)
-                                                .subscribe(unused -> {}, sink::error, sink::success))
-                                        .subscribe(unused -> {}, sink::error);
-                            }
-                        })
-        );
-    }
-
-    private Mono<Document> findAllInCollection(final MongoCollection<GridFSFile> collection, @Nullable final Timeout timeout) {
-        return collectionWithTimeoutDeferred(collection
-                .withDocumentClass(Document.class)
-                .withReadPreference(primary()), timeout)
-                .flatMap(wrappedCollection -> {
-                    if (clientSession != null) {
-                        return Mono.from(wrappedCollection.find(clientSession)
-                                .projection(PROJECTION)
-                                .first());
-                    } else {
-                        return Mono.from(wrappedCollection.find()
-                                .projection(PROJECTION)
-                                .first());
-                    }
-                });
+        return collectionWithTimeoutDeferred(filesCollection.withDocumentClass(Document.class).withReadPreference(primary()), timeout)
+                .map(collection -> clientSession != null ? collection.find(clientSession) : collection.find())
+                .flatMap(findPublisher -> Mono.from(findPublisher.projection(PROJECTION).first()))
+                .switchIfEmpty(Mono.defer(() ->
+                        checkAndCreateIndex(filesCollection.withReadPreference(primary()), FILES_INDEX, timeout)
+                                .then(checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX, timeout))
+                                .then(Mono.fromCallable(Document::new))
+                ))
+                .then();
     }
 
     private <T> Mono<Boolean> hasIndex(final MongoCollection<T> collection, final Document index, @Nullable final Timeout timeout) {
@@ -229,43 +202,37 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     }
 
     private Mono<Long> createSaveChunksMono(final AtomicBoolean terminated, @Nullable final Timeout timeout) {
-        return Mono.create(sink -> {
-            AtomicLong lengthInBytes = new AtomicLong(0);
-            AtomicInteger chunkIndex = new AtomicInteger(0);
-            new ResizingByteBufferFlux(source, chunkSizeBytes)
-                    .contextWrite(sink.contextView())
-                    .takeUntilOther(createMonoTimer(timeout))
-                    .flatMap((Function<ByteBuffer, Publisher<InsertOneResult>>) byteBuffer -> {
-                        if (terminated.get()) {
-                            return Mono.empty();
-                        }
-                        byte[] byteArray = new byte[byteBuffer.remaining()];
-                        if (byteBuffer.hasArray()) {
-                            System.arraycopy(byteBuffer.array(), byteBuffer.position(), byteArray, 0, byteBuffer.remaining());
-                        } else {
-                            byteBuffer.mark();
-                            byteBuffer.get(byteArray);
-                            byteBuffer.reset();
-                        }
-                        Binary data = new Binary(byteArray);
-                        lengthInBytes.addAndGet(data.length());
+        return new ResizingByteBufferFlux(source, chunkSizeBytes)
+                .takeUntilOther(createMonoTimer(timeout))
+                .index()
+                .flatMap(indexAndBuffer -> {
+                    if (terminated.get()) {
+                        return Mono.empty();
+                    }
+                    Long index = indexAndBuffer.getT1();
+                    ByteBuffer byteBuffer = indexAndBuffer.getT2();
+                    byte[] byteArray = new byte[byteBuffer.remaining()];
+                    if (byteBuffer.hasArray()) {
+                        System.arraycopy(byteBuffer.array(), byteBuffer.position(), byteArray, 0, byteBuffer.remaining());
+                    } else {
+                        byteBuffer.mark();
+                        byteBuffer.get(byteArray);
+                        byteBuffer.reset();
+                    }
+                    Binary data = new Binary(byteArray);
 
-                        Document chunkDocument = new Document("files_id", fileId)
-                                .append("n", chunkIndex.getAndIncrement())
-                                .append("data", data);
+                    Document chunkDocument = new Document("files_id", fileId)
+                            .append("n", index.intValue())
+                            .append("data", data);
 
-                        if (clientSession == null) {
-                            return collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE)
-                              .insertOne(chunkDocument)
-                              .contextWrite(sink.contextView());
-                        } else {
-                            return collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE)
-                              .insertOne(clientSession, chunkDocument)
-                              .contextWrite(sink.contextView());
-                        }
-                    })
-                    .subscribe(null, sink::error, () -> sink.success(lengthInBytes.get()));
-        });
+                    Publisher<InsertOneResult> insertOnePublisher = clientSession == null
+                            ? collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).insertOne(chunkDocument)
+                            : collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE)
+                               .insertOne(clientSession, chunkDocument);
+
+                    return Mono.from(insertOnePublisher).thenReturn(data.length());
+                })
+                .reduce(0L, Long::sum);
     }
 
     /**
