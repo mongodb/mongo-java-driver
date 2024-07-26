@@ -45,6 +45,7 @@ dependencies {
 
     implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.5.0"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
 
     api(project(path = ":bson", configuration = "default"))
     implementation("org.jetbrains.kotlin:kotlin-reflect")
