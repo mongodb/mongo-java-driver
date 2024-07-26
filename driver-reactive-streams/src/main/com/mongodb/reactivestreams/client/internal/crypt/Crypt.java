@@ -370,8 +370,8 @@ public class Crypt implements Closeable {
                     .subscribe();
         } else {
             Mono.fromRunnable(cryptContext::completeKeyDecryptors)
-                    .doOnSuccess(r -> executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout))
                     .contextWrite(sink.contextView())
+                    .doOnSuccess(r -> executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout))
                     .doOnError(e -> sink.error(wrapInClientException(e)))
                     .subscribe();
         }
