@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
@@ -34,10 +35,11 @@ import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
 
+import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
@@ -133,9 +135,11 @@ public final class CommandMessage extends RequestMessage {
                     // When there are no more bytes remaining, there are no more Document Sequences
                     while (byteBuf.hasRemaining()) {
                         byteBuf.position(byteBuf.position() + 1 /* payload type */ + 4 /* payload size */);
-                        String payloadName = getPayloadName(byteBuf);
-                        assertFalse(payloadName.contains("."));
-                        commandBsonDocument.append(payloadName, new BsonArray(createList(byteBuf)));
+                        String fieldName = getSequenceIdentifier(byteBuf);
+                        // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
+                        // so, the line following this assertion would have to change in order to handle that situation.
+                        assertFalse(fieldName.contains("."));
+                        commandBsonDocument.append(fieldName, new BsonArray(createList(byteBuf)));
                     }
                     return commandBsonDocument;
                 } else {
@@ -155,18 +159,18 @@ public final class CommandMessage extends RequestMessage {
      * <p>
      * Upon normal completion of the method, the buffer will be positioned at the start of the first BSON object in the sequence.
     */
-    private String getPayloadName(final ByteBuf outputByteBuf) {
-        List<Byte> payloadNameBytes = new ArrayList<>();
-        byte curByte = outputByteBuf.get();
+    private String getSequenceIdentifier(final ByteBuf byteBuf) {
+        ByteArrayOutputStream sequenceIdentifierBytes = new ByteArrayOutputStream();
+        byte curByte = byteBuf.get();
         while (curByte != 0) {
-            payloadNameBytes.add(curByte);
-            curByte = outputByteBuf.get();
+            sequenceIdentifierBytes.write(curByte);
+            curByte = byteBuf.get();
         }
-
-        // Convert List<Byte> to byte[]
-        byte[] byteArray = new byte[payloadNameBytes.size()];
-        IntStream.range(0, payloadNameBytes.size()).forEachOrdered(i -> byteArray[i] = payloadNameBytes.get(i));
-        return new String(byteArray, StandardCharsets.UTF_8);
+        try {
+            return sequenceIdentifierBytes.toString(StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new MongoInternalException("Unexpected exception", e);
+        }
     }
 
     boolean isResponseExpected() {
