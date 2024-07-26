@@ -139,7 +139,7 @@ public final class CommandMessage extends RequestMessage {
                         int sequenceStart = byteBuf.position();
                         int sequenceSizeInBytes = byteBuf.getInt();
                         int sectionEnd = sequenceStart + sequenceSizeInBytes;
-                        
+
                         String fieldName = getSequenceIdentifier(byteBuf);
                         // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
                         // so, this method will need to change in order to append the value to the correct nested document.
