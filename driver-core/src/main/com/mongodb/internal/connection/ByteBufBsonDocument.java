@@ -73,11 +73,11 @@ final class ByteBufBsonDocument extends BsonDocument {
      * The provided buffer will be positioned at the end of the document upon normal completion of the method
      */
     static ByteBufBsonDocument createOne(final ByteBuf outputByteBuf) {
+        int documentStart = outputByteBuf.position();
         int documentSizeInBytes = outputByteBuf.getInt();
-        ByteBuf slice = outputByteBuf.duplicate();
-        slice.position(slice.position() - 4);
-        slice.limit(slice.position() + documentSizeInBytes);
-        outputByteBuf.position(outputByteBuf.position() + documentSizeInBytes - 4);
+        int documentEnd = documentStart + documentSizeInBytes;
+        ByteBuf slice = outputByteBuf.duplicate().position(documentStart).limit(documentEnd);
+        outputByteBuf.position(documentEnd);
         return new ByteBufBsonDocument(slice);
     }
 
