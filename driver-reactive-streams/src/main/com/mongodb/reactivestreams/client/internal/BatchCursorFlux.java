@@ -18,11 +18,9 @@ package com.mongodb.reactivestreams.client.internal;
 
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
-import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
-import reactor.util.context.Context;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,9 +46,9 @@ class BatchCursorFlux<T> implements Publisher<T> {
                 if (calculateDemand(demand) > 0 && inProgress.compareAndSet(false, true)) {
                     if (batchCursor == null) {
                         int batchSize = calculateBatchSize(sink.requestedFromDownstream());
-                        Context initialContext =  subscriber instanceof CoreSubscriber<?>
-                                ? ((CoreSubscriber<?>) subscriber).currentContext() : null;
-                        batchCursorPublisher.batchCursor(batchSize).subscribe(bc -> {
+                        batchCursorPublisher.batchCursor(batchSize)
+                                .contextWrite(sink.contextView())
+                                .subscribe(bc -> {
                             batchCursor = bc;
                             inProgress.set(false);
 
@@ -60,7 +58,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
                             } else {
                                 recurseCursor();
                             }
-                        }, sink::error, null,  initialContext);
+                        }, sink::error);
                     } else {
                         inProgress.set(false);
                         recurseCursor();
@@ -86,6 +84,7 @@ class BatchCursorFlux<T> implements Publisher<T> {
             } else {
                 batchCursor.setBatchSize(calculateBatchSize(sink.requestedFromDownstream()));
                 Mono.from(batchCursor.next(() -> sink.isCancelled()))
+                        .contextWrite(sink.contextView())
                         .doOnCancel(this::closeCursor)
                         .subscribe(results -> {
                                     if (!results.isEmpty()) {
