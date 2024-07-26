@@ -51,7 +51,7 @@ import org.bson.BsonDateTime
  */
 @ExperimentalSerializationApi
 public val dateTimeSerializersModule: SerializersModule =
-        InstantAsBsonDateTime.serializersModule +
+    InstantAsBsonDateTime.serializersModule +
         LocalDateAsBsonDateTime.serializersModule +
         LocalDateTimeAsBsonDateTime.serializersModule +
         LocalTimeAsBsonDateTime.serializersModule
@@ -132,7 +132,7 @@ public object LocalDateAsBsonDateTime : KSerializer<LocalDate> {
 /**
  * LocalDateTime KSerializer.
  *
- * <p>Encodes and decodes {@code LocalDateTime} objects to and from {@code BsonDate}. Data is stored to millisecond
+ * <p>Encodes and decodes {@code LocalDateTime} objects to and from {@code BsonDateTime}. Data is stored to millisecond
  * accuracy.</p>
  *
  * <p>Converts the {@code LocalDateTime} values to and from {@code UTC}.</p>
@@ -172,7 +172,7 @@ public object LocalDateTimeAsBsonDateTime : KSerializer<LocalDateTime> {
 /**
  * LocalTime KSerializer.
  *
- * <p>Encodes and decodes {@code LocalTime} objects to and from {@code DateTime}. Data is stored to millisecond
+ * <p>Encodes and decodes {@code LocalTime} objects to and from {@code BsonDateTime}. Data is stored to millisecond
  * accuracy.</p>
  *
  * <p>Converts the {@code LocalTime} values to and from EpochDay at {@code UTC}.</p>
