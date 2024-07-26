@@ -35,11 +35,14 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.context.ContextView;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -103,7 +106,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
 
     @Override
     public void subscribe(final Subscriber<? super Void> s) {
-        Mono.defer(() -> {
+        Mono.deferContextual(ctx -> {
             AtomicBoolean terminated = new AtomicBoolean(false);
             Timeout timeout = TimeoutContext.startTimeout(timeoutMs);
             return createCheckAndCreateIndexesMono(timeout)
@@ -117,7 +120,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                                         return originalError;
                                     })
                                     .then(Mono.error(originalError)))
-                    .doOnCancel(() -> createCancellationMono(terminated, timeout).subscribe())
+                    .doOnCancel(() -> createCancellationMono(terminated, timeout).contextWrite(ctx).subscribe())
                     .then();
         }).subscribe(s);
     }
