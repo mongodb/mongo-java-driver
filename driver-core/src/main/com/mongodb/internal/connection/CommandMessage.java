@@ -134,12 +134,24 @@ public final class CommandMessage extends RequestMessage {
                     // Each loop iteration processes one Document Sequence
                     // When there are no more bytes remaining, there are no more Document Sequences
                     while (byteBuf.hasRemaining()) {
-                        byteBuf.position(byteBuf.position() + 1 /* payload type */ + 4 /* payload size */);
+                        // skip reading the payload type, we know it is 1
+                        byteBuf.position(byteBuf.position() + 1);
+                        int sequenceStart = byteBuf.position();
+                        int sequenceSizeInBytes = byteBuf.getInt();
+                        int sectionEnd = sequenceStart + sequenceSizeInBytes;
+                        
                         String fieldName = getSequenceIdentifier(byteBuf);
                         // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
-                        // so, the line following this assertion would have to change in order to handle that situation.
+                        // so, this method will need to change in order to append the value to the correct nested document.
                         assertFalse(fieldName.contains("."));
-                        commandBsonDocument.append(fieldName, new BsonArray(createList(byteBuf)));
+
+                        ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
+                        try {
+                            commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
+                        } finally {
+                            documentsByteBufSlice.release();
+                        }
+                        byteBuf.position(sectionEnd);
                     }
                     return commandBsonDocument;
                 } else {
