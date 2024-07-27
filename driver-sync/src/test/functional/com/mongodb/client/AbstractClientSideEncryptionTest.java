@@ -255,6 +255,7 @@ public abstract class AbstractClientSideEncryptionTest {
                     kmsProviderMap.put("endpoint", getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
+                case "local:name2":
                     kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
                     break;
                 default:
