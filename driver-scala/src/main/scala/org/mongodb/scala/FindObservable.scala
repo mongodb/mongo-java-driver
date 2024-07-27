@@ -336,7 +336,7 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   /**
    * Sets the timeoutMode for the cursor.
    *
-   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
    * via [[MongoDatabase]] or via [[MongoCollection]]
    *
    * If the `timeout` is set then:
