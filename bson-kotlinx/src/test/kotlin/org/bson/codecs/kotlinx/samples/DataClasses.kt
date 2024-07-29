@@ -83,6 +83,11 @@ data class DataClassWithDefaults(
 @Serializable data class DataClassWithNulls(val boolean: Boolean?, val string: String?, val listSimple: List<String?>?)
 
 @Serializable
+data class DataClassWithListThatLastItemDefaultsToNull(val elements: List<DataClassLastItemDefaultsToNull>)
+
+@Serializable data class DataClassLastItemDefaultsToNull(val required: String, val optional: String? = null)
+
+@Serializable
 data class DataClassSelfReferential(
     val name: String,
     val left: DataClassSelfReferential? = null,
