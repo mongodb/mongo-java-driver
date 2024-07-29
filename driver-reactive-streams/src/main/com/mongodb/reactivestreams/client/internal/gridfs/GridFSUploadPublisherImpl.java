@@ -35,14 +35,11 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-import reactor.util.context.ContextView;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -155,7 +152,7 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                 .switchIfEmpty(Mono.defer(() ->
                         checkAndCreateIndex(filesCollection.withReadPreference(primary()), FILES_INDEX, timeout)
                                 .then(checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX, timeout))
-                                .then(Mono.fromCallable(Document::new))
+                                .then(Mono.empty())
                 ))
                 .then();
     }
