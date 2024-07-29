@@ -25,6 +25,7 @@ import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.bson.codecs.kotlin.samples.Box
 import org.bson.codecs.kotlin.samples.DataClassEmbedded
+import org.bson.codecs.kotlin.samples.DataClassLastItemDefaultsToNull
 import org.bson.codecs.kotlin.samples.DataClassListOfDataClasses
 import org.bson.codecs.kotlin.samples.DataClassListOfListOfDataClasses
 import org.bson.codecs.kotlin.samples.DataClassListOfSealed
@@ -51,6 +52,7 @@ import org.bson.codecs.kotlin.samples.DataClassWithEnum
 import org.bson.codecs.kotlin.samples.DataClassWithEnumMapKey
 import org.bson.codecs.kotlin.samples.DataClassWithFailingInit
 import org.bson.codecs.kotlin.samples.DataClassWithInvalidBsonRepresentation
+import org.bson.codecs.kotlin.samples.DataClassWithListThatLastItemDefaultsToNull
 import org.bson.codecs.kotlin.samples.DataClassWithMutableList
 import org.bson.codecs.kotlin.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlin.samples.DataClassWithMutableSet
@@ -131,6 +133,20 @@ class DataClassCodecTest {
 
         val withStoredNulls = BsonDocument.parse("""{"boolean": null, "string": null, "listSimple": null}""")
         assertDecodesTo(withStoredNulls, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithListThatLastItemDefaultsToNull() {
+        val expected =
+            """{
+            | "elements": [{"required": "required"}, {"required": "required"}],
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithListThatLastItemDefaultsToNull(
+                listOf(DataClassLastItemDefaultsToNull("required"), DataClassLastItemDefaultsToNull("required")))
+        assertRoundTrips(expected, dataClass)
     }
 
     @Test
