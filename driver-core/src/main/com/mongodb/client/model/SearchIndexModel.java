@@ -53,7 +53,7 @@ public final class SearchIndexModel {
      * @param name       the search index name.
      * @param definition the search index mapping definition.
      */
-    public SearchIndexModel(final String name, final Bson definition) {
+    public SearchIndexModel(@Nullable final String name, final Bson definition) {
         this(name, definition, null);
     }
 
