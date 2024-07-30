@@ -108,24 +108,16 @@ internal data class ArrayCodec<R : Any, V>(private val kClass: KClass<R>, privat
     }
 
     private fun unboxed(data: ArrayList<V?>): R {
-        return if (kClass == BooleanArray::class) {
-            (data as ArrayList<Boolean>).toBooleanArray() as R
-        } else if (kClass == ByteArray::class) {
-            (data as ArrayList<Byte>).toByteArray() as R
-        } else if (kClass == CharArray::class) {
-            (data as ArrayList<Char>).toCharArray() as R
-        } else if (kClass == DoubleArray::class) {
-            (data as ArrayList<Double>).toDoubleArray() as R
-        } else if (kClass == FloatArray::class) {
-            (data as ArrayList<Float>).toFloatArray() as R
-        } else if (kClass == IntArray::class) {
-            (data as ArrayList<Int>).toIntArray() as R
-        } else if (kClass == LongArray::class) {
-            (data as ArrayList<Long>).toLongArray() as R
-        } else if (kClass == ShortArray::class) {
-            (data as ArrayList<Short>).toShortArray() as R
-        } else {
-            data.toArray(arrayOfNulls(data.size)) as R
+ return when (kClass) {
+            BooleanArray::class -> (data as ArrayList<Boolean>).toBooleanArray() as R
+            ByteArray::class -> (data as ArrayList<Byte>).toByteArray() as R
+            CharArray::class -> (data as ArrayList<Char>).toCharArray() as R
+            DoubleArray::class -> (data as ArrayList<Double>).toDoubleArray() as R
+            FloatArray::class -> (data as ArrayList<Float>).toFloatArray() as R
+            IntArray::class -> (data as ArrayList<Int>).toIntArray() as R
+            LongArray::class -> (data as ArrayList<Long>).toLongArray() as R
+            ShortArray::class -> (data as ArrayList<Short>).toShortArray() as R
+            else -> data.toArray(arrayOfNulls(data.size)) as R
         }
     }
 
