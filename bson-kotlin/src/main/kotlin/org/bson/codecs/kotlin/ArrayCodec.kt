@@ -40,6 +40,7 @@ internal data class ArrayCodec<R : Any, V>(private val kClass: KClass<R>, privat
                 if (typeArguments.isEmpty()) {
                     Pair(kClass.java.componentType.kotlin.javaObjectType as Class<Any>, emptyList())
                 } else {
+                    // Unroll the actual class and any type arguments
                     when (val pType = typeArguments[0]) {
                         is Class<*> -> Pair(pType as Class<Any>, emptyList())
                         is ParameterizedType -> Pair(pType.rawType as Class<Any>, pType.actualTypeArguments.toList())
