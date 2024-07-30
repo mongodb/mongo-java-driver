@@ -81,34 +81,34 @@ internal data class ArrayCodec<R : Any, V>(private val kClass: KClass<R>, privat
         return unboxed(data)
     }
 
-    fun boxed(arrayValue: R): Iterator<V?> {
+    fun boxed(arrayValue: R): Iterable<V?> {
         val boxedValue =
             if (!isPrimitiveArray) {
-                (arrayValue as Array<V?>).iterator()
+                (arrayValue as Array<V?>).asIterable()
             } else if (arrayValue is BooleanArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else if (arrayValue is ByteArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else if (arrayValue is CharArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else if (arrayValue is DoubleArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else if (arrayValue is FloatArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else if (arrayValue is IntArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else if (arrayValue is LongArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else if (arrayValue is ShortArray) {
-                arrayValue.toList().iterator()
+                arrayValue.asIterable()
             } else {
                 throw IllegalArgumentException("Unsupported array type ${arrayValue.javaClass}")
             }
-        return boxedValue as Iterator<V?>
+        return boxedValue as Iterable<V?>
     }
 
     private fun unboxed(data: ArrayList<V?>): R {
- return when (kClass) {
+        return when (kClass) {
             BooleanArray::class -> (data as ArrayList<Boolean>).toBooleanArray() as R
             ByteArray::class -> (data as ArrayList<Byte>).toByteArray() as R
             CharArray::class -> (data as ArrayList<Char>).toCharArray() as R
