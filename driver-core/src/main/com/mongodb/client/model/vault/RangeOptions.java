@@ -81,6 +81,7 @@ public class RangeOptions {
      * @return the trim factor value if set
      * @since 5.2
      */
+    @Nullable
     public Integer getTrimFactor() {
         return trimFactor;
     }
@@ -92,7 +93,7 @@ public class RangeOptions {
      * @return this
      * @since 5.2
      */
-    public RangeOptions setTrimFactor(final Integer trimFactor) {
+    public RangeOptions setTrimFactor(@Nullable final Integer trimFactor) {
         this.trimFactor = trimFactor;
         return this;
     }
