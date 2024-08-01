@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import java.util.Optional;
+
 import static java.lang.String.format;
 
 /**
@@ -79,7 +81,7 @@ public abstract class BsonValue {
     public BsonNumber asNumber() {
         if (!isNumber()) {
             throw new BsonInvalidOperationException(format("Value expected to be of a numerical BSON type is of unexpected type %s",
-                                                           getBsonType()));
+                    getBsonType()));
         }
         return (BsonNumber) this;
     }
@@ -237,6 +239,217 @@ public abstract class BsonValue {
     public BsonJavaScriptWithScope asJavaScriptWithScope() {
         throwIfInvalidType(BsonType.JAVASCRIPT_WITH_SCOPE);
         return (BsonJavaScriptWithScope) this;
+    }
+
+
+    /**
+     * Returns {@link Optional} with BsonNull if this is
+     * a BsonNull, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonNull if this is
+     * a BsonNull, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonNull> asNullOpt() {
+        return isNull() ? Optional.of((BsonNull) this) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonDocument if this is
+     * a BsonDocument, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonDocument if this is
+     * a BsonDocument, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonDocument> asDocumentOpt() {
+        return isDocument() ? Optional.of(asDocument()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonArray if this is
+     * a BsonArray, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonArray if this is
+     * a BsonArray, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonArray> asArrayOpt() {
+        return isArray() ? Optional.of(asArray()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonString if this is
+     * a BsonString, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonString if this is
+     * a BsonString, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonString> asStringOpt() {
+        return isString() ? Optional.of(asString()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonNumber if this is
+     * a BsonNumber, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonNumber if this is
+     * a BsonNumber, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonNumber> asNumberOpt() {
+        return isNumber() ? Optional.of(asNumber()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonInt32 if this is
+     * a BsonInt32, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonInt32 if this is
+     * a BsonInt32, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonInt32> asInt32Opt() {
+        return isInt32() ? Optional.of(asInt32()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonInt64 if this is
+     * a BsonInt64, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonInt64 if this is
+     * a BsonInt64, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonInt64> asInt64Opt() {
+        return isInt64() ? Optional.of(asInt64()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonDecimal128 if this is
+     * a BsonDecimal128, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonDecimal128 if this is
+     * a BsonDecimal128, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonDecimal128> asDecimal128Opt() {
+        return isDecimal128() ? Optional.of(asDecimal128()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonDouble if this is
+     * a BsonDouble, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonDouble if this is
+     * a BsonDouble, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonDouble> asDoubleOpt() {
+        return isDouble() ? Optional.of(asDouble()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonBoolean if this is
+     * a BsonBoolean, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonBoolean if this is
+     * a BsonBoolean, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonBoolean> asBooleanOpt() {
+        return isBoolean() ? Optional.of(asBoolean()) : Optional.empty();
+
+    }
+
+    /**
+     * Returns {@link Optional} with BsonObjectId if this is
+     * a BsonObjectId, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonObjectId if this is
+     * a BsonObjectId, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonObjectId> asObjectIdOpt() {
+        return isObjectId() ? Optional.of(asObjectId()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonDbPointer if this is
+     * a BsonDbPointer, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonDbPointer if this is
+     * a BsonDbPointer, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonDbPointer> asDBPointerOpt() {
+        return isDBPointer() ? Optional.of(asDBPointer()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonTimestamp if this is
+     * a BsonTimestamp, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonTimestamp if this is
+     * a BsonTimestamp, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonTimestamp> asTimestampOpt() {
+        return isTimestamp() ? Optional.of(asTimestamp()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonBinary if this is
+     * a BsonBinary, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonBinary if this is
+     * a BsonBinary, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonBinary> asBinaryOpt() {
+        return isBinary() ? Optional.of(asBinary()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonDateTime if this is
+     * a BsonDateTime, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonDateTime if this is
+     * a BsonDateTime, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonDateTime> asDateTimeOpt() {
+        return isDateTime() ? Optional.of(asDateTime()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonSymbol if this is
+     * a BsonSymbol, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonSymbol if this is
+     * a BsonSymbol, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonSymbol> asSymbolOpt() {
+        return isSymbol() ? Optional.of(asSymbol()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonRegularExpression if this is
+     * a BsonRegularExpression, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonRegularExpression if this is
+     * a BsonRegularExpression, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonRegularExpression> asRegularExpressionOpt() {
+        return isRegularExpression() ? Optional.of(asRegularExpression()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonJavaScript if this is
+     * a BsonJavaScript, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonJavaScript if this is
+     * a BsonJavaScript, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonJavaScript> asJavaScriptOpt() {
+        return isJavaScript() ? Optional.of(asJavaScript()) : Optional.empty();
+    }
+
+    /**
+     * Returns {@link Optional} with BsonJavaScriptWithScope if this is
+     * a BsonJavaScriptWithScope, {@link Optional#empty} otherwise
+     *
+     * @return {@link Optional} with BsonJavaScriptWithScope if this is
+     * a BsonJavaScriptWithScope, {@link Optional#empty} otherwise
+     */
+    public Optional<BsonJavaScriptWithScope> asJavaScriptWithScopeOpt() {
+        return isJavaScriptWithScope() ? Optional.of(asJavaScriptWithScope()) : Optional.empty();
     }
 
 
@@ -414,10 +627,11 @@ public abstract class BsonValue {
         return this instanceof BsonJavaScriptWithScope;
     }
 
+
     private void throwIfInvalidType(final BsonType expectedType) {
         if (getBsonType() != expectedType) {
             throw new BsonInvalidOperationException(format("Value expected to be of type %s is of unexpected type %s",
-                                                           expectedType, getBsonType()));
+                    expectedType, getBsonType()));
         }
     }
 }

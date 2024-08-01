@@ -47,6 +47,32 @@ class BsonValueSpecification extends Specification {
         new BsonDocument().isDocument()
     }
 
+    def 'opt methods should return present for the correct type'() {
+        expect:
+        new BsonNull().asNullOpt().isPresent()
+        new BsonInt32(42).asInt32Opt().isPresent()
+        new BsonInt32(42).asNumberOpt().isPresent()
+        new BsonInt64(52L).asInt64Opt().isPresent()
+        new BsonInt64(52L).asNumberOpt().isPresent()
+        new BsonDecimal128(Decimal128.parse('1')).asDecimal128Opt().isPresent()
+        new BsonDecimal128(Decimal128.parse('1')).asNumberOpt().isPresent()
+        new BsonDouble(62.0).asDoubleOpt().isPresent()
+        new BsonDouble(62.0).asNumberOpt().isPresent()
+        new BsonBoolean(true).asBooleanOpt().isPresent()
+        new BsonDateTime(new Date().getTime()).asDateTimeOpt().isPresent()
+        new BsonString('the fox ...').asStringOpt().isPresent()
+        new BsonJavaScript('int i = 0;').asJavaScriptOpt().isPresent()
+        new BsonObjectId(new ObjectId()).asObjectIdOpt().isPresent()
+        new BsonJavaScriptWithScope('int x = y', new BsonDocument('y', new BsonInt32(1))).asJavaScriptWithScopeOpt().isPresent()
+        new BsonRegularExpression('^test.*regex.*xyz$', 'i').asRegularExpressionOpt().isPresent()
+        new BsonSymbol('ruby stuff').asSymbolOpt().isPresent()
+        new BsonTimestamp(0x12345678, 5).asTimestampOpt().isPresent()
+        new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[]).asBinaryOpt().isPresent()
+        new BsonDbPointer('n', new ObjectId()).asDBPointerOpt().isPresent()
+        new BsonArray().asArrayOpt().isPresent()
+        new BsonDocument().asDocumentOpt().isPresent()
+    }
+
     def 'is methods should return false for the incorrect type'() {
         expect:
         !new BsonBoolean(false).isNull()
@@ -72,23 +98,48 @@ class BsonValueSpecification extends Specification {
         !new BsonNull().isDocument()
     }
 
+    def 'opt methods should return empty for the incorrect type'() {
+        expect:
+        new BsonBoolean(false).asNullOpt().isEmpty()
+        new BsonNull().asInt32Opt().isEmpty()
+        new BsonNull().asNumberOpt().isEmpty()
+        new BsonNull().asInt64Opt().isEmpty()
+        new BsonNull().asDecimal128Opt().isEmpty()
+        new BsonNull().asNumberOpt().isEmpty()
+        new BsonNull().asDoubleOpt().isEmpty()
+        new BsonNull().asNumberOpt().isEmpty()
+        new BsonNull().asBooleanOpt().isEmpty()
+        new BsonNull().asDateTimeOpt().isEmpty()
+        new BsonNull().asStringOpt().isEmpty()
+        new BsonNull().asJavaScriptOpt().isEmpty()
+        new BsonNull().asObjectIdOpt().isEmpty()
+        new BsonNull().asJavaScriptWithScopeOpt().isEmpty()
+        new BsonNull().asRegularExpressionOpt().isEmpty()
+        new BsonNull().asSymbolOpt().isEmpty()
+        new BsonNull().asTimestampOpt().isEmpty()
+        new BsonNull().asBinaryOpt().isEmpty()
+        new BsonNull().asDBPointerOpt().isEmpty()
+        new BsonNull().asArrayOpt().isEmpty()
+        new BsonNull().asDocumentOpt().isEmpty()
+    }
+
     def 'support BsonNumber interface for all number types'() {
         expect:
         bsonValue.asNumber() == bsonValue
-        bsonValue.asNumber().intValue()== intValue
+        bsonValue.asNumber().intValue() == intValue
         bsonValue.asNumber().longValue() == longValue
         bsonValue.asNumber().doubleValue() == doubleValue
         bsonValue.asNumber().decimal128Value() == decimal128Value
 
         where:
-        bsonValue                                         | intValue           | longValue      | doubleValue              | decimal128Value
-        new BsonInt32(42)                                 | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
-        new BsonInt64(42)                                 | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
-        new BsonDouble(42)                                | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
-        new BsonDecimal128(Decimal128.parse('42'))        | 42                 | 42L            | 42.0                     | Decimal128.parse('42')
-        new BsonDecimal128(Decimal128.POSITIVE_INFINITY)  | Integer.MAX_VALUE  | Long.MAX_VALUE | Double.POSITIVE_INFINITY | Decimal128.POSITIVE_INFINITY
-        new BsonDecimal128(Decimal128.NEGATIVE_INFINITY)  | Integer.MIN_VALUE  | Long.MIN_VALUE | Double.NEGATIVE_INFINITY | Decimal128.NEGATIVE_INFINITY
-        new BsonDecimal128(Decimal128.NaN)                | 0                  | 0L             | Double.NaN               | Decimal128.NaN
+        bsonValue                                        | intValue          | longValue      | doubleValue              | decimal128Value
+        new BsonInt32(42)                                | 42                | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonInt64(42)                                | 42                | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonDouble(42)                               | 42                | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonDecimal128(Decimal128.parse('42'))       | 42                | 42L            | 42.0                     | Decimal128.parse('42')
+        new BsonDecimal128(Decimal128.POSITIVE_INFINITY) | Integer.MAX_VALUE | Long.MAX_VALUE | Double.POSITIVE_INFINITY | Decimal128.POSITIVE_INFINITY
+        new BsonDecimal128(Decimal128.NEGATIVE_INFINITY) | Integer.MIN_VALUE | Long.MIN_VALUE | Double.NEGATIVE_INFINITY | Decimal128.NEGATIVE_INFINITY
+        new BsonDecimal128(Decimal128.NaN)               | 0                 | 0L             | Double.NaN               | Decimal128.NaN
     }
 
     def 'as methods should return throw for the incorrect type'() {
