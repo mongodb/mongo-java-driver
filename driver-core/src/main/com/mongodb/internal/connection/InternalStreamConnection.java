@@ -689,11 +689,11 @@ public class InternalStreamConnection implements InternalConnection {
         }).thenRunTryCatchAsyncBlocks(c -> {
             stream.writeAsync(byteBuffers, operationContext, c.asHandler());
         }, Exception.class, (e, c) -> {
-            try{
+            try {
                 close();
                 throwTranslatedWriteException(e, operationContext);
-            } finally {
-                c.completeExceptionally(e);
+            } catch (Throwable translatedException) {
+                c.completeExceptionally(translatedException);
             }
         }).finish(errorHandlingCallback(callback, LOGGER));
     }
