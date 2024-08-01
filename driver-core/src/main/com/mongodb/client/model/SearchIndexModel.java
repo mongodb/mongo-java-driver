@@ -25,12 +25,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A model describing the creation of a single Atlas Search index.
  *
  * @since 4.11
- * @mongodb.server.release 7.0
+ * @mongodb.server.release 6.0
  */
 public final class SearchIndexModel {
     @Nullable
     private final String name;
     private final Bson definition;
+    @Nullable
+    private final SearchIndexType type;
 
     /**
      * Construct an instance with the given Atlas Search index mapping definition.
@@ -42,8 +44,7 @@ public final class SearchIndexModel {
      * @param definition the search index mapping definition.
      */
     public SearchIndexModel(final Bson definition) {
-        this.definition = notNull("definition", definition);
-        this.name = null;
+        this(null, definition, null);
     }
 
     /**
@@ -53,8 +54,21 @@ public final class SearchIndexModel {
      * @param definition the search index mapping definition.
      */
     public SearchIndexModel(final String name, final Bson definition) {
+        this(name, definition, null);
+    }
+
+    /**
+     * Construct an instance with the given Atlas Search name, index definition, and type.
+     *
+     * @param name       the search index name.
+     * @param definition the search index mapping definition.
+     * @param type       the search index type.
+     * @since 5.2
+     */
+    public SearchIndexModel(@Nullable final String name, final Bson definition, @Nullable final SearchIndexType type) {
         this.definition = notNull("definition", definition);
-        this.name = notNull("name", name);
+        this.name = name;
+        this.type = type;
     }
 
     /**
@@ -76,11 +90,23 @@ public final class SearchIndexModel {
         return name;
     }
 
+    /**
+     * Get the Atlas Search index type.
+     *
+     * @return the search index type.
+     * @since 5.2
+     */
+    @Nullable
+    public SearchIndexType getType() {
+        return type;
+    }
+
     @Override
     public String toString() {
         return "SearchIndexModel{"
                 + "name=" + name
                 + ", definition=" + definition
+                + ", type=" + (type == null ? "null" : type.toBsonValue())
                 + '}';
     }
 }

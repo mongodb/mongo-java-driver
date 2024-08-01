@@ -1465,7 +1465,7 @@ public interface MongoCollection<TDocument> {
      * @param indexName  the name of the search index to create.
      * @param definition Atlas Search index mapping definition.
      * @return a {@link Publisher} with search index name.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
      */
@@ -1476,7 +1476,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param definition Atlas Search index mapping definition.
      * @return a {@link Publisher} with search index name.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
      */
@@ -1490,7 +1490,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param searchIndexModels the search index models.
      * @return a {@link Publisher} with the search index names in the order specified by the given list {@link SearchIndexModel}s.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/createSearchIndexes/ Create Search indexes
      * @since 4.11
      */
@@ -1501,7 +1501,7 @@ public interface MongoCollection<TDocument> {
      * @param indexName  the name of the search index to update.
      * @param definition Atlas Search index mapping definition.
      * @return an empty publisher that indicates when the operation has completed.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/updateSearchIndex/ Update Search index
      * @since 4.11
      */
@@ -1511,7 +1511,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param indexName the name of the search index to drop.
      * @return an empty publisher that indicates when the operation has completed.
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      * @mongodb.driver.manual reference/command/dropSearchIndex/ Drop Search index
      * @since 4.11
      */
@@ -1522,7 +1522,7 @@ public interface MongoCollection<TDocument> {
      *
      * @return the fluent list search indexes interface.
      * @since 4.11
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      */
     ListSearchIndexesPublisher<Document> listSearchIndexes();
 
@@ -1533,7 +1533,7 @@ public interface MongoCollection<TDocument> {
      * @param <TResult>   the target document type of the iterable.
      * @return the fluent list search indexes interface.
      * @since 4.11
-     * @mongodb.server.release 7.0
+     * @mongodb.server.release 6.0
      */
     <TResult> ListSearchIndexesPublisher<TResult> listSearchIndexes(Class<TResult> resultClass);
 
