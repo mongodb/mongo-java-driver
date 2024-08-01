@@ -2,7 +2,6 @@
   "runOn": [
     {
       "minServerVersion": "7.0.0",
-      "serverless": "forbid",
       "topology": [
         "replicaset",
         "sharded",
@@ -131,6 +130,9 @@
             "command": {
               "compactStructuredEncryptionData": "default"
             }
+          },
+          "result": {
+            "ok": 1
           }
         }
       ],

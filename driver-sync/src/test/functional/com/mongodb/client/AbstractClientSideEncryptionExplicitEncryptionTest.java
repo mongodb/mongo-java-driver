@@ -27,6 +27,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.fixture.EncryptionFixture;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -38,8 +39,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +50,7 @@ import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -94,13 +94,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
         dataKeysCollection.insertOne(key1Document);
         key1Id = key1Document.getBinary("_id");
 
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
-        Map<String, Object> localProviderMap = new HashMap<>();
-        localProviderMap.put("key",
-                Base64.getDecoder().decode(
-                        "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
-                                + "GJkTXVyZG9uSjFk"));
-        kmsProviders.put("local", localProviderMap);
+        Map<String, Map<String, Object>> kmsProviders = getKmsProviders(EncryptionFixture.KmsProviderType.LOCAL);
 
         clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
