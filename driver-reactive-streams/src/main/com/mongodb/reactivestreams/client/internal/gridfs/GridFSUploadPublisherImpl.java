@@ -34,19 +34,16 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -98,31 +95,22 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
 
     @Override
     public void subscribe(final Subscriber<? super Void> s) {
-        Mono.<Void>create(sink -> {
+        Mono.deferContextual(ctx -> {
             AtomicBoolean terminated = new AtomicBoolean(false);
-            sink.onCancel(() -> createCancellationMono(terminated).subscribe());
-
-            Consumer<Throwable> errorHandler = e -> createCancellationMono(terminated)
-                    .doOnError(i -> sink.error(e))
-                    .doOnSuccess(i -> sink.error(e))
-                    .subscribe();
-
-            Consumer<Long> saveFileDataMono = l -> createSaveFileDataMono(terminated, l)
-                    .doOnError(errorHandler)
-                    .doOnSuccess(i -> sink.success())
-                    .subscribe();
-
-            Consumer<Void> saveChunksMono = i -> createSaveChunksMono(terminated)
-                    .doOnError(errorHandler)
-                    .doOnSuccess(saveFileDataMono)
-                    .subscribe();
-
-            createCheckAndCreateIndexesMono()
-                    .doOnError(errorHandler)
-                    .doOnSuccess(saveChunksMono)
-                    .subscribe();
-        })
-       .subscribe(s);
+            return createCheckAndCreateIndexesMono()
+                    .then(createSaveChunksMono(terminated))
+                    .flatMap(lengthInBytes -> createSaveFileDataMono(terminated, lengthInBytes))
+                    .onErrorResume(originalError ->
+                            createCancellationMono(terminated)
+                                    .onErrorMap(cancellationError -> {
+                                        // Timeout exception might occur during cancellation. It gets suppressed.
+                                        originalError.addSuppressed(cancellationError);
+                                        return originalError;
+                                    })
+                                    .then(Mono.error(originalError)))
+                    .doOnCancel(() -> createCancellationMono(terminated).contextWrite(ctx).subscribe())
+                    .then();
+        }).subscribe(s);
     }
 
     public GridFSUploadPublisher<ObjectId> withObjectId() {
@@ -156,28 +144,14 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
         } else {
             findPublisher = collection.find();
         }
-        AtomicBoolean collectionExists = new AtomicBoolean(false);
+        return Mono.from(findPublisher.projection(PROJECTION).first())
+                .switchIfEmpty(Mono.defer(() ->
+                        checkAndCreateIndex(filesCollection.withReadPreference(primary()), FILES_INDEX)
+                                .then(checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX))
+                                .then(Mono.fromCallable(Document::new))
+                ))
+                .then();
 
-        return Mono.create(sink -> Mono.from(findPublisher.projection(PROJECTION).first())
-                .subscribe(
-                        d -> collectionExists.set(true),
-                        sink::error,
-                        () -> {
-                            if (collectionExists.get()) {
-                                sink.success();
-                            } else {
-                                checkAndCreateIndex(filesCollection.withReadPreference(primary()), FILES_INDEX)
-                                        .doOnError(sink::error)
-                                        .doOnSuccess(i -> {
-                                            checkAndCreateIndex(chunksCollection.withReadPreference(primary()), CHUNKS_INDEX)
-                                                    .doOnError(sink::error)
-                                                    .doOnSuccess(sink::success)
-                                                    .subscribe();
-                                        })
-                                        .subscribe();
-                            }
-                        })
-        );
     }
 
     private <T> Mono<Boolean> hasIndex(final MongoCollection<T> collection, final Document index) {
@@ -189,29 +163,23 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
         }
 
         return Flux.from(listIndexesPublisher)
-                .collectList()
-                .map(indexes -> {
-                    boolean hasIndex = false;
-                    for (Document result : indexes) {
-                        Document indexDoc = result.get("key", new Document());
-                        for (final Map.Entry<String, Object> entry : indexDoc.entrySet()) {
-                            if (entry.getValue() instanceof Number) {
-                                entry.setValue(((Number) entry.getValue()).intValue());
-                            }
-                        }
-                        if (indexDoc.equals(index)) {
-                            hasIndex = true;
-                            break;
+                .filter((result) -> {
+                    Document indexDoc = result.get("key", new Document());
+                    for (final Map.Entry<String, Object> entry : indexDoc.entrySet()) {
+                        if (entry.getValue() instanceof Number) {
+                            entry.setValue(((Number) entry.getValue()).intValue());
                         }
                     }
-                    return hasIndex;
-                });
+                    return indexDoc.equals(index);
+                })
+                .take(1)
+                .hasElements();
     }
 
     private <T> Mono<Void> checkAndCreateIndex(final MongoCollection<T> collection, final Document index) {
         return hasIndex(collection, index).flatMap(hasIndex -> {
             if (!hasIndex) {
-                return createIndexMono(collection, index).flatMap(s -> Mono.empty());
+                return createIndexMono(collection, index).then();
             } else {
                 return Mono.empty();
             }
@@ -223,14 +191,14 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
     }
 
     private Mono<Long> createSaveChunksMono(final AtomicBoolean terminated) {
-        return Mono.create(sink -> {
-            AtomicLong lengthInBytes = new AtomicLong(0);
-            AtomicInteger chunkIndex = new AtomicInteger(0);
-            new ResizingByteBufferFlux(source, chunkSizeBytes)
-                    .flatMap((Function<ByteBuffer, Publisher<InsertOneResult>>) byteBuffer -> {
+        return new ResizingByteBufferFlux(source, chunkSizeBytes)
+                    .index()
+                    .flatMap((Function<Tuple2<Long, ByteBuffer>, Publisher<Integer>>) indexAndBuffer -> {
                         if (terminated.get()) {
                             return Mono.empty();
                         }
+                        Long index = indexAndBuffer.getT1();
+                        ByteBuffer byteBuffer = indexAndBuffer.getT2();
                         byte[] byteArray = new byte[byteBuffer.remaining()];
                         if (byteBuffer.hasArray()) {
                             System.arraycopy(byteBuffer.array(), byteBuffer.position(), byteArray, 0, byteBuffer.remaining());
@@ -240,18 +208,19 @@ public final class GridFSUploadPublisherImpl implements GridFSUploadPublisher<Vo
                             byteBuffer.reset();
                         }
                         Binary data = new Binary(byteArray);
-                        lengthInBytes.addAndGet(data.length());
 
                         Document chunkDocument = new Document("files_id", fileId)
-                                .append("n", chunkIndex.getAndIncrement())
+                                .append("n", index.intValue())
                                 .append("data", data);
 
-                        return clientSession == null ? chunksCollection.insertOne(chunkDocument)
+                        Publisher<InsertOneResult> insertOnePublisher = clientSession == null
+                                ? chunksCollection.insertOne(chunkDocument)
                                 : chunksCollection.insertOne(clientSession, chunkDocument);
+
+                        return Mono.from(insertOnePublisher).thenReturn(data.length());
                     })
-                    .subscribe(null, sink::error, () -> sink.success(lengthInBytes.get()));
-        });
-    }
+                    .reduce(0L, Long::sum);
+        }
 
     private Mono<InsertOneResult> createSaveFileDataMono(final AtomicBoolean terminated, final long lengthInBytes) {
         if (terminated.compareAndSet(false, true)) {

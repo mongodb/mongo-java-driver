@@ -103,21 +103,17 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
 
     public Publisher<T> first() {
         return batchCursor(this::asAsyncFirstReadOperation)
-                .flatMap(batchCursor -> Mono.create(sink -> {
+                .flatMap(batchCursor -> {
                     batchCursor.setBatchSize(1);
-                    Mono.from(batchCursor.next())
+                    return Mono.from(batchCursor.next())
                             .doOnTerminate(batchCursor::close)
-                            .doOnError(sink::error)
-                            .doOnSuccess(results -> {
+                            .flatMap(results -> {
                                 if (results == null || results.isEmpty()) {
-                                    sink.success();
-                                } else {
-                                    sink.success(results.get(0));
+                                    return Mono.empty();
                                 }
-                            })
-                            .contextWrite(sink.contextView())
-                            .subscribe();
-                }));
+                                return Mono.fromCallable(() -> results.get(0));
+                            });
+                });
     }
 
     @Override

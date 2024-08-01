@@ -305,6 +305,7 @@ public class Crypt implements Closeable {
             sink.error(new IllegalStateException("Missing database name"));
         } else {
             collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation())
+                    .contextWrite(sink.contextView())
                     .doOnSuccess(result -> {
                         if (result != null) {
                             cryptContext.addMongoOperationResult(result);
@@ -326,6 +327,7 @@ public class Crypt implements Closeable {
             sink.error(wrapInClientException(new IllegalStateException("Missing database name")));
         } else {
             commandMarker.mark(databaseName, cryptContext.getMongoOperation())
+                    .contextWrite(sink.contextView())
                     .doOnSuccess(result -> {
                         cryptContext.addMongoOperationResult(result);
                         cryptContext.completeMongoOperation();
@@ -340,6 +342,7 @@ public class Crypt implements Closeable {
                            @Nullable final String databaseName,
                            final MonoSink<RawBsonDocument> sink) {
         keyRetriever.find(cryptContext.getMongoOperation())
+                .contextWrite(sink.contextView())
                 .doOnSuccess(results -> {
                     for (BsonDocument result : results) {
                         cryptContext.addMongoOperationResult(result);
@@ -357,11 +360,13 @@ public class Crypt implements Closeable {
         MongoKeyDecryptor keyDecryptor = cryptContext.nextKeyDecryptor();
         if (keyDecryptor != null) {
             keyManagementService.decryptKey(keyDecryptor)
+                    .contextWrite(sink.contextView())
                     .doOnSuccess(r -> decryptKeys(cryptContext, databaseName, sink))
                     .doOnError(e -> sink.error(wrapInClientException(e)))
                     .subscribe();
         } else {
             Mono.fromRunnable(cryptContext::completeKeyDecryptors)
+                    .contextWrite(sink.contextView())
                     .doOnSuccess(r -> executeStateMachineWithSink(cryptContext, databaseName, sink))
                     .doOnError(e -> sink.error(wrapInClientException(e)))
                     .subscribe();
