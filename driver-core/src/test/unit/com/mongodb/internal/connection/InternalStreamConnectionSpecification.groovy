@@ -1219,7 +1219,7 @@ class InternalStreamConnectionSpecification extends Specification {
         try {
             rcvdCallbck.get()
             false
-        } catch (MongoSocketWriteException) {
+        } catch (MongoSocketWriteException e) {
             true
         }
     }
