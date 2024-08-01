@@ -36,6 +36,7 @@ import org.bson.codecs.kotlin.samples.DataClassSealedA
 import org.bson.codecs.kotlin.samples.DataClassSealedB
 import org.bson.codecs.kotlin.samples.DataClassSealedC
 import org.bson.codecs.kotlin.samples.DataClassSelfReferential
+import org.bson.codecs.kotlin.samples.DataClassWithArrays
 import org.bson.codecs.kotlin.samples.DataClassWithBooleanMapKey
 import org.bson.codecs.kotlin.samples.DataClassWithBsonConstructor
 import org.bson.codecs.kotlin.samples.DataClassWithBsonDiscriminator
@@ -54,6 +55,7 @@ import org.bson.codecs.kotlin.samples.DataClassWithInvalidBsonRepresentation
 import org.bson.codecs.kotlin.samples.DataClassWithMutableList
 import org.bson.codecs.kotlin.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlin.samples.DataClassWithMutableSet
+import org.bson.codecs.kotlin.samples.DataClassWithNativeArrays
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterizedDataClass
 import org.bson.codecs.kotlin.samples.DataClassWithNullableGeneric
@@ -106,6 +108,59 @@ class DataClassCodecTest {
                 mapOf("a" to 1, "b" to 2, "c" to 3, "d" to 4),
                 mapOf("a" to listOf("a", "b"), "b" to emptyList(), "c" to listOf("c", "d")),
                 mapOf("a" to mapOf("a" to 1, "b" to 2), "b" to emptyMap(), "c" to mapOf("c" to 3, "d" to 4)))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithArrays() {
+        val expected =
+            """{
+            | "arraySimple": ["a", "b", "c", "d"],
+            | "nestedArrays":  [["e", "f"], [], ["g", "h"]],
+            | "arrayOfMaps":  [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithArrays(
+                arrayOf("a", "b", "c", "d"),
+                arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
+                arrayOf(
+                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNativeArrays() {
+        val expected =
+            """{
+            |    "booleanArray": [true, false],
+            |    "byteArray": [1, 2],
+            |    "charArray": ["a", "b"],
+            |    "doubleArray": [ 1.1, 2.2, 3.3],
+            |    "floatArray": [1.0, 2.0, 3.0],
+            |    "intArray": [10, 20, 30, 40],
+            |    "longArray": [{ "$numberLong": "111" }, { "$numberLong": "222" }, { "$numberLong": "333" }],
+            |    "shortArray": [1, 2, 3],
+            |    "listOfArrays": [[true, false], [false, true]],
+            |    "mapOfArrays": {"A": [1, 2], "B":[], "C": [3, 4]}
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithNativeArrays(
+                booleanArrayOf(true, false),
+                byteArrayOf(1, 2),
+                charArrayOf('a', 'b'),
+                doubleArrayOf(1.1, 2.2, 3.3),
+                floatArrayOf(1.0f, 2.0f, 3.0f),
+                intArrayOf(10, 20, 30, 40),
+                longArrayOf(111, 222, 333),
+                shortArrayOf(1, 2, 3),
+                listOf(booleanArrayOf(true, false), booleanArrayOf(false, true)),
+                mapOf(Pair("A", intArrayOf(1, 2)), Pair("B", intArrayOf()), Pair("C", intArrayOf(3, 4))))
 
         assertRoundTrips(expected, dataClass)
     }
@@ -516,5 +571,5 @@ class DataClassCodecTest {
         assertEquals(expected, decoded)
     }
 
-    private fun registry() = fromProviders(DataClassCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)
+    private fun registry() = fromProviders(ArrayCodecProvider(), DataClassCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)
 }
