@@ -90,8 +90,7 @@ public class MongoClient(private val wrapped: JMongoClient) : MongoCluster(wrapp
                 else MongoDriverInformation.builder(mongoDriverInformation)
             return MongoClient(
                 JMongoClients.create(
-                    settings,
-                    builder.driverName("kotlin").driverPlatform("kotlin/${KotlinVersion.CURRENT}").build()))
+                    settings, builder.driverName("kotlin").driverPlatform("kotlin/${KotlinVersion.CURRENT}").build()))
         }
     }
 
