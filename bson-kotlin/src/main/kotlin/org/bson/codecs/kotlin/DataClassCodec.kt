@@ -210,7 +210,7 @@ internal data class DataClassCodec<T : Any>(
                 is KTypeParameter -> {
                     when (val pType = typeMap[kParameter.type.classifier] ?: kParameter.type.javaType) {
                         is Class<*> ->
-                            codecRegistry.getCodec(kParameter, (pType as Class<Any>).kotlin.javaObjectType, emptyList())
+                            codecRegistry.getCodec(kParameter, (pType as Class<Any>).kotlin.java, emptyList())
                         is ParameterizedType ->
                             codecRegistry.getCodec(
                                 kParameter,
@@ -235,11 +235,14 @@ internal data class DataClassCodec<T : Any>(
         @Suppress("UNCHECKED_CAST")
         private fun CodecRegistry.getCodec(kParameter: KParameter, clazz: Class<Any>, types: List<Type>): Codec<Any> {
             val codec =
-                if (types.isEmpty()) {
+                if (clazz.isArray) {
+                    ArrayCodec.create(clazz.kotlin, types, this)
+                } else if (types.isEmpty()) {
                     this.get(clazz)
                 } else {
                     this.get(clazz, types)
                 }
+
             return kParameter.findAnnotation<BsonRepresentation>()?.let {
                 if (codec !is RepresentationConfigurable<*>) {
                     throw CodecConfigurationException(

@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.SearchIndexType;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -51,6 +52,10 @@ final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
         String searchIndexName = request.getIndexName();
         if (searchIndexName != null) {
             bsonIndexRequest.append("name", new BsonString(searchIndexName));
+        }
+        SearchIndexType searchIndexType = request.getSearchIndexType();
+        if (searchIndexType != null) {
+            bsonIndexRequest.append("type", searchIndexType.toBsonValue());
         }
         bsonIndexRequest.append("definition", request.getDefinition());
         return bsonIndexRequest;

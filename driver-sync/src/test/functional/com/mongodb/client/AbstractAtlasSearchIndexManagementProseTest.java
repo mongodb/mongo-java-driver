@@ -17,9 +17,11 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCommandException;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.SearchIndexModel;
+import com.mongodb.client.model.SearchIndexType;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import org.bson.BsonDocument;
@@ -32,7 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,11 +47,15 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * See <a href="https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.rst#search-index-management-helpers">Search Index Management Tests</a>
+ * See <a href="https://github.com/mongodb/specifications/blob/master/source/index-management/tests/README.md#search-index-management-helpers">Search Index Management Tests</a>
  */
 public abstract class AbstractAtlasSearchIndexManagementProseTest {
     /**
@@ -74,6 +79,18 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
                       "{"
                     + "  mappings: { dynamic: true }"
                     + "}");
+    private static final Document VECTOR_SEARCH_DEFINITION = Document.parse(
+                      "{"
+                    + "  fields: ["
+                    + "     {"
+                    + "       type: 'vector',"
+                    + "       path: 'plot_embedding',"
+                    + "       numDimensions: 1536,"
+                    + "       similarity: 'euclidean',"
+                    + "     },"
+                    + "  ]"
+                    + "}");
+
     private MongoClient client = createMongoClient(getMongoClientSettings());
     private MongoDatabase db;
     private MongoCollection<Document> collection;
@@ -153,7 +170,7 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
         SearchIndexModel searchIndexModel2 = new SearchIndexModel(TEST_SEARCH_INDEX_NAME_2, NOT_DYNAMIC_MAPPING_DEFINITION);
 
         //when
-        List<String> searchIndexes = collection.createSearchIndexes(Arrays.asList(searchIndexModel1, searchIndexModel2));
+        List<String> searchIndexes = collection.createSearchIndexes(asList(searchIndexModel1, searchIndexModel2));
 
         //then
         assertThat(searchIndexes, contains(TEST_SEARCH_INDEX_NAME_1, TEST_SEARCH_INDEX_NAME_2));
@@ -200,6 +217,69 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
         collection.dropSearchIndex("not existent index");
     }
 
+    @Test
+    @DisplayName("Case 7 implicit: Driver can successfully handle search index types when creating indexes")
+    public void shouldHandleImplicitSearchIndexTypes() throws InterruptedException {
+        //given
+        String indexName = "test-search-index-case7-implicit";
+
+        //when
+        String result = collection.createSearchIndex(
+                indexName,
+                NOT_DYNAMIC_MAPPING_DEFINITION);
+
+        //then
+        assertEquals(indexName, result);
+        awaitIndexChanges(isQueryable().and(hasSearchIndexType()), new SearchIndexModel(indexName, NOT_DYNAMIC_MAPPING_DEFINITION));
+    }
+
+    @Test
+    @DisplayName("Case 7 explicit 'search' type: Driver can successfully handle search index types when creating indexes")
+    public void shouldHandleExplicitSearchIndexTypes() throws InterruptedException {
+        //given
+        String indexName = "test-search-index-case7-explicit";
+
+        //when
+        List<String> searchIndexes = collection.createSearchIndexes(singletonList(new SearchIndexModel(
+                indexName,
+                NOT_DYNAMIC_MAPPING_DEFINITION,
+                SearchIndexType.search())));
+
+        //then
+        assertEquals(1, searchIndexes.size());
+        assertEquals(indexName, searchIndexes.get(0));
+        awaitIndexChanges(isQueryable().and(hasSearchIndexType()), new SearchIndexModel(indexName, NOT_DYNAMIC_MAPPING_DEFINITION));
+    }
+
+    @Test
+    @DisplayName("Case 7 explicit 'vectorSearch' type: Driver can successfully handle search index types when creating indexes")
+    public void shouldHandleExplicitVectorSearchIndexTypes() throws InterruptedException {
+        //given
+        String indexName = "test-search-index-case7-vector";
+
+        //when
+        List<String> searchIndexes = collection.createSearchIndexes(singletonList(new SearchIndexModel(
+                indexName,
+                VECTOR_SEARCH_DEFINITION,
+                SearchIndexType.vectorSearch())));
+
+        //then
+        assertEquals(1, searchIndexes.size());
+        assertEquals(indexName, searchIndexes.get(0));
+        awaitIndexChanges(isQueryable().and(hasVectorSearchIndexType()), new SearchIndexModel(indexName, NOT_DYNAMIC_MAPPING_DEFINITION));
+    }
+
+    @Test
+    @DisplayName("Case 8: Driver requires explicit type to create a vector search index")
+    public void shouldRequireExplicitTypeToCreateVectorSearchIndex() {
+        //given
+        String indexName = "test-search-index-case8-error";
+
+        //when & then
+        assertThrows(MongoCommandException.class, () -> collection.createSearchIndex(
+                indexName,
+                VECTOR_SEARCH_DEFINITION));
+    }
 
     private void assertIndexDeleted() throws InterruptedException {
         int attempts = MAX_WAIT_ATTEMPTS;
@@ -248,6 +328,16 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     private Predicate<Document> isReady() {
         return document -> "READY".equals(document.getString("status"));
     }
+
+
+    private Predicate<Document> hasSearchIndexType() {
+        return document -> "search".equals(document.getString("type"));
+    }
+
+    private Predicate<Document> hasVectorSearchIndexType() {
+        return document -> "vectorSearch".equals(document.getString("type"));
+    }
+
 
 
     private boolean checkAttempt(final int attempt) {
