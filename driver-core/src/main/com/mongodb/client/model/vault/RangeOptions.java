@@ -87,8 +87,10 @@ public class RangeOptions {
     }
 
     /**
-     * Set the number of top-level edges stored per record by setting a trim factor, reducing write conflicts during simultaneous inserts
-     * and optimizing queries by excluding seldom-used high-level edges.
+     * Set the number of top-level edges stored per record.
+     * <p>
+     * The trim factor may be used to tune performance.
+     *
      * @param trimFactor the trim factor
      * @return this
      * @since 5.2
@@ -107,7 +109,10 @@ public class RangeOptions {
     }
 
     /**
-     * Set the Queryable Encryption range hypergraph sparsity factor
+     * Set the Queryable Encryption range hypergraph sparsity factor.
+     * <p>
+     * Sparsity may be used to tune performance.
+     *
      * @param sparsity the sparsity
      * @return this
      */

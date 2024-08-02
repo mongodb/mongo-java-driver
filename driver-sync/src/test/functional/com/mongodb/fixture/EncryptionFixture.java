@@ -51,7 +51,7 @@ public final class EncryptionFixture {
                     case AWS:
                         put("aws", new HashMap<String, Object>() {{
                             put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
-                            put("secretAccessKey    ", getEnv("AWS_SECRET_ACCESS_KEY"));
+                            put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
                         }});
                         break;
                     case AZURE:
