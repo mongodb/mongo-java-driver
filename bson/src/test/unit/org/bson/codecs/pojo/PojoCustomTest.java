@@ -38,8 +38,8 @@ import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedInt;
 import org.bson.codecs.pojo.entities.BsonRepresentationUnsupportedString;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
-import org.bson.codecs.pojo.entities.ConcreteModel;
 import org.bson.codecs.pojo.entities.ConcreteField;
+import org.bson.codecs.pojo.entities.ConcreteModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
@@ -79,6 +79,9 @@ import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNullModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorPrimitivesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorThrowsExceptionModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodThrowsExceptionModel;
+import org.bson.codecs.pojo.entities.conventions.DiscriminatorModelA;
+import org.bson.codecs.pojo.entities.conventions.DiscriminatorModelB;
+import org.bson.codecs.pojo.entities.conventions.DiscriminatorModelC;
 import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
@@ -662,6 +665,20 @@ public final class PojoCustomTest extends PojoTestCase {
                 + "'myLongField': {'$numberLong': '42'}}}";
 
         roundTrip(actualRegistry, model, json);
+    }
+
+    @Test
+    public void testDiscriminatorDuplicateValues() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(
+                DiscriminatorModelA.class,
+                DiscriminatorModelB.class,
+                DiscriminatorModelC.class);
+
+        roundTrip(builder, new DiscriminatorModelA().setStringField("ok"), "{'_cls': 'DiscriminatorModel', 'stringField': 'ok'}");
+        roundTrip(builder, new DiscriminatorModelB().setStringField("ok"), "{'_t': 'DiscriminatorModel', 'stringField': 'ok'}");
+
+        // Encodes as expected but won't round trip as DiscriminatorModelA has the same discriminator.
+        encodesTo(builder, new DiscriminatorModelC().setStringField("ok"), "{'_cls': 'DiscriminatorModel', 'stringField': 'ok'}");
     }
 
     @Test

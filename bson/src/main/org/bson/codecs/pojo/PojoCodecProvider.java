@@ -23,8 +23,8 @@ import org.bson.diagnostics.Loggers;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -105,7 +105,7 @@ public final class PojoCodecProvider implements CodecProvider {
      */
     public static final class Builder {
         private final Set<String> packages = new HashSet<>();
-        private final Map<Class<?>, ClassModel<?>> classModels = new HashMap<>();
+        private final Map<Class<?>, ClassModel<?>> classModels = new LinkedHashMap<>();
         private final List<Class<?>> clazzes = new ArrayList<>();
         private List<Convention> conventions = null;
         private final List<PropertyCodecProvider> propertyCodecProviders = new ArrayList<>();

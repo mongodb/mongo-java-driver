@@ -290,7 +290,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 if (discriminatorKey.equals(name)) {
                     discriminatorKeyFound = true;
                     try {
-                        Class<?> discriminatorClass = discriminatorLookup.lookup(reader.readString());
+                        Class<?> discriminatorClass = discriminatorLookup.lookup(discriminatorKey, reader.readString());
                         if (codec == null || !codec.getEncoderClass().equals(discriminatorClass)) {
                             codec = (Codec<C>) registry.get(discriminatorClass);
                         }
