@@ -100,7 +100,10 @@ final class ConnectionStringUnitTest {
     @ValueSource(strings = {"mongodb://foo:bar/@hostname/java?", "mongodb://foo:bar?@hostname/java/",
                             "mongodb+srv://foo:bar/@hostname/java?", "mongodb+srv://foo:bar?@hostname/java/",
                             "mongodb://foo:bar/@[::1]:27018", "mongodb://foo:bar?@[::1]:27018",
-                            "mongodb://foo:12345678/@hostname", "mongodb+srv://foo:12345678/@hostname"
+                            "mongodb://foo:12345678/@hostname", "mongodb+srv://foo:12345678/@hostname",
+                            "mongodb://foo:12345678/@hostname", "mongodb+srv://foo:12345678/@hostname",
+                            "mongodb://foo:12345678%40hostname", "mongodb+srv://foo:12345678%40hostname",
+                            "mongodb://foo:12345678@bar@hostname", "mongodb+srv://foo:12345678@bar@hostname"
     })
     void unescapedPasswordsShouldNotBeLeakedInExceptionMessages(final String input) {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ConnectionString(input));
