@@ -31,7 +31,6 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
@@ -54,6 +53,7 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
@@ -72,6 +72,7 @@ import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
 
@@ -96,6 +97,7 @@ final class MongoClusterImpl implements MongoCluster {
     private final TimeoutSettings timeoutSettings;
     private final UuidRepresentation uuidRepresentation;
     private final WriteConcern writeConcern;
+    private final SyncOperations<BsonDocument> operations;
 
     MongoClusterImpl(
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
@@ -120,6 +122,16 @@ final class MongoClusterImpl implements MongoCluster {
         this.timeoutSettings = timeoutSettings;
         this.uuidRepresentation = uuidRepresentation;
         this.writeConcern = writeConcern;
+        operations = new SyncOperations<>(
+                null,
+                BsonDocument.class,
+                readPreference,
+                codecRegistry,
+                readConcern,
+                writeConcern,
+                retryWrites,
+                retryReads,
+                timeoutSettings);
     }
 
     @Override
@@ -316,7 +328,8 @@ final class MongoClusterImpl implements MongoCluster {
     public ClientBulkWriteResult bulkWrite(
             final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
         notNull("clientWriteModels", clientWriteModels);
-        throw Assertions.fail("BULK-TODO implement");
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
+        return executeBulkWrite(null, clientWriteModels, null);
     }
 
     @Override
@@ -324,8 +337,9 @@ final class MongoClusterImpl implements MongoCluster {
             final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         notNull("clientWriteModels", clientWriteModels);
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
         notNull("options", options);
-        throw Assertions.fail("BULK-TODO implement");
+        return executeBulkWrite(null, clientWriteModels, options);
     }
 
     @Override
@@ -334,7 +348,8 @@ final class MongoClusterImpl implements MongoCluster {
             final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
         notNull("clientSession", clientSession);
         notNull("clientWriteModels", clientWriteModels);
-        throw Assertions.fail("BULK-TODO implement");
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
+        return executeBulkWrite(clientSession, clientWriteModels, null);
     }
 
     @Override
@@ -344,8 +359,9 @@ final class MongoClusterImpl implements MongoCluster {
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         notNull("clientSession", clientSession);
         notNull("clientWriteModels", clientWriteModels);
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
         notNull("options", options);
-        throw Assertions.fail("BULK-TODO implement");
+        return executeBulkWrite(clientSession, clientWriteModels, options);
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
@@ -363,6 +379,14 @@ final class MongoClusterImpl implements MongoCluster {
         return new ChangeStreamIterableImpl<>(clientSession, "admin", codecRegistry, readPreference,
                 readConcern, operationExecutor, pipeline, resultClass, ChangeStreamLevel.CLIENT,
                 retryReads, timeoutSettings);
+    }
+
+    private ClientBulkWriteResult executeBulkWrite(
+            @Nullable final ClientSession clientSession,
+            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
+            @Nullable final ClientBulkWriteOptions options) {
+        isTrue("`autoEncryptionSettings` is null, as automatic encryption is not yet supported", autoEncryptionSettings == null);
+        return operationExecutor.execute(operations.clientBulkWriteOperation(clientWriteModels, options), readConcern, clientSession);
     }
 
     final class OperationExecutorImpl implements OperationExecutor {

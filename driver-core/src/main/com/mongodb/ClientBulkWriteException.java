@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ClientBulkWriteOperation.Exceptions.serverAddressFromException;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableList;
@@ -56,6 +58,8 @@ public final class ClientBulkWriteException extends MongoServerException {
      * @param writeErrors The {@linkplain #getWriteErrors() write errors}.
      * @param partialResult The {@linkplain #getPartialResult() partial result}.
      * @param serverAddress The {@linkplain MongoServerException#getServerAddress() server address}.
+     * If {@code error} is a {@link MongoServerException} or a {@link MongoSocketException}, then {@code serverAddress}
+     * must be equal to the {@link ServerAddress} they bear.
      */
     public ClientBulkWriteException(
             @Nullable final MongoException error,
@@ -63,9 +67,14 @@ public final class ClientBulkWriteException extends MongoServerException {
             @Nullable final Map<Long, WriteError> writeErrors,
             @Nullable final ClientBulkWriteResult partialResult,
             final ServerAddress serverAddress) {
-        super(message(error, writeConcernErrors, writeErrors, partialResult, serverAddress), serverAddress);
+        super(
+                message(
+                        error, writeConcernErrors, writeErrors, partialResult,
+                        notNull("serverAddress", serverAddress)),
+                validateServerAddress(error, serverAddress));
         // BULK-TODO Should ClientBulkWriteException.getCode be the same as error.getCode,
         // and getErrorLabels/hasErrorLabel contain the same labels as error.getErrorLabels?
+        // TRANSIENT_TRANSACTION_ERROR_LABEL, UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL, RETRYABLE_WRITE_ERROR_LABEL, NO_WRITES_PERFORMED_ERROR_LABEL
         isTrueArgument("At least one of `writeConcernErrors`, `writeErrors`, `partialResult` must be non-null or non-empty",
                 !(writeConcernErrors == null || writeConcernErrors.isEmpty())
                         || !(writeErrors == null || writeErrors.isEmpty())
@@ -87,6 +96,14 @@ public final class ClientBulkWriteException extends MongoServerException {
                 + (writeErrors == null || writeErrors.isEmpty() ? "" : " Write errors: " + writeErrors + ".")
                 + (writeConcernErrors == null || writeConcernErrors.isEmpty() ? "" : " Write concern errors: " + writeConcernErrors + ".")
                 + (partialResult == null ? "" : " Partial result: " + partialResult + ".");
+    }
+
+    private static ServerAddress validateServerAddress(@Nullable final MongoException error, final ServerAddress serverAddress) {
+        serverAddressFromException(error).ifPresent(serverAddressFromError ->
+                isTrueArgument("`serverAddress` must be equal to that of the `error`", serverAddressFromError.equals(serverAddress)));
+        return error instanceof MongoServerException
+                ? ((MongoServerException) error).getServerAddress()
+                : serverAddress;
     }
 
     /**

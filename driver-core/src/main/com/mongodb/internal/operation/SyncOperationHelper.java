@@ -303,7 +303,7 @@ final class SyncOperationHelper {
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
             final OperationContext operationContext, final Supplier<R> writeFunction) {
         return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                CommandOperationHelper::shouldAttemptToRetryWrite, () -> {
+                CommandOperationHelper::shouldAttemptToRetryWriteAndAddRetryableLabel, () -> {
             logRetryExecute(retryState, operationContext);
             return writeFunction.get();
         });
@@ -335,7 +335,7 @@ final class SyncOperationHelper {
     }
 
     static <T> BatchCursor<T> cursorDocumentToBatchCursor(final TimeoutMode timeoutMode, final BsonDocument cursorDocument,
-            final int batchSize, final Decoder<T> decoder, final BsonValue comment, final ConnectionSource source,
+            final int batchSize, final Decoder<T> decoder, @Nullable final BsonValue comment, final ConnectionSource source,
             final Connection connection) {
         return new CommandBatchCursor<>(timeoutMode, cursorDocument, batchSize, 0, decoder, comment, source, connection);
     }

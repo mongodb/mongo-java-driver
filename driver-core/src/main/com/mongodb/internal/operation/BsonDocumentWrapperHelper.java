@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 
@@ -25,7 +26,12 @@ final class BsonDocumentWrapperHelper {
 
     @SuppressWarnings("unchecked")
     static <T> List<T> toList(final BsonDocument result, final String fieldContainingWrappedArray) {
-        return ((BsonArrayWrapper<T>) result.getArray(fieldContainingWrappedArray)).getWrappedArray();
+        // BULK-TODO why does the expectation of this code fails?
+        BsonArray array = result.getArray(fieldContainingWrappedArray);
+        if (array instanceof BsonArrayWrapper) {
+            return ((BsonArrayWrapper<T>) array).getWrappedArray();
+        }
+        return (List<T>) array.getValues();
     }
 
     @SuppressWarnings("unchecked")

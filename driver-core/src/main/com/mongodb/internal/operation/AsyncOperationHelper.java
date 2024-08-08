@@ -322,7 +322,7 @@ final class AsyncOperationHelper {
     static <R> AsyncCallbackSupplier<R> decorateWriteWithRetriesAsync(final RetryState retryState, final OperationContext operationContext,
             final AsyncCallbackSupplier<R> asyncWriteFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                CommandOperationHelper::shouldAttemptToRetryWrite, callback -> {
+                CommandOperationHelper::shouldAttemptToRetryWriteAndAddRetryableLabel, callback -> {
             logRetryExecute(retryState, operationContext);
             asyncWriteFunction.get(callback);
         });

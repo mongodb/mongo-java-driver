@@ -153,7 +153,14 @@ final class CommandOperationHelper {
         return decision;
     }
 
-    static boolean shouldAttemptToRetryWrite(final RetryState retryState, final Throwable attemptFailure) {
+    static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+        return shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, attemptFailure, true);
+    }
+
+    static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(
+            final RetryState retryState,
+            final Throwable attemptFailure,
+            final boolean logIfDecideToNotRetry) {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
@@ -170,7 +177,7 @@ final class CommandOperationHelper {
             } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryState.attachment(AttachmentKeys.maxWireVersion())
                     .orElse(null))) {
                 decision = true;
-            } else {
+            } else if (logIfDecideToNotRetry) {
                 logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), failure);
             }
         }

@@ -111,7 +111,7 @@ public final class BulkWriteBatch {
         }
         if (canRetryWrites && !writeRequestsAreRetryable) {
             canRetryWrites = false;
-            LOGGER.debug("retryWrites set but one or more writeRequests do not support retryable writes");
+            logWriteModelDoesNotSupportRetries();
         }
         return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation,
                 canRetryWrites, new BulkWriteBatchCombiner(connectionDescription.getServerAddress(), ordered, writeConcern),
@@ -384,5 +384,9 @@ public final class BulkWriteBatch {
             return !((DeleteRequest) writeRequest).isMulti();
         }
         return true;
+    }
+
+    static void logWriteModelDoesNotSupportRetries() {
+        LOGGER.debug("retryWrites set but one or more writeRequests do not support retryable writes");
     }
 }
