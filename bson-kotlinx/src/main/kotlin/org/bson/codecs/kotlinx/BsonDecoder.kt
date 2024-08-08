@@ -36,6 +36,8 @@ import org.bson.BsonType
 import org.bson.BsonValue
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.DecoderContext
+import org.bson.internal.NumberCodecHelper
+import org.bson.internal.StringCodecHelper
 import org.bson.types.ObjectId
 
 /**
@@ -154,14 +156,17 @@ internal open class DefaultBsonDecoder(
         }
     }
 
-    override fun decodeByte(): Byte = decodeInt().toByte()
-    override fun decodeChar(): Char = decodeString().single()
-    override fun decodeFloat(): Float = decodeDouble().toFloat()
-    override fun decodeShort(): Short = decodeInt().toShort()
-    override fun decodeBoolean(): Boolean = readOrThrow({ reader.readBoolean() }, BsonType.BOOLEAN)
-    override fun decodeDouble(): Double = readOrThrow({ reader.readDouble() }, BsonType.DOUBLE)
-    override fun decodeInt(): Int = readOrThrow({ reader.readInt32() }, BsonType.INT32)
-    override fun decodeLong(): Long = readOrThrow({ reader.readInt64() }, BsonType.INT64)
+    override fun decodeByte(): Byte = NumberCodecHelper.decodeByte(reader)
+
+    override fun decodeChar(): Char = StringCodecHelper.decodeChar(reader)
+    override fun decodeFloat(): Float = NumberCodecHelper.decodeFloat(reader)
+
+    override fun decodeShort(): Short = NumberCodecHelper.decodeShort(reader)
+    override fun decodeBoolean(): Boolean = reader.readBoolean()
+
+    override fun decodeDouble(): Double = NumberCodecHelper.decodeDouble(reader)
+    override fun decodeInt(): Int = NumberCodecHelper.decodeInt(reader)
+    override fun decodeLong(): Long = NumberCodecHelper.decodeLong(reader)
     override fun decodeString(): String = readOrThrow({ reader.readString() }, BsonType.STRING)
 
     override fun decodeNull(): Nothing? {

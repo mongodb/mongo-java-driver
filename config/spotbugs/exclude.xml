@@ -198,6 +198,12 @@
         <Method name="~.*validateAnnotations.*"/>
         <Bug pattern="UC_USELESS_OBJECT"/>
     </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="org.bson.codecs.kotlinx.KotlinSerializerCodec$Companion"/>
+        <Method name="~.*validateAnnotations.*"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
 
     <!-- Spotbugs reports false positives for suspendable operations with default params
          see: https://github.com/Kotlin/kotlinx.coroutines/issues/3099

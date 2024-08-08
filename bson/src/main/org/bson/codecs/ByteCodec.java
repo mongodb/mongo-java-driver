@@ -16,12 +16,10 @@
 
 package org.bson.codecs;
 
-import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
-import static java.lang.String.format;
-import static org.bson.codecs.NumberCodecHelper.decodeInt;
+import static org.bson.internal.NumberCodecHelper.decodeByte;
 
 /**
  * Encodes and decodes {@code Byte} objects.
@@ -37,11 +35,7 @@ public class ByteCodec implements Codec<Byte> {
 
     @Override
     public Byte decode(final BsonReader reader, final DecoderContext decoderContext) {
-        int value = decodeInt(reader);
-        if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
-            throw new BsonInvalidOperationException(format("%s can not be converted into a Byte.", value));
-        }
-        return (byte) value;
+        return decodeByte(reader);
     }
 
     @Override
