@@ -29,9 +29,18 @@ import com.mongodb.client.model.search.{ VectorSearchOptions => JVectorSearchOpt
 object VectorSearchOptions {
 
   /**
-   * Returns `VectorSearchOptions` that represents server defaults.
+   * Returns `ApproximateVectorSearchOptions` that represents server defaults.
    *
-   * @return `VectorSearchOptions` that represents server defaults.
+   * @return `ApproximateVectorSearchOptions` that represents server defaults.
    */
-  def vectorSearchOptions(): VectorSearchOptions = JVectorSearchOptions.vectorSearchOptions()
+  def approximateVectorSearchOptions(numCandidates: Long): ApproximateVectorSearchOptions =
+    JVectorSearchOptions.approximateVectorSearchOptions(numCandidates)
+
+  /**
+   * Returns `ExactVectorSearchOptions` that represents server defaults with the `exact` option set to true.
+   *
+   * @return `ExactVectorSearchOptions` that represents server defaults.
+   * @since 5.2
+   */
+  def exactVectorSearchOptions(): ExactVectorSearchOptions = JVectorSearchOptions.exactVectorSearchOptions()
 }

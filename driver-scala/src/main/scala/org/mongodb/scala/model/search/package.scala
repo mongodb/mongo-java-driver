@@ -231,6 +231,33 @@ package object search {
   type VectorSearchOptions = com.mongodb.client.model.search.VectorSearchOptions
 
   /**
+   * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
+   * <p>
+   * Configures approximate vector search for Atlas Vector Search to enable searches that may not return the exact closest vectors.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @note Requires MongoDB 6.0.10 or greater
+   * @since 5.2
+   */
+  @Sealed
+  @Beta(Array(Reason.SERVER))
+  type ApproximateVectorSearchOptions = com.mongodb.client.model.search.ApproximateVectorSearchOptions
+
+  /**
+   * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
+   * <p>
+   * Configures exact vector search for Atlas Vector Search to enable precise matching, ensuring that
+   * results are the closest vectors to a given query vector.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @note Requires MongoDB 6.0.10 or greater
+   * @since 5.2
+   */
+  @Sealed
+  @Beta(Array(Reason.SERVER))
+  type ExactVectorSearchOptions = com.mongodb.client.model.search.ExactVectorSearchOptions
+
+  /**
    * Highlighting options.
    * You may use the `\$meta: "searchHighlights"` expression, e.g., via [[Projections.metaSearchHighlights]],
    * to extract the results of highlighting.

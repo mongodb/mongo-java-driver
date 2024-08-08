@@ -52,7 +52,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
-import static com.mongodb.client.model.search.VectorSearchOptions.vectorSearchOptions;
 import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static java.util.Arrays.asList;
@@ -947,35 +946,6 @@ public final class Aggregates {
      * @param queryVector The query vector. The number of dimensions must match that of the {@code index}.
      * @param path The field to be searched.
      * @param index The name of the index to use.
-     * @param numCandidates The number of candidates.
-     * @param limit The limit on the number of documents produced by the pipeline stage.
-     * @return The {@code $vectorSearch} pipeline stage.
-     *
-     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
-     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @mongodb.server.release 6.0.10
-     * @since 4.11
-     */
-    @Beta(Reason.SERVER)
-    public static Bson vectorSearch(
-            final FieldSearchPath path,
-            final Iterable<Double> queryVector,
-            final String index,
-            final long numCandidates,
-            final long limit) {
-        return vectorSearch(notNull("path", path), notNull("queryVector", queryVector), notNull("index", index), numCandidates, limit,
-                vectorSearchOptions());
-    }
-
-    /**
-     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
-     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
-     * to extract the relevance score assigned to each found document.
-     *
-     * @param queryVector The query vector. The number of dimensions must match that of the {@code index}.
-     * @param path The field to be searched.
-     * @param index The name of the index to use.
-     * @param numCandidates The number of candidates.
      * @param limit The limit on the number of documents produced by the pipeline stage.
      * @param options Optional {@code $vectorSearch} pipeline stage fields.
      * @return The {@code $vectorSearch} pipeline stage.
@@ -990,7 +960,6 @@ public final class Aggregates {
             final FieldSearchPath path,
             final Iterable<Double> queryVector,
             final String index,
-            final long numCandidates,
             final long limit,
             final VectorSearchOptions options) {
         notNull("path", path);
@@ -1003,7 +972,6 @@ public final class Aggregates {
                 Document specificationDoc = new Document("path", path.toValue())
                         .append("queryVector", queryVector)
                         .append("index", index)
-                        .append("numCandidates", numCandidates)
                         .append("limit", limit);
                 specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
                 return new Document("$vectorSearch", specificationDoc).toBsonDocument(documentClass, codecRegistry);
@@ -1015,7 +983,6 @@ public final class Aggregates {
                         + ", path=" + path
                         + ", queryVector=" + queryVector
                         + ", index=" + index
-                        + ", numCandidates=" + numCandidates
                         + ", limit=" + limit
                         + ", options=" + options
                         + '}';
