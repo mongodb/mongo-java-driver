@@ -21,6 +21,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import org.bson.BsonArray
 import org.bson.BsonBinary
@@ -306,6 +307,8 @@ data class DataClassWithFailingInit(val id: String) {
 @Serializable
 data class DataClassWithNestedJsonElements(
     val dataClass: DataClassWithJsonElement,
-    val valueList: List<JsonElement>,
-    val valueMap: Map<String, JsonElement>
+    val jsonArrayPrimitives: JsonArray,
+    val jsonArrayNested: List<JsonArray>,
+    val jsonArrayJsonObject: List<JsonElement>,
+    val jsonNestedMap: Map<String, JsonElement>
 )

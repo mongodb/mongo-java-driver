@@ -48,18 +48,7 @@ internal interface JsonBsonDecoder : BsonDecoder, JsonDecoder {
     @Suppress("ComplexMethod")
     override fun decodeJsonElement(): JsonElement =
         reader.run {
-            if (state == AbstractBsonReader.State.INITIAL ||
-                state == AbstractBsonReader.State.SCOPE_DOCUMENT ||
-                state == AbstractBsonReader.State.TYPE) {
-                readBsonType()
-            }
-
-            if (state == AbstractBsonReader.State.NAME) {
-                // ignore name
-                skipName()
-            }
-
-            return when (currentBsonType) {
+            when (currentBsonType) {
                 BsonType.DOCUMENT -> readJsonObject()
                 BsonType.ARRAY -> readJsonArray()
                 BsonType.NULL -> JsonPrimitive(decodeNull())
@@ -85,7 +74,7 @@ internal interface JsonBsonDecoder : BsonDecoder, JsonDecoder {
                         else -> JsonPrimitive(Base64.getEncoder().encodeToString(data))
                     }
                 }
-                else -> error("unsupported json type: $currentBsonType")
+                else -> error("Unsupported json type: $currentBsonType")
             }
         }
 

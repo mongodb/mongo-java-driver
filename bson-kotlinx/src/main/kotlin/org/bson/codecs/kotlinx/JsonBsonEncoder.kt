@@ -17,6 +17,7 @@ package org.bson.codecs.kotlinx
 
 import java.math.BigDecimal
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -54,13 +55,28 @@ internal class JsonBsonEncoder(
         serializersModule = this@JsonBsonEncoder.serializersModule
     }
 
-    override fun encodeJsonElement(element: JsonElement) =
-        when (element) {
-            is JsonNull -> encodeNull()
-            is JsonPrimitive -> encodeJsonPrimitive(element)
-            is JsonObject -> encodeJsonObject(element)
-            is JsonArray -> encodeJsonArray(element)
+    override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
+        if (value is JsonElement) encodeJsonElement(value as JsonElement)
+        else super<BsonEncoderImpl>.encodeSerializableValue(serializer, value)
+    }
+
+    override fun encodeJsonElement(element: JsonElement) {
+        if (element is JsonNull) {
+            if (configuration.explicitNulls) {
+                deferredElementName?.let { encodeName(it) }
+                encodeNull()
+            } else {
+                deferredElementName = null
+            }
+        } else {
+            deferredElementName?.let { encodeName(it) }
+            when (element) {
+                is JsonPrimitive -> encodeJsonPrimitive(element)
+                is JsonObject -> encodeJsonObject(element)
+                is JsonArray -> encodeJsonArray(element)
+            }
         }
+    }
 
     private fun encodeJsonPrimitive(primitive: JsonPrimitive) {
         val content = primitive.content
@@ -70,7 +86,7 @@ internal class JsonBsonEncoder(
             else -> {
                 val decimal = BigDecimal(content)
                 when {
-                    decimal.stripTrailingZeros().scale() > 0 ->
+                    decimal.scale() != 0 ->
                         if (DOUBLE_MIN_VALUE <= decimal && decimal <= DOUBLE_MAX_VALUE) {
                             encodeDouble(primitive.double)
                         } else {
@@ -87,7 +103,7 @@ internal class JsonBsonEncoder(
     private fun encodeJsonObject(obj: JsonObject) {
         writer.writeStartDocument()
         obj.forEach { k, v ->
-            writer.writeName(k)
+            deferredElementName = k
             encodeJsonElement(v)
         }
         writer.writeEndDocument()

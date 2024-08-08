@@ -99,7 +99,7 @@ internal open class BsonEncoderImpl(
     private var isPolymorphic = false
     private var state = STATE.VALUE
     private var mapState = MapState()
-    private var deferredElementName: String? = null
+    internal var deferredElementName: String? = null
 
     override fun shouldEncodeElementDefault(descriptor: SerialDescriptor, index: Int): Boolean =
         configuration.encodeDefaults
@@ -210,7 +210,7 @@ internal open class BsonEncoderImpl(
 
     override fun encodeString(value: String) {
         when (state) {
-            STATE.NAME -> encodeName(value)
+            STATE.NAME -> deferredElementName = value
             STATE.VALUE -> writer.writeString(value)
         }
     }
@@ -231,7 +231,7 @@ internal open class BsonEncoderImpl(
         bsonValueCodec.encode(writer, value, EncoderContext.builder().build())
     }
 
-    private fun encodeName(value: Any) {
+    internal fun encodeName(value: Any) {
         writer.writeName(value.toString())
         deferredElementName = null
         state = STATE.VALUE
@@ -244,7 +244,6 @@ internal open class BsonEncoderImpl(
 
     private class MapState {
         var currentState: STATE = STATE.VALUE
-
         fun getState(): STATE = currentState
 
         fun nextState(): STATE {
