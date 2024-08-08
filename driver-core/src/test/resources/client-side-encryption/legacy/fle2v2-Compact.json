@@ -1,7 +1,7 @@
 {
   "runOn": [
     {
-      "minServerVersion": "8.0.0",
+      "minServerVersion": "7.0.0",
       "topology": [
         "replicaset",
         "sharded",
@@ -21,26 +21,24 @@
             "subType": "04"
           }
         },
-        "path": "encryptedInt",
-        "bsonType": "int",
+        "path": "encryptedIndexed",
+        "bsonType": "string",
         "queries": {
-          "queryType": "range",
+          "queryType": "equality",
           "contention": {
             "$numberLong": "0"
-          },
-          "trimFactor": {
-            "$numberInt": "1"
-          },
-          "sparsity": {
-            "$numberLong": "1"
-          },
-          "min": {
-            "$numberInt": "0"
-          },
-          "max": {
-            "$numberInt": "200"
           }
         }
+      },
+      {
+        "keyId": {
+          "$binary": {
+            "base64": "q83vqxI0mHYSNBI0VniQEg==",
+            "subType": "04"
+          }
+        },
+        "path": "encryptedUnindexed",
+        "bsonType": "string"
       }
     ]
   },
@@ -74,11 +72,41 @@
       "masterKey": {
         "provider": "local"
       }
+    },
+    {
+      "_id": {
+        "$binary": {
+          "base64": "q83vqxI0mHYSNBI0VniQEg==",
+          "subType": "04"
+        }
+      },
+      "keyMaterial": {
+        "$binary": {
+          "base64": "HBk9BWihXExNDvTp1lUxOuxuZK2Pe2ZdVdlsxPEBkiO1bS4mG5NNDsQ7zVxJAH8BtdOYp72Ku4Y3nwc0BUpIKsvAKX4eYXtlhv5zUQxWdeNFhg9qK7qb8nqhnnLeT0f25jFSqzWJoT379hfwDeu0bebJHr35QrJ8myZdPMTEDYF08QYQ48ShRBli0S+QzBHHAQiM2iJNr4svg2WR8JSeWQ==",
+          "subType": "00"
+        }
+      },
+      "creationDate": {
+        "$date": {
+          "$numberLong": "1648914851981"
+        }
+      },
+      "updateDate": {
+        "$date": {
+          "$numberLong": "1648914851981"
+        }
+      },
+      "status": {
+        "$numberInt": "0"
+      },
+      "masterKey": {
+        "provider": "local"
+      }
     }
   ],
   "tests": [
     {
-      "description": "Compact works with 'range' fields",
+      "description": "Compact works",
       "clientOptions": {
         "autoEncryptOpts": {
           "kmsProviders": {
@@ -94,17 +122,6 @@
         }
       },
       "operations": [
-        {
-          "name": "insertOne",
-          "arguments": {
-            "document": {
-              "_id": 0,
-              "encryptedInt": {
-                "$numberInt": "0"
-              }
-            }
-          }
-        },
         {
           "name": "runCommand",
           "object": "database",
@@ -145,6 +162,12 @@
                             "base64": "EjRWeBI0mHYSNBI0VniQEg==",
                             "subType": "04"
                           }
+                        },
+                        {
+                          "$binary": {
+                            "base64": "q83vqxI0mHYSNBI0VniQEg==",
+                            "subType": "04"
+                          }
                         }
                       ]
                     }
@@ -167,120 +190,41 @@
         {
           "command_started_event": {
             "command": {
-              "insert": "default",
-              "documents": [
-                {
-                  "_id": 0,
-                  "encryptedInt": {
-                    "$$type": "binData"
-                  }
-                }
-              ],
-              "ordered": true,
-              "encryptionInformation": {
-                "type": 1,
-                "schema": {
-                  "default.default": {
-                    "escCollection": "enxcol_.default.esc",
-                    "ecocCollection": "enxcol_.default.ecoc",
-                    "fields": [
-                      {
-                        "keyId": {
-                          "$binary": {
-                            "base64": "EjRWeBI0mHYSNBI0VniQEg==",
-                            "subType": "04"
-                          }
-                        },
-                        "path": "encryptedInt",
-                        "bsonType": "int",
-                        "queries": {
-                          "queryType": "range",
-                          "contention": {
-                            "$numberLong": "0"
-                          },
-                          "trimFactor": {
-                            "$numberInt": "1"
-                          },
-                          "sparsity": {
-                            "$numberLong": "1"
-                          },
-                          "min": {
-                            "$numberInt": "0"
-                          },
-                          "max": {
-                            "$numberInt": "200"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              }
-            },
-            "command_name": "insert"
-          }
-        },
-        {
-          "command_started_event": {
-            "command": {
               "compactStructuredEncryptionData": "default",
               "compactionTokens": {
-                "encryptedInt": {
-                  "ecoc": {
-                    "$binary": {
-                      "base64": "noN+05JsuO1oDg59yypIGj45i+eFH6HOTXOPpeZ//Mk=",
-                      "subType": "00"
-                    }
-                  },
-                  "anchorPaddingToken": {
-                    "$binary": {
-                      "base64": "QxKJD2If48p0l8NAXf2Kr0aleMd/dATSjBK6hTpNMyc=",
-                      "subType": "00"
-                    }
+                "encryptedIndexed": {
+                  "$binary": {
+                    "base64": "noN+05JsuO1oDg59yypIGj45i+eFH6HOTXOPpeZ//Mk=",
+                    "subType": "00"
                   }
-                }
-              },
-              "encryptionInformation": {
-                "type": 1,
-                "schema": {
-                  "default.default": {
-                    "escCollection": "enxcol_.default.esc",
-                    "ecocCollection": "enxcol_.default.ecoc",
-                    "fields": [
-                      {
-                        "keyId": {
-                          "$binary": {
-                            "base64": "EjRWeBI0mHYSNBI0VniQEg==",
-                            "subType": "04"
-                          }
-                        },
-                        "path": "encryptedInt",
-                        "bsonType": "int",
-                        "queries": {
-                          "queryType": "range",
-                          "contention": {
-                            "$numberLong": "0"
-                          },
-                          "trimFactor": {
-                            "$numberInt": "1"
-                          },
-                          "sparsity": {
-                            "$numberLong": "1"
-                          },
-                          "min": {
-                            "$numberInt": "0"
-                          },
-                          "max": {
-                            "$numberInt": "200"
-                          }
-                        }
-                      }
-                    ]
+                },
+                "encryptedUnindexed": {
+                  "$binary": {
+                    "base64": "SWO8WEoZ2r2Kx/muQKb7+COizy85nIIUFiHh4K9kcvA=",
+                    "subType": "00"
                   }
                 }
               }
             },
             "command_name": "compactStructuredEncryptionData"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Compact errors on an unencrypted client",
+      "operations": [
+        {
+          "name": "runCommand",
+          "object": "database",
+          "command_name": "compactStructuredEncryptionData",
+          "arguments": {
+            "command": {
+              "compactStructuredEncryptionData": "default"
+            }
+          },
+          "result": {
+            "errorContains": "'compactStructuredEncryptionData.compactionTokens' is missing"
           }
         }
       ]
