@@ -305,7 +305,8 @@ public class JsonPoweredCrudTestHelper {
                 response = database.runCommand(clientSession, command, readPreference, BsonDocument.class);
             }
         }
-        if(response.containsKey("ok")){
+        if (response.containsKey("ok")) {
+            // The server response to the command may contain a double value for the "ok" field, but the expected result is an integer.
             response.put("ok", new BsonInt32((int) response.get("ok").asDouble().getValue()));
         }
         return toResult(response);
