@@ -305,11 +305,9 @@ public class JsonPoweredCrudTestHelper {
                 response = database.runCommand(clientSession, command, readPreference, BsonDocument.class);
             }
         }
-        response.remove("ok");
-        response.remove("operationTime");
-        response.remove("opTime");
-        response.remove("electionId");
-        response.remove("$clusterTime");
+        if(response.containsKey("ok")){
+            response.put("ok", new BsonInt32((int) response.get("ok").asDouble().getValue()));
+        }
         return toResult(response);
     }
 
