@@ -33,7 +33,8 @@ import org.bson.BsonNull
 import org.bson.BsonString
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.*
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException
 import static com.mongodb.internal.connection.ProtocolHelper.getQueryFailureException
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk
@@ -73,22 +74,19 @@ class ProtocolHelperSpecification extends Specification {
     def 'command failure exception should be MongoExecutionTimeoutException if error code is 50'() {
         expect:
         getCommandFailureException(new BsonDocument('ok', new BsonInt32(0)).append('code', new BsonInt32(50)),
-                                   new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS))
-                instanceof MongoExecutionTimeoutException
+                                   new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS)) instanceof MongoExecutionTimeoutException
     }
 
     def 'command failure exception should be MongoOperationTimeoutException if error code is 50 and timeoutMS is set'() {
         expect:
         getCommandFailureException(new BsonDocument('ok', new BsonInt32(0)).append('code', new BsonInt32(50)),
-                new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
-                instanceof MongoOperationTimeoutException
+                new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT)) instanceof MongoOperationTimeoutException
     }
 
     def 'query failure exception should be MongoExecutionTimeoutException if error code is 50'() {
         expect:
         getQueryFailureException(new BsonDocument('code', new BsonInt32(50)),
-                                 new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS))
-                instanceof MongoExecutionTimeoutException
+                                 new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS)) instanceof MongoExecutionTimeoutException
     }
 
     def 'query failure exception should be MongoOperationTimeoutException if error code is 50'() {
@@ -97,13 +95,12 @@ class ProtocolHelperSpecification extends Specification {
                 new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT))
         exception instanceof MongoOperationTimeoutException
         exception.getCause() instanceof MongoExecutionTimeoutException
-
     }
 
     def 'command failure exceptions should handle MongoNotPrimaryException scenarios'() {
         expect:
-        getCommandFailureException(exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS))
-                instanceof MongoNotPrimaryException
+        getCommandFailureException(
+                exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS)) instanceof MongoNotPrimaryException
 
         where:
         exception << [
@@ -115,8 +112,8 @@ class ProtocolHelperSpecification extends Specification {
 
     def 'query failure exceptions should handle MongoNotPrimaryException scenarios'() {
         expect:
-        getQueryFailureException(exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS))
-                instanceof MongoNotPrimaryException
+        getQueryFailureException(
+                exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS)) instanceof MongoNotPrimaryException
 
         where:
         exception << [
@@ -128,8 +125,8 @@ class ProtocolHelperSpecification extends Specification {
 
     def 'command failure exceptions should handle MongoNodeIsRecoveringException scenarios'() {
         expect:
-        getCommandFailureException(exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS))
-                instanceof MongoNodeIsRecoveringException
+        getCommandFailureException(
+                exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS)) instanceof MongoNodeIsRecoveringException
 
         where:
         exception << [
@@ -144,8 +141,8 @@ class ProtocolHelperSpecification extends Specification {
 
     def 'query failure exceptions should handle MongoNodeIsRecoveringException scenarios'() {
         expect:
-        getQueryFailureException(exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS))
-                instanceof MongoNodeIsRecoveringException
+        getQueryFailureException(
+                exception, new ServerAddress(), new TimeoutContext(TIMEOUT_SETTINGS)) instanceof MongoNodeIsRecoveringException
 
         where:
         exception << [
