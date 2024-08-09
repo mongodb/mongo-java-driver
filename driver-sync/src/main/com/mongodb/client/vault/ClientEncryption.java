@@ -18,8 +18,6 @@ package com.mongodb.client.vault;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoUpdatedEncryptedFieldsException;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;

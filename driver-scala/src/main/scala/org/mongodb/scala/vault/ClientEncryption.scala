@@ -89,7 +89,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @return a Publisher containing the queryable encrypted range expression
    * @since 4.9
    */
-   def encryptExpression(
+  def encryptExpression(
       expression: Document,
       options: EncryptOptions
   ): SingleObservable[Document] =

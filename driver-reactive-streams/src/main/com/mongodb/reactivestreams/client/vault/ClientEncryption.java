@@ -18,8 +18,6 @@ package com.mongodb.reactivestreams.client.vault;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoUpdatedEncryptedFieldsException;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.vault.DataKeyOptions;
