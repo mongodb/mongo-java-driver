@@ -54,7 +54,6 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +68,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
+import static java.util.Collections.singletonMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -279,11 +279,11 @@ public final class BulkWriteBatch {
 
     FieldNameValidator getFieldNameValidator() {
         if (batchType == UPDATE || batchType == REPLACE) {
-            Map<String, FieldNameValidator> rootMap = new HashMap<>();
+            Map<String, FieldNameValidator> rootMap;
             if (batchType == REPLACE) {
-                rootMap.put("u", new ReplacingDocumentFieldNameValidator());
+                rootMap = singletonMap("u", new ReplacingDocumentFieldNameValidator());
             } else {
-                rootMap.put("u", new UpdateFieldNameValidator());
+                rootMap = singletonMap("u", new UpdateFieldNameValidator());
             }
             return new MappedFieldNameValidator(NO_OP_FIELD_NAME_VALIDATOR, rootMap);
         } else {

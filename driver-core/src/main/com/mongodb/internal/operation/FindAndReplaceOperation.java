@@ -30,11 +30,9 @@ import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
+import static java.util.Collections.singletonMap;
 
 /**
  * An operation that atomically finds and replaces a single document.
@@ -133,9 +131,9 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     protected FieldNameValidator getFieldNameValidator() {
-        Map<String, FieldNameValidator> map = new HashMap<>();
-        map.put("update", new ReplacingDocumentFieldNameValidator());
-        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
+        return new MappedFieldNameValidator(
+                new NoOpFieldNameValidator(),
+                singletonMap("update", new ReplacingDocumentFieldNameValidator()));
     }
 
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {
