@@ -212,7 +212,6 @@ public class Crypt implements Closeable {
      * @param options    the options
      * @return the encrypted expression
      */
-    @Beta(Reason.SERVER)
     BsonDocument encryptExpression(final BsonDocument expression, final EncryptOptions options, @Nullable final Timeout timeoutOperation) {
         notNull("expression", expression);
         notNull("options", options);

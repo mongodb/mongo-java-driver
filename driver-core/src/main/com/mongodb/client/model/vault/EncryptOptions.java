@@ -54,7 +54,6 @@ public class EncryptOptions {
      *     <li>Unindexed</li>
      *     <li>Range</li>
      * </ul>
-     * Note: The Range algorithm is unstable. It is subject to breaking changes.
      *
      * @return the encryption algorithm
      */
@@ -118,7 +117,6 @@ public class EncryptOptions {
      * The contention factor.
      *
      * <p>It is an error to set contentionFactor when algorithm is not "Indexed" or "Range".
-     * <p>Note: The Range algorithm is unstable. It is subject to breaking changes.</p>
      * @param contentionFactor the contention factor, which must be {@code >= 0} or null.
      * @return this
      * @since 4.7
@@ -147,7 +145,6 @@ public class EncryptOptions {
      *
      * <p>Currently, we support only "equality" or "range" queryType.</p>
      * <p>It is an error to set queryType when the algorithm is not "Indexed" or "Range".</p>
-     * <p>Note: The Range algorithm is unstable. It is subject to breaking changes.</p>
      * @param queryType the query type
      * @return this
      * @since 4.7
@@ -162,7 +159,6 @@ public class EncryptOptions {
      * Gets the QueryType.
      *
      * <p>Currently, we support only "equality" or "range" queryType.</p>
-     * <p>Note: The Range algorithm is unstable. It is subject to breaking changes.
      * @see #queryType(String)
      * @return the queryType or null
      * @since 4.7
@@ -177,14 +173,12 @@ public class EncryptOptions {
      * The RangeOptions
      *
      * <p>It is an error to set RangeOptions when the algorithm is not "Range".
-     * <p>Note: The Range algorithm is unstable. It is subject to breaking changes.
      * @param rangeOptions the range options
      * @return this
      * @since 4.9
      * @mongodb.server.release 8.0
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
-    @Beta(Reason.SERVER)
     public EncryptOptions rangeOptions(@Nullable final RangeOptions rangeOptions) {
         this.rangeOptions = rangeOptions;
         return this;

@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model.vault;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
@@ -29,12 +27,10 @@ import org.bson.BsonValue;
  *
  * <p>For {@code double} and {@code decimal128}, {@code min}/{@code max}/{@code precision} must all be set, or all be unset.
  *
- * <p>Note: The "Range" algorithm is unstable. It is subject to breaking changes.
  * @since 4.9
  * @mongodb.server.release 6.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
  */
-@Beta(Reason.SERVER)
 public class RangeOptions {
 
     private BsonValue min;
