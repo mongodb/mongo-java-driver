@@ -26,12 +26,12 @@ import static java.lang.String.format;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
-    private int numFields = 0;
+public final class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
+    private boolean encounteredField = false;
 
     @Override
     public boolean validate(final String fieldName) {
-        numFields++;
+        encounteredField = true;
         return fieldName.startsWith("$");
     }
 
@@ -43,17 +43,17 @@ public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
 
     @Override
     public FieldNameValidator getValidatorForField(final String fieldName) {
-        return new NoOpFieldNameValidator();
+        return NoOpFieldNameValidator.INSTANCE;
     }
 
     @Override
     public void start() {
-        numFields = 0;
+        encounteredField = false;
     }
 
     @Override
     public void end() {
-        if (numFields == 0) {
+        if (!encounteredField) {
             throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
         }
     }

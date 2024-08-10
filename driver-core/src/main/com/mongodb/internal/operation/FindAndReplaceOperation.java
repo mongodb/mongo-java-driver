@@ -132,8 +132,8 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
 
     protected FieldNameValidator getFieldNameValidator() {
         return new MappedFieldNameValidator(
-                new NoOpFieldNameValidator(),
-                singletonMap("update", new ReplacingDocumentFieldNameValidator()));
+                NoOpFieldNameValidator.INSTANCE,
+                singletonMap("update", ReplacingDocumentFieldNameValidator.INSTANCE));
     }
 
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {

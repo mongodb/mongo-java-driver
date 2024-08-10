@@ -160,7 +160,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     protected FieldNameValidator getFieldNameValidator() {
-        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), singletonMap("update", new UpdateFieldNameValidator()));
+        return new MappedFieldNameValidator(NoOpFieldNameValidator.INSTANCE, singletonMap("update", new UpdateFieldNameValidator()));
     }
 
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {

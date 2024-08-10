@@ -57,7 +57,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def replyDocument = new BsonDocument('ok', new BsonInt32(1))
         def failureException = new MongoInternalException('failure!')
         def message = new CommandMessage(namespace, commandDocument,
-                new NoOpFieldNameValidator(), ReadPreference.primary(), messageSettings, MULTIPLE, null)
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
                 Stub(TimeoutContext), null))
@@ -101,7 +101,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def commandDocument = new BsonDocument('ping', new BsonInt32(1))
         def replyDocument = new BsonDocument('ok', new BsonInt32(42))
         def failureException = new MongoInternalException('failure!')
-        def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
+        def message = new CommandMessage(namespace, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 messageSettings, MULTIPLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
@@ -158,7 +158,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def namespace = new MongoNamespace('test.driver')
         def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('fake', new BsonBinary(new byte[2048]))
-        def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
+        def message = new CommandMessage(namespace, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
@@ -192,7 +192,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
         def namespace = new MongoNamespace('test.driver')
         def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
         def commandDocument = new BsonDocument('createUser', new BsonString('private'))
-        def message = new CommandMessage(namespace, commandDocument, new NoOpFieldNameValidator(), ReadPreference.primary(),
+        def message = new CommandMessage(namespace, commandDocument, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 messageSettings, SINGLE, null)
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,

@@ -77,7 +77,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 public final class BulkWriteBatch {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final Decoder<BsonDocument> DECODER = REGISTRY.get(BsonDocument.class);
-    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
 
     private final MongoNamespace namespace;
     private final ConnectionDescription connectionDescription;
@@ -281,13 +280,13 @@ public final class BulkWriteBatch {
         if (batchType == UPDATE || batchType == REPLACE) {
             Map<String, FieldNameValidator> rootMap;
             if (batchType == REPLACE) {
-                rootMap = singletonMap("u", new ReplacingDocumentFieldNameValidator());
+                rootMap = singletonMap("u", ReplacingDocumentFieldNameValidator.INSTANCE);
             } else {
                 rootMap = singletonMap("u", new UpdateFieldNameValidator());
             }
-            return new MappedFieldNameValidator(NO_OP_FIELD_NAME_VALIDATOR, rootMap);
+            return new MappedFieldNameValidator(NoOpFieldNameValidator.INSTANCE, rootMap);
         } else {
-            return NO_OP_FIELD_NAME_VALIDATOR;
+            return NoOpFieldNameValidator.INSTANCE;
         }
     }
 

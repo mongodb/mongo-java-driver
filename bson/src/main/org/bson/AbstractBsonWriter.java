@@ -47,7 +47,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      * @param settings The writer settings.
      */
     protected AbstractBsonWriter(final BsonWriterSettings settings) {
-        this(settings, new NoOpFieldNameValidator());
+        this(settings, NoOpFieldNameValidator.INSTANCE);
     }
 
     /**
