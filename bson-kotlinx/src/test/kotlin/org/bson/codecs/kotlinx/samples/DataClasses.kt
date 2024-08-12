@@ -305,10 +305,17 @@ data class DataClassWithFailingInit(val id: String) {
 @Serializable data class DataClassWithJsonElement(val value: JsonElement)
 
 @Serializable
-data class DataClassWithNestedJsonElements(
-    val dataClass: DataClassWithJsonElement,
-    val jsonArrayPrimitives: JsonArray,
-    val jsonArrayNested: List<JsonArray>,
-    val jsonArrayJsonObject: List<JsonElement>,
+data class DataClassWithJsonElements(
+    val jsonElement: JsonElement,
+    val jsonArray: JsonArray,
+    val jsonElements: List<JsonElement>,
     val jsonNestedMap: Map<String, JsonElement>
+)
+
+@Serializable
+data class DataClassWithJsonElementsNullable(
+    val jsonElement: JsonElement?,
+    val jsonArray: JsonArray?,
+    val jsonElements: List<JsonElement?>?,
+    val jsonNestedMap: Map<String, JsonElement?>?
 )

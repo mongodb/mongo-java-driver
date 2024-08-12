@@ -84,10 +84,11 @@ import org.bson.codecs.kotlinx.samples.DataClassWithEnum
 import org.bson.codecs.kotlinx.samples.DataClassWithEnumMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithFailingInit
 import org.bson.codecs.kotlinx.samples.DataClassWithJsonElement
+import org.bson.codecs.kotlinx.samples.DataClassWithJsonElements
+import org.bson.codecs.kotlinx.samples.DataClassWithJsonElementsNullable
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableList
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
-import org.bson.codecs.kotlinx.samples.DataClassWithNestedJsonElements
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterizedDataClass
 import org.bson.codecs.kotlinx.samples.DataClassWithNullableGeneric
@@ -785,36 +786,24 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
-    fun testDataClassWithNestedJsonElements() {
+    fun testDataClassWithJsonElements() {
         val expected =
             """{
-                | "dataClass": {"value": {"string": "String"}},
-                | "jsonArrayPrimitives": [1, 2, 3, 4],
-                | "jsonArrayNested": [[1, 2], [3, 4]],
-                | "jsonArrayJsonObject": [{"string": "String"}, {"int": 42}],
+                | "jsonElement": {"string": "String"},
+                | "jsonArray": [1, 2],
+                | "jsonElements": [{"string": "String"}, {"int": 42}],
                 | "jsonNestedMap": {"nestedString": {"string": "String"},
                 |    "nestedLong": {"long": {"$numberLong": "3000000000"}}}
                 |}"""
                 .trimMargin()
 
         val dataClass =
-            DataClassWithNestedJsonElements(
-                DataClassWithJsonElement(buildJsonObject { put("string", "String") }),
+            DataClassWithJsonElements(
+                buildJsonObject { put("string", "String") },
                 buildJsonArray {
                     add(JsonPrimitive(1))
                     add(JsonPrimitive(2))
-                    add(JsonPrimitive(3))
-                    add(JsonPrimitive(4))
                 },
-                listOf(
-                    buildJsonArray {
-                        add(JsonPrimitive(1))
-                        add(JsonPrimitive(2))
-                    },
-                    buildJsonArray {
-                        add(JsonPrimitive(3))
-                        add(JsonPrimitive(4))
-                    }),
                 listOf(buildJsonObject { put("string", "String") }, buildJsonObject { put("int", 42) }),
                 mapOf(
                     Pair("nestedString", buildJsonObject { put("string", "String") }),
@@ -824,59 +813,91 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
+    fun testDataClassWithJsonElementsNullable() {
+        val expected =
+            """{
+                | "jsonElement": {"null": null},
+                | "jsonArray": [1, 2, null],
+                | "jsonElements": [{"null": null}],
+                | "jsonNestedMap": {"nestedNull": null}
+                |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithJsonElementsNullable(
+                buildJsonObject { put("null", null) },
+                buildJsonArray {
+                    add(JsonPrimitive(1))
+                    add(JsonPrimitive(2))
+                    add(JsonPrimitive(null))
+                },
+                listOf(buildJsonObject { put("null", null) }),
+                mapOf(Pair("nestedNull", null)))
+
+        assertRoundTrips(expected, dataClass, altConfiguration)
+
+        val expectedNoNulls =
+            """{
+                | "jsonElement": {},
+                | "jsonArray": [1, 2],
+                | "jsonElements": [{}],
+                | "jsonNestedMap": {}
+                |}"""
+                .trimMargin()
+
+        val dataClassNoNulls =
+            DataClassWithJsonElementsNullable(
+                buildJsonObject {},
+                buildJsonArray {
+                    add(JsonPrimitive(1))
+                    add(JsonPrimitive(2))
+                },
+                listOf(buildJsonObject {}),
+                mapOf())
+        assertEncodesTo(expectedNoNulls, dataClass)
+        assertDecodesTo(expectedNoNulls, dataClassNoNulls)
+    }
+
+    @Test
     fun testDataClassWithJsonElementNullSupport() {
         val expected =
-            """{"dataClass": {"value": {"null": null}},
-                | "jsonArrayPrimitives": [1, 2, null],
-                | "jsonArrayNested": [[1, 2], [null]],
-                | "jsonArrayJsonObject": [{"null": null}],
+            """{"jsonElement": {"null": null},
+                | "jsonArray": [1, 2, null],
+                | "jsonElements": [{"null": null}],
                 | "jsonNestedMap": {"nestedNull": null}
                 | }
                 | """
                 .trimMargin()
 
         val dataClass =
-            DataClassWithNestedJsonElements(
-                DataClassWithJsonElement(buildJsonObject { put("null", null) }),
+            DataClassWithJsonElements(
+                buildJsonObject { put("null", null) },
                 buildJsonArray {
                     add(JsonPrimitive(1))
                     add(JsonPrimitive(2))
                     add(JsonPrimitive(null))
                 },
-                listOf(
-                    buildJsonArray {
-                        add(JsonPrimitive(1))
-                        add(JsonPrimitive(2))
-                    },
-                    buildJsonArray { add(JsonPrimitive(null)) }),
                 listOf(buildJsonObject { put("null", null) }),
                 mapOf(Pair("nestedNull", JsonPrimitive(null))))
 
         assertRoundTrips(expected, dataClass, altConfiguration)
 
         val expectedNoNulls =
-            """{"dataClass": {"value": {}},
-                | "jsonArrayPrimitives": [1, 2],
-                | "jsonArrayNested": [[1, 2], []],
-                | "jsonArrayJsonObject": [{}],
+            """{"jsonElement": {},
+                | "jsonArray": [1, 2],
+                | "jsonElements": [{}],
                 | "jsonNestedMap": {}
                 | }
                 | """
                 .trimMargin()
 
         val dataClassNoNulls =
-            DataClassWithNestedJsonElements(
-                DataClassWithJsonElement(buildJsonObject {}),
+            DataClassWithJsonElements(
+                buildJsonObject {},
                 buildJsonArray {
                     add(JsonPrimitive(1))
                     add(JsonPrimitive(2))
                 },
-                listOf(
-                    buildJsonArray {
-                        add(JsonPrimitive(1))
-                        add(JsonPrimitive(2))
-                    },
-                    buildJsonArray {}),
                 listOf(buildJsonObject {}),
                 mapOf())
         assertEncodesTo(expectedNoNulls, dataClass)

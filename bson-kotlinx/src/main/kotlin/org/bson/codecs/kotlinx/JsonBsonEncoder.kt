@@ -56,7 +56,7 @@ internal class JsonBsonEncoder(
     }
 
     override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
-        if (value is JsonElement) encodeJsonElement(value as JsonElement)
+        if (value is JsonElement) encodeJsonElement(value)
         else super<BsonEncoderImpl>.encodeSerializableValue(serializer, value)
     }
 
