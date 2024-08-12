@@ -100,7 +100,8 @@ configure(javaProjects) { project ->
                 artifact sourcesJar
                 artifact javadocJar
 
-                suppressAllPomMetadataWarnings()
+                suppressPomMetadataWarningsFor("jsonSupportApiElements")
+                suppressPomMetadataWarningsFor("jsonSupportRuntimeElements")
             }
         }
 
