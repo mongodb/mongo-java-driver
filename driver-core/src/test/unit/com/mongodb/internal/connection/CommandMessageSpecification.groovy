@@ -51,7 +51,7 @@ class CommandMessageSpecification extends Specification {
 
     def namespace = new MongoNamespace('db.test')
     def command = new BsonDocument('find', new BsonString(namespace.collectionName))
-    def fieldNameValidator = new NoOpFieldNameValidator()
+    def fieldNameValidator = NoOpFieldNameValidator.INSTANCE
 
     def 'should encode command message with OP_MSG when server version is >= 3.6'() {
         given:
@@ -149,7 +149,7 @@ class CommandMessageSpecification extends Specification {
     def 'should get command document'() {
         given:
         def message = new CommandMessage(namespace, originalCommandDocument, fieldNameValidator, ReadPreference.primary(),
-                MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true, payload, new NoOpFieldNameValidator(),
+                MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true, payload, NoOpFieldNameValidator.INSTANCE,
                 ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         message.encode(output, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,

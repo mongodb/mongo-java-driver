@@ -25,6 +25,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -439,7 +440,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
         localConnection.command(getNamespace().getDatabaseName(),
                 new BsonDocument("killCursors", new BsonString(getNamespace().getCollectionName()))
                         .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getOperationContext());
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getOperationContext());
         localConnection.release();
 
         cursor.next();
@@ -529,7 +530,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
         }
 
         BsonDocument results = connection.command(getDatabaseName(), findCommand,
-                NO_OP_FIELD_NAME_VALIDATOR, readPreference,
+                NoOpFieldNameValidator.INSTANCE, readPreference,
                 CommandResultDocumentCodec.create(DOCUMENT_DECODER, FIRST_BATCH),
                 connectionSource.getOperationContext());
 

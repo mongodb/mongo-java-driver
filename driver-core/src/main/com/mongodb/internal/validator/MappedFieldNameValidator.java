@@ -55,10 +55,6 @@ public class MappedFieldNameValidator implements FieldNameValidator {
 
     @Override
     public FieldNameValidator getValidatorForField(final String fieldName) {
-        if (fieldNameToValidatorMap.containsKey(fieldName)) {
-            return fieldNameToValidatorMap.get(fieldName);
-        } else {
-            return defaultValidator;
-        }
+        return fieldNameToValidatorMap.getOrDefault(fieldName, defaultValidator);
     }
 }

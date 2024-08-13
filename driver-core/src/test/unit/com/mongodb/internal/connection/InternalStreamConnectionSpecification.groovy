@@ -78,7 +78,7 @@ class InternalStreamConnectionSpecification extends Specification {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
 
     def cmdNamespace = new MongoNamespace('admin.$cmd')
-    def fieldNameValidator = new NoOpFieldNameValidator()
+    def fieldNameValidator = NoOpFieldNameValidator.INSTANCE
     def helper = new StreamHelper()
     def serverAddress = new ServerAddress()
     def connectionId = new ConnectionId(SERVER_ID, 1, 1)
@@ -1219,7 +1219,7 @@ class InternalStreamConnectionSpecification extends Specification {
         try {
             rcvdCallbck.get()
             false
-        } catch (MongoSocketWriteException) {
+        } catch (MongoSocketWriteException e) {
             true
         }
     }

@@ -230,8 +230,7 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
                 .build();
 
         MongoCryptException e = assertThrows(MongoCryptException.class, () -> {
-            try (ClientEncryption ignore = createClientEncryption(settings)) {//NOP
-            }
+            createClientEncryption(settings).close();
         });
         assertTrue(e.getMessage().contains("On-demand credentials are not supported for named KMS providers."));
     }
@@ -267,10 +266,9 @@ public abstract class AbstractClientSideEncryptionAwsCredentialFromEnvironmentTe
                 .build();
 
         MongoCryptException e = assertThrows(MongoCryptException.class, () -> {
-            try (MongoClient ignore = createMongoClient(getMongoClientSettingsBuilder()
+            createMongoClient(getMongoClientSettingsBuilder()
                     .autoEncryptionSettings(autoEncryptionSettings)
-                    .build())) {//NOP
-                 }
+                    .build()).close();
         });
         assertTrue(e.getMessage().contains("On-demand credentials are not supported for named KMS providers."));
     }

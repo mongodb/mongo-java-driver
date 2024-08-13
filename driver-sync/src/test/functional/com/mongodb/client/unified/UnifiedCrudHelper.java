@@ -68,6 +68,7 @@ import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.SearchIndexModel;
+import com.mongodb.client.model.SearchIndexType;
 import com.mongodb.client.model.TimeSeriesGranularity;
 import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.UpdateManyModel;
@@ -99,6 +100,7 @@ import org.bson.codecs.configuration.CodecRegistries;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1508,17 +1510,22 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         MongoCollection<BsonDocument> collection = getMongoCollection(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         BsonDocument model = arguments.getDocument("model");
-        BsonDocument definition = model.getDocument("definition");
 
         return resultOf(() -> {
-            if (model.containsKey("name")) {
-                String name = model.getString("name").getValue();
-                collection.createSearchIndex(name, definition);
-            } else {
-                collection.createSearchIndex(definition);
-            }
+            collection.createSearchIndexes(Collections.singletonList(toIndexSearchModel(model)));
             return null;
         });
+    }
+
+    private static SearchIndexType  getSearchIndexType(final BsonString type) {
+        switch (type.getValue()) {
+            case "search":
+                return SearchIndexType.search();
+            case "vectorSearch":
+                return SearchIndexType.vectorSearch();
+            default:
+                throw new UnsupportedOperationException("Unsupported search index type: " + type.getValue());
+        }
     }
 
     OperationResult executeCreateSearchIndexes(final BsonDocument operation) {
@@ -1561,14 +1568,12 @@ final class UnifiedCrudHelper extends UnifiedHelper {
 
     private static SearchIndexModel toIndexSearchModel(final BsonValue bsonValue) {
         BsonDocument model = bsonValue.asDocument();
-        String name;
         BsonDocument definition = model.getDocument("definition");
-        if (model.containsKey("name")) {
-            name = model.getString("name").getValue();
-            return new SearchIndexModel(name, definition);
-        } else {
-            return new SearchIndexModel(definition);
-        }
+        SearchIndexType type = model.containsKey("type") ? getSearchIndexType(model.getString("type")) : null;
+        String name = Optional.ofNullable(model.getString("name", null))
+                .map(BsonString::getValue).
+                orElse(null);
+        return new SearchIndexModel(name, definition, type);
     }
 
 

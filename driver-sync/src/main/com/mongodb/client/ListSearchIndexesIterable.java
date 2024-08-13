@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * @param <TResult> The type of the result.
  * @mongodb.driver.manual reference/operator/aggregation/listSearchIndexes ListSearchIndexes
  * @since 4.11
- * @mongodb.server.release 7.0
+ * @mongodb.server.release 6.0
  */
 @Evolving
 public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResult> {

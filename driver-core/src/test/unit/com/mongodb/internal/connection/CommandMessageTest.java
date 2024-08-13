@@ -28,7 +28,6 @@ import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
-import org.bson.FieldNameValidator;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.Test;
 
@@ -44,12 +43,11 @@ class CommandMessageTest {
 
     private static final MongoNamespace NAMESPACE = new MongoNamespace("db.test");
     private static final BsonDocument COMMAND = new BsonDocument("find", new BsonString(NAMESPACE.getCollectionName()));
-    private static final FieldNameValidator FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
 
     @Test
     void encodeShouldThrowTimeoutExceptionWhenTimeoutContextIsCalled() {
         //given
-        CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
+        CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 MessageSettings.builder()
                         .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
@@ -75,7 +73,7 @@ class CommandMessageTest {
     @Test
     void encodeShouldNotAddExtraElementsFromTimeoutContextWhenConnectedToMongoCrypt() {
         //given
-        CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, FIELD_NAME_VALIDATOR, ReadPreference.primary(),
+        CommandMessage commandMessage = new CommandMessage(NAMESPACE, COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 MessageSettings.builder()
                         .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION)
                         .serverType(ServerType.REPLICA_SET_SECONDARY)

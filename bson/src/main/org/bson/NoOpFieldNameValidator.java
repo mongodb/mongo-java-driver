@@ -16,7 +16,12 @@
 
 package org.bson;
 
-class NoOpFieldNameValidator implements FieldNameValidator {
+final class NoOpFieldNameValidator implements FieldNameValidator {
+    static final NoOpFieldNameValidator INSTANCE = new NoOpFieldNameValidator();
+
+    private NoOpFieldNameValidator() {
+    }
+
     @Override
     public boolean validate(final String fieldName) {
         return true;

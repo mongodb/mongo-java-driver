@@ -54,7 +54,6 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +68,7 @@ import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
+import static java.util.Collections.singletonMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -77,7 +77,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 public final class BulkWriteBatch {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final Decoder<BsonDocument> DECODER = REGISTRY.get(BsonDocument.class);
-    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
 
     private final MongoNamespace namespace;
     private final ConnectionDescription connectionDescription;
@@ -279,15 +278,15 @@ public final class BulkWriteBatch {
 
     FieldNameValidator getFieldNameValidator() {
         if (batchType == UPDATE || batchType == REPLACE) {
-            Map<String, FieldNameValidator> rootMap = new HashMap<>();
+            Map<String, FieldNameValidator> rootMap;
             if (batchType == REPLACE) {
-                rootMap.put("u", new ReplacingDocumentFieldNameValidator());
+                rootMap = singletonMap("u", ReplacingDocumentFieldNameValidator.INSTANCE);
             } else {
-                rootMap.put("u", new UpdateFieldNameValidator());
+                rootMap = singletonMap("u", new UpdateFieldNameValidator());
             }
-            return new MappedFieldNameValidator(NO_OP_FIELD_NAME_VALIDATOR, rootMap);
+            return new MappedFieldNameValidator(NoOpFieldNameValidator.INSTANCE, rootMap);
         } else {
-            return NO_OP_FIELD_NAME_VALIDATOR;
+            return NoOpFieldNameValidator.INSTANCE;
         }
     }
 
