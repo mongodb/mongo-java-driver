@@ -18,8 +18,10 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static com.mongodb.reactivestreams.client.internal.TestHelper.OPERATION_EXECUTOR;
@@ -168,6 +171,11 @@ public class BatchCursorPublisherTest {
             @Override
             AsyncReadOperation<AsyncBatchCursor<Document>> asAsyncReadOperation(final int initialBatchSize) {
                 return readOperation;
+            }
+
+            @Override
+            Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+                return (AsyncOperations::getTimeoutSettings);
             }
         };
 

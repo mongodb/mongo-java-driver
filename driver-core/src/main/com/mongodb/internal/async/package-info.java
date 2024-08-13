@@ -15,7 +15,6 @@
  */
 
 /**
- * This package contains cluster and connection event related classes
  */
 
 @NonNullApi

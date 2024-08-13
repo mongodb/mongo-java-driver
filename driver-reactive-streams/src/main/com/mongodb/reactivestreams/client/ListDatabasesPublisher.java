@@ -17,6 +17,9 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
@@ -106,6 +109,20 @@ public interface ListDatabasesPublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 4.4
      */
     ListDatabasesPublisher<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    ListDatabasesPublisher<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Helper to return a publisher limited to the first result.

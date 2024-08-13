@@ -17,31 +17,27 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.reactivestreams.client.internal.BatchCursor;
-import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
-
-import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
-import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
-import static java.util.Objects.requireNonNull;
+import java.util.concurrent.TimeUnit;
 
 public class SyncMongoClient implements MongoClient {
 
-    private static long sleepAfterCursorOpenMS;
-
-    private static long sleepAfterCursorCloseMS;
-    private static long sleepAfterSessionCloseMS;
     private static boolean waitForBatchCursorCreation;
 
     /**
@@ -50,13 +46,17 @@ public class SyncMongoClient implements MongoClient {
      * can set this to a positive value.  A value of 256 ms has been shown to work well. The default value is 0.
      */
     public static void enableSleepAfterCursorOpen(final long sleepMS) {
-        if (sleepAfterCursorOpenMS != 0) {
-            throw new IllegalStateException("Already enabled");
-        }
-        if (sleepMS <= 0) {
-            throw new IllegalArgumentException("sleepMS must be a positive value");
-        }
-        sleepAfterCursorOpenMS = sleepMS;
+        SyncMongoCluster.enableSleepAfterCursorOpen(sleepMS);
+    }
+
+    /**
+     * Unfortunately this is the only way to wait for error logic to complete, since it's asynchronous.
+     * This is inherently racy but there are not any other good options. Tests which require cursor error handling to complete before
+     * execution of the next operation can set this to a positive value.  A value of 256 ms has been shown to work well. The default
+     * value is 0.
+     */
+    public static void enableSleepAfterCursorError(final long sleepMS) {
+        SyncMongoCluster.enableSleepAfterCursorError(sleepMS);
     }
 
     /**
@@ -66,13 +66,7 @@ public class SyncMongoClient implements MongoClient {
      * value is 0.
      */
     public static void enableSleepAfterCursorClose(final long sleepMS) {
-        if (sleepAfterCursorCloseMS != 0) {
-            throw new IllegalStateException("Already enabled");
-        }
-        if (sleepMS <= 0) {
-            throw new IllegalArgumentException("sleepMS must be a positive value");
-        }
-        sleepAfterCursorCloseMS = sleepMS;
+        SyncMongoCluster.enableSleepAfterCursorClose(sleepMS);
     }
 
     /**
@@ -81,13 +75,7 @@ public class SyncMongoClient implements MongoClient {
      * the attempt is racy and incorrect, but good enough for tests given that no other approach is available.
      */
     public static void enableSleepAfterSessionClose(final long sleepMS) {
-        if (sleepAfterSessionCloseMS != 0) {
-            throw new IllegalStateException("Already enabled");
-        }
-        if (sleepMS <= 0) {
-            throw new IllegalArgumentException("sleepMS must be a positive value");
-        }
-        sleepAfterSessionCloseMS = sleepMS;
+        SyncMongoCluster.enableSleepAfterSessionClose(sleepMS);
     }
 
     /**
@@ -112,27 +100,31 @@ public class SyncMongoClient implements MongoClient {
     }
 
     public static void disableSleep() {
-        sleepAfterCursorOpenMS = 0;
-        sleepAfterCursorCloseMS = 0;
-        sleepAfterSessionCloseMS = 0;
+        SyncMongoCluster.disableSleep();
     }
 
     public static long getSleepAfterCursorOpen() {
-        return sleepAfterCursorOpenMS;
+        return SyncMongoCluster.getSleepAfterCursorOpen();
+    }
+
+    public static long getSleepAfterCursorError() {
+        return SyncMongoCluster.getSleepAfterCursorError();
     }
 
     public static long getSleepAfterCursorClose() {
-        return sleepAfterCursorCloseMS;
+        return SyncMongoCluster.getSleepAfterCursorClose();
     }
 
     public static long getSleepAfterSessionClose() {
-        return sleepAfterSessionCloseMS;
+        return SyncMongoCluster.getSleepAfterSessionClose();
     }
 
     private final com.mongodb.reactivestreams.client.MongoClient wrapped;
+    private final SyncMongoCluster delegate;
 
     public SyncMongoClient(final com.mongodb.reactivestreams.client.MongoClient wrapped) {
         this.wrapped = wrapped;
+        this.delegate = new SyncMongoCluster(wrapped);
     }
 
     public com.mongodb.reactivestreams.client.MongoClient getWrapped() {
@@ -140,18 +132,140 @@ public class SyncMongoClient implements MongoClient {
     }
 
     @Override
+    public CodecRegistry getCodecRegistry() {
+        return delegate.getCodecRegistry();
+    }
+
+    @Override
+    public ReadPreference getReadPreference() {
+        return delegate.getReadPreference();
+    }
+
+    @Override
+    public WriteConcern getWriteConcern() {
+        return delegate.getWriteConcern();
+    }
+
+    @Override
+    public ReadConcern getReadConcern() {
+        return delegate.getReadConcern();
+    }
+
+    @Override
+    public Long getTimeout(final TimeUnit timeUnit) {
+        return delegate.getTimeout(timeUnit);
+    }
+
+    @Override
+    public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
+        return delegate.withCodecRegistry(codecRegistry);
+    }
+
+    @Override
+    public MongoCluster withReadPreference(final ReadPreference readPreference) {
+        return delegate.withReadPreference(readPreference);
+    }
+
+    @Override
+    public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
+        return delegate.withWriteConcern(writeConcern);
+    }
+
+    @Override
+    public MongoCluster withReadConcern(final ReadConcern readConcern) {
+        return delegate.withReadConcern(readConcern);
+    }
+
+    @Override
+    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
+        return delegate.withTimeout(timeout, timeUnit);
+    }
+
+    @Override
     public MongoDatabase getDatabase(final String databaseName) {
-        return new SyncMongoDatabase(wrapped.getDatabase(databaseName));
+        return delegate.getDatabase(databaseName);
     }
 
     @Override
     public ClientSession startSession() {
-        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession()).contextWrite(CONTEXT).block(TIMEOUT_DURATION)), this);
+        return delegate.startSession();
     }
 
     @Override
     public ClientSession startSession(final ClientSessionOptions options) {
-        return new SyncClientSession(requireNonNull(Mono.from(wrapped.startSession(options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION)), this);
+        return delegate.startSession(options);
+    }
+
+    @Override
+    public MongoIterable<String> listDatabaseNames() {
+        return delegate.listDatabaseNames();
+    }
+
+    @Override
+    public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
+        return delegate.listDatabaseNames(clientSession);
+    }
+
+
+    @Override
+    public ListDatabasesIterable<Document> listDatabases() {
+        return delegate.listDatabases();
+    }
+
+    @Override
+    public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
+        return delegate.listDatabases(clientSession);
+    }
+
+    @Override
+    public <TResult> ListDatabasesIterable<TResult> listDatabases(final Class<TResult> resultClass) {
+        return delegate.listDatabases(resultClass);
+    }
+
+    @Override
+    public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return delegate.listDatabases(clientSession, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch() {
+        return delegate.watch();
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
+        return delegate.watch(resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
+        return delegate.watch(pipeline);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return delegate.watch(pipeline, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
+        return delegate.watch(clientSession);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return delegate.watch(clientSession, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return delegate.watch(clientSession, pipeline);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(
+            final ClientSession clientSession, final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return delegate.watch(clientSession, pipeline, resultClass);
     }
 
     @Override
@@ -159,83 +273,10 @@ public class SyncMongoClient implements MongoClient {
         wrapped.close();
     }
 
-    @Override
-    public MongoIterable<String> listDatabaseNames() {
-        return listDatabases(BsonDocument.class).nameOnly(true).map(result -> result.getString("name").getValue());
-    }
-
-    @Override
-    public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
-        return listDatabases(clientSession, BsonDocument.class).nameOnly(true).map(result -> result.getString("name").getValue());
-    }
-
-    @Override
-    public ListDatabasesIterable<Document> listDatabases() {
-        return new SyncListDatabasesIterable<>(wrapped.listDatabases());
-    }
-
-    @Override
-    public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
-        return listDatabases(clientSession, Document.class);
-    }
-
-    @Override
-    public <TResult> ListDatabasesIterable<TResult> listDatabases(final Class<TResult> resultClass) {
-        return new SyncListDatabasesIterable<>(wrapped.listDatabases(resultClass));
-    }
-
-    @Override
-    public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return new SyncListDatabasesIterable<>(wrapped.listDatabases(unwrap(clientSession), resultClass));
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch() {
-        return new SyncChangeStreamIterable<>(wrapped.watch());
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(resultClass));
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline));
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline, resultClass));
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession)));
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), resultClass));
-    }
-
-    @Override
-    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline));
-    }
-
-    @Override
-    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
-                                                         final Class<TResult> resultClass) {
-        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, resultClass));
-    }
 
     @Override
     public ClusterDescription getClusterDescription() {
         return wrapped.getClusterDescription();
     }
 
-    private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {
-        return ((SyncClientSession) clientSession).getWrapped();
-    }
 }

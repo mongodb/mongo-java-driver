@@ -20,7 +20,7 @@ import com.mongodb.client.DistinctIterable
 import com.mongodb.client.model.Collation
 import org.bson.BsonValue
 import org.bson.conversions.Bson
-import org.mongodb.scala.DistinctObservable
+import org.mongodb.scala.{ DistinctObservable, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
 
@@ -39,6 +39,11 @@ case class SyncDistinctIterable[T](wrapped: DistinctObservable[T])
 
   override def batchSize(batchSize: Int): DistinctIterable[T] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  override def timeoutMode(timeoutMode: TimeoutMode): DistinctIterable[T] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

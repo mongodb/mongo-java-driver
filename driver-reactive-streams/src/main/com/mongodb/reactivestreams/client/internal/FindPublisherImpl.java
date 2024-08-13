@@ -18,10 +18,13 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncExplainableReadOperation;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -32,6 +35,7 @@ import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -74,7 +78,7 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     @Override
     public FindPublisher<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
+        validateMaxAwaitTime(maxAwaitTime, timeUnit);
         findOptions.maxAwaitTime(maxAwaitTime, timeUnit);
         return this;
     }
@@ -183,6 +187,13 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
     }
 
     @Override
+    public FindPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
+        super.timeoutMode(timeoutMode);
+        findOptions.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    @Override
     public Publisher<Document> explain() {
         return publishExplain(Document.class, null);
     }
@@ -204,15 +215,20 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
 
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
-        return getMongoOperationPublisher().createReadOperationMono(() ->
-                        asAsyncReadOperation(0).asAsyncExplainableOperation(verbosity,
-                                getCodecRegistry().get(explainResultClass)),
-                getClientSession());
+        return getMongoOperationPublisher().createReadOperationMono(
+                getTimeoutSettings(),
+                () -> asAsyncReadOperation(0)
+                        .asAsyncExplainableOperation(verbosity, getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
     @Override
     AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
         return getOperations().find(filter, getDocumentClass(), findOptions.withBatchSize(initialBatchSize));
+    }
+
+    @Override
+    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (asyncOperations -> asyncOperations.createTimeoutSettings(findOptions));
     }
 
     @Override

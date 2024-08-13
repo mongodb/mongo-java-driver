@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.reactivestreams.client.FindPublisher
 import com.mongodb.{ CursorType, ExplainVerbosity }
 import org.mongodb.scala.bson.BsonValue
@@ -329,6 +330,28 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    */
   def allowDiskUse(allowDiskUse: Boolean): FindObservable[TResult] = {
     wrapped.allowDiskUse(allowDiskUse)
+    this
+  }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   * to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): FindObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

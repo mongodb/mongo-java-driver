@@ -16,7 +16,6 @@
 package com.mongodb.internal.mockito;
 
 import com.mongodb.internal.binding.ReadBinding;
-import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
@@ -25,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -60,13 +60,13 @@ final class InsufficientStubbingDetectorDemoTest {
     void stubbingWithThrowsException() {
         ReadBinding binding = Mockito.mock(ReadBinding.class,
                 new ThrowsException(new AssertionError("Unfortunately, you cannot do stubbing")));
-        assertThrows(AssertionError.class, () -> when(binding.getOperationContext()).thenReturn(new OperationContext()));
+        assertThrows(AssertionError.class, () -> when(binding.getOperationContext()).thenReturn(OPERATION_CONTEXT));
     }
 
     @Test
     void stubbingWithInsufficientStubbingDetector() {
         MongoMockito.mock(ReadBinding.class, bindingMock ->
-                when(bindingMock.getOperationContext()).thenReturn(new OperationContext())
+                when(bindingMock.getOperationContext()).thenReturn(OPERATION_CONTEXT)
         );
     }
 }

@@ -17,6 +17,7 @@
 package org.mongodb.scala
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.reactivestreams.client.ListSearchIndexesPublisher
 import org.mongodb.scala.bson.BsonValue
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
@@ -40,7 +41,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * Sets an Atlas Search index name for this operation.
    *
    * @param indexName Atlas Search index name.
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    */
   def name(indexName: String): ListSearchIndexesObservable[TResult] = {
     wrapped.name(indexName)
@@ -119,6 +120,28 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    */
   def batchSize(batchSize: Int): ListSearchIndexesObservable[TResult] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  /**
+   * Sets the timeoutMode for the cursor.
+   *
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
+   * via [[MongoDatabase]] or via [[MongoCollection]]
+   *
+   * If the `timeout` is set then:
+   *
+   * - For non-tailable cursors, the default value of timeoutMode is `TimeoutMode.CURSOR_LIFETIME`
+   * - For tailable cursors, the default value of timeoutMode is `TimeoutMode.ITERATION` and its an error
+   * to configure it as: `TimeoutMode.CURSOR_LIFETIME`
+   *
+   * @param timeoutMode the timeout mode
+   * @return this
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def timeoutMode(timeoutMode: TimeoutMode): ListSearchIndexesObservable[TResult] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 

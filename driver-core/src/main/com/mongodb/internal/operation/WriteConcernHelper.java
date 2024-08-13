@@ -22,11 +22,14 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.ProtocolHelper;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
@@ -41,10 +44,26 @@ public final class WriteConcernHelper {
             commandDocument.put("writeConcern", writeConcern.asDocument());
         }
     }
+    @Nullable
+    public static WriteConcern cloneWithoutTimeout(@Nullable final WriteConcern writeConcern) {
+        if (writeConcern == null || writeConcern.getWTimeout(TimeUnit.MILLISECONDS) == null) {
+            return writeConcern;
+        }
 
-    public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress, final int maxWireVersion) {
+        WriteConcern mapped;
+        Object w = writeConcern.getWObject();
+        if (w == null) {
+            mapped = WriteConcern.ACKNOWLEDGED;
+        } else {
+            mapped = w instanceof Integer ? new WriteConcern((Integer) w) : new WriteConcern((String) w);
+        }
+        return mapped.withJournal(writeConcern.getJournal());
+    }
+
+    public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress,
+                                                final int maxWireVersion, final TimeoutContext timeoutContext) {
         if (hasWriteConcernError(result)) {
-            MongoException exception = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg");
+            MongoException exception = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg", timeoutContext);
             if (exception == null) {
                 exception = createWriteConcernException(result, serverAddress);
             }

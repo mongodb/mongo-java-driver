@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.FindIterable as JFindIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
@@ -31,7 +32,7 @@ import org.mockito.kotlin.*
 class FindIterableTest {
     @Test
     fun shouldHaveTheSameMethods() {
-        val jFindIterableFunctions = JFindIterable::class.declaredFunctions.map { it.name }.toSet()
+        val jFindIterableFunctions = JFindIterable::class.declaredFunctions.map { it.name }.toSet() + "timeoutMode"
         val kFindIterableFunctions = FindIterable::class.declaredFunctions.map { it.name }.toSet()
 
         assertEquals(jFindIterableFunctions, kFindIterableFunctions)
@@ -86,6 +87,7 @@ class FindIterableTest {
         iterable.showRecordId(true)
         iterable.skip(1)
         iterable.sort(bson)
+        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).allowDiskUse(true)
         verify(wrapped).batchSize(batchSize)
@@ -114,6 +116,7 @@ class FindIterableTest {
         verify(wrapped).showRecordId(true)
         verify(wrapped).skip(1)
         verify(wrapped).sort(bson)
+        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

@@ -554,6 +554,9 @@ public class TlsChannelImpl implements ByteChannel {
     try {
       writeLock.lock();
       try {
+        if (invalid || shutdownSent) {
+            throw new ClosedChannelException();
+        }
         Util.assertTrue(inPlain.nullOrEmpty());
         outEncrypted.prepare();
         try {

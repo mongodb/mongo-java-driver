@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
@@ -34,7 +35,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Sealed
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public interface SearchCollector extends Bson {
     /**
      * Returns a {@link SearchCollector} that groups results by values or ranges in the specified faceted fields and returns the count
@@ -45,7 +46,7 @@ public interface SearchCollector extends Bson {
      * @return The requested {@link SearchCollector}.
      * @mongodb.atlas.manual atlas-search/facet/ facet collector
      */
-    @Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
+    @Beta({Reason.CLIENT, Reason.SERVER})
     static FacetSearchCollector facet(final SearchOperator operator, final Iterable<? extends SearchFacet> facets) {
         notNull("operator", operator);
         notNull("facets", facets);

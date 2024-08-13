@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.client.ListDatabasesIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
 import org.bson.BsonValue;
@@ -72,6 +73,12 @@ class SyncListDatabasesIterable<T> extends SyncMongoIterable<T> implements ListD
     @Override
     public ListDatabasesIterable<T> comment(final BsonValue comment) {
         wrapped.comment(comment);
+        return this;
+    }
+
+    @Override
+    public ListDatabasesIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
+        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 }

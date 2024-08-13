@@ -87,11 +87,12 @@ public final class DescriptionHelper {
     }
 
     public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument helloResult,
-                                                            final long roundTripTime) {
+                                                            final long roundTripTime, final long minRoundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
                                 .address(serverAddress)
                                 .type(getServerType(helloResult))
+                                .cryptd(helloResult.getBoolean("iscryptd", BsonBoolean.FALSE).getValue())
                                 .canonicalAddress(helloResult.containsKey("me") ? helloResult.getString("me").getValue() : null)
                                 .hosts(listToSet(helloResult.getArray("hosts", new BsonArray())))
                                 .passives(listToSet(helloResult.getArray("passives", new BsonArray())))
@@ -107,6 +108,7 @@ public final class DescriptionHelper {
                                 .topologyVersion(getTopologyVersion(helloResult))
                                 .lastWriteDate(getLastWriteDate(helloResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
+                                .minRoundTripTime(minRoundTripTime, NANOSECONDS)
                                 .logicalSessionTimeoutMinutes(getLogicalSessionTimeoutMinutes(helloResult))
                                 .helloOk(helloResult.getBoolean("helloOk", BsonBoolean.FALSE).getValue())
                                 .ok(CommandHelper.isCommandOk(helloResult)).build();

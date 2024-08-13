@@ -28,6 +28,9 @@ import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.TimePointTest;
+import com.mongodb.internal.time.Timeout;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,6 +87,22 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
         return eventCount;
     }
 
+    public void waitForEvents(final List<Class<?>> eventClasses, final long time, final TimeUnit unit)
+            throws InterruptedException, TimeoutException {
+        Timeout timeout = StartTime.now().timeoutAfterOrInfiniteIfNegative(time, unit);
+        ArrayList<Object> seen = new ArrayList<>();
+
+        for (Class<?> eventClass : eventClasses) {
+            waitForEvent(eventClass, 1, TimePointTest.remaining(timeout, unit), unit);
+
+            if (TimePointTest.hasExpired(timeout)) {
+                throw new TimeoutException("Timed out waiting for event of type " + eventClass
+                        + ". Timing out after seeing " + seen);
+            }
+            seen.add(eventClass);
+        }
+    }
+
     public <T> void waitForEvent(final Class<T> eventClass, final int count, final long time, final TimeUnit unit)
             throws InterruptedException, TimeoutException {
         lock.lock();
@@ -105,6 +124,7 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
             lock.unlock();
         }
     }
+
 
     private <T> boolean containsEvent(final Class<T> eventClass, final int expectedEventCount) {
         return countEvents(eventClass) >= expectedEventCount;

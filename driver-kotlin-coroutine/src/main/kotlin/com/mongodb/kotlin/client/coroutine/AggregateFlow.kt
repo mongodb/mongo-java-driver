@@ -16,6 +16,9 @@
 package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.ExplainVerbosity
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.AggregatePublisher
 import java.util.concurrent.TimeUnit
@@ -44,6 +47,19 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
     public fun batchSize(batchSize: Int): AggregateFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun timeoutMode(timeoutMode: TimeoutMode): AggregateFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
@@ -167,7 +183,6 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
     /**
      * Explain the execution plan for this operation with the given verbosity level
      *
-     * @param R the type of the document class
      * @param verbosity the verbosity of the explanation
      * @return the execution plan
      * @see [Explain command](https://www.mongodb.com/docs/manual/reference/command/explain/)

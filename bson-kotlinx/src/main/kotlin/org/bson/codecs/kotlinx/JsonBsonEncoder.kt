@@ -61,21 +61,36 @@ internal class JsonBsonEncoder(
     }
 
     override fun encodeJsonElement(element: JsonElement) {
-        if (element is JsonNull) {
-            if (configuration.explicitNulls) {
-                deferredElementName?.let { encodeName(it) }
-                encodeNull()
-            } else {
-                deferredElementName = null
-            }
-        } else {
-            deferredElementName?.let { encodeName(it) }
-            when (element) {
-                is JsonPrimitive -> encodeJsonPrimitive(element)
-                is JsonObject -> encodeJsonObject(element)
-                is JsonArray -> encodeJsonArray(element)
-            }
-        }
+        deferredElementHandler.with(
+            {
+                when (element) {
+                    is JsonNull ->
+                        if (configuration.explicitNulls) {
+                            encodeName(it)
+                            encodeNull()
+                        }
+                    is JsonPrimitive -> {
+                        encodeName(it)
+                        encodeJsonPrimitive(element)
+                    }
+                    is JsonObject -> {
+                        encodeName(it)
+                        encodeJsonObject(element)
+                    }
+                    is JsonArray -> {
+                        encodeName(it)
+                        encodeJsonArray(element)
+                    }
+                }
+            },
+            {
+                when (element) {
+                    is JsonNull -> if (configuration.explicitNulls) encodeNull()
+                    is JsonPrimitive -> encodeJsonPrimitive(element)
+                    is JsonObject -> encodeJsonObject(element)
+                    is JsonArray -> encodeJsonArray(element)
+                }
+            })
     }
 
     private fun encodeJsonPrimitive(primitive: JsonPrimitive) {
@@ -103,7 +118,7 @@ internal class JsonBsonEncoder(
     private fun encodeJsonObject(obj: JsonObject) {
         writer.writeStartDocument()
         obj.forEach { k, v ->
-            deferredElementName = k
+            deferredElementHandler.set(k)
             encodeJsonElement(v)
         }
         writer.writeEndDocument()

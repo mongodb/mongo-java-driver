@@ -99,7 +99,7 @@ internal open class BsonEncoderImpl(
     private var isPolymorphic = false
     private var state = STATE.VALUE
     private var mapState = MapState()
-    internal var deferredElementName: String? = null
+    internal val deferredElementHandler: DeferredElementHandler = DeferredElementHandler()
 
     override fun shouldEncodeElementDefault(descriptor: SerialDescriptor, index: Int): Boolean =
         configuration.encodeDefaults
@@ -144,7 +144,7 @@ internal open class BsonEncoderImpl(
             is StructureKind.CLASS -> {
                 val elementName = descriptor.getElementName(index)
                 if (descriptor.getElementDescriptor(index).isNullable) {
-                    deferredElementName = elementName
+                    deferredElementHandler.set(elementName)
                 } else {
                     encodeName(elementName)
                 }
@@ -167,27 +167,27 @@ internal open class BsonEncoderImpl(
     }
 
     override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
-        deferredElementName?.let {
-            if (value != null || configuration.explicitNulls) {
-                encodeName(it)
-                super<AbstractEncoder>.encodeSerializableValue(serializer, value)
-            } else {
-                deferredElementName = null
-            }
-        }
-            ?: super<AbstractEncoder>.encodeSerializableValue(serializer, value)
+        deferredElementHandler.with(
+            {
+                // When using generics its possible for `value` to be null
+                // See: https://youtrack.jetbrains.com/issue/KT-66206
+                if (value != null || configuration.explicitNulls) {
+                    encodeName(it)
+                    super<AbstractEncoder>.encodeSerializableValue(serializer, value)
+                }
+            },
+            { super<AbstractEncoder>.encodeSerializableValue(serializer, value) })
     }
 
     override fun <T : Any> encodeNullableSerializableValue(serializer: SerializationStrategy<T>, value: T?) {
-        deferredElementName?.let {
-            if (value != null || configuration.explicitNulls) {
-                encodeName(it)
-                super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value)
-            } else {
-                deferredElementName = null
-            }
-        }
-            ?: super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value)
+        deferredElementHandler.with(
+            {
+                if (value != null || configuration.explicitNulls) {
+                    encodeName(it)
+                    super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value)
+                }
+            },
+            { super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value) })
     }
 
     override fun encodeByte(value: Byte) = encodeInt(value.toInt())
@@ -199,18 +199,11 @@ internal open class BsonEncoderImpl(
     override fun encodeDouble(value: Double) = writer.writeDouble(value)
     override fun encodeInt(value: Int) = writer.writeInt32(value)
     override fun encodeLong(value: Long) = writer.writeInt64(value)
-    override fun encodeNull() {
-        deferredElementName?.let {
-            if (configuration.explicitNulls) {
-                encodeName(it)
-            }
-        }
-        writer.writeNull()
-    }
+    override fun encodeNull() = writer.writeNull()
 
     override fun encodeString(value: String) {
         when (state) {
-            STATE.NAME -> deferredElementName = value
+            STATE.NAME -> deferredElementHandler.set(value)
             STATE.VALUE -> writer.writeString(value)
         }
     }
@@ -233,7 +226,6 @@ internal open class BsonEncoderImpl(
 
     internal fun encodeName(value: Any) {
         writer.writeName(value.toString())
-        deferredElementName = null
         state = STATE.VALUE
     }
 
@@ -253,6 +245,27 @@ internal open class BsonEncoderImpl(
                     STATE.NAME -> STATE.VALUE
                 }
             return getState()
+        }
+    }
+
+    internal class DeferredElementHandler {
+        private var deferredElementName: String? = null
+
+        fun set(name: String) {
+            assert(deferredElementName == null) { "Overwriting an existing deferred name" }
+            deferredElementName = name
+        }
+
+        fun with(actionWithDeferredElement: (String) -> Unit, actionWithoutDeferredElement: () -> Unit) {
+            deferredElementName?.let {
+                reset()
+                actionWithDeferredElement(it)
+            }
+                ?: actionWithoutDeferredElement()
+        }
+
+        private fun reset() {
+            deferredElementName = null
         }
     }
 }

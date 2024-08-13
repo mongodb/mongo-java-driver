@@ -17,6 +17,7 @@
 package com.mongodb.client.model.mql;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.function.Function;
  * @param <R> the type of the value produced.
  * @since 4.9.0
  */
-@Beta(Beta.Reason.CLIENT)
+@Beta(Reason.CLIENT)
 public class BranchesTerminal<T extends MqlValue, R extends MqlValue> {
 
     private final List<Function<T, SwitchCase<R>>> branches;

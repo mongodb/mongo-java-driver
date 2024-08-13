@@ -60,6 +60,10 @@ public final class EncryptOptionsHelper {
             if (sparsity != null) {
                 rangeOptionsBsonDocument.put("sparsity", new BsonInt64(sparsity));
             }
+            Integer trimFactor = rangeOptions.getTrimFactor();
+            if (trimFactor != null) {
+                rangeOptionsBsonDocument.put("trimFactor", new BsonInt32(trimFactor));
+            }
             Integer precision = rangeOptions.getPrecision();
             if (precision != null) {
                 rangeOptionsBsonDocument.put("precision", new BsonInt32(precision));

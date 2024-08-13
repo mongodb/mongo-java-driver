@@ -45,7 +45,6 @@ import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.operation.AsyncReadOperation
@@ -64,6 +63,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.executeAsync
@@ -109,13 +109,14 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
-        new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true, ACKNOWLEDGED, false).execute(binding)
+        new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true,
+                ACKNOWLEDGED, false).execute(binding)
         binding.release()
     }
 
     void acknowledgeWrite(final AsyncSingleConnectionBinding binding) {
-        executeAsync(new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true, ACKNOWLEDGED, false),
-                binding)
+        executeAsync(new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())],
+                true, ACKNOWLEDGED, false), binding)
         binding.release()
     }
 
@@ -142,7 +143,9 @@ class OperationFunctionalSpecification extends Specification {
 
     def executeWithSession(operation, boolean async) {
         def executor = async ? ClusterFixture.&executeAsync : ClusterFixture.&executeSync
-        def binding = async ? new AsyncSessionBinding(getAsyncBinding()) : new SessionBinding(getBinding())
+        def binding = async ?
+                new AsyncSessionBinding(getAsyncBinding())
+                : new SessionBinding(getBinding())
         executor(operation, binding)
     }
 
@@ -270,7 +273,11 @@ class OperationFunctionalSpecification extends Specification {
                           BsonDocument expectedCommand=null, Boolean checkSecondaryOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = new OperationContext()
+        def operationContext = OPERATION_CONTEXT
+                .withSessionContext(Stub(SessionContext) {
+                    hasActiveTransaction() >> activeTransaction
+                    getReadConcern() >> readConcern
+                })
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -283,7 +290,6 @@ class OperationFunctionalSpecification extends Specification {
                 connection
             }
             getOperationContext() >> operationContext
-            getServerApi() >> null
             getReadPreference() >> readPreference
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
@@ -296,23 +302,11 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource(*_) >> connectionSource
             getReadPreference() >> readPreference
-            getServerApi() >> null
             getOperationContext() >> operationContext
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> activeTransaction
-                getReadConcern() >> readConcern
-            }
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
-            getServerApi() >> null
             getOperationContext() >> operationContext
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> activeTransaction
-                getReadConcern() >> readConcern
-            }
         }
 
         if (retryable) {
@@ -356,7 +350,11 @@ class OperationFunctionalSpecification extends Specification {
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSecondaryOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
                            ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = new OperationContext()
+        def operationContext = OPERATION_CONTEXT
+                .withSessionContext(Stub(SessionContext) {
+                    hasActiveTransaction() >> activeTransaction
+                    getReadConcern() >> readConcern
+                })
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -367,7 +365,6 @@ class OperationFunctionalSpecification extends Specification {
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
             getReadPreference() >> readPreference
-            getServerApi() >> null
             getOperationContext() >> operationContext
             getServerDescription() >> {
                 def builder = ServerDescription.builder().address(Stub(ServerAddress)).state(ServerConnectionState.CONNECTED)
@@ -380,23 +377,11 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(*_) >> { it.last().onResult(connectionSource, null) }
             getReadPreference() >> readPreference
-            getServerApi() >> null
             getOperationContext() >> operationContext
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> activeTransaction
-                getReadConcern() >> readConcern
-            }
         }
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getServerApi() >> null
             getOperationContext() >> operationContext
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> activeTransaction
-                getReadConcern() >> readConcern
-            }
         }
         def callback = new FutureResultCallback()
 
@@ -458,6 +443,13 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
+        def operationContext = OPERATION_CONTEXT.withSessionContext(
+                Stub(SessionContext) {
+                    hasSession() >> true
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
+
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> {
                 if (serverVersions.isEmpty()){
@@ -466,16 +458,11 @@ class OperationFunctionalSpecification extends Specification {
                     connection
                 }
             }
-            getServerApi() >> null
+            getOperationContext() >> operationContext
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
-            getServerApi() >> null
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
 
         1 * connection.command(*_) >> {
@@ -499,8 +486,14 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
+        def operationContext = OPERATION_CONTEXT.withSessionContext(
+                Stub(SessionContext) {
+                    hasSession() >> true
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.DEFAULT
+                })
+
         def connectionSource = Stub(AsyncConnectionSource) {
-            getServerApi() >> null
             getConnection(_) >> {
                 if (serverVersions.isEmpty()) {
                     it[0].onResult(null,
@@ -509,16 +502,12 @@ class OperationFunctionalSpecification extends Specification {
                     it[0].onResult(connection, null)
                 }
             }
+            getOperationContext() >> operationContext
         }
 
         def writeBinding = Stub(AsyncWriteBinding) {
-            getServerApi() >> null
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getSessionContext() >> Stub(SessionContext) {
-                hasSession() >> true
-                hasActiveTransaction() >> false
-                getReadConcern() >> ReadConcern.DEFAULT
-            }
+            getOperationContext() >> operationContext
         }
         def callback = new FutureResultCallback()
 

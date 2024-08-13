@@ -19,11 +19,13 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.connection.ClusterId;
-import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -41,7 +43,7 @@ public interface Cluster extends Closeable {
 
     ClusterId getClusterId();
 
-    ServersSnapshot getServersSnapshot();
+    ServersSnapshot getServersSnapshot(Timeout serverSelectionTimeout, TimeoutContext timeoutContext);
 
     /**
      * Get the current description of this cluster.
