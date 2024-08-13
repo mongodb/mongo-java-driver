@@ -47,7 +47,6 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.FieldNameValidator;
 
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +76,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndCo
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
-    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private final MongoNamespace namespace;
     private final List<? extends WriteRequest> writeRequests;
     private final boolean ordered;
@@ -408,14 +406,14 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     @Nullable
     private BsonDocument executeCommand(final OperationContext operationContext, final Connection connection, final BulkWriteBatch batch) {
-        return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
+        return connection.command(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
                 operationContext, shouldAcknowledge(batch, operationContext.getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator());
     }
 
     private void executeCommandAsync(final OperationContext operationContext, final AsyncConnection connection, final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
-        connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR, null, batch.getDecoder(),
+        connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
                 operationContext, shouldAcknowledge(batch, operationContext.getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator(), callback);
     }

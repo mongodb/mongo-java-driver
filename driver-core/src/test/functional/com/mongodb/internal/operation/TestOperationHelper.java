@@ -56,7 +56,7 @@ final class TestOperationHelper {
                 connection.command(namespace.getDatabaseName(),
                         new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                                 .append("collection", new BsonString(namespace.getCollectionName())),
-                        new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT));
+                        NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT));
     }
 
     static void makeAdditionalGetMoreCall(final MongoNamespace namespace, final ServerCursor serverCursor,
@@ -66,7 +66,7 @@ final class TestOperationHelper {
             connection.commandAsync(namespace.getDatabaseName(),
                     new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                             .append("collection", new BsonString(namespace.getCollectionName())),
-                    new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT, callback);
+                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), OPERATION_CONTEXT, callback);
             callback.get();
         });
     }
