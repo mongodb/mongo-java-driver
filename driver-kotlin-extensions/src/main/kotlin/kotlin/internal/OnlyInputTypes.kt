@@ -13,23 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package kotlin.internal
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-lambda'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-kotlin'
-include ':bson-kotlinx'
-include ':driver-kotlin-extensions'
-include ':driver-kotlin-sync'
-include ':driver-kotlin-coroutine'
-include ':bson-scala'
-include ':driver-scala'
-include 'util:spock'
-include 'util:taglets'
-include ':graalvm-native-image-app'
+/**
+ * Work around to expose `kotlin.internal` OnlyInputTypes
+ *
+ * Enables compile time type checking, so that captured types cannot be expanded.
+ *
+ * See: https://youtrack.jetbrains.com/issue/KT-13198/
+ */
+@Target(AnnotationTarget.TYPE_PARAMETER)
+@Retention(AnnotationRetention.BINARY)
+internal annotation class OnlyInputTypes
