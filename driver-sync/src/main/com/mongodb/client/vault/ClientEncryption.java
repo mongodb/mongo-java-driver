@@ -96,6 +96,8 @@ public interface ClientEncryption extends Closeable {
      *     </ul>
      *     {@code $gt} may also be {@code $gte}. {@code $lt} may also be {@code $lte}.
      *
+     * <p>Only supported when queryType is "range" and algorithm is "Range".
+     *
      * @param expression the Match Expression or Aggregate Expression
      * @param options    the options
      * @return the encrypted queryable range expression

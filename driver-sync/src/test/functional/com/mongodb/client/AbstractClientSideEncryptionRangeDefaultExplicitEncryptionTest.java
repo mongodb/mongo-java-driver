@@ -19,7 +19,6 @@
 package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RangeOptions;
@@ -35,10 +34,10 @@ import org.junit.jupiter.api.Test;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -51,8 +50,6 @@ public abstract class AbstractClientSideEncryptionRangeDefaultExplicitEncryption
     private ClientEncryption clientEncryption;
     private BsonBinary keyId;
     private BsonBinary payloadDefaults;
-
-    protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     protected abstract ClientEncryption createClientEncryption(ClientEncryptionSettings settings);
 
@@ -85,6 +82,7 @@ public abstract class AbstractClientSideEncryptionRangeDefaultExplicitEncryption
     }
 
     @AfterEach
+    @SuppressWarnings("try")
     public void cleanUp() {
         try (ClientEncryption ignored = clientEncryption) {
             // just using try-with-resources to ensure they all get closed, even in the case of exceptions
@@ -96,7 +94,7 @@ public abstract class AbstractClientSideEncryptionRangeDefaultExplicitEncryption
      */
     @Test
     @DisplayName("Case 1: Uses libmongocrypt defaults")
-    void shouldUserDefaultsWhenNotSpecified() {
+    void shouldUseDefaultsWhenNotSpecified() {
         BsonBinary encryptedValue = clientEncryption.encrypt(VALUE_TO_ENCRYPT,
                 new EncryptOptions("Range")
                         .keyId(keyId)

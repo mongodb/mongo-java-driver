@@ -19,22 +19,15 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ClientEncryptionSettings;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractClientSideEncryptionRangeDefaultExplicitEncryptionTest;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.client.vault.ClientEncryptions;
-import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
+import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
+import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 
 public class ClientSideEncryptionRangeDefaultExplicitEncryptionTest extends AbstractClientSideEncryptionRangeDefaultExplicitEncryptionTest {
 
     @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
-    }
-
-    @Override
     protected ClientEncryption createClientEncryption(final ClientEncryptionSettings settings) {
-        return ClientEncryptions.create(settings);
+        return new SyncClientEncryption(ClientEncryptions.create(settings));
     }
 }

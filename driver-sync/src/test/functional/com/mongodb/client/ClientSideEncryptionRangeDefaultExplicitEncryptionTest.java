@@ -19,16 +19,10 @@
 package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
 
 public class ClientSideEncryptionRangeDefaultExplicitEncryptionTest extends AbstractClientSideEncryptionRangeDefaultExplicitEncryptionTest {
-
-    @Override
-    protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
-    }
 
     @Override
     protected ClientEncryption createClientEncryption(final ClientEncryptionSettings settings) {
