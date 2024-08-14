@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/tests/README.md#22-range-explicit-encryption-applies-defaults">
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/tests/README.md#23-range-explicit-encryption-applies-defaults">
  */
 
 public abstract class AbstractClientSideEncryptionRangeDefaultExplicitEncryptionTest {
