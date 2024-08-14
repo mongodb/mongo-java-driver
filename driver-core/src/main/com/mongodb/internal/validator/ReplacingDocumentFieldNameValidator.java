@@ -30,10 +30,13 @@ import static java.lang.String.format;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ReplacingDocumentFieldNameValidator implements FieldNameValidator {
-    private static final NoOpFieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
+public final class ReplacingDocumentFieldNameValidator implements FieldNameValidator {
+    public static final ReplacingDocumentFieldNameValidator INSTANCE = new ReplacingDocumentFieldNameValidator();
     // Have to support DBRef fields
     private static final List<String> EXCEPTIONS = Arrays.asList("$db", "$ref", "$id");
+
+    private ReplacingDocumentFieldNameValidator() {
+    }
 
     @Override
     public boolean validate(final String fieldName) {
@@ -49,6 +52,6 @@ public class ReplacingDocumentFieldNameValidator implements FieldNameValidator {
     @Override
     public FieldNameValidator getValidatorForField(final String fieldName) {
         // Only top-level fields are validated
-        return NO_OP_FIELD_NAME_VALIDATOR;
+        return NoOpFieldNameValidator.INSTANCE;
     }
 }

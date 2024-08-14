@@ -156,7 +156,7 @@ public class ServerSessionPool {
                     operationContext).getServer().getConnection(operationContext);
 
             connection.command("admin",
-                    new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
+                    new BsonDocument("endSessions", new BsonArray(identifiers)), NoOpFieldNameValidator.INSTANCE,
                     ReadPreference.primaryPreferred(), new BsonDocumentCodec(), operationContext);
         } catch (MongoException e) {
             // ignore exceptions

@@ -168,7 +168,7 @@ class StreamHelper {
 
     static hello() {
         CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
-                new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
+                new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 MessageSettings.builder().build(), SINGLE, null)
         OutputBuffer outputBuffer = new BasicOutputBuffer()
         command.encode(outputBuffer, new OperationContext(

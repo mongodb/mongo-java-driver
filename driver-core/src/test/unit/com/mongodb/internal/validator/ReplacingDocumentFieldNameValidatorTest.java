@@ -18,28 +18,27 @@ package com.mongodb.internal.validator;
 
 import org.junit.Test;
 
+import static com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator.INSTANCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ReplacingDocumentFieldNameValidatorTest {
-    private final ReplacingDocumentFieldNameValidator fieldNameValidator = new ReplacingDocumentFieldNameValidator();
-
     @Test
     public void testFieldValidationSuccess() {
-        assertTrue(fieldNameValidator.validate("ok"));
+        assertTrue(INSTANCE.validate("ok"));
     }
 
     @Test
     public void testFieldNameStartsWithDollarValidation() {
-        assertFalse(fieldNameValidator.validate("$1"));
-        assertTrue(fieldNameValidator.validate("$db"));
-        assertTrue(fieldNameValidator.validate("$ref"));
-        assertTrue(fieldNameValidator.validate("$id"));
+        assertFalse(INSTANCE.validate("$1"));
+        assertTrue(INSTANCE.validate("$db"));
+        assertTrue(INSTANCE.validate("$ref"));
+        assertTrue(INSTANCE.validate("$id"));
     }
 
     @Test
     public void testNestedDocumentsAreNotValidated() {
-        assertEquals(NoOpFieldNameValidator.class, fieldNameValidator.getValidatorForField("nested").getClass());
+        assertEquals(NoOpFieldNameValidator.class, INSTANCE.getValidatorForField("nested").getClass());
     }
 }

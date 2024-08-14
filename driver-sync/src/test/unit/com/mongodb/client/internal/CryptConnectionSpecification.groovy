@@ -84,7 +84,7 @@ class CryptConnectionSpecification extends Specification {
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('find', 'test')
                         .append('filter', new Document('ssid', '555-55-5555')), codec),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), codec, operationContext)
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), codec, operationContext)
 
         then:
         _ * wrappedConnection.getDescription() >> {
@@ -133,8 +133,8 @@ class CryptConnectionSpecification extends Specification {
         when:
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                operationContext, true, payload, new NoOpFieldNameValidator(),)
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
+                operationContext, true, payload, NoOpFieldNameValidator.INSTANCE,)
 
         then:
         _ * wrappedConnection.getDescription() >> {
@@ -190,8 +190,8 @@ class CryptConnectionSpecification extends Specification {
         when:
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), operationContext, true, payload,
-                new NoOpFieldNameValidator())
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext, true, payload,
+                NoOpFieldNameValidator.INSTANCE)
 
         then:
         _ * wrappedConnection.getDescription() >> {

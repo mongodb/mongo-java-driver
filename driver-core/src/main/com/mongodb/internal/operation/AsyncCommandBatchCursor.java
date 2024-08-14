@@ -37,6 +37,7 @@ import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableConnectionWithCallback;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -53,7 +54,6 @@ import static com.mongodb.assertions.Assertions.doesNotThrow;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
-import static com.mongodb.internal.operation.CommandBatchCursorHelper.NO_OP_FIELD_NAME_VALIDATOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.getKillCursorsCommand;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.getMoreCommandDocument;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.logCommandCursorResult;
@@ -177,7 +177,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(),
                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
                 assertNotNull(resourceManager.getConnectionSource()).getOperationContext(),
                 (commandResult, t) -> {
@@ -334,7 +334,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             timeoutContext.resetToDefaultMaxTime();
 
             localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
-                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
+                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
                     operationContext, (r, t) -> callback.onResult(null, null));
         }
     }
