@@ -34,37 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class SameThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest {
     @Override
     public ExecutorService createAsyncExecutor() {
-        return new AbstractExecutorService() {
-            @Override
-            public void execute(@NotNull final Runnable command) {
-                command.run();
-            }
-
-            @Override
-            public void shutdown() {
-            }
-
-            @NotNull
-            @Override
-            public List<Runnable> shutdownNow() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public boolean isShutdown() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean isTerminated() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean awaitTermination(final long timeout, @NotNull final TimeUnit unit) {
-                return true;
-            }
-        };
+        return new SameThreadExecutorService();
     }
 
     @Test
@@ -88,5 +58,37 @@ public class SameThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest {
                 throw illegalStateException;
             });
         });
+    }
+
+    private static class SameThreadExecutorService extends AbstractExecutorService {
+        @Override
+        public void execute(@NotNull final Runnable command) {
+            command.run();
+        }
+
+        @Override
+        public void shutdown() {
+        }
+
+        @NotNull
+        @Override
+        public List<Runnable> shutdownNow() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public boolean isShutdown() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean isTerminated() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean awaitTermination(final long timeout, @NotNull final TimeUnit unit) {
+            return true;
+        }
     }
 }
