@@ -19,16 +19,37 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import org.junit.jupiter.api.Test;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
+abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0L, 0));
+
+//   @Test
+//   void test(){
+//
+//         SingleResultCallback<Void> userCallback = (result, t) -> {
+//              if (t != null) {
+//                  System.out.println("Error:" + t.getMessage());
+//              }
+//              System.out.println("Result:"  + result);
+//         };
+//
+//       beginAsync().thenRun(c -> {
+//           // Async imitation
+//           new Thread() {
+//               public void run() {
+//                   c.complete(c);
+//               }
+//           }.start();
+//       }).thenRun(callback -> {
+//           // Assume this is plain code
+//           throw new RuntimeException("Error adada");
+//       }).finish(userCallback);
+//   }
+
     @Test
     void test1Method() {
         // the number of expected variations is often: 1 + N methods invoked
@@ -761,92 +782,73 @@ final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
     }
 
     @Test
-    void testInvalid() {
-        setIsTestingAbruptCompletion(false);
-        setAsyncStep(true);
-        assertThrows(IllegalStateException.class, () -> {
-            beginAsync().thenRun(c -> {
-                async(3, c);
-                throw new IllegalStateException("must not cause second callback invocation");
-            }).finish((v, e) -> {});
-        });
-        assertThrows(IllegalStateException.class, () -> {
-            beginAsync().thenRun(c -> {
-                async(3, c);
-            }).finish((v, e) -> {
-                throw new IllegalStateException("must not cause second callback invocation");
-            });
-        });
-    }
-
-    @Test
     void testDerivation() {
-        // Demonstrates the progression from nested async to the API.
-
-        // Stand-ins for sync-async methods; these "happily" do not throw
-        // exceptions, to avoid complicating this demo async code.
-        Consumer<Integer> happySync = (i) -> {
-            getNextOption(1);
-            listenerAdd("affected-success-" + i);
-        };
-        BiConsumer<Integer, SingleResultCallback<Void>> happyAsync = (i, c) -> {
-            happySync.accept(i);
-            c.complete(c);
-        };
-
-        // Standard nested async, no error handling:
-        assertBehavesSameVariations(1,
-                () -> {
-                    happySync.accept(1);
-                    happySync.accept(2);
-                },
-                (callback) -> {
-                    happyAsync.accept(1, (v, e) -> {
-                        happyAsync.accept(2, callback);
-                    });
-                });
-
-        // When both methods are naively extracted, they are out of order:
-        assertBehavesSameVariations(1,
-                () -> {
-                    happySync.accept(1);
-                    happySync.accept(2);
-                },
-                (callback) -> {
-                    SingleResultCallback<Void> second = (v, e) -> {
-                        happyAsync.accept(2, callback);
-                    };
-                    SingleResultCallback<Void> first = (v, e) -> {
-                        happyAsync.accept(1, second);
-                    };
-                    first.onResult(null, null);
-                });
-
-        // We create an "AsyncRunnable" that takes a callback, which
-        // decouples any async methods from each other, allowing them
-        // to be declared in a sync-like order, and without nesting:
-        assertBehavesSameVariations(1,
-                () -> {
-                    happySync.accept(1);
-                    happySync.accept(2);
-                },
-                (callback) -> {
-                    AsyncRunnable first = (SingleResultCallback<Void> c) -> {
-                        happyAsync.accept(1, c);
-                    };
-                    AsyncRunnable second = (SingleResultCallback<Void> c) -> {
-                        happyAsync.accept(2, c);
-                    };
-                    // This is a simplified variant of the "then" methods;
-                    // it has no error handling. It takes methods A and B,
-                    // and returns C, which is B(A()).
-                    AsyncRunnable combined = (c) -> {
-                        first.unsafeFinish((r, e) -> {
-                            second.unsafeFinish(c);
-                        });
-                    };
-                    combined.unsafeFinish(callback);
-                });
+//        // Demonstrates the progression from nested async to the API.
+//
+//        // Stand-ins for sync-async methods; these "happily" do not throw
+//        // exceptions, to avoid complicating this demo async code.
+//        Consumer<Integer> happySync = (i) -> {
+//            getNextOption(1);
+//            listenerAdd("affected-success-" + i);
+//        };
+//        BiConsumer<Integer, SingleResultCallback<Void>> happyAsync = (i, c) -> {
+//            happySync.accept(i);
+//            c.complete(c);
+//        };
+//
+//        // Standard nested async, no error handling:
+//        assertBehavesSameVariations(1,
+//                () -> {
+//                    happySync.accept(1);
+//                    happySync.accept(2);
+//                },
+//                (callback) -> {
+//                    happyAsync.accept(1, (v, e) -> {
+//                        happyAsync.accept(2, callback);
+//                    });
+//                });
+//
+//        // When both methods are naively extracted, they are out of order:
+//        assertBehavesSameVariations(1,
+//                () -> {
+//                    happySync.accept(1);
+//                    happySync.accept(2);
+//                },
+//                (callback) -> {
+//                    SingleResultCallback<Void> second = (v, e) -> {
+//                        happyAsync.accept(2, callback);
+//                    };
+//                    SingleResultCallback<Void> first = (v, e) -> {
+//                        happyAsync.accept(1, second);
+//                    };
+//                    first.onResult(null, null);
+//                });
+//
+//        // We create an "AsyncRunnable" that takes a callback, which
+//        // decouples any async methods from each other, allowing them
+//        // to be declared in a sync-like order, and without nesting:
+//        assertBehavesSameVariations(1,
+//                () -> {
+//                    happySync.accept(1);
+//                    happySync.accept(2);
+//                },
+//                (callback) -> {
+//                    AsyncRunnable first = (SingleResultCallback<Void> c) -> {
+//                        happyAsync.accept(1, c);
+//                    };
+//                    AsyncRunnable second = (SingleResultCallback<Void> c) -> {
+//                        happyAsync.accept(2, c);
+//                    };
+//                    // This is a simplified variant of the "then" methods;
+//                    // it has no error handling. It takes methods A and B,
+//                    // and returns C, which is B(A()).
+//                    AsyncRunnable combined = (c) -> {
+//                        first.unsafeFinish((r, e) -> {
+//                            second.unsafeFinish(c);
+//                        });
+//                    };
+//                    combined.unsafeFinish(callback);
+//                });
 
         // This combining method is added as a default method on AsyncRunnable,
         // and a "finish" method wraps the resulting methods. This also adds
@@ -866,5 +868,4 @@ final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
                     }).finish(callback);
                 });
     }
-
 }

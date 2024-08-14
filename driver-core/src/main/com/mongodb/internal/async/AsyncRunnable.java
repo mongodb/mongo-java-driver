@@ -169,9 +169,14 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      */
     default AsyncRunnable thenRun(final AsyncRunnable runnable) {
         return (c) -> {
+            /* This call of 'unsafeFinish' initiates the async chain and should be triggered from the thread that called 'finish()'.
+               However, the callback provided to 'unsafeFinish' may execute on a different thread, thus 'finish()' instead of 'unsafeFinish()'
+               must be used within callbacks. */
             this.unsafeFinish((r, e) -> {
                 if (e == null) {
-                    runnable.unsafeFinish(c);
+                    /* If 'runnable' is executed on a different thread from the one that executed the initial 'finish()',
+                     then invoking 'finish()' within 'runnable' will catch and propagate any exceptions to 'c' (the callback). */
+                    runnable.finish(c);
                 } else {
                     c.completeExceptionally(e);
                 }
@@ -236,7 +241,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                     return;
                 }
                 if (matched) {
-                    runnable.unsafeFinish(callback);
+                    runnable.finish(callback);
                 } else {
                     callback.complete(callback);
                 }
@@ -253,7 +258,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         return (c) -> {
             this.unsafeFinish((r, e) -> {
                 if (e == null) {
-                    supplier.unsafeFinish(c);
+                    supplier.finish(c);
                 } else {
                     c.completeExceptionally(e);
                 }
