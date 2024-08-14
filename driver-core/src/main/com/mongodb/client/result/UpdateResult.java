@@ -83,10 +83,10 @@ public abstract class UpdateResult {
 
     private static class AcknowledgedUpdateResult extends UpdateResult {
         private final long matchedCount;
-        private final Long modifiedCount;
+        private final long modifiedCount;
         private final BsonValue upsertedId;
 
-        AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, @Nullable final BsonValue upsertedId) {
+        AcknowledgedUpdateResult(final long matchedCount, final long modifiedCount, @Nullable final BsonValue upsertedId) {
             this.matchedCount = matchedCount;
             this.modifiedCount = modifiedCount;
             this.upsertedId = upsertedId;
