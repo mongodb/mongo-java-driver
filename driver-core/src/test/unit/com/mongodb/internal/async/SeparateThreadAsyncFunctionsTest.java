@@ -55,9 +55,7 @@ public class SeparateThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest
         setIsTestingAbruptCompletion(false);
         setAsyncStep(true);
         IllegalStateException illegalStateException = new IllegalStateException("must not cause second callback invocation");
-
         AtomicBoolean callbackInvoked = new AtomicBoolean(false);
-        CompletableFuture<Void> finalCallbackWasInvoked = new CompletableFuture<>();
 
         //when
         beginAsync().thenRun(c -> {
@@ -69,7 +67,6 @@ public class SeparateThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest
                 })
                 .finish((v, e) -> {
                             assertEquals(illegalStateException, e);
-                            finalCallbackWasInvoked.complete(null);
                         }
                 );
 
@@ -87,13 +84,11 @@ public class SeparateThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest
         setIsTestingAbruptCompletion(false);
         setAsyncStep(true);
         IllegalStateException illegalStateException = new IllegalStateException("must not cause second callback invocation");
-        CompletableFuture<Void> finalCallbackWasInvoked = new CompletableFuture<>();
 
         //when
         beginAsync().thenRun(c -> {
             async(3, c);
         }).finish((v, e) -> {
-            finalCallbackWasInvoked.complete(null);
             throw illegalStateException;
         });
 
