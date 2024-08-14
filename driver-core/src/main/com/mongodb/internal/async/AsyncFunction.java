@@ -37,7 +37,7 @@ public interface AsyncFunction<T, R> {
     void unsafeFinish(T value, SingleResultCallback<R> callback);
 
     /**
-     * Must be invoked at end of async chain  or when executing a callback handler supplied by the caller.
+     * Must be invoked at end of async chain or when executing a callback handler supplied by the caller.
      *
      * @param callback the callback provided by the method the chain is used in.
      */

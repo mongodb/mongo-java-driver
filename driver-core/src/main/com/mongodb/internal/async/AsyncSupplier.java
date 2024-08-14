@@ -55,7 +55,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     /**
-     * Must be invoked at end of async chain  or when executing a callback handler supplied by the caller.
+     * Must be invoked at end of async chain or when executing a callback handler supplied by the caller.
      *
      * @see #thenApply(AsyncFunction)
      * @see #thenConsume(AsyncConsumer)
