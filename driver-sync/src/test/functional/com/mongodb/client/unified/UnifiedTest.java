@@ -229,7 +229,8 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.16")
                         || schemaVersion.equals("1.17")
                         || schemaVersion.equals("1.18")
-                        || schemaVersion.equals("1.19"),
+                        || schemaVersion.equals("1.19")
+                        || schemaVersion.equals("1.21"),
                 String.format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
             assumeTrue(runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()),
@@ -538,6 +539,8 @@ public abstract class UnifiedTest {
                     return crudHelper.createFindCursor(operation);
                 case "createChangeStream":
                     return crudHelper.createChangeStreamCursor(operation);
+                case "clientBulkWrite":
+                    return crudHelper.clientBulkWrite(operation);
                 case "close":
                     return crudHelper.close(operation);
                 case "iterateUntilDocumentOrError":
