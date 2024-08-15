@@ -23,6 +23,7 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.bulk.WriteRequestWithIndex;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -196,10 +197,23 @@ public final class SplittablePayload {
                 InsertRequest insertRequest = (InsertRequest) writeRequestWithIndex.getWriteRequest();
                 BsonDocument document = insertRequest.getDocument();
 
-                IdHoldingBsonWriter idHoldingBsonWriter = new IdHoldingBsonWriter(writer);
-                getCodec(document).encode(idHoldingBsonWriter, document,
-                        EncoderContext.builder().isEncodingCollectibleDocument(true).build());
-                insertedIds.put(writeRequestWithIndex.getIndex(), idHoldingBsonWriter.getId());
+                BsonValue documentId = insertedIds.compute(
+                        writeRequestWithIndex.getIndex(),
+                        (writeRequestIndex, writeRequestDocumentId) -> {
+                            IdHoldingBsonWriter idHoldingBsonWriter = new IdHoldingBsonWriter(
+                                    writer,
+                                    // Reuse `writeRequestDocumentId` if it may have been generated
+                                    // by `IdHoldingBsonWriter` in a previous attempt.
+                                    // If its type is not `BsonObjectId`, we know it could not have been generated.
+                                    writeRequestDocumentId instanceof BsonObjectId ? writeRequestDocumentId.asObjectId() : null);
+                            getCodec(document).encode(idHoldingBsonWriter, document,
+                                    EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+                            return idHoldingBsonWriter.getId();
+                        });
+                if (documentId == null) {
+                    // we must add an entry anyway because we rely on all the indexes being present
+                    insertedIds.put(writeRequestWithIndex.getIndex(), null);
+                }
             } else if (writeRequestWithIndex.getType() == WriteRequest.Type.UPDATE
                     || writeRequestWithIndex.getType() == WriteRequest.Type.REPLACE) {
                 UpdateRequest update = (UpdateRequest) writeRequestWithIndex.getWriteRequest();
