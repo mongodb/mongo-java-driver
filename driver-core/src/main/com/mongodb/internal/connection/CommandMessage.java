@@ -253,7 +253,7 @@ public final class CommandMessage extends RequestMessage {
         if (responseExpected) {
             return true;
         } else {
-            return payload != null && payload.hasAnotherSplit();
+            return payload != null && payload.isOrdered() && payload.hasAnotherSplit();
         }
     }
 

@@ -154,7 +154,7 @@ public final class BulkWriteBatch {
 
         this.indexMap = indexMap;
         this.unprocessed = unprocessedItems;
-        this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems);
+        this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems, ordered);
         this.operationContext = operationContext;
         this.comment = comment;
         this.variables = variables;

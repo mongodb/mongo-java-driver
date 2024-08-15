@@ -57,6 +57,7 @@ public final class SplittablePayload {
     private final WriteRequestEncoder writeRequestEncoder = new WriteRequestEncoder();
     private final Type payloadType;
     private final List<WriteRequestWithIndex> writeRequestWithIndexes;
+    private final boolean ordered;
     private final Map<Integer, BsonValue> insertedIds = new HashMap<>();
     private int position = 0;
 
@@ -91,9 +92,10 @@ public final class SplittablePayload {
      * @param payloadType the payload type
      * @param writeRequestWithIndexes the writeRequests
      */
-    public SplittablePayload(final Type payloadType, final List<WriteRequestWithIndex> writeRequestWithIndexes) {
+    public SplittablePayload(final Type payloadType, final List<WriteRequestWithIndex> writeRequestWithIndexes, final boolean ordered) {
         this.payloadType = notNull("batchType", payloadType);
         this.writeRequestWithIndexes = notNull("writeRequests", writeRequestWithIndexes);
+        this.ordered = ordered;
     }
 
     /**
@@ -159,13 +161,17 @@ public final class SplittablePayload {
         return writeRequestWithIndexes.size() > position;
     }
 
+    boolean isOrdered() {
+        return ordered;
+    }
+
     /**
      * @return a new SplittablePayload containing only the values after the current position.
      */
     public SplittablePayload getNextSplit() {
         isTrue("hasAnotherSplit", hasAnotherSplit());
         List<WriteRequestWithIndex> nextPayLoad = writeRequestWithIndexes.subList(position, writeRequestWithIndexes.size());
-        return new SplittablePayload(payloadType, nextPayLoad);
+        return new SplittablePayload(payloadType, nextPayLoad, ordered);
     }
 
     /**
