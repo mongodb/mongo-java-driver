@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -65,6 +64,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
+import static com.mongodb.internal.operation.MixedBulkWriteOperation.commandWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
@@ -101,12 +101,7 @@ public final class BulkWriteBatch {
                                                       final List<? extends WriteRequest> writeRequests,
                                                       final OperationContext operationContext,
                                                       @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
-        SessionContext sessionContext = operationContext.getSessionContext();
-        if (sessionContext.hasSession() && !sessionContext.isImplicitSession() && !sessionContext.hasActiveTransaction()
-                && !writeConcern.isAcknowledged()) {
-            throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
-        }
-        boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, connectionDescription, sessionContext);
+        boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, connectionDescription, operationContext.getSessionContext());
         List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<>();
         boolean writeRequestsAreRetryable = true;
         for (int i = 0; i < writeRequests.size(); i++) {
@@ -169,9 +164,8 @@ public final class BulkWriteBatch {
         if (!payloadItems.isEmpty()) {
             command.put(getCommandName(batchType), new BsonString(namespace.getCollectionName()));
             command.put("ordered", new BsonBoolean(ordered));
-            if (!writeConcern.isServerDefault() && !sessionContext.hasActiveTransaction()) {
-                command.put("writeConcern", writeConcern.asDocument());
-            }
+            commandWriteConcern(writeConcern, sessionContext).ifPresent(value ->
+                    command.put("writeConcern", value.asDocument()));
             if (bypassDocumentValidation != null) {
                 command.put("bypassDocumentValidation", new BsonBoolean(bypassDocumentValidation));
             }
