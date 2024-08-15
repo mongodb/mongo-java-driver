@@ -117,7 +117,7 @@ public final class SplittablePayload {
     }
 
     boolean hasPayload() {
-        return writeRequestWithIndexes.size() > 0;
+        return !writeRequestWithIndexes.isEmpty();
     }
 
     public int size() {
@@ -135,10 +135,6 @@ public final class SplittablePayload {
         return writeRequestWithIndexes.stream().map(wri ->
                     new BsonDocumentWrapper<>(wri, writeRequestEncoder))
                     .collect(Collectors.toList());
-    }
-
-    public List<WriteRequestWithIndex> getWriteRequestWithIndexes() {
-        return writeRequestWithIndexes;
     }
 
     /**
