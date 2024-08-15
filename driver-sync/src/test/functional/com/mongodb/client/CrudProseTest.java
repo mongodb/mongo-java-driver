@@ -23,7 +23,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ValidationOptions;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import org.bson.BsonArray;
@@ -137,11 +136,17 @@ public class CrudProseTest extends DatabaseTestCase {
     void insertMustGenerateIdAtMostOnce() throws ExecutionException, InterruptedException {
         ServerAddress primaryServerAddress = Fixture.getPrimary();
         CompletableFuture<BsonValue> futureIdGeneratedByFirstInsertAttempt = new CompletableFuture<>();
+        CompletableFuture<BsonValue> futureIdGeneratedBySecondInsertAttempt = new CompletableFuture<>();
         CommandListener commandListener = new CommandListener() {
             @Override
             public void commandStarted(final CommandStartedEvent event) {
                 if (event.getCommandName().equals("insert")) {
-                    futureIdGeneratedByFirstInsertAttempt.complete(event.getCommand().getArray("documents").get(0).asDocument().get("_id"));
+                    BsonValue generatedId = event.getCommand().getArray("documents").get(0).asDocument().get("_id");
+                    if (!futureIdGeneratedByFirstInsertAttempt.isDone()) {
+                        futureIdGeneratedByFirstInsertAttempt.complete(generatedId);
+                    } else {
+                        futureIdGeneratedBySecondInsertAttempt.complete(generatedId);
+                    }
                 }
             }
         };
@@ -163,8 +168,10 @@ public class CrudProseTest extends DatabaseTestCase {
                     .withCodecRegistry(fromRegistries(
                             getDefaultCodecRegistry(),
                             fromProviders(PojoCodecProvider.builder().automatic(true).build())));
-            InsertOneResult result = coll.insertOne(new MyDocument());
-            assertEquals(futureIdGeneratedByFirstInsertAttempt.get(), result.getInsertedId());
+            BsonValue insertedId = coll.insertOne(new MyDocument()).getInsertedId();
+            BsonValue idGeneratedByFirstInsertAttempt = futureIdGeneratedByFirstInsertAttempt.get();
+            assertEquals(idGeneratedByFirstInsertAttempt, insertedId);
+            assertEquals(idGeneratedByFirstInsertAttempt, futureIdGeneratedBySecondInsertAttempt.get());
         }
     }
 
