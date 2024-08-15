@@ -42,7 +42,7 @@ public final class ClientUpdateManyModel extends ClientUpdateOneModel {
                 + "namespace=" + getNamespace()
                 + ", filter=" + getFilter()
                 + ", update=" + getUpdate().map(Object::toString)
-                .orElse(getUpdatePipeline().map(Object::toString)
+                        .orElse(getUpdatePipeline().map(Object::toString)
                         .orElseThrow(Assertions::fail))
                 + ", options=" + getOptions()
                 + '}';
