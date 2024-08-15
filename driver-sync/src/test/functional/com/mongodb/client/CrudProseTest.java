@@ -134,6 +134,7 @@ public class CrudProseTest extends DatabaseTestCase {
     @Test
     @SuppressWarnings("try")
     void insertMustGenerateIdAtMostOnce() throws ExecutionException, InterruptedException {
+        assumeTrue(isDiscoverableReplicaSet());
         ServerAddress primaryServerAddress = Fixture.getPrimary();
         CompletableFuture<BsonValue> futureIdGeneratedByFirstInsertAttempt = new CompletableFuture<>();
         CompletableFuture<BsonValue> futureIdGeneratedBySecondInsertAttempt = new CompletableFuture<>();
