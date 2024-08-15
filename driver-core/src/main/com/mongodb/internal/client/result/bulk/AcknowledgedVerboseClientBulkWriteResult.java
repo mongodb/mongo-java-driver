@@ -19,12 +19,10 @@ import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.client.result.bulk.ClientDeleteResult;
 import com.mongodb.client.result.bulk.ClientInsertOneResult;
 import com.mongodb.client.result.bulk.ClientUpdateResult;
-import com.mongodb.lang.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
 
-import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableMap;
 
 /**
@@ -38,13 +36,13 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
 
     public AcknowledgedVerboseClientBulkWriteResult(
             final AcknowledgedSummaryClientBulkWriteResult summaryResults,
-            @Nullable final Map<Long, ClientInsertOneResult> insertResults,
-            @Nullable final Map<Long, ClientUpdateResult> updateResults,
-            @Nullable final Map<Long, ClientDeleteResult> deleteResults) {
+            final Map<Long, ClientInsertOneResult> insertResults,
+            final Map<Long, ClientUpdateResult> updateResults,
+            final Map<Long, ClientDeleteResult> deleteResults) {
         this.summaryResults = summaryResults;
-        this.insertResults = insertResults == null ? emptyMap() : unmodifiableMap(insertResults);
-        this.updateResults = updateResults == null ? emptyMap() : unmodifiableMap(updateResults);
-        this.deleteResults = deleteResults == null ? emptyMap() : unmodifiableMap(deleteResults);
+        this.insertResults = unmodifiableMap(insertResults);
+        this.updateResults = unmodifiableMap(updateResults);
+        this.deleteResults = unmodifiableMap(deleteResults);
     }
 
     @Override

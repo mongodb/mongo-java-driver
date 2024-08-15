@@ -86,8 +86,6 @@ public interface ClientBulkWriteResult {
      */
     long getModifiedCount() throws UnsupportedOperationException;
 
-    // BULK-TODO Is ReplaceOne reported as 1 modified (I expect this behavior), or 1 deleted and 1 inserted?
-
     /**
      * The number of documents that were deleted across all delete operations.
      *
