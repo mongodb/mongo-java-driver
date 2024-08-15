@@ -312,7 +312,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
 
         RangeOptions getRangeOptions() {
             RangeOptions rangeOptions = new RangeOptions()
-                    .setTrimFactor(1)
+                    .trimFactor(1)
                     .sparsity(1L);
             switch (this) {
                 case DECIMAL_NO_PRECISION:

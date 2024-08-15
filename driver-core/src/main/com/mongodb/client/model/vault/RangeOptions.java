@@ -91,7 +91,7 @@ public class RangeOptions {
      * @return this
      * @since 5.2
      */
-    public RangeOptions setTrimFactor(@Nullable final Integer trimFactor) {
+    public RangeOptions trimFactor(@Nullable final Integer trimFactor) {
         this.trimFactor = trimFactor;
         return this;
     }

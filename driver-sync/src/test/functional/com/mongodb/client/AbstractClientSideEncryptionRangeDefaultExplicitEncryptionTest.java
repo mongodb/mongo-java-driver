@@ -103,7 +103,7 @@ public abstract class AbstractClientSideEncryptionRangeDefaultExplicitEncryption
                                 .min(new BsonInt32(0))
                                 .max(new BsonInt32(1000))
                                 .sparsity(2L)
-                                .setTrimFactor(6)
+                                .trimFactor(6)
                         )
         );
 
@@ -120,7 +120,7 @@ public abstract class AbstractClientSideEncryptionRangeDefaultExplicitEncryption
                         .rangeOptions(new RangeOptions()
                                 .min(new BsonInt32(0))
                                 .max(new BsonInt32(1000))
-                                .setTrimFactor(0)
+                                .trimFactor(0)
                         )
         );
 
