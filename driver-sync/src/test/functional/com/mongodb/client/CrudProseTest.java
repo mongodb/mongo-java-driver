@@ -19,21 +19,36 @@ package com.mongodb.client;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ValidationOptions;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.codecs.pojo.PojoCodecProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -114,6 +129,45 @@ public class CrudProseTest extends DatabaseTestCase {
         }
     }
 
+    /**
+     * This test is not from the specification.
+     */
+    @Test
+    @SuppressWarnings("try")
+    void insertMustGenerateIdAtMostOnce() throws ExecutionException, InterruptedException {
+        ServerAddress primaryServerAddress = Fixture.getPrimary();
+        CompletableFuture<BsonValue> futureIdGeneratedByFirstInsertAttempt = new CompletableFuture<>();
+        CommandListener commandListener = new CommandListener() {
+            @Override
+            public void commandStarted(final CommandStartedEvent event) {
+                if (event.getCommandName().equals("insert")) {
+                    futureIdGeneratedByFirstInsertAttempt.complete(event.getCommand().getArray("documents").get(0).asDocument().get("_id"));
+                }
+            }
+        };
+        BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
+                .append("mode", new BsonDocument("times", new BsonInt32(1)))
+                .append("data", new BsonDocument()
+                        .append("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
+                        .append("errorLabels", new BsonArray(singletonList(new BsonString("RetryableWriteError"))))
+                        .append("writeConcernError", new BsonDocument("code", new BsonInt32(91))
+                                .append("errmsg", new BsonString("Replication is being shut down"))));
+        try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
+                .retryWrites(true)
+                .addCommandListener(commandListener)
+                .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                .build());
+             FailPoint ignored = FailPoint.enable(failPointDocument, primaryServerAddress)) {
+            MongoCollection<MyDocument> coll = client.getDatabase(database.getName())
+                    .getCollection(collection.getNamespace().getCollectionName(), MyDocument.class)
+                    .withCodecRegistry(fromRegistries(
+                            getDefaultCodecRegistry(),
+                            fromProviders(PojoCodecProvider.builder().automatic(true).build())));
+            InsertOneResult result = coll.insertOne(new MyDocument());
+            assertEquals(futureIdGeneratedByFirstInsertAttempt.get(), result.getInsertedId());
+        }
+    }
+
     private void setFailPoint() {
         failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))
@@ -129,5 +183,16 @@ public class CrudProseTest extends DatabaseTestCase {
 
     private void disableFailPoint() {
         getCollectionHelper().runAdminCommand(failPointDocument.append("mode", new BsonString("off")));
+    }
+
+    public static final class MyDocument {
+        private int v;
+
+        public MyDocument() {
+        }
+
+        public int getV() {
+            return v;
+        }
     }
 }
