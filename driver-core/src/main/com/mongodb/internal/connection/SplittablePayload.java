@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT;
@@ -158,6 +159,8 @@ public final class SplittablePayload {
      * @return true if there are more values after the current position
      */
     public boolean hasAnotherSplit() {
+        // this method must be not called before this payload having been encoded
+        assertTrue(position > 0);
         return writeRequestWithIndexes.size() > position;
     }
 

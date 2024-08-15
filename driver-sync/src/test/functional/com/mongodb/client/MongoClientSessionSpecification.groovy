@@ -26,6 +26,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.client.model.Filters
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.internal.connection.TestCommandListener
+import com.mongodb.internal.time.Timeout
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -350,9 +351,11 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
     void waitForInsertAcknowledgement(MongoCollection<Document> collection, ObjectId id) {
         Document document = collection.find(Filters.eq(id)).first()
+        Timeout timeout = Timeout.expiresIn(5, TimeUnit.SECONDS, Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE);
         while (document == null) {
             Thread.sleep(1)
             document = collection.find(Filters.eq(id)).first()
+            timeout.onExpired {throw new RuntimeException("Timed out waiting for insert acknowledgement")}
         }
     }
 }
