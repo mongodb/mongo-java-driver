@@ -48,7 +48,7 @@ public final class ClientUpdateOneModel implements ClientWriteModel {
         assertTrue(update == null ^ updatePipeline == null);
         this.update = update;
         this.updatePipeline = updatePipeline;
-        this.options = options == null ? ConcreteClientUpdateOptions.EMPTY : (ConcreteClientUpdateOptions) options;
+        this.options = options == null ? ConcreteClientUpdateOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOptions) options;
     }
 
     @Override

@@ -35,7 +35,7 @@ public final class ClientDeleteManyModel implements ClientWriteModel {
             @Nullable final ClientDeleteOptions options) {
         this.namespace = namespace;
         this.filter = filter;
-        this.options = options == null ? ConcreteClientDeleteOptions.EMPTY : (ConcreteClientDeleteOptions) options;
+        this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.client.result.bulk;
 
+import com.mongodb.annotations.Immutable;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.client.result.bulk.ClientDeleteResult;
 import com.mongodb.client.result.bulk.ClientInsertOneResult;
@@ -25,6 +26,7 @@ import java.util.Map;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
+@Immutable
 public final class UnacknowledgedClientBulkWriteResult implements ClientBulkWriteResult {
     public static final UnacknowledgedClientBulkWriteResult INSTANCE = new UnacknowledgedClientBulkWriteResult();
 

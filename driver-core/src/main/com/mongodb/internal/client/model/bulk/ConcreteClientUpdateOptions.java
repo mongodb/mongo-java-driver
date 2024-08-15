@@ -24,7 +24,7 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
-    static final ConcreteClientUpdateOptions EMPTY = new ConcreteClientUpdateOptions();
+    static final ConcreteClientUpdateOptions MUTABLE_EMPTY = new ConcreteClientUpdateOptions();
 
     @Nullable
     private Iterable<? extends Bson> arrayFilters;

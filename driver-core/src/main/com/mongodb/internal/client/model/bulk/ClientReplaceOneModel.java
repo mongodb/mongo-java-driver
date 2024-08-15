@@ -38,7 +38,7 @@ public final class ClientReplaceOneModel implements ClientWriteModel {
         this.namespace = namespace;
         this.filter = filter;
         this.replacement = replacement;
-        this.options = options == null ? ConcreteClientReplaceOptions.EMPTY : (ConcreteClientReplaceOptions) options;
+        this.options = options == null ? ConcreteClientReplaceOptions.MUTABLE_EMPTY : (ConcreteClientReplaceOptions) options;
     }
 
     @Override

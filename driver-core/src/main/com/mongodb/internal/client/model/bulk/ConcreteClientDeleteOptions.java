@@ -24,7 +24,7 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
-    static final ConcreteClientDeleteOptions EMPTY = new ConcreteClientDeleteOptions();
+    static final ConcreteClientDeleteOptions MUTABLE_EMPTY = new ConcreteClientDeleteOptions();
 
     @Nullable
     private Collation collation;
