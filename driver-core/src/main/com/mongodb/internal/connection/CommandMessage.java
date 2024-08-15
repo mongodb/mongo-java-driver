@@ -286,7 +286,7 @@ public final class CommandMessage extends RequestMessage {
                 throw new MongoClientException("Attempting to use a ClientSession while connected to a server that doesn't support "
                         + "sessions");
             }
-            if (getSettings().isSessionSupported() && requireOpMsgResponse()) {
+            if (getSettings().isSessionSupported() && responseExpected) {
                 extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
             }
         }
