@@ -46,8 +46,8 @@ public interface AsyncFunction<T, R> {
         try {
             this.unsafeFinish(value, (v, e) -> {
                 if (!callbackInvoked.compareAndSet(false, true)) {
-                    throw new AssertionError("Callback has been already completed. It could happen "
-                            + "if code throws an exception after invoking an async method.");
+                    throw new AssertionError(String.format("Callback has been already completed. It could happen "
+                            + "if code throws an exception after invoking an async method. Value: %s", v), e);
                 }
                 callback.onResult(v, e);
             });

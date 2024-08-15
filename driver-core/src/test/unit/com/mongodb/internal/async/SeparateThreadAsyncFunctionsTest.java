@@ -75,7 +75,7 @@ public class SeparateThreadAsyncFunctionsTest extends AsyncFunctionsAbstractTest
         assertNotNull(exception);
         assertEquals(AssertionError.class, exception.getClass());
         assertEquals("Callback has been already completed. It could happen "
-                + "if code throws an exception after invoking an async method.", exception.getMessage());
+                + "if code throws an exception after invoking an async method. Value: null", exception.getMessage());
     }
 
     @Test
