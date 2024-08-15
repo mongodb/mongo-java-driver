@@ -21,12 +21,15 @@ import com.mongodb.client.model.bulk.ClientWriteModel;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.util.Optional;
+
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static java.util.Optional.ofNullable;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientUpdateOneModel implements ClientWriteModel {
+public class ClientUpdateOneModel implements ClientWriteModel {
     private final MongoNamespace namespace;
     private final Bson filter;
     @Nullable
@@ -49,6 +52,26 @@ public final class ClientUpdateOneModel implements ClientWriteModel {
         this.update = update;
         this.updatePipeline = updatePipeline;
         this.options = options == null ? ConcreteClientUpdateOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOptions) options;
+    }
+
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    public Bson getFilter() {
+        return filter;
+    }
+
+    public Optional<Bson> getUpdate() {
+        return ofNullable(update);
+    }
+
+    public Optional<Iterable<? extends Bson>> getUpdatePipeline() {
+        return ofNullable(updatePipeline);
+    }
+
+    public ConcreteClientUpdateOptions getOptions() {
+        return options;
     }
 
     @Override

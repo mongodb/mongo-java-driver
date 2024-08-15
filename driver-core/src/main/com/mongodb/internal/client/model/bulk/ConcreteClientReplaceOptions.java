@@ -20,6 +20,10 @@ import com.mongodb.client.model.bulk.ClientReplaceOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
@@ -44,11 +48,25 @@ public final class ConcreteClientReplaceOptions implements ClientReplaceOptions 
         return this;
     }
 
+    /**
+     * @see #collation(Collation)
+     */
+    public Optional<Collation> getCollation() {
+        return ofNullable(collation);
+    }
+
     @Override
     public ClientReplaceOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
         this.hintString = null;
         return this;
+    }
+
+    /**
+     * @see #hint(Bson)
+     */
+    public Optional<Bson> getHint() {
+        return ofNullable(hint);
     }
 
     @Override
@@ -58,10 +76,24 @@ public final class ConcreteClientReplaceOptions implements ClientReplaceOptions 
         return this;
     }
 
+    /**
+     * @see #hintString(String)
+     */
+    public Optional<String> getHintString() {
+        return ofNullable(hintString);
+    }
+
     @Override
     public ClientReplaceOptions upsert(@Nullable final Boolean upsert) {
         this.upsert = upsert;
         return this;
+    }
+
+    /**
+     * @see #upsert(Boolean)
+     */
+    public Optional<Boolean> isUpsert() {
+        return ofNullable(upsert);
     }
 
     @Override

@@ -20,11 +20,14 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientBulkWriteOptions implements ClientBulkWriteOptions {
-    // BULK-TODO Introduce EMPTY similar to ConcreteClientUpdateOptions.EMPTY.
     private static final Boolean CLIENT_DEFAULT_ORDERED = true;
     private static final Boolean CLIENT_DEFAULT_VERBOSE_RESULTS = false;
 
@@ -48,10 +51,24 @@ public final class ConcreteClientBulkWriteOptions implements ClientBulkWriteOpti
         return this;
     }
 
+    /**
+     * @see #ordered(Boolean)
+     */
+    public boolean isOrdered() {
+        return ordered == null ? CLIENT_DEFAULT_ORDERED : ordered;
+    }
+
     @Override
     public ClientBulkWriteOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
+    }
+
+    /**
+     * @see #bypassDocumentValidation(Boolean)
+     */
+    public Optional<Boolean> isBypassDocumentValidation() {
+        return ofNullable(bypassDocumentValidation);
     }
 
     @Override
@@ -60,16 +77,37 @@ public final class ConcreteClientBulkWriteOptions implements ClientBulkWriteOpti
         return this;
     }
 
+    /**
+     * @see #let(Bson)
+     */
+    public Optional<Bson> getLet() {
+        return ofNullable(let);
+    }
+
     @Override
     public ClientBulkWriteOptions comment(@Nullable final BsonValue comment) {
         this.comment = comment;
         return this;
     }
 
+    /**
+     * @see #comment(BsonValue)
+     */
+    public Optional<BsonValue> getComment() {
+        return ofNullable(comment);
+    }
+
     @Override
     public ClientBulkWriteOptions verboseResults(@Nullable final Boolean verboseResults) {
         this.verboseResults = verboseResults;
         return this;
+    }
+
+    /**
+     * @see #verboseResults(Boolean)
+     */
+    public boolean isVerboseResults() {
+        return verboseResults == null ? CLIENT_DEFAULT_VERBOSE_RESULTS : verboseResults;
     }
 
     @Override

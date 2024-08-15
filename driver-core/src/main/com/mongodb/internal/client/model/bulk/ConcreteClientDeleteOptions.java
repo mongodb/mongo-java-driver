@@ -20,6 +20,10 @@ import com.mongodb.client.model.bulk.ClientDeleteOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
@@ -42,6 +46,13 @@ public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
         return this;
     }
 
+    /**
+     * @see #collation(Collation)
+     */
+    public Optional<Collation> getCollation() {
+        return ofNullable(collation);
+    }
+
     @Override
     public ClientDeleteOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
@@ -49,11 +60,25 @@ public final class ConcreteClientDeleteOptions implements ClientDeleteOptions {
         return this;
     }
 
+    /**
+     * @see #hint(Bson)
+     */
+    public Optional<Bson> getHint() {
+        return ofNullable(hint);
+    }
+
     @Override
     public ClientDeleteOptions hintString(@Nullable final String hintString) {
         this.hintString = hintString;
         this.hint = null;
         return this;
+    }
+
+    /**
+     * @see #hintString(String)
+     */
+    public Optional<String> getHintString() {
+        return ofNullable(hintString);
     }
 
     @Override

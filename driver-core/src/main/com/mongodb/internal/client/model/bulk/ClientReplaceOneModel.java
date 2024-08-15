@@ -41,6 +41,22 @@ public final class ClientReplaceOneModel implements ClientWriteModel {
         this.options = options == null ? ConcreteClientReplaceOptions.MUTABLE_EMPTY : (ConcreteClientReplaceOptions) options;
     }
 
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    public Bson getFilter() {
+        return filter;
+    }
+
+    public Object getReplacement() {
+        return replacement;
+    }
+
+    public ConcreteClientReplaceOptions getOptions() {
+        return options;
+    }
+
     @Override
     public String toString() {
         return "ClientReplaceOneModel{"

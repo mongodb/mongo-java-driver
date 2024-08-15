@@ -32,6 +32,14 @@ public final class ClientInsertOneModel implements ClientWriteModel {
         this.document = document;
     }
 
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    public Object getDocument() {
+        return document;
+    }
+
     @Override
     public String toString() {
         return "ClientInsertOneModel{"

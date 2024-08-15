@@ -24,7 +24,7 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientDeleteOneModel implements ClientWriteModel {
+public class ClientDeleteOneModel implements ClientWriteModel {
     private final MongoNamespace namespace;
     private final Bson filter;
     private final ConcreteClientDeleteOptions options;
@@ -36,6 +36,18 @@ public final class ClientDeleteOneModel implements ClientWriteModel {
         this.namespace = namespace;
         this.filter = filter;
         this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
+    }
+
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    public Bson getFilter() {
+        return filter;
+    }
+
+    public ConcreteClientDeleteOptions getOptions() {
+        return options;
     }
 
     @Override

@@ -52,7 +52,6 @@ public interface ClientBulkWriteResult {
      * @return Whether there are verbose results.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    // BULK-TODO Do we still have getInsertedCount etc., when there are no verbose results?
     boolean hasVerboseResults() throws UnsupportedOperationException;
 
     /**

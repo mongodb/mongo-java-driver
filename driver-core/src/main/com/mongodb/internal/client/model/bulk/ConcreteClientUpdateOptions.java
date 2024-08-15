@@ -20,6 +20,10 @@ import com.mongodb.client.model.bulk.ClientUpdateOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
@@ -46,10 +50,24 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
         return this;
     }
 
+    /**
+     * @see #arrayFilters(Iterable)
+     */
+    public Optional<Iterable<? extends Bson>> getArrayFilters() {
+        return ofNullable(arrayFilters);
+    }
+
     @Override
     public ClientUpdateOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
+    }
+
+    /**
+     * @see #collation(Collation)
+     */
+    public Optional<Collation> getCollation() {
+        return ofNullable(collation);
     }
 
     @Override
@@ -59,6 +77,13 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
         return this;
     }
 
+    /**
+     * @see #hint(Bson)
+     */
+    public Optional<Bson> getHint() {
+        return ofNullable(hint);
+    }
+
     @Override
     public ClientUpdateOptions hintString(@Nullable final String hintString) {
         this.hintString = hintString;
@@ -66,10 +91,24 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
         return this;
     }
 
+    /**
+     * @see #hintString(String)
+     */
+    public Optional<String> getHintString() {
+        return ofNullable(hintString);
+    }
+
     @Override
     public ClientUpdateOptions upsert(@Nullable final Boolean upsert) {
         this.upsert = upsert;
         return this;
+    }
+
+    /**
+     * @see #isUpsert()
+     */
+    public Optional<Boolean> isUpsert() {
+        return ofNullable(upsert);
     }
 
     @Override

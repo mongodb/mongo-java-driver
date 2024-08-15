@@ -17,33 +17,26 @@ package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.bulk.ClientDeleteOptions;
-import com.mongodb.client.model.bulk.ClientWriteModel;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientDeleteManyModel implements ClientWriteModel {
-    private final MongoNamespace namespace;
-    private final Bson filter;
-    private final ConcreteClientDeleteOptions options;
-
+public final class ClientDeleteManyModel extends ClientDeleteOneModel {
     public ClientDeleteManyModel(
             final MongoNamespace namespace,
             final Bson filter,
             @Nullable final ClientDeleteOptions options) {
-        this.namespace = namespace;
-        this.filter = filter;
-        this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
+        super(namespace, filter, options);
     }
 
     @Override
     public String toString() {
         return "ClientDeleteManyModel{"
-                + "namespace=" + namespace
-                + ", filter=" + filter
-                + ", options=" + options
+                + "namespace=" + getNamespace()
+                + ", filter=" + getFilter()
+                + ", options=" + getOptions()
                 + '}';
     }
 }
