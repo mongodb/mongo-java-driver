@@ -351,11 +351,11 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
     void waitForInsertAcknowledgement(MongoCollection<Document> collection, ObjectId id) {
         Document document = collection.find(Filters.eq(id)).first()
-        Timeout timeout = Timeout.expiresIn(5, TimeUnit.SECONDS, Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE);
+        Timeout timeout = Timeout.expiresIn(5, TimeUnit.SECONDS, Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE)
         while (document == null) {
             Thread.sleep(1)
             document = collection.find(Filters.eq(id)).first()
-            timeout.onExpired {throw new RuntimeException("Timed out waiting for insert acknowledgement")}
+            timeout.onExpired { assert !"Timed out waiting for insert acknowledgement".trim() }
         }
     }
 }
