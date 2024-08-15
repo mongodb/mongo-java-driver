@@ -45,6 +45,7 @@ import java.util.List;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
@@ -112,6 +113,7 @@ public final class CommandMessage extends RequestMessage {
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
+        assertTrue(useOpMsg() || responseExpected);
     }
 
     /**
@@ -187,7 +189,11 @@ public final class CommandMessage extends RequestMessage {
     }
 
     boolean isResponseExpected() {
-        return !useOpMsg() || requireOpMsgResponse();
+        if (responseExpected) {
+            return true;
+        } else {
+            return payload != null && payload.isOrdered() && payload.hasAnotherSplit();
+        }
     }
 
     MongoNamespace getNamespace() {
@@ -240,21 +246,13 @@ public final class CommandMessage extends RequestMessage {
 
     private int getOpMsgFlagBits() {
         int flagBits = 0;
-        if (!requireOpMsgResponse()) {
+        if (!isResponseExpected()) {
             flagBits = 1 << 1;
         }
         if (exhaustAllowed) {
             flagBits |= 1 << 16;
         }
         return flagBits;
-    }
-
-    private boolean requireOpMsgResponse() {
-        if (responseExpected) {
-            return true;
-        } else {
-            return payload != null && payload.hasAnotherSplit();
-        }
     }
 
     private boolean isDirectConnectionToReplicaSetMember() {

@@ -115,7 +115,7 @@ class CryptConnectionSpecification extends Specification {
         def payload = new SplittablePayload(INSERT, [
                 new BsonDocumentWrapper(new Document('_id', 1).append('ssid', '555-55-5555').append('b', bytes), codec),
                 new BsonDocumentWrapper(new Document('_id', 2).append('ssid', '666-66-6666').append('b', bytes), codec)
-        ].withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) })
+        ].withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true)
         def encryptedCommand = toRaw(new BsonDocument('insert', new BsonString('test')).append('documents', new BsonArray(
                 [
                         new BsonDocument('_id', new BsonInt32(1))
@@ -172,7 +172,7 @@ class CryptConnectionSpecification extends Specification {
                 new BsonDocumentWrapper(new Document('_id', 1), codec),
                 new BsonDocumentWrapper(new Document('_id', 2), codec),
                 new BsonDocumentWrapper(new Document('_id', 3), codec)
-        ].withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) })
+        ].withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true)
         def encryptedCommand = toRaw(new BsonDocument('insert', new BsonString('test')).append('documents', new BsonArray(
                 [
                         new BsonDocument('_id', new BsonInt32(1)),
