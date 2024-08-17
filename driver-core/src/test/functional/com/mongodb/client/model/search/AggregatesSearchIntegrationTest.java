@@ -243,7 +243,7 @@ final class AggregatesSearchIntegrationTest {
         assumeTrue(isAtlasSearchTest());
     }
 
-    public static Stream<Arguments> vectorSearchArgs(){
+    private static Stream<Arguments> vectorSearchArgs(){
         return Stream.of(
                 arguments(approximateVectorSearchOptions(LIMIT + 1)),
                 arguments(exactVectorSearchOptions())
