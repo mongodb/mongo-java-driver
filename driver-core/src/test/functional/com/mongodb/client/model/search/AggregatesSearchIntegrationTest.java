@@ -284,7 +284,7 @@ final class AggregatesSearchIntegrationTest {
         );
     }
 
-    public static Stream<Arguments> vectorSearchSupportedFiltersArgs(){
+    private static Stream<Arguments> vectorSearchSupportedFiltersArgs(){
         return Stream.of(
                 arguments(approximateVectorSearchOptions(1)),
                 arguments(exactVectorSearchOptions())
