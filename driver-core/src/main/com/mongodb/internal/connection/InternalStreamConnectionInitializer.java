@@ -104,8 +104,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                         InternalConnectionInitializationDescription initializationDescription;
                         try {
                             initializationDescription = createInitializationDescription(helloResult, internalConnection, startTime);
-                        } catch (Throwable localException) {
-                            callback.onResult(null, localException);
+                        } catch (Throwable localThrowable) {
+                            callback.onResult(null, localThrowable);
                             return;
                         }
                         callback.onResult(initializationDescription, null);
