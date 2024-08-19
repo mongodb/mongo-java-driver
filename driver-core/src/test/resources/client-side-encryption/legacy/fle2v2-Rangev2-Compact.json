@@ -1,7 +1,7 @@
 {
   "runOn": [
     {
-      "minServerVersion": "7.0.0",
+      "minServerVersion": "8.0.0",
       "topology": [
         "replicaset",
         "sharded",
@@ -21,24 +21,26 @@
             "subType": "04"
           }
         },
-        "path": "encryptedIndexed",
-        "bsonType": "string",
+        "path": "encryptedInt",
+        "bsonType": "int",
         "queries": {
-          "queryType": "equality",
+          "queryType": "range",
           "contention": {
             "$numberLong": "0"
+          },
+          "trimFactor": {
+            "$numberInt": "1"
+          },
+          "sparsity": {
+            "$numberLong": "1"
+          },
+          "min": {
+            "$numberInt": "0"
+          },
+          "max": {
+            "$numberInt": "200"
           }
         }
-      },
-      {
-        "keyId": {
-          "$binary": {
-            "base64": "q83vqxI0mHYSNBI0VniQEg==",
-            "subType": "04"
-          }
-        },
-        "path": "encryptedUnindexed",
-        "bsonType": "string"
       }
     ]
   },
@@ -76,7 +78,7 @@
   ],
   "tests": [
     {
-      "description": "Insert and find FLE2 indexed field",
+      "description": "Compact works with 'range' fields",
       "clientOptions": {
         "autoEncryptOpts": {
           "kmsProviders": {
@@ -96,24 +98,25 @@
           "name": "insertOne",
           "arguments": {
             "document": {
-              "_id": 1,
-              "encryptedIndexed": "123"
+              "_id": 0,
+              "encryptedInt": {
+                "$numberInt": "0"
+              }
             }
           }
         },
         {
-          "name": "find",
+          "name": "runCommand",
+          "object": "database",
+          "command_name": "compactStructuredEncryptionData",
           "arguments": {
-            "filter": {
-              "encryptedIndexed": "123"
+            "command": {
+              "compactStructuredEncryptionData": "default"
             }
           },
-          "result": [
-            {
-              "_id": 1,
-              "encryptedIndexed": "123"
-            }
-          ]
+          "result": {
+            "ok": 1
+          }
         }
       ],
       "expectations": [
@@ -167,8 +170,8 @@
               "insert": "default",
               "documents": [
                 {
-                  "_id": 1,
-                  "encryptedIndexed": {
+                  "_id": 0,
+                  "encryptedInt": {
                     "$$type": "binData"
                   }
                 }
@@ -188,24 +191,26 @@
                             "subType": "04"
                           }
                         },
-                        "path": "encryptedIndexed",
-                        "bsonType": "string",
+                        "path": "encryptedInt",
+                        "bsonType": "int",
                         "queries": {
-                          "queryType": "equality",
+                          "queryType": "range",
                           "contention": {
                             "$numberLong": "0"
+                          },
+                          "trimFactor": {
+                            "$numberInt": "1"
+                          },
+                          "sparsity": {
+                            "$numberLong": "1"
+                          },
+                          "min": {
+                            "$numberInt": "0"
+                          },
+                          "max": {
+                            "$numberInt": "200"
                           }
                         }
-                      },
-                      {
-                        "keyId": {
-                          "$binary": {
-                            "base64": "q83vqxI0mHYSNBI0VniQEg==",
-                            "subType": "04"
-                          }
-                        },
-                        "path": "encryptedUnindexed",
-                        "bsonType": "string"
                       }
                     ]
                   }
@@ -218,13 +223,19 @@
         {
           "command_started_event": {
             "command": {
-              "find": "default",
-              "filter": {
-                "encryptedIndexed": {
-                  "$eq": {
+              "compactStructuredEncryptionData": "default",
+              "compactionTokens": {
+                "encryptedInt": {
+                  "ecoc": {
                     "$binary": {
-                      "base64": "DIkAAAAFZAAgAAAAAPGmZcUzdE/FPILvRSyAScGvZparGI2y9rJ/vSBxgCujBXMAIAAAAACi1RjmndKqgnXy7xb22RzUbnZl1sOZRXPOC0KcJkAxmQVsACAAAAAApJtKPW4+o9B7gAynNLL26jtlB4+hq5TXResijcYet8USY20AAAAAAAAAAAAA",
-                      "subType": "06"
+                      "base64": "noN+05JsuO1oDg59yypIGj45i+eFH6HOTXOPpeZ//Mk=",
+                      "subType": "00"
+                    }
+                  },
+                  "anchorPaddingToken": {
+                    "$binary": {
+                      "base64": "QxKJD2If48p0l8NAXf2Kr0aleMd/dATSjBK6hTpNMyc=",
+                      "subType": "00"
                     }
                   }
                 }
@@ -243,54 +254,36 @@
                             "subType": "04"
                           }
                         },
-                        "path": "encryptedIndexed",
-                        "bsonType": "string",
+                        "path": "encryptedInt",
+                        "bsonType": "int",
                         "queries": {
-                          "queryType": "equality",
+                          "queryType": "range",
                           "contention": {
                             "$numberLong": "0"
+                          },
+                          "trimFactor": {
+                            "$numberInt": "1"
+                          },
+                          "sparsity": {
+                            "$numberLong": "1"
+                          },
+                          "min": {
+                            "$numberInt": "0"
+                          },
+                          "max": {
+                            "$numberInt": "200"
                           }
                         }
-                      },
-                      {
-                        "keyId": {
-                          "$binary": {
-                            "base64": "q83vqxI0mHYSNBI0VniQEg==",
-                            "subType": "04"
-                          }
-                        },
-                        "path": "encryptedUnindexed",
-                        "bsonType": "string"
                       }
                     ]
                   }
                 }
               }
             },
-            "command_name": "find"
+            "command_name": "compactStructuredEncryptionData"
           }
         }
-      ],
-      "outcome": {
-        "collection": {
-          "data": [
-            {
-              "_id": 1,
-              "encryptedIndexed": {
-                "$$type": "binData"
-              },
-              "__safeContent__": [
-                {
-                  "$binary": {
-                    "base64": "31eCYlbQoVboc5zwC8IoyJVSkag9PxREka8dkmbXJeY=",
-                    "subType": "00"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      }
+      ]
     }
   ]
 }

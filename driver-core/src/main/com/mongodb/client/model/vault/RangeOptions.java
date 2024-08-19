@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model.vault;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
@@ -29,12 +27,10 @@ import org.bson.BsonValue;
  *
  * <p>For {@code double} and {@code decimal128}, {@code min}/{@code max}/{@code precision} must all be set, or all be unset.
  *
- * <p>Note: The "Range" algorithm is unstable. It is subject to breaking changes.
  * @since 4.9
  * @mongodb.server.release 6.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
  */
-@Beta(Reason.SERVER)
 public class RangeOptions {
 
     private BsonValue min;
@@ -81,18 +77,21 @@ public class RangeOptions {
      * @return the trim factor value if set
      * @since 5.2
      */
+    @Nullable
     public Integer getTrimFactor() {
         return trimFactor;
     }
 
     /**
-     * Set the number of top-level edges stored per record by setting a trim factor, reducing write conflicts during simultaneous inserts
-     * and optimizing queries by excluding seldom-used high-level edges.
+     * Set the number of top-level edges stored per record.
+     * <p>
+     * The trim factor may be used to tune performance.
+     *
      * @param trimFactor the trim factor
      * @return this
      * @since 5.2
      */
-    public RangeOptions setTrimFactor(final Integer trimFactor) {
+    public RangeOptions trimFactor(@Nullable final Integer trimFactor) {
         this.trimFactor = trimFactor;
         return this;
     }
@@ -106,7 +105,10 @@ public class RangeOptions {
     }
 
     /**
-     * Set the Queryable Encryption range hypergraph sparsity factor
+     * Set the Queryable Encryption range hypergraph sparsity factor.
+     * <p>
+     * Sparsity may be used to tune performance.
+     *
      * @param sparsity the sparsity
      * @return this
      */
