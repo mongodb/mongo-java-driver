@@ -595,6 +595,7 @@ public class InternalStreamConnection implements InternalConnection {
                         return;
                     }
                     assertNotNull(responseBuffers);
+                    T commandResult;
                     try {
                         updateSessionContext(sessionContext, responseBuffers);
                         boolean commandOk =
@@ -609,13 +610,14 @@ public class InternalStreamConnection implements InternalConnection {
                         }
                         commandEventSender.sendSucceededEvent(responseBuffers);
 
-                        T result1 = getCommandResult(decoder, responseBuffers, messageId);
-                        callback.onResult(result1, null);
+                        commandResult = getCommandResult(decoder, responseBuffers, messageId);
                     } catch (Throwable localThrowable) {
                         callback.onResult(null, localThrowable);
+                        return;
                     } finally {
                         responseBuffers.close();
                     }
+                    callback.onResult(commandResult, null);
                 }));
             }
         });

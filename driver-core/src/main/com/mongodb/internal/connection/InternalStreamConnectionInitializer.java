@@ -98,7 +98,14 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                         callback.onResult(null, t instanceof MongoException ? mapHelloException((MongoException) t) : t);
                     } else {
                         setSpeculativeAuthenticateResponse(helloResult);
-                        callback.onResult(createInitializationDescription(helloResult, internalConnection, startTime), null);
+                        InternalConnectionInitializationDescription initializationDescription;
+                        try {
+                            initializationDescription = createInitializationDescription(helloResult, internalConnection, startTime);
+                        } catch (Throwable localThrowable) {
+                            callback.onResult(null, localThrowable);
+                            return;
+                        }
+                        callback.onResult(initializationDescription, null);
                     }
                 });
     }
