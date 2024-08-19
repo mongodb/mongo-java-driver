@@ -308,7 +308,7 @@ class DefaultServerMonitor implements ServerMonitor {
         private CommandMessage createCommandMessage(final BsonDocument command, final InternalConnection connection,
                 final ServerDescription currentServerDescription) {
             return new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME), command,
-                    new NoOpFieldNameValidator(), primary(),
+                    NoOpFieldNameValidator.INSTANCE, primary(),
                     MessageSettings.builder()
                             .maxWireVersion(connection.getDescription().getMaxWireVersion())
                             .build(),

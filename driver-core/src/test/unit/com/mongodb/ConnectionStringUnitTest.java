@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -91,5 +92,21 @@ final class ConnectionStringUnitTest {
                 () -> assertThrows(IllegalArgumentException.class,
                         () -> new ConnectionString(DEFAULT_OPTIONS + "serverMonitoringMode=invalid"))
         );
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mongodb://foo:bar/@hostname/java?", "mongodb://foo:bar?@hostname/java/",
+                            "mongodb+srv://foo:bar/@hostname/java?", "mongodb+srv://foo:bar?@hostname/java/",
+                            "mongodb://foo:bar/@[::1]:27018", "mongodb://foo:bar?@[::1]:27018",
+                            "mongodb://foo:12345678/@hostname", "mongodb+srv://foo:12345678/@hostname",
+                            "mongodb://foo:12345678/@hostname", "mongodb+srv://foo:12345678/@hostname",
+                            "mongodb://foo:12345678%40hostname", "mongodb+srv://foo:12345678%40hostname",
+                            "mongodb://foo:12345678@bar@hostname", "mongodb+srv://foo:12345678@bar@hostname"
+    })
+    void unescapedPasswordsShouldNotBeLeakedInExceptionMessages(final String input) {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ConnectionString(input));
+        assertFalse(exception.getMessage().contains("bar"));
+        assertFalse(exception.getMessage().contains("12345678"));
     }
 }

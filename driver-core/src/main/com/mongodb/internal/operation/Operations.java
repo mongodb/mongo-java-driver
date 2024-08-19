@@ -48,6 +48,7 @@ import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.SearchIndexModel;
+import com.mongodb.client.model.SearchIndexType;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
@@ -752,7 +753,8 @@ final class Operations<TDocument> {
     private SearchIndexRequest createSearchIndexRequest(final SearchIndexModel model) {
         BsonDocument definition = assertNotNull(toBsonDocument(model.getDefinition()));
         String indexName = model.getName();
+        SearchIndexType searchIndexType = model.getType();
 
-        return new SearchIndexRequest(definition, indexName);
+        return new SearchIndexRequest(definition, indexName, searchIndexType);
     }
 }

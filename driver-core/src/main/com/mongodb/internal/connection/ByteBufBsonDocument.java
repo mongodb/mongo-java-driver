@@ -53,38 +53,31 @@ final class ByteBufBsonDocument extends BsonDocument {
 
     private final transient ByteBuf byteBuf;
 
-    static List<ByteBufBsonDocument> createList(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
-        List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
-        CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
-        outputByteBuf.position(startPosition);
+    /**
+     * Create a list of ByteBufBsonDocument from a buffer positioned at the start of the first document of an OP_MSG Section
+     * of type Document Sequence (Kind 1).
+     * <p>
+     * The provided buffer will be positioned at the end of the section upon normal completion of the method
+     */
+    static List<ByteBufBsonDocument> createList(final ByteBuf outputByteBuf) {
         List<ByteBufBsonDocument> documents = new ArrayList<>();
-        int curDocumentStartPosition = startPosition;
         while (outputByteBuf.hasRemaining()) {
-            int documentSizeInBytes = outputByteBuf.getInt();
-            ByteBuf slice = outputByteBuf.duplicate();
-            slice.position(curDocumentStartPosition);
-            slice.limit(curDocumentStartPosition + documentSizeInBytes);
-            documents.add(new ByteBufBsonDocument(slice));
-            curDocumentStartPosition += documentSizeInBytes;
-            outputByteBuf.position(outputByteBuf.position() + documentSizeInBytes - 4);
-        }
-        for (ByteBuf byteBuffer : duplicateByteBuffers) {
-            byteBuffer.release();
+            ByteBufBsonDocument curDocument = createOne(outputByteBuf);
+            documents.add(curDocument);
         }
         return documents;
     }
 
-    static ByteBufBsonDocument createOne(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
-        List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
-        CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
-        outputByteBuf.position(startPosition);
+    /**
+     * Create a ByteBufBsonDocument from a buffer positioned at the start of a BSON document.
+     * The provided buffer will be positioned at the end of the document upon normal completion of the method
+     */
+    static ByteBufBsonDocument createOne(final ByteBuf outputByteBuf) {
+        int documentStart = outputByteBuf.position();
         int documentSizeInBytes = outputByteBuf.getInt();
-        ByteBuf slice = outputByteBuf.duplicate();
-        slice.position(startPosition);
-        slice.limit(startPosition + documentSizeInBytes);
-        for (ByteBuf byteBuffer : duplicateByteBuffers) {
-            byteBuffer.release();
-        }
+        int documentEnd = documentStart + documentSizeInBytes;
+        ByteBuf slice = outputByteBuf.duplicate().position(documentStart).limit(documentEnd);
+        outputByteBuf.position(documentEnd);
         return new ByteBufBsonDocument(slice);
     }
 
@@ -136,10 +129,6 @@ final class ByteBufBsonDocument extends BsonDocument {
         }
 
         return finder.notFound();
-    }
-
-    int getSizeInBytes() {
-        return byteBuf.getInt(byteBuf.position());
     }
 
     BsonDocument toBaseBsonDocument() {

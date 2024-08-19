@@ -32,6 +32,7 @@ import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RangeOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.fixture.EncryptionFixture;
 import com.mongodb.test.AfterBeforeParameterResolver;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -52,20 +53,18 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -92,8 +91,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
 
     @BeforeEach
     public void setUp(final Type type) {
-        assumeTrue(serverVersionLessThan(8, 0));
-        assumeTrue(serverVersionAtLeast(6, 2));
+        assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isStandalone());
         assumeFalse(isServerlessTest());
 
@@ -116,13 +114,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
         dataKeysCollection.drop();
         dataKeysCollection.insertOne(key1Document);
 
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
-        Map<String, Object> localProviderMap = new HashMap<>();
-        localProviderMap.put("key",
-                Base64.getDecoder().decode(
-                        "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
-                                + "GJkTXVyZG9uSjFk"));
-        kmsProviders.put("local", localProviderMap);
+        Map<String, Map<String, Object>> kmsProviders = getKmsProviders(EncryptionFixture.KmsProviderType.LOCAL);
 
         clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
@@ -139,7 +131,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
                                 .build())
                 .build());
 
-        encryptOptions = new EncryptOptions("RangePreview")
+        encryptOptions = new EncryptOptions("Range")
                 .keyId(key1Id)
                 .contentionFactor(0L)
                 .rangeOptions(type.getRangeOptions());
@@ -149,9 +141,9 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
         BsonBinary encryptedValue30 = clientEncryption.encrypt(type.convertNumber(30), encryptOptions);
         BsonBinary encryptedValue200 = clientEncryption.encrypt(type.convertNumber(200), encryptOptions);
 
-        encryptQueryOptions = new EncryptOptions("RangePreview")
+        encryptQueryOptions = new EncryptOptions("Range")
                 .keyId(key1Id)
-                .queryType("rangePreview")
+                .queryType("range")
                 .contentionFactor(0L)
                 .rangeOptions(type.getRangeOptions());
 
@@ -292,7 +284,7 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
     void testSettingPrecisionErrorsIfTheTypeIsNotADouble(final Type type) {
         BsonValue originalValue = type == Type.INT ? new BsonDouble(6) : new BsonInt32(6);
 
-        EncryptOptions precisionEncryptOptions = new EncryptOptions("RangePreview")
+        EncryptOptions precisionEncryptOptions = new EncryptOptions("Range")
                 .keyId(key1Id)
                 .contentionFactor(0L)
                 .rangeOptions(type.getRangeOptions().precision(2));
@@ -319,7 +311,9 @@ public abstract class AbstractClientSideEncryptionRangeExplicitEncryptionTest {
         }
 
         RangeOptions getRangeOptions() {
-            RangeOptions rangeOptions = new RangeOptions().sparsity(1L);
+            RangeOptions rangeOptions = new RangeOptions()
+                    .trimFactor(1)
+                    .sparsity(1L);
             switch (this) {
                 case DECIMAL_NO_PRECISION:
                 case DOUBLE_NO_PRECISION:

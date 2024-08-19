@@ -79,19 +79,17 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    *
    * `\$gt` may also be `\$gte`. `\$lt` may also be `\$lte`.
    *
-   * Only supported when queryType is "rangePreview" and algorithm is "RangePreview".
-   *
-   * '''Note:''' The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
+   * Only supported when queryType is "range" and algorithm is "Range".
    *
    * [[https://www.mongodb.com/docs/manual/core/queryable-encryption/ queryable encryption]]
    *
-   * @note Requires MongoDB 6.2 or greater
+   * @note Requires MongoDB 8.0 or greater
    * @param expression the Match Expression or Aggregate Expression
    * @param options    the options
    * @return a Publisher containing the queryable encrypted range expression
    * @since 4.9
    */
-  @Beta(Array(Reason.SERVER)) def encryptExpression(
+  def encryptExpression(
       expression: Document,
       options: EncryptOptions
   ): SingleObservable[Document] =

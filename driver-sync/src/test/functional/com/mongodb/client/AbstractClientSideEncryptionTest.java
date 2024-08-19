@@ -255,6 +255,7 @@ public abstract class AbstractClientSideEncryptionTest {
                     kmsProviderMap.put("endpoint", getEnv("org.mongodb.test.kmipEndpoint", "localhost:5698"));
                     break;
                 case "local":
+                case "local:name2":
                     kmsProviderMap.put("key", kmsProviderOptions.getBinary("key").getData());
                     break;
                 default:
@@ -311,7 +312,6 @@ public abstract class AbstractClientSideEncryptionTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        assumeTrue("Skipping timeoutMS tests", filename.startsWith("timeoutMS."));
         for (BsonValue cur : definition.getArray("operations")) {
             BsonDocument operation = cur.asDocument();
             String operationName = operation.getString("name").getValue();

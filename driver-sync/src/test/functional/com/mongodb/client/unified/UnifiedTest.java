@@ -574,6 +574,10 @@ public abstract class UnifiedTest {
                     return clientEncryptionHelper.executeGetKeyByAltName(operation);
                 case "rewrapManyDataKey":
                     return clientEncryptionHelper.executeRewrapManyDataKey(operation);
+                case "encrypt":
+                    return clientEncryptionHelper.executeEncrypt(operation);
+                case "decrypt":
+                    return clientEncryptionHelper.executeDecrypt(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }

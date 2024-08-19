@@ -68,7 +68,7 @@ class OperationUnitSpecification extends Specification {
             [9, 0]: 25,
     ]
 
-    static int getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
+    static Integer getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
         def maxWireVersion = SERVER_TO_WIRE_VERSION_MAP[serverVersion.subList(0, 2)]
 
         if (maxWireVersion == null) {

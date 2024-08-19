@@ -26,6 +26,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -349,7 +350,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         this.<BsonDocument>block(cb -> localConnection.commandAsync(getNamespace().getDatabaseName(),
                 new BsonDocument("killCursors", new BsonString(getNamespace().getCollectionName()))
                         .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId())))),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getOperationContext(), cb));
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getOperationContext(), cb));
         localConnection.release();
 
         cursorNext();
@@ -414,7 +415,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         }
 
         BsonDocument results = block(cb -> connection.commandAsync(getDatabaseName(), findCommand,
-                NO_OP_FIELD_NAME_VALIDATOR, readPreference, CommandResultDocumentCodec.create(DOCUMENT_DECODER, FIRST_BATCH),
+                NoOpFieldNameValidator.INSTANCE, readPreference, CommandResultDocumentCodec.create(DOCUMENT_DECODER, FIRST_BATCH),
                 connectionSource.getOperationContext(), cb));
 
         assertNotNull(results);

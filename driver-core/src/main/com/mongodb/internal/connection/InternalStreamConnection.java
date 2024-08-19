@@ -610,6 +610,7 @@ public class InternalStreamConnection implements InternalConnection {
                         return;
                     }
                     assertNotNull(responseBuffers);
+                    T commandResult;
                     try {
                         updateSessionContext(operationContext.getSessionContext(), responseBuffers);
                         boolean commandOk =
@@ -624,13 +625,14 @@ public class InternalStreamConnection implements InternalConnection {
                         }
                         commandEventSender.sendSucceededEvent(responseBuffers);
 
-                        T result1 = getCommandResult(decoder, responseBuffers, messageId, operationContext.getTimeoutContext());
-                        callback.onResult(result1, null);
+                        commandResult = getCommandResult(decoder, responseBuffers, messageId, operationContext.getTimeoutContext());
                     } catch (Throwable localThrowable) {
                         callback.onResult(null, localThrowable);
+                        return;
                     } finally {
                         responseBuffers.close();
                     }
+                    callback.onResult(commandResult, null);
                 }));
             }
         });
@@ -689,8 +691,12 @@ public class InternalStreamConnection implements InternalConnection {
         }).thenRunTryCatchAsyncBlocks(c -> {
             stream.writeAsync(byteBuffers, operationContext, c.asHandler());
         }, Exception.class, (e, c) -> {
-            close();
-            throwTranslatedWriteException(e, operationContext);
+            try {
+                close();
+                throwTranslatedWriteException(e, operationContext);
+            } catch (Throwable translatedException) {
+                c.completeExceptionally(translatedException);
+            }
         }).finish(errorHandlingCallback(callback, LOGGER));
     }
 

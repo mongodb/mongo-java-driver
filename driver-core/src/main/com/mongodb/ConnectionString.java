@@ -1209,7 +1209,7 @@ public class ConnectionString {
                 }
                 int idx = host.indexOf("]:");
                 if (idx != -1) {
-                    validatePort(host, host.substring(idx + 2));
+                    validatePort(host.substring(idx + 2));
                 }
             } else {
                 int colonCount = countOccurrences(host, ":");
@@ -1218,7 +1218,7 @@ public class ConnectionString {
                             + "Reserved characters such as ':' must be escaped according RFC 2396. "
                             + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
                 } else if (colonCount == 1) {
-                    validatePort(host, host.substring(host.indexOf(":") + 1));
+                    validatePort(host.substring(host.indexOf(":") + 1));
                 }
             }
             hosts.add(host);
@@ -1227,19 +1227,17 @@ public class ConnectionString {
         return hosts;
     }
 
-    private void validatePort(final String host, final String port) {
-        boolean invalidPort = false;
+    private void validatePort(final String port) {
         try {
             int portInt = Integer.parseInt(port);
             if (portInt <= 0 || portInt > 65535) {
-                invalidPort = true;
+                throw new IllegalArgumentException("The connection string contains an invalid host and port. "
+                        + "The port must be an integer between 0 and 65535.");
             }
         } catch (NumberFormatException e) {
-            invalidPort = true;
-        }
-        if (invalidPort) {
-            throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
-                    + "The port '%s' is not a valid, it must be an integer between 0 and 65535", host, port));
+            throw new IllegalArgumentException("The connection string contains an invalid host and port. "
+                    + "The port contains non-digit characters, it must be an integer between 0 and 65535. "
+                    + "Hint: username and password must be escaped according to RFC 3986.");
         }
     }
 

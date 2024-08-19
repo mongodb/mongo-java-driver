@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <TResult> The type of the result.
  * @since 4.11
- * @mongodb.server.release 7.0
+ * @mongodb.server.release 6.0
  */
 @Evolving
 public interface ListSearchIndexesPublisher<TResult> extends Publisher<TResult> {

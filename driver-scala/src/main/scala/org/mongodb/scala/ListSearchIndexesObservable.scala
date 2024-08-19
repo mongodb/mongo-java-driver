@@ -41,7 +41,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
    * Sets an Atlas Search index name for this operation.
    *
    * @param indexName Atlas Search index name.
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    */
   def name(indexName: String): ListSearchIndexesObservable[TResult] = {
     wrapped.name(indexName)
@@ -126,7 +126,7 @@ case class ListSearchIndexesObservable[TResult](wrapped: ListSearchIndexesPublis
   /**
    * Sets the timeoutMode for the cursor.
    *
-   * Requires the `timeout` to be set, either in the [[com.mongodb.MongoClientSettings]],
+   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
    * via [[MongoDatabase]] or via [[MongoCollection]]
    *
    * If the `timeout` is set then:

@@ -49,6 +49,7 @@ import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
 import org.bson.codecs.kotlinx.samples.DataClassContainsValueClass
 import org.bson.codecs.kotlinx.samples.DataClassEmbedded
 import org.bson.codecs.kotlinx.samples.DataClassKey
+import org.bson.codecs.kotlinx.samples.DataClassLastItemDefaultsToNull
 import org.bson.codecs.kotlinx.samples.DataClassListOfDataClasses
 import org.bson.codecs.kotlinx.samples.DataClassListOfListOfDataClasses
 import org.bson.codecs.kotlinx.samples.DataClassListOfSealed
@@ -84,6 +85,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithEncodeDefault
 import org.bson.codecs.kotlinx.samples.DataClassWithEnum
 import org.bson.codecs.kotlinx.samples.DataClassWithEnumMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithFailingInit
+import org.bson.codecs.kotlinx.samples.DataClassWithListThatLastItemDefaultsToNull
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableList
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
@@ -299,6 +301,27 @@ class KotlinSerializerCodecTest {
         val dataClass = DataClassWithNulls(null, null, null)
         assertRoundTrips(emptyDocument, dataClass)
         assertRoundTrips(expectedNulls, dataClass, altConfiguration)
+    }
+
+    @Test
+    fun testDataClassWithListThatLastItemDefaultsToNull() {
+        val expectedWithOutNulls =
+            """{
+            | "elements": [{"required": "required"}, {"required": "required"}],
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithListThatLastItemDefaultsToNull(
+                listOf(DataClassLastItemDefaultsToNull("required"), DataClassLastItemDefaultsToNull("required")))
+        assertRoundTrips(expectedWithOutNulls, dataClass)
+
+        val expectedWithNulls =
+            """{
+            | "elements": [{"required": "required", "optional": null}, {"required": "required", "optional": null}],
+            |}"""
+                .trimMargin()
+        assertRoundTrips(expectedWithNulls, dataClass, BsonConfiguration(explicitNulls = true))
     }
 
     @Test
