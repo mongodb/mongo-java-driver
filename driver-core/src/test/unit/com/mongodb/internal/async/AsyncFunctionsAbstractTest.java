@@ -25,10 +25,10 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
+abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0L, 0));
+
     @Test
     void test1Method() {
         // the number of expected variations is often: 1 + N methods invoked
@@ -761,25 +761,6 @@ final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
     }
 
     @Test
-    void testInvalid() {
-        setIsTestingAbruptCompletion(false);
-        setAsyncStep(true);
-        assertThrows(IllegalStateException.class, () -> {
-            beginAsync().thenRun(c -> {
-                async(3, c);
-                throw new IllegalStateException("must not cause second callback invocation");
-            }).finish((v, e) -> {});
-        });
-        assertThrows(IllegalStateException.class, () -> {
-            beginAsync().thenRun(c -> {
-                async(3, c);
-            }).finish((v, e) -> {
-                throw new IllegalStateException("must not cause second callback invocation");
-            });
-        });
-    }
-
-    @Test
     void testDerivation() {
         // Demonstrates the progression from nested async to the API.
 
@@ -866,5 +847,4 @@ final class AsyncFunctionsTest extends AsyncFunctionsTestAbstract {
                     }).finish(callback);
                 });
     }
-
 }

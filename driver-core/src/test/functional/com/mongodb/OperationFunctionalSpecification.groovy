@@ -53,10 +53,8 @@ import com.mongodb.internal.operation.MixedBulkWriteOperation
 import com.mongodb.internal.operation.ReadOperation
 import com.mongodb.internal.operation.WriteOperation
 import com.mongodb.internal.session.SessionContext
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.Document
-import org.bson.FieldNameValidator
 import org.bson.codecs.DocumentCodec
 import spock.lang.Shared
 import spock.lang.Specification
@@ -536,10 +534,4 @@ class OperationFunctionalSpecification extends Specification {
             .locale('en')
             .collationStrength(CollationStrength.SECONDARY)
             .build()
-
-    static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
-
-    static boolean serverVersionIsGreaterThan(List<Integer> actualVersion, List<Integer> minVersion) {
-        new ServerVersion(actualVersion).compareTo(new ServerVersion(minVersion)) >= 0
-    }
 }

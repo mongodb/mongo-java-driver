@@ -23,6 +23,7 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
+import com.mongodb.fixture.EncryptionFixture.KmsProviderType;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -39,11 +40,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.getEnv;
 import static com.mongodb.ClusterFixture.hasEncryptionTestsEnabled;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -80,25 +81,12 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
 
 
         // Step 2: Create encrypted client and client encryption
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
-            put("aws",  new HashMap<String, Object>() {{
-                put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
-                put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
-            }});
-            put("azure",  new HashMap<String, Object>() {{
-                put("tenantId", getEnv("AZURE_TENANT_ID"));
-                put("clientId", getEnv("AZURE_CLIENT_ID"));
-                put("clientSecret", getEnv("AZURE_CLIENT_SECRET"));
-            }});
-            put("gcp",  new HashMap<String, Object>() {{
-                put("email", getEnv("GCP_EMAIL"));
-                put("privateKey", getEnv("GCP_PRIVATE_KEY"));
-            }});
-            put("local", new HashMap<String, Object>() {{
-                put("key", "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBM"
-                        + "UN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk");
-            }});
-        }};
+        Map<String, Map<String, Object>> kmsProviders = getKmsProviders(
+                KmsProviderType.AWS,
+                KmsProviderType.AZURE,
+                KmsProviderType.GCP,
+                KmsProviderType.LOCAL
+        );
 
         HashMap<String, BsonDocument> schemaMap = new HashMap<String, BsonDocument>() {{
             put("db.coll", BsonDocument.parse("{"

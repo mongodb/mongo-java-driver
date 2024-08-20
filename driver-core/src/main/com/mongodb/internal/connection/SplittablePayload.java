@@ -23,6 +23,7 @@ import com.mongodb.internal.bulk.WriteRequest;
 import com.mongodb.internal.bulk.WriteRequestWithIndex;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT;
@@ -57,6 +59,7 @@ public final class SplittablePayload {
     private final WriteRequestEncoder writeRequestEncoder = new WriteRequestEncoder();
     private final Type payloadType;
     private final List<WriteRequestWithIndex> writeRequestWithIndexes;
+    private final boolean ordered;
     private final Map<Integer, BsonValue> insertedIds = new HashMap<>();
     private int position = 0;
 
@@ -91,9 +94,10 @@ public final class SplittablePayload {
      * @param payloadType the payload type
      * @param writeRequestWithIndexes the writeRequests
      */
-    public SplittablePayload(final Type payloadType, final List<WriteRequestWithIndex> writeRequestWithIndexes) {
+    public SplittablePayload(final Type payloadType, final List<WriteRequestWithIndex> writeRequestWithIndexes, final boolean ordered) {
         this.payloadType = notNull("batchType", payloadType);
         this.writeRequestWithIndexes = notNull("writeRequests", writeRequestWithIndexes);
+        this.ordered = ordered;
     }
 
     /**
@@ -117,7 +121,7 @@ public final class SplittablePayload {
     }
 
     boolean hasPayload() {
-        return writeRequestWithIndexes.size() > 0;
+        return !writeRequestWithIndexes.isEmpty();
     }
 
     public int size() {
@@ -135,10 +139,6 @@ public final class SplittablePayload {
         return writeRequestWithIndexes.stream().map(wri ->
                     new BsonDocumentWrapper<>(wri, writeRequestEncoder))
                     .collect(Collectors.toList());
-    }
-
-    public List<WriteRequestWithIndex> getWriteRequestWithIndexes() {
-        return writeRequestWithIndexes;
     }
 
     /**
@@ -160,7 +160,13 @@ public final class SplittablePayload {
      * @return true if there are more values after the current position
      */
     public boolean hasAnotherSplit() {
+        // this method must be not called before this payload having been encoded
+        assertTrue(position > 0);
         return writeRequestWithIndexes.size() > position;
+    }
+
+    boolean isOrdered() {
+        return ordered;
     }
 
     /**
@@ -169,7 +175,7 @@ public final class SplittablePayload {
     public SplittablePayload getNextSplit() {
         isTrue("hasAnotherSplit", hasAnotherSplit());
         List<WriteRequestWithIndex> nextPayLoad = writeRequestWithIndexes.subList(position, writeRequestWithIndexes.size());
-        return new SplittablePayload(payloadType, nextPayLoad);
+        return new SplittablePayload(payloadType, nextPayLoad, ordered);
     }
 
     /**
@@ -191,10 +197,23 @@ public final class SplittablePayload {
                 InsertRequest insertRequest = (InsertRequest) writeRequestWithIndex.getWriteRequest();
                 BsonDocument document = insertRequest.getDocument();
 
-                IdHoldingBsonWriter idHoldingBsonWriter = new IdHoldingBsonWriter(writer);
-                getCodec(document).encode(idHoldingBsonWriter, document,
-                        EncoderContext.builder().isEncodingCollectibleDocument(true).build());
-                insertedIds.put(writeRequestWithIndex.getIndex(), idHoldingBsonWriter.getId());
+                BsonValue documentId = insertedIds.compute(
+                        writeRequestWithIndex.getIndex(),
+                        (writeRequestIndex, writeRequestDocumentId) -> {
+                            IdHoldingBsonWriter idHoldingBsonWriter = new IdHoldingBsonWriter(
+                                    writer,
+                                    // Reuse `writeRequestDocumentId` if it may have been generated
+                                    // by `IdHoldingBsonWriter` in a previous attempt.
+                                    // If its type is not `BsonObjectId`, we know it could not have been generated.
+                                    writeRequestDocumentId instanceof BsonObjectId ? writeRequestDocumentId.asObjectId() : null);
+                            getCodec(document).encode(idHoldingBsonWriter, document,
+                                    EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+                            return idHoldingBsonWriter.getId();
+                        });
+                if (documentId == null) {
+                    // we must add an entry anyway because we rely on all the indexes being present
+                    insertedIds.put(writeRequestWithIndex.getIndex(), null);
+                }
             } else if (writeRequestWithIndex.getType() == WriteRequest.Type.UPDATE
                     || writeRequestWithIndex.getType() == WriteRequest.Type.REPLACE) {
                 UpdateRequest update = (UpdateRequest) writeRequestWithIndex.getWriteRequest();

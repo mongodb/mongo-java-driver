@@ -19,8 +19,6 @@ package com.mongodb.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
@@ -212,7 +210,6 @@ public class Crypt implements Closeable {
      * @param options    the options
      * @return the encrypted expression
      */
-    @Beta(Reason.SERVER)
     BsonDocument encryptExpression(final BsonDocument expression, final EncryptOptions options, @Nullable final Timeout timeoutOperation) {
         notNull("expression", expression);
         notNull("options", options);

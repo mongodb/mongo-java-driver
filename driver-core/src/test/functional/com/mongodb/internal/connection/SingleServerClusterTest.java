@@ -110,7 +110,7 @@ public class SingleServerClusterTest {
 
         // when
         BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("count", new BsonString(collectionName)),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
 
         // then
         assertEquals(new BsonDouble(1.0).intValue(), result.getNumber("ok").intValue());

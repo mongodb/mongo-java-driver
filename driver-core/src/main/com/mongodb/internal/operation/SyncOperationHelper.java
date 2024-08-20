@@ -210,7 +210,7 @@ final class SyncOperationHelper {
                                 commandCreator.create(binding.getOperationContext(),
                                         source.getServerDescription(),
                                         connection.getDescription()),
-                                new NoOpFieldNameValidator(), primary(), BSON_DOCUMENT_CODEC, binding.getOperationContext())),
+                                NoOpFieldNameValidator.INSTANCE, primary(), BSON_DOCUMENT_CODEC, binding.getOperationContext())),
                         connection));
     }
 
@@ -219,7 +219,7 @@ final class SyncOperationHelper {
                                    final Decoder<D> decoder, final CommandWriteTransformer<D, T> transformer) {
         return withSourceAndConnection(binding::getWriteConnectionSource, false, (source, connection) ->
                 transformer.apply(assertNotNull(
-                        connection.command(database, command, new NoOpFieldNameValidator(), primary(), decoder,
+                        connection.command(database, command, NoOpFieldNameValidator.INSTANCE, primary(), decoder,
                                 binding.getOperationContext())), connection));
     }
 
@@ -228,7 +228,7 @@ final class SyncOperationHelper {
                                 final Connection connection, final CommandWriteTransformer<BsonDocument, T> transformer) {
         notNull("binding", binding);
         return transformer.apply(assertNotNull(
-                connection.command(database, command, new NoOpFieldNameValidator(), primary(), BSON_DOCUMENT_CODEC,
+                connection.command(database, command, NoOpFieldNameValidator.INSTANCE, primary(), BSON_DOCUMENT_CODEC,
                         binding.getOperationContext())),
                 connection);
     }
@@ -295,7 +295,7 @@ final class SyncOperationHelper {
         BsonDocument command = commandCreator.create(operationContext, source.getServerDescription(),
                 connection.getDescription());
         retryState.attach(AttachmentKeys.commandDescriptionSupplier(), command::getFirstKey, false);
-        return transformer.apply(assertNotNull(connection.command(database, command, new NoOpFieldNameValidator(),
+        return transformer.apply(assertNotNull(connection.command(database, command, NoOpFieldNameValidator.INSTANCE,
                 source.getReadPreference(), decoder, operationContext)), source, connection);
     }
 

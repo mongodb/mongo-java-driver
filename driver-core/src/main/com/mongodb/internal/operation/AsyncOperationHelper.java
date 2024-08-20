@@ -225,7 +225,7 @@ final class AsyncOperationHelper {
         Assertions.notNull("binding", binding);
         SingleResultCallback<T> addingRetryableLabelCallback = addingRetryableLabelCallback(callback,
                 connection.getDescription().getMaxWireVersion());
-        connection.commandAsync(database, command, new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
+        connection.commandAsync(database, command, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
                 binding.getOperationContext(), transformingWriteCallback(transformer, connection, addingRetryableLabelCallback));
     }
 
@@ -306,7 +306,7 @@ final class AsyncOperationHelper {
             callback.onResult(null, e);
             return;
         }
-        connection.commandAsync(database, command, new NoOpFieldNameValidator(), source.getReadPreference(), decoder,
+        connection.commandAsync(database, command, NoOpFieldNameValidator.INSTANCE, source.getReadPreference(), decoder,
                 operationContext, transformingReadCallback(transformer, source, connection, callback));
     }
 
