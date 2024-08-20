@@ -223,7 +223,7 @@ package object search {
    * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
-   * @note Requires MongoDB 6.0.10 or greater
+   * @note Requires MongoDB 6.0.11 or greater
    * @since 4.11
    */
   @Sealed
@@ -236,7 +236,7 @@ package object search {
    * Configures approximate vector search for Atlas Vector Search to enable searches that may not return the exact closest vectors.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
-   * @note Requires MongoDB 6.0.10 or greater
+   * @note Requires MongoDB 6.0.11, 7.0.2 or greater
    * @since 5.2
    */
   @Sealed
@@ -250,7 +250,7 @@ package object search {
    * results are the closest vectors to a given query vector.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
-   * @note Requires MongoDB 6.0.10 or greater
+   * @note Requires MongoDB 6.0.16, 7.0.10, 7.3.2 or greater
    * @since 5.2
    */
   @Sealed

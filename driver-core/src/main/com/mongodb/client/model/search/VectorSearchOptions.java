@@ -27,7 +27,7 @@ import org.bson.conversions.Bson;
  *
  * @see Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)
  * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
- * @mongodb.server.release 6.0.10
+ * @mongodb.server.release 6.0.11
  * @since 4.11
  */
 @Sealed

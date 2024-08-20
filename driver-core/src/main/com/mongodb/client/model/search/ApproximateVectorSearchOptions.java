@@ -28,7 +28,7 @@ import com.mongodb.client.model.Aggregates;
  *
  * @see Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)
  * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
- * @mongodb.server.release 6.0.10
+ * @mongodb.server.release 6.0.11, 7.0.2 or greater.
  * @since 5.2
  */
 @Sealed
