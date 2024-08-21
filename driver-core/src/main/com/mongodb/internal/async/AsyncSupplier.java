@@ -18,6 +18,7 @@ package com.mongodb.internal.async;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 
@@ -54,18 +55,25 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     /**
-     * Must be invoked at end of async chain.
+     * Must be invoked at end of async chain or when executing a callback handler supplied by the caller.
+     *
+     * @see #thenApply(AsyncFunction)
+     * @see #thenConsume(AsyncConsumer)
+     * @see #onErrorIf(Predicate, AsyncFunction)
      * @param callback the callback provided by the method the chain is used in
      */
     default void finish(final SingleResultCallback<T> callback) {
-        final boolean[] callbackInvoked = {false};
+        final AtomicBoolean callbackInvoked = new AtomicBoolean(false);
         try {
             this.unsafeFinish((v, e) -> {
-                callbackInvoked[0] = true;
+                if (!callbackInvoked.compareAndSet(false, true)) {
+                    throw new AssertionError(String.format("Callback has been already completed. It could happen "
+                            + "if code throws an exception after invoking an async method. Value: %s", v), e);
+                }
                 callback.onResult(v, e);
             });
         } catch (Throwable t) {
-            if (callbackInvoked[0]) {
+            if (!callbackInvoked.compareAndSet(false, true)) {
                 throw t;
             } else {
                 callback.completeExceptionally(t);
@@ -80,9 +88,9 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
      */
     default <R> AsyncSupplier<R> thenApply(final AsyncFunction<T, R> function) {
         return (c) -> {
-            this.unsafeFinish((v, e) -> {
+            this.finish((v, e) -> {
                 if (e == null) {
-                    function.unsafeFinish(v, c);
+                    function.finish(v, c);
                 } else {
                     c.completeExceptionally(e);
                 }
@@ -99,7 +107,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
         return (c) -> {
             this.unsafeFinish((v, e) -> {
                 if (e == null) {
-                    consumer.unsafeFinish(v, c);
+                    consumer.finish(v, c);
                 } else {
                     c.completeExceptionally(e);
                 }
@@ -131,7 +139,7 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
                 return;
             }
             if (errorMatched) {
-                errorFunction.unsafeFinish(e, callback);
+                errorFunction.finish(e, callback);
             } else {
                 callback.completeExceptionally(e);
             }
