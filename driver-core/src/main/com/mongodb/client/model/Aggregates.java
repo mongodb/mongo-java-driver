@@ -952,7 +952,7 @@ public final class Aggregates {
      *
      * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @mongodb.server.release 6.0.10
+     * @mongodb.server.release 6.0.11
      * @since 4.11
      */
     @Beta(Reason.SERVER)
