@@ -23,6 +23,7 @@ import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientWriteModel;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The result of a successful or partially successful client-level bulk write operation.
@@ -42,17 +43,6 @@ public interface ClientBulkWriteResult {
      * @return Whether this result was acknowledged.
      */
     boolean isAcknowledged();
-
-    /**
-     * Indicates whether there are {@linkplain ClientBulkWriteOptions#verboseResults(Boolean) verbose results}
-     * of individual operations.
-     * If not, then {@link #getInsertResults()}, {@link #getUpdateResults()}, {@link #getDeleteResults()}
-     * throw {@link UnsupportedOperationException}.
-     *
-     * @return Whether there are verbose results.
-     * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
-     */
-    boolean hasVerboseResults();
 
     /**
      * The number of documents that were inserted across all insert operations.
@@ -95,44 +85,54 @@ public interface ClientBulkWriteResult {
     long getDeletedCount();
 
     /**
-     * The indexed {@link ClientInsertOneResult}s.
-     * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
-     * in the client-level bulk write operation.
-     * <p>
-     * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
+     * The {@linkplain ClientBulkWriteOptions#verboseResults(Boolean) verbose results} of individual operations.
      *
-     * @return The indexed {@link ClientInsertOneResult}s.
-     * @throws UnsupportedOperationException If this result is either not {@linkplain #isAcknowledged() acknowledged},
-     * or does not have {@linkplain #hasVerboseResults() verbose results}.
-     * @see ClientBulkWriteException#getWriteErrors()
+     * @return {@link Optional} verbose results of individual operations.
+     * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    Map<Long, ClientInsertOneResult> getInsertResults();
+    Optional<Verbose> getVerbose();
 
     /**
-     * The indexed {@link ClientUpdateResult}s.
-     * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
-     * in the client-level bulk write operation.
-     * <p>
-     * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
+     * The {@linkplain ClientBulkWriteResult#getVerbose() verbose results} of individual operations.
      *
-     * @return The indexed {@link ClientUpdateResult}s.
-     * @throws UnsupportedOperationException If this result is either not {@linkplain #isAcknowledged() acknowledged},
-     * or does not have {@linkplain #hasVerboseResults() verbose results}.
-     * @see ClientBulkWriteException#getWriteErrors()
+     * @since 5.3
      */
-    Map<Long, ClientUpdateResult> getUpdateResults();
+    @Evolving
+    interface Verbose {
+        /**
+         * The indexed {@link ClientInsertOneResult}s.
+         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
+         * in the client-level bulk write operation.
+         * <p>
+         * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
+         *
+         * @return The indexed {@link ClientInsertOneResult}s.
+         * @see ClientBulkWriteException#getWriteErrors()
+         */
+        Map<Long, ClientInsertOneResult> getInsertResults();
 
-    /**
-     * The indexed {@link ClientDeleteResult}s.
-     * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
-     * in the client-level bulk write operation.
-     * <p>
-     * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
-     *
-     * @return The indexed {@link ClientDeleteResult}s.
-     * @throws UnsupportedOperationException If this result is either not {@linkplain #isAcknowledged() acknowledged},
-     * or does not have {@linkplain #hasVerboseResults() verbose results}.
-     * @see ClientBulkWriteException#getWriteErrors()
-     */
-    Map<Long, ClientDeleteResult> getDeleteResults();
+        /**
+         * The indexed {@link ClientUpdateResult}s.
+         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
+         * in the client-level bulk write operation.
+         * <p>
+         * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
+         *
+         * @return The indexed {@link ClientUpdateResult}s.
+         * @see ClientBulkWriteException#getWriteErrors()
+         */
+        Map<Long, ClientUpdateResult> getUpdateResults();
+
+        /**
+         * The indexed {@link ClientDeleteResult}s.
+         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
+         * in the client-level bulk write operation.
+         * <p>
+         * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
+         *
+         * @return The indexed {@link ClientDeleteResult}s.
+         * @see ClientBulkWriteException#getWriteErrors()
+         */
+        Map<Long, ClientDeleteResult> getDeleteResults();
+    }
 }

@@ -16,12 +16,11 @@
 package com.mongodb.internal.client.result.bulk;
 
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
-import com.mongodb.client.result.bulk.ClientDeleteResult;
-import com.mongodb.client.result.bulk.ClientInsertOneResult;
-import com.mongodb.client.result.bulk.ClientUpdateResult;
 
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+
+import static java.util.Optional.empty;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -52,11 +51,6 @@ public final class AcknowledgedSummaryClientBulkWriteResult implements ClientBul
     }
 
     @Override
-    public boolean hasVerboseResults() {
-        return false;
-    }
-
-    @Override
     public long getInsertedCount() {
         return insertedCount;
     }
@@ -82,22 +76,8 @@ public final class AcknowledgedSummaryClientBulkWriteResult implements ClientBul
     }
 
     @Override
-    public Map<Long, ClientInsertOneResult> getInsertResults() throws UnsupportedOperationException {
-        throw noVerboseResultsException();
-    }
-
-    @Override
-    public Map<Long, ClientUpdateResult> getUpdateResults() throws UnsupportedOperationException {
-        throw noVerboseResultsException();
-    }
-
-    @Override
-    public Map<Long, ClientDeleteResult> getDeleteResults() throws UnsupportedOperationException {
-        throw noVerboseResultsException();
-    }
-
-    private static UnsupportedOperationException noVerboseResultsException() {
-        return new UnsupportedOperationException("Verbose results are not available");
+    public Optional<Verbose> getVerbose() {
+        return empty();
     }
 
     @Override

@@ -80,7 +80,7 @@ public interface ClientBulkWriteOptions {
     ClientBulkWriteOptions comment(@Nullable BsonValue comment);
 
     /**
-     * Enables or disables requesting {@linkplain ClientBulkWriteResult#hasVerboseResults() verbose results}.
+     * Enables or disables requesting {@linkplain ClientBulkWriteResult#getVerbose() verbose results}.
      *
      * @param verboseResults The flag specifying whether to request verbose results.
      * If {@code null}, the client defaults to {@code false}.

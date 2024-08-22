@@ -22,17 +22,16 @@ import com.mongodb.client.result.bulk.ClientUpdateResult;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
-import static java.util.Collections.unmodifiableMap;
+import static java.util.Optional.of;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBulkWriteResult {
     private final AcknowledgedSummaryClientBulkWriteResult summaryResults;
-    private final Map<Long, ClientInsertOneResult> insertResults;
-    private final Map<Long, ClientUpdateResult> updateResults;
-    private final Map<Long, ClientDeleteResult> deleteResults;
+    private final Verbose verbose;
 
     public AcknowledgedVerboseClientBulkWriteResult(
             final AcknowledgedSummaryClientBulkWriteResult summaryResults,
@@ -40,18 +39,11 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
             final Map<Long, ClientUpdateResult> updateResults,
             final Map<Long, ClientDeleteResult> deleteResults) {
         this.summaryResults = summaryResults;
-        this.insertResults = unmodifiableMap(insertResults);
-        this.updateResults = unmodifiableMap(updateResults);
-        this.deleteResults = unmodifiableMap(deleteResults);
+        this.verbose = new Verbose(insertResults, updateResults, deleteResults);
     }
 
     @Override
     public boolean isAcknowledged() {
-        return true;
-    }
-
-    @Override
-    public boolean hasVerboseResults() {
         return true;
     }
 
@@ -81,18 +73,8 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
     }
 
     @Override
-    public Map<Long, ClientInsertOneResult> getInsertResults() {
-        return insertResults;
-    }
-
-    @Override
-    public Map<Long, ClientUpdateResult> getUpdateResults() {
-        return updateResults;
-    }
-
-    @Override
-    public Map<Long, ClientDeleteResult> getDeleteResults() {
-        return deleteResults;
+    public Optional<ClientBulkWriteResult.Verbose> getVerbose() {
+        return of(verbose);
     }
 
     @Override
@@ -105,14 +87,12 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
         }
         final AcknowledgedVerboseClientBulkWriteResult that = (AcknowledgedVerboseClientBulkWriteResult) o;
         return Objects.equals(summaryResults, that.summaryResults)
-                && Objects.equals(insertResults, that.insertResults)
-                && Objects.equals(updateResults, that.updateResults)
-                && Objects.equals(deleteResults, that.deleteResults);
+                && Objects.equals(verbose, that.verbose);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(summaryResults, insertResults, updateResults, deleteResults);
+        return Objects.hash(summaryResults, verbose);
     }
 
     @Override
@@ -123,9 +103,67 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
                 + ", matchedCount=" + summaryResults.getMatchedCount()
                 + ", modifiedCount=" + summaryResults.getModifiedCount()
                 + ", deletedCount=" + summaryResults.getDeletedCount()
-                + ", insertResults=" + insertResults
-                + ", updateResults=" + updateResults
-                + ", deleteResults=" + deleteResults
+                + ", insertResults=" + verbose.insertResults
+                + ", updateResults=" + verbose.updateResults
+                + ", deleteResults=" + verbose.deleteResults
                 + '}';
+    }
+
+    private static final class Verbose implements ClientBulkWriteResult.Verbose {
+        private final Map<Long, ClientInsertOneResult> insertResults;
+        private final Map<Long, ClientUpdateResult> updateResults;
+        private final Map<Long, ClientDeleteResult> deleteResults;
+
+        Verbose(
+                final Map<Long, ClientInsertOneResult> insertResults,
+                final Map<Long, ClientUpdateResult> updateResults,
+                final Map<Long, ClientDeleteResult> deleteResults) {
+            this.insertResults = insertResults;
+            this.updateResults = updateResults;
+            this.deleteResults = deleteResults;
+        }
+
+        @Override
+        public Map<Long, ClientInsertOneResult> getInsertResults() {
+            return insertResults;
+        }
+
+        @Override
+        public Map<Long, ClientUpdateResult> getUpdateResults() {
+            return updateResults;
+        }
+
+        @Override
+        public Map<Long, ClientDeleteResult> getDeleteResults() {
+            return deleteResults;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Verbose verbose = (Verbose) o;
+            return Objects.equals(insertResults, verbose.insertResults)
+                    && Objects.equals(updateResults, verbose.updateResults)
+                    && Objects.equals(deleteResults, verbose.deleteResults);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(insertResults, updateResults, deleteResults);
+        }
+
+        @Override
+        public String toString() {
+            return "AcknowledgedVerboseClientBulkWriteResult.Verbose{"
+                    + ", insertResults=" + insertResults
+                    + ", updateResults=" + updateResults
+                    + ", deleteResults=" + deleteResults
+                    + '}';
+        }
     }
 }

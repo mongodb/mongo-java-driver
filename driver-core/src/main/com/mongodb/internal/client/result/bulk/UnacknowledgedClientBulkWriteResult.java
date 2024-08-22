@@ -17,11 +17,8 @@ package com.mongodb.internal.client.result.bulk;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
-import com.mongodb.client.result.bulk.ClientDeleteResult;
-import com.mongodb.client.result.bulk.ClientInsertOneResult;
-import com.mongodb.client.result.bulk.ClientUpdateResult;
 
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -36,11 +33,6 @@ public final class UnacknowledgedClientBulkWriteResult implements ClientBulkWrit
     @Override
     public boolean isAcknowledged() {
         return false;
-    }
-
-    @Override
-    public boolean hasVerboseResults() throws UnsupportedOperationException {
-        throw createUnacknowledgedResultsException();
     }
 
     @Override
@@ -69,17 +61,7 @@ public final class UnacknowledgedClientBulkWriteResult implements ClientBulkWrit
     }
 
     @Override
-    public Map<Long, ClientInsertOneResult> getInsertResults() throws UnsupportedOperationException {
-        throw createUnacknowledgedResultsException();
-    }
-
-    @Override
-    public Map<Long, ClientUpdateResult> getUpdateResults() throws UnsupportedOperationException {
-        throw createUnacknowledgedResultsException();
-    }
-
-    @Override
-    public Map<Long, ClientDeleteResult> getDeleteResults() throws UnsupportedOperationException {
+    public Optional<Verbose> getVerbose() throws UnsupportedOperationException {
         throw createUnacknowledgedResultsException();
     }
 
