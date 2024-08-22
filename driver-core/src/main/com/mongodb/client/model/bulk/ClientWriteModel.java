@@ -53,7 +53,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating at most one document that matches the {@code filter}.
+     * Creates a model for updating at most one document matching the {@code filter}.
      * This method is functionally equivalent to {@link #updateOne(Bson, Bson, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
      *
@@ -70,7 +70,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating at most one document that matches the {@code filter}.
+     * Creates a model for updating at most one document matching the {@code filter}.
      *
      * @param filter The filter.
      * @param update The update.
@@ -87,7 +87,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating at most one document that matches the {@code filter}.
+     * Creates a model for updating at most one document matching the {@code filter}.
      * This method is functionally equivalent to {@link #updateOne(Bson, Iterable, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
      *
@@ -104,7 +104,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating at most one document that matches the {@code filter}.
+     * Creates a model for updating at most one document matching the {@code filter}.
      *
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
@@ -121,7 +121,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating all documents that match the {@code filter}.
+     * Creates a model for updating all documents matching the {@code filter}.
      * This method is functionally equivalent to {@link #updateMany(Bson, Bson, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default}.
      *
@@ -138,7 +138,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating all documents that match the {@code filter}.
+     * Creates a model for updating all documents matching the {@code filter}.
      *
      * @param filter The filter.
      * @param update The update.
@@ -155,7 +155,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating all documents that match the {@code filter}.
+     * Creates a model for updating all documents matching the {@code filter}.
      * This method is functionally equivalent to {@link #updateMany(Bson, Iterable, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
      *
@@ -172,7 +172,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for updating all documents that match the {@code filter}.
+     * Creates a model for updating all documents matching the {@code filter}.
      *
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
@@ -189,7 +189,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for replacing at most one document that matches the {@code filter}.
+     * Creates a model for replacing at most one document matching the {@code filter}.
      * This method is functionally equivalent to {@link #replaceOne(Bson, Object, ClientReplaceOptions)}
      * with the {@linkplain ClientReplaceOptions#clientReplaceOptions() default options}.
      *
@@ -207,7 +207,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for replacing at most one document that matches the {@code filter}.
+     * Creates a model for replacing at most one document matching the {@code filter}.
      *
      * @param filter The filter.
      * @param replacement The replacement.
@@ -225,7 +225,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for removing at most one document that match the {@code filter}.
+     * Creates a model for removing at most one document matching the {@code filter}.
      * This method is functionally equivalent to {@link #deleteOne(Bson, ClientDeleteOptions)}
      * with the {@linkplain ClientDeleteOptions#clientDeleteOptions() default options}.
      *
@@ -239,7 +239,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for removing at most one document that match the {@code filter}.
+     * Creates a model for removing at most one document matching the {@code filter}.
      *
      * @param filter The filter.
      * @param options The options.
@@ -253,7 +253,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for removing all documents that match the {@code filter}.
+     * Creates a model for removing all documents matching the {@code filter}.
      * This method is functionally equivalent to {@link #deleteMany(Bson, ClientDeleteOptions)}
      * with the {@linkplain ClientDeleteOptions#clientDeleteOptions() default options}.
      *
@@ -267,7 +267,7 @@ public interface ClientWriteModel {
     }
 
     /**
-     * Creates a model for removing all documents that match the {@code filter}.
+     * Creates a model for removing all documents matching the {@code filter}.
      *
      * @param filter The filter.
      * @param options The options.
