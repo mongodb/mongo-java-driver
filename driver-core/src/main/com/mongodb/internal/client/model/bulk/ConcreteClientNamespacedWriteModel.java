@@ -17,31 +17,34 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientWriteModel;
-import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
 
-public final class ConcreteClientWriteModelWithNamespace implements ClientWriteModelWithNamespace {
-    private final ClientWriteModel model;
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
+public final class ConcreteClientNamespacedWriteModel implements ClientNamespacedWriteModel {
     private final MongoNamespace namespace;
+    private final ClientWriteModel model;
 
-    public ConcreteClientWriteModelWithNamespace(final ClientWriteModel model, final MongoNamespace namespace) {
-        this.model = model;
+    public ConcreteClientNamespacedWriteModel(final MongoNamespace namespace, final ClientWriteModel model) {
         this.namespace = namespace;
-    }
-
-    public ClientWriteModel getModel() {
-        return model;
+        this.model = model;
     }
 
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
+    public ClientWriteModel getModel() {
+        return model;
+    }
+
     @Override
     public String toString() {
-        return "ClientWriteModelWithNamespace{"
-                + "model=" + model
-                + ", namespace=" + namespace
+        return "ClientNamespacedWriteModel{"
+                + "namespace=" + namespace
+                + ", model=" + model
                 + '}';
     }
 }

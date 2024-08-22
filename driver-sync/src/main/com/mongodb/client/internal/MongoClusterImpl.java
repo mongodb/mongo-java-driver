@@ -40,7 +40,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutSettings;
@@ -314,14 +314,14 @@ final class MongoClusterImpl implements MongoCluster {
 
     @Override
     public ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
         notNull("clientWriteModels", clientWriteModels);
         throw Assertions.fail("BULK-TODO implement");
     }
 
     @Override
     public ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         notNull("clientWriteModels", clientWriteModels);
         notNull("options", options);
@@ -331,7 +331,7 @@ final class MongoClusterImpl implements MongoCluster {
     @Override
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
         notNull("clientSession", clientSession);
         notNull("clientWriteModels", clientWriteModels);
         throw Assertions.fail("BULK-TODO implement");
@@ -340,7 +340,7 @@ final class MongoClusterImpl implements MongoCluster {
     @Override
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         notNull("clientSession", clientSession);
         notNull("clientWriteModels", clientWriteModels);
