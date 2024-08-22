@@ -19,7 +19,7 @@ package com.mongodb.client.model.bulk;
 import com.mongodb.annotations.Sealed;
 
 /**
- * A model for removing all documents matching a filter.
+ * A model for deleting all documents matching a filter.
  *
  * @since 5.3
  */

@@ -29,7 +29,7 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -285,13 +285,13 @@ public class SyncMongoCluster implements MongoCluster {
 
     @Override
     public ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
         throw Assertions.fail("BULK-TODO implement");
     }
 
     @Override
     public ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         throw Assertions.fail("BULK-TODO implement");
     }
@@ -299,14 +299,14 @@ public class SyncMongoCluster implements MongoCluster {
     @Override
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
         throw Assertions.fail("BULK-TODO implement");
     }
 
     @Override
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         throw Assertions.fail("BULK-TODO implement");
     }

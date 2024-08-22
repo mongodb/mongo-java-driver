@@ -1,7 +1,7 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.assertions.Assertions
-import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientWriteModelWithNamespace }
+import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientNamespacedWriteModel }
 import com.mongodb.client.result.bulk.ClientBulkWriteResult
 import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.{ ClientSession, MongoCluster => JMongoCluster, MongoDatabase => JMongoDatabase }
@@ -129,25 +129,25 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
     clientSession.asInstanceOf[SyncClientSession].wrapped
 
   override def bulkWrite(
-      models: util.List[_ <: ClientWriteModelWithNamespace]
+      models: util.List[_ <: ClientNamespacedWriteModel]
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
 
   override def bulkWrite(
-      models: util.List[_ <: ClientWriteModelWithNamespace],
+      models: util.List[_ <: ClientNamespacedWriteModel],
       options: ClientBulkWriteOptions
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
 
   override def bulkWrite(
       clientSession: ClientSession,
-      models: util.List[_ <: ClientWriteModelWithNamespace]
+      models: util.List[_ <: ClientNamespacedWriteModel]
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
 
   override def bulkWrite(
       clientSession: ClientSession,
-      models: util.List[_ <: ClientWriteModelWithNamespace],
+      models: util.List[_ <: ClientNamespacedWriteModel],
       options: ClientBulkWriteOptions
   ): ClientBulkWriteResult =
     throw Assertions.fail("BULK-TODO implement")
