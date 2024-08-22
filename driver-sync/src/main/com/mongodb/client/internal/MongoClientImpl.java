@@ -33,7 +33,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.SocketSettings;
@@ -262,13 +262,13 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModel> clientWriteModels) throws ClientBulkWriteException {
+            final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
         return delegate.bulkWrite(clientWriteModels);
     }
 
     @Override
     public ClientBulkWriteResult bulkWrite(
-            final List<? extends ClientWriteModel> clientWriteModels,
+            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         return delegate.bulkWrite(clientWriteModels, options);
     }
@@ -276,14 +276,14 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModel> clientWriteModels) throws ClientBulkWriteException {
+            final List<? extends ClientWriteModelWithNamespace> clientWriteModels) throws ClientBulkWriteException {
         return delegate.bulkWrite(clientSession, clientWriteModels);
     }
 
     @Override
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
-            final List<? extends ClientWriteModel> clientWriteModels,
+            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
         return delegate.bulkWrite(clientSession, clientWriteModels, options);
     }

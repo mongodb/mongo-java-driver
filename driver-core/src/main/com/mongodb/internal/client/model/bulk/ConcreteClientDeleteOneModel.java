@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.bulk.ClientDeleteOneModel;
 import com.mongodb.client.model.bulk.ClientDeleteOptions;
 import com.mongodb.lang.Nullable;
@@ -25,21 +24,12 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public class ConcreteClientDeleteOneModel implements ClientDeleteOneModel {
-    private final MongoNamespace namespace;
     private final Bson filter;
     private final ConcreteClientDeleteOptions options;
 
-    public ConcreteClientDeleteOneModel(
-            final MongoNamespace namespace,
-            final Bson filter,
-            @Nullable final ClientDeleteOptions options) {
-        this.namespace = namespace;
+    public ConcreteClientDeleteOneModel(final Bson filter, @Nullable final ClientDeleteOptions options) {
         this.filter = filter;
         this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
-    }
-
-    public MongoNamespace getNamespace() {
-        return namespace;
     }
 
     public Bson getFilter() {
@@ -53,7 +43,6 @@ public class ConcreteClientDeleteOneModel implements ClientDeleteOneModel {
     @Override
     public String toString() {
         return "ClientDeleteOneModel{"
-                + "namespace=" + namespace
                 + ", filter=" + filter
                 + ", options=" + options
                 + '}';

@@ -15,25 +15,16 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.bulk.ClientInsertOneModel;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientInsertOneModel implements ClientInsertOneModel {
-    private final MongoNamespace namespace;
     private final Object document;
 
-    public ConcreteClientInsertOneModel(
-            final MongoNamespace namespace,
-            final Object document) {
-        this.namespace = namespace;
+    public ConcreteClientInsertOneModel(final Object document) {
         this.document = document;
-    }
-
-    public MongoNamespace getNamespace() {
-        return namespace;
     }
 
     public Object getDocument() {
@@ -43,7 +34,6 @@ public final class ConcreteClientInsertOneModel implements ClientInsertOneModel 
     @Override
     public String toString() {
         return "ClientInsertOneModel{"
-                + "namespace=" + namespace
                 + ", document=" + document
                 + '}';
     }

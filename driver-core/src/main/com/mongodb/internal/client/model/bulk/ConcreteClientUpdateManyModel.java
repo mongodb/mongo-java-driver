@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.bulk.ClientUpdateManyModel;
 import com.mongodb.client.model.bulk.ClientUpdateOptions;
@@ -27,20 +26,18 @@ import org.bson.conversions.Bson;
  */
 public final class ConcreteClientUpdateManyModel extends ConcreteClientUpdateOneModel implements ClientUpdateManyModel {
     public ConcreteClientUpdateManyModel(
-            final MongoNamespace namespace,
             final Bson filter,
             @Nullable
             final Bson update,
             @Nullable
             final Iterable<? extends Bson> updatePipeline,
             @Nullable final ClientUpdateOptions options) {
-        super(namespace, filter, update, updatePipeline, options);
+        super(filter, update, updatePipeline, options);
     }
 
     @Override
     public String toString() {
         return "ClientUpdateManyModel{"
-                + "namespace=" + getNamespace()
                 + ", filter=" + getFilter()
                 + ", update=" + getUpdate().map(Object::toString)
                         .orElse(getUpdatePipeline().map(Object::toString)

@@ -26,6 +26,7 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientWriteModelWithNamespace;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -39,48 +40,38 @@ import static com.mongodb.assertions.Assertions.notNull;
 @Sealed
 public interface ClientWriteModel {
     /**
-     * Creates a model for inserting the {@code document} into the {@code namespace}.
+     * Creates a model for inserting the {@code document}.
      *
-     * @param namespace The namespace.
      * @param document The document.
      * @return The requested model.
      * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <TDocument> ClientInsertOneModel insertOne(
-            final MongoNamespace namespace,
-            final TDocument document) {
-        notNull("namespace", namespace);
+    static <TDocument> ClientInsertOneModel insertOne(final TDocument document) {
         notNull("document", document);
-        return new ConcreteClientInsertOneModel(namespace, document);
+        return new ConcreteClientInsertOneModel(document);
     }
 
     /**
-     * Creates a model for updating at most one document in the {@code namespace} that matches the {@code filter}.
-     * This method is functionally equivalent to {@link #updateOne(MongoNamespace, Bson, Bson, ClientUpdateOptions)}
+     * Creates a model for updating at most one document that matches the {@code filter}.
+     * This method is functionally equivalent to {@link #updateOne(Bson, Bson, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param update The update.
      * @return The requested model.
      * @see Filters
      * @see Updates
      */
-    static ClientUpdateOneModel updateOne(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Bson update) {
-        notNull("namespace", namespace);
+    static ClientUpdateOneModel updateOne(final Bson filter, final Bson update) {
         notNull("filter", filter);
         notNull("update", update);
-        return new ConcreteClientUpdateOneModel(namespace, filter, update, null, null);
+        return new ConcreteClientUpdateOneModel(filter, update, null, null);
     }
 
     /**
-     * Creates a model for updating at most one document in the {@code namespace} that matches the {@code filter}.
+     * Creates a model for updating at most one document that matches the {@code filter}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param update The update.
      * @param options The options.
@@ -88,44 +79,33 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Updates
      */
-    static ClientUpdateOneModel updateOne(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Bson update,
-            final ClientUpdateOptions options) {
-        notNull("namespace", namespace);
+    static ClientUpdateOneModel updateOne(final Bson filter, final Bson update, final ClientUpdateOptions options) {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ConcreteClientUpdateOneModel(namespace, filter, update, null, options);
+        return new ConcreteClientUpdateOneModel(filter, update, null, options);
     }
 
     /**
-     * Creates a model for updating at most one document in the {@code namespace} that matches the {@code filter}.
-     * This method is functionally equivalent to {@link #updateOne(MongoNamespace, Bson, Iterable, ClientUpdateOptions)}
+     * Creates a model for updating at most one document that matches the {@code filter}.
+     * This method is functionally equivalent to {@link #updateOne(Bson, Iterable, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
      * @return The requested model.
      * @see Filters
      * @see Aggregates
      */
-    static ClientUpdateOneModel updateOne(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Iterable<? extends Bson> updatePipeline) {
-        notNull("namespace", namespace);
+    static ClientUpdateOneModel updateOne(final Bson filter, final Iterable<? extends Bson> updatePipeline) {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ConcreteClientUpdateOneModel(namespace, filter, null, updatePipeline, null);
+        return new ConcreteClientUpdateOneModel(filter, null, updatePipeline, null);
     }
 
     /**
-     * Creates a model for updating at most one document in the {@code namespace} that matches the {@code filter}.
+     * Creates a model for updating at most one document that matches the {@code filter}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
      * @param options The options.
@@ -133,44 +113,33 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Aggregates
      */
-    static ClientUpdateOneModel updateOne(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Iterable<? extends Bson> updatePipeline,
-            final ClientUpdateOptions options) {
-        notNull("namespace", namespace);
+    static ClientUpdateOneModel updateOne(final Bson filter, final Iterable<? extends Bson> updatePipeline, final ClientUpdateOptions options) {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ConcreteClientUpdateOneModel(namespace, filter, null, updatePipeline, options);
+        return new ConcreteClientUpdateOneModel(filter, null, updatePipeline, options);
     }
 
     /**
-     * Creates a model for updating all documents in the {@code namespace} that match the {@code filter}.
-     * This method is functionally equivalent to {@link #updateMany(MongoNamespace, Bson, Bson, ClientUpdateOptions)}
+     * Creates a model for updating all documents that match the {@code filter}.
+     * This method is functionally equivalent to {@link #updateMany(Bson, Bson, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param update The update.
      * @return The requested model.
      * @see Filters
      * @see Updates
      */
-    static ClientUpdateManyModel updateMany(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Bson update) {
-        notNull("namespace", namespace);
+    static ClientUpdateManyModel updateMany(final Bson filter, final Bson update) {
         notNull("filter", filter);
         notNull("update", update);
-        return new ConcreteClientUpdateManyModel(namespace, filter, update, null, null);
+        return new ConcreteClientUpdateManyModel(filter, update, null, null);
     }
 
     /**
-     * Creates a model for updating all documents in the {@code namespace} that match the {@code filter}.
+     * Creates a model for updating all documents that match the {@code filter}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param update The update.
      * @param options The options.
@@ -178,44 +147,33 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Updates
      */
-    static ClientUpdateManyModel updateMany(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Bson update,
-            final ClientUpdateOptions options) {
-        notNull("namespace", namespace);
+    static ClientUpdateManyModel updateMany(final Bson filter, final Bson update, final ClientUpdateOptions options) {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ConcreteClientUpdateManyModel(namespace, filter, update, null, options);
+        return new ConcreteClientUpdateManyModel(filter, update, null, options);
     }
 
     /**
-     * Creates a model for updating all documents in the {@code namespace} that match the {@code filter}.
-     * This method is functionally equivalent to {@link #updateMany(MongoNamespace, Bson, Iterable, ClientUpdateOptions)}
+     * Creates a model for updating all documents that match the {@code filter}.
+     * This method is functionally equivalent to {@link #updateMany(Bson, Iterable, ClientUpdateOptions)}
      * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
      * @return The requested model.
      * @see Filters
      * @see Aggregates
      */
-    static ClientUpdateManyModel updateMany(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Iterable<? extends Bson> updatePipeline) {
-        notNull("namespace", namespace);
+    static ClientUpdateManyModel updateMany(final Bson filter, final Iterable<? extends Bson> updatePipeline) {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ConcreteClientUpdateManyModel(namespace, filter, null, updatePipeline, null);
+        return new ConcreteClientUpdateManyModel(filter, null, updatePipeline, null);
     }
 
     /**
-     * Creates a model for updating all documents in the {@code namespace} that match the {@code filter}.
+     * Creates a model for updating all documents that match the {@code filter}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param updatePipeline The update pipeline.
      * @param options The options.
@@ -223,24 +181,18 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Aggregates
      */
-    static ClientUpdateManyModel updateMany(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Iterable<? extends Bson> updatePipeline,
-            final ClientUpdateOptions options) {
-        notNull("namespace", namespace);
+    static ClientUpdateManyModel updateMany(final Bson filter, final Iterable<? extends Bson> updatePipeline, final ClientUpdateOptions options) {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ConcreteClientUpdateManyModel(namespace, filter, null, updatePipeline, options);
+        return new ConcreteClientUpdateManyModel(filter, null, updatePipeline, options);
     }
 
     /**
-     * Creates a model for replacing at most one document in the {@code namespace} that matches the {@code filter}.
-     * This method is functionally equivalent to {@link #replaceOne(MongoNamespace, Bson, Object, ClientReplaceOptions)}
+     * Creates a model for replacing at most one document that matches the {@code filter}.
+     * This method is functionally equivalent to {@link #replaceOne(Bson, Object, ClientReplaceOptions)}
      * with the {@linkplain ClientReplaceOptions#clientReplaceOptions() default options}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param replacement The replacement.
      * The keys of this document must not start with {@code $}, unless they express a {@linkplain com.mongodb.DBRef database reference}.
@@ -248,20 +200,15 @@ public interface ClientWriteModel {
      * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <TDocument> ClientReplaceOneModel replaceOne(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final TDocument replacement) {
-        notNull("namespace", namespace);
+    static <TDocument> ClientReplaceOneModel replaceOne(final Bson filter, final TDocument replacement) {
         notNull("filter", filter);
         notNull("replacement", replacement);
-        return new ConcreteClientReplaceOneModel(namespace, filter, replacement, null);
+        return new ConcreteClientReplaceOneModel(filter, replacement, null);
     }
 
     /**
-     * Creates a model for replacing at most one document in the {@code namespace} that matches the {@code filter}.
+     * Creates a model for replacing at most one document that matches the {@code filter}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param replacement The replacement.
      * The keys of this document must not start with {@code $}, unless they express a {@linkplain com.mongodb.DBRef database reference}.
@@ -270,89 +217,77 @@ public interface ClientWriteModel {
      * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <TDocument> ClientReplaceOneModel replaceOne(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final TDocument replacement,
-            final ClientReplaceOptions options) {
-        notNull("namespace", namespace);
+    static <TDocument> ClientReplaceOneModel replaceOne(final Bson filter, final TDocument replacement, final ClientReplaceOptions options) {
         notNull("filter", filter);
         notNull("replacement", replacement);
         notNull("options", options);
-        return new ConcreteClientReplaceOneModel(namespace, filter, replacement, options);
+        return new ConcreteClientReplaceOneModel(filter, replacement, options);
     }
 
     /**
-     * Creates a model for removing at most one document from the {@code namespace} that match the {@code filter}.
-     * This method is functionally equivalent to {@link #deleteOne(MongoNamespace, Bson, ClientDeleteOptions)}
+     * Creates a model for removing at most one document that match the {@code filter}.
+     * This method is functionally equivalent to {@link #deleteOne(Bson, ClientDeleteOptions)}
      * with the {@linkplain ClientDeleteOptions#clientDeleteOptions() default options}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @return The requested model.
      * @see Filters
      */
-    static ClientDeleteOneModel deleteOne(
-            final MongoNamespace namespace,
-            final Bson filter) {
-        notNull("namespace", namespace);
+    static ClientDeleteOneModel deleteOne(final Bson filter) {
         notNull("filter", filter);
-        return new ConcreteClientDeleteOneModel(namespace, filter, null);
+        return new ConcreteClientDeleteOneModel(filter, null);
     }
 
     /**
-     * Creates a model for removing at most one document from the {@code namespace} that match the {@code filter}.
+     * Creates a model for removing at most one document that match the {@code filter}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param options The options.
      * @return The requested model.
      * @see Filters
      */
-    static ClientDeleteOneModel deleteOne(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final ClientDeleteOptions options) {
-        notNull("namespace", namespace);
+    static ClientDeleteOneModel deleteOne(final Bson filter, final ClientDeleteOptions options) {
         notNull("filter", filter);
         notNull("options", options);
-        return new ConcreteClientDeleteOneModel(namespace, filter, options);
+        return new ConcreteClientDeleteOneModel(filter, options);
     }
 
     /**
-     * Creates a model for removing all documents from the {@code namespace} that match the {@code filter}.
-     * This method is functionally equivalent to {@link #deleteMany(MongoNamespace, Bson, ClientDeleteOptions)}
+     * Creates a model for removing all documents that match the {@code filter}.
+     * This method is functionally equivalent to {@link #deleteMany(Bson, ClientDeleteOptions)}
      * with the {@linkplain ClientDeleteOptions#clientDeleteOptions() default options}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @return The requested model.
      * @see Filters
      */
-    static ClientDeleteManyModel deleteMany(
-            final MongoNamespace namespace,
-            final Bson filter) {
-        notNull("namespace", namespace);
+    static ClientDeleteManyModel deleteMany(final Bson filter) {
         notNull("filter", filter);
-        return new ConcreteClientDeleteManyModel(namespace, filter, null);
+        return new ConcreteClientDeleteManyModel(filter, null);
     }
 
     /**
-     * Creates a model for removing all documents from the {@code namespace} that match the {@code filter}.
+     * Creates a model for removing all documents that match the {@code filter}.
      *
-     * @param namespace The namespace.
      * @param filter The filter.
      * @param options The options.
      * @return The requested model.
      * @see Filters
      */
-    static ClientDeleteManyModel deleteMany(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final ClientDeleteOptions options) {
-        notNull("namespace", namespace);
+    static ClientDeleteManyModel deleteMany(final Bson filter, final ClientDeleteOptions options) {
         notNull("filter", filter);
         notNull("options", options);
-        return new ConcreteClientDeleteManyModel(namespace, filter, options);
+        return new ConcreteClientDeleteManyModel(filter, options);
+    }
+
+    /**
+     * Combines this model with the {@code namespace} it is targeted at.
+     *
+     * @param namespace The namespace.
+     * @return The model with the {@code namespace}.
+     */
+    default ClientWriteModelWithNamespace withNamespace(final MongoNamespace namespace) {
+        notNull("namespace", namespace);
+        return new ConcreteClientWriteModelWithNamespace(this, namespace);
     }
 }

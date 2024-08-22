@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.bulk.ClientUpdateOneModel;
 import com.mongodb.client.model.bulk.ClientUpdateOptions;
 import com.mongodb.lang.Nullable;
@@ -30,7 +29,6 @@ import static java.util.Optional.ofNullable;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public class ConcreteClientUpdateOneModel implements ClientUpdateOneModel {
-    private final MongoNamespace namespace;
     private final Bson filter;
     @Nullable
     private final Bson update;
@@ -39,23 +37,17 @@ public class ConcreteClientUpdateOneModel implements ClientUpdateOneModel {
     private final ConcreteClientUpdateOptions options;
 
     public ConcreteClientUpdateOneModel(
-            final MongoNamespace namespace,
             final Bson filter,
             @Nullable
             final Bson update,
             @Nullable
             final Iterable<? extends Bson> updatePipeline,
             @Nullable final ClientUpdateOptions options) {
-        this.namespace = namespace;
         this.filter = filter;
         assertTrue(update == null ^ updatePipeline == null);
         this.update = update;
         this.updatePipeline = updatePipeline;
         this.options = options == null ? ConcreteClientUpdateOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOptions) options;
-    }
-
-    public MongoNamespace getNamespace() {
-        return namespace;
     }
 
     public Bson getFilter() {
@@ -77,7 +69,6 @@ public class ConcreteClientUpdateOneModel implements ClientUpdateOneModel {
     @Override
     public String toString() {
         return "ClientUpdateOneModel{"
-                + "namespace=" + namespace
                 + ", filter=" + filter
                 + ", update=" + (update != null ? update : updatePipeline)
                 + ", options=" + options

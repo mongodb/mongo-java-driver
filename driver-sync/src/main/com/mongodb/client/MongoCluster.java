@@ -30,7 +30,7 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientDeleteManyModel;
 import com.mongodb.client.model.bulk.ClientUpdateManyModel;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
@@ -372,7 +372,7 @@ public interface MongoCluster {
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
-     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param models The {@linkplain ClientWriteModelWithNamespace individual write operations}.
      * @return The {@link ClientBulkWriteResult} if the operation is successful.
      * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
      * and there is at least one of the following pieces of information to report:
@@ -383,7 +383,7 @@ public interface MongoCluster {
      * @mongodb.server.release 8.0
      * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
      */
-    ClientBulkWriteResult bulkWrite(List<? extends ClientWriteModel> models) throws ClientBulkWriteException;
+    ClientBulkWriteResult bulkWrite(List<? extends ClientWriteModelWithNamespace> models) throws ClientBulkWriteException;
 
     /**
      * Executes a client-level bulk write operation.
@@ -394,7 +394,7 @@ public interface MongoCluster {
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
-     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param models The {@linkplain ClientWriteModelWithNamespace individual write operations}.
      * @param options The options.
      * @return The {@link ClientBulkWriteResult} if the operation is successful.
      * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
@@ -407,7 +407,7 @@ public interface MongoCluster {
      * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
      */
     ClientBulkWriteResult bulkWrite(
-            List<? extends ClientWriteModel> models,
+            List<? extends ClientWriteModelWithNamespace> models,
             ClientBulkWriteOptions options) throws ClientBulkWriteException;
 
     /**
@@ -422,7 +422,7 @@ public interface MongoCluster {
      * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
-     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param models The {@linkplain ClientWriteModelWithNamespace individual write operations}.
      * @return The {@link ClientBulkWriteResult} if the operation is successful.
      * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
      * and there is at least one of the following pieces of information to report:
@@ -435,7 +435,7 @@ public interface MongoCluster {
      */
     ClientBulkWriteResult bulkWrite(
             ClientSession clientSession,
-            List<? extends ClientWriteModel> models) throws ClientBulkWriteException;
+            List<? extends ClientWriteModelWithNamespace> models) throws ClientBulkWriteException;
 
     /**
      * Executes a client-level bulk write operation.
@@ -447,7 +447,7 @@ public interface MongoCluster {
      * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
-     * @param models The {@linkplain ClientWriteModel individual write operations}.
+     * @param models The {@linkplain ClientWriteModelWithNamespace individual write operations}.
      * @param options The options.
      * @return The {@link ClientBulkWriteResult} if the operation is successful.
      * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful,
@@ -461,6 +461,6 @@ public interface MongoCluster {
      */
     ClientBulkWriteResult bulkWrite(
             ClientSession clientSession,
-            List<? extends ClientWriteModel> models,
+            List<? extends ClientWriteModelWithNamespace> models,
             ClientBulkWriteOptions options) throws ClientBulkWriteException;
 }

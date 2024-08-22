@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.bulk.ClientDeleteManyModel;
 import com.mongodb.client.model.bulk.ClientDeleteOptions;
 import com.mongodb.lang.Nullable;
@@ -25,17 +24,13 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientDeleteManyModel extends ConcreteClientDeleteOneModel implements ClientDeleteManyModel {
-    public ConcreteClientDeleteManyModel(
-            final MongoNamespace namespace,
-            final Bson filter,
-            @Nullable final ClientDeleteOptions options) {
-        super(namespace, filter, options);
+    public ConcreteClientDeleteManyModel(final Bson filter, @Nullable final ClientDeleteOptions options) {
+        super(filter, options);
     }
 
     @Override
     public String toString() {
         return "ClientDeleteManyModel{"
-                + "namespace=" + getNamespace()
                 + ", filter=" + getFilter()
                 + ", options=" + getOptions()
                 + '}';

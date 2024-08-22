@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.bulk.ClientReplaceOneModel;
 import com.mongodb.client.model.bulk.ClientReplaceOptions;
 import com.mongodb.lang.Nullable;
@@ -25,24 +24,14 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientReplaceOneModel implements ClientReplaceOneModel {
-    private final MongoNamespace namespace;
     private final Bson filter;
     private final Object replacement;
     private final ConcreteClientReplaceOptions options;
 
-    public ConcreteClientReplaceOneModel(
-            final MongoNamespace namespace,
-            final Bson filter,
-            final Object replacement,
-            @Nullable final ClientReplaceOptions options) {
-        this.namespace = namespace;
+    public ConcreteClientReplaceOneModel(final Bson filter, final Object replacement, @Nullable final ClientReplaceOptions options) {
         this.filter = filter;
         this.replacement = replacement;
         this.options = options == null ? ConcreteClientReplaceOptions.MUTABLE_EMPTY : (ConcreteClientReplaceOptions) options;
-    }
-
-    public MongoNamespace getNamespace() {
-        return namespace;
     }
 
     public Bson getFilter() {
@@ -60,7 +49,6 @@ public final class ConcreteClientReplaceOneModel implements ClientReplaceOneMode
     @Override
     public String toString() {
         return "ClientReplaceOneModel{"
-                + "namespace=" + namespace
                 + ", filter=" + filter
                 + ", replacement=" + replacement
                 + ", options=" + options
