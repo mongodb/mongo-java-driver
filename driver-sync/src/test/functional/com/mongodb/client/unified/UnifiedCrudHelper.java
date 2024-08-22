@@ -1979,13 +1979,13 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     .append("matchedCount", new BsonInt64(result.getMatchedCount()))
                     .append("modifiedCount", new BsonInt64(result.getModifiedCount()))
                     .append("deletedCount", new BsonInt64(result.getDeletedCount()));
-            if (result.hasVerboseResults()) {
-                expected.append("insertResults", new BsonDocument(result.getInsertResults().entrySet().stream()
+            result.getVerbose().ifPresent(verbose ->
+                expected.append("insertResults", new BsonDocument(verbose.getInsertResults().entrySet().stream()
                                 .map(entry -> new BsonElement(
                                         entry.getKey().toString(),
                                         new BsonDocument("insertedId", entry.getValue().getInsertedId())))
                                 .collect(toList())))
-                        .append("updateResults", new BsonDocument(result.getUpdateResults().entrySet().stream()
+                        .append("updateResults", new BsonDocument(verbose.getUpdateResults().entrySet().stream()
                                 .map(entry -> {
                                     ClientUpdateResult updateResult = entry.getValue();
                                     BsonDocument updateResultDocument = new BsonDocument(
@@ -1995,12 +1995,11 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                                     return new BsonElement(entry.getKey().toString(), updateResultDocument);
                                 })
                                 .collect(toList())))
-                        .append("deleteResults", new BsonDocument(result.getDeleteResults().entrySet().stream()
+                        .append("deleteResults", new BsonDocument(verbose.getDeleteResults().entrySet().stream()
                                 .map(entry -> new BsonElement(
                                         entry.getKey().toString(),
                                         new BsonDocument("deletedCount", new BsonInt64(entry.getValue().getDeletedCount()))))
-                                .collect(toList())));
-            }
+                                .collect(toList()))));
         }
         return expected;
     }
