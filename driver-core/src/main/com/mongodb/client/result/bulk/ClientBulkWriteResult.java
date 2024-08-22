@@ -52,7 +52,7 @@ public interface ClientBulkWriteResult {
      * @return Whether there are verbose results.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    boolean hasVerboseResults() throws UnsupportedOperationException;
+    boolean hasVerboseResults();
 
     /**
      * The number of documents that were inserted across all insert operations.
@@ -60,7 +60,7 @@ public interface ClientBulkWriteResult {
      * @return The number of documents that were inserted.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    long getInsertedCount() throws UnsupportedOperationException;
+    long getInsertedCount();
 
     /**
      * The number of documents that were upserted across all update and replace operations.
@@ -68,7 +68,7 @@ public interface ClientBulkWriteResult {
      * @return The number of documents that were upserted.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    long getUpsertedCount() throws UnsupportedOperationException;
+    long getUpsertedCount();
 
     /**
      * The number of documents that matched the filters across all operations with filters.
@@ -76,7 +76,7 @@ public interface ClientBulkWriteResult {
      * @return The number of documents that were matched.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    long getMatchedCount() throws UnsupportedOperationException;
+    long getMatchedCount();
 
     /**
      * The number of documents that were modified across all update and replace operations.
@@ -84,7 +84,7 @@ public interface ClientBulkWriteResult {
      * @return The number of documents that were modified.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    long getModifiedCount() throws UnsupportedOperationException;
+    long getModifiedCount();
 
     /**
      * The number of documents that were deleted across all delete operations.
@@ -92,7 +92,7 @@ public interface ClientBulkWriteResult {
      * @return The number of documents that were deleted.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      */
-    long getDeletedCount() throws UnsupportedOperationException;
+    long getDeletedCount();
 
     /**
      * The indexed {@link ClientInsertOneResult}s.
@@ -106,7 +106,7 @@ public interface ClientBulkWriteResult {
      * or does not have {@linkplain #hasVerboseResults() verbose results}.
      * @see ClientBulkWriteException#getWriteErrors()
      */
-    Map<Long, ClientInsertOneResult> getInsertResults() throws UnsupportedOperationException;
+    Map<Long, ClientInsertOneResult> getInsertResults();
 
     /**
      * The indexed {@link ClientUpdateResult}s.
@@ -120,7 +120,7 @@ public interface ClientBulkWriteResult {
      * or does not have {@linkplain #hasVerboseResults() verbose results}.
      * @see ClientBulkWriteException#getWriteErrors()
      */
-    Map<Long, ClientUpdateResult> getUpdateResults() throws UnsupportedOperationException;
+    Map<Long, ClientUpdateResult> getUpdateResults();
 
     /**
      * The indexed {@link ClientDeleteResult}s.
@@ -134,5 +134,5 @@ public interface ClientBulkWriteResult {
      * or does not have {@linkplain #hasVerboseResults() verbose results}.
      * @see ClientBulkWriteException#getWriteErrors()
      */
-    Map<Long, ClientDeleteResult> getDeleteResults() throws UnsupportedOperationException;
+    Map<Long, ClientDeleteResult> getDeleteResults();
 }
