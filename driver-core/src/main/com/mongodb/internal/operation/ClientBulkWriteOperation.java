@@ -359,10 +359,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                 commandIsRetryable = false;
                                 logWriteModelDoesNotSupportRetries();
                             }
-                            MongoNamespace namespace = modelWithNamespace.getNamespace();
-                            int namespaceIndexInBatch = indexedNamespaces.size();
-                            Integer existingNamespaceIndex = indexedNamespaces.putIfAbsent(namespace, namespaceIndexInBatch);
-                            namespaceIndexInBatch = existingNamespaceIndex == null ? namespaceIndexInBatch : existingNamespaceIndex;
+                            int namespaceIndexInBatch = indexedNamespaces.computeIfAbsent(
+                                    modelWithNamespace.getNamespace(), k -> indexedNamespaces.size());
                             batchEncoder.encodeWriteModel(writer, model, modelIndexInBatch, namespaceIndexInBatch);
                         }
                         writer.writeEndArray();
