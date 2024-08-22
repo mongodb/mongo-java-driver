@@ -79,8 +79,7 @@ import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientDeleteOptions;
 import com.mongodb.client.model.bulk.ClientReplaceOptions;
 import com.mongodb.client.model.bulk.ClientUpdateOptions;
-import com.mongodb.client.model.bulk.ClientWriteModel;
-import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
@@ -1787,9 +1786,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         MongoCluster cluster = entities.getClient(clientId);
         BsonDocument arguments = operation.getDocument("arguments");
         ClientSession session = getSession(arguments);
-        List<ClientWriteModelWithNamespace> models = arguments.getArray("models").stream()
+        List<ClientNamespacedWriteModel> models = arguments.getArray("models").stream()
                 .map(BsonValue::asDocument)
-                .map(UnifiedCrudHelper::toClientWriteModelWithNamespace)
+                .map(UnifiedCrudHelper::toClientNamespacedWriteModel)
                 .collect(toList());
         ClientBulkWriteOptions options = clientBulkWriteOptions();
         for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
@@ -1831,7 +1830,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         });
     }
 
-    private static ClientWriteModelWithNamespace toClientWriteModelWithNamespace(final BsonDocument model) {
+    private static ClientNamespacedWriteModel toClientNamespacedWriteModel(final BsonDocument model) {
         String modelType = model.getFirstKey();
         BsonDocument arguments = model.getDocument(modelType);
         MongoNamespace namespace = new MongoNamespace(arguments.getString("namespace").getValue());
@@ -1841,41 +1840,49 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 if (!expectedArguments.containsAll(arguments.keySet())) {
                     throw new UnsupportedOperationException("Unsupported argument, one of: " + arguments.keySet());
                 }
-                return ClientWriteModel.insertOne(
-                        arguments.getDocument("document")).withNamespace(namespace);
+                return ClientNamespacedWriteModel.insertOne(
+                        namespace,
+                        arguments.getDocument("document"));
             case "replaceOne":
-                return ClientWriteModel.replaceOne(
+                return ClientNamespacedWriteModel.replaceOne(
+                        namespace,
                         arguments.getDocument("filter"),
                         arguments.getDocument("replacement"),
-                        getClientReplaceOptions(arguments)).withNamespace(namespace);
+                        getClientReplaceOptions(arguments));
             case "updateOne":
                 return arguments.isDocument("update")
-                        ? ClientWriteModel.updateOne(
+                        ? ClientNamespacedWriteModel.updateOne(
+                                namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getDocument("update"),
-                                getClientUpdateOptions(arguments)).withNamespace(namespace)
-                        : ClientWriteModel.updateOne(
+                                getClientUpdateOptions(arguments))
+                        : ClientNamespacedWriteModel.updateOne(
+                                namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
-                                getClientUpdateOptions(arguments)).withNamespace(namespace);
+                                getClientUpdateOptions(arguments));
             case "updateMany":
                 return arguments.isDocument("update")
-                        ? ClientWriteModel.updateMany(
+                        ? ClientNamespacedWriteModel.updateMany(
+                                namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getDocument("update"),
-                                getClientUpdateOptions(arguments)).withNamespace(namespace)
-                        : ClientWriteModel.updateMany(
+                                getClientUpdateOptions(arguments))
+                        : ClientNamespacedWriteModel.updateMany(
+                                namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
-                                getClientUpdateOptions(arguments)).withNamespace(namespace);
+                                getClientUpdateOptions(arguments));
             case "deleteOne":
-                return ClientWriteModel.deleteOne(
+                return ClientNamespacedWriteModel.deleteOne(
+                        namespace,
                         arguments.getDocument("filter"),
-                        getClientDeleteOptions(arguments)).withNamespace(namespace);
+                        getClientDeleteOptions(arguments));
             case "deleteMany":
-                return ClientWriteModel.deleteMany(
+                return ClientNamespacedWriteModel.deleteMany(
+                        namespace,
                         arguments.getDocument("filter"),
-                        getClientDeleteOptions(arguments)).withNamespace(namespace);
+                        getClientDeleteOptions(arguments));
             default:
                 throw new UnsupportedOperationException("Unsupported client write model type: " + modelType);
         }

@@ -45,7 +45,7 @@ import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
@@ -363,7 +363,7 @@ public final class SyncOperations<TDocument> {
     }
 
     public WriteOperation<ClientBulkWriteResult> clientBulkWriteOperation(
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             @Nullable final ClientBulkWriteOptions options) {
         return operations.clientBulkWriteOperation(clientWriteModels, options);
     }

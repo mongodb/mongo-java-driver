@@ -383,7 +383,7 @@ final class MongoClusterImpl implements MongoCluster {
 
     private ClientBulkWriteResult executeBulkWrite(
             @Nullable final ClientSession clientSession,
-            final List<? extends ClientWriteModelWithNamespace> clientWriteModels,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             @Nullable final ClientBulkWriteOptions options) {
         isTrue("`autoEncryptionSettings` is null, as automatic encryption is not yet supported", autoEncryptionSettings == null);
         return operationExecutor.execute(operations.clientBulkWriteOperation(clientWriteModels, options), readConcern, clientSession);

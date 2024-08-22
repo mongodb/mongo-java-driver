@@ -38,7 +38,7 @@ import com.mongodb.client.model.bulk.ClientReplaceOneModel;
 import com.mongodb.client.model.bulk.ClientUpdateManyModel;
 import com.mongodb.client.model.bulk.ClientUpdateOneModel;
 import com.mongodb.client.model.bulk.ClientWriteModel;
-import com.mongodb.client.model.bulk.ClientWriteModelWithNamespace;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.client.result.bulk.ClientDeleteResult;
 import com.mongodb.client.result.bulk.ClientInsertOneResult;
@@ -58,7 +58,7 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOptions;
-import com.mongodb.internal.client.model.bulk.ConcreteClientWriteModelWithNamespace;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedWriteModel;
 import com.mongodb.internal.client.result.bulk.AcknowledgedSummaryClientBulkWriteResult;
 import com.mongodb.internal.client.result.bulk.AcknowledgedVerboseClientBulkWriteResult;
 import com.mongodb.internal.client.result.bulk.ConcreteClientDeleteResult;
@@ -132,7 +132,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     private static final EncoderContext COLLECTIBLE_DOCUMENT_ENCODER_CONTEXT = EncoderContext.builder()
             .isEncodingCollectibleDocument(true).build();
 
-    private final List<? extends ClientWriteModelWithNamespace> models;
+    private final List<? extends ClientNamespacedWriteModel> models;
     private final ConcreteClientBulkWriteOptions options;
     private final WriteConcern writeConcernSetting;
     private final boolean retryWritesSetting;
@@ -142,7 +142,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
      * @param retryWritesSetting See {@link MongoClientSettings#getRetryWrites()}.
      */
     public ClientBulkWriteOperation(
-            final List<? extends ClientWriteModelWithNamespace> models,
+            final List<? extends ClientNamespacedWriteModel> models,
             @Nullable final ClientBulkWriteOptions options,
             final WriteConcern writeConcernSetting,
             final boolean retryWritesSetting,
@@ -198,7 +198,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final WriteConcern effectiveWriteConcern,
             final WriteBinding binding,
             final ResultAccumulator resultAccumulator) {
-        List<? extends ClientWriteModelWithNamespace> unexecutedModels = models.subList(batchStartModelIndex, models.size());
+        List<? extends ClientNamespacedWriteModel> unexecutedModels = models.subList(batchStartModelIndex, models.size());
         OperationContext operationContext = binding.getOperationContext();
         SessionContext sessionContext = operationContext.getSessionContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
@@ -254,7 +254,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final ConnectionSource connectionSource,
             final Connection connection,
             final BsonDocumentWrapper<?> lazilyEncodedCommand,
-            final List<? extends ClientWriteModelWithNamespace> unexecutedModels,
+            final List<? extends ClientNamespacedWriteModel> unexecutedModels,
             final WriteConcern effectiveWriteConcern,
             final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
         BsonDocument bulkWriteCommandOkResponse = connection.command(
@@ -321,7 +321,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final boolean effectiveRetryWrites,
             final WriteConcern effectiveWriteConcern,
             final SessionContext sessionContext,
-            final List<? extends ClientWriteModelWithNamespace> unexecutedModels,
+            final List<? extends ClientNamespacedWriteModel> unexecutedModels,
             final BatchEncoder batchEncoder,
             final Runnable ifCommandIsRetryable) {
         // BULK-TODO This implementation must limit the number of `models` it includes in a batch if needed.
@@ -353,7 +353,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         writer.writeStartArray("ops");
                         boolean commandIsRetryable = effectiveRetryWrites;
                         for (int modelIndexInBatch = 0; modelIndexInBatch < unexecutedModels.size(); modelIndexInBatch++) {
-                            ConcreteClientWriteModelWithNamespace modelWithNamespace = getModelWithNamespace(unexecutedModels, modelIndexInBatch);
+                            ConcreteClientNamespacedWriteModel modelWithNamespace = getModelWithNamespace(unexecutedModels, modelIndexInBatch);
                             ClientWriteModel model = modelWithNamespace.getModel();
                             if (commandIsRetryable && !modelSupportsRetries.apply(model)) {
                                 commandIsRetryable = false;
@@ -400,9 +400,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         collationEncoder.encode(writer, value, encoderContext);
     }
 
-    private static ConcreteClientWriteModelWithNamespace getModelWithNamespace(
-            final List<? extends ClientWriteModelWithNamespace> models, final int index) {
-        return (ConcreteClientWriteModelWithNamespace) models.get(index);
+    private static ConcreteClientNamespacedWriteModel getModelWithNamespace(
+            final List<? extends ClientNamespacedWriteModel> models, final int index) {
+        return (ConcreteClientNamespacedWriteModel) models.get(index);
     }
 
     public static final class Exceptions {
@@ -443,7 +443,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
          *     <li>if the name of the first field does not start with {@code '$'}, then the document is interpreted as a replacement.</li>
          * </ul>
          */
-        private static FieldNameValidator createUpdateModsFieldValidator(final List<? extends ClientWriteModelWithNamespace> models) {
+        private static FieldNameValidator createUpdateModsFieldValidator(final List<? extends ClientNamespacedWriteModel> models) {
             return new MappedFieldNameValidator(
                     NoOpFieldNameValidator.INSTANCE,
                     singletonMap("ops", new FieldNameValidators.OpsArrayFieldValidator(models)));
@@ -452,12 +452,12 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         static final class OpsArrayFieldValidator implements FieldNameValidator {
             private static final Set<String> OPERATION_DISCRIMINATOR_FIELD_NAMES = Stream.of("insert", "update", "delete").collect(toSet());
 
-            private final List<? extends ClientWriteModelWithNamespace> models;
+            private final List<? extends ClientNamespacedWriteModel> models;
             private final ReplacingUpdateModsFieldValidator replacingValidator;
             private final UpdatingUpdateModsFieldValidator updatingValidator;
             private int currentIndividualOperationIndex;
 
-            OpsArrayFieldValidator(final List<? extends ClientWriteModelWithNamespace> models) {
+            OpsArrayFieldValidator(final List<? extends ClientNamespacedWriteModel> models) {
                 this.models = models;
                 replacingValidator = new ReplacingUpdateModsFieldValidator();
                 updatingValidator = new UpdatingUpdateModsFieldValidator();
