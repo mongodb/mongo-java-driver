@@ -16,35 +16,46 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.assertions.Assertions;
-import com.mongodb.client.model.bulk.ClientUpdateOptions;
+import com.mongodb.client.model.bulk.ClientDeleteOneModel;
+import com.mongodb.client.model.bulk.ClientDeleteOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientUpdateManyModel extends ClientUpdateOneModel {
-    public ClientUpdateManyModel(
+public class ConcreteClientDeleteOneModel implements ClientDeleteOneModel {
+    private final MongoNamespace namespace;
+    private final Bson filter;
+    private final ConcreteClientDeleteOptions options;
+
+    public ConcreteClientDeleteOneModel(
             final MongoNamespace namespace,
             final Bson filter,
-            @Nullable
-            final Bson update,
-            @Nullable
-            final Iterable<? extends Bson> updatePipeline,
-            @Nullable final ClientUpdateOptions options) {
-        super(namespace, filter, update, updatePipeline, options);
+            @Nullable final ClientDeleteOptions options) {
+        this.namespace = namespace;
+        this.filter = filter;
+        this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
+    }
+
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    public Bson getFilter() {
+        return filter;
+    }
+
+    public ConcreteClientDeleteOptions getOptions() {
+        return options;
     }
 
     @Override
     public String toString() {
-        return "ClientUpdateManyModel{"
-                + "namespace=" + getNamespace()
-                + ", filter=" + getFilter()
-                + ", update=" + getUpdate().map(Object::toString)
-                        .orElse(getUpdatePipeline().map(Object::toString)
-                        .orElseThrow(Assertions::fail))
-                + ", options=" + getOptions()
+        return "ClientDeleteOneModel{"
+                + "namespace=" + namespace
+                + ", filter=" + filter
+                + ", options=" + options
                 + '}';
     }
 }

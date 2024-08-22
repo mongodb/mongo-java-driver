@@ -16,42 +16,29 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.model.bulk.ClientUpdateOptions;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.model.bulk.ClientReplaceOneModel;
+import com.mongodb.client.model.bulk.ClientReplaceOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
-
-import java.util.Optional;
-
-import static com.mongodb.assertions.Assertions.assertTrue;
-import static java.util.Optional.ofNullable;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class ClientUpdateOneModel implements ClientWriteModel {
+public final class ConcreteClientReplaceOneModel implements ClientReplaceOneModel {
     private final MongoNamespace namespace;
     private final Bson filter;
-    @Nullable
-    private final Bson update;
-    @Nullable
-    private final Iterable<? extends Bson> updatePipeline;
-    private final ConcreteClientUpdateOptions options;
+    private final Object replacement;
+    private final ConcreteClientReplaceOptions options;
 
-    public ClientUpdateOneModel(
+    public ConcreteClientReplaceOneModel(
             final MongoNamespace namespace,
             final Bson filter,
-            @Nullable
-            final Bson update,
-            @Nullable
-            final Iterable<? extends Bson> updatePipeline,
-            @Nullable final ClientUpdateOptions options) {
+            final Object replacement,
+            @Nullable final ClientReplaceOptions options) {
         this.namespace = namespace;
         this.filter = filter;
-        assertTrue(update == null ^ updatePipeline == null);
-        this.update = update;
-        this.updatePipeline = updatePipeline;
-        this.options = options == null ? ConcreteClientUpdateOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOptions) options;
+        this.replacement = replacement;
+        this.options = options == null ? ConcreteClientReplaceOptions.MUTABLE_EMPTY : (ConcreteClientReplaceOptions) options;
     }
 
     public MongoNamespace getNamespace() {
@@ -62,24 +49,20 @@ public class ClientUpdateOneModel implements ClientWriteModel {
         return filter;
     }
 
-    public Optional<Bson> getUpdate() {
-        return ofNullable(update);
+    public Object getReplacement() {
+        return replacement;
     }
 
-    public Optional<Iterable<? extends Bson>> getUpdatePipeline() {
-        return ofNullable(updatePipeline);
-    }
-
-    public ConcreteClientUpdateOptions getOptions() {
+    public ConcreteClientReplaceOptions getOptions() {
         return options;
     }
 
     @Override
     public String toString() {
-        return "ClientUpdateOneModel{"
+        return "ClientReplaceOneModel{"
                 + "namespace=" + namespace
                 + ", filter=" + filter
-                + ", update=" + (update != null ? update : updatePipeline)
+                + ", replacement=" + replacement
                 + ", options=" + options
                 + '}';
     }

@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
@@ -27,6 +28,8 @@ import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientDeleteManyModel;
+import com.mongodb.client.model.bulk.ClientUpdateManyModel;
 import com.mongodb.client.model.bulk.ClientWriteModel;
 import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.lang.Nullable;
@@ -362,6 +365,12 @@ public interface MongoCluster {
      * Executes a client-level bulk write operation.
      * This method is functionally equivalent to {@link #bulkWrite(List, ClientBulkWriteOptions)}
      * with the {@linkplain ClientBulkWriteOptions#clientBulkWriteOptions() default options}.
+     * <p>
+     * This operation supports {@linkplain MongoClientSettings#getRetryWrites() retryable writes}.
+     * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
+     * executing this operation may require multiple {@code bulkWrite} commands.
+     * The eligibility for retries is determined per each {@code bulkWrite} command:
+     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
      * @param models The {@linkplain ClientWriteModel individual write operations}.
      * @return The {@link ClientBulkWriteResult} if the operation is successful.
@@ -378,6 +387,12 @@ public interface MongoCluster {
 
     /**
      * Executes a client-level bulk write operation.
+     * <p>
+     * This operation supports {@linkplain MongoClientSettings#getRetryWrites() retryable writes}.
+     * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
+     * executing this operation may require multiple {@code bulkWrite} commands.
+     * The eligibility for retries is determined per each {@code bulkWrite} command:
+     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
      * @param models The {@linkplain ClientWriteModel individual write operations}.
      * @param options The options.
@@ -399,6 +414,12 @@ public interface MongoCluster {
      * Executes a client-level bulk write operation.
      * This method is functionally equivalent to {@link #bulkWrite(ClientSession, List, ClientBulkWriteOptions)}
      * with the {@linkplain ClientBulkWriteOptions#clientBulkWriteOptions() default options}.
+     * <p>
+     * This operation supports {@linkplain MongoClientSettings#getRetryWrites() retryable writes}.
+     * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
+     * executing this operation may require multiple {@code bulkWrite} commands.
+     * The eligibility for retries is determined per each {@code bulkWrite} command:
+     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientWriteModel individual write operations}.
@@ -418,6 +439,12 @@ public interface MongoCluster {
 
     /**
      * Executes a client-level bulk write operation.
+     * <p>
+     * This operation supports {@linkplain MongoClientSettings#getRetryWrites() retryable writes}.
+     * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
+     * executing this operation may require multiple {@code bulkWrite} commands.
+     * The eligibility for retries is determined per each {@code bulkWrite} command:
+     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientWriteModel individual write operations}.

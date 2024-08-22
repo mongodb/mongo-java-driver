@@ -16,16 +16,16 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.model.bulk.ClientInsertOneModel;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ClientInsertOneModel implements ClientWriteModel {
+public final class ConcreteClientInsertOneModel implements ClientInsertOneModel {
     private final MongoNamespace namespace;
     private final Object document;
 
-    public ClientInsertOneModel(
+    public ConcreteClientInsertOneModel(
             final MongoNamespace namespace,
             final Object document) {
         this.namespace = namespace;

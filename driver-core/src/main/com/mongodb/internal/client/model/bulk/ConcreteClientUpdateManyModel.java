@@ -16,46 +16,36 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.model.bulk.ClientDeleteOptions;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.assertions.Assertions;
+import com.mongodb.client.model.bulk.ClientUpdateManyModel;
+import com.mongodb.client.model.bulk.ClientUpdateOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class ClientDeleteOneModel implements ClientWriteModel {
-    private final MongoNamespace namespace;
-    private final Bson filter;
-    private final ConcreteClientDeleteOptions options;
-
-    public ClientDeleteOneModel(
+public final class ConcreteClientUpdateManyModel extends ConcreteClientUpdateOneModel implements ClientUpdateManyModel {
+    public ConcreteClientUpdateManyModel(
             final MongoNamespace namespace,
             final Bson filter,
-            @Nullable final ClientDeleteOptions options) {
-        this.namespace = namespace;
-        this.filter = filter;
-        this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
-    }
-
-    public MongoNamespace getNamespace() {
-        return namespace;
-    }
-
-    public Bson getFilter() {
-        return filter;
-    }
-
-    public ConcreteClientDeleteOptions getOptions() {
-        return options;
+            @Nullable
+            final Bson update,
+            @Nullable
+            final Iterable<? extends Bson> updatePipeline,
+            @Nullable final ClientUpdateOptions options) {
+        super(namespace, filter, update, updatePipeline, options);
     }
 
     @Override
     public String toString() {
-        return "ClientDeleteOneModel{"
-                + "namespace=" + namespace
-                + ", filter=" + filter
-                + ", options=" + options
+        return "ClientUpdateManyModel{"
+                + "namespace=" + getNamespace()
+                + ", filter=" + getFilter()
+                + ", update=" + getUpdate().map(Object::toString)
+                        .orElse(getUpdatePipeline().map(Object::toString)
+                        .orElseThrow(Assertions::fail))
+                + ", options=" + getOptions()
                 + '}';
     }
 }

@@ -17,14 +17,15 @@ package com.mongodb.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Sealed;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
-import com.mongodb.internal.client.model.bulk.ClientDeleteManyModel;
-import com.mongodb.internal.client.model.bulk.ClientDeleteOneModel;
-import com.mongodb.internal.client.model.bulk.ClientInsertOneModel;
-import com.mongodb.internal.client.model.bulk.ClientReplaceOneModel;
-import com.mongodb.internal.client.model.bulk.ClientUpdateManyModel;
-import com.mongodb.internal.client.model.bulk.ClientUpdateOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -46,12 +47,12 @@ public interface ClientWriteModel {
      * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <TDocument> ClientWriteModel insertOne(
+    static <TDocument> ClientInsertOneModel insertOne(
             final MongoNamespace namespace,
             final TDocument document) {
         notNull("namespace", namespace);
         notNull("document", document);
-        return new ClientInsertOneModel(namespace, document);
+        return new ConcreteClientInsertOneModel(namespace, document);
     }
 
     /**
@@ -66,14 +67,14 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Updates
      */
-    static ClientWriteModel updateOne(
+    static ClientUpdateOneModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
-        return new ClientUpdateOneModel(namespace, filter, update, null, null);
+        return new ConcreteClientUpdateOneModel(namespace, filter, update, null, null);
     }
 
     /**
@@ -87,7 +88,7 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Updates
      */
-    static ClientWriteModel updateOne(
+    static ClientUpdateOneModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update,
@@ -96,7 +97,7 @@ public interface ClientWriteModel {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ClientUpdateOneModel(namespace, filter, update, null, options);
+        return new ConcreteClientUpdateOneModel(namespace, filter, update, null, options);
     }
 
     /**
@@ -109,16 +110,16 @@ public interface ClientWriteModel {
      * @param updatePipeline The update pipeline.
      * @return The requested model.
      * @see Filters
-     * @see Updates
+     * @see Aggregates
      */
-    static ClientWriteModel updateOne(
+    static ClientUpdateOneModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ClientUpdateOneModel(namespace, filter, null, updatePipeline, null);
+        return new ConcreteClientUpdateOneModel(namespace, filter, null, updatePipeline, null);
     }
 
     /**
@@ -130,9 +131,9 @@ public interface ClientWriteModel {
      * @param options The options.
      * @return The requested model.
      * @see Filters
-     * @see Updates
+     * @see Aggregates
      */
-    static ClientWriteModel updateOne(
+    static ClientUpdateOneModel updateOne(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline,
@@ -141,7 +142,7 @@ public interface ClientWriteModel {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ClientUpdateOneModel(namespace, filter, null, updatePipeline, options);
+        return new ConcreteClientUpdateOneModel(namespace, filter, null, updatePipeline, options);
     }
 
     /**
@@ -156,14 +157,14 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Updates
      */
-    static ClientWriteModel updateMany(
+    static ClientUpdateManyModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
-        return new ClientUpdateManyModel(namespace, filter, update, null, null);
+        return new ConcreteClientUpdateManyModel(namespace, filter, update, null, null);
     }
 
     /**
@@ -177,7 +178,7 @@ public interface ClientWriteModel {
      * @see Filters
      * @see Updates
      */
-    static ClientWriteModel updateMany(
+    static ClientUpdateManyModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Bson update,
@@ -186,7 +187,7 @@ public interface ClientWriteModel {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ClientUpdateManyModel(namespace, filter, update, null, options);
+        return new ConcreteClientUpdateManyModel(namespace, filter, update, null, options);
     }
 
     /**
@@ -199,16 +200,16 @@ public interface ClientWriteModel {
      * @param updatePipeline The update pipeline.
      * @return The requested model.
      * @see Filters
-     * @see Updates
+     * @see Aggregates
      */
-    static ClientWriteModel updateMany(
+    static ClientUpdateManyModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ClientUpdateManyModel(namespace, filter, null, updatePipeline, null);
+        return new ConcreteClientUpdateManyModel(namespace, filter, null, updatePipeline, null);
     }
 
     /**
@@ -220,9 +221,9 @@ public interface ClientWriteModel {
      * @param options The options.
      * @return The requested model.
      * @see Filters
-     * @see Updates
+     * @see Aggregates
      */
-    static ClientWriteModel updateMany(
+    static ClientUpdateManyModel updateMany(
             final MongoNamespace namespace,
             final Bson filter,
             final Iterable<? extends Bson> updatePipeline,
@@ -231,7 +232,7 @@ public interface ClientWriteModel {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ClientUpdateManyModel(namespace, filter, null, updatePipeline, options);
+        return new ConcreteClientUpdateManyModel(namespace, filter, null, updatePipeline, options);
     }
 
     /**
@@ -242,18 +243,19 @@ public interface ClientWriteModel {
      * @param namespace The namespace.
      * @param filter The filter.
      * @param replacement The replacement.
+     * The keys of this document must not start with {@code $}, unless they express a {@linkplain com.mongodb.DBRef database reference}.
      * @return The requested model.
      * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <TDocument> ClientWriteModel replaceOne(
+    static <TDocument> ClientReplaceOneModel replaceOne(
             final MongoNamespace namespace,
             final Bson filter,
             final TDocument replacement) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("replacement", replacement);
-        return new ClientReplaceOneModel(namespace, filter, replacement, null);
+        return new ConcreteClientReplaceOneModel(namespace, filter, replacement, null);
     }
 
     /**
@@ -262,12 +264,13 @@ public interface ClientWriteModel {
      * @param namespace The namespace.
      * @param filter The filter.
      * @param replacement The replacement.
+     * The keys of this document must not start with {@code $}, unless they express a {@linkplain com.mongodb.DBRef database reference}.
      * @param options The options.
      * @return The requested model.
      * @param <TDocument> The document type, for example {@link Document}.
      * @see Filters
      */
-    static <TDocument> ClientWriteModel replaceOne(
+    static <TDocument> ClientReplaceOneModel replaceOne(
             final MongoNamespace namespace,
             final Bson filter,
             final TDocument replacement,
@@ -276,7 +279,7 @@ public interface ClientWriteModel {
         notNull("filter", filter);
         notNull("replacement", replacement);
         notNull("options", options);
-        return new ClientReplaceOneModel(namespace, filter, replacement, options);
+        return new ConcreteClientReplaceOneModel(namespace, filter, replacement, options);
     }
 
     /**
@@ -289,12 +292,12 @@ public interface ClientWriteModel {
      * @return The requested model.
      * @see Filters
      */
-    static ClientWriteModel deleteOne(
+    static ClientDeleteOneModel deleteOne(
             final MongoNamespace namespace,
             final Bson filter) {
         notNull("namespace", namespace);
         notNull("filter", filter);
-        return new ClientDeleteOneModel(namespace, filter, null);
+        return new ConcreteClientDeleteOneModel(namespace, filter, null);
     }
 
     /**
@@ -306,14 +309,14 @@ public interface ClientWriteModel {
      * @return The requested model.
      * @see Filters
      */
-    static ClientWriteModel deleteOne(
+    static ClientDeleteOneModel deleteOne(
             final MongoNamespace namespace,
             final Bson filter,
             final ClientDeleteOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);
-        return new ClientDeleteOneModel(namespace, filter, options);
+        return new ConcreteClientDeleteOneModel(namespace, filter, options);
     }
 
     /**
@@ -326,12 +329,12 @@ public interface ClientWriteModel {
      * @return The requested model.
      * @see Filters
      */
-    static ClientWriteModel deleteMany(
+    static ClientDeleteManyModel deleteMany(
             final MongoNamespace namespace,
             final Bson filter) {
         notNull("namespace", namespace);
         notNull("filter", filter);
-        return new ClientDeleteManyModel(namespace, filter, null);
+        return new ConcreteClientDeleteManyModel(namespace, filter, null);
     }
 
     /**
@@ -343,13 +346,13 @@ public interface ClientWriteModel {
      * @return The requested model.
      * @see Filters
      */
-    static ClientWriteModel deleteMany(
+    static ClientDeleteManyModel deleteMany(
             final MongoNamespace namespace,
             final Bson filter,
             final ClientDeleteOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);
-        return new ClientDeleteManyModel(namespace, filter, options);
+        return new ConcreteClientDeleteManyModel(namespace, filter, options);
     }
 }
