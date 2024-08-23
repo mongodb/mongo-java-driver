@@ -730,32 +730,6 @@ object Aggregates {
    * @param queryVector The query vector. The number of dimensions must match that of the `index`.
    * @param path The field to be searched.
    * @param index The name of the index to use.
-   * @param numCandidates The number of candidates.
-   * @param limit The limit on the number of documents produced by the pipeline stage.
-   * @return The `\$vectorSearch` pipeline stage.
-   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
-   * @note Requires MongoDB 6.0.10 or greater
-   * @since 4.11
-   */
-  @Beta(Array(Reason.SERVER))
-  def vectorSearch(
-      path: FieldSearchPath,
-      queryVector: Iterable[java.lang.Double],
-      index: String,
-      numCandidates: Long,
-      limit: Long
-  ): Bson =
-    JAggregates.vectorSearch(path, queryVector.asJava, index, numCandidates, limit)
-
-  /**
-   * Creates a `\$vectorSearch` pipeline stage supported by MongoDB Atlas.
-   * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
-   * to extract the relevance score assigned to each found document.
-   *
-   * @param queryVector The query vector. The number of dimensions must match that of the `index`.
-   * @param path The field to be searched.
-   * @param index The name of the index to use.
-   * @param numCandidates The number of candidates.
    * @param limit The limit on the number of documents produced by the pipeline stage.
    * @param options Optional `\$vectorSearch` pipeline stage fields.
    * @return The `\$vectorSearch` pipeline stage.
@@ -768,11 +742,10 @@ object Aggregates {
       path: FieldSearchPath,
       queryVector: Iterable[java.lang.Double],
       index: String,
-      numCandidates: Long,
       limit: Long,
       options: VectorSearchOptions
   ): Bson =
-    JAggregates.vectorSearch(path, queryVector.asJava, index, numCandidates, limit, options)
+    JAggregates.vectorSearch(path, queryVector.asJava, index, limit, options)
 
   /**
    * Creates an `\$unset` pipeline stage that removes/excludes fields from documents
