@@ -235,7 +235,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             // The server does not have a chance to add "RetryableWriteError" label to `e`,
             // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
             // to add the label. So we do that explicitly.
-            shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, e, false);
+            shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, e);
             resultAccumulator.onBulkWriteCommandErrorWithoutResponse(e);
             throw e;
         }

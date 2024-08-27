@@ -41,6 +41,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -153,14 +154,26 @@ final class CommandOperationHelper {
         return decision;
     }
 
-    static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
-        return shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, attemptFailure, true);
+    static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+        Throwable attemptFailureNotToBeRetried = getAttemptFailureNotToRetryOrAddRetryableLabel(retryState, attemptFailure);
+        boolean decision = attemptFailureNotToBeRetried == null;
+        if (!decision && retryState.attachment(AttachmentKeys.retryableCommandFlag()).orElse(false)) {
+            logUnableToRetry(
+                    retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null),
+                    assertNotNull(attemptFailureNotToBeRetried));
+        }
+        return decision;
     }
 
-    static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(
-            final RetryState retryState,
-            final Throwable attemptFailure,
-            final boolean logIfDecideToNotRetry) {
+    static boolean shouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
+        return getAttemptFailureNotToRetryOrAddRetryableLabel(retryState, attemptFailure) != null;
+    }
+
+    /**
+     * @return {@code null} if the decision is {@code true}. Otherwise, returns the {@link Throwable} that must not be retried.
+     */
+    @Nullable
+    private static Throwable getAttemptFailureNotToRetryOrAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
         Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
         boolean decision = false;
         MongoException exceptionRetryableRegardlessOfCommand = null;
@@ -177,11 +190,9 @@ final class CommandOperationHelper {
             } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryState.attachment(AttachmentKeys.maxWireVersion())
                     .orElse(null))) {
                 decision = true;
-            } else if (logIfDecideToNotRetry) {
-                logUnableToRetry(retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).orElse(null), failure);
             }
         }
-        return decision;
+        return decision ? null : assertNotNull(failure);
     }
 
     static boolean isRetryWritesEnabled(@Nullable final BsonDocument command) {

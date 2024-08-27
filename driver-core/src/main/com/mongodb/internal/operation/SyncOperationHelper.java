@@ -303,7 +303,7 @@ final class SyncOperationHelper {
     static <R> Supplier<R> decorateWriteWithRetries(final RetryState retryState,
             final OperationContext operationContext, final Supplier<R> writeFunction) {
         return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
-                CommandOperationHelper::shouldAttemptToRetryWriteAndAddRetryableLabel, () -> {
+                CommandOperationHelper::loggingShouldAttemptToRetryWriteAndAddRetryableLabel, () -> {
             logRetryExecute(retryState, operationContext);
             return writeFunction.get();
         });
