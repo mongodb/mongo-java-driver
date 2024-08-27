@@ -107,6 +107,8 @@ tasks.register<Download>("downloadJava") {
     src(downloadUrl)
     dest("${jnaDownloadsDir}/$binariesArchiveName")
     overwrite(true)
+    /* To make sure we don't download archive with binaries if it already exists or if it hasn't changed in S3 bucket.*/
+    onlyIfModified(true)
 }
 
 // The `processResources` task (defined by the `java-library` plug-in) consumes files in the main source set.
