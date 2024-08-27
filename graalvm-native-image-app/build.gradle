@@ -82,12 +82,12 @@ dependencies {
     implementation project(path:':driver-sync', configuration:'archives')
     implementation project(path:':driver-reactive-streams', configuration:'archives')
     implementation project(path:':driver-legacy', configuration:'archives')
+    implementation project(path: ':mongocrypt', configuration: 'archives')
     // note that as a result of these `sourceSets` dependencies, `driver-sync/src/test/resources/logback-test.xml` is used
     implementation project(':driver-core').sourceSets.test.output
     implementation project(':driver-sync').sourceSets.test.output
     implementation project(':driver-legacy').sourceSets.test.output
     implementation project(':driver-reactive-streams').sourceSets.test.output
-    implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion"
     implementation 'org.slf4j:slf4j-api:2.0.12'
     implementation "ch.qos.logback:logback-classic:$logbackVersion"
     implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")

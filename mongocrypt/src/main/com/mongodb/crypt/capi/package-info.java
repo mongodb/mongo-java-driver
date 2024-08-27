@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-present MongoDB, Inc.
+ * Copyright 2019-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,24 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-lambda'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-kotlin'
-include ':bson-kotlinx'
-include ':driver-kotlin-sync'
-include ':driver-kotlin-coroutine'
-include ':bson-scala'
-include ':driver-scala'
-include ':mongocrypt'
-include 'util:spock'
-include 'util:taglets'
-include ':graalvm-native-image-app'
+package com.mongodb.crypt.capi;
