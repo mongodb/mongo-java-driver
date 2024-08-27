@@ -33,5 +33,7 @@ public interface ClientInsertOneResult {
      *
      * @return The {@code "_id"} of the inserted document.
      */
+    // BULK-TODO return optional because of `RawBsonDocument`?
+    // BULK-TODO document this for both the old and the new API
     BsonValue getInsertedId();
 }

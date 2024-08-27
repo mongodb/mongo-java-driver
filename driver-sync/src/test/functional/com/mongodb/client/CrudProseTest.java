@@ -20,40 +20,59 @@ import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.RawBsonDocument;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
+import static com.mongodb.client.model.bulk.ClientNamespacedWriteModel.insertOne;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * See https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.rst#prose-tests
@@ -131,9 +150,54 @@ public class CrudProseTest extends DatabaseTestCase {
     /**
      * This test is not from the specification.
      */
-    @Test
+    @ParameterizedTest
+    @MethodSource("insertMustGenerateIdAtMostOnceArgs")
+    <TDocument> void insertMustGenerateIdAtMostOnce(
+            final Class<TDocument> documentClass,
+            final boolean expectIdGenerated,
+            final Supplier<TDocument> documentSupplier) {
+        assertAll(
+                () -> assertInsertMustGenerateIdAtMostOnce("insert", documentClass, expectIdGenerated,
+                        (client, collection) -> collection.insertOne(documentSupplier.get()).getInsertedId()),
+                () -> assertInsertMustGenerateIdAtMostOnce("insert", documentClass, expectIdGenerated,
+                        (client, collection) -> collection.bulkWrite(
+                                singletonList(new InsertOneModel<>(documentSupplier.get())))
+                                .getInserts().get(0).getId()),
+                () -> assertInsertMustGenerateIdAtMostOnce("bulkWrite", documentClass, expectIdGenerated,
+                        (client, collection) -> client.bulkWrite(
+                                singletonList(insertOne(collection.getNamespace(), documentSupplier.get())),
+                                clientBulkWriteOptions().verboseResults(true))
+                                // BULK-TODO use Integer instead of Long in BulkWriteResult.insertResults/updateResults/deleteResults
+                                .getVerbose().orElseThrow(Assertions::fail).getInsertResults().get(0L).getInsertedId())
+        );
+    }
+
+    private static Stream<Arguments> insertMustGenerateIdAtMostOnceArgs() {
+        CodecRegistry codecRegistry = fromRegistries(
+                getDefaultCodecRegistry(),
+                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+        return Stream.of(
+                arguments(MyDocument.class, true, (Supplier<MyDocument>) MyDocument::new),
+                arguments(Document.class, true, (Supplier<Document>) Document::new),
+                arguments(BsonDocument.class, true, (Supplier<BsonDocument>) BsonDocument::new),
+                arguments(
+                        BsonDocumentWrapper.class, true,
+                        (Supplier<BsonDocumentWrapper<MyDocument>>) () ->
+                                new BsonDocumentWrapper<>(new MyDocument(), codecRegistry.get(MyDocument.class))),
+                arguments(
+                        RawBsonDocument.class, false,
+                        (Supplier<RawBsonDocument>) () ->
+                                new RawBsonDocument(new MyDocument(), codecRegistry.get(MyDocument.class)))
+        );
+    }
+
     @SuppressWarnings("try")
-    void insertMustGenerateIdAtMostOnce() throws ExecutionException, InterruptedException {
+    private <TDocument> void assertInsertMustGenerateIdAtMostOnce(
+            final String commandName,
+            final Class<TDocument> documentClass,
+            final boolean expectIdGenerated,
+            final BiFunction<MongoClient, MongoCollection<TDocument>, BsonValue> insertOperation)
+            throws ExecutionException, InterruptedException, TimeoutException {
         assumeTrue(isDiscoverableReplicaSet());
         ServerAddress primaryServerAddress = Fixture.getPrimary();
         CompletableFuture<BsonValue> futureIdGeneratedByFirstInsertAttempt = new CompletableFuture<>();
@@ -141,12 +205,26 @@ public class CrudProseTest extends DatabaseTestCase {
         CommandListener commandListener = new CommandListener() {
             @Override
             public void commandStarted(final CommandStartedEvent event) {
-                if (event.getCommandName().equals("insert")) {
-                    BsonValue generatedId = event.getCommand().getArray("documents").get(0).asDocument().get("_id");
+                Consumer<BsonValue> generatedIdConsumer = generatedId -> {
                     if (!futureIdGeneratedByFirstInsertAttempt.isDone()) {
                         futureIdGeneratedByFirstInsertAttempt.complete(generatedId);
                     } else {
                         futureIdGeneratedBySecondInsertAttempt.complete(generatedId);
+                    }
+                };
+                switch (event.getCommandName()) {
+                    case "insert": {
+                        Assertions.assertTrue(commandName.equals("insert"));
+                        generatedIdConsumer.accept(event.getCommand().getArray("documents").get(0).asDocument().get("_id"));
+                        break;
+                    }
+                    case "bulkWrite": {
+                        Assertions.assertTrue(commandName.equals("bulkWrite"));
+                        generatedIdConsumer.accept(event.getCommand().getArray("ops").get(0).asDocument().getDocument("document").get("_id"));
+                        break;
+                    }
+                    default: {
+                        // nothing to do
                     }
                 }
             }
@@ -154,7 +232,7 @@ public class CrudProseTest extends DatabaseTestCase {
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))
                 .append("data", new BsonDocument()
-                        .append("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
+                        .append("failCommands", new BsonArray(singletonList(new BsonString(commandName))))
                         .append("errorLabels", new BsonArray(singletonList(new BsonString("RetryableWriteError"))))
                         .append("writeConcernError", new BsonDocument("code", new BsonInt32(91))
                                 .append("errmsg", new BsonString("Replication is being shut down"))));
@@ -162,17 +240,23 @@ public class CrudProseTest extends DatabaseTestCase {
                 .retryWrites(true)
                 .addCommandListener(commandListener)
                 .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                .codecRegistry(fromRegistries(
+                        getDefaultCodecRegistry(),
+                        fromProviders(PojoCodecProvider.builder().automatic(true).build())))
                 .build());
              FailPoint ignored = FailPoint.enable(failPointDocument, primaryServerAddress)) {
-            MongoCollection<MyDocument> coll = client.getDatabase(database.getName())
-                    .getCollection(collection.getNamespace().getCollectionName(), MyDocument.class)
-                    .withCodecRegistry(fromRegistries(
-                            getDefaultCodecRegistry(),
-                            fromProviders(PojoCodecProvider.builder().automatic(true).build())));
-            BsonValue insertedId = coll.insertOne(new MyDocument()).getInsertedId();
-            BsonValue idGeneratedByFirstInsertAttempt = futureIdGeneratedByFirstInsertAttempt.get();
+            MongoCollection<TDocument> coll = client.getDatabase(database.getName())
+                    .getCollection(collection.getNamespace().getCollectionName(), documentClass);
+            BsonValue insertedId = insertOperation.apply(client, coll);
+            if (expectIdGenerated) {
+                assertNotNull(insertedId);
+            } else {
+                assertNull(insertedId);
+            }
+            Duration timeout = Duration.ofSeconds(10);
+            BsonValue idGeneratedByFirstInsertAttempt = futureIdGeneratedByFirstInsertAttempt.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             assertEquals(idGeneratedByFirstInsertAttempt, insertedId);
-            assertEquals(idGeneratedByFirstInsertAttempt, futureIdGeneratedBySecondInsertAttempt.get());
+            assertEquals(idGeneratedByFirstInsertAttempt, futureIdGeneratedBySecondInsertAttempt.get(timeout.toMillis(), TimeUnit.MILLISECONDS));
         }
     }
 
