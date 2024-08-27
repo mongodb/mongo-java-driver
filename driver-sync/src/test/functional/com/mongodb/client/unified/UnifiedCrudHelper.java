@@ -1838,6 +1838,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
             case "insertOne":
                 Set<String> expectedArguments = new HashSet<>(asList("namespace", "document"));
                 if (!expectedArguments.containsAll(arguments.keySet())) {
+                    // for other `modelType`s a conceptually similar check is done when creating their options objects
                     throw new UnsupportedOperationException("Unsupported argument, one of: " + arguments.keySet());
                 }
                 return ClientNamespacedWriteModel.insertOne(
