@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -66,6 +65,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExec
 import static com.mongodb.internal.operation.CommandOperationHelper.loggingShouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
+import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests;
@@ -434,24 +434,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
                 operationContext, shouldExpectResponse(batch, effectiveWriteConcern),
                 batch.getPayload(), batch.getFieldNameValidator(), callback);
-    }
-
-    static WriteConcern validateAndGetEffectiveWriteConcern(final WriteConcern writeConcernSetting, final SessionContext sessionContext)
-            throws MongoClientException {
-        boolean activeTransaction = sessionContext.hasActiveTransaction();
-        WriteConcern effectiveWriteConcern = activeTransaction
-                ? WriteConcern.ACKNOWLEDGED
-                : writeConcernSetting;
-        if (sessionContext.hasSession() && !sessionContext.isImplicitSession() && !activeTransaction && !effectiveWriteConcern.isAcknowledged()) {
-            throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
-        }
-        return effectiveWriteConcern;
-    }
-
-    static Optional<WriteConcern> commandWriteConcern(final WriteConcern effectiveWriteConcern, final SessionContext sessionContext) {
-        return effectiveWriteConcern.isServerDefault() || sessionContext.hasActiveTransaction()
-                ? Optional.empty()
-                : Optional.of(effectiveWriteConcern);
     }
 
     private boolean shouldExpectResponse(final BulkWriteBatch batch, final WriteConcern effectiveWriteConcern) {

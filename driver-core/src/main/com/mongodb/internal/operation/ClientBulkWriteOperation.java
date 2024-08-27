@@ -106,8 +106,8 @@ import static com.mongodb.internal.operation.BulkWriteBatch.logWriteModelDoesNot
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.shouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
-import static com.mongodb.internal.operation.MixedBulkWriteOperation.commandWriteConcern;
-import static com.mongodb.internal.operation.MixedBulkWriteOperation.validateAndGetEffectiveWriteConcern;
+import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
+import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWriteWithRetries;

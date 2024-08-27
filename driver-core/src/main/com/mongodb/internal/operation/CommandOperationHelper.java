@@ -25,6 +25,7 @@ import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
@@ -33,10 +34,12 @@ import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
@@ -48,6 +51,23 @@ import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
 final class CommandOperationHelper {
+    static WriteConcern validateAndGetEffectiveWriteConcern(final WriteConcern writeConcernSetting, final SessionContext sessionContext)
+            throws MongoClientException {
+        boolean activeTransaction = sessionContext.hasActiveTransaction();
+        WriteConcern effectiveWriteConcern = activeTransaction
+                ? WriteConcern.ACKNOWLEDGED
+                : writeConcernSetting;
+        if (sessionContext.hasSession() && !sessionContext.isImplicitSession() && !activeTransaction && !effectiveWriteConcern.isAcknowledged()) {
+            throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
+        }
+        return effectiveWriteConcern;
+    }
+
+    static Optional<WriteConcern> commandWriteConcern(final WriteConcern effectiveWriteConcern, final SessionContext sessionContext) {
+        return effectiveWriteConcern.isServerDefault() || sessionContext.hasActiveTransaction()
+                ? Optional.empty()
+                : Optional.of(effectiveWriteConcern);
+    }
 
     interface CommandCreator {
         BsonDocument create(
