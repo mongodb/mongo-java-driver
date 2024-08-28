@@ -27,6 +27,7 @@ import com.mongodb.Tag;
 import com.mongodb.TagSet;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
@@ -119,7 +120,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientDeleteOptions.clientDeleteOptions;
 import static com.mongodb.client.model.bulk.ClientReplaceOptions.clientReplaceOptions;
@@ -1985,7 +1985,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 expected.append("insertResults", new BsonDocument(verbose.getInsertResults().entrySet().stream()
                                 .map(entry -> new BsonElement(
                                         entry.getKey().toString(),
-                                        new BsonDocument("insertedId", assertNotNull(entry.getValue().getInsertedId()))))
+                                        new BsonDocument("insertedId", entry.getValue().getInsertedId().orElseThrow(Assertions::fail))))
                                 .collect(toList())))
                         .append("updateResults", new BsonDocument(verbose.getUpdateResults().entrySet().stream()
                                 .map(entry -> {
