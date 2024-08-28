@@ -53,6 +53,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
+import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -398,8 +399,9 @@ final class MongoClusterImpl implements MongoCluster {
                 }
                 return operation.execute(binding);
             } catch (MongoException e) {
-                labelException(actualClientSession, e);
-                clearTransactionContextOnTransientTransactionError(session, e);
+                MongoException exceptionToHandle = OperationHelper.unwrap(e);
+                labelException(actualClientSession, exceptionToHandle);
+                clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
                 throw e;
             } finally {
                 binding.release();
@@ -419,8 +421,9 @@ final class MongoClusterImpl implements MongoCluster {
             try {
                 return operation.execute(binding);
             } catch (MongoException e) {
-                labelException(actualClientSession, e);
-                clearTransactionContextOnTransientTransactionError(session, e);
+                MongoException exceptionToHandle = OperationHelper.unwrap(e);
+                labelException(actualClientSession, exceptionToHandle);
+                clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
                 throw e;
             } finally {
                 binding.release();
