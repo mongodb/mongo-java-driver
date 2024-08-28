@@ -159,7 +159,7 @@ public class AsynchronousTlsChannelGroup {
 
     private final Selector selector;
 
-    final ExecutorService executor;
+    private final ExecutorService executor;
 
     private final ScheduledThreadPoolExecutor timeoutExecutor =
             new ScheduledThreadPoolExecutor(
@@ -226,6 +226,10 @@ public class AsynchronousTlsChannelGroup {
     /** Creates an instance of this class, using as many thread as available processors. */
     public AsynchronousTlsChannelGroup() {
         this(Runtime.getRuntime().availableProcessors());
+    }
+
+    void submit(final Runnable r) {
+        executor.submit(r);
     }
 
     RegisteredSocket registerSocket(TlsChannel reader, SocketChannel socketChannel) {
@@ -702,7 +706,7 @@ public class AsynchronousTlsChannelGroup {
      *
      * @return whether the channel is terminated
      */
-    public boolean isTerminated() {
+    private boolean isTerminated() {
         return executor.isTerminated();
     }
 
