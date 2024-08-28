@@ -35,6 +35,8 @@ import static java.util.Optional.ofNullable;
 
 /**
  * The result of an unsuccessful or partially unsuccessful client-level bulk write operation.
+ * Note that the {@linkplain #getCode() code} and {@linkplain #getErrorLabels() labels} from this exception are not useful.
+ * An application should use those from the {@linkplain #getError() top-level error}.
  *
  * @see ClientBulkWriteResult
  * @since 5.3
@@ -72,9 +74,6 @@ public final class ClientBulkWriteException extends MongoServerException {
                         error, writeConcernErrors, writeErrors, partialResult,
                         notNull("serverAddress", serverAddress)),
                 validateServerAddress(error, serverAddress));
-        // BULK-TODO Should ClientBulkWriteException.getCode be the same as error.getCode,
-        // and getErrorLabels/hasErrorLabel contain the same labels as error.getErrorLabels?
-        // TRANSIENT_TRANSACTION_ERROR_LABEL, UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL, RETRYABLE_WRITE_ERROR_LABEL, NO_WRITES_PERFORMED_ERROR_LABEL
         isTrueArgument("At least one of `writeConcernErrors`, `writeErrors`, `partialResult` must be non-null or non-empty",
                 !(writeConcernErrors == null || writeConcernErrors.isEmpty())
                         || !(writeErrors == null || writeErrors.isEmpty())
