@@ -35,9 +35,9 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
 
     public AcknowledgedVerboseClientBulkWriteResult(
             final AcknowledgedSummaryClientBulkWriteResult summaryResults,
-            final Map<Long, ClientInsertOneResult> insertResults,
-            final Map<Long, ClientUpdateResult> updateResults,
-            final Map<Long, ClientDeleteResult> deleteResults) {
+            final Map<Integer, ClientInsertOneResult> insertResults,
+            final Map<Integer, ClientUpdateResult> updateResults,
+            final Map<Integer, ClientDeleteResult> deleteResults) {
         this.summaryResults = summaryResults;
         this.verbose = new Verbose(insertResults, updateResults, deleteResults);
     }
@@ -110,31 +110,31 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
     }
 
     private static final class Verbose implements ClientBulkWriteResult.Verbose {
-        private final Map<Long, ClientInsertOneResult> insertResults;
-        private final Map<Long, ClientUpdateResult> updateResults;
-        private final Map<Long, ClientDeleteResult> deleteResults;
+        private final Map<Integer, ClientInsertOneResult> insertResults;
+        private final Map<Integer, ClientUpdateResult> updateResults;
+        private final Map<Integer, ClientDeleteResult> deleteResults;
 
         Verbose(
-                final Map<Long, ClientInsertOneResult> insertResults,
-                final Map<Long, ClientUpdateResult> updateResults,
-                final Map<Long, ClientDeleteResult> deleteResults) {
+                final Map<Integer, ClientInsertOneResult> insertResults,
+                final Map<Integer, ClientUpdateResult> updateResults,
+                final Map<Integer, ClientDeleteResult> deleteResults) {
             this.insertResults = insertResults;
             this.updateResults = updateResults;
             this.deleteResults = deleteResults;
         }
 
         @Override
-        public Map<Long, ClientInsertOneResult> getInsertResults() {
+        public Map<Integer, ClientInsertOneResult> getInsertResults() {
             return insertResults;
         }
 
         @Override
-        public Map<Long, ClientUpdateResult> getUpdateResults() {
+        public Map<Integer, ClientUpdateResult> getUpdateResults() {
             return updateResults;
         }
 
         @Override
-        public Map<Long, ClientDeleteResult> getDeleteResults() {
+        public Map<Integer, ClientDeleteResult> getDeleteResults() {
             return deleteResults;
         }
 

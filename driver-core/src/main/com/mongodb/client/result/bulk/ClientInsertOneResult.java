@@ -18,7 +18,9 @@ package com.mongodb.client.result.bulk;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
+import org.bson.RawBsonDocument;
 
 /**
  * The result of a successful {@linkplain ClientWriteModel individual insert one operation}.
@@ -31,9 +33,10 @@ public interface ClientInsertOneResult {
     /**
      * The {@code "_id"} of the inserted document.
      *
-     * @return The {@code "_id"} of the inserted document.
+     * @return The {@code "_id"} of the inserted document, or {@code null} if one is not available,
+     * which happens when a {@link RawBsonDocument} without {@code "_id"} is inserted,
+     * because the driver does not generate missing {@code "_id"} fields for {@link RawBsonDocument}s.
      */
-    // BULK-TODO return optional because of `RawBsonDocument`?
-    // BULK-TODO document this for both the old and the new API
+    @Nullable
     BsonValue getInsertedId();
 }

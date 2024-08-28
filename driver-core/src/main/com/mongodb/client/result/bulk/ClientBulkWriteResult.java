@@ -85,10 +85,11 @@ public interface ClientBulkWriteResult {
     long getDeletedCount();
 
     /**
-     * The {@linkplain ClientBulkWriteOptions#verboseResults(Boolean) verbose results} of individual operations.
+     * The verbose results of individual operations.
      *
      * @return {@link Optional} verbose results of individual operations.
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
+     * @see ClientBulkWriteOptions#verboseResults(Boolean)
      */
     Optional<Verbose> getVerbose();
 
@@ -109,7 +110,7 @@ public interface ClientBulkWriteResult {
          * @return The indexed {@link ClientInsertOneResult}s.
          * @see ClientBulkWriteException#getWriteErrors()
          */
-        Map<Long, ClientInsertOneResult> getInsertResults();
+        Map<Integer, ClientInsertOneResult> getInsertResults();
 
         /**
          * The indexed {@link ClientUpdateResult}s.
@@ -121,7 +122,7 @@ public interface ClientBulkWriteResult {
          * @return The indexed {@link ClientUpdateResult}s.
          * @see ClientBulkWriteException#getWriteErrors()
          */
-        Map<Long, ClientUpdateResult> getUpdateResults();
+        Map<Integer, ClientUpdateResult> getUpdateResults();
 
         /**
          * The indexed {@link ClientDeleteResult}s.
@@ -133,6 +134,6 @@ public interface ClientBulkWriteResult {
          * @return The indexed {@link ClientDeleteResult}s.
          * @see ClientBulkWriteException#getWriteErrors()
          */
-        Map<Long, ClientDeleteResult> getDeleteResults();
+        Map<Integer, ClientDeleteResult> getDeleteResults();
     }
 }

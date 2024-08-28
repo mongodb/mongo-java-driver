@@ -46,7 +46,7 @@ public final class ClientBulkWriteException extends MongoServerException {
     @Nullable
     private final MongoException error;
     private final List<WriteConcernError> writeConcernErrors;
-    private final Map<Long, WriteError> writeErrors;
+    private final Map<Integer, WriteError> writeErrors;
     @Nullable
     private final ClientBulkWriteResult partialResult;
 
@@ -64,7 +64,7 @@ public final class ClientBulkWriteException extends MongoServerException {
     public ClientBulkWriteException(
             @Nullable final MongoException error,
             @Nullable final List<WriteConcernError> writeConcernErrors,
-            @Nullable final Map<Long, WriteError> writeErrors,
+            @Nullable final Map<Integer, WriteError> writeErrors,
             @Nullable final ClientBulkWriteResult partialResult,
             final ServerAddress serverAddress) {
         super(
@@ -88,7 +88,7 @@ public final class ClientBulkWriteException extends MongoServerException {
     private static String message(
             @Nullable final MongoException error,
             @Nullable final List<WriteConcernError> writeConcernErrors,
-            @Nullable final Map<Long, WriteError> writeErrors,
+            @Nullable final Map<Integer, WriteError> writeErrors,
             @Nullable final ClientBulkWriteResult partialResult,
             final ServerAddress serverAddress) {
         return "Client-level bulk write operation error on server " + serverAddress + "."
@@ -139,7 +139,7 @@ public final class ClientBulkWriteException extends MongoServerException {
      * @see ClientBulkWriteResult.Verbose#getUpdateResults()
      * @see ClientBulkWriteResult.Verbose#getDeleteResults()
      */
-    public Map<Long, WriteError> getWriteErrors() {
+    public Map<Integer, WriteError> getWriteErrors() {
         return writeErrors;
     }
 
