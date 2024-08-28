@@ -20,6 +20,9 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
 import java.util.Objects;
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -33,9 +36,8 @@ public final class ConcreteClientInsertOneResult implements ClientInsertOneResul
     }
 
     @Override
-    @Nullable
-    public BsonValue getInsertedId() {
-        return insertedId;
+    public Optional<BsonValue> getInsertedId() {
+        return ofNullable(insertedId);
     }
 
     @Override
