@@ -18,9 +18,10 @@ package com.mongodb.client.result.bulk;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.model.bulk.ClientWriteModel;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.RawBsonDocument;
+
+import java.util.Optional;
 
 /**
  * The result of a successful {@linkplain ClientWriteModel individual insert one operation}.
@@ -33,10 +34,10 @@ public interface ClientInsertOneResult {
     /**
      * The {@code "_id"} of the inserted document.
      *
-     * @return The {@code "_id"} of the inserted document, or {@code null} if one is not available,
-     * which happens when a {@link RawBsonDocument} without {@code "_id"} is inserted,
-     * because the driver does not generate missing {@code "_id"} fields for {@link RawBsonDocument}s.
+     * @return The {@code "_id"} of the inserted document.
+     * {@linkplain Optional#isPresent() Present} unless a {@link RawBsonDocument} is inserted,
+     * because the driver neither generates the missing {@code "_id"} field for a {@link RawBsonDocument},
+     * nor does it read the {@code "_id"} field from a {@link RawBsonDocument} when inserting it.
      */
-    @Nullable
-    BsonValue getInsertedId();
+    Optional<BsonValue> getInsertedId();
 }
