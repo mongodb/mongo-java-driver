@@ -262,7 +262,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 lazilyEncodedCommand,
                 FieldNameValidators.createUpdateModsFieldValidator(unexecutedModels),
                 null,
-                codecRegistry.get(BsonDocument.class),
+                CommandResultDocumentCodec.create(codecRegistry.get(BsonDocument.class), CommandBatchCursorHelper.FIRST_BATCH),
                 operationContext,
                 effectiveWriteConcern.isAcknowledged(),
                 null,
