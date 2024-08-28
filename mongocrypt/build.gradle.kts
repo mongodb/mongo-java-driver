@@ -36,6 +36,7 @@ plugins {
 group = "org.mongodb"
 base.archivesBaseName = "mongodb-crypt"
 description = "MongoDB client-side crypto support"
+ext.set("pomName", "MongoCrypt")
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -167,8 +168,20 @@ tasks.withType<AbstractPublishToMaven> {
 }
 
 tasks.jar {
-    manifest {
-        attributes(
+    //NOTE this enables depending on the mongocrypt from driver-core
+   dependsOn("downloadJnaLibs")
+}
+
+tasks.javadoc {
+    if (JavaVersion.current().isJava9Compatible) {
+        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+    }
+}
+
+afterEvaluate {
+    tasks.jar {
+        manifest {
+            attributes(
                 "-exportcontents" to "com.mongodb.crypt.capi.*;-noimport:=true",
                 "Automatic-Module-Name" to "com.mongodb.crypt.capi",
                 "Import-Package" to "org.bson.*",
@@ -177,15 +190,7 @@ tasks.jar {
                 "Bundle-Name" to "MongoCrypt",
                 "Bundle-SymbolicName" to "com.mongodb.crypt.capi",
                 "Private-Package" to ""
-        )
-    }
-
-    //NOTE this enables depending on the mongocrypt from driver-core
-   dependsOn("downloadJnaLibs")
-}
-
-tasks.javadoc {
-    if (JavaVersion.current().isJava9Compatible) {
-        (options as StandardJavadocDocletOptions).addBooleanOption("html5", true)
+            )
+        }
     }
 }
