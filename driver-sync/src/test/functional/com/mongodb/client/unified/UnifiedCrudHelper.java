@@ -119,6 +119,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientDeleteOptions.clientDeleteOptions;
 import static com.mongodb.client.model.bulk.ClientReplaceOptions.clientReplaceOptions;
@@ -1984,7 +1985,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 expected.append("insertResults", new BsonDocument(verbose.getInsertResults().entrySet().stream()
                                 .map(entry -> new BsonElement(
                                         entry.getKey().toString(),
-                                        new BsonDocument("insertedId", entry.getValue().getInsertedId())))
+                                        new BsonDocument("insertedId", assertNotNull(entry.getValue().getInsertedId()))))
                                 .collect(toList())))
                         .append("updateResults", new BsonDocument(verbose.getUpdateResults().entrySet().stream()
                                 .map(entry -> {

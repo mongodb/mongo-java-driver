@@ -167,8 +167,7 @@ public class CrudProseTest extends DatabaseTestCase {
                         (client, collection) -> client.bulkWrite(
                                 singletonList(insertOne(collection.getNamespace(), documentSupplier.get())),
                                 clientBulkWriteOptions().verboseResults(true))
-                                // BULK-TODO use Integer instead of Long in BulkWriteResult.insertResults/updateResults/deleteResults
-                                .getVerbose().orElseThrow(Assertions::fail).getInsertResults().get(0L).getInsertedId())
+                                .getVerbose().orElseThrow(Assertions::fail).getInsertResults().get(0).getInsertedId())
         );
     }
 

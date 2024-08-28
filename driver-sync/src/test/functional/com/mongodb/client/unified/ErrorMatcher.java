@@ -41,7 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import static java.lang.Long.parseLong;
+import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
@@ -150,10 +150,10 @@ final class ErrorMatcher {
                     e instanceof ClientBulkWriteException);
             BsonDocument writeErrors = expectedError.getDocument("writeErrors");
             ClientBulkWriteException actualException = (ClientBulkWriteException) e;
-            Map<Long, WriteError> actualWriteErrors = actualException.getWriteErrors();
+            Map<Integer, WriteError> actualWriteErrors = actualException.getWriteErrors();
             assertEquals("The number of write errors must match", writeErrors.size(), actualWriteErrors.size());
             writeErrors.forEach((index, writeError) -> {
-                WriteError actualWriteError = actualWriteErrors.get(parseLong(index));
+                WriteError actualWriteError = actualWriteErrors.get(parseInt(index));
                 assertNotNull("Expected a write error with index " + index, actualWriteError);
                 valueMatcher.assertValuesMatch(writeError, toMatchableValue(actualWriteError));
             });

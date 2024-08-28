@@ -658,11 +658,11 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             long matchedCount = 0;
             long modifiedCount = 0;
             long deletedCount = 0;
-            Map<Long, ClientInsertOneResult> insertResults = verboseResultsSetting ? new HashMap<>() : emptyMap();
-            Map<Long, ClientUpdateResult> updateResults = verboseResultsSetting ? new HashMap<>() : emptyMap();
-            Map<Long, ClientDeleteResult> deleteResults = verboseResultsSetting ? new HashMap<>() : emptyMap();
+            Map<Integer, ClientInsertOneResult> insertResults = verboseResultsSetting ? new HashMap<>() : emptyMap();
+            Map<Integer, ClientUpdateResult> updateResults = verboseResultsSetting ? new HashMap<>() : emptyMap();
+            Map<Integer, ClientDeleteResult> deleteResults = verboseResultsSetting ? new HashMap<>() : emptyMap();
             ArrayList<WriteConcernError> writeConcernErrors = new ArrayList<>();
-            Map<Long, WriteError> writeErrors = new HashMap<>();
+            Map<Integer, WriteError> writeErrors = new HashMap<>();
             for (BatchResult batchResult : batchResults) {
                 if (batchResult.hasResponse()) {
                     haveResponses = true;
@@ -688,19 +688,19 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                             ClientWriteModel writeModel = getModelWithNamespace(models, writeModelIndexInBatch).getModel();
                             if (writeModel instanceof ClientInsertOneModel) {
                                 insertResults.put(
-                                        (long) writeModelIndexInBatch,
+                                        writeModelIndexInBatch,
                                         new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
                             } else if (writeModel instanceof ClientUpdateOneModel || writeModel instanceof ClientReplaceOneModel) {
                                 BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
                                 updateResults.put(
-                                        (long) writeModelIndexInBatch,
+                                        writeModelIndexInBatch,
                                         new ConcreteClientUpdateResult(
                                                 individualOperationResponse.getInt32("n").getValue(),
                                                 individualOperationResponse.getInt32("nModified").getValue(),
                                                 upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
                             } else if (writeModel instanceof ClientDeleteOneModel) {
                                 deleteResults.put(
-                                        (long) writeModelIndexInBatch,
+                                        writeModelIndexInBatch,
                                         new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
                             } else {
                                 fail(writeModel.getClass().toString());
@@ -710,7 +710,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     individualOperationResponse.getInt32("code").getValue(),
                                     individualOperationResponse.getString("errmsg").getValue(),
                                     individualOperationResponse.getDocument("errInfo", new BsonDocument()));
-                            writeErrors.put((long) writeModelIndexInBatch, individualOperationWriteError);
+                            writeErrors.put(writeModelIndexInBatch, individualOperationWriteError);
                         }
                     }
                 }
