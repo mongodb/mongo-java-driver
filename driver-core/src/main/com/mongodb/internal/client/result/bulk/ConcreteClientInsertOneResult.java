@@ -16,6 +16,7 @@
 package com.mongodb.internal.client.result.bulk;
 
 import com.mongodb.client.result.bulk.ClientInsertOneResult;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
 import java.util.Objects;
@@ -24,13 +25,15 @@ import java.util.Objects;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientInsertOneResult implements ClientInsertOneResult {
+    @Nullable
     private final BsonValue insertedId;
 
-    public ConcreteClientInsertOneResult(final BsonValue insertedId) {
+    public ConcreteClientInsertOneResult(@Nullable final BsonValue insertedId) {
         this.insertedId = insertedId;
     }
 
     @Override
+    @Nullable
     public BsonValue getInsertedId() {
         return insertedId;
     }
