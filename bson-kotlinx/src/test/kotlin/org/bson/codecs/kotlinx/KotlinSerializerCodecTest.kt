@@ -15,9 +15,6 @@
  */
 package org.bson.codecs.kotlinx
 
-import java.math.BigDecimal
-import java.util.stream.Stream
-import kotlin.test.assertEquals
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
@@ -104,10 +101,16 @@ import org.bson.codecs.kotlinx.samples.DataClassWithTriple
 import org.bson.codecs.kotlinx.samples.Key
 import org.bson.codecs.kotlinx.samples.SealedInterface
 import org.bson.codecs.kotlinx.samples.ValueClass
+import org.bson.json.JsonMode
+import org.bson.json.JsonWriterSettings
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import java.math.BigDecimal
+import java.util.Base64
+import java.util.stream.Stream
+import kotlin.test.assertEquals
 
 @OptIn(ExperimentalSerializationApi::class)
 @Suppress("LargeClass")
@@ -929,7 +932,6 @@ class KotlinSerializerCodecTest {
 
     @Test
     fun testDataClassWithJsonElementBsonSupport() {
-
         val dataClassWithAllSupportedJsonTypes =
             DataClassWithJsonElement(
                 buildJsonObject {
@@ -981,6 +983,18 @@ class KotlinSerializerCodecTest {
                     put("string", JsonPrimitive("the fox ..."))
                     put("timestamp", JsonPrimitive(1311768464867721221))
                 })
+
+        val jsonWriterSettings = JsonWriterSettings.builder()
+            .outputMode(JsonMode.RELAXED)
+            .objectIdConverter { oid, writer -> writer.writeString(oid.toHexString()) }
+            .dateTimeConverter { d, writer -> writer.writeNumber(d.toString()) }
+            .timestampConverter { ts, writer -> writer.writeNumber(ts.value.toString()) }
+            .binaryConverter {b, writer -> writer.writeString(Base64.getEncoder().encodeToString(b.data)) }
+            .decimal128Converter {d, writer -> writer.writeNumber(d.toDouble().toString()) }
+            .build()
+        val dataClassWithAllSupportedJsonTypesSimpleJson = jsonAllSupportedTypesDocument.toJson(jsonWriterSettings)
+
+        assertEncodesTo("""{"value": $dataClassWithAllSupportedJsonTypesSimpleJson""", dataClassWithAllSupportedJsonTypes)
         assertDecodesTo("""{"value": $jsonAllSupportedTypesDocument}""", dataClassWithAllSupportedJsonTypes)
     }
 
@@ -1081,6 +1095,7 @@ class KotlinSerializerCodecTest {
     ): BsonDocument {
         val expected = BsonDocument.parse(json)
         val actual = serialize(value, serializersModule, configuration)
+        println(actual.toJson())
         assertEquals(expected, actual)
         return actual
     }
