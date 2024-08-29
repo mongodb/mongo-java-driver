@@ -54,7 +54,8 @@ import org.bson.codecs.kotlinx.utils.SerializationModuleUtils.isClassAvailable
 public val dateTimeSerializersModule: SerializersModule by lazy {
     var module = SerializersModule {}
     if (isClassAvailable("kotlinx.datetime.Instant")) {
-        module += InstantAsBsonDateTime.serializersModule +
+        module +=
+            InstantAsBsonDateTime.serializersModule +
                 LocalDateAsBsonDateTime.serializersModule +
                 LocalDateTimeAsBsonDateTime.serializersModule +
                 LocalTimeAsBsonDateTime.serializersModule
@@ -137,8 +138,7 @@ public object LocalDateAsBsonDateTime : KSerializer<LocalDate> {
 /**
  * LocalDateTime KSerializer.
  *
- * Encodes and decodes `LocalDateTime` objects to and from `BsonDateTime`. Data is stored to millisecond
- * accuracy.
+ * Encodes and decodes `LocalDateTime` objects to and from `BsonDateTime`. Data is stored to millisecond accuracy.
  *
  * Converts the `LocalDateTime` values to and from `UTC`.
  *
@@ -177,8 +177,7 @@ public object LocalDateTimeAsBsonDateTime : KSerializer<LocalDateTime> {
 /**
  * LocalTime KSerializer.
  *
- * Encodes and decodes `LocalTime` objects to and from `BsonDateTime`. Data is stored to millisecond
- * accuracy.
+ * Encodes and decodes `LocalTime` objects to and from `BsonDateTime`. Data is stored to millisecond accuracy.
  *
  * Converts the `LocalTime` values to and from EpochDay at `UTC`.
  *
