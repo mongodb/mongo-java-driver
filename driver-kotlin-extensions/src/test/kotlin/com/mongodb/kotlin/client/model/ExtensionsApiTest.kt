@@ -31,7 +31,6 @@ class ExtensionsApiTest {
     }
 
     private fun getKotlinExtensions(className: String): Set<String> {
-        // In the JVM extension methods in Filters.kt will become a class FiltersKt
         return ClassGraph()
             .enableClassInfo()
             .enableMethodInfo()
@@ -39,7 +38,7 @@ class ExtensionsApiTest {
             .scan()
             .use {
                 it.allClasses
-                    .filter { it.simpleName == "${className}Kt" }
+                    .filter { it.simpleName == "${className}" }
                     .flatMap { it.methodInfo }
                     .filter { it.isPublic }
                     .map { it.name }
@@ -49,7 +48,6 @@ class ExtensionsApiTest {
     }
 
     private fun getJavaMethods(className: String): Set<String> {
-        // In the JVM extension methods in Filters.kt will become a class FiltersKt
         return ClassGraph().enableClassInfo().enableMethodInfo().acceptPackages("com.mongodb.client.model").scan().use {
             it.getClassInfo("com.mongodb.client.model.$className")
                 .methodInfo

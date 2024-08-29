@@ -15,13 +15,48 @@
  */
 @file:Suppress("PackageNaming")
 
-package com.mongodb.kotlin.client.model.Filters
+package com.mongodb.kotlin.client.model
 
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.model.TextSearchOptions
 import com.mongodb.client.model.geojson.Point
 import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.Position
+import com.mongodb.kotlin.client.model.Filters.all
+import com.mongodb.kotlin.client.model.Filters.and
+import com.mongodb.kotlin.client.model.Filters.bitsAllClear
+import com.mongodb.kotlin.client.model.Filters.bitsAllSet
+import com.mongodb.kotlin.client.model.Filters.bitsAnyClear
+import com.mongodb.kotlin.client.model.Filters.bitsAnySet
+import com.mongodb.kotlin.client.model.Filters.elemMatch
+import com.mongodb.kotlin.client.model.Filters.eq
+import com.mongodb.kotlin.client.model.Filters.exists
+import com.mongodb.kotlin.client.model.Filters.expr
+import com.mongodb.kotlin.client.model.Filters.geoIntersects
+import com.mongodb.kotlin.client.model.Filters.geoWithin
+import com.mongodb.kotlin.client.model.Filters.geoWithinBox
+import com.mongodb.kotlin.client.model.Filters.geoWithinCenter
+import com.mongodb.kotlin.client.model.Filters.geoWithinCenterSphere
+import com.mongodb.kotlin.client.model.Filters.geoWithinPolygon
+import com.mongodb.kotlin.client.model.Filters.gt
+import com.mongodb.kotlin.client.model.Filters.gte
+import com.mongodb.kotlin.client.model.Filters.`in`
+import com.mongodb.kotlin.client.model.Filters.jsonSchema
+import com.mongodb.kotlin.client.model.Filters.lt
+import com.mongodb.kotlin.client.model.Filters.lte
+import com.mongodb.kotlin.client.model.Filters.mod
+import com.mongodb.kotlin.client.model.Filters.ne
+import com.mongodb.kotlin.client.model.Filters.near
+import com.mongodb.kotlin.client.model.Filters.nearSphere
+import com.mongodb.kotlin.client.model.Filters.nin
+import com.mongodb.kotlin.client.model.Filters.nor
+import com.mongodb.kotlin.client.model.Filters.not
+import com.mongodb.kotlin.client.model.Filters.or
+import com.mongodb.kotlin.client.model.Filters.regex
+import com.mongodb.kotlin.client.model.Filters.size
+import com.mongodb.kotlin.client.model.Filters.text
+import com.mongodb.kotlin.client.model.Filters.type
+import com.mongodb.kotlin.client.model.Filters.where
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.BsonType
