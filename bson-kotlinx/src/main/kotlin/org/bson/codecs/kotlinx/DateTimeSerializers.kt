@@ -71,9 +71,8 @@ public val dateTimeSerializersModule: SerializersModule by lazy {
 /**
  * Instant KSerializer.
  *
- * <p>
- * Encodes and decodes {@code Instant} objects to and from {@code BsonDateTime}. Data is extracted via {@link
- * Instant#fromEpochMilliseconds()} and stored to millisecond accuracy. </p>
+ * Encodes and decodes `Instant` objects to and from `BsonDateTime`. Data is extracted via
+ * [kotlinx.datetime.Instant.fromEpochMilliseconds] and stored to millisecond accuracy.
  *
  * @since 5.2
  */
