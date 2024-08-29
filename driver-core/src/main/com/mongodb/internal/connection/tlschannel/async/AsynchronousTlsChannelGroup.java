@@ -706,7 +706,7 @@ public class AsynchronousTlsChannelGroup {
      *
      * @return whether the channel is terminated
      */
-    private boolean isTerminated() {
+    public boolean isTerminated() {
         return executor.isTerminated();
     }
 
