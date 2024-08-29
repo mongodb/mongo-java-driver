@@ -97,9 +97,9 @@ public object InstantAsBsonDateTime : KSerializer<Instant> {
 /**
  * LocalDate KSerializer.
  *
- * <p>Encodes and decodes {@code LocalDate} objects to and from {@code BsonDateTime}.</p>
+ * Encodes and decodes `LocalDate` objects to and from `BsonDateTime`.
  *
- * <p>Converts the {@code LocalDate} values to and from {@code UTC}.</p>
+ * Converts the `LocalDate` values to and from `UTC`.
  *
  * @since 5.2
  */
