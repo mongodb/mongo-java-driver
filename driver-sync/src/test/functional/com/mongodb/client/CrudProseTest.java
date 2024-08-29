@@ -17,9 +17,10 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
-import com.mongodb.ServerAddress;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
@@ -37,7 +38,7 @@ import org.bson.Document;
 import org.bson.RawBsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -56,11 +57,11 @@ import java.util.stream.Stream;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientNamespacedWriteModel.insertOne;
-import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -69,81 +70,76 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
- * See https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.rst#prose-tests
+ * See
+ * <a href="https://github.com/mongodb/specifications/blob/master/source/crud/tests/README.md#prose-tests">CRUD Prose Tests</a>.
  */
-public class CrudProseTest extends DatabaseTestCase {
-    private BsonDocument failPointDocument;
-
-    @BeforeEach
-    @Override
-    public void setUp() {
-        super.setUp();
-    }
-
-    /**
-     * 1. WriteConcernError.details exposes writeConcernError.errInfo
-     */
+public class CrudProseTest {
+    @DisplayName("1. WriteConcernError.details exposes writeConcernError.errInfo")
     @Test
-    public void testWriteConcernErrInfoIsPropagated() {
+    @SuppressWarnings("try")
+    void testWriteConcernErrInfoIsPropagated() throws InterruptedException {
         assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(4, 0));
-
-        try {
-            setFailPoint();
-            collection.insertOne(Document.parse("{ x: 1 }"));
-        } catch (MongoWriteConcernException e) {
-            assertEquals(e.getWriteConcernError().getCode(), 100);
-            assertEquals("UnsatisfiableWriteConcern", e.getWriteConcernError().getCodeName());
-            assertEquals(e.getWriteConcernError().getDetails(), new BsonDocument("writeConcern",
+        BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
+                .append("mode", new BsonDocument("times", new BsonInt32(1)))
+                .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
+                        .append("writeConcernError", new BsonDocument("code", new BsonInt32(100))
+                                .append("codeName", new BsonString("UnsatisfiableWriteConcern"))
+                                .append("errmsg", new BsonString("Not enough data-bearing nodes"))
+                                .append("errInfo", new BsonDocument("writeConcern", new BsonDocument("w", new BsonInt32(2))
+                                        .append("wtimeout", new BsonInt32(0))
+                                        .append("provenance", new BsonString("clientSupplied"))))));
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder());
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            MongoWriteConcernException actual = assertThrows(MongoWriteConcernException.class, () ->
+                    droppedCollection(client, Document.class).insertOne(Document.parse("{ x: 1 }")));
+            assertEquals(actual.getWriteConcernError().getCode(), 100);
+            assertEquals("UnsatisfiableWriteConcern", actual.getWriteConcernError().getCodeName());
+            assertEquals(actual.getWriteConcernError().getDetails(), new BsonDocument("writeConcern",
                     new BsonDocument("w", new BsonInt32(2))
                             .append("wtimeout", new BsonInt32(0))
                             .append("provenance", new BsonString("clientSupplied"))));
-        } catch (Exception ex) {
-            fail(format("Incorrect exception thrown in test: %s", ex.getClass()));
-        } finally {
-            disableFailPoint();
         }
     }
 
-    /**
-     * 2. WriteError.details exposes writeErrors[].errInfo
-     */
+    @DisplayName("2. WriteError.details exposes writeErrors[].errInfo")
     @Test
-    public void testWriteErrorDetailsIsPropagated() {
-        getCollectionHelper().create(getCollectionName(),
-                new CreateCollectionOptions()
-                        .validationOptions(new ValidationOptions()
-                                .validator(Filters.type("x", "string"))));
+    void testWriteErrorDetailsIsPropagated() {
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
+            MongoCollection<Document> collection = droppedCollection(client, Document.class);
+            droppedDatabase(client).createCollection(
+                    collection.getNamespace().getCollectionName(),
+                    new CreateCollectionOptions().validationOptions(new ValidationOptions().validator(Filters.type("x", "string"))));
+            assertAll(
+                    () -> {
+                        MongoWriteException actual = assertThrows(MongoWriteException.class, () ->
+                                collection.insertOne(new Document("x", 1)));
+                        // These assertions don't do exactly what's required by the specification,
+                        // but it's simpler to implement and nearly as effective.
+                        assertTrue(actual.getMessage().contains("Write error"));
+                        assertNotNull(actual.getError().getDetails());
+                        if (serverVersionAtLeast(5, 0)) {
+                            assertFalse(actual.getError().getDetails().isEmpty());
+                        }
+                    },
+                    () -> {
+                        MongoBulkWriteException actual = assertThrows(MongoBulkWriteException.class, () ->
+                                collection.insertMany(singletonList(new Document("x", 1))));
+                        // These assertions don't do exactly what's required by the specification,
+                        // but it's simpler to implement and nearly as effective.
+                        assertTrue(actual.getMessage().contains("Write errors"));
+                        assertEquals(1, actual.getWriteErrors().size());
+                        if (serverVersionAtLeast(5, 0)) {
+                            assertFalse(actual.getWriteErrors().get(0).getDetails().isEmpty());
+                        }
+                    }
+            );
 
-        try {
-            collection.insertOne(new Document("x", 1));
-            fail("Should throw, as document doesn't match schema");
-        } catch (MongoWriteException e) {
-            // These assertions doesn't do exactly what's required by the specification, but it's simpler to implement and nearly as
-            // effective
-            assertTrue(e.getMessage().contains("Write error"));
-            assertNotNull(e.getError().getDetails());
-            if (serverVersionAtLeast(5, 0)) {
-                assertFalse(e.getError().getDetails().isEmpty());
-            }
-        }
-
-        try {
-            collection.insertMany(asList(new Document("x", 1)));
-            fail("Should throw, as document doesn't match schema");
-        } catch (MongoBulkWriteException e) {
-            // These assertions doesn't do exactly what's required by the specification, but it's simpler to implement and nearly as
-            // effective
-            assertTrue(e.getMessage().contains("Write errors"));
-            assertEquals(1, e.getWriteErrors().size());
-            if (serverVersionAtLeast(5, 0)) {
-                assertFalse(e.getWriteErrors().get(0).getDetails().isEmpty());
-            }
         }
     }
 
@@ -156,6 +152,7 @@ public class CrudProseTest extends DatabaseTestCase {
             final Class<TDocument> documentClass,
             final boolean expectIdGenerated,
             final Supplier<TDocument> documentSupplier) {
+        assumeTrue(isDiscoverableReplicaSet());
         assertAll(
                 () -> assertInsertMustGenerateIdAtMostOnce("insert", documentClass, expectIdGenerated,
                         (client, collection) -> collection.insertOne(documentSupplier.get()).getInsertedId()),
@@ -197,8 +194,6 @@ public class CrudProseTest extends DatabaseTestCase {
             final boolean expectIdGenerated,
             final BiFunction<MongoClient, MongoCollection<TDocument>, BsonValue> insertOperation)
             throws ExecutionException, InterruptedException, TimeoutException {
-        assumeTrue(isDiscoverableReplicaSet());
-        ServerAddress primaryServerAddress = Fixture.getPrimary();
         CompletableFuture<BsonValue> futureIdGeneratedByFirstInsertAttempt = new CompletableFuture<>();
         CompletableFuture<BsonValue> futureIdGeneratedBySecondInsertAttempt = new CompletableFuture<>();
         CommandListener commandListener = new CommandListener() {
@@ -235,18 +230,16 @@ public class CrudProseTest extends DatabaseTestCase {
                         .append("errorLabels", new BsonArray(singletonList(new BsonString("RetryableWriteError"))))
                         .append("writeConcernError", new BsonDocument("code", new BsonInt32(91))
                                 .append("errmsg", new BsonString("Replication is being shut down"))));
-        try (MongoClient client = MongoClients.create(getMongoClientSettingsBuilder()
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
                 .retryWrites(true)
                 .addCommandListener(commandListener)
                 .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
                 .codecRegistry(fromRegistries(
                         getDefaultCodecRegistry(),
-                        fromProviders(PojoCodecProvider.builder().automatic(true).build())))
-                .build());
-             FailPoint ignored = FailPoint.enable(failPointDocument, primaryServerAddress)) {
-            MongoCollection<TDocument> coll = client.getDatabase(database.getName())
-                    .getCollection(collection.getNamespace().getCollectionName(), documentClass);
-            BsonValue insertedId = insertOperation.apply(client, coll);
+                        fromProviders(PojoCodecProvider.builder().automatic(true).build()))));
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            MongoCollection<TDocument> collection = droppedCollection(client, documentClass);
+            BsonValue insertedId = insertOperation.apply(client, collection);
             if (expectIdGenerated) {
                 assertNotNull(insertedId);
             } else {
@@ -259,21 +252,22 @@ public class CrudProseTest extends DatabaseTestCase {
         }
     }
 
-    private void setFailPoint() {
-        failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
-                .append("mode", new BsonDocument("times", new BsonInt32(1)))
-                .append("data", new BsonDocument("failCommands", new BsonArray(asList(new BsonString("insert"))))
-                        .append("writeConcernError", new BsonDocument("code", new BsonInt32(100))
-                                .append("codeName", new BsonString("UnsatisfiableWriteConcern"))
-                                .append("errmsg", new BsonString("Not enough data-bearing nodes"))
-                                .append("errInfo", new BsonDocument("writeConcern", new BsonDocument("w", new BsonInt32(2))
-                                        .append("wtimeout", new BsonInt32(0))
-                                        .append("provenance", new BsonString("clientSupplied"))))));
-        getCollectionHelper().runAdminCommand(failPointDocument);
+    protected MongoClient createMongoClient(final MongoClientSettings.Builder mongoClientSettingsBuilder) {
+        return MongoClients.create(mongoClientSettingsBuilder.build());
     }
 
-    private void disableFailPoint() {
-        getCollectionHelper().runAdminCommand(failPointDocument.append("mode", new BsonString("off")));
+    private <TDocument> MongoCollection<TDocument> droppedCollection(final MongoClient client, final Class<TDocument> documentClass) {
+        return droppedDatabase(client).getCollection(namespace().getCollectionName(), documentClass);
+    }
+
+    private MongoDatabase droppedDatabase(final MongoClient client) {
+        MongoDatabase database = client.getDatabase(namespace().getDatabaseName());
+        database.drop();
+        return database;
+    }
+
+    private MongoNamespace namespace() {
+        return new MongoNamespace(getDefaultDatabaseName(), getClass().getSimpleName());
     }
 
     public static final class MyDocument {
