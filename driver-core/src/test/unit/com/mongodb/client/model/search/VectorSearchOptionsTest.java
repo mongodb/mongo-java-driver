@@ -16,7 +16,9 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.client.model.Filters;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.junit.jupiter.api.Test;
 
@@ -24,10 +26,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 final class VectorSearchOptionsTest {
     @Test
-    void vectorSearchOptions() {
+    void approximateVectorSearchOptions() {
         assertEquals(
-                new BsonDocument(),
-                VectorSearchOptions.vectorSearchOptions()
+                new BsonDocument().append("numCandidates", new BsonInt64(1)),
+                VectorSearchOptions.approximateVectorSearchOptions(1)
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
+    void exactVectorSearchOptions() {
+        assertEquals(
+                new BsonDocument().append("exact", new BsonBoolean(true)),
+                VectorSearchOptions.exactVectorSearchOptions()
                         .toBsonDocument()
         );
     }
@@ -35,50 +46,81 @@ final class VectorSearchOptionsTest {
     @Test
     void option() {
         assertEquals(
-                VectorSearchOptions.vectorSearchOptions()
+                VectorSearchOptions.approximateVectorSearchOptions(1)
                         .filter(Filters.lt("fieldName", 1))
                         .toBsonDocument(),
-                VectorSearchOptions.vectorSearchOptions()
+                VectorSearchOptions.approximateVectorSearchOptions(1)
                         .option("filter", Filters.lt("fieldName", 1))
                         .toBsonDocument());
     }
 
     @Test
-    void filter() {
+    void filterApproximate() {
         assertEquals(
                 new BsonDocument()
-                        .append("filter", Filters.lt("fieldName", 1).toBsonDocument()),
-                VectorSearchOptions.vectorSearchOptions()
+                        .append("filter", Filters.lt("fieldName", 1).toBsonDocument())
+                        .append("numCandidates", new BsonInt64(1)),
+                VectorSearchOptions.approximateVectorSearchOptions(1)
                         .filter(Filters.lt("fieldName", 1))
                         .toBsonDocument()
         );
     }
 
     @Test
-    void options() {
+    void filterExact() {
         assertEquals(
                 new BsonDocument()
-                        .append("name", new BsonString("value"))
-                        .append("filter", Filters.lt("fieldName", 1).toBsonDocument()),
-                VectorSearchOptions.vectorSearchOptions()
-                        .option("name", "value")
-                        .filter(Filters.lt("fieldName", 0))
-                        .option("filter", Filters.lt("fieldName", 1))
+                        .append("filter", Filters.lt("fieldName", 1).toBsonDocument())
+                        .append("exact", new BsonBoolean(true)),
+                VectorSearchOptions.exactVectorSearchOptions()
+                        .filter(Filters.lt("fieldName", 1))
                         .toBsonDocument()
         );
     }
 
     @Test
-    void vectorSearchOptionsIsUnmodifiable() {
-        String expected = VectorSearchOptions.vectorSearchOptions().toBsonDocument().toJson();
-        VectorSearchOptions.vectorSearchOptions().option("name", "value");
-        assertEquals(expected, VectorSearchOptions.vectorSearchOptions().toBsonDocument().toJson());
+    void optionsApproximate() {
+        assertEquals(
+                new BsonDocument()
+                        .append("name", new BsonString("value"))
+                        .append("filter", Filters.lt("fieldName", 1).toBsonDocument())
+                        .append("numCandidates", new BsonInt64(1)),
+                VectorSearchOptions.approximateVectorSearchOptions(1)
+                        .option("name", "value")
+                        .filter(Filters.lt("fieldName", 0))
+                        .option("filter", Filters.lt("fieldName", 1))
+                        .option("numCandidates", new BsonInt64(1))
+                        .toBsonDocument()
+        );
     }
 
     @Test
-    void vectorSearchOptionsIsImmutable() {
-        String expected = VectorSearchOptions.vectorSearchOptions().toBsonDocument().toJson();
-        VectorSearchOptions.vectorSearchOptions().toBsonDocument().append("name", new BsonString("value"));
-        assertEquals(expected, VectorSearchOptions.vectorSearchOptions().toBsonDocument().toJson());
+    void optionsExact() {
+        assertEquals(
+                new BsonDocument()
+                        .append("name", new BsonString("value"))
+                        .append("filter", Filters.lt("fieldName", 1).toBsonDocument())
+                        .append("exact", new BsonBoolean(true)),
+                VectorSearchOptions.exactVectorSearchOptions()
+                        .option("name", "value")
+                        .filter(Filters.lt("fieldName", 0))
+                        .option("filter", Filters.lt("fieldName", 1))
+                        .option("exact", new BsonBoolean(true))
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
+    void approximateVectorSearchOptionsIsUnmodifiable() {
+        String expected = VectorSearchOptions.approximateVectorSearchOptions(1).toBsonDocument().toJson();
+        VectorSearchOptions.approximateVectorSearchOptions(1).option("name", "value");
+        assertEquals(expected, VectorSearchOptions.approximateVectorSearchOptions(1).toBsonDocument().toJson());
+    }
+
+    @Test
+    void approximateVectorSearchOptionsIsImmutable() {
+        String expected = VectorSearchOptions.approximateVectorSearchOptions(1).toBsonDocument().toJson();
+        VectorSearchOptions.approximateVectorSearchOptions(1).toBsonDocument().append("name", new BsonString("value"));
+        assertEquals(expected, VectorSearchOptions.approximateVectorSearchOptions(1).toBsonDocument().toJson());
     }
 }
