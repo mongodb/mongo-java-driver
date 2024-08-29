@@ -137,10 +137,10 @@ public object LocalDateAsBsonDateTime : KSerializer<LocalDate> {
 /**
  * LocalDateTime KSerializer.
  *
- * <p>Encodes and decodes {@code LocalDateTime} objects to and from {@code BsonDateTime}. Data is stored to millisecond
- * accuracy.</p>
+ * Encodes and decodes `LocalDateTime` objects to and from `BsonDateTime`. Data is stored to millisecond
+ * accuracy.
  *
- * <p>Converts the {@code LocalDateTime} values to and from {@code UTC}.</p>
+ * Converts the `LocalDateTime` values to and from `UTC`.
  *
  * @since 5.2
  */
