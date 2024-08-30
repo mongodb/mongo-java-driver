@@ -26,8 +26,8 @@ import com.mongodb.client.MongoCluster as JMongoCluster
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.MongoIterable
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions
+import com.mongodb.client.model.bulk.ClientBulkWriteResult
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
-import com.mongodb.client.result.bulk.ClientBulkWriteResult
 import com.mongodb.kotlin.client.MongoCluster
 import java.util.concurrent.TimeUnit
 import org.bson.Document

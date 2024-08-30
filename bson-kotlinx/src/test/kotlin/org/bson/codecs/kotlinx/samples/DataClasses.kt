@@ -15,6 +15,10 @@
  */
 package org.bson.codecs.kotlinx.samples
 
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -61,6 +65,22 @@ data class DataClassWithSimpleValues(
     val double: Double,
     val boolean: Boolean,
     val string: String
+)
+
+@Serializable
+data class DataClassWithContextualDateValues(
+    @Contextual val instant: Instant,
+    @Contextual val localTime: LocalTime,
+    @Contextual val localDateTime: LocalDateTime,
+    @Contextual val localDate: LocalDate,
+)
+
+@Serializable
+data class DataClassWithDateValues(
+    val instant: Instant,
+    val localTime: LocalTime,
+    val localDateTime: LocalDateTime,
+    val localDate: LocalDate,
 )
 
 @Serializable

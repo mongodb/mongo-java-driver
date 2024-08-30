@@ -30,7 +30,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
-import com.mongodb.client.result.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;

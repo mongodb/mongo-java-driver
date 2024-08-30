@@ -17,7 +17,7 @@ package com.mongodb;
 
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.model.bulk.ClientWriteModel;
-import com.mongodb.client.result.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;

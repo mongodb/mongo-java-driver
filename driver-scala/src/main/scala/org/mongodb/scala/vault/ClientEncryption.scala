@@ -81,8 +81,6 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    *
    * Only supported when queryType is "range" and algorithm is "Range".
    *
-   * '''Note:''' The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
-   *
    * [[https://www.mongodb.com/docs/manual/core/queryable-encryption/ queryable encryption]]
    *
    * @note Requires MongoDB 8.0 or greater
@@ -91,7 +89,7 @@ case class ClientEncryption(private val wrapped: JClientEncryption) extends Clos
    * @return a Publisher containing the queryable encrypted range expression
    * @since 4.9
    */
-  @Beta(Array(Reason.SERVER)) def encryptExpression(
+  def encryptExpression(
       expression: Document,
       options: EncryptOptions
   ): SingleObservable[Document] =

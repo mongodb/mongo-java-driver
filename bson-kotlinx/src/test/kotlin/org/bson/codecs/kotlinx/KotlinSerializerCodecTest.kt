@@ -17,6 +17,10 @@ package org.bson.codecs.kotlinx
 
 import java.util.stream.Stream
 import kotlin.test.assertEquals
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
@@ -72,7 +76,9 @@ import org.bson.codecs.kotlinx.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonProperty
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonRepresentation
 import org.bson.codecs.kotlinx.samples.DataClassWithCollections
+import org.bson.codecs.kotlinx.samples.DataClassWithContextualDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDataClassMapKey
+import org.bson.codecs.kotlinx.samples.DataClassWithDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDefaults
 import org.bson.codecs.kotlinx.samples.DataClassWithEmbedded
 import org.bson.codecs.kotlinx.samples.DataClassWithEncodeDefault
@@ -196,6 +202,46 @@ class KotlinSerializerCodecTest {
         val expectedDataClass = DataClassWithSimpleValues('c', 1, 2, 10, 10L, 2.0f, 3.0, true, "String")
 
         assertDecodesTo(data, expectedDataClass)
+    }
+
+    @Test
+    fun testDataClassWithDateValuesContextualSerialization() {
+        val expected =
+            "{\n" +
+                "    \"instant\": {\"\$date\": \"2001-09-09T01:46:40Z\"}, \n" +
+                "    \"localTime\": {\"\$date\": \"1970-01-01T00:00:10Z\"}, \n" +
+                "    \"localDateTime\": {\"\$date\": \"2021-01-01T00:00:04Z\"}, \n" +
+                "    \"localDate\": {\"\$date\": \"1970-10-28T00:00:00Z\"}\n" +
+                "}".trimMargin()
+
+        val expectedDataClass =
+            DataClassWithContextualDateValues(
+                Instant.fromEpochMilliseconds(10_000_000_000_00),
+                LocalTime.fromMillisecondOfDay(10_000),
+                LocalDateTime.parse("2021-01-01T00:00:04"),
+                LocalDate.fromEpochDays(300))
+
+        assertRoundTrips(expected, expectedDataClass)
+    }
+
+    @Test
+    fun testDataClassWithDateValuesStandard() {
+        val expected =
+            "{\n" +
+                "    \"instant\": \"1970-01-01T00:00:01Z\", \n" +
+                "    \"localTime\": \"00:00:01\", \n" +
+                "    \"localDateTime\": \"2021-01-01T00:00:04\", \n" +
+                "    \"localDate\":  \"1970-01-02\"\n" +
+                "}".trimMargin()
+
+        val expectedDataClass =
+            DataClassWithDateValues(
+                Instant.fromEpochMilliseconds(1000),
+                LocalTime.fromMillisecondOfDay(1000),
+                LocalDateTime.parse("2021-01-01T00:00:04"),
+                LocalDate.fromEpochDays(1))
+
+        assertRoundTrips(expected, expectedDataClass)
     }
 
     @Test

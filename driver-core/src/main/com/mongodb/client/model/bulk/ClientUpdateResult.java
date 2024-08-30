@@ -13,31 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.result.bulk;
+package com.mongodb.client.model.bulk;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.client.model.bulk.ClientWriteModel;
 import org.bson.BsonValue;
-import org.bson.RawBsonDocument;
 
 import java.util.Optional;
 
 /**
- * The result of a successful {@linkplain ClientWriteModel individual insert one operation}.
+ * The result of a successful {@linkplain ClientWriteModel individual update or replace operation}.
  * Note that {@link WriteConcernError}s are not considered as making individuals operations unsuccessful.
  *
  * @since 5.3
  */
 @Evolving
-public interface ClientInsertOneResult {
+public interface ClientUpdateResult {
     /**
-     * The {@code "_id"} of the inserted document.
+     * The number of documents that matched the filter.
      *
-     * @return The {@code "_id"} of the inserted document.
-     * {@linkplain Optional#isPresent() Present} unless a {@link RawBsonDocument} is inserted,
-     * because the driver neither generates the missing {@code "_id"} field for a {@link RawBsonDocument},
-     * nor does it read the {@code "_id"} field from a {@link RawBsonDocument} when inserting it.
+     * @return The number of documents that matched the filter.
      */
-    Optional<BsonValue> getInsertedId();
+    long getMatchedCount();
+
+    /**
+     * The number of documents that were modified.
+     *
+     * @return The number of documents that were modified.
+     */
+    long getModifiedCount();
+
+    /**
+     * The {@code "_id"} of the upserted document if and only if an upsert occurred.
+     *
+     * @return The {@code "_id"} of the upserted.
+     * {@linkplain Optional#isPresent() Present} if and only if an upsert occurred.
+     */
+    Optional<BsonValue> getUpsertedId();
 }

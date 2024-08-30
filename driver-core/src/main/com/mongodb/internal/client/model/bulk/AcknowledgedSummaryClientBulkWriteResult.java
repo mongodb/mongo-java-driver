@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.client.result.bulk;
+package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.result.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 
 import java.util.Objects;
 import java.util.Optional;

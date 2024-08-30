@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.mongodb.client.model.bulk;
+
+import com.mongodb.annotations.Evolving;
+import com.mongodb.bulk.WriteConcernError;
 
 /**
- * Internal program elements related to {@link com.mongodb.client.result.bulk}.
+ * The result of a successful {@linkplain ClientWriteModel individual delete operation}.
+ * Note that {@link WriteConcernError}s are not considered as making individuals operations unsuccessful.
+ *
+ * @since 5.3
  */
-@NonNullApi
-package com.mongodb.internal.client.result.bulk;
-
-import com.mongodb.lang.NonNullApi;
+@Evolving
+public interface ClientDeleteResult {
+    /**
+     * The number of documents that were deleted.
+     *
+     * @return The number of documents that were deleted.
+     */
+    long getDeletedCount();
+}

@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.bson.codecs.kotlinx.utils
 
-/**
- * Results of the client-level bulk write operation.
- */
-@NonNullApi
-package com.mongodb.client.result.bulk;
-
-import com.mongodb.lang.NonNullApi;
+internal object SerializationModuleUtils {
+    @Suppress("SwallowedException")
+    fun isClassAvailable(className: String): Boolean {
+        return try {
+            Class.forName(className)
+            true
+        } catch (e: ClassNotFoundException) {
+            false
+        }
+    }
+}

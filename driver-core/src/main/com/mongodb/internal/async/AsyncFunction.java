@@ -18,6 +18,8 @@ package com.mongodb.internal.async;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * See {@link AsyncRunnable}
  * <p>
@@ -33,4 +35,28 @@ public interface AsyncFunction<T, R> {
      * @param callback the callback
      */
     void unsafeFinish(T value, SingleResultCallback<R> callback);
+
+    /**
+     * Must be invoked at end of async chain or when executing a callback handler supplied by the caller.
+     *
+     * @param callback the callback provided by the method the chain is used in.
+     */
+    default void finish(final T value, final SingleResultCallback<R> callback) {
+        final AtomicBoolean callbackInvoked = new AtomicBoolean(false);
+        try {
+            this.unsafeFinish(value, (v, e) -> {
+                if (!callbackInvoked.compareAndSet(false, true)) {
+                    throw new AssertionError(String.format("Callback has been already completed. It could happen "
+                            + "if code throws an exception after invoking an async method. Value: %s", v), e);
+                }
+                callback.onResult(v, e);
+            });
+        } catch (Throwable t) {
+            if (!callbackInvoked.compareAndSet(false, true)) {
+                throw t;
+            } else {
+                callback.completeExceptionally(t);
+            }
+        }
+    }
 }

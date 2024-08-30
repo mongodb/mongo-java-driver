@@ -17,11 +17,17 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.client.TestListener;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -31,11 +37,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class AsyncFunctionsTestAbstract {
+public abstract class AsyncFunctionsTestBase {
 
     private final TestListener listener = new TestListener();
     private final InvocationTracker invocationTracker = new InvocationTracker();
     private boolean isTestingAbruptCompletion = false;
+    private ExecutorService asyncExecutor;
 
     void setIsTestingAbruptCompletion(final boolean b) {
         isTestingAbruptCompletion = b;
@@ -51,6 +58,23 @@ public class AsyncFunctionsTestAbstract {
 
     public void listenerAdd(final String s) {
         listener.add(s);
+    }
+
+    /**
+     * Create an executor service for async operations before each test.
+     *
+     * @return the executor service.
+     */
+    public abstract ExecutorService createAsyncExecutor();
+
+    @BeforeEach
+    public void setUp() {
+        asyncExecutor = createAsyncExecutor();
+    }
+
+    @AfterEach
+    public void shutDown() {
+        asyncExecutor.shutdownNow();
     }
 
     void plain(final int i) {
@@ -98,32 +122,47 @@ public class AsyncFunctionsTestAbstract {
         return affectedReturns(i);
     }
 
+
+    public void submit(final Runnable task) {
+        asyncExecutor.execute(task);
+    }
     void async(final int i, final SingleResultCallback<Void> callback) {
         assertTrue(invocationTracker.isAsyncStep);
         if (isTestingAbruptCompletion) {
+            /* We should not test for abrupt completion in a separate thread. Once a callback is registered for an async operation,
+            the Async Framework does not handle exceptions thrown outside of callbacks by the executing thread. Such exception management
+            should be the responsibility of the thread conducting the asynchronous operations. */
             affected(i);
-            callback.complete(callback);
-
-        } else {
-            try {
-                affected(i);
+            submit(() -> {
                 callback.complete(callback);
-            } catch (Throwable t) {
-                callback.onResult(null, t);
-            }
+            });
+        } else {
+            submit(() -> {
+                try {
+                    affected(i);
+                    callback.complete(callback);
+                } catch (Throwable t) {
+                    callback.onResult(null, t);
+                }
+            });
         }
     }
 
     void asyncReturns(final int i, final SingleResultCallback<Integer> callback) {
         assertTrue(invocationTracker.isAsyncStep);
         if (isTestingAbruptCompletion) {
-            callback.complete(affectedReturns(i));
+            int result = affectedReturns(i);
+            submit(() -> {
+                callback.complete(result);
+            });
         } else {
-            try {
-                callback.complete(affectedReturns(i));
-            } catch (Throwable t) {
-                callback.onResult(null, t);
-            }
+            submit(() -> {
+                try {
+                    callback.complete(affectedReturns(i));
+                } catch (Throwable t) {
+                    callback.onResult(null, t);
+                }
+            });
         }
     }
 
@@ -200,24 +239,26 @@ public class AsyncFunctionsTestAbstract {
 
         AtomicReference<T> actualValue = new AtomicReference<>();
         AtomicReference<Throwable> actualException = new AtomicReference<>();
-        AtomicBoolean wasCalled = new AtomicBoolean(false);
+        CompletableFuture<Void> wasCalledFuture = new CompletableFuture<>();
         try {
             async.accept((v, e) -> {
                 actualValue.set(v);
                 actualException.set(e);
-                if (wasCalled.get()) {
+                if (wasCalledFuture.isDone()) {
                     fail();
                 }
-                wasCalled.set(true);
+                wasCalledFuture.complete(null);
             });
         } catch (Throwable e) {
             fail("async threw instead of using callback");
         }
 
+        await(wasCalledFuture, "Callback should have been called");
+
         // The following code can be used to debug variations:
 //        System.out.println("===VARIATION START");
 //        System.out.println("sync: " + expectedEvents);
-//        System.out.println("callback called?: " + wasCalled.get());
+//        System.out.println("callback called?: " + wasCalledFuture.isDone());
 //        System.out.println("value -- sync: " + expectedValue + " -- async: " + actualValue.get());
 //        System.out.println("excep -- sync: " + expectedException + " -- async: " + actualException.get());
 //        System.out.println("exception mode: " + (isTestingAbruptCompletion
@@ -229,7 +270,7 @@ public class AsyncFunctionsTestAbstract {
             throw (AssertionFailedError) actualException.get();
         }
 
-        assertTrue(wasCalled.get(), "callback should have been called");
+        assertTrue(wasCalledFuture.isDone(), "callback should have been called");
         assertEquals(expectedEvents, listener.getEventStrings(), "steps should have matched");
         assertEquals(expectedValue, actualValue.get());
         assertEquals(expectedException == null, actualException.get() == null,
@@ -240,6 +281,14 @@ public class AsyncFunctionsTestAbstract {
         }
 
         listener.clear();
+    }
+
+    protected <T> T await(final CompletableFuture<T> voidCompletableFuture, final String errorMessage) {
+        try {
+            return voidCompletableFuture.get(1, TimeUnit.MINUTES);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new AssertionError(errorMessage);
+        }
     }
 
     /**
