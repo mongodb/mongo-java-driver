@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,13 +48,24 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     private final ServerAddress serverAddress;
     private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
+    @Nullable
+    private final ExecutorService executorService;
 
-    public AsynchronousSocketChannelStream(final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
+    public AsynchronousSocketChannelStream(
+            final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
             final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider) {
+        this(serverAddress, inetAddressResolver, settings, bufferProvider, null);
+    }
+
+    public AsynchronousSocketChannelStream(
+            final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
+            final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider,
+            @Nullable final ExecutorService executorService) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
         this.inetAddressResolver = inetAddressResolver;
         this.settings = settings;
+        this.executorService = executorService;
     }
 
     @Override
@@ -77,7 +90,13 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
             SocketAddress socketAddress = socketAddressQueue.poll();
 
             try {
-                AsynchronousSocketChannel attemptConnectionChannel = AsynchronousSocketChannel.open();
+                AsynchronousSocketChannel attemptConnectionChannel;
+                if (executorService != null) {
+                    AsynchronousChannelGroup group = AsynchronousChannelGroup.withThreadPool(executorService);
+                    attemptConnectionChannel = AsynchronousSocketChannel.open(group);
+                } else {
+                    attemptConnectionChannel = AsynchronousSocketChannel.open();
+                }
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {
