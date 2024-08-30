@@ -30,7 +30,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
-import com.mongodb.client.result.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import org.bson.BsonArray;
