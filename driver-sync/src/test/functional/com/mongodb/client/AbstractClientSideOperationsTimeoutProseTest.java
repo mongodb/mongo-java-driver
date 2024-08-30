@@ -700,6 +700,14 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
         }
     }
 
+    @DisplayName("11. Multi-batch bulkWrites")
+    @Test
+    void test11MultiBatchBulkWrites() {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        assumeFalse(isServerlessTest());
+        assumeTrue(Runtime.getRuntime().availableProcessors() < 1, "BULK-TODO implement prose test https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.md#11-multi-batch-bulkwrites");
+    }
+
     /**
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
