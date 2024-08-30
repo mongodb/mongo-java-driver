@@ -13,31 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.internal.client.result.bulk;
+package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientInsertOneResult;
-import com.mongodb.lang.Nullable;
-import org.bson.BsonValue;
-
-import java.util.Objects;
-import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
+import com.mongodb.client.model.bulk.ClientDeleteResult;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientInsertOneResult implements ClientInsertOneResult {
-    @Nullable
-    private final BsonValue insertedId;
+public final class ConcreteClientDeleteResult implements ClientDeleteResult {
+    private final long deletedCount;
 
-    public ConcreteClientInsertOneResult(@Nullable final BsonValue insertedId) {
-        this.insertedId = insertedId;
+    public ConcreteClientDeleteResult(final long deletedCount) {
+        this.deletedCount = deletedCount;
     }
 
     @Override
-    public Optional<BsonValue> getInsertedId() {
-        return ofNullable(insertedId);
+    public long getDeletedCount() {
+        return deletedCount;
     }
 
     @Override
@@ -48,19 +40,19 @@ public final class ConcreteClientInsertOneResult implements ClientInsertOneResul
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ConcreteClientInsertOneResult that = (ConcreteClientInsertOneResult) o;
-        return Objects.equals(insertedId, that.insertedId);
+        final ConcreteClientDeleteResult that = (ConcreteClientDeleteResult) o;
+        return deletedCount == that.deletedCount;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(insertedId);
+        return Long.hashCode(deletedCount);
     }
 
     @Override
     public String toString() {
-        return "ClientInsertOneResult{"
-                + "insertedId=" + insertedId
+        return "ClientDeleteResult{"
+                + "deletedCount=" + deletedCount
                 + '}';
     }
 }
