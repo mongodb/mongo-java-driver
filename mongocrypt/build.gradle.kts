@@ -184,7 +184,7 @@ afterEvaluate {
             attributes(
                 "-exportcontents" to "com.mongodb.crypt.capi.*;-noimport:=true",
                 "Automatic-Module-Name" to "com.mongodb.crypt.capi",
-                "Import-Package" to "org.bson.*",
+                "Import-Package" to "org.slf4j.*;resolution:=optional,org.bson.*",
                 "Build-Version" to gitVersion,
                 "Bundle-Version" to gitVersion,
                 "Bundle-Name" to "MongoCrypt",
