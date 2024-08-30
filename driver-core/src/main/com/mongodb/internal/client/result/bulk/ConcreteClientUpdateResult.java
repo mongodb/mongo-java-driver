@@ -15,7 +15,7 @@
  */
 package com.mongodb.internal.client.result.bulk;
 
-import com.mongodb.client.result.bulk.ClientUpdateResult;
+import com.mongodb.client.model.bulk.ClientUpdateResult;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 

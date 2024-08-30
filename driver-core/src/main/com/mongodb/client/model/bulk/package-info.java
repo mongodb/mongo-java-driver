@@ -15,7 +15,7 @@
  */
 
 /**
- * Models and options for the client-level bulk write operation.
+ * Models, options, results for the client-level bulk write operation.
  */
 @NonNullApi
 package com.mongodb.client.model.bulk;

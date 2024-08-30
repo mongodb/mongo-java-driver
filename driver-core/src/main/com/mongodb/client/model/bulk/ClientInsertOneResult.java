@@ -13,24 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.result.bulk;
+package com.mongodb.client.model.bulk;
 
 import com.mongodb.annotations.Evolving;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import org.bson.BsonValue;
+import org.bson.RawBsonDocument;
+
+import java.util.Optional;
 
 /**
- * The result of a successful {@linkplain ClientWriteModel individual delete operation}.
+ * The result of a successful {@linkplain ClientWriteModel individual insert one operation}.
  * Note that {@link WriteConcernError}s are not considered as making individuals operations unsuccessful.
  *
  * @since 5.3
  */
 @Evolving
-public interface ClientDeleteResult {
+public interface ClientInsertOneResult {
     /**
-     * The number of documents that were deleted.
+     * The {@code "_id"} of the inserted document.
      *
-     * @return The number of documents that were deleted.
+     * @return The {@code "_id"} of the inserted document.
+     * {@linkplain Optional#isPresent() Present} unless a {@link RawBsonDocument} is inserted,
+     * because the driver neither generates the missing {@code "_id"} field for a {@link RawBsonDocument},
+     * nor does it read the {@code "_id"} field from a {@link RawBsonDocument} when inserting it.
      */
-    long getDeletedCount();
+    Optional<BsonValue> getInsertedId();
 }

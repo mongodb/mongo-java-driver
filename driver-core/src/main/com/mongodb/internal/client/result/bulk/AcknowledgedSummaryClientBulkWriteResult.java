@@ -15,7 +15,7 @@
  */
 package com.mongodb.internal.client.result.bulk;
 
-import com.mongodb.client.result.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 
 import java.util.Objects;
 import java.util.Optional;

@@ -17,7 +17,6 @@ package com.mongodb.client.model.bulk;
 
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.result.bulk.ClientBulkWriteResult;
 import com.mongodb.internal.client.model.bulk.ConcreteClientBulkWriteOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;

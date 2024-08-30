@@ -15,10 +15,10 @@
  */
 package com.mongodb.internal.client.result.bulk;
 
-import com.mongodb.client.result.bulk.ClientBulkWriteResult;
-import com.mongodb.client.result.bulk.ClientDeleteResult;
-import com.mongodb.client.result.bulk.ClientInsertOneResult;
-import com.mongodb.client.result.bulk.ClientUpdateResult;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientDeleteResult;
+import com.mongodb.client.model.bulk.ClientInsertOneResult;
+import com.mongodb.client.model.bulk.ClientUpdateResult;
 
 import java.util.Map;
 import java.util.Objects;

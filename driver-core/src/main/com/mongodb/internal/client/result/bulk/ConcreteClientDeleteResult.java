@@ -15,7 +15,7 @@
  */
 package com.mongodb.internal.client.result.bulk;
 
-import com.mongodb.client.result.bulk.ClientDeleteResult;
+import com.mongodb.client.model.bulk.ClientDeleteResult;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.

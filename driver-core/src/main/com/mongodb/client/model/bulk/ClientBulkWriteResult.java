@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongodb.client.result.bulk;
+package com.mongodb.client.model.bulk;
 
 import com.mongodb.ClientBulkWriteException;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Evolving;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientWriteModel;
 
 import java.util.Map;
 import java.util.Optional;

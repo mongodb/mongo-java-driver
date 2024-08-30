@@ -1,8 +1,7 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.assertions.Assertions
-import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientNamespacedWriteModel }
-import com.mongodb.client.result.bulk.ClientBulkWriteResult
+import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
 import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.{ ClientSession, MongoCluster => JMongoCluster, MongoDatabase => JMongoDatabase }
 import org.bson.Document
