@@ -57,10 +57,8 @@ package object vault {
 
   /**
    * Range options specifies index options for a Queryable Encryption field supporting "range" queries.
-   * <p>Note: The Range algorithm is experimental only. It is not intended for public use. It is subject to breaking changes.
    * @since 4.9
    */
-  @Beta(Array(Reason.SERVER))
   type RangeOptions = JRangeOptions
 
   object RangeOptions {

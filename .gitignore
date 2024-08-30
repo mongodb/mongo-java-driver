@@ -42,6 +42,9 @@ local.properties
 # jenv
 .java-version
 
+#sdkman
+.sdkmanrc
+
 # mongocryptd
 **/mongocryptd*.pid
 
