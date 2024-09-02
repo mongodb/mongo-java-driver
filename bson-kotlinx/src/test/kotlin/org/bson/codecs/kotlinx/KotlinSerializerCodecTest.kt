@@ -15,6 +15,14 @@
  */
 package org.bson.codecs.kotlinx
 
+import java.math.BigDecimal
+import java.util.Base64
+import java.util.stream.Stream
+import kotlin.test.assertEquals
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
@@ -74,7 +82,9 @@ import org.bson.codecs.kotlinx.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonProperty
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonRepresentation
 import org.bson.codecs.kotlinx.samples.DataClassWithCollections
+import org.bson.codecs.kotlinx.samples.DataClassWithContextualDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDataClassMapKey
+import org.bson.codecs.kotlinx.samples.DataClassWithDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDefaults
 import org.bson.codecs.kotlinx.samples.DataClassWithEmbedded
 import org.bson.codecs.kotlinx.samples.DataClassWithEncodeDefault
@@ -107,10 +117,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import java.math.BigDecimal
-import java.util.Base64
-import java.util.stream.Stream
-import kotlin.test.assertEquals
 
 @OptIn(ExperimentalSerializationApi::class)
 @Suppress("LargeClass")
@@ -217,6 +223,46 @@ class KotlinSerializerCodecTest {
         val expectedDataClass = DataClassWithSimpleValues('c', 1, 2, 10, 10L, 2.0f, 3.0, true, "String")
 
         assertDecodesTo(data, expectedDataClass)
+    }
+
+    @Test
+    fun testDataClassWithDateValuesContextualSerialization() {
+        val expected =
+            "{\n" +
+                "    \"instant\": {\"\$date\": \"2001-09-09T01:46:40Z\"}, \n" +
+                "    \"localTime\": {\"\$date\": \"1970-01-01T00:00:10Z\"}, \n" +
+                "    \"localDateTime\": {\"\$date\": \"2021-01-01T00:00:04Z\"}, \n" +
+                "    \"localDate\": {\"\$date\": \"1970-10-28T00:00:00Z\"}\n" +
+                "}".trimMargin()
+
+        val expectedDataClass =
+            DataClassWithContextualDateValues(
+                Instant.fromEpochMilliseconds(10_000_000_000_00),
+                LocalTime.fromMillisecondOfDay(10_000),
+                LocalDateTime.parse("2021-01-01T00:00:04"),
+                LocalDate.fromEpochDays(300))
+
+        assertRoundTrips(expected, expectedDataClass)
+    }
+
+    @Test
+    fun testDataClassWithDateValuesStandard() {
+        val expected =
+            "{\n" +
+                "    \"instant\": \"1970-01-01T00:00:01Z\", \n" +
+                "    \"localTime\": \"00:00:01\", \n" +
+                "    \"localDateTime\": \"2021-01-01T00:00:04\", \n" +
+                "    \"localDate\":  \"1970-01-02\"\n" +
+                "}".trimMargin()
+
+        val expectedDataClass =
+            DataClassWithDateValues(
+                Instant.fromEpochMilliseconds(1000),
+                LocalTime.fromMillisecondOfDay(1000),
+                LocalDateTime.parse("2021-01-01T00:00:04"),
+                LocalDate.fromEpochDays(1))
+
+        assertRoundTrips(expected, expectedDataClass)
     }
 
     @Test
@@ -931,6 +977,7 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun testDataClassWithJsonElementBsonSupport() {
         val dataClassWithAllSupportedJsonTypes =
             DataClassWithJsonElement(
@@ -984,17 +1031,19 @@ class KotlinSerializerCodecTest {
                     put("timestamp", JsonPrimitive(1311768464867721221))
                 })
 
-        val jsonWriterSettings = JsonWriterSettings.builder()
-            .outputMode(JsonMode.RELAXED)
-            .objectIdConverter { oid, writer -> writer.writeString(oid.toHexString()) }
-            .dateTimeConverter { d, writer -> writer.writeNumber(d.toString()) }
-            .timestampConverter { ts, writer -> writer.writeNumber(ts.value.toString()) }
-            .binaryConverter {b, writer -> writer.writeString(Base64.getEncoder().encodeToString(b.data)) }
-            .decimal128Converter {d, writer -> writer.writeNumber(d.toDouble().toString()) }
-            .build()
+        val jsonWriterSettings =
+            JsonWriterSettings.builder()
+                .outputMode(JsonMode.RELAXED)
+                .objectIdConverter { oid, writer -> writer.writeString(oid.toHexString()) }
+                .dateTimeConverter { d, writer -> writer.writeNumber(d.toString()) }
+                .timestampConverter { ts, writer -> writer.writeNumber(ts.value.toString()) }
+                .binaryConverter { b, writer -> writer.writeString(Base64.getEncoder().encodeToString(b.data)) }
+                .decimal128Converter { d, writer -> writer.writeNumber(d.toDouble().toString()) }
+                .build()
         val dataClassWithAllSupportedJsonTypesSimpleJson = jsonAllSupportedTypesDocument.toJson(jsonWriterSettings)
 
-        assertEncodesTo("""{"value": $dataClassWithAllSupportedJsonTypesSimpleJson""", dataClassWithAllSupportedJsonTypes)
+        assertEncodesTo(
+            """{"value": $dataClassWithAllSupportedJsonTypesSimpleJson }""", dataClassWithAllSupportedJsonTypes)
         assertDecodesTo("""{"value": $jsonAllSupportedTypesDocument}""", dataClassWithAllSupportedJsonTypes)
     }
 

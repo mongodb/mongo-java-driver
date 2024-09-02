@@ -57,7 +57,7 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
         TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        return executeRetryableWrite(binding, "admin", null, new NoOpFieldNameValidator(),
+        return executeRetryableWrite(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
                                      new BsonDocumentCodec(), getCommandCreator(),
                 writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext));
     }
@@ -66,7 +66,7 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getOperationContext().getSessionContext().hasActiveTransaction());
         TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        executeRetryableWriteAsync(binding, "admin", null, new NoOpFieldNameValidator(),
+        executeRetryableWriteAsync(binding, "admin", null, NoOpFieldNameValidator.INSTANCE,
                                    new BsonDocumentCodec(), getCommandCreator(),
                 writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(timeoutContext),
                                    errorHandlingCallback(callback, LOGGER));

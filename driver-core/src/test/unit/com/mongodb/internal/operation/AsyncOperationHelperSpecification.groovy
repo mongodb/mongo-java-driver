@@ -91,7 +91,7 @@ class AsyncOperationHelperSpecification extends Specification {
 
         when:
         executeRetryableWriteAsync(asyncWriteBinding, dbName, primary(),
-                new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.asyncTransformer(),
+                NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.asyncTransformer(),
                 { cmd -> cmd }, callback)
 
         then:

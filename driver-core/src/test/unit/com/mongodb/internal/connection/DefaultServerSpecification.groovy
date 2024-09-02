@@ -44,7 +44,6 @@ import com.mongodb.internal.time.Timeout
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.FieldNameValidator
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
@@ -56,7 +55,6 @@ import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 
 class DefaultServerSpecification extends Specification {
-    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
 
     def 'should get a connection'() {
@@ -311,13 +309,13 @@ class DefaultServerSpecification extends Specification {
         when:
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
-            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
+            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE,
                     ReadPreference.primary(), new BsonDocumentCodec(), operationContext) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
         } else {
-            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
+            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE,
                     ReadPreference.primary(), new BsonDocumentCodec(), operationContext)
         }
 

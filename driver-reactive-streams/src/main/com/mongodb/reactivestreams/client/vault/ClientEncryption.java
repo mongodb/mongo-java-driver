@@ -18,8 +18,6 @@ package com.mongodb.reactivestreams.client.vault;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoUpdatedEncryptedFieldsException;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateEncryptedCollectionParams;
 import com.mongodb.client.model.vault.DataKeyOptions;
@@ -99,7 +97,6 @@ public interface ClientEncryption extends Closeable {
      *     {@code $gt} may also be {@code $gte}. {@code $lt} may also be {@code $lte}.
      *
      * <p>Only supported when queryType is "range" and algorithm is "Range".
-     * <p>Note: The Range algorithm is unstable. It is subject to breaking changes.
      *
      * @param expression the Match Expression or Aggregate Expression
      * @param options    the options
@@ -109,7 +106,6 @@ public interface ClientEncryption extends Closeable {
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      * @mongodb.driver.manual reference/operator/aggregation/match/ $match
      */
-    @Beta(Reason.SERVER)
     Publisher<BsonDocument> encryptExpression(Bson expression, EncryptOptions options);
 
     /**

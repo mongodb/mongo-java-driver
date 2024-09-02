@@ -215,7 +215,7 @@ public final class Projections {
 
     /**
      * Creates a projection to the given field name of the vectorSearchScore,
-     * for use with {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions)}.
+     * for use with {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)} .
      * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "vectorSearchScore"} as the second argument.
      *
      * @param fieldName the field name

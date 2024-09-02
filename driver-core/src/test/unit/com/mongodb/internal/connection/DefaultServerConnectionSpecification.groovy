@@ -39,7 +39,7 @@ class DefaultServerConnectionSpecification extends Specification {
     def 'should execute command protocol asynchronously'() {
         given:
         def command = new BsonDocument(LEGACY_HELLO_LOWER, new BsonInt32(1))
-        def validator = new NoOpFieldNameValidator()
+        def validator = NoOpFieldNameValidator.INSTANCE
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)

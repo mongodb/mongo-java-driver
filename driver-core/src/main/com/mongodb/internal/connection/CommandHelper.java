@@ -105,7 +105,7 @@ public final class CommandHelper {
                                                     final InternalConnection internalConnection,
                                                     final ClusterConnectionMode clusterConnectionMode,
                                                     @Nullable final ServerApi serverApi) {
-        return new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME), command, new NoOpFieldNameValidator(), primary(),
+        return new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME), command, NoOpFieldNameValidator.INSTANCE, primary(),
                 MessageSettings
                         .builder()
                          // Note: server version will be 0.0 at this point when called from InternalConnectionInitializer,

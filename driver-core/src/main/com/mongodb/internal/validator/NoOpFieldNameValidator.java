@@ -23,7 +23,12 @@ import org.bson.FieldNameValidator;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class NoOpFieldNameValidator implements FieldNameValidator {
+public final class NoOpFieldNameValidator implements FieldNameValidator {
+    public static final NoOpFieldNameValidator INSTANCE = new NoOpFieldNameValidator();
+
+    private NoOpFieldNameValidator() {
+    }
+
     @Override
     public boolean validate(final String fieldName) {
         return true;

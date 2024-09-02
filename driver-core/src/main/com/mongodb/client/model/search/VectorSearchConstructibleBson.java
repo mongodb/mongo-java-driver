@@ -23,7 +23,8 @@ import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class VectorSearchConstructibleBson extends AbstractConstructibleBson<VectorSearchConstructibleBson> implements VectorSearchOptions {
+final class VectorSearchConstructibleBson extends AbstractConstructibleBson<VectorSearchConstructibleBson>
+        implements ApproximateVectorSearchOptions, ExactVectorSearchOptions {
     /**
      * An {@linkplain Immutable immutable} {@link BsonDocument#isEmpty() empty} instance.
      */

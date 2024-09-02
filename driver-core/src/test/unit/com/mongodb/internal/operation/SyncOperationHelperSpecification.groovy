@@ -107,7 +107,7 @@ class SyncOperationHelperSpecification extends Specification {
 
         when:
         executeRetryableWrite(writeBinding, dbName, primary(),
-                new NoOpFieldNameValidator(), decoder, commandCreator, FindAndModifyHelper.transformer())
+                NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.transformer())
                 { cmd -> cmd }
 
         then:
