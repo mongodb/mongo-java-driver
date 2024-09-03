@@ -1,5 +1,6 @@
 /*
  * Copyright 2008-present MongoDB, Inc.
+ * Copyright (C) 2016/2022 Litote
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * @custom-license-header
  */
 package com.mongodb.kotlin.client.model
 
@@ -31,25 +34,25 @@ import org.bson.codecs.pojo.annotations.BsonProperty
 
 private val pathCache: MutableMap<String, String> by lazySoft { ConcurrentHashMap<String, String>() }
 
-/** Returns a composed property. For example Friend::address / Address.postalCode = "address.postalCode". */
+/** Returns a composed property. For example Friend::address / Address::postalCode = "address.postalCode". */
 public operator fun <T0, T1, T2> KProperty1<T0, T1?>.div(p2: KProperty1<T1, T2?>): KProperty1<T0, T2?> =
     KPropertyPath(this, p2)
 
 /**
- * Returns a composed property without type checks. For example Friend.address % Address.postalCode =
+ * Returns a composed property without type checks. For example Friend::address % Address::postalCode =
  * "address.postalCode".
  */
 public operator fun <T0, T1, T2> KProperty1<T0, T1?>.rem(p2: KProperty1<out T1, T2?>): KProperty1<T0, T2?> =
     KPropertyPath(this, p2)
 
 /**
- * Returns a collection composed property. For example Friend.addresses / Address.postalCode = "addresses.postalCode".
+ * Returns a collection composed property. For example Friend::addresses / Address::postalCode = "addresses.postalCode".
  */
 @JvmName("divCol")
 public operator fun <T0, T1, T2> KProperty1<T0, Iterable<T1>?>.div(p2: KProperty1<out T1, T2?>): KProperty1<T0, T2?> =
     KPropertyPath(this, p2)
 
-/** Returns a map composed property. For example Friend.addresses / Address.postalCode = "addresses.postalCode". */
+/** Returns a map composed property. For example Friend::addresses / Address::postalCode = "addresses.postalCode". */
 @JvmName("divMap")
 public operator fun <T0, K, T1, T2> KProperty1<T0, Map<out K, T1>?>.div(
     p2: KProperty1<out T1, T2?>
@@ -57,7 +60,7 @@ public operator fun <T0, K, T1, T2> KProperty1<T0, Map<out K, T1>?>.div(
 
 /** Returns a mongo path of a property. */
 @SuppressWarnings("BC_BAD_CAST_TO_ABSTRACT_COLLECTION")
-public fun <T> KProperty<T>.path(): String {
+internal fun <T> KProperty<T>.path(): String {
     return if (this is KPropertyPath<*, T>) {
         this.name
     } else {

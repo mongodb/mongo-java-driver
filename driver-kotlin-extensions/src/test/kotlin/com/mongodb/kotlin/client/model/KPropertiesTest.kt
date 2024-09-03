@@ -1,5 +1,6 @@
 /*
  * Copyright 2008-present MongoDB, Inc.
+ * Copyright (C) 2016/2022 Litote
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +102,7 @@ class KPropertiesTest {
     @Test
     fun testMapProjection() {
         assertEquals("localeMap", Restaurant::localeMap.path())
+        assertEquals("localeMap.rating", (Restaurant::localeMap / Review::score).path())
         assertEquals("localeMap.en", Restaurant::localeMap.keyProjection(Locale.ENGLISH).path())
         assertEquals(
             "localeMap.en.rating", (Restaurant::localeMap.keyProjection(Locale.ENGLISH) / Review::score).path())

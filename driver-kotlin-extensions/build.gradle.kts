@@ -66,6 +66,8 @@ tasks.withType<KotlinCompile> {
 // ===========================
 //     Code Quality checks
 // ===========================
+val customLicenseHeader = "/^(?s)(?!.*@custom-license-header).*/"
+
 spotless {
     kotlinGradle {
         ktfmt("0.39").dropboxStyle().configure { it.setMaxWidth(120) }
@@ -81,7 +83,10 @@ spotless {
         trimTrailingWhitespace()
         indentWithSpaces()
         endWithNewline()
+
         licenseHeaderFile(rootProject.file("config/mongodb.license"))
+            .named("standard")
+            .onlyIfContentMatches("^(?!Copyright .*? Litote).*\$")
     }
 
     format("extraneous") {
