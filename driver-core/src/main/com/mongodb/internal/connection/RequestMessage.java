@@ -128,7 +128,7 @@ abstract class RequestMessage {
      * @param bsonOutput the output
      * @param operationContext the session context
      */
-    public void encode(final BsonOutput bsonOutput, final OperationContext operationContext) {
+    public void encode(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         notNull("operationContext", operationContext);
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
@@ -165,7 +165,7 @@ abstract class RequestMessage {
      * @param operationContext the session context
      * @return the encoding metadata
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, OperationContext operationContext);
+    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(ByteBufferBsonOutput bsonOutput, OperationContext operationContext);
 
     protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                final FieldNameValidator validator, @Nullable final List<BsonElement> extraElements) {

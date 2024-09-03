@@ -34,7 +34,6 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
-import org.bson.io.BsonOutput;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -201,7 +200,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final OperationContext operationContext) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
         int commandStartPosition;
         if (useOpMsg()) {

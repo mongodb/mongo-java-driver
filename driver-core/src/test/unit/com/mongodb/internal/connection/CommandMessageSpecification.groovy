@@ -38,7 +38,6 @@ import org.bson.BsonTimestamp
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.io.BasicOutputBuffer
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -62,7 +61,7 @@ class CommandMessageSpecification extends Specification {
                         .sessionSupported(true)
                         .build(),
                 responseExpected, null, null, clusterConnectionMode, null)
-        def output = new BasicOutputBuffer()
+        def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
 
         when:
         message.encode(output, operationContext)
@@ -92,6 +91,9 @@ class CommandMessageSpecification extends Specification {
             expectedCommandDocument.append('$readPreference', ReadPreference.primaryPreferred().toDocument())
         }
         getCommandDocument(byteBuf, replyHeader) == expectedCommandDocument
+
+        cleanup:
+        output.close()
 
         where:
         [readPreference, serverType, clusterConnectionMode, operationContext, responseExpected, isCryptd] << [
@@ -196,7 +198,7 @@ class CommandMessageSpecification extends Specification {
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true)
         def message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
-        def output = new BasicOutputBuffer()
+        def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
         }
@@ -272,6 +274,9 @@ class CommandMessageSpecification extends Specification {
         byteBuf.getInt() == 1 << 1
         payload.getPosition() == 1
         !payload.hasAnotherSplit()
+
+        cleanup:
+        output.close()
     }
 
     def 'should respect the max batch count'() {
@@ -283,7 +288,7 @@ class CommandMessageSpecification extends Specification {
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true)
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
-        def output = new BasicOutputBuffer()
+        def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
         }
@@ -321,6 +326,9 @@ class CommandMessageSpecification extends Specification {
         byteBuf.getInt() == 1 << 1
         payload.getPosition() == 1
         !payload.hasAnotherSplit()
+
+        cleanup:
+        output.close()
     }
 
     def 'should throw if payload document bigger than max document size'() {
@@ -331,7 +339,7 @@ class CommandMessageSpecification extends Specification {
                 .withIndex().collect { doc, i -> new WriteRequestWithIndex(new InsertRequest(doc), i) }, true)
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
-        def output = new BasicOutputBuffer()
+        def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
         }
@@ -342,6 +350,9 @@ class CommandMessageSpecification extends Specification {
 
         then:
         thrown(BsonMaximumSizeExceededException)
+
+        cleanup:
+        output.close()
     }
 
     def 'should throw if wire version and sharded cluster does not support transactions'() {
@@ -351,7 +362,7 @@ class CommandMessageSpecification extends Specification {
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonInt32(1))], true)
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE, null)
-        def output = new BasicOutputBuffer()
+        def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
         def sessionContext = Stub(SessionContext) {
             getReadConcern() >> ReadConcern.DEFAULT
             hasActiveTransaction() >> true
@@ -363,6 +374,9 @@ class CommandMessageSpecification extends Specification {
 
         then:
         thrown(MongoClientException)
+
+        cleanup:
+        output.close()
     }
 
     private static BsonDocument getCommandDocument(ByteBufNIO byteBuf, ReplyHeader replyHeader) {
