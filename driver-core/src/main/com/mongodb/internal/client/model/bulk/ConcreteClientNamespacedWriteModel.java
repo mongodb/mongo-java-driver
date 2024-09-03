@@ -17,13 +17,23 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel;
+import com.mongodb.client.model.bulk.ClientNamespacedDeleteOneModel;
+import com.mongodb.client.model.bulk.ClientNamespacedInsertOneModel;
+import com.mongodb.client.model.bulk.ClientNamespacedReplaceOneModel;
+import com.mongodb.client.model.bulk.ClientNamespacedUpdateManyModel;
+import com.mongodb.client.model.bulk.ClientNamespacedUpdateOneModel;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientNamespacedWriteModel implements ClientNamespacedWriteModel {
+public final class ConcreteClientNamespacedWriteModel
+        implements ClientNamespacedInsertOneModel,
+        ClientNamespacedUpdateOneModel,
+        ClientNamespacedUpdateManyModel,
+        ClientNamespacedReplaceOneModel,
+        ClientNamespacedDeleteOneModel,
+        ClientNamespacedDeleteManyModel {
     private final MongoNamespace namespace;
     private final ClientWriteModel model;
 
@@ -36,7 +46,7 @@ public final class ConcreteClientNamespacedWriteModel implements ClientNamespace
         return namespace;
     }
 
-    public ClientWriteModel getModel() {
+    public ClientWriteModel getModel() {// VAKOTODO non-public exposed?
         return model;
     }
 

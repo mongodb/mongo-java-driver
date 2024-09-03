@@ -28,9 +28,9 @@ import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientDeleteManyModel;
+import com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel;
+import com.mongodb.client.model.bulk.ClientNamespacedUpdateManyModel;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
-import com.mongodb.client.model.bulk.ClientUpdateManyModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
@@ -370,7 +370,7 @@ public interface MongoCluster {
      * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
-     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
+     * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
      * <p>
      * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
@@ -394,7 +394,7 @@ public interface MongoCluster {
      * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
-     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
+     * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
      * <p>
      * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
@@ -423,7 +423,7 @@ public interface MongoCluster {
      * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
-     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
+     * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
      * <p>
      * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
@@ -450,7 +450,7 @@ public interface MongoCluster {
      * Depending on the number of {@code models}, encoded size of {@code models}, and the size limits in effect,
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
-     * {@link ClientUpdateManyModel}, {@link ClientDeleteManyModel} in a command render it non-retryable.</p>
+     * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
      * <p>
      * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *

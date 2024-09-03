@@ -19,10 +19,10 @@ package com.mongodb.client.model.bulk;
 import com.mongodb.annotations.Sealed;
 
 /**
- * A model for updating all documents matching a filter.
+ * A model for deleting at most one document matching a filter.
  *
  * @since 5.3
  */
 @Sealed
-public interface ClientUpdateManyModel extends ClientWriteModel {
+public interface ClientNamespacedDeleteOneModel extends ClientNamespacedWriteModel {
 }

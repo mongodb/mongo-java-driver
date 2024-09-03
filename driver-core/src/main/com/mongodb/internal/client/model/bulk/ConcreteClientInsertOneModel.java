@@ -15,12 +15,10 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientInsertOneModel;
-
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientInsertOneModel implements ClientInsertOneModel {
+public final class ConcreteClientInsertOneModel implements ClientWriteModel {
     private final Object document;
 
     public ConcreteClientInsertOneModel(final Object document) {

@@ -19,10 +19,10 @@ package com.mongodb.client.model.bulk;
 import com.mongodb.annotations.Sealed;
 
 /**
- * A model for inserting a document.
+ * A model for updating at most one document matching a filter.
  *
  * @since 5.3
  */
 @Sealed
-public interface ClientInsertOneModel extends ClientWriteModel {
+public interface ClientNamespacedUpdateOneModel extends ClientNamespacedWriteModel {
 }

@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.mongodb.client.model.bulk;
 
 import com.mongodb.annotations.Sealed;
 
 /**
- * An individual write operation to be executed as part of a client-level bulk write operation.
+ * A model for updating all documents matching a filter.
  *
  * @since 5.3
  */
 @Sealed
-public interface ClientWriteModel {
+public interface ClientNamespacedUpdateManyModel extends ClientNamespacedWriteModel {
 }

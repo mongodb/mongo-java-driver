@@ -16,8 +16,8 @@
 package com.mongodb;
 
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.client.model.bulk.ClientWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
@@ -128,7 +128,7 @@ public final class ClientBulkWriteException extends MongoServerException {
 
     /**
      * The indexed {@link WriteError}s.
-     * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
+     * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientNamespacedWriteModel}s
      * in the corresponding client-level bulk write operation.
      * <p>
      * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
@@ -146,7 +146,7 @@ public final class ClientBulkWriteException extends MongoServerException {
      * The result of the successful part of a client-level bulk write operation.
      *
      * @return The successful partial result. {@linkplain Optional#isPresent() Present} only if at least one
-     * {@linkplain ClientWriteModel individual write operation} succeed.
+     * {@linkplain ClientNamespacedWriteModel individual write operation} succeed.
      */
     public Optional<ClientBulkWriteResult> getPartialResult() {
         return ofNullable(partialResult);
