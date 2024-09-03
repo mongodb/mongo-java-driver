@@ -31,13 +31,8 @@ import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientDeleteManyModel;
-import com.mongodb.client.model.bulk.ClientDeleteOneModel;
-import com.mongodb.client.model.bulk.ClientInsertOneModel;
-import com.mongodb.client.model.bulk.ClientReplaceOneModel;
-import com.mongodb.client.model.bulk.ClientUpdateManyModel;
-import com.mongodb.client.model.bulk.ClientUpdateOneModel;
-import com.mongodb.client.model.bulk.ClientWriteModel;
+import com.mongodb.client.model.bulk.ClientNamespacedReplaceOneModel;
+import com.mongodb.client.model.bulk.ClientNamespacedUpdateOneModel;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientDeleteResult;
@@ -48,6 +43,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.client.model.bulk.ClientWriteModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientBulkWriteOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneModel;
@@ -347,7 +343,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                             encodeUsingRegistry(writer, value);
                         });
                         Function<ClientWriteModel, Boolean> modelSupportsRetries = model ->
-                                !(model instanceof ClientUpdateManyModel || model instanceof ClientDeleteManyModel);
+                                !(model instanceof ConcreteClientUpdateManyModel || model instanceof ConcreteClientDeleteManyModel);
                         assertFalse(unexecutedModels.isEmpty());
                         LinkedHashMap<MongoNamespace, Integer> indexedNamespaces = new LinkedHashMap<>();
                         writer.writeStartArray("ops");
@@ -435,8 +431,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
     private static final class FieldNameValidators {
         /**
-         * The server supports only the {@code update} individual write operation in the {@code ops} array field,
-         * while the driver supports {@link ClientUpdateOneModel}, {@link ClientUpdateOneModel}, {@link ClientReplaceOneModel}.
+         * The server supports only the {@code update} individual write operation in the {@code ops} array field, while the driver supports
+         * {@link ClientNamespacedUpdateOneModel}, {@link ClientNamespacedUpdateOneModel}, {@link ClientNamespacedReplaceOneModel}.
          * The difference between updating and replacing is only in the document specified via the {@code updateMods} field:
          * <ul>
          *     <li>if the name of the first field starts with {@code '$'}, then the document is interpreted as specifying update operators;</li>
@@ -481,7 +477,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             }
 
             private boolean currentIndividualOperationIsReplace() {
-                return getModelWithNamespace(models, currentIndividualOperationIndex).getModel() instanceof ClientReplaceOneModel;
+                return getModelWithNamespace(models, currentIndividualOperationIndex).getModel() instanceof ConcreteClientReplaceOneModel;
             }
         }
 
@@ -686,11 +682,11 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         if (individualOperationResponse.getNumber("ok").intValue() == 1) {
                             assertTrue(verboseResultsSetting);
                             ClientWriteModel writeModel = getModelWithNamespace(models, writeModelIndexInBatch).getModel();
-                            if (writeModel instanceof ClientInsertOneModel) {
+                            if (writeModel instanceof ConcreteClientInsertOneModel) {
                                 insertResults.put(
                                         writeModelIndexInBatch,
                                         new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
-                            } else if (writeModel instanceof ClientUpdateOneModel || writeModel instanceof ClientReplaceOneModel) {
+                            } else if (writeModel instanceof ConcreteClientUpdateOneModel || writeModel instanceof ConcreteClientReplaceOneModel) {
                                 BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
                                 updateResults.put(
                                         writeModelIndexInBatch,
@@ -698,7 +694,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                                 individualOperationResponse.getInt32("n").getValue(),
                                                 individualOperationResponse.getInt32("nModified").getValue(),
                                                 upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
-                            } else if (writeModel instanceof ClientDeleteOneModel) {
+                            } else if (writeModel instanceof ConcreteClientDeleteOneModel) {
                                 deleteResults.put(
                                         writeModelIndexInBatch,
                                         new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
