@@ -25,7 +25,7 @@ import java.util.Optional;
 
 /**
  * The result of a successful or partially successful client-level bulk write operation.
- * Note that if only some of the {@linkplain ClientWriteModel individual write operations} succeed,
+ * Note that if only some of the {@linkplain ClientNamespacedWriteModel individual write operations} succeed,
  * or if there are {@link WriteConcernError}s, then the successful partial result
  * is still accessible via {@link ClientBulkWriteException#getPartialResult()}.
  *
@@ -100,7 +100,7 @@ public interface ClientBulkWriteResult {
     interface Verbose {
         /**
          * The indexed {@link ClientInsertOneResult}s.
-         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
+         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientNamespacedWriteModel}s
          * in the client-level bulk write operation.
          * <p>
          * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
@@ -112,7 +112,7 @@ public interface ClientBulkWriteResult {
 
         /**
          * The indexed {@link ClientUpdateResult}s.
-         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
+         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientNamespacedWriteModel}s
          * in the client-level bulk write operation.
          * <p>
          * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
@@ -124,7 +124,7 @@ public interface ClientBulkWriteResult {
 
         /**
          * The indexed {@link ClientDeleteResult}s.
-         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientWriteModel}s
+         * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientNamespacedWriteModel}s
          * in the client-level bulk write operation.
          * <p>
          * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>

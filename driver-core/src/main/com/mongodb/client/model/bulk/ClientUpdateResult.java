@@ -22,7 +22,7 @@ import org.bson.BsonValue;
 import java.util.Optional;
 
 /**
- * The result of a successful {@linkplain ClientWriteModel individual update or replace operation}.
+ * The result of a successful {@linkplain ClientNamespacedWriteModel individual update or replace operation}.
  * Note that {@link WriteConcernError}s are not considered as making individuals operations unsuccessful.
  *
  * @since 5.3

@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientDeleteOneModel;
 import com.mongodb.client.model.bulk.ClientDeleteOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -23,7 +22,7 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class ConcreteClientDeleteOneModel implements ClientDeleteOneModel {
+public class ConcreteClientDeleteOneModel implements ClientWriteModel {
     private final Bson filter;
     private final ConcreteClientDeleteOptions options;
 

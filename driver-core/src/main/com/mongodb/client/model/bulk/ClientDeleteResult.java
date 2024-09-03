@@ -19,7 +19,7 @@ import com.mongodb.annotations.Evolving;
 import com.mongodb.bulk.WriteConcernError;
 
 /**
- * The result of a successful {@linkplain ClientWriteModel individual delete operation}.
+ * The result of a successful {@linkplain ClientNamespacedWriteModel individual delete operation}.
  * Note that {@link WriteConcernError}s are not considered as making individuals operations unsuccessful.
  *
  * @since 5.3

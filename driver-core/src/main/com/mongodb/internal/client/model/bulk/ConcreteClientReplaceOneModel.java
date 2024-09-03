@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientReplaceOneModel;
 import com.mongodb.client.model.bulk.ClientReplaceOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -23,7 +22,7 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientReplaceOneModel implements ClientReplaceOneModel {
+public final class ConcreteClientReplaceOneModel implements ClientWriteModel {
     private final Bson filter;
     private final Object replacement;
     private final ConcreteClientReplaceOptions options;

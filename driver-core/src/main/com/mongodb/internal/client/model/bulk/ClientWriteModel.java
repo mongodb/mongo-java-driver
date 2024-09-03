@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.mongodb.client.model.bulk;
-
-import com.mongodb.annotations.Sealed;
+package com.mongodb.internal.client.model.bulk;
 
 /**
- * A model for deleting all documents matching a filter.
- *
- * @since 5.3
+ * An individual write operation to be executed as part of a client-level bulk write operation.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.</p>
  */
-@Sealed
-public interface ClientDeleteManyModel extends ClientWriteModel {
+public interface ClientWriteModel {
 }

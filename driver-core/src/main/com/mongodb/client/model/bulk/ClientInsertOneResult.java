@@ -23,7 +23,7 @@ import org.bson.RawBsonDocument;
 import java.util.Optional;
 
 /**
- * The result of a successful {@linkplain ClientWriteModel individual insert one operation}.
+ * The result of a successful {@linkplain ClientNamespacedWriteModel individual insert one operation}.
  * Note that {@link WriteConcernError}s are not considered as making individuals operations unsuccessful.
  *
  * @since 5.3

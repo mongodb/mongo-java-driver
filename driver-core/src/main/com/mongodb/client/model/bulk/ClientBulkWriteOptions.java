@@ -39,7 +39,7 @@ public interface ClientBulkWriteOptions {
     }
 
     /**
-     * Enables or disables ordered execution of {@linkplain ClientWriteModel individual write operations}.
+     * Enables or disables ordered execution of {@linkplain ClientNamespacedWriteModel individual write operations}.
      * In an ordered execution a failure of an individual operation prevents the rest of them
      * from being executed.
      * In an unordered execution failures of individual operations do not prevent the rest of them
@@ -60,7 +60,7 @@ public interface ClientBulkWriteOptions {
     ClientBulkWriteOptions bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation);
 
     /**
-     * Sets variables that can be referenced from {@linkplain ClientWriteModel individual write operations}
+     * Sets variables that can be referenced from {@linkplain ClientNamespacedWriteModel individual write operations}
      * with the {@code "$$"} syntax, which in turn requires using {@link Filters#expr(Object)} when specifying filters.
      * Values must be constants or expressions that do not reference fields.
      *

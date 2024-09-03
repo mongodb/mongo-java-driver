@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientUpdateOneModel;
 import com.mongodb.client.model.bulk.ClientUpdateOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -28,7 +27,7 @@ import static java.util.Optional.ofNullable;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class ConcreteClientUpdateOneModel implements ClientUpdateOneModel {
+public class ConcreteClientUpdateOneModel implements ClientWriteModel {
     private final Bson filter;
     @Nullable
     private final Bson update;
