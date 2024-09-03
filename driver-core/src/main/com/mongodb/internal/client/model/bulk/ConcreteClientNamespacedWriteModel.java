@@ -46,7 +46,7 @@ public final class ConcreteClientNamespacedWriteModel
         return namespace;
     }
 
-    public ClientWriteModel getModel() {// VAKOTODO non-public exposed?
+    public ClientWriteModel getModel() {
         return model;
     }
 
