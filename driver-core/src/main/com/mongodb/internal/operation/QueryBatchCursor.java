@@ -26,6 +26,7 @@ import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.QueryResult;
@@ -58,6 +59,7 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withLock;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.SyncOperationHelper.getMoreCursorDocumentToQueryResult;
@@ -359,7 +361,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
      * others are not and rely on the total order mentioned above.
      */
     @ThreadSafe
-    private final class ResourceManager {
+    @VisibleForTesting(otherwise = PRIVATE)
+    final class ResourceManager {
         private final Lock lock;
         private volatile State state;
         @Nullable
@@ -416,7 +419,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
          * If {@linkplain #operable() closed}, then returns false, otherwise completes abruptly.
          * @throws IllegalStateException Iff another operation is in progress.
          */
-        private boolean tryStartOperation() throws IllegalStateException {
+        @VisibleForTesting(otherwise = PRIVATE)
+        boolean tryStartOperation() throws IllegalStateException {
             return withLock(lock, () -> {
                 State localState = state;
                 if (!localState.operable()) {
@@ -435,7 +439,8 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         /**
          * Thread-safe.
          */
-        private void endOperation() {
+        @VisibleForTesting(otherwise = PRIVATE)
+        void endOperation() {
             boolean doClose = withLock(lock, () -> {
                 State localState = state;
                 if (localState == State.OPERATION_IN_PROGRESS) {
@@ -459,7 +464,7 @@ class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         void close() {
             boolean doClose = withLock(lock, () -> {
                 State localState = state;
-                if (localState == State.OPERATION_IN_PROGRESS) {
+                if (localState.inProgress()) {
                     state = State.CLOSE_PENDING;
                     return false;
                 } else if (localState != State.CLOSED) {
