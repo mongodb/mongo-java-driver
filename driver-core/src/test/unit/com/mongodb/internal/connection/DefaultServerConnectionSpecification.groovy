@@ -49,8 +49,8 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync({
-            compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, true, null, null,
-                    ClusterConnectionMode.MULTIPLE, OPERATION_CONTEXT), it)
+            compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, true,
+                    OpMsgSequences.EmptyOpMsgSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, OPERATION_CONTEXT), it)
         }, internalConnection, OPERATION_CONTEXT.getSessionContext(), callback)
     }
 }

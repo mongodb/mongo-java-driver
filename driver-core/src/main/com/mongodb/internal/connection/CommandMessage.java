@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.OpMsgSequences.EmptyOpMsgSequences;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -45,6 +46,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
@@ -68,8 +70,7 @@ public final class CommandMessage extends RequestMessage {
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
     private final boolean exhaustAllowed;
-    private final SplittablePayload payload;
-    private final FieldNameValidator payloadFieldNameValidator;
+    private final OpMsgSequences sequences;
     private final boolean responseExpected;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
@@ -77,29 +78,29 @@ public final class CommandMessage extends RequestMessage {
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
                    @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, EmptyOpMsgSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, EmptyOpMsgSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
-                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+                   final OpMsgSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
-                payloadFieldNameValidator, clusterConnectionMode, serverApi);
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false,
+                sequences, clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
-                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+                   final OpMsgSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.namespace = namespace;
@@ -108,8 +109,7 @@ public final class CommandMessage extends RequestMessage {
         this.readPreference = readPreference;
         this.responseExpected = responseExpected;
         this.exhaustAllowed = exhaustAllowed;
-        this.payload = payload;
-        this.payloadFieldNameValidator = payloadFieldNameValidator;
+        this.sequences = sequences;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
         assertTrue(useOpMsg() || responseExpected);
@@ -191,7 +191,12 @@ public final class CommandMessage extends RequestMessage {
         if (responseExpected) {
             return true;
         } else {
-            return payload != null && payload.isOrdered() && payload.hasAnotherSplit();
+            if (sequences instanceof ValidatableSplittablePayload) {
+                ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
+                SplittablePayload payload = validatableSplittablePayload.getSplittablePayload();
+                return payload.isOrdered() && payload.hasAnotherSplit();
+            }
+            return false;
         }
     }
 
@@ -211,16 +216,16 @@ public final class CommandMessage extends RequestMessage {
 
             addDocument(command, bsonOutput, commandFieldNameValidator, getExtraElements(operationContext));
 
-            if (payload != null) {
-                bsonOutput.writeByte(1);          // payload type
-                int payloadBsonOutputStartPosition = bsonOutput.getPosition();
-                bsonOutput.writeInt32(0);         // size
-                bsonOutput.writeCString(payload.getPayloadName());
-                writePayload(new BsonBinaryWriter(bsonOutput, payloadFieldNameValidator), bsonOutput, getSettings(),
-                        messageStartPosition, payload, getSettings().getMaxDocumentSize());
-
-                int payloadBsonOutputLength = bsonOutput.getPosition() - payloadBsonOutputStartPosition;
-                bsonOutput.writeInt32(payloadBsonOutputStartPosition, payloadBsonOutputLength);
+            if (sequences instanceof ValidatableSplittablePayload) {
+                ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
+                SplittablePayload payload = validatableSplittablePayload.getSplittablePayload();
+                writeOpMsgSectionWithPayloadType1(bsonOutput, payload.getPayloadName(), () ->
+                        writePayload(new BsonBinaryWriter(bsonOutput, validatableSplittablePayload.getFieldNameValidator()), bsonOutput, getSettings(),
+                                messageStartPosition, payload, getSettings().getMaxDocumentSize()));
+            } else if (sequences instanceof EmptyOpMsgSequences) {
+                // nothing to do
+            } else {
+                fail(sequences.toString());
             }
 
             // Write the flag bits
@@ -338,6 +343,20 @@ public final class CommandMessage extends RequestMessage {
         if (!readConcernDocument.isEmpty()) {
             extraElements.add(new BsonElement("readConcern", readConcernDocument));
         }
+    }
+
+    private void writeOpMsgSectionWithPayloadType1(
+            final ByteBufferBsonOutput bsonOutput,
+            final String sequenceId,
+            final Runnable writeDocuments) {
+        // payload type
+        bsonOutput.writeByte(1);
+        int sequenceStart = bsonOutput.getPosition();
+        // size to be patched back later
+        bsonOutput.writeInt32(0);
+        bsonOutput.writeCString(sequenceId);
+        writeDocuments.run();
+        backpatchLength(sequenceStart, bsonOutput);
     }
 
     private static OpCode getOpCode(final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,

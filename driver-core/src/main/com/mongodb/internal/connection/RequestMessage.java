@@ -133,7 +133,7 @@ abstract class RequestMessage {
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
         EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, operationContext);
-        backpatchMessageLength(messageStartPosition, bsonOutput);
+        backpatchLength(messageStartPosition, bsonOutput);
         this.encodingMetadata = encodingMetadata;
     }
 
@@ -174,14 +174,14 @@ abstract class RequestMessage {
     }
 
     /**
-     * Backpatches the message length into the beginning of the message.
+     * Backpatches the message/sequence length into the beginning of the message/sequence.
      *
-     * @param startPosition the start position of the message
+     * @param startPosition the start position of the message/sequence
      * @param bsonOutput the output
      */
-    protected void backpatchMessageLength(final int startPosition, final BsonOutput bsonOutput) {
+    protected void backpatchLength(final int startPosition, final BsonOutput bsonOutput) {
         int messageLength = bsonOutput.getPosition() - startPosition;
-        bsonOutput.writeInt32(bsonOutput.getPosition() - messageLength, messageLength);
+        bsonOutput.writeInt32(startPosition, messageLength);
     }
 
     /**

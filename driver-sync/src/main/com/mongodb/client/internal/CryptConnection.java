@@ -21,9 +21,12 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
+import com.mongodb.internal.connection.OpMsgSequences;
+import com.mongodb.internal.connection.OpMsgSequences.EmptyOpMsgSequences;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
+import com.mongodb.internal.connection.ValidatableSplittablePayload;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -50,7 +53,10 @@ import java.util.Map;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
-class CryptConnection implements Connection {
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
+public final class CryptConnection implements Connection {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final int MAX_SPLITTABLE_DOCUMENT_SIZE = 2097152;
 
@@ -87,13 +93,19 @@ class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final OperationContext operationContext, final boolean responseExpected,
-            @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
+            final OperationContext operationContext, final boolean responseExpected, final OpMsgSequences sequences) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
             throw new MongoClientException("Auto-encryption requires a minimum MongoDB version of 4.2");
         }
 
+        SplittablePayload payload = null;
+        FieldNameValidator payloadFieldNameValidator = null;
+        if (sequences instanceof ValidatableSplittablePayload) {
+            ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
+            payload = validatableSplittablePayload.getSplittablePayload();
+            payloadFieldNameValidator = validatableSplittablePayload.getFieldNameValidator();
+        }
         BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
         BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(),
                 new BsonBinaryWriterSettings(getDescription().getMaxDocumentSize()),
@@ -110,7 +122,7 @@ class CryptConnection implements Connection {
                 new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout);
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                new RawBsonDocumentCodec(), operationContext, responseExpected, null, null);
+                new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyOpMsgSequences.INSTANCE);
 
         if (encryptedResponse == null) {
             return null;
@@ -127,7 +139,7 @@ class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, null, null);
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, EmptyOpMsgSequences.INSTANCE);
     }
 
     @SuppressWarnings("unchecked")

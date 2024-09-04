@@ -72,6 +72,7 @@ import com.mongodb.internal.client.model.bulk.UnacknowledgedClientBulkWriteResul
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.IdHoldingBsonWriter;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
+import com.mongodb.internal.connection.OpMsgSequences.EmptyOpMsgSequences;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.session.SessionContext;
@@ -269,8 +270,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 CommandResultDocumentCodec.create(codecRegistry.get(BsonDocument.class), CommandBatchCursorHelper.FIRST_BATCH),
                 operationContext,
                 effectiveWriteConcern.isAcknowledged(),
-                null,
-                null);
+                EmptyOpMsgSequences.INSTANCE);
         if (bulkWriteCommandOkResponse == null) {
             return null;
         }
@@ -331,6 +331,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         // BULK-TODO This implementation must limit the number of `models` it includes in a batch if needed.
         // Each batch re-selects a server and re-checks out a connection because this is simpler and it is allowed,
         // see https://mongodb.slack.com/archives/C035ZJL6CQN/p1722265720037099?thread_ts=1722264610.664109&cid=C035ZJL6CQN.
+        // maxBsonObjectSize from hello (ConnectionDescription.getMaxDocumentSize)
+        // maxWriteBatchSize from hello (ConnectionDescription.getMaxBatchCount)
+        // maxMessageSizeBytes from hello (ConnectionDescription.getMaxMessageSize)
         return new BsonDocumentWrapper<>(
                 BULK_WRITE_COMMAND_NAME,
                 new Encoder<String>() {

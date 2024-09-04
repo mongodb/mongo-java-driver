@@ -27,7 +27,9 @@ import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OpMsgSequences
 import com.mongodb.internal.connection.SplittablePayload
+import com.mongodb.internal.connection.ValidatableSplittablePayload
 import com.mongodb.internal.time.Timeout
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
@@ -96,7 +98,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, operationContext, true, null, null) >> {
+                _ as RawBsonDocumentCodec, operationContext, true, OpMsgSequences.EmptyOpMsgSequences.INSTANCE) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {
@@ -134,7 +136,7 @@ class CryptConnectionSpecification extends Specification {
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
                 NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
-                operationContext, true, payload, NoOpFieldNameValidator.INSTANCE,)
+                operationContext, true, new ValidatableSplittablePayload(payload, NoOpFieldNameValidator.INSTANCE))
 
         then:
         _ * wrappedConnection.getDescription() >> {
@@ -151,7 +153,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, operationContext, true, null, null,) >> {
+                _ as RawBsonDocumentCodec, operationContext, true, OpMsgSequences.EmptyOpMsgSequences.INSTANCE) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {
@@ -190,8 +192,8 @@ class CryptConnectionSpecification extends Specification {
         when:
         def response = cryptConnection.command('db',
                 new BsonDocumentWrapper(new Document('insert', 'test'), codec),
-                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext, true, payload,
-                NoOpFieldNameValidator.INSTANCE)
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext, true,
+                new ValidatableSplittablePayload(payload, NoOpFieldNameValidator.INSTANCE))
 
         then:
         _ * wrappedConnection.getDescription() >> {
@@ -207,7 +209,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, operationContext, true, null, null,) >> {
+                _ as RawBsonDocumentCodec, operationContext, true, OpMsgSequences.EmptyOpMsgSequences.INSTANCE) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {

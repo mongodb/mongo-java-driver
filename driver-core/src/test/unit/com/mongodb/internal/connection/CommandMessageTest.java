@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.OpMsgSequences.EmptyOpMsgSequences;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
@@ -52,7 +53,7 @@ class CommandMessageTest {
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .build(),
-                true, null, null, ClusterConnectionMode.MULTIPLE, null);
+                true, EmptyOpMsgSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, null);
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
             SessionContext sessionContext = mock(SessionContext.class);
@@ -80,7 +81,7 @@ class CommandMessageTest {
                         .sessionSupported(true)
                         .cryptd(true)
                         .build(),
-                true, null, null, ClusterConnectionMode.MULTIPLE, null);
+                true, EmptyOpMsgSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, null);
 
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
             SessionContext sessionContext = mock(SessionContext.class, mock -> {

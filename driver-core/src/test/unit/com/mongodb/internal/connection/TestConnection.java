@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -65,8 +64,7 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
-            final boolean responseExpected, @Nullable final SplittablePayload payload,
-            @Nullable final FieldNameValidator payloadFieldNameValidator) {
+            final boolean responseExpected, final OpMsgSequences sequences) {
         return executeEnqueuedCommandBasedProtocol(operationContext);
     }
 
@@ -80,8 +78,7 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
-            final boolean responseExpected, @Nullable final SplittablePayload payload,
-            @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+            final boolean responseExpected, final OpMsgSequences sequences, final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(operationContext, callback);
     }
 
