@@ -170,7 +170,9 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     @Override
     public void truncateToPosition(final int newPosition) {
         ensureOpen();
-
+        if (newPosition == position) {
+            return;
+        }
         if (newPosition > position || newPosition < 0) {
             throw new IllegalArgumentException();
         }

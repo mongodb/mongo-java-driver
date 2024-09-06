@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
@@ -37,6 +36,7 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
+import org.bson.BsonMaximumSizeExceededException;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -196,7 +196,6 @@ public class CrudProseTest {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         assumeFalse(isStandalone());
-        assumeTrue(Runtime.getRuntime().availableProcessors() < 1, "BULK-TODO implement batch splitting https://jira.mongodb.org/browse/JAVA-5529");
         ArrayList<CommandStartedEvent> startedBulkWriteCommandEvents = new ArrayList<>();
         CommandListener commandListener = new CommandListener() {
             @Override
@@ -235,9 +234,8 @@ public class CrudProseTest {
     void testBulkWriteErrorsForUnacknowledgedTooLargeInsert(final String operationType) {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
-        assumeTrue(Runtime.getRuntime().availableProcessors() < 1, "BULK-TODO implement maxBsonObjectSize validation https://jira.mongodb.org/browse/JAVA-5529");
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .writeConcern(WriteConcern.ACKNOWLEDGED))) {
+                .writeConcern(WriteConcern.UNACKNOWLEDGED))) {
             int maxBsonObjectSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
             Document document = new Document("a", join("", nCopies(maxBsonObjectSize, "b")));
             ClientNamespacedWriteModel model;
@@ -254,7 +252,7 @@ public class CrudProseTest {
                     throw Assertions.fail(operationType);
                 }
             }
-            assertThrows(MongoClientException.class, () -> client.bulkWrite(singletonList(model)));
+            assertThrows(BsonMaximumSizeExceededException.class, () -> client.bulkWrite(singletonList(model)));
         }
     }
 
