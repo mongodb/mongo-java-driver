@@ -75,7 +75,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 200
+                "blockTimeMS": 250
               }
             }
           }
@@ -175,7 +175,7 @@
                   "killCursors"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 30
+                "blockTimeMS": 250
               }
             }
           }
@@ -186,7 +186,7 @@
           "arguments": {
             "filter": {},
             "batchSize": 2,
-            "timeoutMS": 20
+            "timeoutMS": 200
           },
           "saveResultAsEntity": "cursor"
         },
@@ -194,7 +194,7 @@
           "name": "close",
           "object": "cursor",
           "arguments": {
-            "timeoutMS": 40
+            "timeoutMS": 400
           }
         }
       ],
