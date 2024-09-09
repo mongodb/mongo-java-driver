@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * The options for creation of a data key
  */
-public class MongoDataKeyOptions {
+public final class MongoDataKeyOptions {
     private final List<String> keyAltNames;
     private final BsonDocument masterKey;
     private final byte[] keyMaterial;
@@ -32,7 +32,7 @@ public class MongoDataKeyOptions {
     /**
      * Options builder
      */
-    public static class Builder {
+    public static final class Builder {
         private List<String> keyAltNames;
         private BsonDocument masterKey;
         private byte[] keyMaterial;

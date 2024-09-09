@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ final class CAPIHelper {
         return byteArray;
     }
 
-    static void writeByteArrayToBinary(final mongocrypt_binary_t binary, byte[] bytes) {
+    static void writeByteArrayToBinary(final mongocrypt_binary_t binary, final byte[] bytes) {
         if (binary.len() < bytes.length) {
             throw new IllegalArgumentException(format("mongocrypt binary of length %d is not large enough to hold %d bytes",
                     binary.len(), bytes.length));

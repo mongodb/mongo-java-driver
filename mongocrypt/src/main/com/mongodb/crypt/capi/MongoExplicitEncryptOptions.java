@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * Options for explicit encryption.
  */
-public class MongoExplicitEncryptOptions {
+public final class MongoExplicitEncryptOptions {
     private final BsonBinary keyId;
     private final String keyAltName;
     private final String algorithm;
@@ -36,7 +36,7 @@ public class MongoExplicitEncryptOptions {
     /**
      * The builder for the options
      */
-    public static class Builder {
+    public static final class Builder {
         private BsonBinary keyId;
         private String keyAltName;
         private String algorithm;
@@ -195,7 +195,7 @@ public class MongoExplicitEncryptOptions {
         return rangeOptions;
     }
 
-    private MongoExplicitEncryptOptions(Builder builder) {
+    private MongoExplicitEncryptOptions(final Builder builder) {
         this.keyId = builder.keyId;
         this.keyAltName = builder.keyAltName;
         this.algorithm = builder.algorithm;
@@ -215,13 +215,13 @@ public class MongoExplicitEncryptOptions {
 
     @Override
     public String toString() {
-        return "MongoExplicitEncryptOptions{" +
-                "keyId=" + keyId +
-                ", keyAltName='" + keyAltName + '\'' +
-                ", algorithm='" + algorithm + '\'' +
-                ", contentionFactor=" + contentionFactor +
-                ", queryType='" + queryType + '\'' +
-                ", rangeOptions=" + rangeOptions +
-                '}';
+        return "MongoExplicitEncryptOptions{"
+                + "keyId=" + keyId
+                + ", keyAltName='" + keyAltName + '\''
+                + ", algorithm='" + algorithm + '\''
+                + ", contentionFactor=" + contentionFactor
+                + ", queryType='" + queryType + '\''
+                + ", rangeOptions=" + rangeOptions
+                + '}';
     }
 }

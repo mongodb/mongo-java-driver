@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class MongoCryptException extends RuntimeException {
      * @param msg   the message
      * @param cause the cause
      */
-    public MongoCryptException(final String msg, Throwable cause) {
+    public MongoCryptException(final String msg, final Throwable cause) {
         super(msg, cause);
         this.code = -1;
     }

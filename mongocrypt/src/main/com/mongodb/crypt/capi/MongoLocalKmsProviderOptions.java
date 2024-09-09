@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import static org.bson.assertions.Assertions.notNull;
 /**
  * The options for configuring a local KMS provider.
  */
-public class MongoLocalKmsProviderOptions {
+public final class MongoLocalKmsProviderOptions {
 
     private final ByteBuffer localMasterKey;
 
@@ -49,7 +49,7 @@ public class MongoLocalKmsProviderOptions {
     /**
      * The builder for the options
      */
-    public static class Builder {
+    public static final class Builder {
         private ByteBuffer localMasterKey;
 
         private Builder() {

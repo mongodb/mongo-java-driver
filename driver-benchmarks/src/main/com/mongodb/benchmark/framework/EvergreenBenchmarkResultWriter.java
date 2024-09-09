@@ -66,6 +66,32 @@ public class EvergreenBenchmarkResultWriter implements BenchmarkResultWriter {
     }
 
     @Override
+    public void write(final MongocryptBecnhmarkResult result) {
+        jsonWriter.writeStartDocument();
+
+        jsonWriter.writeStartDocument("info");
+        jsonWriter.writeString("test_name", result.getTestName());
+
+        jsonWriter.writeStartDocument("args");
+        jsonWriter.writeInt32("threads", result.getThreadCount());
+        jsonWriter.writeEndDocument();
+        jsonWriter.writeEndDocument();
+
+        jsonWriter.writeString("created_at", result.getCreatedAt());
+        jsonWriter.writeString("completed_at", result.getCompletedAt());
+        jsonWriter.writeStartArray("metrics");
+
+        jsonWriter.writeStartDocument();
+        jsonWriter.writeString("name", result.getMetricName());
+        jsonWriter.writeString("type", result.getMetricType());
+        jsonWriter.writeDouble("value", result.getMedianOpsPerSec());
+        jsonWriter.writeEndDocument();
+
+        jsonWriter.writeEndArray();
+        jsonWriter.writeEndDocument();
+    }
+
+    @Override
     public void close() throws IOException {
         jsonWriter.writeEndArray();
         jsonWriter.writeEndDocument();

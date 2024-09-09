@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,11 @@ package com.mongodb.crypt.capi;
 /**
  * The entry point to the MongoCrypt library.
  */
-public class MongoCrypts {
+public final class MongoCrypts {
+
+    private MongoCrypts() {
+        //NOP
+    }
 
     /**
      * Create a {@code MongoCrypt} instance.
@@ -32,7 +36,7 @@ public class MongoCrypts {
      * @param options the options
      * @return the instance
      */
-    public static MongoCrypt create(MongoCryptOptions options) {
+    public static MongoCrypt create(final MongoCryptOptions options) {
         return new MongoCryptImpl(options);
     }
 }

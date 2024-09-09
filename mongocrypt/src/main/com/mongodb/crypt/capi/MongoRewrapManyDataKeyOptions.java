@@ -27,7 +27,7 @@ import org.bson.BsonDocument;
  *
  * @since 1.5
  */
-public class MongoRewrapManyDataKeyOptions {
+public final class MongoRewrapManyDataKeyOptions {
 
     private final String provider;
     private final BsonDocument masterKey;
@@ -35,7 +35,7 @@ public class MongoRewrapManyDataKeyOptions {
     /**
      * Options builder
      */
-    public static class Builder {
+    public static final class Builder {
         private String provider;
         private BsonDocument masterKey;
 

@@ -35,6 +35,12 @@ public class MinimalTextBasedBenchmarkResultWriter implements BenchmarkResultWri
     }
 
     @Override
+    public void write(final MongocryptBecnhmarkResult result) {
+        printStream.printf("%s: %d%n", result.getTestName(),
+                result.getMedianOpsPerSec());
+    }
+
+    @Override
     public void close() {
     }
 }

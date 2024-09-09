@@ -52,22 +52,6 @@ dependencies {
     testRuntimeOnly("ch.qos.logback:logback-classic:1.2.11")
 }
 
-/*
- * Git version information
- */
-// Returns a String representing the output of `git describe`
-val gitDescribe by lazy {
-    val describeStdOut = ByteArrayOutputStream()
-    exec {
-        commandLine = listOf("git", "describe", "--tags", "--always", "--dirty")
-        standardOutput = describeStdOut
-    }
-    describeStdOut.toString().trim()
-}
-
-val isJavaTag by lazy { gitDescribe.startsWith("java") }
-val gitVersion by lazy { gitDescribe.subSequence(gitDescribe.toCharArray().indexOfFirst { it.isDigit() }, gitDescribe.length).toString() }
-
 val defaultDownloadRevision = "9a88ac5698e8e3ffcd6580b98c247f0126f26c40" // r.1.11.0
 
 /*
@@ -185,8 +169,6 @@ afterEvaluate {
                 "-exportcontents" to "com.mongodb.crypt.capi.*;-noimport:=true",
                 "Automatic-Module-Name" to "com.mongodb.crypt.capi",
                 "Import-Package" to "org.slf4j.*;resolution:=optional,org.bson.*",
-                "Build-Version" to gitVersion,
-                "Bundle-Version" to gitVersion,
                 "Bundle-Name" to "MongoCrypt",
                 "Bundle-SymbolicName" to "com.mongodb.crypt.capi",
                 "Private-Package" to ""

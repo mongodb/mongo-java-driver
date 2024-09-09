@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import static org.bson.assertions.Assertions.isTrue;
 /**
  * The options for configuring MongoCrypt.
  */
-public class MongoCryptOptions {
+public final class MongoCryptOptions {
 
     private final MongoAwsKmsProviderOptions awsKmsProviderOptions;
     private final MongoLocalKmsProviderOptions localKmsProviderOptions;
@@ -137,7 +137,7 @@ public class MongoCryptOptions {
     /**
      * The builder for the options
      */
-    public static class Builder {
+    public static final class Builder {
         private MongoAwsKmsProviderOptions awsKmsProviderOptions;
         private MongoLocalKmsProviderOptions localKmsProviderOptions;
         private BsonDocument kmsProviderOptions = null;
@@ -270,7 +270,7 @@ public class MongoCryptOptions {
     private MongoCryptOptions(final Builder builder) {
         isTrue("at least one KMS provider is configured",
                 builder.awsKmsProviderOptions != null || builder.localKmsProviderOptions != null
-                        || builder.kmsProviderOptions != null );
+                        || builder.kmsProviderOptions != null);
         this.awsKmsProviderOptions = builder.awsKmsProviderOptions;
         this.localKmsProviderOptions = builder.localKmsProviderOptions;
         this.kmsProviderOptions = builder.kmsProviderOptions;

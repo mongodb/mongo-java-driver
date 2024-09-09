@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import static org.bson.assertions.Assertions.notNull;
 /**
  * The options for configuring the AWS KMS provider.
  */
-public class MongoAwsKmsProviderOptions {
+public final class MongoAwsKmsProviderOptions {
 
     private final String accessKeyId;
     private final String secretAccessKey;
@@ -58,7 +58,7 @@ public class MongoAwsKmsProviderOptions {
     /**
      * The builder for the options
      */
-    public static class Builder {
+    public static final class Builder {
         private String accessKeyId;
         private String secretAccessKey;
 
