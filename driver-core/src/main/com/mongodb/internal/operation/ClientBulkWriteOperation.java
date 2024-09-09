@@ -43,18 +43,26 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.client.model.bulk.AbstractClientDeleteModel;
+import com.mongodb.internal.client.model.bulk.AbstractClientNamespacedWriteModel;
+import com.mongodb.internal.client.model.bulk.AbstractClientUpdateModel;
 import com.mongodb.internal.client.model.bulk.ClientWriteModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientBulkWriteOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedDeleteManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedDeleteOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedInsertOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedReplaceOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOptions;
-import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedWriteModel;
 import com.mongodb.internal.client.model.bulk.AcknowledgedSummaryClientBulkWriteResult;
 import com.mongodb.internal.client.model.bulk.AcknowledgedVerboseClientBulkWriteResult;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteResult;
@@ -349,7 +357,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         writer.writeStartArray("ops");
                         boolean commandIsRetryable = effectiveRetryWrites;
                         for (int modelIndexInBatch = 0; modelIndexInBatch < unexecutedModels.size(); modelIndexInBatch++) {
-                            ConcreteClientNamespacedWriteModel modelWithNamespace = getModelWithNamespace(unexecutedModels, modelIndexInBatch);
+                            AbstractClientNamespacedWriteModel modelWithNamespace = getNamespacedModel(unexecutedModels, modelIndexInBatch);
                             ClientWriteModel model = modelWithNamespace.getModel();
                             if (commandIsRetryable && !modelSupportsRetries.apply(model)) {
                                 commandIsRetryable = false;
@@ -396,9 +404,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         collationEncoder.encode(writer, value, encoderContext);
     }
 
-    private static ConcreteClientNamespacedWriteModel getModelWithNamespace(
+    private static AbstractClientNamespacedWriteModel getNamespacedModel(
             final List<? extends ClientNamespacedWriteModel> models, final int index) {
-        return (ConcreteClientNamespacedWriteModel) models.get(index);
+        return (AbstractClientNamespacedWriteModel) models.get(index);
     }
 
     public static final class Exceptions {
@@ -477,7 +485,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             }
 
             private boolean currentIndividualOperationIsReplace() {
-                return getModelWithNamespace(models, currentIndividualOperationIndex).getModel() instanceof ConcreteClientReplaceOneModel;
+                return getNamespacedModel(models, currentIndividualOperationIndex) instanceof ConcreteClientNamespacedReplaceOneModel;
             }
         }
 
@@ -681,12 +689,14 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         int writeModelIndexInBatch = batchStartModelIndex + individualOperationIndexInBatch;
                         if (individualOperationResponse.getNumber("ok").intValue() == 1) {
                             assertTrue(verboseResultsSetting);
-                            ClientWriteModel writeModel = getModelWithNamespace(models, writeModelIndexInBatch).getModel();
-                            if (writeModel instanceof ConcreteClientInsertOneModel) {
+                            AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndexInBatch);
+                            if (writeModel instanceof ConcreteClientNamespacedInsertOneModel) {
                                 insertResults.put(
                                         writeModelIndexInBatch,
                                         new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
-                            } else if (writeModel instanceof ConcreteClientUpdateOneModel || writeModel instanceof ConcreteClientReplaceOneModel) {
+                            } else if (writeModel instanceof ConcreteClientNamespacedUpdateOneModel
+                                    || writeModel instanceof ConcreteClientNamespacedUpdateManyModel
+                                    || writeModel instanceof ConcreteClientNamespacedReplaceOneModel) {
                                 BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
                                 updateResults.put(
                                         writeModelIndexInBatch,
@@ -694,7 +704,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                                 individualOperationResponse.getInt32("n").getValue(),
                                                 individualOperationResponse.getInt32("nModified").getValue(),
                                                 upsertedIdDocument == null ? null : upsertedIdDocument.get("_id")));
-                            } else if (writeModel instanceof ConcreteClientDeleteOneModel) {
+                            } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
+                                    || writeModel instanceof ConcreteClientNamespacedDeleteManyModel) {
                                 deleteResults.put(
                                         writeModelIndexInBatch,
                                         new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
@@ -905,21 +916,25 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             if (model instanceof ConcreteClientInsertOneModel) {
                 writer.writeInt32("insert", namespaceIndexInBatch);
                 encodeWriteModelInternals(writer, (ConcreteClientInsertOneModel) model, modelIndexInBatch);
-            } else if (model instanceof ConcreteClientUpdateManyModel) {
-                writer.writeInt32("update", namespaceIndexInBatch);
-                encodeWriteModelInternals(writer, (ConcreteClientUpdateManyModel) model);
             } else if (model instanceof ConcreteClientUpdateOneModel) {
                 writer.writeInt32("update", namespaceIndexInBatch);
+                writer.writeBoolean("multi", false);
                 encodeWriteModelInternals(writer, (ConcreteClientUpdateOneModel) model);
+            } else if (model instanceof ConcreteClientUpdateManyModel) {
+                writer.writeInt32("update", namespaceIndexInBatch);
+                writer.writeBoolean("multi", true);
+                encodeWriteModelInternals(writer, (ConcreteClientUpdateManyModel) model);
             } else if (model instanceof ConcreteClientReplaceOneModel) {
                 writer.writeInt32("update", namespaceIndexInBatch);
                 encodeWriteModelInternals(writer, (ConcreteClientReplaceOneModel) model);
-            } else if (model instanceof ConcreteClientDeleteManyModel) {
-                writer.writeInt32("delete", namespaceIndexInBatch);
-                encodeWriteModelInternals(writer, (ConcreteClientDeleteManyModel) model);
             } else if (model instanceof ConcreteClientDeleteOneModel) {
                 writer.writeInt32("delete", namespaceIndexInBatch);
+                writer.writeBoolean("multi", false);
                 encodeWriteModelInternals(writer, (ConcreteClientDeleteOneModel) model);
+            } else if (model instanceof ConcreteClientDeleteManyModel) {
+                writer.writeInt32("delete", namespaceIndexInBatch);
+                writer.writeBoolean("multi", true);
+                encodeWriteModelInternals(writer, (ConcreteClientDeleteManyModel) model);
             } else {
                 throw fail(model.getClass().toString());
             }
@@ -942,12 +957,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
         }
 
-        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateManyModel model) {
-            encodeWriteModelInternals(writer, (ConcreteClientUpdateOneModel) model);
-        }
-
-        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateOneModel model) {
-            writer.writeBoolean("multi", model instanceof ConcreteClientUpdateManyModel);
+        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
             model.getUpdate().ifPresent(value -> {
@@ -996,12 +1006,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             options.isUpsert().ifPresent(value -> writer.writeBoolean("upsert", value));
         }
 
-        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientDeleteManyModel model) {
-            encodeWriteModelInternals(writer, (ConcreteClientDeleteOneModel) model);
-        }
-
-        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientDeleteOneModel model) {
-            writer.writeBoolean("multi", model instanceof ConcreteClientDeleteManyModel);
+        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientDeleteModel model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
             ConcreteClientDeleteOptions options = model.getOptions();

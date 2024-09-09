@@ -24,7 +24,10 @@ import java.util.Optional;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Optional.ofNullable;
 
-abstract class AbstractClientUpdateModel {
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
+public abstract class AbstractClientUpdateModel {
     private final Bson filter;
     @Nullable
     private final Bson update;
