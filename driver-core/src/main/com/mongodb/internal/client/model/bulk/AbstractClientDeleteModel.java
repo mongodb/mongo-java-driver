@@ -22,7 +22,7 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-abstract class AbstractClientDeleteModel implements ClientWriteModel {
+public abstract class AbstractClientDeleteModel implements ClientWriteModel {
     private final Bson filter;
     private final ConcreteClientDeleteOptions options;
 
