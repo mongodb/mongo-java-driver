@@ -87,8 +87,6 @@ public class BenchmarkSuite {
         runBenchmark(new MultiFileExportBenchmark());
         runBenchmark(new GridFSMultiFileUploadBenchmark());
         runBenchmark(new GridFSMultiFileDownloadBenchmark());
-        runBenchmark(new GridFSMultiFileDownloadBenchmark());
-
         runMongoCryptBenchMarks();
     }
 
