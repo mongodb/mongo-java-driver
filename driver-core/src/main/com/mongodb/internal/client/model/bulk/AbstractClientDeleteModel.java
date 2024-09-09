@@ -15,41 +15,36 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientReplaceOptions;
+import com.mongodb.client.model.bulk.ClientDeleteOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientReplaceOneModel implements ClientWriteModel {
+abstract class AbstractClientDeleteModel implements ClientWriteModel {
     private final Bson filter;
-    private final Object replacement;
-    private final ConcreteClientReplaceOptions options;
+    private final ConcreteClientDeleteOptions options;
 
-    public ConcreteClientReplaceOneModel(final Bson filter, final Object replacement, @Nullable final ClientReplaceOptions options) {
+    AbstractClientDeleteModel(final Bson filter, @Nullable final ClientDeleteOptions options) {
         this.filter = filter;
-        this.replacement = replacement;
-        this.options = options == null ? ConcreteClientReplaceOptions.MUTABLE_EMPTY : (ConcreteClientReplaceOptions) options;
+        this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
     }
 
-    public Bson getFilter() {
+    public final Bson getFilter() {
         return filter;
     }
 
-    public Object getReplacement() {
-        return replacement;
-    }
-
-    public ConcreteClientReplaceOptions getOptions() {
+    public final ConcreteClientDeleteOptions getOptions() {
         return options;
     }
 
+    abstract String getToStringDescription();
+
     @Override
-    public String toString() {
-        return "ClientReplaceOneModel{"
-                + "filter=" + filter
-                + ", replacement=" + replacement
+    public final String toString() {
+        return getToStringDescription()
+                + "{filter=" + filter
                 + ", options=" + options
                 + '}';
     }

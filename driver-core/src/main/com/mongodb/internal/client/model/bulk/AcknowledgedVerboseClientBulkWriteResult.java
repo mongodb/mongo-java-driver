@@ -160,7 +160,7 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
         @Override
         public String toString() {
             return "AcknowledgedVerboseClientBulkWriteResult.Verbose{"
-                    + ", insertResults=" + insertResults
+                    + "insertResults=" + insertResults
                     + ", updateResults=" + updateResults
                     + ", deleteResults=" + deleteResults
                     + '}';

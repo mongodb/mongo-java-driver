@@ -24,7 +24,12 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedWriteModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedDeleteManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedDeleteOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedInsertOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedReplaceOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
@@ -53,7 +58,7 @@ public interface ClientNamespacedWriteModel {
     static <TDocument> ClientNamespacedInsertOneModel insertOne(final MongoNamespace namespace, final TDocument document) {
         notNull("namespace", namespace);
         notNull("document", document);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientInsertOneModel(document));
+        return new ConcreteClientNamespacedInsertOneModel(namespace, new ConcreteClientInsertOneModel(document));
     }
 
     /**
@@ -72,7 +77,7 @@ public interface ClientNamespacedWriteModel {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateOneModel(filter, update, null, null));
+        return new ConcreteClientNamespacedUpdateOneModel(namespace, new ConcreteClientUpdateOneModel(filter, update, null, null));
     }
 
     /**
@@ -92,7 +97,7 @@ public interface ClientNamespacedWriteModel {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateOneModel(filter, update, null, options));
+        return new ConcreteClientNamespacedUpdateOneModel(namespace, new ConcreteClientUpdateOneModel(filter, update, null, options));
     }
 
     /**
@@ -112,7 +117,7 @@ public interface ClientNamespacedWriteModel {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateOneModel(filter, null, updatePipeline, null));
+        return new ConcreteClientNamespacedUpdateOneModel(namespace, new ConcreteClientUpdateOneModel(filter, null, updatePipeline, null));
     }
 
     /**
@@ -132,7 +137,7 @@ public interface ClientNamespacedWriteModel {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateOneModel(filter, null, updatePipeline, options));
+        return new ConcreteClientNamespacedUpdateOneModel(namespace, new ConcreteClientUpdateOneModel(filter, null, updatePipeline, options));
     }
 
     /**
@@ -151,7 +156,7 @@ public interface ClientNamespacedWriteModel {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateManyModel(filter, update, null, null));
+        return new ConcreteClientNamespacedUpdateManyModel(namespace, new ConcreteClientUpdateManyModel(filter, update, null, null));
     }
 
     /**
@@ -171,7 +176,7 @@ public interface ClientNamespacedWriteModel {
         notNull("filter", filter);
         notNull("update", update);
         notNull("options", options);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateManyModel(filter, update, null, options));
+        return new ConcreteClientNamespacedUpdateManyModel(namespace, new ConcreteClientUpdateManyModel(filter, update, null, options));
     }
 
     /**
@@ -191,7 +196,7 @@ public interface ClientNamespacedWriteModel {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateManyModel(filter, null, updatePipeline, null));
+        return new ConcreteClientNamespacedUpdateManyModel(namespace, new ConcreteClientUpdateManyModel(filter, null, updatePipeline, null));
     }
 
     /**
@@ -211,7 +216,7 @@ public interface ClientNamespacedWriteModel {
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
         notNull("options", options);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientUpdateManyModel(filter, null, updatePipeline, options));
+        return new ConcreteClientNamespacedUpdateManyModel(namespace, new ConcreteClientUpdateManyModel(filter, null, updatePipeline, options));
     }
 
     /**
@@ -231,7 +236,7 @@ public interface ClientNamespacedWriteModel {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("replacement", replacement);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientReplaceOneModel(filter, replacement, null));
+        return new ConcreteClientNamespacedReplaceOneModel(namespace, new ConcreteClientReplaceOneModel(filter, replacement, null));
     }
 
     /**
@@ -252,7 +257,7 @@ public interface ClientNamespacedWriteModel {
         notNull("filter", filter);
         notNull("replacement", replacement);
         notNull("options", options);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientReplaceOneModel(filter, replacement, options));
+        return new ConcreteClientNamespacedReplaceOneModel(namespace, new ConcreteClientReplaceOneModel(filter, replacement, options));
     }
 
     /**
@@ -268,7 +273,7 @@ public interface ClientNamespacedWriteModel {
     static ClientNamespacedDeleteOneModel deleteOne(final MongoNamespace namespace, final Bson filter) {
         notNull("namespace", namespace);
         notNull("filter", filter);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientDeleteOneModel(filter, null));
+        return new ConcreteClientNamespacedDeleteOneModel(namespace, new ConcreteClientDeleteOneModel(filter, null));
     }
 
     /**
@@ -284,7 +289,7 @@ public interface ClientNamespacedWriteModel {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientDeleteOneModel(filter, options));
+        return new ConcreteClientNamespacedDeleteOneModel(namespace, new ConcreteClientDeleteOneModel(filter, options));
     }
 
     /**
@@ -300,7 +305,7 @@ public interface ClientNamespacedWriteModel {
     static ClientNamespacedDeleteManyModel deleteMany(final MongoNamespace namespace, final Bson filter) {
         notNull("namespace", namespace);
         notNull("filter", filter);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientDeleteManyModel(filter, null));
+        return new ConcreteClientNamespacedDeleteManyModel(namespace, new ConcreteClientDeleteManyModel(filter, null));
     }
 
     /**
@@ -316,6 +321,6 @@ public interface ClientNamespacedWriteModel {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);
-        return new ConcreteClientNamespacedWriteModel(namespace, new ConcreteClientDeleteManyModel(filter, options));
+        return new ConcreteClientNamespacedDeleteManyModel(namespace, new ConcreteClientDeleteManyModel(filter, options));
     }
 }

@@ -15,24 +15,14 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
+import com.mongodb.MongoNamespace;
+import com.mongodb.client.model.bulk.ClientNamespacedDeleteOneModel;
+
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientInsertOneModel implements ClientWriteModel {
-    private final Object document;
-
-    public ConcreteClientInsertOneModel(final Object document) {
-        this.document = document;
-    }
-
-    public Object getDocument() {
-        return document;
-    }
-
-    @Override
-    public String toString() {
-        return "ClientInsertOneModel{"
-                + "document=" + document
-                + '}';
+public final class ConcreteClientNamespacedDeleteOneModel extends AbstractClientNamespacedWriteModel implements ClientNamespacedDeleteOneModel {
+    public ConcreteClientNamespacedDeleteOneModel(final MongoNamespace namespace, final ClientWriteModel model) {
+        super(namespace, model);
     }
 }

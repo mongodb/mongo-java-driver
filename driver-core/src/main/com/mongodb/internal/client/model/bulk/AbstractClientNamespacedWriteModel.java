@@ -17,41 +17,29 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel;
-import com.mongodb.client.model.bulk.ClientNamespacedDeleteOneModel;
-import com.mongodb.client.model.bulk.ClientNamespacedInsertOneModel;
-import com.mongodb.client.model.bulk.ClientNamespacedReplaceOneModel;
-import com.mongodb.client.model.bulk.ClientNamespacedUpdateManyModel;
-import com.mongodb.client.model.bulk.ClientNamespacedUpdateOneModel;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientNamespacedWriteModel
-        implements ClientNamespacedInsertOneModel,
-        ClientNamespacedUpdateOneModel,
-        ClientNamespacedUpdateManyModel,
-        ClientNamespacedReplaceOneModel,
-        ClientNamespacedDeleteOneModel,
-        ClientNamespacedDeleteManyModel {
+public abstract class AbstractClientNamespacedWriteModel {
     private final MongoNamespace namespace;
     private final ClientWriteModel model;
 
-    public ConcreteClientNamespacedWriteModel(final MongoNamespace namespace, final ClientWriteModel model) {
+    AbstractClientNamespacedWriteModel(final MongoNamespace namespace, final ClientWriteModel model) {
         this.namespace = namespace;
         this.model = model;
     }
 
-    public MongoNamespace getNamespace() {
+    public final MongoNamespace getNamespace() {
         return namespace;
     }
 
-    public ClientWriteModel getModel() {
+    public final ClientWriteModel getModel() {
         return model;
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
         return "ClientNamespacedWriteModel{"
                 + "namespace=" + namespace
                 + ", model=" + model

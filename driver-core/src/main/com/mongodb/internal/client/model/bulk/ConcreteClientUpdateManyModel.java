@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.bulk.ClientUpdateOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -23,7 +22,7 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientUpdateManyModel extends ConcreteClientUpdateOneModel implements ClientWriteModel {
+public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateModel implements ClientWriteModel {
     public ConcreteClientUpdateManyModel(
             final Bson filter,
             @Nullable
@@ -35,13 +34,7 @@ public final class ConcreteClientUpdateManyModel extends ConcreteClientUpdateOne
     }
 
     @Override
-    public String toString() {
-        return "ClientUpdateManyModel{"
-                + ", filter=" + getFilter()
-                + ", update=" + getUpdate().map(Object::toString)
-                        .orElse(getUpdatePipeline().map(Object::toString)
-                        .orElseThrow(Assertions::fail))
-                + ", options=" + getOptions()
-                + '}';
+    String getToStringDescription() {
+        return "ClientUpdateManyModel";
     }
 }
