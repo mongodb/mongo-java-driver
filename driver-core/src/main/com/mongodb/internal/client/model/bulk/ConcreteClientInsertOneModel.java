@@ -32,7 +32,7 @@ public final class ConcreteClientInsertOneModel implements ClientWriteModel {
     @Override
     public String toString() {
         return "ClientInsertOneModel{"
-                + ", document=" + document
+                + "document=" + document
                 + '}';
     }
 }

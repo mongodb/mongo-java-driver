@@ -22,28 +22,13 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class ConcreteClientDeleteManyModel implements ClientWriteModel {
-    private final Bson filter;
-    private final ConcreteClientDeleteOptions options;
-
+public final class ConcreteClientDeleteManyModel extends AbstractClientDeleteModel implements ClientWriteModel {
     public ConcreteClientDeleteManyModel(final Bson filter, @Nullable final ClientDeleteOptions options) {
-        this.filter = filter;
-        this.options = options == null ? ConcreteClientDeleteOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOptions) options;
-    }
-
-    public Bson getFilter() {
-        return filter;
-    }
-
-    public ConcreteClientDeleteOptions getOptions() {
-        return options;
+        super(filter, options);
     }
 
     @Override
-    public String toString() {
-        return "ClientDeleteManyModel{"
-                + ", filter=" + filter
-                + ", options=" + options
-                + '}';
+    String getToStringDescription() {
+        return "ClientDeleteManyModel";
     }
 }

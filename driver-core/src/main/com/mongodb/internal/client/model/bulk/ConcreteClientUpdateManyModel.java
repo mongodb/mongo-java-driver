@@ -19,22 +19,10 @@ import com.mongodb.client.model.bulk.ClientUpdateOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
-import java.util.Optional;
-
-import static com.mongodb.assertions.Assertions.assertTrue;
-import static java.util.Optional.ofNullable;
-
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class ConcreteClientUpdateManyModel implements ClientWriteModel {
-    private final Bson filter;
-    @Nullable
-    private final Bson update;
-    @Nullable
-    private final Iterable<? extends Bson> updatePipeline;
-    private final ConcreteClientUpdateOptions options;
-
+public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateModel implements ClientWriteModel {
     public ConcreteClientUpdateManyModel(
             final Bson filter,
             @Nullable
@@ -42,35 +30,11 @@ public class ConcreteClientUpdateManyModel implements ClientWriteModel {
             @Nullable
             final Iterable<? extends Bson> updatePipeline,
             @Nullable final ClientUpdateOptions options) {
-        this.filter = filter;
-        assertTrue(update == null ^ updatePipeline == null);
-        this.update = update;
-        this.updatePipeline = updatePipeline;
-        this.options = options == null ? ConcreteClientUpdateOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOptions) options;
-    }
-
-    public Bson getFilter() {
-        return filter;
-    }
-
-    public Optional<Bson> getUpdate() {
-        return ofNullable(update);
-    }
-
-    public Optional<Iterable<? extends Bson>> getUpdatePipeline() {
-        return ofNullable(updatePipeline);
-    }
-
-    public ConcreteClientUpdateOptions getOptions() {
-        return options;
+        super(filter, update, updatePipeline, options);
     }
 
     @Override
-    public String toString() {
-        return "ClientUpdateManyModel{"
-                + ", filter=" + filter
-                + ", update=" + (update != null ? update : updatePipeline)
-                + ", options=" + options
-                + '}';
+    String getToStringDescription() {
+        return "ClientUpdateManyModel";
     }
 }
