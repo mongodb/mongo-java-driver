@@ -18,7 +18,10 @@ package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.MongoNamespace;
 
-abstract class AbstractClientNamespacedWriteModel {
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
+public abstract class AbstractClientNamespacedWriteModel {
     private final MongoNamespace namespace;
     private final ClientWriteModel model;
 
