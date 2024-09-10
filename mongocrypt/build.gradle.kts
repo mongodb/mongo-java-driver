@@ -16,7 +16,6 @@
  */
 
 import de.undercouch.gradle.tasks.download.Download
-import java.io.ByteArrayOutputStream
 
 buildscript {
     repositories {
@@ -67,6 +66,13 @@ val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 val downloadRevision: String = System.getProperties().computeIfAbsent("gitRevision") { k -> defaultDownloadRevision }.toString()
 val binariesArchiveName = "libmongocrypt-java.tar.gz"
 
+/**
+ * The name of the archive includes defaultDownloadRevision to ensure that:
+ * - the archive is downloaded if the revision changes.
+ * - the archive is not downloaded if the revision is the same and archive had already been saved in build output.
+ */
+val localBinariesArchiveName = "libmongocrypt-java-$defaultDownloadRevision.tar.gz"
+
 val downloadUrl: String = "https://mciuploads.s3.amazonaws.com/libmongocrypt/java/$downloadRevision/$binariesArchiveName"
 
 val jnaMapping: Map<String, String> = mapOf(
@@ -90,9 +96,9 @@ sourceSets {
 
 tasks.register<Download>("downloadJava") {
     src(downloadUrl)
-    dest("${jnaDownloadsDir}/$binariesArchiveName")
+    dest("${jnaDownloadsDir}/$localBinariesArchiveName")
     overwrite(true)
-    /* To make sure we don't download archive with binaries if it already exists or if it hasn't changed in S3 bucket.*/
+    /* To make sure we don't download archive with binaries if it hasn't been changed in S3 bucket since last download.*/
     onlyIfModified(true)
 }
 
@@ -104,8 +110,23 @@ tasks.processResources {
 }
 
 tasks.register<Copy>("unzipJava") {
-    outputs.upToDateWhen { false }
-    from(tarTree(resources.gzip("${jnaDownloadsDir}/$binariesArchiveName")))
+    /*
+        Clean up the directory first if the task is not UP-TO-DATE.
+        This can happen if the download revision has been changed and the archive is downloaded again.
+     */
+    doFirst {
+        println("Cleaning up $jnaResourcesDir")
+        delete(fileTree(jnaResourcesDir).matching {
+            include(jnaMapping.keys.flatMap {
+                listOf(
+                    "${it}/nocrypto/**/libmongocrypt.so",
+                    "${it}/lib/**/libmongocrypt.dylib",
+                    "${it}/bin/**/mongocrypt.dll"
+                )
+            })
+        })
+    }
+    from(tarTree(resources.gzip("${jnaDownloadsDir}/$localBinariesArchiveName")))
     include(jnaMapping.keys.flatMap {
         listOf("${it}/nocrypto/**/libmongocrypt.so", "${it}/lib/**/libmongocrypt.dylib", "${it}/bin/**/mongocrypt.dll" )
     })
