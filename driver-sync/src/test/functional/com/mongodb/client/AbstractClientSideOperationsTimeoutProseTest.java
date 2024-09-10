@@ -16,12 +16,14 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.CursorType;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -34,6 +36,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.GridFSUploadStream;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.test.CollectionHelper;
@@ -48,8 +51,11 @@ import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.test.FlakyTest;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
@@ -81,7 +87,9 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getPrimary;
+import static java.lang.String.join;
 import static java.util.Arrays.asList;
+import static java.util.Collections.nCopies;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,6 +99,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -702,10 +711,32 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @DisplayName("11. Multi-batch bulkWrites")
     @Test
-    void test11MultiBatchBulkWrites() {
+    @SuppressWarnings("try")
+    void test11MultiBatchBulkWrites() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
-        assumeTrue(Runtime.getRuntime().availableProcessors() < 1, "BULK-TODO implement prose test https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/tests/README.md#11-multi-batch-bulkwrites");
+        BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
+                .append("mode", new BsonDocument("times", new BsonInt32(2)))
+                .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("bulkWrite"))))
+                        .append("blockConnection", BsonBoolean.TRUE)
+                        .append("blockTimeMS", new BsonInt32(1010)));
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().timeout(2000, TimeUnit.MILLISECONDS));
+             FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
+            MongoDatabase db = client.getDatabase(namespace.getDatabaseName());
+            db.drop();
+            Document helloResponse = db.runCommand(new Document("hello", 1));
+            int maxBsonObjectSize = helloResponse.getInteger("maxBsonObjectSize");
+            int maxMessageSizeBytes = helloResponse.getInteger("maxMessageSizeBytes");
+            ClientNamespacedWriteModel model = ClientNamespacedWriteModel.insertOne(
+                    namespace,
+                    new Document("a", join("", nCopies(maxBsonObjectSize - 500, "b"))));
+            MongoException topLevelError = assertThrows(ClientBulkWriteException.class, () ->
+                    client.bulkWrite(nCopies(maxMessageSizeBytes / maxBsonObjectSize + 1, model)))
+                    .getError()
+                    .<AssertionError>orElseThrow(() -> fail("Expected a top-level error"));
+            assertInstanceOf(MongoOperationTimeoutException.class, topLevelError);
+            assertEquals(2, commandListener.getCommandStartedEvents("bulkWrite").size());
+        }
     }
 
     /**

@@ -312,7 +312,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final Connection connection,
             final BsonDocument response) {
         int serverDefaultCursorBatchSize = 0;
-        try (BatchCursor<BsonDocument> cursor = cursorDocumentToBatchCursor(
+        try (CommandBatchCursor<BsonDocument> cursor = cursorDocumentToBatchCursor(
                 TimeoutMode.CURSOR_LIFETIME,
                 response,
                 serverDefaultCursorBatchSize,
@@ -320,6 +320,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 options.getComment().orElse(null),
                 connectionSource,
                 connection)) {
+            cursor.setCloseWithoutTimeoutReset(true);
             return stream(spliteratorUnknownSize(cursor, ORDERED | IMMUTABLE), false).collect(toList());
         }
     }
