@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -360,7 +360,7 @@ public class MongoCryptTest {
         return ByteBuffer.wrap(getFileAsString(fileName, "\r\n").getBytes(StandardCharsets.UTF_8));
     }
 
-    private static String getFileAsString(final String fileName, String lineSeparator)  {
+    private static String getFileAsString(final String fileName, final String lineSeparator)  {
         try {
             URL resource = MongoCryptTest.class.getResource("/" + fileName);
             if (resource == null) {
