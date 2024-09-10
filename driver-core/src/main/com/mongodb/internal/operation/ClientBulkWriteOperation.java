@@ -210,6 +210,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         BatchEncoder batchEncoder = new BatchEncoder();
         Supplier<ExhaustiveBulkWriteCommandOkResponse> retryingBatchExecutor = decorateWriteWithRetries(
                 retryState, operationContext,
+                // Each batch re-selects a server and re-checks out a connection because this is simpler,
+                // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
+                // If connection pinning is required, {@code binding} handles that,
+                // and `ClientSession`, `TransactionContext` are aware of that.
                 () -> withSourceAndConnection(binding::getWriteConnectionSource, true, (connectionSource, connection) -> {
                     ConnectionDescription connectionDescription = connection.getDescription();
                     boolean effectiveRetryWrites = isRetryableWrite(retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
@@ -328,9 +332,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final List<? extends ClientNamespacedWriteModel> unexecutedModels,
             final BatchEncoder batchEncoder,
             final Runnable ifCommandIsRetryable) {
-        // BULK-TODO This implementation must limit the number of `models` it includes in a batch if needed.
-        // Each batch re-selects a server and re-checks out a connection because this is simpler and it is allowed,
-        // see https://mongodb.slack.com/archives/C035ZJL6CQN/p1722265720037099?thread_ts=1722264610.664109&cid=C035ZJL6CQN.
         return new BsonDocumentWrapper<>(
                 BULK_WRITE_COMMAND_NAME,
                 new Encoder<String>() {
