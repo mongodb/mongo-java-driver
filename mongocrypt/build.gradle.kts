@@ -51,7 +51,6 @@ dependencies {
     testRuntimeOnly("ch.qos.logback:logback-classic:1.2.11")
 }
 
-val defaultDownloadRevision = "9a88ac5698e8e3ffcd6580b98c247f0126f26c40" // r.1.11.0
 
 /*
  * Jna copy or download resources
@@ -62,16 +61,16 @@ val jnaLibPlatform: String = if (com.sun.jna.Platform.RESOURCE_PREFIX.startsWith
 val jnaLibsPath: String = System.getProperty("jnaLibsPath", "${jnaResourcesDir}${jnaLibPlatform}")
 val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 
-// Download jnaLibs that match the git to jnaResourcesBuildDir
-val downloadRevision: String = System.getProperties().computeIfAbsent("gitRevision") { k -> defaultDownloadRevision }.toString()
+// Download jnaLibs that match the git tag or revision to jnaResourcesBuildDir
+val downloadRevision = "9a88ac5698e8e3ffcd6580b98c247f0126f26c40" // r.1.11.0
 val binariesArchiveName = "libmongocrypt-java.tar.gz"
 
 /**
- * The name of the archive includes defaultDownloadRevision to ensure that:
+ * The name of the archive includes downloadRevision to ensure that:
  * - the archive is downloaded if the revision changes.
  * - the archive is not downloaded if the revision is the same and archive had already been saved in build output.
  */
-val localBinariesArchiveName = "libmongocrypt-java-$defaultDownloadRevision.tar.gz"
+val localBinariesArchiveName = "libmongocrypt-java-$downloadRevision.tar.gz"
 
 val downloadUrl: String = "https://mciuploads.s3.amazonaws.com/libmongocrypt/java/$downloadRevision/$binariesArchiveName"
 
@@ -105,7 +104,6 @@ tasks.register<Download>("downloadJava") {
 // The `processResources` task (defined by the `java-library` plug-in) consumes files in the main source set.
 // Add a dependency on `unzipJava`. `unzipJava` adds libmongocrypt libraries to the main source set.
 tasks.processResources {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     mustRunAfter(tasks.named("unzipJava"))
 }
 
