@@ -58,6 +58,7 @@ public class BenchmarkSuite {
     private static void runBenchmarks()
             throws Exception {
 
+        runMongoCryptBenchMarks();
         runBenchmark(new BsonEncodingBenchmark<>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
         runBenchmark(new BsonEncodingBenchmark<>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
         runBenchmark(new BsonEncodingBenchmark<>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
@@ -87,7 +88,6 @@ public class BenchmarkSuite {
         runBenchmark(new MultiFileExportBenchmark());
         runBenchmark(new GridFSMultiFileUploadBenchmark());
         runBenchmark(new GridFSMultiFileDownloadBenchmark());
-        runMongoCryptBenchMarks();
     }
 
     private static void runMongoCryptBenchMarks() throws InterruptedException {
