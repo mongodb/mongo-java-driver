@@ -108,15 +108,7 @@ tasks.register<Copy>("unzipJava") {
      */
     doFirst {
         println("Cleaning up $jnaResourcesDir")
-        delete(fileTree(jnaResourcesDir).matching {
-            include(jnaMapping.keys.flatMap {
-                listOf(
-                    "${it}/nocrypto/**/libmongocrypt.so",
-                    "${it}/lib/**/libmongocrypt.dylib",
-                    "${it}/bin/**/mongocrypt.dll"
-                )
-            })
-        })
+        delete(jnaResourcesDir)
     }
     from(tarTree(resources.gzip("${jnaDownloadsDir}/$localBinariesArchiveName")))
     include(jnaMapping.keys.flatMap {
@@ -126,7 +118,7 @@ tasks.register<Copy>("unzipJava") {
         path = "${jnaMapping[path.substringBefore("/")]}/${name}"
     }
     into(jnaResourcesDir)
-    mustRunAfter("downloadJava")
+    dependsOn("downloadJava")
 
     doLast {
         println("jna.library.path contents: \n  ${fileTree(jnaResourcesDir).files.joinToString(",\n  ")}")
