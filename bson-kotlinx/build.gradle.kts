@@ -42,7 +42,10 @@ ext.set("kotlinxDatetimeVersion", "0.4.0")
 
 val kotlinxDatetimeVersion: String by ext
 
-java { registerFeature("dateTimeSupport") { usingSourceSet(sourceSets["main"]) } }
+java {
+    registerFeature("dateTimeSupport") { usingSourceSet(sourceSets["main"]) }
+    registerFeature("jsonSupport") { usingSourceSet(sourceSets["main"]) }
+}
 
 dependencies {
     // Align versions of all Kotlin components
@@ -52,6 +55,7 @@ dependencies {
     implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.5.0"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core")
     "dateTimeSupportImplementation"("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
+    "jsonSupportImplementation"("org.jetbrains.kotlinx:kotlinx-serialization-json")
 
     api(project(path = ":bson", configuration = "default"))
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -59,6 +63,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     testImplementation(project(path = ":driver-core", configuration = "default"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
 }
 
 kotlin { explicitApi() }

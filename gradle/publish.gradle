@@ -102,6 +102,9 @@ configure(javaProjects) { project ->
 
                 suppressPomMetadataWarningsFor("dateTimeSupportApiElements")
                 suppressPomMetadataWarningsFor("dateTimeRuntimeElements")
+
+                suppressPomMetadataWarningsFor("jsonSupportApiElements")
+                suppressPomMetadataWarningsFor("jsonSupportRuntimeElements")
             }
         }
 
