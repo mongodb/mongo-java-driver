@@ -23,8 +23,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
-import com.mongodb.internal.connection.OpMsgSequences;
-import com.mongodb.internal.connection.OpMsgSequences.EmptyOpMsgSequences;
+import com.mongodb.internal.connection.MessageSequences;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
@@ -96,13 +96,13 @@ class CryptConnection implements AsyncConnection {
                                  @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                                  final OperationContext operationContext, final SingleResultCallback<T> callback) {
         commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                operationContext, true, EmptyOpMsgSequences.INSTANCE, callback);
+                operationContext, true, EmptyMessageSequences.INSTANCE, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                                 final OperationContext operationContext, final boolean responseExpected, final OpMsgSequences sequences,
+                                 final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences,
                                  final SingleResultCallback<T> callback) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
@@ -133,7 +133,7 @@ class CryptConnection implements AsyncConnection {
             crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout)
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                                    new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyOpMsgSequences.INSTANCE, sinkToCallback(sink))))
+                                    new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE, sinkToCallback(sink))))
                     .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, operationTimeout))
                     .map(decryptedResponse ->
                         commandResultDecoder.decode(new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO()),

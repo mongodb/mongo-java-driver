@@ -32,7 +32,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final MongoNamespace namespace;
     private final BsonDocument command;
-    private final OpMsgSequences sequences;
+    private final MessageSequences sequences;
     private final ReadPreference readPreference;
     private final FieldNameValidator commandFieldNameValidator;
     private final Decoder<T> commandResultDecoder;
@@ -42,7 +42,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
-            final OpMsgSequences sequences, final ClusterConnectionMode clusterConnectionMode, final OperationContext operationContext) {
+            final MessageSequences sequences, final ClusterConnectionMode clusterConnectionMode, final OperationContext operationContext) {
         notNull("database", database);
         this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);

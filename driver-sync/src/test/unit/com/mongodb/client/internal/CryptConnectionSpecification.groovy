@@ -27,7 +27,7 @@ import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.connection.Connection
-import com.mongodb.internal.connection.OpMsgSequences
+import com.mongodb.internal.connection.MessageSequences
 import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.connection.ValidatableSplittablePayload
 import com.mongodb.internal.time.Timeout
@@ -98,7 +98,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, operationContext, true, OpMsgSequences.EmptyOpMsgSequences.INSTANCE) >> {
+                _ as RawBsonDocumentCodec, operationContext, true, MessageSequences.EmptyMessageSequences.INSTANCE) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {
@@ -153,7 +153,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, operationContext, true, OpMsgSequences.EmptyOpMsgSequences.INSTANCE) >> {
+                _ as RawBsonDocumentCodec, operationContext, true, MessageSequences.EmptyMessageSequences.INSTANCE) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {
@@ -209,7 +209,7 @@ class CryptConnectionSpecification extends Specification {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
-                _ as RawBsonDocumentCodec, operationContext, true, OpMsgSequences.EmptyOpMsgSequences.INSTANCE) >> {
+                _ as RawBsonDocumentCodec, operationContext, true, MessageSequences.EmptyMessageSequences.INSTANCE) >> {
             encryptedResponse
         }
         1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {

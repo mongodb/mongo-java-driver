@@ -64,7 +64,7 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
-            final boolean responseExpected, final OpMsgSequences sequences) {
+            final boolean responseExpected, final MessageSequences sequences) {
         return executeEnqueuedCommandBasedProtocol(operationContext);
     }
 
@@ -78,7 +78,7 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
-            final boolean responseExpected, final OpMsgSequences sequences, final SingleResultCallback<T> callback) {
+            final boolean responseExpected, final MessageSequences sequences, final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(operationContext, callback);
     }
 

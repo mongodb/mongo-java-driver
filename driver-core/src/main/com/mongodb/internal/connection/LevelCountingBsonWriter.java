@@ -20,7 +20,9 @@ import org.bson.BsonWriter;
 
 
 abstract class LevelCountingBsonWriter extends BsonWriterDecorator {
-    private int level = -1;
+    static final int INITIAL_LEVEL = -1;
+
+    private int level = INITIAL_LEVEL;
 
     LevelCountingBsonWriter(final BsonWriter bsonWriter) {
         super(bsonWriter);

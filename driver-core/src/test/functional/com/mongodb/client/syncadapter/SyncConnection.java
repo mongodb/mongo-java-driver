@@ -19,7 +19,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
-import com.mongodb.internal.connection.OpMsgSequences;
+import com.mongodb.internal.connection.MessageSequences;
 import com.mongodb.internal.connection.OperationContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -65,7 +65,7 @@ public final class SyncConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final OperationContext operationContext, final boolean responseExpected, final OpMsgSequences sequences) {
+            final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences) {
         SupplyingCallback<T> callback = new SupplyingCallback<>();
         wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, operationContext,
                 responseExpected, sequences, callback);

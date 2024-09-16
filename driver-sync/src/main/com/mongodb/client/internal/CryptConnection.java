@@ -21,8 +21,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSettings;
-import com.mongodb.internal.connection.OpMsgSequences;
-import com.mongodb.internal.connection.OpMsgSequences.EmptyOpMsgSequences;
+import com.mongodb.internal.connection.MessageSequences;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
@@ -93,7 +93,7 @@ public final class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final OperationContext operationContext, final boolean responseExpected, final OpMsgSequences sequences) {
+            final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
             throw new MongoClientException("Auto-encryption requires a minimum MongoDB version of 4.2");
@@ -122,7 +122,7 @@ public final class CryptConnection implements Connection {
                 new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), operationTimeout);
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyOpMsgSequences.INSTANCE);
+                new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE);
 
         if (encryptedResponse == null) {
             return null;
@@ -139,7 +139,7 @@ public final class CryptConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, EmptyOpMsgSequences.INSTANCE);
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, EmptyMessageSequences.INSTANCE);
     }
 
     @SuppressWarnings("unchecked")

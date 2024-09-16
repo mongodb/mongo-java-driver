@@ -23,7 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.connection.OpMsgSequences.EmptyOpMsgSequences;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.operation.ClientBulkWriteOperation.ClientBulkWriteCommand;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
@@ -78,7 +78,7 @@ public final class CommandMessage extends RequestMessage {
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
     private final boolean exhaustAllowed;
-    private final OpMsgSequences sequences;
+    private final MessageSequences sequences;
     private final boolean responseExpected;
     /**
      * {@code null} iff either {@link #sequences} is not of the {@link ClientBulkWriteCommand.OpsAndNsInfo} type,
@@ -92,20 +92,20 @@ public final class CommandMessage extends RequestMessage {
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
                    @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, EmptyOpMsgSequences.INSTANCE,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, EmptyOpMsgSequences.INSTANCE,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
-                   final OpMsgSequences sequences,
+                   final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false,
                 sequences, clusterConnectionMode, serverApi);
@@ -114,7 +114,7 @@ public final class CommandMessage extends RequestMessage {
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
-                   final OpMsgSequences sequences,
+                   final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.namespace = namespace;
@@ -212,7 +212,7 @@ public final class CommandMessage extends RequestMessage {
                 return payload.isOrdered() && payload.hasAnotherSplit();
             } else if (sequences instanceof ClientBulkWriteCommand.OpsAndNsInfo) {
                 return assertNotNull(opsAndNsInfoRequireResponse);
-            } else if (!(sequences instanceof EmptyOpMsgSequences)) {
+            } else if (!(sequences instanceof EmptyMessageSequences)) {
                 fail(sequences.toString());
             }
             return false;
@@ -267,7 +267,7 @@ public final class CommandMessage extends RequestMessage {
                     }
                     appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
                 }
-            } else if (sequences instanceof EmptyOpMsgSequences) {
+            } else if (sequences instanceof EmptyMessageSequences) {
                 appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
             } else {
                 fail(sequences.toString());

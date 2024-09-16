@@ -260,7 +260,7 @@ public final class BsonWriterHelper {
             return storedDocumentWriter;
         }
 
-        private static final class StoredDocumentSizeLimitCheckingBsonBinaryWriter extends BsonWriterDecorator {
+        private static final class StoredDocumentSizeLimitCheckingBsonBinaryWriter extends LevelCountingBsonWriter {
             private final int maxStoredDocumentSize;
             private final BsonOutput out;
             private int documentStart;
@@ -273,16 +273,20 @@ public final class BsonWriterHelper {
 
             @Override
             public void writeStartDocument() {
-                documentStart = out.getPosition();
+                if (getCurrentLevel() == INITIAL_LEVEL) {
+                    documentStart = out.getPosition();
+                }
                 super.writeStartDocument();
             }
 
             @Override
             public void writeEndDocument() throws BsonMaximumSizeExceededException {
                 super.writeEndDocument();
-                int documentSize = out.getPosition() - documentStart;
-                if (documentSize > maxStoredDocumentSize) {
-                    throw createBsonMaximumSizeExceededException(maxStoredDocumentSize);
+                if (getCurrentLevel() == INITIAL_LEVEL) {
+                    int documentSize = out.getPosition() - documentStart;
+                    if (documentSize > maxStoredDocumentSize) {
+                        throw createBsonMaximumSizeExceededException(maxStoredDocumentSize);
+                    }
                 }
             }
         }

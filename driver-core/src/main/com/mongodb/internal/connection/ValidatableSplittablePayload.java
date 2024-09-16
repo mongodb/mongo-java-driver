@@ -20,7 +20,7 @@ import org.bson.FieldNameValidator;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ValidatableSplittablePayload extends OpMsgSequences {
+public final class ValidatableSplittablePayload extends MessageSequences {
     private final SplittablePayload sequence;
     private final FieldNameValidator validator;
 

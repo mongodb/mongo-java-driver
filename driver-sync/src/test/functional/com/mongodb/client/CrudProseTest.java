@@ -313,16 +313,22 @@ public class CrudProseTest {
         }
     }
 
+    /**
+     * This test extends the one required by the specification.
+     */
     @DisplayName("10. MongoClient.bulkWrite returns error for unacknowledged too-large insert")
     @ParameterizedTest
-    @ValueSource(strings = {"insert", "replace"})
-    void testBulkWriteErrorsForUnacknowledgedTooLargeInsert(final String operationType) {
+    @MethodSource("testBulkWriteErrorsForUnacknowledgedTooLargeInsertArgs")
+    void testBulkWriteErrorsForUnacknowledgedTooLargeInsert(final String operationType, final boolean nesting) {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
                 .writeConcern(WriteConcern.UNACKNOWLEDGED))) {
             int maxBsonObjectSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
-            Document document = new Document("a", join("", nCopies(maxBsonObjectSize, "b")));
+            Document document = nesting
+                    ? new Document("a", join("", nCopies(maxBsonObjectSize / 2, "b")))
+                            .append("nested", new Document("c", join("", nCopies(maxBsonObjectSize / 2, "d"))))
+                    : new Document("a", join("", nCopies(maxBsonObjectSize, "b")));
             ClientNamespacedWriteModel model;
             switch (operationType) {
                 case "insert": {
@@ -339,6 +345,15 @@ public class CrudProseTest {
             }
             assertThrows(BsonMaximumSizeExceededException.class, () -> client.bulkWrite(singletonList(model)));
         }
+    }
+
+    private static Stream<Arguments> testBulkWriteErrorsForUnacknowledgedTooLargeInsertArgs() {
+        return Stream.of(
+                arguments("insert", false),
+                arguments("insert", true),
+                arguments("replace", false),
+                arguments("replace", true)
+        );
     }
 
     @DisplayName("11. MongoClient.bulkWrite batch splits when the addition of a new namespace exceeds the maximum message size")

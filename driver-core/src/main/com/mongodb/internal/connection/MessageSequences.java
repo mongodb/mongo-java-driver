@@ -18,11 +18,11 @@ package com.mongodb.internal.connection;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public abstract class OpMsgSequences {
-    public static final class EmptyOpMsgSequences extends OpMsgSequences {
-        public static final EmptyOpMsgSequences INSTANCE = new EmptyOpMsgSequences();
+public abstract class MessageSequences {
+    public static final class EmptyMessageSequences extends MessageSequences {
+        public static final EmptyMessageSequences INSTANCE = new EmptyMessageSequences();
 
-        private EmptyOpMsgSequences() {
+        private EmptyMessageSequences() {
         }
     }
 }

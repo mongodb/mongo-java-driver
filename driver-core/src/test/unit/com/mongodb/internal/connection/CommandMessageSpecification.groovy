@@ -60,7 +60,7 @@ class CommandMessageSpecification extends Specification {
                         .serverType(serverType as ServerType)
                         .sessionSupported(true)
                         .build(),
-                responseExpected, OpMsgSequences.EmptyOpMsgSequences.INSTANCE, clusterConnectionMode, null)
+                responseExpected, MessageSequences.EmptyMessageSequences.INSTANCE, clusterConnectionMode, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
 
         when:
@@ -153,7 +153,7 @@ class CommandMessageSpecification extends Specification {
         def message = new CommandMessage(namespace, originalCommandDocument, fieldNameValidator, ReadPreference.primary(),
                 MessageSettings.builder().maxWireVersion(maxWireVersion).build(), true,
                 payload == null
-                        ? OpMsgSequences.EmptyOpMsgSequences.INSTANCE
+                        ? MessageSequences.EmptyMessageSequences.INSTANCE
                         : new ValidatableSplittablePayload(payload, NoOpFieldNameValidator.INSTANCE),
                 ClusterConnectionMode.MULTIPLE, null)
         def output = new ByteBufferBsonOutput(new SimpleBufferProvider())

@@ -264,9 +264,8 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         public void close() {
             if (isOpen()) {
                 try {
-                    if (parent.isOpen()) {
-                        parent.merge(this);
-                    }
+                    assertTrue(parent.isOpen());
+                    parent.merge(this);
                 } finally {
                     super.close();
                 }
