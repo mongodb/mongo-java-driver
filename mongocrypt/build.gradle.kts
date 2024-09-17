@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,8 @@ dependencies {
 
     // Tests
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("ch.qos.logback:logback-classic:1.2.11")
+    testRuntimeOnly("ch.qos.logback:logback-classic:1.2.13")
 }
-
 
 /*
  * Jna copy or download resources
@@ -62,7 +61,7 @@ val jnaLibsPath: String = System.getProperty("jnaLibsPath", "${jnaResourcesDir}$
 val jnaResources: String = System.getProperty("jna.library.path", jnaLibsPath)
 
 // Download jnaLibs that match the git tag or revision to jnaResourcesBuildDir
-val downloadRevision = "9a88ac5698e8e3ffcd6580b98c247f0126f26c40" // r.1.11.0
+val downloadRevision = "9a88ac5698e8e3ffcd6580b98c247f0126f26c40" // r1.11.0
 val binariesArchiveName = "libmongocrypt-java.tar.gz"
 
 /**

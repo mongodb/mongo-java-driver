@@ -16,6 +16,6 @@
  */
 
 /**
- * The mongocrpyt API package
+ * The mongocrypt API package
  */
 package com.mongodb.crypt.capi;
