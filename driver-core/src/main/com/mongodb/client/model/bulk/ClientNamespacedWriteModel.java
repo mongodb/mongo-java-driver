@@ -53,7 +53,6 @@ public interface ClientNamespacedWriteModel {
      * @param document The document.
      * @return The requested {@link ClientNamespacedInsertOneModel}.
      * @param <TDocument> The document type, for example {@link Document}.
-     * @see Filters
      */
     static <TDocument> ClientNamespacedInsertOneModel insertOne(final MongoNamespace namespace, final TDocument document) {
         notNull("namespace", namespace);
