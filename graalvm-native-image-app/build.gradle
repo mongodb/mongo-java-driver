@@ -83,6 +83,7 @@ dependencies {
     implementation project(path:':driver-reactive-streams', configuration:'archives')
     implementation project(path:':driver-legacy', configuration:'archives')
     implementation project(path: ':mongocrypt', configuration: 'archives')
+    implementation project(path: ':mongocrypt', configuration: 'runtimeElements')
     // note that as a result of these `sourceSets` dependencies, `driver-sync/src/test/resources/logback-test.xml` is used
     implementation project(':driver-core').sourceSets.test.output
     implementation project(':driver-sync').sourceSets.test.output
