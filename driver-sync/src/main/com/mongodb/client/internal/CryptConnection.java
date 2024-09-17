@@ -50,6 +50,7 @@ import org.bson.io.BasicOutputBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -105,6 +106,8 @@ public final class CryptConnection implements Connection {
             ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
             payload = validatableSplittablePayload.getSplittablePayload();
             payloadFieldNameValidator = validatableSplittablePayload.getFieldNameValidator();
+        } else if (!(sequences instanceof EmptyMessageSequences)) {
+            fail(sequences.toString());
         }
         BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
         BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(),

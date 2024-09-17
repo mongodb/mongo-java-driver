@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotTwo;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -117,6 +118,8 @@ class CryptConnection implements AsyncConnection {
                 ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
                 payload = validatableSplittablePayload.getSplittablePayload();
                 payloadFieldNameValidator = validatableSplittablePayload.getFieldNameValidator();
+            } else if (!(sequences instanceof EmptyMessageSequences)) {
+                fail(sequences.toString());
             }
             BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
             BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(
