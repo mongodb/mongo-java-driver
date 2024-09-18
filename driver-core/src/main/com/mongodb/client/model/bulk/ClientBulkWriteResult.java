@@ -89,7 +89,7 @@ public interface ClientBulkWriteResult {
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      * @see ClientBulkWriteOptions#verboseResults(Boolean)
      */
-    Optional<Verbose> getVerbose();
+    Optional<ClientBulkWriteResult.Verbose> getVerbose();
 
     /**
      * The {@linkplain ClientBulkWriteResult#getVerbose() verbose results} of individual operations.

@@ -31,7 +31,7 @@ import static java.util.Optional.of;
  */
 public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBulkWriteResult {
     private final AcknowledgedSummaryClientBulkWriteResult summaryResults;
-    private final Verbose verbose;
+    private final AcknowledgedVerboseClientBulkWriteResult.Verbose verbose;
 
     public AcknowledgedVerboseClientBulkWriteResult(
             final AcknowledgedSummaryClientBulkWriteResult summaryResults,
@@ -39,7 +39,7 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
             final Map<Integer, ClientUpdateResult> updateResults,
             final Map<Integer, ClientDeleteResult> deleteResults) {
         this.summaryResults = summaryResults;
-        this.verbose = new Verbose(insertResults, updateResults, deleteResults);
+        this.verbose = new AcknowledgedVerboseClientBulkWriteResult.Verbose(insertResults, updateResults, deleteResults);
     }
 
     @Override
@@ -146,7 +146,7 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final Verbose verbose = (Verbose) o;
+            final AcknowledgedVerboseClientBulkWriteResult.Verbose verbose = (AcknowledgedVerboseClientBulkWriteResult.Verbose) o;
             return Objects.equals(insertResults, verbose.insertResults)
                     && Objects.equals(updateResults, verbose.updateResults)
                     && Objects.equals(deleteResults, verbose.deleteResults);
