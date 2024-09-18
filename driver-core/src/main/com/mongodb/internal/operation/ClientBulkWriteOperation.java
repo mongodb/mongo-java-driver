@@ -540,20 +540,20 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     Map<Integer, BsonValue> insertModelDocumentIds = batchResult.getInsertModelDocumentIds();
                     for (BsonDocument individualOperationResponse : response.getCursorExhaust()) {
                         int individualOperationIndexInBatch = individualOperationResponse.getInt32("idx").getValue();
-                        int writeModelIndexInBatch = batchStartModelIndex + individualOperationIndexInBatch;
+                        int writeModelIndex = batchStartModelIndex + individualOperationIndexInBatch;
                         if (individualOperationResponse.getNumber("ok").intValue() == 1) {
                             assertTrue(verboseResultsSetting);
-                            AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndexInBatch);
+                            AbstractClientNamespacedWriteModel writeModel = getNamespacedModel(models, writeModelIndex);
                             if (writeModel instanceof ConcreteClientNamespacedInsertOneModel) {
                                 insertResults.put(
-                                        writeModelIndexInBatch,
+                                        writeModelIndex,
                                         new ConcreteClientInsertOneResult(insertModelDocumentIds.get(individualOperationIndexInBatch)));
                             } else if (writeModel instanceof ConcreteClientNamespacedUpdateOneModel
                                     || writeModel instanceof ConcreteClientNamespacedUpdateManyModel
                                     || writeModel instanceof ConcreteClientNamespacedReplaceOneModel) {
                                 BsonDocument upsertedIdDocument = individualOperationResponse.getDocument("upserted", null);
                                 updateResults.put(
-                                        writeModelIndexInBatch,
+                                        writeModelIndex,
                                         new ConcreteClientUpdateResult(
                                                 individualOperationResponse.getInt32("n").getValue(),
                                                 individualOperationResponse.getInt32("nModified").getValue(),
@@ -561,7 +561,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                             } else if (writeModel instanceof ConcreteClientNamespacedDeleteOneModel
                                     || writeModel instanceof ConcreteClientNamespacedDeleteManyModel) {
                                 deleteResults.put(
-                                        writeModelIndexInBatch,
+                                        writeModelIndex,
                                         new ConcreteClientDeleteResult(individualOperationResponse.getInt32("n").getValue()));
                             } else {
                                 fail(writeModel.getClass().toString());
@@ -571,7 +571,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     individualOperationResponse.getInt32("code").getValue(),
                                     individualOperationResponse.getString("errmsg").getValue(),
                                     individualOperationResponse.getDocument("errInfo", new BsonDocument()));
-                            writeErrors.put(writeModelIndexInBatch, individualOperationWriteError);
+                            writeErrors.put(writeModelIndex, individualOperationWriteError);
                         }
                     }
                 }
