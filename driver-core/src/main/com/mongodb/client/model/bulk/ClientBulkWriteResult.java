@@ -35,7 +35,7 @@ import java.util.Optional;
 @Evolving
 public interface ClientBulkWriteResult {
     /**
-     * Indicated whether this result was {@linkplain WriteConcern#isAcknowledged() acknowledged}.
+     * Indicates whether this result was {@linkplain WriteConcern#isAcknowledged() acknowledged}.
      * If not, then all other methods throw {@link UnsupportedOperationException}.
      *
      * @return Whether this result was acknowledged.
