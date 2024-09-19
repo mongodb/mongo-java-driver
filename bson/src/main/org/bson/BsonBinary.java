@@ -18,9 +18,12 @@ package org.bson;
 
 import org.bson.assertions.Assertions;
 import org.bson.internal.UuidHelper;
+import org.bson.internal.vector.VectorHelper;
 
 import java.util.Arrays;
 import java.util.UUID;
+
+import static org.bson.internal.vector.VectorHelper.encodeVectorToBinary;
 
 /**
  * A representation of the BSON Binary type.  Note that for performance reasons instances of this class are not immutable,
@@ -90,6 +93,20 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
+     * Construct a Type 9 BsonBinary from the given Vector.
+     *
+     * @param vector the {@link Vector}
+     * @since BINARY_VECTOR
+     */
+    public BsonBinary(final Vector vector) {
+        if (vector == null) {
+            throw new IllegalArgumentException("Vector must not be null");
+        }
+        this.data = encodeVectorToBinary(vector);
+        type = BsonBinarySubType.VECTOR.getValue();
+    }
+
+    /**
      * Construct a new instance from the given UUID and UuidRepresentation
      *
      * @param uuid the UUID
@@ -125,6 +142,21 @@ public class BsonBinary extends BsonValue {
         }
 
         return UuidHelper.decodeBinaryToUuid(this.data.clone(), this.type, UuidRepresentation.STANDARD);
+    }
+
+    /**
+     * Returns the binary as a {@link Vector}. The binary type must be 9.
+     *
+     * @return the vector
+     * @throws IllegalArgumentException if the binary subtype is not {@link BsonBinarySubType#VECTOR}.
+     * @since BINARY_VECTOR
+     */
+    public Vector asVector() {
+        if (!BsonBinarySubType.isVector(type)) {
+            throw new BsonInvalidOperationException("type must be a Vector subtype.");
+        }
+
+        return VectorHelper.decodeBinaryToVector(this.data);
     }
 
     /**

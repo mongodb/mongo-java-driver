@@ -17,10 +17,12 @@
 package org.bson;
 
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import util.Hex;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
@@ -108,5 +110,24 @@ public final class BsonHelper {
     }
 
     private BsonHelper() {
+    }
+
+    public static BsonDocument decodeToDocument(final String subjectHex, final String description) {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(Hex.decode(subjectHex));
+        BsonDocument actualDecodedDocument = new BsonDocumentCodec().decode(new BsonBinaryReader(byteBuffer),
+                DecoderContext.builder().build());
+
+        if (byteBuffer.hasRemaining()) {
+            throw new BsonSerializationException(format("Should have consumed all bytes, but " + byteBuffer.remaining()
+                            + " still remain in the buffer for document with description ",
+                    description));
+        }
+        return actualDecodedDocument;
+    }
+
+    public static String encodeToHex(final BsonDocument decodedDocument) {
+        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(outputBuffer), decodedDocument, EncoderContext.builder().build());
+        return Hex.encode(outputBuffer.toByteArray());
     }
 }
