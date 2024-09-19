@@ -17,16 +17,9 @@
 description = "A Reactive Streams implementation of the MongoDB Java driver"
 archivesBaseName = 'mongodb-driver-reactivestreams'
 
-java {
-    registerFeature("mongoCryptSupport") {
-        usingSourceSet(sourceSets["main"])
-    }
-}
-
 dependencies {
     api project(path: ':bson', configuration: 'default')
     api project(path: ':driver-core', configuration: 'default')
-    mongoCryptSupportImplementation project(path: ':mongocrypt', configuration: 'default')
 
     api 'org.reactivestreams:reactive-streams:1.0.4'
     implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")
