@@ -48,7 +48,6 @@ dependencies {
 
     // Tests
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("ch.qos.logback:logback-classic:1.2.13")
 }
 
 /*
