@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.client.model.{ CreateCollectionOptions, CreateViewOptions }
 import com.mongodb.reactivestreams.client.{ MongoDatabase => JMongoDatabase }
 import org.bson.codecs.configuration.CodecRegistry
@@ -23,6 +24,7 @@ import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 /**
@@ -70,6 +72,29 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   lazy val readConcern: ReadConcern = wrapped.getReadConcern
 
   /**
+   * The time limit for the full execution of an operation.
+   *
+   * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+   * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
+   *
+   *   - `null` means that the timeout mechanism for operations will defer to using:
+   *      - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to become available
+   *      - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+   *      - `wTimeoutMS`: How long the server will wait for  the write concern to be fulfilled before timing out.
+   *      - `maxTimeMS`: The time limit for processing operations on a cursor.
+   *        See: [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+   *      - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+   *   - `0` means infinite timeout.
+   *   - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @return the optional timeout duration
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  lazy val timeout: Option[Duration] =
+    Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
+
+  /**
    * Create a new MongoDatabase instance with a different codec registry.
    *
    * The { @link CodecRegistry} configured by this method is effectively treated by the driver as an
@@ -114,6 +139,20 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
     MongoDatabase(wrapped.withReadConcern(readConcern))
 
   /**
+   * Sets the time limit for the full execution of an operation.
+   *
+   * - `0` means infinite timeout.
+   * - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @param timeout the timeout, which must be greater than or equal to 0
+   * @return a new MongoDatabase instance with the set time limit for operations
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def withTimeout(timeout: Duration): MongoDatabase =
+    MongoDatabase(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
+
+  /**
    * Gets a collection, with a specific default document class.
    *
    * @param collectionName the name of the collection to return
@@ -128,6 +167,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
   /**
    * Executes command in the context of the current database using the primary server.
    *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
+   *
    * @param command  the command to be run
    * @tparam TResult the type of the class to use instead of [[Document]].
    * @return a Observable containing the command result
@@ -139,6 +181,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
 
   /**
    * Executes command in the context of the current database.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param command        the command to be run
    * @param readPreference the [[ReadPreference]] to be used when executing the command
@@ -153,6 +198,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
 
   /**
    * Executes command in the context of the current database using the primary server.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param clientSession the client session with which to associate this operation
    * @param command  the command to be run
@@ -169,6 +217,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
 
   /**
    * Executes command in the context of the current database.
+   *
+   * Note: The behavior of `runCommand` is undefined if the provided command document includes a `maxTimeMS` field and the
+   * `timeoutMS` setting has been set.
    *
    * @param command        the command to be run
    * @param readPreference the [[ReadPreference]] to be used when executing the command

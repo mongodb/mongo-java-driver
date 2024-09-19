@@ -47,8 +47,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +57,8 @@ import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.fixture.EncryptionFixture.KmsProviderType.LOCAL;
+import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -93,13 +93,7 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
                 .validationOptions(new ValidationOptions()
                         .validator(new BsonDocument("$jsonSchema", bsonDocumentFromPath("external-schema.json")))));
 
-        kmsProviders = new HashMap<>();
-        Map<String, Object> localProviderMap = new HashMap<>();
-        localProviderMap.put("key",
-                Base64.getDecoder().decode(
-                        "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
-                                + "GJkTXVyZG9uSjFk"));
-        kmsProviders.put("local", localProviderMap);
+        kmsProviders = getKmsProviders(LOCAL);
         ClientEncryption clientEncryption = ClientEncryptions.create(
                 ClientEncryptionSettings.builder()
                         .keyVaultMongoClientSettings(getKeyVaultClientSettings(new TestCommandListener()))
@@ -195,11 +189,11 @@ public abstract class AbstractClientSideEncryptionDeadlockTest {
     }
 
     private void assertEventEquality(final TestCommandListener commandListener, final List<ExpectedEvent> expectedStartEvents) {
-        List<CommandEvent> actualStartedEvents = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> actualStartedEvents = commandListener.getCommandStartedEvents();
         assertEquals(expectedStartEvents.size(), actualStartedEvents.size());
         for (int i = 0; i < expectedStartEvents.size(); i++) {
             ExpectedEvent expectedEvent = expectedStartEvents.get(i);
-            CommandStartedEvent actualEvent = (CommandStartedEvent) actualStartedEvents.get(i);
+            CommandStartedEvent actualEvent = actualStartedEvents.get(i);
             assertEquals(expectedEvent.getDatabase(), actualEvent.getDatabaseName(), "Database name");
             assertEquals(expectedEvent.getCommandName(), actualEvent.getCommandName(), "Command name");
         }

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
@@ -57,11 +58,17 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
     private LevelCountingBsonWriter idBsonBinaryWriter;
     private BasicOutputBuffer outputBuffer;
     private String currentFieldName;
+    private final BsonValue fallbackId;
     private BsonValue id;
     private boolean idFieldIsAnArray = false;
 
-    public IdHoldingBsonWriter(final BsonWriter bsonWriter) {
+    /**
+     * @param fallbackId The "_id" field value to use if the top-level document written via this {@link BsonWriter}
+     * does not have "_id". If {@code null}, then a new {@link BsonObjectId} is generated instead.
+     */
+    public IdHoldingBsonWriter(final BsonWriter bsonWriter, @Nullable final BsonObjectId fallbackId) {
         super(bsonWriter);
+        this.fallbackId = fallbackId;
     }
 
     @Override
@@ -99,7 +106,7 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
         }
 
         if (getCurrentLevel() == 0 && id == null) {
-            id = new BsonObjectId();
+            id = fallbackId == null ? new BsonObjectId() : fallbackId;
             writeObjectId(ID_FIELD_NAME, id.asObjectId().getValue());
         }
         super.writeEndDocument();
@@ -408,6 +415,15 @@ public class IdHoldingBsonWriter extends LevelCountingBsonWriter {
         super.flush();
     }
 
+    /**
+     * Returns either the value of the "_id" field from the top-level document written via this {@link BsonWriter},
+     * provided that the document is not {@link RawBsonDocument},
+     * or the generated {@link BsonObjectId}.
+     * If the document is {@link RawBsonDocument}, then returns {@code null}.
+     * <p>
+     * {@linkplain #flush() Flushing} is not required before calling this method.</p>
+     */
+    @Nullable
     public BsonValue getId() {
         return id;
     }

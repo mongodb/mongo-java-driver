@@ -16,6 +16,7 @@
 package com.mongodb.kotlin.client.syncadapter
 
 import com.mongodb.client.ListCollectionsIterable as JListCollectionsIterable
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.kotlin.client.ListCollectionsIterable
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
@@ -25,6 +26,9 @@ internal class SyncListCollectionsIterable<T : Any>(val wrapped: ListCollections
     JListCollectionsIterable<T>, SyncMongoIterable<T>(wrapped) {
 
     override fun batchSize(batchSize: Int): SyncListCollectionsIterable<T> = apply { wrapped.batchSize(batchSize) }
+    override fun timeoutMode(timeoutMode: TimeoutMode): SyncListCollectionsIterable<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
 
     override fun maxTime(maxTime: Long, timeUnit: TimeUnit): SyncListCollectionsIterable<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)

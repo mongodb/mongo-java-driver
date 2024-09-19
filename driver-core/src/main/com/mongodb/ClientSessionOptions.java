@@ -16,14 +16,19 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * The options to apply to a {@code ClientSession}.
@@ -38,6 +43,7 @@ public final class ClientSessionOptions {
 
     private final Boolean causallyConsistent;
     private final Boolean snapshot;
+    private final Long defaultTimeoutMS;
     private final TransactionOptions defaultTransactionOptions;
 
     /**
@@ -77,6 +83,25 @@ public final class ClientSessionOptions {
         return defaultTransactionOptions;
     }
 
+    /**
+     * Gets the default time limit for the following operations executed on the session:
+     *
+     * <ul>
+     *   <li>{@code commitTransaction}</li>
+     *   <li>{@code abortTransaction}</li>
+     *   <li>{@code withTransaction}</li>
+     *   <li>{@code close}</li>
+     * </ul>
+     * @param timeUnit the time unit
+     * @return the default timeout
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    public Long getDefaultTimeout(final TimeUnit timeUnit) {
+        return defaultTimeoutMS == null ? null : timeUnit.convert(defaultTimeoutMS, MILLISECONDS);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -85,36 +110,24 @@ public final class ClientSessionOptions {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        ClientSessionOptions that = (ClientSessionOptions) o;
-
-        if (!Objects.equals(causallyConsistent, that.causallyConsistent)) {
-            return false;
-        }
-
-        if (!Objects.equals(snapshot, that.snapshot)) {
-            return false;
-        }
-        if (!Objects.equals(defaultTransactionOptions, that.defaultTransactionOptions)) {
-            return false;
-        }
-
-        return true;
+        final ClientSessionOptions that = (ClientSessionOptions) o;
+        return Objects.equals(causallyConsistent, that.causallyConsistent)
+                && Objects.equals(snapshot, that.snapshot)
+                && Objects.equals(defaultTimeoutMS, that.defaultTimeoutMS)
+                && Objects.equals(defaultTransactionOptions, that.defaultTransactionOptions);
     }
 
     @Override
     public int hashCode() {
-        int result = causallyConsistent != null ? causallyConsistent.hashCode() : 0;
-        result = 31 * result + (snapshot != null ? snapshot.hashCode() : 0);
-        result = 31 * result + (defaultTransactionOptions != null ? defaultTransactionOptions.hashCode() : 0);
-        return result;
+        return Objects.hash(causallyConsistent, snapshot, defaultTimeoutMS, defaultTransactionOptions);
     }
 
     @Override
     public String toString() {
         return "ClientSessionOptions{"
                 + "causallyConsistent=" + causallyConsistent
-                + "snapshot=" + snapshot
+                + ", snapshot=" + snapshot
+                + ", defaultTimeoutMS=" + defaultTimeoutMS
                 + ", defaultTransactionOptions=" + defaultTransactionOptions
                 + '}';
     }
@@ -141,6 +154,7 @@ public final class ClientSessionOptions {
         builder.causallyConsistent = options.isCausallyConsistent();
         builder.snapshot = options.isSnapshot();
         builder.defaultTransactionOptions = options.getDefaultTransactionOptions();
+        builder.defaultTimeoutMS = options.defaultTimeoutMS;
         return builder;
     }
 
@@ -151,6 +165,7 @@ public final class ClientSessionOptions {
     public static final class Builder {
         private Boolean causallyConsistent;
         private Boolean snapshot;
+        private Long defaultTimeoutMS;
         private TransactionOptions defaultTransactionOptions = TransactionOptions.builder().build();
 
         /**
@@ -197,6 +212,27 @@ public final class ClientSessionOptions {
         }
 
         /**
+         * Sets the default time limit for the following operations executed on the session:
+         *
+         * <ul>
+         *   <li>{@code commitTransaction}</li>
+         *   <li>{@code abortTransaction}</li>
+         *   <li>{@code withTransaction}</li>
+         *   <li>{@code close}</li>
+         * </ul>
+         * @param defaultTimeout the timeout
+         * @param timeUnit the time unit
+         * @return this
+         * @since 5.2
+         * @see #getDefaultTimeout
+         */
+        @Alpha(Reason.CLIENT)
+        public Builder defaultTimeout(final long defaultTimeout, final TimeUnit timeUnit) {
+            this.defaultTimeoutMS = convertAndValidateTimeout(defaultTimeout, timeUnit, "defaultTimeout");
+            return this;
+        }
+
+        /**
          * Build the session options instance.
          *
          * @return The {@code ClientSessionOptions}
@@ -218,5 +254,6 @@ public final class ClientSessionOptions {
                 : Boolean.valueOf(!builder.snapshot);
         this.snapshot = builder.snapshot;
         this.defaultTransactionOptions = builder.defaultTransactionOptions;
+        this.defaultTimeoutMS = builder.defaultTimeoutMS;
     }
 }

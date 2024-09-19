@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
@@ -24,19 +25,19 @@ import org.bson.conversions.Bson;
 /**
  * Represents optional fields of the {@code $vectorSearch} pipeline stage of an aggregation pipeline.
  *
- * @see Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions)
+ * @see Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)
  * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
- * @mongodb.server.release 6.0.10
+ * @mongodb.server.release 6.0.11
  * @since 4.11
  */
 @Sealed
-@Beta(Beta.Reason.SERVER)
+@Beta(Reason.SERVER)
 public interface VectorSearchOptions extends Bson {
     /**
      * Creates a new {@link VectorSearchOptions} with the filter specified.
      *
      * @param filter A filter that is applied before applying the
-     * {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions) queryVector}.
+     * {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions) queryVector}
      * One may use {@link Filters} to create this filter, though not all filters may be supported.
      * See the MongoDB documentation for the list of supported filters.
      * @return A new {@link VectorSearchOptions}.
@@ -65,11 +66,24 @@ public interface VectorSearchOptions extends Bson {
     VectorSearchOptions option(String name, Object value);
 
     /**
-     * Returns {@link VectorSearchOptions} that represents server defaults.
+     * Returns {@link ApproximateVectorSearchOptions} that represents server defaults.
      *
-     * @return {@link VectorSearchOptions} that represents server defaults.
+     * @param numCandidates The number of candidates.
+     * @return {@link ApproximateVectorSearchOptions} that represents server defaults.
+     * @since 5.2
      */
-    static VectorSearchOptions vectorSearchOptions() {
-        return VectorSearchConstructibleBson.EMPTY_IMMUTABLE;
+    static ApproximateVectorSearchOptions approximateVectorSearchOptions(long numCandidates) {
+        return (ApproximateVectorSearchOptions) VectorSearchConstructibleBson.EMPTY_IMMUTABLE.option("numCandidates", numCandidates);
+    }
+
+    /**
+     * Returns {@link ExactVectorSearchOptions} that represents server defaults with the {@code exact} option set to true.
+     *
+     * @return {@link ExactVectorSearchOptions} that represents server defaults.
+     * @since 5.2
+     */
+    static ExactVectorSearchOptions exactVectorSearchOptions() {
+        return (ExactVectorSearchOptions) VectorSearchConstructibleBson.EMPTY_IMMUTABLE
+                .option("exact", true);
     }
 }

@@ -23,6 +23,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
@@ -220,11 +221,15 @@ public class DB {
     public Set<String> getCollectionNames() {
         List<String> collectionNames =
                 new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
-                        mongo.getMongoClientOptions().getRetryReads()) {
+                                                mongo.getMongoClientOptions().getRetryReads(), DB.this.getTimeoutSettings()) {
                     @Override
                     public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<>(name, commandCodec)
-                                .nameOnly(true);
+                        return new ListCollectionsOperation<>(name, commandCodec).nameOnly(true);
+                    }
+
+                    @Override
+                    protected OperationExecutor getExecutor() {
+                        return executor;
                     }
                 }.map(result -> (String) result.get("name")).into(new ArrayList<>());
         Collections.sort(collectionNames);
@@ -304,8 +309,9 @@ public class DB {
         try {
             notNull("options", options);
             DBCollection view = getCollection(viewName);
-            executor.execute(new CreateViewOperation(name, viewName, viewOn, view.preparePipeline(pipeline), writeConcern)
-                                     .collation(options.getCollation()), getReadConcern());
+            executor.execute(new CreateViewOperation(name, viewName, viewOn,
+                    view.preparePipeline(pipeline), writeConcern)
+                    .collation(options.getCollation()), getReadConcern());
             return view;
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
@@ -380,7 +386,8 @@ public class DB {
             validationAction = ValidationAction.fromString((String) options.get("validationAction"));
         }
         Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
-        return new CreateCollectionOperation(getName(), collectionName, getWriteConcern())
+        return new CreateCollectionOperation(getName(), collectionName,
+                getWriteConcern())
                    .capped(capped)
                    .collation(collation)
                    .sizeInBytes(sizeInBytes)
@@ -513,12 +520,16 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(executor.execute(new CommandReadOperation<>(getName(), commandDocument,
-                        new BsonDocumentCodec()), readPreference, getReadConcern()), getDefaultDBObjectCodec());
+        return new CommandResult(executor.execute(
+                new CommandReadOperation<>(getName(), commandDocument,
+                        new BsonDocumentCodec()), readPreference, getReadConcern(), null), getDefaultDBObjectCodec());
     }
 
     OperationExecutor getExecutor() {
         return executor;
+    }
+    TimeoutSettings getTimeoutSettings() {
+        return mongo.getTimeoutSettings();
     }
 
     private BsonDocument wrap(final DBObject document) {
@@ -559,6 +570,11 @@ public class DB {
                 DBObjectCodec.getDefaultBsonTypeClassMap(),
                 new DBCollectionObjectFactory())
                 .withUuidRepresentation(getMongoClient().getMongoClientOptions().getUuidRepresentation());
+    }
+
+    @Nullable
+    Long getTimeoutMS() {
+        return mongo.getMongoClientOptions().getTimeout();
     }
 
     private static final Set<String> OBEDIENT_COMMANDS = new HashSet<>();

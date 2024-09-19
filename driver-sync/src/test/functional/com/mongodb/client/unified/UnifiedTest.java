@@ -41,6 +41,7 @@ import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
+import com.mongodb.test.AfterBeforeParameterResolver;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -49,12 +50,13 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
-import org.junit.After;
-import org.junit.AssumptionViolatedException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.TestAbortedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,35 +82,37 @@ import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 import static util.JsonPoweredTestHelper.getTestFiles;
 
-@RunWith(Parameterized.class)
+@ExtendWith(AfterBeforeParameterResolver.class)
 public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
 
     @Nullable
-    private final String fileDescription;
-    private final String schemaVersion;
-    private final BsonArray runOnRequirements;
-    private final BsonArray entitiesArray;
-    private final BsonArray initialData;
-    private final BsonDocument definition;
-    private final Entities entities = new Entities();
-    private final UnifiedCrudHelper crudHelper;
-    private final UnifiedGridFSHelper gridFSHelper = new UnifiedGridFSHelper(entities);
-    private final UnifiedClientEncryptionHelper clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
-    private final List<FailPoint> failPoints = new ArrayList<>();
-    private final UnifiedTestContext rootContext = new UnifiedTestContext();
+    private String fileDescription;
+    private String schemaVersion;
+    @Nullable
+    private BsonArray runOnRequirements;
+    private BsonArray entitiesArray;
+    private BsonArray initialData;
+    private BsonDocument definition;
+    private Entities entities;
+    private UnifiedCrudHelper crudHelper;
+    private UnifiedGridFSHelper gridFSHelper;
+    private UnifiedClientEncryptionHelper clientEncryptionHelper;
+    private List<FailPoint> failPoints;
+    private UnifiedTestContext rootContext;
+    private boolean ignoreExtraEvents;
     private BsonDocument startingClusterTime;
 
     private class UnifiedTestContext {
@@ -139,16 +143,7 @@ public abstract class UnifiedTest {
         }
     }
 
-    public UnifiedTest(@Nullable final String fileDescription, final String schemaVersion, @Nullable final BsonArray runOnRequirements,
-            final BsonArray entitiesArray, final BsonArray initialData, final BsonDocument definition) {
-        this.fileDescription = fileDescription;
-        this.schemaVersion = schemaVersion;
-        this.runOnRequirements = runOnRequirements;
-        this.entitiesArray = entitiesArray;
-        this.initialData = initialData;
-        this.definition = definition;
-        this.rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
-        crudHelper = new UnifiedCrudHelper(entities, definition.getString("description").getValue());
+    protected UnifiedTest() {
     }
 
     public Entities getEntities() {
@@ -156,8 +151,8 @@ public abstract class UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Object[]> getTestData(final String directory) throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<>();
+    protected static Collection<Arguments> getTestData(final String directory) throws URISyntaxException, IOException {
+        List<Arguments> data = new ArrayList<>();
         for (File file : getTestFiles("/" + directory + "/")) {
             BsonDocument fileDocument = getTestDocument(file);
 
@@ -169,15 +164,15 @@ public abstract class UnifiedTest {
     }
 
     @NonNull
-    private static Object[] createTestData(final BsonDocument fileDocument, final BsonDocument testDocument) {
-        return new Object[]{
+    private static Arguments createTestData(final BsonDocument fileDocument, final BsonDocument testDocument) {
+        return Arguments.of(
                 fileDocument.getString("description").getValue(),
                 testDocument.getString("description").getValue(),
                 fileDocument.getString("schemaVersion").getValue(),
                 fileDocument.getArray("runOnRequirements", null),
                 fileDocument.getArray("createEntities", new BsonArray()),
                 fileDocument.getArray("initialData", new BsonArray()),
-                testDocument};
+                testDocument);
     }
 
     protected BsonDocument getDefinition() {
@@ -190,9 +185,31 @@ public abstract class UnifiedTest {
 
     protected abstract ClientEncryption createClientEncryption(MongoClient keyVaultClient, ClientEncryptionSettings clientEncryptionSettings);
 
-    @Before
-    public void setUp() {
-        assertTrue(String.format("Unsupported schema version %s", schemaVersion),
+    @BeforeEach
+    public void setUp(
+            @Nullable final String fileDescription,
+            @Nullable final String testDescription,
+            final String schemaVersion,
+            @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray,
+            final BsonArray initialData,
+            final BsonDocument definition) {
+        this.fileDescription = fileDescription;
+        this.schemaVersion = schemaVersion;
+        this.runOnRequirements = runOnRequirements;
+        this.entitiesArray = entitiesArray;
+        this.initialData = initialData;
+        this.definition = definition;
+        entities = new Entities();
+        crudHelper = new UnifiedCrudHelper(entities, definition.getString("description").getValue());
+        gridFSHelper = new UnifiedGridFSHelper(entities);
+        clientEncryptionHelper = new UnifiedClientEncryptionHelper(entities);
+        failPoints = new ArrayList<>();
+        rootContext = new UnifiedTestContext();
+        rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
+        ignoreExtraEvents = false;
+        skips(fileDescription, testDescription);
+        assertTrue(
                 schemaVersion.equals("1.0")
                         || schemaVersion.equals("1.1")
                         || schemaVersion.equals("1.2")
@@ -210,18 +227,21 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.14")
                         || schemaVersion.equals("1.15")
                         || schemaVersion.equals("1.16")
-                        || schemaVersion.equals("1.17"));
+                        || schemaVersion.equals("1.17")
+                        || schemaVersion.equals("1.18")
+                        || schemaVersion.equals("1.19"),
+                String.format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
-            assumeTrue("Run-on requirements not met",
-                    runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()));
+            assumeTrue(runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()),
+                    "Run-on requirements not met");
         }
         if (definition.containsKey("runOnRequirements")) {
-            assumeTrue("Run-on requirements not met",
-                    runOnRequirementsMet(definition.getArray("runOnRequirements", new BsonArray()), getMongoClientSettings(),
-                            getServerVersion()));
+            assumeTrue(runOnRequirementsMet(definition.getArray("runOnRequirements", new BsonArray()), getMongoClientSettings(),
+                            getServerVersion()),
+                    "Run-on requirements not met");
         }
         if (definition.containsKey("skipReason")) {
-            throw new AssumptionViolatedException(definition.getString("skipReason").getValue());
+            throw new TestAbortedException(definition.getString("skipReason").getValue());
         }
 
         if (!isDataLakeTest()) {
@@ -237,7 +257,7 @@ public abstract class UnifiedTest {
                 this::createClientEncryption);
     }
 
-    @After
+    @AfterEach
     public void cleanUp() {
         for (FailPoint failPoint : failPoints) {
             failPoint.disableFailPoint();
@@ -245,8 +265,23 @@ public abstract class UnifiedTest {
         entities.close();
     }
 
-    @Test
-    public void shouldPassAllOutcomes() {
+    /**
+     * This method is called once per {@link #setUp(String, String, String, BsonArray, BsonArray, BsonArray, BsonDocument)},
+     * unless {@link #setUp(String, String, String, BsonArray, BsonArray, BsonArray, BsonDocument)} fails unexpectedly.
+     */
+    protected void skips(final String fileDescription, final String testDescription) {
+    }
+
+    @ParameterizedTest(name = "{0}: {1}")
+    @MethodSource("data")
+    public void shouldPassAllOutcomes(
+            @Nullable final String fileDescription,
+            @Nullable final String testDescription,
+            final String schemaVersion,
+            @Nullable final BsonArray runOnRequirements,
+            final BsonArray entitiesArray,
+            final BsonArray initialData,
+            final BsonDocument definition) {
         BsonArray operations = definition.getArray("operations");
         for (int i = 0; i < operations.size(); i++) {
             BsonValue cur = operations.get(i);
@@ -277,7 +312,8 @@ public abstract class UnifiedTest {
         for (BsonValue cur : definition.getArray("expectEvents")) {
             BsonDocument curClientEvents = cur.asDocument();
             String client = curClientEvents.getString("client").getValue();
-            boolean ignoreExtraEvents = curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.FALSE).getValue();
+            boolean ignoreExtraEvents =
+                    curClientEvents.getBoolean("ignoreExtraEvents", BsonBoolean.valueOf(this.ignoreExtraEvents)).getValue();
             String eventType = curClientEvents.getString("eventType", new BsonString("command")).getValue();
             BsonArray expectedEvents = curClientEvents.getArray("events");
             if (eventType.equals("command")) {
@@ -301,11 +337,12 @@ public abstract class UnifiedTest {
             final Iterable<LogMatcher.Tweak> tweaks) {
         for (BsonValue cur : definition.getArray("expectLogMessages")) {
             BsonDocument curLogMessagesForClient = cur.asDocument();
+            boolean ignoreExtraMessages = curLogMessagesForClient.getBoolean("ignoreExtraMessages", BsonBoolean.FALSE).getValue();
             String clientId = curLogMessagesForClient.getString("client").getValue();
             TestLoggingInterceptor loggingInterceptor =
                     entities.getClientLoggingInterceptor(clientId);
-            rootContext.getLogMatcher().assertLogMessageEquality(clientId, curLogMessagesForClient.getArray("messages"),
-                    loggingInterceptor.getMessages(), tweaks);
+            rootContext.getLogMatcher().assertLogMessageEquality(clientId, ignoreExtraMessages,
+                    curLogMessagesForClient.getArray("messages"), loggingInterceptor.getMessages(), tweaks);
         }
     }
 
@@ -317,7 +354,7 @@ public abstract class UnifiedTest {
             List<BsonDocument> expectedOutcome = curDocument.getArray("documents").stream().map(BsonValue::asDocument).collect(toList());
             List<BsonDocument> actualOutcome = new CollectionHelper<>(new BsonDocumentCodec(), namespace).find();
             context.getAssertionContext().push(ContextElement.ofOutcome(namespace, expectedOutcome, actualOutcome));
-            assertEquals(context.getAssertionContext().getMessage("Outcomes are not equal"), expectedOutcome, actualOutcome);
+            assertEquals(expectedOutcome, actualOutcome, context.getAssertionContext().getMessage("Outcomes are not equal"));
             context.getAssertionContext().pop();
         }
     }
@@ -339,18 +376,19 @@ public abstract class UnifiedTest {
     private static void assertOperationResult(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex,
             final OperationResult result) {
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
+
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
             if (operation.containsKey("expectResult")) {
-                assertNull(context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"),
-                        result.getException());
+                assertNull(result.getException(),
+                        context.getAssertionContext().getMessage("The operation expects a result but an exception occurred"));
                 context.getValueMatcher().assertValuesMatch(operation.get("expectResult"), result.getResult());
             } else if (operation.containsKey("expectError")) {
-                assertNotNull(context.getAssertionContext().getMessage("The operation expects an error but no exception was thrown"),
-                        result.getException());
+                assertNotNull(result.getException(),
+                        context.getAssertionContext().getMessage("The operation expects an error but no exception was thrown"));
                 context.getErrorMatcher().assertErrorsMatch(operation.getDocument("expectError"), result.getException());
             } else {
-                assertNull(context.getAssertionContext().getMessage("The operation expects no error but an exception occurred"),
-                        result.getException());
+                assertNull(result.getException(),
+                        context.getAssertionContext().getMessage("The operation expects no error but an exception occurred"));
             }
         }
         context.getAssertionContext().pop();
@@ -359,6 +397,7 @@ public abstract class UnifiedTest {
     private OperationResult executeOperation(final UnifiedTestContext context, final BsonDocument operation, final int operationNum) {
         context.getAssertionContext().push(ContextElement.ofStartedOperation(operation, operationNum));
         String name = operation.getString("name").getValue();
+        String object = operation.getString("object").getValue();
         try {
             switch (name) {
                 case "createEntities":
@@ -428,6 +467,9 @@ public abstract class UnifiedTest {
                 case "aggregate":
                     return crudHelper.executeAggregate(operation);
                 case "find":
+                    if ("bucket".equals(object)){
+                        return gridFSHelper.executeFind(operation);
+                    }
                     return crudHelper.executeFind(operation);
                 case "findOne":
                     return crudHelper.executeFindOne(operation);
@@ -464,6 +506,9 @@ public abstract class UnifiedTest {
                 case "modifyCollection":
                     return crudHelper.executeModifyCollection(operation);
                 case "rename":
+                    if ("bucket".equals(object)){
+                        return gridFSHelper.executeRename(operation);
+                    }
                     return crudHelper.executeRenameCollection(operation);
                 case "createSearchIndex":
                     return crudHelper.executeCreateSearchIndex(operation);
@@ -479,6 +524,8 @@ public abstract class UnifiedTest {
                     return crudHelper.executeCreateIndex(operation);
                 case "dropIndex":
                     return crudHelper.executeDropIndex(operation);
+                case "dropIndexes":
+                    return crudHelper.executeDropIndexes(operation);
                 case "startTransaction":
                     return crudHelper.executeStartTransaction(operation);
                 case "commitTransaction":
@@ -495,8 +542,12 @@ public abstract class UnifiedTest {
                     return crudHelper.close(operation);
                 case "iterateUntilDocumentOrError":
                     return crudHelper.executeIterateUntilDocumentOrError(operation);
+                case "iterateOnce":
+                    return crudHelper.executeIterateOnce(operation);
                 case "delete":
                     return gridFSHelper.executeDelete(operation);
+                case "drop":
+                    return gridFSHelper.executeDrop(operation);
                 case "download":
                     return gridFSHelper.executeDownload(operation);
                 case "downloadByName":
@@ -523,6 +574,10 @@ public abstract class UnifiedTest {
                     return clientEncryptionHelper.executeGetKeyByAltName(operation);
                 case "rewrapManyDataKey":
                     return clientEncryptionHelper.executeRewrapManyDataKey(operation);
+                case "encrypt":
+                    return clientEncryptionHelper.executeEncrypt(operation);
+                case "decrypt":
+                    return clientEncryptionHelper.executeDecrypt(operation);
                 default:
                     throw new UnsupportedOperationException("Unsupported test operation: " + name);
             }
@@ -767,8 +822,8 @@ public abstract class UnifiedTest {
 
         context.getAssertionContext().push(ContextElement.ofTopologyType(expectedTopologyType));
 
-        assertEquals(context.getAssertionContext().getMessage("Unexpected topology type"), getClusterType(expectedTopologyType),
-                clusterDescription.getType());
+        assertEquals(getClusterType(expectedTopologyType), clusterDescription.getType(),
+                context.getAssertionContext().getMessage("Unexpected topology type"));
 
         context.getAssertionContext().pop();
         return OperationResult.NONE;
@@ -851,8 +906,8 @@ public abstract class UnifiedTest {
     private OperationResult executeAssertNumberConnectionsCheckedOut(final UnifiedTestContext context, final BsonDocument operation) {
         TestConnectionPoolListener listener = entities.getConnectionPoolListener(
                 operation.getDocument("arguments").getString("client").getValue());
-        assertEquals(context.getAssertionContext().getMessage("Number of checked out connections must match expected"),
-                operation.getDocument("arguments").getNumber("connections").intValue(), listener.getNumConnectionsCheckedOut());
+        assertEquals(operation.getDocument("arguments").getNumber("connections").intValue(), listener.getNumConnectionsCheckedOut(),
+                context.getAssertionContext().getMessage("Number of checked out connections must match expected"));
         return OperationResult.NONE;
     }
 
@@ -869,14 +924,14 @@ public abstract class UnifiedTest {
                 operation.getDocument("arguments").getString("client").getValue());
         List<CommandEvent> events = lastTwoCommandEvents(listener);
         String eventsJson = listener.getCommandStartedEvents().stream()
-                .map(e -> ((CommandStartedEvent) e).getCommand().toJson())
+                .map(e -> e.getCommand().toJson())
                 .collect(Collectors.joining(", "));
         BsonDocument expected = ((CommandStartedEvent) events.get(0)).getCommand().getDocument("lsid");
         BsonDocument actual = ((CommandStartedEvent) events.get(1)).getCommand().getDocument("lsid");
         if (same) {
-            assertEquals(eventsJson, expected, actual);
+            assertEquals(expected, actual, eventsJson);
         } else {
-            assertNotEquals(eventsJson, expected, actual);
+            assertNotEquals(expected, actual, eventsJson);
         }
         return OperationResult.NONE;
     }
@@ -935,9 +990,9 @@ public abstract class UnifiedTest {
     }
 
     private List<CommandEvent> lastTwoCommandEvents(final TestCommandListener listener) {
-        List<CommandEvent> events = listener.getCommandStartedEvents();
+        List<CommandStartedEvent> events = listener.getCommandStartedEvents();
         assertTrue(events.size() >= 2);
-        return events.subList(events.size() - 2, events.size());
+        return new ArrayList<>(events.subList(events.size() - 2, events.size()));
     }
 
     private BsonDocument addInitialDataAndGetClusterTime() {
@@ -947,7 +1002,7 @@ public abstract class UnifiedTest {
                     new MongoNamespace(curDataSet.getString("databaseName").getValue(),
                             curDataSet.getString("collectionName").getValue()));
 
-            helper.create(WriteConcern.MAJORITY);
+            helper.create(WriteConcern.MAJORITY, curDataSet.getDocument("createOptions", new BsonDocument()));
 
             BsonArray documentsArray = curDataSet.getArray("documents", new BsonArray());
             if (!documentsArray.isEmpty()) {
@@ -956,5 +1011,13 @@ public abstract class UnifiedTest {
             }
         }
         return getCurrentClusterTime();
+    }
+
+    protected void ignoreExtraCommandEvents(final boolean ignoreExtraEvents) {
+        this.ignoreExtraEvents = ignoreExtraEvents;
+    }
+
+    protected void ignoreExtraEvents() {
+        this.ignoreExtraEvents = true;
     }
 }

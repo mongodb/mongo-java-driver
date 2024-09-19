@@ -31,14 +31,12 @@ import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
+import static java.util.Collections.singletonMap;
 
 /**
  * An operation that atomically finds and updates a single document.
@@ -53,15 +51,15 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private Boolean bypassDocumentValidation;
     private List<BsonDocument> arrayFilters;
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final BsonDocument update) {
+    public FindAndUpdateOperation(final MongoNamespace namespace,
+            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final BsonDocument update) {
         super(namespace, writeConcern, retryWrites, decoder);
         this.update = notNull("update", update);
         this.updatePipeline = null;
     }
 
     public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final List<BsonDocument> update) {
+            final Decoder<T> decoder, final List<BsonDocument> update) {
         super(namespace, writeConcern, retryWrites, decoder);
         this.updatePipeline = update;
         this.update = null;
@@ -126,12 +124,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndUpdateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        super.maxTime(maxTime, timeUnit);
-        return this;
-    }
-
-    @Override
     public FindAndUpdateOperation<T> sort(@Nullable final BsonDocument sort) {
         super.sort(sort);
         return this;
@@ -168,9 +160,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     protected FieldNameValidator getFieldNameValidator() {
-        Map<String, FieldNameValidator> map = new HashMap<>();
-        map.put("update", new UpdateFieldNameValidator());
-        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
+        return new MappedFieldNameValidator(NoOpFieldNameValidator.INSTANCE, singletonMap("update", new UpdateFieldNameValidator()));
     }
 
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {

@@ -17,7 +17,10 @@
 package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
+import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Evolving;
+import com.mongodb.annotations.Reason;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -31,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * @param <TResult> The type of the result.
  * @mongodb.driver.manual reference/operator/aggregation/listSearchIndexes ListSearchIndexes
  * @since 4.11
- * @mongodb.server.release 7.0
+ * @mongodb.server.release 6.0
  */
 @Evolving
 public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResult> {
@@ -97,6 +100,20 @@ public interface ListSearchIndexesIterable<TResult> extends MongoIterable<TResul
      * @return this.
      */
     ListSearchIndexesIterable<TResult> comment(@Nullable BsonValue comment);
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * <p>
+     *     Requires the {@code timeout} to be set, either in the {@link com.mongodb.MongoClientSettings},
+     *     via {@link MongoDatabase} or via {@link MongoCollection}
+     * </p>
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    ListSearchIndexesIterable<TResult> timeoutMode(TimeoutMode timeoutMode);
 
     /**
      * Explain the execution plan for this operation with the server's default verbosity level.

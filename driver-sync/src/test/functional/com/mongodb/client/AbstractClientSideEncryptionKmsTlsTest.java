@@ -46,7 +46,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
 public abstract class AbstractClientSideEncryptionKmsTlsTest {
 
     private static final String SYSTEM_PROPERTY_KEY = "org.mongodb.test.kms.tls.error.type";
@@ -93,6 +92,10 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
     @NonNull
     public abstract ClientEncryption getClientEncryption(ClientEncryptionSettings settings);
 
+    /**
+     * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#10-kms-tls-tests">
+     * 10. KMS TLS Tests</a>.
+     */
     @Test
     public void testInvalidKmsCertificate() {
         assumeTrue(System.getProperties().containsKey(SYSTEM_PROPERTY_KEY));
@@ -120,6 +123,10 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
         }
     }
 
+    /**
+     * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#11-kms-tls-options-tests">
+     * 11. KMS TLS Options Tests</a>.
+     */
     @Test()
     public void testThatCustomSslContextIsUsed() {
         assumeTrue(serverVersionAtLeast(4, 2));
@@ -131,10 +138,14 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                 .keyVaultNamespace("keyvault.datakeys")
                 .kmsProviders(kmsProviders)
                 .kmsProviderSslContextMap(new HashMap<String, SSLContext>() {{
-                    put("aws", getUntrustingSslContext());
-                    put("azure", getUntrustingSslContext());
-                    put("gcp", getUntrustingSslContext());
-                    put("kmip", getUntrustingSslContext());
+                    put("aws", getUntrustingSslContext("aws"));
+                    put("aws:named", getUntrustingSslContext("aws:named"));
+                    put("azure", getUntrustingSslContext("azure"));
+                    put("azure:named", getUntrustingSslContext("azure:named"));
+                    put("gcp", getUntrustingSslContext("gcp"));
+                    put("gcp:named", getUntrustingSslContext("gcp:named"));
+                    put("kmip", getUntrustingSslContext("kmip"));
+                    put("kmip:named", getUntrustingSslContext("kmip:named"));
                 }})
                 .build();
         try (ClientEncryption clientEncryption = getClientEncryption(clientEncryptionSettings)) {
@@ -144,7 +155,7 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                         clientEncryption.createDataKey(curProvider, new DataKeyOptions().masterKey(
                                 BsonDocument.parse(getMasterKey(curProvider)))));
                 while (e != null) {
-                    if (e.getMessage().contains("Don't trust anything")) {
+                    if (e.getMessage().contains("Don't trust " + curProvider)) {
                         break outer;
                     }
                     e = e.getCause();
@@ -160,7 +171,17 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                 put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
                 put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
             }});
+            put("aws:named",  new HashMap<String, Object>() {{
+                put("accessKeyId", getEnv("AWS_ACCESS_KEY_ID"));
+                put("secretAccessKey", getEnv("AWS_SECRET_ACCESS_KEY"));
+            }});
             put("azure",  new HashMap<String, Object>() {{
+                put("tenantId", getEnv("AZURE_TENANT_ID"));
+                put("clientId", getEnv("AZURE_CLIENT_ID"));
+                put("clientSecret", getEnv("AZURE_CLIENT_SECRET"));
+                put("identityPlatformEndpoint", "login.microsoftonline.com:443");
+            }});
+            put("azure:named",  new HashMap<String, Object>() {{
                 put("tenantId", getEnv("AZURE_TENANT_ID"));
                 put("clientId", getEnv("AZURE_CLIENT_ID"));
                 put("clientSecret", getEnv("AZURE_CLIENT_SECRET"));
@@ -171,7 +192,15 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                 put("privateKey", getEnv("GCP_PRIVATE_KEY"));
                 put("endpoint", "oauth2.googleapis.com:443");
             }});
+            put("gcp:named",  new HashMap<String, Object>() {{
+                put("email", getEnv("GCP_EMAIL"));
+                put("privateKey", getEnv("GCP_PRIVATE_KEY"));
+                put("endpoint", "oauth2.googleapis.com:443");
+            }});
             put("kmip", new HashMap<String, Object>() {{
+                put("endpoint", "localhost:5698");
+            }});
+            put("kmip:named", new HashMap<String, Object>() {{
                 put("endpoint", "localhost:5698");
             }});
         }};
@@ -180,15 +209,18 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
     String getMasterKey(final String kmsProvider) {
         switch (kmsProvider) {
             case "aws":
+            case "aws:named":
                 return "{"
                         + "region: \"us-east-1\", "
                         + "key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\"}";
             case "azure":
+            case "azure:named":
                 return "{"
                         + "  \"keyVaultEndpoint\": \"key-vault-csfle.vault.azure.net\","
                         + "  \"keyName\": \"key-name-csfle\""
                         + "}";
             case "gcp":
+            case "gcp:named":
                 return "{"
                         + "  \"projectId\": \"devprod-drivers\","
                         + "  \"location\": \"global\", "
@@ -196,13 +228,14 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                         + "  \"keyName\": \"key-name-csfle\""
                         + "}";
             case "kmip":
+            case "kmip:named":
                 return "{}";
             default:
                 throw new UnsupportedOperationException("Unsupported KMS provider: " + kmsProvider);
         }
     }
 
-    private SSLContext getUntrustingSslContext() {
+    private SSLContext getUntrustingSslContext(final String kmsProvider) {
         try {
             TrustManager untrustingTrustManager = new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
@@ -213,7 +246,7 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                 }
 
                 public void checkServerTrusted(final X509Certificate[] certs, final String authType) throws CertificateException {
-                    throw new CertificateException("Don't trust anything");
+                    throw new CertificateException("Don't trust " + kmsProvider);
                 }
             };
 

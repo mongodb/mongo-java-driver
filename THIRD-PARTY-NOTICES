@@ -21,7 +21,7 @@ https://github.com/mongodb/mongo-java-driver.
    Any republication or derived work distributed in source code form
    must include this copyright and license notice.
 
-2) The following files: Assertions.java, AbstractCopyOnWriteMap.java, CopyOnWriteMap.java
+2) The following files: Assertions.java
 
     Copyright (c) 2008-2014 Atlassian Pty Ltd
 
@@ -37,7 +37,10 @@ https://github.com/mongodb/mongo-java-driver.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-3) The following files: Beta.java, UnsignedLongs.java, UnsignedLongsTest.java
+3) The following files:
+
+    Alpha.java (formerly Beta.java)
+    Beta.java
 
     Copyright 2010 The Guava Authors
     Copyright 2011 The Guava Authors
@@ -54,24 +57,7 @@ https://github.com/mongodb/mongo-java-driver.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-4) The following files: ReadTimeoutHandler.java
-
-    Copyright 2008-present MongoDB, Inc.
-    Copyright 2012 The Netty Project
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-
-5) The following files: InstantCodec.java, Jsr310CodecProvider.java, LocalDateCodec.java, LocalDateTimeCodec.java, LocalTimeCodec.java
+4) The following files: InstantCodec.java, Jsr310CodecProvider.java, LocalDateCodec.java, LocalDateTimeCodec.java, LocalTimeCodec.java
 
     Copyright 2008-present MongoDB, Inc.
     Copyright 2018 Cezary Bartosiak
@@ -88,7 +74,7 @@ https://github.com/mongodb/mongo-java-driver.
     See the License for the specific language governing permissions and
     limitations under the License.
 
-6) The following files: SaslPrep.java
+5) The following files: SaslPrep.java
 
      Copyright 2008-present MongoDB, Inc.
      Copyright 2017 Tom Bentley
@@ -105,7 +91,7 @@ https://github.com/mongodb/mongo-java-driver.
      See the License for the specific language governing permissions and
      limitations under the License.
 
-7) The following files (originally from https://github.com/marianobarrios/tls-channel):
+6) The following files (originally from https://github.com/marianobarrios/tls-channel):
 
         AsynchronousTlsChannel.java
         AsynchronousTlsChannelGroup.java
@@ -155,7 +141,7 @@ https://github.com/mongodb/mongo-java-driver.
      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
      SOFTWARE.
 
-8) The following files (originally from https://github.com/google/guava):
+7) The following files (originally from https://github.com/google/guava):
 
     InetAddressUtils.java (formerly InetAddresses.java)
     InetAddressUtilsTest.java (formerly InetAddressesTest.java)

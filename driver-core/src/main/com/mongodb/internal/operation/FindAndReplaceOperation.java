@@ -30,12 +30,9 @@ import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfTrue;
+import static java.util.Collections.singletonMap;
 
 /**
  * An operation that atomically finds and replaces a single document.
@@ -49,7 +46,7 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     private Boolean bypassDocumentValidation;
 
     public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                   final Decoder<T> decoder, final BsonDocument replacement) {
+            final Decoder<T> decoder, final BsonDocument replacement) {
         super(namespace, writeConcern, retryWrites, decoder);
         this.replacement = notNull("replacement", replacement);
     }
@@ -98,12 +95,6 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     @Override
-    public FindAndReplaceOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        super.maxTime(maxTime, timeUnit);
-        return this;
-    }
-
-    @Override
     public FindAndReplaceOperation<T> sort(@Nullable final BsonDocument sort) {
         super.sort(sort);
         return this;
@@ -140,9 +131,9 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     protected FieldNameValidator getFieldNameValidator() {
-        Map<String, FieldNameValidator> map = new HashMap<>();
-        map.put("update", new ReplacingDocumentFieldNameValidator());
-        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
+        return new MappedFieldNameValidator(
+                NoOpFieldNameValidator.INSTANCE,
+                singletonMap("update", ReplacingDocumentFieldNameValidator.INSTANCE));
     }
 
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {

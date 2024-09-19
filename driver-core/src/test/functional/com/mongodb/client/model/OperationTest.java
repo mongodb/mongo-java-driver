@@ -21,14 +21,12 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.internal.connection.ServerHelper;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
@@ -61,7 +59,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public abstract class OperationTest {
 
     protected static final DocumentCodec DOCUMENT_DECODER = new DocumentCodec();
-    protected static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
 
     @BeforeEach
     public void beforeEach() {

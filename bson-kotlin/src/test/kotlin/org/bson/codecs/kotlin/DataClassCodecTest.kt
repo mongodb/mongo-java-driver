@@ -23,7 +23,9 @@ import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
+import org.bson.codecs.kotlin.samples.Box
 import org.bson.codecs.kotlin.samples.DataClassEmbedded
+import org.bson.codecs.kotlin.samples.DataClassLastItemDefaultsToNull
 import org.bson.codecs.kotlin.samples.DataClassListOfDataClasses
 import org.bson.codecs.kotlin.samples.DataClassListOfListOfDataClasses
 import org.bson.codecs.kotlin.samples.DataClassListOfSealed
@@ -35,6 +37,7 @@ import org.bson.codecs.kotlin.samples.DataClassSealedA
 import org.bson.codecs.kotlin.samples.DataClassSealedB
 import org.bson.codecs.kotlin.samples.DataClassSealedC
 import org.bson.codecs.kotlin.samples.DataClassSelfReferential
+import org.bson.codecs.kotlin.samples.DataClassWithArrays
 import org.bson.codecs.kotlin.samples.DataClassWithBooleanMapKey
 import org.bson.codecs.kotlin.samples.DataClassWithBsonConstructor
 import org.bson.codecs.kotlin.samples.DataClassWithBsonDiscriminator
@@ -50,11 +53,14 @@ import org.bson.codecs.kotlin.samples.DataClassWithEnum
 import org.bson.codecs.kotlin.samples.DataClassWithEnumMapKey
 import org.bson.codecs.kotlin.samples.DataClassWithFailingInit
 import org.bson.codecs.kotlin.samples.DataClassWithInvalidBsonRepresentation
+import org.bson.codecs.kotlin.samples.DataClassWithListThatLastItemDefaultsToNull
 import org.bson.codecs.kotlin.samples.DataClassWithMutableList
 import org.bson.codecs.kotlin.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlin.samples.DataClassWithMutableSet
+import org.bson.codecs.kotlin.samples.DataClassWithNativeArrays
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterizedDataClass
+import org.bson.codecs.kotlin.samples.DataClassWithNullableGeneric
 import org.bson.codecs.kotlin.samples.DataClassWithNulls
 import org.bson.codecs.kotlin.samples.DataClassWithObjectIdAndBsonDocument
 import org.bson.codecs.kotlin.samples.DataClassWithPair
@@ -109,6 +115,59 @@ class DataClassCodecTest {
     }
 
     @Test
+    fun testDataClassWithArrays() {
+        val expected =
+            """{
+            | "arraySimple": ["a", "b", "c", "d"],
+            | "nestedArrays":  [["e", "f"], [], ["g", "h"]],
+            | "arrayOfMaps":  [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithArrays(
+                arrayOf("a", "b", "c", "d"),
+                arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
+                arrayOf(
+                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNativeArrays() {
+        val expected =
+            """{
+            |    "booleanArray": [true, false],
+            |    "byteArray": [1, 2],
+            |    "charArray": ["a", "b"],
+            |    "doubleArray": [ 1.1, 2.2, 3.3],
+            |    "floatArray": [1.0, 2.0, 3.0],
+            |    "intArray": [10, 20, 30, 40],
+            |    "longArray": [{ "$numberLong": "111" }, { "$numberLong": "222" }, { "$numberLong": "333" }],
+            |    "shortArray": [1, 2, 3],
+            |    "listOfArrays": [[true, false], [false, true]],
+            |    "mapOfArrays": {"A": [1, 2], "B":[], "C": [3, 4]}
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithNativeArrays(
+                booleanArrayOf(true, false),
+                byteArrayOf(1, 2),
+                charArrayOf('a', 'b'),
+                doubleArrayOf(1.1, 2.2, 3.3),
+                floatArrayOf(1.0f, 2.0f, 3.0f),
+                intArrayOf(10, 20, 30, 40),
+                longArrayOf(111, 222, 333),
+                shortArrayOf(1, 2, 3),
+                listOf(booleanArrayOf(true, false), booleanArrayOf(false, true)),
+                mapOf(Pair("A", intArrayOf(1, 2)), Pair("B", intArrayOf()), Pair("C", intArrayOf(3, 4))))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
     fun testDataClassWithDefaults() {
         val expectedDefault =
             """{
@@ -129,6 +188,39 @@ class DataClassCodecTest {
 
         val withStoredNulls = BsonDocument.parse("""{"boolean": null, "string": null, "listSimple": null}""")
         assertDecodesTo(withStoredNulls, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithListThatLastItemDefaultsToNull() {
+        val expected =
+            """{
+            | "elements": [{"required": "required"}, {"required": "required"}],
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithListThatLastItemDefaultsToNull(
+                listOf(DataClassLastItemDefaultsToNull("required"), DataClassLastItemDefaultsToNull("required")))
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNotNull() {
+        val expected =
+            """{
+            | "box": {"boxed": "String"}
+            |}"""
+                .trimMargin()
+
+        val dataClass = DataClassWithNullableGeneric(Box("String"))
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNull() {
+        val expected = """{"box": {}}"""
+        val dataClass = DataClassWithNullableGeneric(Box(null))
+        assertRoundTrips(expected, dataClass)
     }
 
     @Test
@@ -228,7 +320,7 @@ class DataClassCodecTest {
             |"nestedParameterized": {
             |  "parameterizedDataClass":
             |  {"number": 4.2, "string": "myString", "parameterizedList": [{"name": "embedded1"}]},
-            |  "other": "myOtherString"
+            |  "other": "myOtherString", "optionalOther": "myOptionalOtherString"
             | }
             |}"""
                 .trimMargin()
@@ -236,7 +328,9 @@ class DataClassCodecTest {
             DataClassWithNestedParameterizedDataClass(
                 "myId",
                 DataClassWithNestedParameterized(
-                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))), "myOtherString"))
+                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))),
+                    "myOtherString",
+                    "myOptionalOtherString"))
 
         assertRoundTrips(expected, dataClass)
     }
@@ -495,5 +589,5 @@ class DataClassCodecTest {
         assertEquals(expected, decoded)
     }
 
-    private fun registry() = fromProviders(DataClassCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)
+    private fun registry() = fromProviders(ArrayCodecProvider(), DataClassCodecProvider(), Bson.DEFAULT_CODEC_REGISTRY)
 }

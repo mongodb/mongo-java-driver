@@ -25,7 +25,6 @@ import com.mongodb.crypt.capi.MongoCrypt;
 import com.mongodb.crypt.capi.MongoCrypts;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
-import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
@@ -41,11 +40,11 @@ public final class Crypts {
     private Crypts() {
     }
 
-    public static Crypt createCrypt(final MongoClientImpl client, final AutoEncryptionSettings settings) {
+    public static Crypt createCrypt(final MongoClientSettings mongoClientSettings, final AutoEncryptionSettings autoEncryptionSettings) {
         MongoClient sharedInternalClient = null;
-        MongoClientSettings keyVaultMongoClientSettings = settings.getKeyVaultMongoClientSettings();
-        if (keyVaultMongoClientSettings == null || !settings.isBypassAutoEncryption()) {
-            MongoClientSettings defaultInternalMongoClientSettings = MongoClientSettings.builder(client.getSettings())
+        MongoClientSettings keyVaultMongoClientSettings = autoEncryptionSettings.getKeyVaultMongoClientSettings();
+        if (keyVaultMongoClientSettings == null || !autoEncryptionSettings.isBypassAutoEncryption()) {
+            MongoClientSettings defaultInternalMongoClientSettings = MongoClientSettings.builder(mongoClientSettings)
                     .applyToConnectionPoolSettings(builder -> builder.minSize(0))
                     .autoEncryptionSettings(null)
                     .build();
@@ -53,16 +52,16 @@ public final class Crypts {
         }
         MongoClient keyVaultClient = keyVaultMongoClientSettings == null
                 ? sharedInternalClient : MongoClients.create(keyVaultMongoClientSettings);
-        MongoCrypt mongoCrypt = MongoCrypts.create(createMongoCryptOptions(settings));
+        MongoCrypt mongoCrypt = MongoCrypts.create(createMongoCryptOptions(autoEncryptionSettings));
         return new Crypt(
                 mongoCrypt,
-                createKeyRetriever(keyVaultClient, settings.getKeyVaultNamespace()),
-                createKeyManagementService(settings.getKmsProviderSslContextMap()),
-                settings.getKmsProviders(),
-                settings.getKmsProviderPropertySuppliers(),
-                settings.isBypassAutoEncryption(),
-                settings.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(sharedInternalClient),
-                new CommandMarker(mongoCrypt, settings),
+                createKeyRetriever(keyVaultClient, autoEncryptionSettings.getKeyVaultNamespace()),
+                createKeyManagementService(autoEncryptionSettings.getKmsProviderSslContextMap()),
+                autoEncryptionSettings.getKmsProviders(),
+                autoEncryptionSettings.getKmsProviderPropertySuppliers(),
+                autoEncryptionSettings.isBypassAutoEncryption(),
+                autoEncryptionSettings.isBypassAutoEncryption() ? null : new CollectionInfoRetriever(sharedInternalClient),
+                new CommandMarker(mongoCrypt, autoEncryptionSettings),
                 sharedInternalClient,
                 keyVaultClient);
     }

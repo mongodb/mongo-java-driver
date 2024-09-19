@@ -17,6 +17,7 @@ package org.mongodb.scala.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.AggregateIterable
+import org.mongodb.scala.TimeoutMode
 import com.mongodb.client.model.Collation
 import org.bson.conversions.Bson
 import org.bson.{ BsonValue, Document }
@@ -39,6 +40,11 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
 
   override def batchSize(batchSize: Int): AggregateIterable[T] = {
     wrapped.batchSize(batchSize)
+    this
+  }
+
+  override def timeoutMode(timeoutMode: TimeoutMode): AggregateIterable[T] = {
+    wrapped.timeoutMode(timeoutMode)
     this
   }
 
@@ -102,5 +108,4 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
       .explain[E](verbosity)(DefaultsTo.overrideDefault[E, org.mongodb.scala.Document], ClassTag(explainResultClass))
       .toFuture()
       .get()
-
 }

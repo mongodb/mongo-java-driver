@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterId
@@ -29,6 +28,7 @@ import com.mongodb.internal.selector.WritableServerSelector
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
 import static com.mongodb.connection.ClusterType.SHARDED
@@ -87,14 +87,16 @@ class MultiServerClusterSpecification extends Specification {
         cluster.getCurrentDescription().connectionMode == MULTIPLE
     }
 
-    def 'should not get server when closed'() {
+    def 'should not get servers snapshot when closed'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts(Arrays.asList(firstServer)).mode(MULTIPLE).build(),
                 factory)
         cluster.close()
 
         when:
-        cluster.getServer(firstServer)
+        cluster.getServersSnapshot(
+                OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout(),
+                OPERATION_CONTEXT.getTimeoutContext())
 
         then:
         thrown(IllegalStateException)
@@ -379,7 +381,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.selectServer(new WritableServerSelector(), new OperationContext())
+        cluster.selectServer(new WritableServerSelector(), OPERATION_CONTEXT)
 
         then:
         thrown(IllegalStateException)

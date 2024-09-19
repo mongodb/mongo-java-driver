@@ -22,7 +22,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ServerCursor;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -30,7 +29,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.FieldNameValidator;
 
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -42,7 +40,6 @@ final class CommandBatchCursorHelper {
 
     static final String FIRST_BATCH = "firstBatch";
     static final String NEXT_BATCH = "nextBatch";
-    static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     static final String MESSAGE_IF_CLOSED_AS_CURSOR = "Cursor has been closed";
     static final String MESSAGE_IF_CLOSED_AS_ITERATOR = "Iterator has been closed";
 
@@ -51,15 +48,12 @@ final class CommandBatchCursorHelper {
 
     static BsonDocument getMoreCommandDocument(
             final long cursorId, final ConnectionDescription connectionDescription, final MongoNamespace namespace, final int batchSize,
-            final long maxTimeMS, @Nullable final BsonValue comment) {
+            @Nullable final BsonValue comment) {
         BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursorId))
                 .append("collection", new BsonString(namespace.getCollectionName()));
 
         if (batchSize != 0) {
             document.append("batchSize", new BsonInt32(batchSize));
-        }
-        if (maxTimeMS != 0) {
-            document.append("maxTimeMS", new BsonInt64(maxTimeMS));
         }
         if (serverIsAtLeastVersionFourDotFour(connectionDescription)) {
             putIfNotNull(document, "comment", comment);
@@ -76,7 +70,7 @@ final class CommandBatchCursorHelper {
     }
 
     static BsonDocument getKillCursorsCommand(final MongoNamespace namespace, final ServerCursor serverCursor) {
-        return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+       return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                 .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
     }
 

@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client;
 
 import com.mongodb.ReadConcern;
-import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
@@ -30,12 +29,10 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static java.util.Collections.singletonList;
-import static org.junit.Assume.assumeTrue;
 
 public class ReadConcernTest {
     private TestCommandListener commandListener;
@@ -43,7 +40,6 @@ public class ReadConcernTest {
 
     @Before
     public void setUp() {
-        assumeTrue(canRunTests());
         commandListener = new TestCommandListener();
         mongoClient = MongoClients.create(getMongoClientBuilderFromConnectionString()
                 .addCommandListener(commandListener)
@@ -65,7 +61,7 @@ public class ReadConcernTest {
                 .find())
                 .block(TIMEOUT_DURATION);
 
-        List<CommandEvent> events = commandListener.getCommandStartedEvents();
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents();
 
         BsonDocument commandDocument = new BsonDocument("find", new BsonString("test"))
                 .append("readConcern", ReadConcern.LOCAL.asDocument())
@@ -73,9 +69,5 @@ public class ReadConcernTest {
 
         assertEventsEquality(singletonList(new CommandStartedEvent(null, 1, 1, null, getDefaultDatabaseName(), "find", commandDocument)),
                 events);
-    }
-
-    private boolean canRunTests() {
-        return serverVersionAtLeast(3, 2);
     }
 }

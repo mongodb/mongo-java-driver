@@ -20,10 +20,11 @@ import com.mongodb.MongoGridFSException
 import com.mongodb.client.ClientSession
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.gridfs.model.GridFSFile
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
-import org.bson.types.Binary
 import spock.lang.Specification
 
 class GridFSUploadStreamSpecification extends Specification {
@@ -34,7 +35,7 @@ class GridFSUploadStreamSpecification extends Specification {
     def 'should return the file id'() {
         when:
         def uploadStream = new GridFSUploadStreamImpl(null, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255
-                , metadata)
+                , metadata, null)
         then:
         uploadStream.getId() == fileId
     }
@@ -44,7 +45,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 2
-                , metadata)
+                , metadata, null)
         when:
         uploadStream.write(1)
 
@@ -70,7 +71,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , null)
+                , null, null)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -100,7 +101,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def content = 'file content ' as byte[]
         def metadata = new Document('contentType', 'text/txt')
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
+                metadata, null)
         def filesId = fileId
 
         when:
@@ -110,18 +112,18 @@ class GridFSUploadStreamSpecification extends Specification {
         then:
         if (clientSession != null) {
             1 * chunksCollection.insertOne(clientSession) {
-                verifyAll(it, Document) {
+                verifyAll(it, BsonDocument) {
                     it.get('files_id') == filesId
-                    it.getInteger('n') == 0
-                    it.get('data', Binary).getData() == content
+                    it.getInt32('n') == new BsonInt32(0)
+                    it.getBinary('data').getData() == content
                 }
             }
         } else {
             1 * chunksCollection.insertOne {
-                verifyAll(it, Document) {
+                verifyAll(it, BsonDocument) {
                     it.get('files_id') == filesId
-                    it.getInteger('n') == 0
-                    it.get('data', Binary).getData() == content
+                    it.getInt32('n') == new BsonInt32(0)
+                    it.getBinary('data').getData() == content
                 }
             }
         }
@@ -158,7 +160,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , metadata)
+                , metadata, null)
         when:
         uploadStream.close()
 
@@ -178,7 +180,7 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
-                , metadata)
+                , metadata, null)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -198,7 +200,7 @@ class GridFSUploadStreamSpecification extends Specification {
     def 'should close the stream on abort'() {
         given:
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255
-                , metadata)
+                , metadata, null)
         uploadStream.write('file content ' as byte[])
         uploadStream.abort()
 
@@ -216,7 +218,7 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
-                , metadata)
+                , metadata, null)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -234,7 +236,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , metadata)
+                , metadata, null)
         when:
         uploadStream.close()
         uploadStream.write(1)
@@ -252,7 +254,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , metadata)
+                , metadata, null)
         when:
         uploadStream.getObjectId()
 

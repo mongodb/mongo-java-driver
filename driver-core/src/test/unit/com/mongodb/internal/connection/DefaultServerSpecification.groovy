@@ -36,27 +36,25 @@ import com.mongodb.connection.ServerType
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerDescriptionChangedEvent
 import com.mongodb.event.ServerListener
-import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.async.SingleResultCallback
-import com.mongodb.internal.binding.StaticBindingContext
 import com.mongodb.internal.inject.SameObjectProvider
 import com.mongodb.internal.session.SessionContext
+import com.mongodb.internal.time.Timeout
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.FieldNameValidator
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
-import static com.mongodb.ClusterFixture.getServerApi
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 
 class DefaultServerSpecification extends Specification {
-    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
 
     def 'should get a connection'() {
@@ -71,7 +69,7 @@ class DefaultServerSpecification extends Specification {
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
-        def receivedConnection = server.getConnection(new OperationContext())
+        def receivedConnection = server.getConnection(OPERATION_CONTEXT)
 
         then:
         receivedConnection
@@ -97,7 +95,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def callback = new SupplyingCallback<AsyncConnection>()
-        server.getConnectionAsync(new OperationContext(), callback)
+        server.getConnectionAsync(OPERATION_CONTEXT, callback)
 
         then:
         callback.get() == connection
@@ -114,7 +112,7 @@ class DefaultServerSpecification extends Specification {
         server.close()
 
         when:
-        server.getConnection(new OperationContext())
+        server.getConnection(OPERATION_CONTEXT)
 
         then:
         def ex = thrown(MongoServerUnavailableException)
@@ -124,7 +122,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(new OperationContext()) {
+        server.getConnectionAsync(OPERATION_CONTEXT) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -166,7 +164,7 @@ class DefaultServerSpecification extends Specification {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitor = Mock(ServerMonitor)
-        connectionPool.get(new OperationContext()) >> { throw exceptionToThrow }
+        connectionPool.get(OPERATION_CONTEXT) >> { throw exceptionToThrow }
 
         def server = defaultServer(connectionPool, serverMonitor)
         server.close()
@@ -187,7 +185,7 @@ class DefaultServerSpecification extends Specification {
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection(new OperationContext())
+        server.getConnection(OPERATION_CONTEXT)
 
         then:
         def e = thrown(MongoException)
@@ -212,7 +210,7 @@ class DefaultServerSpecification extends Specification {
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection(new OperationContext())
+        server.getConnection(OPERATION_CONTEXT)
 
         then:
         def e = thrown(MongoSecurityException)
@@ -237,7 +235,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(new OperationContext()) {
+        server.getConnectionAsync(OPERATION_CONTEXT) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -270,7 +268,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(new OperationContext()) {
+        server.getConnectionAsync(OPERATION_CONTEXT) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -306,19 +304,19 @@ class DefaultServerSpecification extends Specification {
                           ''')
         def protocol = new TestCommandProtocol(response)
         testConnection.enqueueProtocol(protocol)
-        def context = new StaticBindingContext(sessionContext, getServerApi(), IgnorableRequestContext.INSTANCE, new OperationContext())
+        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
 
         when:
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
-            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), context) {
+            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE,
+                    ReadPreference.primary(), new BsonDocumentCodec(), operationContext) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
         } else {
-            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), new BsonDocumentCodec(), context)
+            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE,
+                    ReadPreference.primary(), new BsonDocumentCodec(), operationContext)
         }
 
         then:
@@ -379,7 +377,7 @@ class DefaultServerSpecification extends Specification {
         }
 
         @Override
-        TestCommandProtocol sessionContext(final SessionContext sessionContext) {
+        TestCommandProtocol withSessionContext(final SessionContext sessionContext) {
             contextClusterTime = sessionContext.clusterTime
             sessionContext.advanceClusterTime(responseDocument.getDocument('$clusterTime'))
             sessionContext.advanceOperationTime(responseDocument.getTimestamp('operationTime'))
@@ -394,8 +392,11 @@ class DefaultServerSpecification extends Specification {
             }
 
             @Override
-            ClusterableServer getServer(final ServerAddress serverAddress) {
-                throw new UnsupportedOperationException()
+            Cluster.ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
+                Cluster.ServersSnapshot result = {
+                    serverAddress -> throw new UnsupportedOperationException()
+                }
+                result
             }
 
             @Override

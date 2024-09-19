@@ -15,20 +15,23 @@
  */
 package com.mongodb.internal.async.function;
 
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 
 /**
  * Represents both the state associated with a retryable activity and a handle that can be used to affect retrying, e.g.,
@@ -48,25 +51,62 @@ public final class RetryState {
 
     private final LoopState loopState;
     private final int attempts;
+    private final boolean retryUntilTimeoutThrowsException;
     @Nullable
-    private Throwable exception;
+    private Throwable previouslyChosenException;
 
     /**
-     * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
+     * Creates a {@code RetryState} with a positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as
+     * being unlimited.
+     * <p>
+     * If a timeout is not specified in the {@link TimeoutContext#hasTimeoutMS()}, the specified {@code retries} param acts as a fallback
+     * bound. Otherwise, retries are unbounded until the timeout is reached.
+     * <p>
+     * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow} method,
+     * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
+     * </p>
+     *
+     * @param retries A positive number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
+     * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
      * @see #attempts()
      */
-    public RetryState(final int retries) {
-        assertTrue(retries >= 0);
-        loopState = new LoopState();
-        attempts = retries == INFINITE_ATTEMPTS ? INFINITE_ATTEMPTS : retries + 1;
+    public static RetryState withRetryableState(final int retries, final TimeoutContext timeoutContext) {
+        assertTrue(retries > 0);
+        if (timeoutContext.hasTimeoutMS()){
+            return new RetryState(INFINITE_ATTEMPTS, timeoutContext);
+        }
+        return new RetryState(retries, null);
+    }
+
+    public static RetryState withNonRetryableState() {
+        return new RetryState(0, null);
     }
 
     /**
      * Creates a {@link RetryState} that does not limit the number of retries.
+     * The number of attempts is limited iff {@link TimeoutContext#hasTimeoutMS()} is true and timeout has expired.
+     * <p>
+     * It is possible to provide an additional {@code retryPredicate} in the {@link #doAdvanceOrThrow} method,
+     * which can be used to stop retrying based on a custom condition additionally to {@code retires} and {@link TimeoutContext}.
+     * </p>
+     *
+     * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
      * @see #attempts()
      */
-    public RetryState() {
-        this(INFINITE_ATTEMPTS);
+    public RetryState(final TimeoutContext timeoutContext) {
+        this(INFINITE_ATTEMPTS, timeoutContext);
+    }
+
+    /**
+     * @param retries A non-negative number of allowed retries. {@link Integer#MAX_VALUE} is a special value interpreted as being unlimited.
+     * @param timeoutContext A timeout context that will be used to determine if the operation has timed out.
+     * @see #attempts()
+     */
+    private RetryState(final int retries, @Nullable final TimeoutContext timeoutContext) {
+        assertTrue(retries >= 0);
+        loopState = new LoopState();
+        attempts = retries == INFINITE_ATTEMPTS ? INFINITE_ATTEMPTS : retries + 1;
+        this.retryUntilTimeoutThrowsException = timeoutContext != null && timeoutContext.hasTimeoutMS();
     }
 
     /**
@@ -78,24 +118,25 @@ public final class RetryState {
      * which is usually synchronous code.
      *
      * @param attemptException The exception produced by the most recent attempt.
-     * It is passed to the {@code retryPredicate} and to the {@code exceptionTransformer}.
-     * @param exceptionTransformer A function that chooses which exception to preserve as a prospective failed result of the associated
-     * retryable activity and may also transform or mutate the exceptions.
-     * The choice is between
+     * It is passed to the {@code retryPredicate} and to the {@code onAttemptFailureOperator}.
+     * @param onAttemptFailureOperator The action that is called once per failed attempt before (in the happens-before order) the
+     * {@code retryPredicate}, regardless of whether the {@code retryPredicate} is called.
+     * This action is allowed to have side effects.
+     * <p>
+     * It also has to choose which exception to preserve as a prospective failed result of the associated retryable activity.
+     * The {@code onAttemptFailureOperator} may mutate its arguments, choose from the arguments, or return a different exception,
+     * but it must return a {@code @}{@link NonNull} value.
+     * The choice is between</p>
      * <ul>
      *     <li>the previously chosen exception or {@code null} if none has been chosen
-     *     (the first argument of the {@code exceptionTransformer})</li>
-     *     <li>and the exception from the most recent attempt (the second argument of the {@code exceptionTransformer}).</li>
+     *     (the first argument of the {@code onAttemptFailureOperator})</li>
+     *     <li>and the exception from the most recent attempt (the second argument of the {@code onAttemptFailureOperator}).</li>
      * </ul>
-     * The {@code exceptionTransformer} may either choose from its arguments, or return a different exception, a.k.a. transform,
-     * but it must return a {@code @}{@link NonNull} value.
-     * The {@code exceptionTransformer} is called once before (in the happens-before order) the {@code retryPredicate},
-     * regardless of whether the {@code retryPredicate} is called. The result of the {@code exceptionTransformer} does not affect
-     * what exception is passed to the {@code retryPredicate}.
+     * The result of the {@code onAttemptFailureOperator} does not affect the exception passed to the {@code retryPredicate}.
      * @param retryPredicate {@code true} iff another attempt needs to be made. The {@code retryPredicate} is called not more than once
      * per attempt and only if all the following is true:
      * <ul>
-     *     <li>{@code exceptionTransformer} completed normally;</li>
+     *     <li>{@code onAttemptFailureOperator} completed normally;</li>
      *     <li>the most recent attempt is not the {@linkplain #isLastAttempt() last} one.</li>
      * </ul>
      * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
@@ -103,19 +144,19 @@ public final class RetryState {
      * after (in the happens-before order) testing the {@code retryPredicate}, and only if the predicate completes normally.
      * @throws RuntimeException Iff any of the following is true:
      * <ul>
-     *     <li>the {@code exceptionTransformer} completed abruptly;</li>
+     *     <li>the {@code onAttemptFailureOperator} completed abruptly;</li>
      *     <li>the most recent attempt is the {@linkplain #isLastAttempt() last} one;</li>
      *     <li>the {@code retryPredicate} completed abruptly;</li>
      *     <li>the {@code retryPredicate} is {@code false}.</li>
      * </ul>
      * The exception thrown represents the failed result of the associated retryable activity,
      * i.e., the caller must not do any more attempts.
-     * @see #advanceOrThrow(Throwable, BiFunction, BiPredicate)
+     * @see #advanceOrThrow(Throwable, BinaryOperator, BiPredicate)
      */
-    void advanceOrThrow(final RuntimeException attemptException, final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer,
+    void advanceOrThrow(final RuntimeException attemptException, final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate) throws RuntimeException {
         try {
-            doAdvanceOrThrow(attemptException, exceptionTransformer, retryPredicate, true);
+            doAdvanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate, true);
         } catch (RuntimeException | Error unchecked) {
             throw unchecked;
         } catch (Throwable checked) {
@@ -127,20 +168,21 @@ public final class RetryState {
      * This method is intended to be used by code that generally handles all {@link Throwable} types explicitly,
      * which is usually asynchronous code.
      *
-     * @see #advanceOrThrow(RuntimeException, BiFunction, BiPredicate)
+     * @see #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)
      */
-    void advanceOrThrow(final Throwable attemptException, final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer,
+    void advanceOrThrow(final Throwable attemptException, final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate) throws Throwable {
-        doAdvanceOrThrow(attemptException, exceptionTransformer, retryPredicate, false);
+        doAdvanceOrThrow(attemptException, onAttemptFailureOperator, retryPredicate, false);
     }
 
     /**
-     * @param onlyRuntimeExceptions {@code true} iff the method must expect {@link #exception} and {@code attemptException} to be
+     * @param onlyRuntimeExceptions {@code true} iff the method must expect {@link #previouslyChosenException} and {@code attemptException} to be
      * {@link RuntimeException}s and must not explicitly handle other {@link Throwable} types, of which only {@link Error} is possible
      * as {@link RetryState} does not have any source of {@link Exception}s.
+     * @param onAttemptFailureOperator See {@link #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)}.
      */
     private void doAdvanceOrThrow(final Throwable attemptException,
-            final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer,
+            final BinaryOperator<Throwable> onAttemptFailureOperator,
             final BiPredicate<RetryState, Throwable> retryPredicate,
             final boolean onlyRuntimeExceptions) throws Throwable {
         assertTrue(attempt() < attempts);
@@ -148,53 +190,74 @@ public final class RetryState {
         if (onlyRuntimeExceptions) {
             assertTrue(isRuntime(attemptException));
         }
-        assertTrue(!isFirstAttempt() || exception == null);
-        Throwable newlyChosenException = transformException(exception, attemptException, onlyRuntimeExceptions, exceptionTransformer);
-        if (isLastAttempt()) {
-            exception = newlyChosenException;
-            throw exception;
+        assertTrue(!isFirstAttempt() || previouslyChosenException == null);
+        Throwable newlyChosenException = callOnAttemptFailureOperator(previouslyChosenException, attemptException, onlyRuntimeExceptions, onAttemptFailureOperator);
+
+        /*
+         * A MongoOperationTimeoutException indicates that the operation timed out, either during command execution or server selection.
+         * The timeout for server selection is determined by the computedServerSelectionMS = min(serverSelectionTimeoutMS, timeoutMS).
+         *
+         * It is important to check if the exception is an instance of MongoOperationTimeoutException to detect a timeout.
+         */
+        if (isLastAttempt() || attemptException instanceof MongoOperationTimeoutException) {
+            previouslyChosenException = newlyChosenException;
+            /*
+             * The function of isLastIteration() is to indicate if retrying has
+             * been explicitly halted. Such a stop is not interpreted as
+             * a timeout exception but as a deliberate cessation of retry attempts.
+             */
+            if (retryUntilTimeoutThrowsException && !loopState.isLastIteration()) {
+                previouslyChosenException = createMongoTimeoutException(
+                        "Retry attempt exceeded the timeout limit.",
+                        previouslyChosenException);
+            }
+            throw previouslyChosenException;
         } else {
-            // note that we must not update the state, e.g, `exception`, `loopState`, before calling `retryPredicate`
+            // note that we must not update the state, e.g, `previouslyChosenException`, `loopState`, before calling `retryPredicate`
             boolean retry = shouldRetry(this, attemptException, newlyChosenException, onlyRuntimeExceptions, retryPredicate);
-            exception = newlyChosenException;
+            previouslyChosenException = newlyChosenException;
             if (retry) {
                 assertTrue(loopState.advance());
             } else {
-                throw exception;
+                throw previouslyChosenException;
             }
         }
     }
 
     /**
-     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)}.
+     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BinaryOperator, BiPredicate, boolean)}.
+     * @param onAttemptFailureOperator See {@link #advanceOrThrow(RuntimeException, BinaryOperator, BiPredicate)}.
      */
-    private static Throwable transformException(@Nullable final Throwable previouslyChosenException, final Throwable attemptException,
-            final boolean onlyRuntimeExceptions, final BiFunction<Throwable, Throwable, Throwable> exceptionTransformer) {
+    private static Throwable callOnAttemptFailureOperator(
+            @Nullable final Throwable previouslyChosenException,
+            final Throwable attemptException,
+            final boolean onlyRuntimeExceptions,
+            final BinaryOperator<Throwable> onAttemptFailureOperator) {
         if (onlyRuntimeExceptions && previouslyChosenException != null) {
             assertTrue(isRuntime(previouslyChosenException));
         }
         Throwable result;
         try {
-            result = assertNotNull(exceptionTransformer.apply(previouslyChosenException, attemptException));
+            result = assertNotNull(onAttemptFailureOperator.apply(previouslyChosenException, attemptException));
             if (onlyRuntimeExceptions) {
                 assertTrue(isRuntime(result));
             }
-        } catch (Throwable exceptionTransformerException) {
-            if (onlyRuntimeExceptions && !isRuntime(exceptionTransformerException)) {
-                throw exceptionTransformerException;
+        } catch (Throwable onAttemptFailureOperatorException) {
+            if (onlyRuntimeExceptions && !isRuntime(onAttemptFailureOperatorException)) {
+                throw onAttemptFailureOperatorException;
             }
             if (previouslyChosenException != null) {
-                exceptionTransformerException.addSuppressed(previouslyChosenException);
+                onAttemptFailureOperatorException.addSuppressed(previouslyChosenException);
             }
-            exceptionTransformerException.addSuppressed(attemptException);
-            throw exceptionTransformerException;
+            onAttemptFailureOperatorException.addSuppressed(attemptException);
+            throw onAttemptFailureOperatorException;
         }
         return result;
     }
 
     /**
      * @param readOnlyRetryState Must not be mutated by this method.
-     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BiFunction, BiPredicate, boolean)}.
+     * @param onlyRuntimeExceptions See {@link #doAdvanceOrThrow(Throwable, BinaryOperator, BiPredicate, boolean)}.
      */
     private boolean shouldRetry(final RetryState readOnlyRetryState, final Throwable attemptException, final Throwable newlyChosenException,
             final boolean onlyRuntimeExceptions, final BiPredicate<RetryState, Throwable> retryPredicate) {
@@ -227,7 +290,7 @@ public final class RetryState {
      * by the caller to complete the ongoing attempt.
      * <p>
      * If this method is called from
-     * {@linkplain RetryingSyncSupplier#RetryingSyncSupplier(RetryState, BiFunction, BiPredicate, Supplier)
+     * {@linkplain RetryingSyncSupplier#RetryingSyncSupplier(RetryState, BinaryOperator, BiPredicate, Supplier)
      * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @param predicate {@code true} iff retrying needs to be broken.
@@ -243,9 +306,9 @@ public final class RetryState {
     public void breakAndThrowIfRetryAnd(final Supplier<Boolean> predicate) throws RuntimeException {
         assertFalse(loopState.isLastIteration());
         if (!isFirstAttempt()) {
-            assertNotNull(exception);
-            assertTrue(exception instanceof RuntimeException);
-            RuntimeException localException = (RuntimeException) exception;
+            assertNotNull(previouslyChosenException);
+            assertTrue(previouslyChosenException instanceof RuntimeException);
+            RuntimeException localException = (RuntimeException) previouslyChosenException;
             try {
                 if (predicate.get()) {
                     loopState.markAsLastIteration();
@@ -265,7 +328,7 @@ public final class RetryState {
      * but instead of throwing an exception, it relays it to the {@code callback}.
      * <p>
      * If this method is called from
-     * {@linkplain RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BiFunction, BiPredicate, com.mongodb.internal.async.function.AsyncCallbackSupplier)
+     * {@linkplain RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryState, BinaryOperator, BiPredicate, AsyncCallbackSupplier)
      * retry predicate / failed result transformer}, the behavior is unspecified.
      *
      * @return {@code true} iff the {@code callback} was completed, which happens in the same situations in which
@@ -304,14 +367,23 @@ public final class RetryState {
 
     /**
      * Returns {@code true} iff the current attempt is known to be the last one, i.e., it is known that no more retries will be made.
-     * An attempt is known to be the last one either because the number of {@linkplain #attempts() attempts} is limited and the current
-     * attempt is the last one, or because {@link #breakAndThrowIfRetryAnd(Supplier)} /
-     * {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} / {@link #markAsLastAttempt()} was called.
+     * An attempt is known to be the last one iff any of the following applies:
+     * <ul>
+     *   <li>{@link #breakAndThrowIfRetryAnd(Supplier)} / {@link #breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} / {@link #markAsLastAttempt()} was called.</li>
+     *   <li>A timeout is set and has been reached.</li>
+     *   <li>No timeout is set, and the number of {@linkplain #attempts() attempts} is limited, and the current attempt is the last one.</li>
+     * </ul>
      *
      * @see #attempts()
      */
     public boolean isLastAttempt() {
-        return attempt() == attempts - 1 || loopState.isLastIteration();
+        if (loopState.isLastIteration()){
+            return true;
+        }
+        if (retryUntilTimeoutThrowsException) {
+           return false;
+        }
+        return attempt() == attempts - 1;
     }
 
     /**
@@ -326,9 +398,9 @@ public final class RetryState {
     /**
      * Returns a positive maximum number of attempts:
      * <ul>
-     *     <li>0 if the number of retries is {@linkplain #RetryState() unlimited};</li>
+     *     <li>0 if the number of retries is {@linkplain #RetryState(TimeoutContext) unlimited};</li>
      *     <li>1 if no retries are allowed;</li>
-     *     <li>{@link #RetryState(int) retries} + 1 otherwise.</li>
+     *     <li>{@link #RetryState(int, TimeoutContext) retries} + 1 otherwise.</li>
      * </ul>
      *
      * @see #attempt()
@@ -347,8 +419,8 @@ public final class RetryState {
      * In synchronous code the returned exception is of the type {@link RuntimeException}.
      */
     public Optional<Throwable> exception() {
-        assertTrue(exception == null || !isFirstAttempt());
-        return Optional.ofNullable(exception);
+        assertTrue(previouslyChosenException == null || !isFirstAttempt());
+        return Optional.ofNullable(previouslyChosenException);
     }
 
     /**
@@ -371,7 +443,7 @@ public final class RetryState {
         return "RetryState{"
                 + "loopState=" + loopState
                 + ", attempts=" + (attempts == INFINITE_ATTEMPTS ? "infinite" : attempts)
-                + ", exception=" + exception
+                + ", exception=" + previouslyChosenException
                 + '}';
     }
 }

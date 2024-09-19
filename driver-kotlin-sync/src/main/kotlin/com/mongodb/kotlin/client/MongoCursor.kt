@@ -36,7 +36,7 @@ import org.bson.BsonDocument
  *
  * @param T The type of documents the cursor contains
  */
-public sealed interface MongoCursor<T : Any> : Iterator<T>, Closeable {
+public sealed interface MongoCursor<T : Any?> : Iterator<T>, Closeable {
 
     /**
      * Gets the number of results available locally without blocking, which may be 0.
@@ -76,6 +76,14 @@ public sealed interface MongoCursor<T : Any> : Iterator<T>, Closeable {
  *  }
  * ```
  *
+ * A [com.mongodb.MongoOperationTimeoutException] does not invalidate the [MongoChangeStreamCursor], but is immediately
+ * propagated to the caller. Subsequent method calls will attempt to resume operation by establishing a new change
+ * stream on the server, without performing a `getMore` request first.
+ *
+ * If a [com.mongodb.MongoOperationTimeoutException] occurs before any events are received, it indicates that the server
+ * has timed out before it could finish processing the existing oplog. In such cases, it is recommended to close the
+ * current stream and recreate it with a higher timeout setting.
+ *
  * @param T The type of documents the cursor contains
  */
 public sealed interface MongoChangeStreamCursor<T : Any> : MongoCursor<T> {
@@ -90,7 +98,7 @@ public sealed interface MongoChangeStreamCursor<T : Any> : MongoCursor<T> {
     public val resumeToken: BsonDocument?
 }
 
-internal class MongoCursorImpl<T : Any>(private val wrapped: JMongoCursor<T>) : MongoCursor<T> {
+internal class MongoCursorImpl<T : Any?>(private val wrapped: JMongoCursor<T>) : MongoCursor<T> {
 
     override fun hasNext(): Boolean = wrapped.hasNext()
 

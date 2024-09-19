@@ -31,12 +31,11 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.internal.operation.AsyncSingleBatchCursor.createEmptyAsyncSingleBatchCursor;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
+import static java.util.Collections.singletonList;
+
 
 /**
  * An operation that lists Alas Search indexes with the help of {@value #STAGE_LIST_SEARCH_INDEXES} pipeline stage.
@@ -56,26 +55,18 @@ final class ListSearchIndexesOperation<T>
     private final Collation collation;
     @Nullable
     private final BsonValue comment;
-    private final long maxTimeMS;
     @Nullable
     private final String indexName;
     private final boolean retryReads;
 
-    ListSearchIndexesOperation(final MongoNamespace namespace,
-                               final Decoder<T> decoder,
-                               final long maxTimeMS,
-                               @Nullable final String indexName,
-                               @Nullable final Integer batchSize,
-                               @Nullable final Collation collation,
-                               @Nullable final BsonValue comment,
-                               @Nullable final Boolean allowDiskUse,
-                               final boolean retryReads) {
+    ListSearchIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder, @Nullable final String indexName,
+            @Nullable final Integer batchSize, @Nullable final Collation collation, @Nullable final BsonValue comment,
+            @Nullable final Boolean allowDiskUse, final boolean retryReads) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
         this.batchSize = batchSize;
         this.collation = collation;
-        this.maxTimeMS = maxTimeMS;
         this.comment = comment;
         this.indexName = indexName;
         this.retryReads = retryReads;
@@ -122,14 +113,12 @@ final class ListSearchIndexesOperation<T>
     private AggregateOperation<T> asAggregateOperation() {
         BsonDocument searchDefinition = getSearchDefinition();
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
-
-        return new AggregateOperation<>(namespace, Collections.singletonList(listSearchIndexesStage), decoder)
+        return new AggregateOperation<>(namespace, singletonList(listSearchIndexesStage), decoder)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)
                 .allowDiskUse(allowDiskUse)
-                .batchSize(batchSize)
-                .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+                .batchSize(batchSize);
     }
 
     @NonNull

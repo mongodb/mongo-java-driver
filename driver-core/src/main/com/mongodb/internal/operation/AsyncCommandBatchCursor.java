@@ -18,13 +18,16 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -32,7 +35,9 @@ import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.AsyncOperationHelper.AsyncCallableConnectionWithCallback;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -49,7 +54,6 @@ import static com.mongodb.assertions.Assertions.doesNotThrow;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
-import static com.mongodb.internal.operation.CommandBatchCursorHelper.NO_OP_FIELD_NAME_VALIDATOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.getKillCursorsCommand;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.getMoreCommandDocument;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.logCommandCursorResult;
@@ -71,6 +75,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
     private volatile CommandCursorResult<T> commandCursorResult;
 
     AsyncCommandBatchCursor(
+            final TimeoutMode timeoutMode,
             final BsonDocument commandCursorDocument,
             final int batchSize, final long maxTimeMS,
             final Decoder<T> decoder,
@@ -87,14 +92,18 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeOverride(maxTimeMS);
+
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
-        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
+                commandCursorResult.getServerCursor());
     }
 
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
         resourceManager.execute(funcCallback -> {
+            resourceManager.checkTimeoutModeAndResetTimeoutContextIfIteration();
             ServerCursor localServerCursor = resourceManager.getServerCursor();
             boolean serverCursorIsNull = localServerCursor == null;
             List<T> batchResults = emptyList();
@@ -167,10 +176,10 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
     private void getMoreLoop(final AsyncConnection connection, final ServerCursor serverCursor,
             final SingleResultCallback<List<T>> callback) {
         connection.commandAsync(namespace.getDatabaseName(),
-                getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, maxTimeMS, comment),
-                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
+                getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
-                assertNotNull(resourceManager.getConnectionSource()),
+                assertNotNull(resourceManager.getConnectionSource()).getOperationContext(),
                 (commandResult, t) -> {
                     if (t != null) {
                         Throwable translatedException =
@@ -207,15 +216,21 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         return commandCursorResult;
     }
 
+    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
+        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
+    }
+
     @ThreadSafe
     private static final class ResourceManager extends CursorResourceManager<AsyncConnectionSource, AsyncConnection> {
 
         ResourceManager(
+                final TimeoutMode timeoutMode,
                 final MongoNamespace namespace,
                 final AsyncConnectionSource connectionSource,
                 @Nullable final AsyncConnection connectionToPin,
                 @Nullable final ServerCursor serverCursor) {
-            super(namespace, connectionSource, connectionToPin, serverCursor);
+            super(connectionSource.getOperationContext().getTimeoutContext(), timeoutMode, namespace, connectionSource, connectionToPin,
+                    serverCursor);
         }
 
         /**
@@ -250,6 +265,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 unsetServerCursor();
             }
 
+            resetTimeout();
             if (getServerCursor() != null) {
                 getConnection((connection, t) -> {
                     if (connection != null) {
@@ -271,13 +287,21 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                     return;
                 }
                 callable.call(assertNotNull(connection), (result, t1) -> {
-                    if (t1 instanceof MongoSocketException) {
-                        onCorruptedConnection(connection, (MongoSocketException) t1);
+                    if (t1 != null) {
+                        handleException(connection, t1);
                     }
                     connection.release();
                     callback.onResult(result, t1);
                 });
             });
+        }
+
+        private void handleException(final AsyncConnection connection, final Throwable exception) {
+            if (exception instanceof MongoOperationTimeoutException && exception.getCause() instanceof MongoSocketException) {
+                onCorruptedConnection(connection, (MongoSocketException) exception.getCause());
+            } else if (exception instanceof MongoSocketException) {
+                onCorruptedConnection(connection, (MongoSocketException) exception);
+            }
         }
 
         private void getConnection(final SingleResultCallback<AsyncConnection> callback) {
@@ -305,9 +329,13 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
+            OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.resetToDefaultMaxTime();
+
             localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
-                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
-                    assertNotNull(getConnectionSource()), (r, t) -> callback.onResult(null, null));
+                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
+                    operationContext, (r, t) -> callback.onResult(null, null));
         }
     }
 }

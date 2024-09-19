@@ -21,6 +21,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.TransactionBody;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
@@ -180,6 +181,11 @@ class SyncClientSession implements ClientSession {
     @Override
     public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TimeoutContext getTimeoutContext() {
+        return wrapped.getTimeoutContext();
     }
 
     private static void sleep(final long millis) {

@@ -15,13 +15,19 @@
  */
 package com.mongodb;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ServerMonitoringMode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,6 +38,34 @@ final class ConnectionStringUnitTest {
     void defaults() {
         ConnectionString connectionStringDefault = new ConnectionString(DEFAULT_OPTIONS);
         assertAll(() -> assertNull(connectionStringDefault.getServerMonitoringMode()));
+    }
+
+    @Test
+    public void mustDecodeNonOidcAsWhole()  {
+        // this string allows us to check if there is no double decoding
+        String rawValue = encode("ot her");
+        assertAll(() -> {
+            // even though only one part has been encoded by the user, the whole option value (pre-split) must be decoded
+            ConnectionString cs = new ConnectionString(
+                    "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                            + "SERVICE_NAME:" + encode(rawValue) + ",CANONICALIZE_HOST_NAME:true&authSource=$external");
+            MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+            assertEquals(rawValue, credential.getMechanismProperty("SERVICE_NAME", null));
+        }, () -> {
+            ConnectionString cs = new ConnectionString(
+                    "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties="
+                            + encode("SERVICE_NAME:" + rawValue + ",CANONICALIZE_HOST_NAME:true&authSource=$external"));
+            MongoCredential credential = Assertions.assertNotNull(cs.getCredential());
+            assertEquals(rawValue, credential.getMechanismProperty("SERVICE_NAME", null));
+        });
+    }
+
+    private static String encode(final String string) {
+        try {
+            return URLEncoder.encode(string, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @ParameterizedTest
@@ -58,5 +92,21 @@ final class ConnectionStringUnitTest {
                 () -> assertThrows(IllegalArgumentException.class,
                         () -> new ConnectionString(DEFAULT_OPTIONS + "serverMonitoringMode=invalid"))
         );
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mongodb://foo:bar/@hostname/java?", "mongodb://foo:bar?@hostname/java/",
+                            "mongodb+srv://foo:bar/@hostname/java?", "mongodb+srv://foo:bar?@hostname/java/",
+                            "mongodb://foo:bar/@[::1]:27018", "mongodb://foo:bar?@[::1]:27018",
+                            "mongodb://foo:12345678/@hostname", "mongodb+srv://foo:12345678/@hostname",
+                            "mongodb://foo:12345678/@hostname", "mongodb+srv://foo:12345678/@hostname",
+                            "mongodb://foo:12345678%40hostname", "mongodb+srv://foo:12345678%40hostname",
+                            "mongodb://foo:12345678@bar@hostname", "mongodb+srv://foo:12345678@bar@hostname"
+    })
+    void unescapedPasswordsShouldNotBeLeakedInExceptionMessages(final String input) {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ConnectionString(input));
+        assertFalse(exception.getMessage().contains("bar"));
+        assertFalse(exception.getMessage().contains("12345678"));
     }
 }

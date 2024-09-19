@@ -16,6 +16,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -26,7 +27,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  *
  * @since 4.9
  */
-@Beta(Beta.Reason.SERVER)
+@Beta(Reason.SERVER)
 public final class MongoUpdatedEncryptedFieldsException extends MongoClientException {
     private static final long serialVersionUID = 1;
 

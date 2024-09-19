@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Beta
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.vault.{ DataKeyOptions => JDataKeyOptions }
 import com.mongodb.client.model.vault.{ EncryptOptions => JEncryptOptions }
 import com.mongodb.client.model.vault.{ RangeOptions => JRangeOptions }
@@ -56,11 +56,9 @@ package object vault {
   }
 
   /**
-   * Range options specifies index options for a Queryable Encryption field supporting "rangePreview" queries.
-   *
+   * Range options specifies index options for a Queryable Encryption field supporting "range" queries.
    * @since 4.9
    */
-  @Beta(Array(Beta.Reason.SERVER))
   type RangeOptions = JRangeOptions
 
   object RangeOptions {

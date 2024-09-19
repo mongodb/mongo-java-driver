@@ -19,6 +19,8 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.client.MongoCollection as JMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
@@ -85,6 +87,28 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
         get() = wrapped.writeConcern
 
     /**
+     * The time limit for the full execution of an operation.
+     *
+     * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+     * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
+     * - `null` means that the timeout mechanism for operations will defer to using:
+     *     - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to
+     *       become available
+     *     - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+     *     - `wTimeoutMS`: How long the server will wait for the write concern to be fulfilled before timing out.
+     *     - `maxTimeMS`: The time limit for processing operations on a cursor. See:
+     *       [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+     *     - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+     * - `0` means infinite timeout.
+     * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * @return the optional timeout duration
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
+
+    /**
      * Create a new collection instance with a different default class to cast any documents returned from the database
      * into.
      *
@@ -146,6 +170,21 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      */
     public fun withWriteConcern(newWriteConcern: WriteConcern): MongoCollection<T> =
         MongoCollection(wrapped.withWriteConcern(newWriteConcern))
+
+    /**
+     * Create a new MongoCollection instance with the set time limit for the full execution of an operation.
+     * - `0` means an infinite timeout
+     * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * @param timeout the timeout, which must be greater than or equal to 0
+     * @param timeUnit the time unit, defaults to Milliseconds
+     * @return a new MongoCollection instance with the set time limit for operations
+     * @see [MongoCollection.timeout]
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun withTimeout(timeout: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): MongoCollection<T> =
+        MongoCollection(wrapped.withTimeout(timeout, timeUnit))
 
     /**
      * Counts the number of documents in the collection.
@@ -219,7 +258,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public fun <R : Any> distinct(
+    public fun <R : Any?> distinct(
         fieldName: String,
         filter: Bson = BsonDocument(),
         resultClass: Class<R>
@@ -236,7 +275,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public fun <R : Any> distinct(
+    public fun <R : Any?> distinct(
         clientSession: ClientSession,
         fieldName: String,
         filter: Bson = BsonDocument(),
@@ -252,7 +291,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public inline fun <reified R : Any> distinct(
+    public inline fun <reified R : Any?> distinct(
         fieldName: String,
         filter: Bson = BsonDocument()
     ): DistinctIterable<R> = distinct(fieldName, filter, R::class.java)
@@ -267,7 +306,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * @return an iterable of distinct values
      * @see [Distinct command](https://www.mongodb.com/docs/manual/reference/command/distinct/)
      */
-    public inline fun <reified R : Any> distinct(
+    public inline fun <reified R : Any?> distinct(
         clientSession: ClientSession,
         fieldName: String,
         filter: Bson = BsonDocument()

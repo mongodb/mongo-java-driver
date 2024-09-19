@@ -29,6 +29,7 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -43,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CrudTestHelper.replaceTypeAssertionWithActual;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -90,11 +90,9 @@ public final class CommandMonitoringTestHelper {
                 }
 
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
-                if (serverVersionAtLeast(3, 6)) {
-                    commandDocument.put("$db", new BsonString(actualDatabaseName));
-                    if (operation != null && operation.containsKey("read_preference")) {
-                        commandDocument.put("$readPreference", operation.getDocument("read_preference"));
-                    }
+                commandDocument.put("$db", new BsonString(actualDatabaseName));
+                if (operation != null && operation.containsKey("read_preference")) {
+                    commandDocument.put("$readPreference", operation.getDocument("read_preference"));
                 }
                 commandEvent = new CommandStartedEvent(null, 1, 1, null, actualDatabaseName, commandName,
                         commandDocument);
@@ -120,11 +118,11 @@ public final class CommandMonitoringTestHelper {
         return asList("insert", "update", "delete").contains(commandName);
     }
 
-    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events) {
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<? extends CommandEvent> events) {
         assertEventsEquality(expectedEvents, events, null);
     }
 
-    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events,
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<? extends CommandEvent> events,
                                             @Nullable final Map<String, BsonDocument> lsidMap) {
         assertEquals(expectedEvents.size(), events.size());
 
@@ -224,25 +222,33 @@ public final class CommandMonitoringTestHelper {
     private static CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent event,
                                                                         @Nullable final Map<String, BsonDocument> lsidMap,
                                                                         final CommandStartedEvent expectedCommandStartedEvent) {
-        BsonDocument command = getWritableCloneOfCommand(event.getCommand());
+        BsonDocument actualCommand = getWritableCloneOfCommand(event.getCommand());
+        BsonDocument expectedCommand = expectedCommandStartedEvent.getCommand();
 
-        massageCommand(event, command);
+        massageCommand(event, actualCommand);
 
-        if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
-            command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
+        if (actualCommand.containsKey("readConcern") && (actualCommand.getDocument("readConcern").containsKey("afterClusterTime"))) {
+            actualCommand.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
-        // Tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
-        if (command.containsKey("maxTimeMS")) {
-            command.put("maxTimeMS", new BsonInt32(command.getNumber("maxTimeMS").intValue()));
+        if (actualCommand.containsKey("maxTimeMS")  && !isExpectedMaxTimeMsLong(expectedCommand)) {
+            // Some tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
+            actualCommand.put("maxTimeMS", new BsonInt32(actualCommand.getNumber("maxTimeMS").intValue()));
         }
         // Tests do not expect the "ns" field in a result after running createIndex.
-        if (command.containsKey("createIndexes") && command.containsKey("indexes")) {
-            massageCommandIndexes(command.getArray("indexes"));
+        if (actualCommand.containsKey("createIndexes") && actualCommand.containsKey("indexes")) {
+            massageCommandIndexes(actualCommand.getArray("indexes"));
         }
-        massageActualCommand(command, expectedCommandStartedEvent.getCommand());
+        massageActualCommand(actualCommand, expectedCommand);
 
         return new CommandStartedEvent(event.getRequestContext(), event.getOperationId(), event.getRequestId(),
-                event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(), command);
+                event.getConnectionDescription(), event.getDatabaseName(), event.getCommandName(), actualCommand);
+    }
+
+    private static boolean isExpectedMaxTimeMsLong(final BsonDocument expectedCommand) {
+        if (expectedCommand.containsKey("maxTimeMS")) {
+            return expectedCommand.get("maxTimeMS").getBsonType() == BsonType.INT64;
+        }
+        return false;
     }
 
     private static void massageCommandIndexes(final BsonArray indexes) {

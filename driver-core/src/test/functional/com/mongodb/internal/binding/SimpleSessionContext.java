@@ -28,13 +28,13 @@ import org.bson.codecs.UuidCodec;
 
 import java.util.UUID;
 
-class SimpleSessionContext implements SessionContext {
+public class SimpleSessionContext implements SessionContext {
     private final BsonDocument sessionId;
     private BsonTimestamp operationTime;
     private long counter;
     private BsonDocument clusterTime;
 
-    SimpleSessionContext() {
+    public SimpleSessionContext() {
         this.sessionId = createNewServerSessionIdentifier();
     }
 

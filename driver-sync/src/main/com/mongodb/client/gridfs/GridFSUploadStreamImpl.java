@@ -20,10 +20,15 @@ import com.mongodb.MongoGridFSException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.internal.TimeoutHelper;
+import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
@@ -33,9 +38,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
 
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
+    public static final String TIMEOUT_MESSAGE = "The GridFS upload stream exceeded the timeout limit.";
     private final ClientSession clientSession;
     private final MongoCollection<GridFSFile> filesCollection;
-    private final MongoCollection<Document> chunksCollection;
+    private final MongoCollection<BsonDocument> chunksCollection;
     private final BsonValue fileId;
     private final String filename;
     private final int chunkSizeBytes;
@@ -44,13 +50,14 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private long lengthInBytes;
     private int bufferOffset;
     private int chunkIndex;
-
+    @Nullable
+    private final Timeout timeout;
     private final ReentrantLock closeLock = new ReentrantLock();
     private boolean closed = false;
 
     GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
-                           final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
-                           final int chunkSizeBytes, @Nullable final Document metadata) {
+                           final MongoCollection<BsonDocument> chunksCollection, final BsonValue fileId, final String filename,
+                           final int chunkSizeBytes, @Nullable final Document metadata, @Nullable final Timeout timeout) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
@@ -61,6 +68,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
         chunkIndex = 0;
         bufferOffset = 0;
         buffer = new byte[chunkSizeBytes];
+        this.timeout = timeout;
     }
 
     @Override
@@ -84,9 +92,11 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
         });
 
         if (clientSession != null) {
-            chunksCollection.deleteMany(clientSession, new Document("files_id", fileId));
+            withNullableTimeout(chunksCollection, timeout)
+                    .deleteMany(clientSession, new Document("files_id", fileId));
         } else {
-            chunksCollection.deleteMany(new Document("files_id", fileId));
+            withNullableTimeout(chunksCollection, timeout)
+                    .deleteMany(new Document("files_id", fileId));
         }
     }
 
@@ -105,6 +115,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     @Override
     public void write(final byte[] b, final int off, final int len) {
         checkClosed();
+        checkTimeout();
         notNull("b", b);
 
         if ((off < 0) || (off > b.length) || (len < 0)
@@ -136,6 +147,10 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
         }
     }
 
+    private void checkTimeout() {
+        Timeout.onExistsAndExpired(timeout, () -> TimeoutContext.throwMongoTimeoutException(TIMEOUT_MESSAGE));
+    }
+
     @Override
     public void close() {
         boolean alreadyClosed = withInterruptibleLock(closeLock, () -> {
@@ -150,9 +165,9 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
         GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
                 metadata);
         if (clientSession != null) {
-            filesCollection.insertOne(clientSession, gridFSFile);
+            withNullableTimeout(filesCollection, timeout).insertOne(clientSession, gridFSFile);
         } else {
-            filesCollection.insertOne(gridFSFile);
+            withNullableTimeout(filesCollection, timeout).insertOne(gridFSFile);
         }
         buffer = null;
     }
@@ -160,23 +175,28 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private void writeChunk() {
         if (bufferOffset > 0) {
             if (clientSession != null) {
-                chunksCollection.insertOne(clientSession, new Document("files_id", fileId).append("n", chunkIndex)
-                        .append("data", getData()));
+                withNullableTimeout(chunksCollection, timeout)
+                        .insertOne(clientSession, new BsonDocument("files_id", fileId)
+                                .append("n", new BsonInt32(chunkIndex))
+                                .append("data", getData()));
             } else {
-                chunksCollection.insertOne(new Document("files_id", fileId).append("n", chunkIndex).append("data", getData()));
+                withNullableTimeout(chunksCollection, timeout)
+                        .insertOne(new BsonDocument("files_id", fileId)
+                                .append("n", new BsonInt32(chunkIndex))
+                                .append("data", getData()));
             }
             chunkIndex++;
             bufferOffset = 0;
         }
     }
 
-    private Binary getData() {
+    private BsonBinary getData() {
         if (bufferOffset < chunkSizeBytes) {
             byte[] sizedBuffer = new byte[bufferOffset];
             System.arraycopy(buffer, 0, sizedBuffer, 0, bufferOffset);
             buffer = sizedBuffer;
         }
-        return new Binary(buffer);
+        return new BsonBinary(buffer);
     }
 
     private void checkClosed() {
@@ -185,5 +205,10 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
                 throw new MongoGridFSException("The OutputStream has been closed");
             }
         });
+    }
+
+    private static <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> collection,
+                                                             @Nullable final Timeout timeout) {
+        return TimeoutHelper.collectionWithTimeout(collection, TIMEOUT_MESSAGE, timeout);
     }
 }

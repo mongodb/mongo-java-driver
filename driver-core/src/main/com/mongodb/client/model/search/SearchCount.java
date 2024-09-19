@@ -16,6 +16,7 @@
 package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Projections;
 import org.bson.BsonDocument;
@@ -33,7 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Sealed
-@Beta({Beta.Reason.CLIENT, Beta.Reason.SERVER})
+@Beta({Reason.CLIENT, Reason.SERVER})
 public interface SearchCount extends Bson {
     /**
      * Returns a {@link SearchCount} that instructs to count documents exactly.

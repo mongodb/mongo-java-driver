@@ -19,12 +19,15 @@ package com.mongodb.client.internal;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.crypt.capi.MongoCrypt;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.RawBsonDocument;
 
@@ -32,6 +35,7 @@ import java.io.Closeable;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdClientSettings;
 import static com.mongodb.internal.capi.MongoCryptHelper.createProcessBuilder;
 import static com.mongodb.internal.capi.MongoCryptHelper.isMongocryptdSpawningDisabled;
@@ -39,6 +43,7 @@ import static com.mongodb.internal.capi.MongoCryptHelper.startProcess;
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
+    private static final String TIMEOUT_ERROR_MESSAGE = "Command marker exceeded the timeout limit.";
     @Nullable
     private final MongoClient client;
     @Nullable
@@ -58,7 +63,6 @@ class CommandMarker implements Closeable {
      *  <li>The extraOptions.cryptSharedLibRequired option is false.</li>
      * </ul>
      *  Then mongocryptd MUST be spawned by the driver.
-     * </p>
      */
     CommandMarker(
             final MongoCrypt mongoCrypt,
@@ -80,17 +84,19 @@ class CommandMarker implements Closeable {
         }
     }
 
-    RawBsonDocument mark(final String databaseName, final RawBsonDocument command) {
+    RawBsonDocument mark(final String databaseName, final RawBsonDocument command, @Nullable final Timeout operationTimeout) {
         if (client != null) {
             try {
                 try {
-                    return executeCommand(databaseName, command);
+                    return executeCommand(databaseName, command, operationTimeout);
+                } catch (MongoOperationTimeoutException e){
+                    throw e;
                 } catch (MongoTimeoutException e) {
                     if (processBuilder == null) {  // mongocryptdBypassSpawn=true
                         throw e;
                     }
                     startProcess(processBuilder);
-                    return executeCommand(databaseName, command);
+                    return executeCommand(databaseName, command, operationTimeout);
                 }
             } catch (MongoException e) {
                 throw wrapInClientException(e);
@@ -107,11 +113,14 @@ class CommandMarker implements Closeable {
         }
     }
 
-    private RawBsonDocument executeCommand(final String databaseName, final RawBsonDocument markableCommand) {
+    private RawBsonDocument executeCommand(final String databaseName, final RawBsonDocument markableCommand, @Nullable final Timeout operationTimeout) {
         assertNotNull(client);
-        return client.getDatabase(databaseName)
+
+        MongoDatabase mongoDatabase = client.getDatabase(databaseName)
                 .withReadConcern(ReadConcern.DEFAULT)
-                .withReadPreference(ReadPreference.primary())
+                .withReadPreference(ReadPreference.primary());
+
+        return databaseWithTimeout(mongoDatabase, TIMEOUT_ERROR_MESSAGE, operationTimeout)
                 .runCommand(markableCommand, RawBsonDocument.class);
     }
 

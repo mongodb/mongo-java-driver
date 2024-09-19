@@ -55,6 +55,10 @@ ext {
                     password project.hasProperty('nexusPassword') ? project.getProperty('nexusPassword') : ''
                 }
             }
+
+            maven {
+                url = "$rootDir/build/repo"
+            }
         }
     }
     configureJarManifestAttributes = { project ->
@@ -68,7 +72,7 @@ ext {
     }
 }
 
-def projectsNotPublishedToMaven = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor") + project("driver-lambda")
+def projectsNotPublishedToMaven = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor") + project("driver-lambda") + project(":graalvm-native-image-app")
 def publishedProjects = subprojects - projectsNotPublishedToMaven
 def scalaProjects = publishedProjects.findAll { it.name.contains('scala') }
 def javaProjects = publishedProjects - scalaProjects
@@ -96,6 +100,11 @@ configure(javaProjects) { project ->
                 artifact sourcesJar
                 artifact javadocJar
 
+                suppressPomMetadataWarningsFor("dateTimeSupportApiElements")
+                suppressPomMetadataWarningsFor("dateTimeSupportRuntimeElements")
+
+                suppressPomMetadataWarningsFor("jsonSupportApiElements")
+                suppressPomMetadataWarningsFor("jsonSupportRuntimeElements")
             }
         }
 

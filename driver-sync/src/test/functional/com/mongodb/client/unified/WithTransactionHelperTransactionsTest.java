@@ -16,24 +16,14 @@
 
 package com.mongodb.client.unified;
 
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-public class WithTransactionHelperTransactionsTest extends UnifiedSyncTest {
-    public WithTransactionHelperTransactionsTest(@SuppressWarnings("unused") final String fileDescription,
-            @SuppressWarnings("unused") final String testDescription,
-            final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
-            final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
-    }
-
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+final class WithTransactionHelperTransactionsTest extends UnifiedSyncTest {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/transactions-convenient-api");
     }
 }

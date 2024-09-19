@@ -17,9 +17,9 @@ package com.mongodb.client.syncadapter;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.binding.BindingContext;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -56,19 +56,19 @@ public final class SyncConnection implements Connection {
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final BindingContext context) {
+            final OperationContext operationContext) {
         SupplyingCallback<T> callback = new SupplyingCallback<>();
-        wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, context, callback);
+        wrapped.commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, callback);
         return callback.get();
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final BindingContext context, final boolean responseExpected, final SplittablePayload payload,
+            final OperationContext operationContext, final boolean responseExpected, final SplittablePayload payload,
             final FieldNameValidator payloadFieldNameValidator) {
         SupplyingCallback<T> callback = new SupplyingCallback<>();
-        wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, context,
+        wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, operationContext,
                 responseExpected, payload, payloadFieldNameValidator, callback);
         return callback.get();
     }

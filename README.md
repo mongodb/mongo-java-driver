@@ -8,13 +8,15 @@ Reference and API documentation for the Java driver is available [here](https://
 
 Reference and API documentation for the Kotlin driver is available [here](https://www.mongodb.com/docs/drivers/kotlin/coroutine/current/).
 
+Reference and API documentation for the Scala driver is available [here](https://www.mongodb.com/docs/languages/scala/scala-driver/current/). 
+
 ## Tutorials / Training
 
 For tutorials on how to use the MongoDB JVM Drivers, please reference [MongoDB University](https://learn.mongodb.com/). Additional tutorials, videos, and code examples using both the Java Driver and the Kotlin Driver can also be found in the [MongoDB Developer Center](https://www.mongodb.com/developer/).
 
 ## Support / Feedback
 
-For issues with, questions about, or feedback for the MongoDB Java and Kotlin drivers, please look into
+For issues with, questions about, or feedback for the MongoDB Java, Kotlin, and Scala drivers, please look into
 our [support channels](https://www.mongodb.com/docs/manual/support/). Please
 do not email any of the driver developers directly with issues or
 questions - you're more likely to get an answer on the [MongoDB Community Forums](https://community.mongodb.com/tags/c/drivers-odms-connectors/7/java-driver) or [StackOverflow](https://stackoverflow.com/questions/tagged/mongodb+java).
@@ -26,7 +28,7 @@ any connectivity-related exceptions and post those as well.
 
 ## Bugs / Feature Requests
 
-Think you’ve found a bug in the Java or Kotlin drivers? Want to see a new feature in the drivers? Please open a
+Think you’ve found a bug in the Java, Kotlin, or Scala drivers? Want to see a new feature in the drivers? Please open a
 case in our issue management tool, JIRA:
 
 - [Create an account and login](https://jira.mongodb.org).
@@ -40,17 +42,28 @@ MongoDB project, please report it according to the [instructions here](https://w
 
 ## Versioning
 
-Major increments (such as 3.x -> 4.x) will occur when break changes are being made to the public API.  All methods and
+Major increments (such as 4.x -> 5.x) will occur when breaking changes are being made to the public API.  All methods and
 classes removed in a major release will have been deprecated in a prior release of the previous major release branch, and/or otherwise
 called out in the release notes.
 
-Minor 4.x increments (such as 4.1, 4.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
+Minor 5.x increments (such as 5.1, 5.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
 fixes occur that may have behavioral changes that may affect some edge cases (such as dependence on behavior resulting from a bug). An
 example of an enhancement is a method or class added to support new functionality added to the MongoDB server.   Minor releases will
 almost always be binary compatible with prior minor releases from the same major release branch, except as noted below.
 
-Patch 4.x.y increments (such as 4.0.0 -> 4.0.1, 4.1.1 -> 4.1.2, etc) will occur for bug fixes only and will always be binary compatible
+Patch 5.x.y increments (such as 5.0.0 -> 5.0.1, 5.1.1 -> 5.1.2, etc) will occur for bug fixes only and will always be binary compatible
 with prior patch releases of the same minor release branch.
+
+#### @Alpha
+
+APIs marked with the `@Alpha` annotation are in the early stages of development, subject to incompatible changes, 
+or even removal, in a future release and may lack some intended features. An APIs bearing `@Alpha` annotation may 
+contain known issues affecting functionality, performance, and stability. They are also exempt from any compatibility 
+guarantees made by its containing library.
+
+It is inadvisable for <i>applications</i> to use Alpha APIs in production environments or for <i>libraries</i>
+(which get included on users' CLASSPATHs, outside the library developers' control) to depend on these APIs. Alpha APIs
+are intended for <b>experimental purposes</b> only.
 
 #### @Beta
 

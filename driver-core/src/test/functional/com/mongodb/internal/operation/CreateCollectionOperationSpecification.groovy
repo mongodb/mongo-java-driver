@@ -38,7 +38,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
 
     def 'should have the correct defaults'() {
         when:
-        CreateCollectionOperation operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        CreateCollectionOperation operation = createOperation()
 
         then:
         !operation.isCapped()
@@ -61,7 +61,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         def validator = BsonDocument.parse('{ level: { $gte : 10 }}')
 
         when:
-        CreateCollectionOperation operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        CreateCollectionOperation operation = createOperation()
             .autoIndex(false)
             .capped(true)
             .sizeInBytes(1000)
@@ -91,7 +91,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
 
         when:
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = createOperation()
         execute(operation, async)
 
         then:
@@ -108,16 +108,16 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         if (serverVersionLessThan(4, 2)) {
             storageEngineOptions.append('mmapv1', new BsonDocument())
         }
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = createOperation()
                 .storageEngineOptions(storageEngineOptions)
 
         when:
         execute(operation, async)
 
         then:
-        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
-            it -> it.getString('name').value == getCollectionName()
-        }.getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
+                .execute(getBinding()).next().find { it -> it.getString('name').value == getCollectionName() }
+                .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
 
         where:
         async << [true, false]
@@ -130,17 +130,16 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         if (serverVersionLessThan(4, 2)) {
             storageEngineOptions.append('mmapv1', new BsonDocument())
         }
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = createOperation()
                 .storageEngineOptions(storageEngineOptions)
 
         when:
         execute(operation, async)
 
         then:
-        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
-            it -> it.getString('name').value == getCollectionName()
-        }.getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
-
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec())
+                .execute(getBinding()).next().find { it -> it.getString('name').value == getCollectionName() }
+                .getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
         where:
         async << [true, false]
     }
@@ -148,7 +147,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should create capped collection'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = createOperation()
                 .capped(true)
                 .maxDocuments(100)
                 .sizeInBytes(40 * 1024)
@@ -177,7 +176,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should create collection in respect to the autoIndex option'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = createOperation()
                 .autoIndex(autoIndex)
 
         when:
@@ -199,7 +198,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         given:
         assert !collectionNameExists(getCollectionName())
         def indexOptionDefaults = BsonDocument.parse('{ storageEngine: { wiredTiger : {} }}')
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = createOperation()
                 .indexOptionDefaults(indexOptionDefaults)
 
         when:
@@ -218,7 +217,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         given:
         assert !collectionNameExists(getCollectionName())
         def validator = BsonDocument.parse('{ level: { $gte : 10 }}')
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = createOperation()
                 .validator(validator)
                 .validationLevel(ValidationLevel.MODERATE)
                 .validationAction(ValidationAction.ERROR)
@@ -247,7 +246,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should throw on write concern error'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName(), new WriteConcern(5))
+        def operation = createOperation(new WriteConcern(5))
 
         when:
         execute(operation, async)
@@ -264,7 +263,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     @IgnoreIf({ serverVersionLessThan(3, 4) })
     def 'should be able to create a collection with a collation'() {
         given:
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName()).collation(defaultCollation)
+        def operation = createOperation().collation(defaultCollation)
 
         when:
         execute(operation, async)
@@ -287,6 +286,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         getCollectionInfo(collectionName) != null
     }
 
+
     BsonDocument storageStats() {
         if (serverVersionLessThan(6, 2)) {
             return new CommandReadOperation<>(getDatabaseName(),
@@ -294,6 +294,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
                     new BsonDocumentCodec()).execute(getBinding())
         }
         BatchCursor<BsonDocument> cursor = new AggregateOperation(
+
                 getNamespace(),
                 singletonList(new BsonDocument('$collStats', new BsonDocument('storageStats', new BsonDocument()))),
                 new BsonDocumentCodec()).execute(getBinding())
@@ -302,5 +303,13 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         } finally {
             cursor.close()
         }
+    }
+
+    def createOperation() {
+        createOperation(null)
+    }
+
+    def createOperation(WriteConcern writeConcern) {
+        new CreateCollectionOperation(getDatabaseName(), getCollectionName(), writeConcern)
     }
 }

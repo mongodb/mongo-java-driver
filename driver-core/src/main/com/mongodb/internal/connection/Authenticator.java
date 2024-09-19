@@ -21,11 +21,13 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -40,6 +42,11 @@ public abstract class Authenticator {
         this.credential = credential;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
+    }
+
+    public static boolean shouldAuthenticate(@Nullable final Authenticator authenticator,
+            final ConnectionDescription connectionDescription) {
+        return authenticator != null && connectionDescription.getServerType() != ServerType.REPLICA_SET_ARBITER;
     }
 
     @NonNull
@@ -89,8 +96,20 @@ public abstract class Authenticator {
 
     }
 
-    abstract void authenticate(InternalConnection connection, ConnectionDescription connectionDescription);
+    abstract void authenticate(InternalConnection connection, ConnectionDescription connectionDescription,
+            OperationContext operationContext);
 
     abstract void authenticateAsync(InternalConnection connection, ConnectionDescription connectionDescription,
-                                    SingleResultCallback<Void> callback);
+            OperationContext operationContext, SingleResultCallback<Void> callback);
+
+    public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
+        authenticate(connection, connection.getDescription(), operationContext);
+    }
+
+    public void reauthenticateAsync(final InternalConnection connection, final OperationContext operationContext,
+                                    final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun((c) -> {
+            authenticateAsync(connection, connection.getDescription(), operationContext, c);
+        }).finish(callback);
+    }
 }

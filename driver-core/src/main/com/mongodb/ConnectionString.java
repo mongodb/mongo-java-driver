@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerMonitoringMode;
@@ -47,7 +49,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -74,8 +80,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
@@ -94,8 +99,7 @@ import static java.util.Collections.unmodifiableList;
  * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
- * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
- * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * <li>{@code ?options} are connection options. Options are name=value pairs and the pairs
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
  * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
@@ -137,9 +141,12 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
+ * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation. Note: This parameter is part of an {@linkplain Alpha Alpha API} and may be
+ * subject to changes or even removal in future releases.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
- * This option is the same as {@link SocketSettings#getReadTimeout(TimeUnit)}.</li>
+ * This option is the same as {@link SocketSettings#getReadTimeout(TimeUnit)}.
+ * Deprecated, use {@code timeoutMS} instead.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
@@ -159,7 +166,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum duration to wait until either:
  * an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available},
  * or a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
- * See {@link #getMaxWaitTime()} for more details.</li>
+ * See {@link #getMaxWaitTime()} for more details. . Deprecated, use {@code timeoutMS} instead.</li>
  * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
  * </ul>
  * <p>Write concern configuration:</p>
@@ -187,7 +194,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code wtimeoutMS=ms}
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
- * <li>Used in combination with {@code w}</li>
+ * <li>Used in combination with {@code w}. Deprecated, use {@code timeoutMS} instead</li>
  * </ul>
  * </li>
  * </ul>
@@ -225,9 +232,9 @@ import static java.util.Collections.unmodifiableList;
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
- * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
+ * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509|MONGODB-OIDC}: The authentication mechanism to use if a credential was supplied.
  * The default is unspecified, in which case the client will pick the most secure mechanism available based on the sever version.  For the
- * GSSAPI and MONGODB-X509 mechanisms, no password is accepted, only the username.
+ * GSSAPI, MONGODB-X509, and MONGODB-OIDC mechanisms, no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the connection string.
@@ -281,6 +288,9 @@ public class ConnectionString {
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
             new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
+    private static final List<String> MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING = Stream.of(ALLOWED_HOSTS_KEY)
+            .map(k -> k.toLowerCase())
+            .collect(Collectors.toList());
 
     private final MongoCredential credential;
     private final boolean isSrvProtocol;
@@ -306,6 +316,7 @@ public class ConnectionString {
     private Integer maxConnectionLifeTime;
     private Integer maxConnecting;
     private Integer connectTimeout;
+    private Long timeout;
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
@@ -361,16 +372,18 @@ public class ConnectionString {
 
         // Split out the user and host information
         String userAndHostInformation;
-        int idx = unprocessedConnectionString.indexOf("/");
-        if (idx == -1) {
-            if (unprocessedConnectionString.contains("?")) {
-                throw new IllegalArgumentException("The connection string contains options without trailing slash");
-            }
+        int firstForwardSlashIdx = unprocessedConnectionString.indexOf("/");
+        int firstQuestionMarkIdx = unprocessedConnectionString.indexOf("?");
+        if (firstQuestionMarkIdx == -1 && firstForwardSlashIdx == -1) {
             userAndHostInformation = unprocessedConnectionString;
             unprocessedConnectionString = "";
+        } else if (firstQuestionMarkIdx != -1 && (firstForwardSlashIdx == -1 || firstQuestionMarkIdx < firstForwardSlashIdx)) {
+            // there is a question mark, and there is no slash or the question mark comes before any slash
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstQuestionMarkIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstQuestionMarkIdx);
         } else {
-            userAndHostInformation = unprocessedConnectionString.substring(0, idx);
-            unprocessedConnectionString = unprocessedConnectionString.substring(idx + 1);
+            userAndHostInformation = unprocessedConnectionString.substring(0, firstForwardSlashIdx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(firstForwardSlashIdx + 1);
         }
 
         // Split the user and host information
@@ -378,7 +391,7 @@ public class ConnectionString {
         String hostIdentifier;
         String userName = null;
         char[] password = null;
-        idx = userAndHostInformation.lastIndexOf("@");
+        int idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
             hostIdentifier = userAndHostInformation.substring(idx + 1);
@@ -496,6 +509,7 @@ public class ConnectionString {
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
+        warnDeprecatedTimeouts(combinedOptionsMaps);
     }
 
     private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<>();
@@ -504,16 +518,18 @@ public class ConnectionString {
     private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<>();
     private static final Set<String> COMPRESSOR_KEYS = new HashSet<>();
     private static final Set<String> ALL_KEYS = new HashSet<>();
+    private static final Set<String> DEPRECATED_TIMEOUT_KEYS = new HashSet<>();
 
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
         GENERAL_OPTIONS_KEYS.add("maxpoolsize");
+        GENERAL_OPTIONS_KEYS.add("timeoutms");
+        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
         GENERAL_OPTIONS_KEYS.add("maxconnecting");
-        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
 
         // Order matters here: Having tls after ssl means than the tls option will supersede the ssl option when both are set
         GENERAL_OPTIONS_KEYS.add("ssl");
@@ -576,6 +592,10 @@ public class ConnectionString {
         ALL_KEYS.addAll(READ_PREFERENCE_KEYS);
         ALL_KEYS.addAll(WRITE_CONCERN_KEYS);
         ALL_KEYS.addAll(COMPRESSOR_KEYS);
+
+        DEPRECATED_TIMEOUT_KEYS.add("sockettimeoutms");
+        DEPRECATED_TIMEOUT_KEYS.add("waitqueuetimeoutms");
+        DEPRECATED_TIMEOUT_KEYS.add("wtimeoutms");
     }
 
     // Any options contained in the connection string completely replace the corresponding options specified in TXT records,
@@ -589,14 +609,22 @@ public class ConnectionString {
 
 
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
-        for (final String key : optionsMap.keySet()) {
-            if (!ALL_KEYS.contains(key)) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Connection string contains unsupported option '%s'.", key));
-                }
-            }
+        if (LOGGER.isWarnEnabled()) {
+            optionsMap.keySet()
+                    .stream()
+                    .filter(k -> !ALL_KEYS.contains(k))
+                    .forEach(k -> LOGGER.warn(format("Connection string contains unsupported option '%s'.", k)));
         }
     }
+    private void warnDeprecatedTimeouts(final Map<String, List<String>> optionsMap) {
+        if (LOGGER.isWarnEnabled()) {
+            optionsMap.keySet()
+                    .stream()
+                    .filter(DEPRECATED_TIMEOUT_KEYS::contains)
+                    .forEach(k -> LOGGER.warn(format("Use of deprecated timeout option: '%s'. Prefer 'timeoutMS' instead.", k)));
+        }
+    }
+
 
     private void translateOptions(final Map<String, List<String>> optionsMap) {
         boolean tlsInsecureSet = false;
@@ -631,6 +659,9 @@ public class ConnectionString {
                     break;
                 case "sockettimeoutms":
                     socketTimeout = parseInteger(value, "sockettimeoutms");
+                    break;
+                case "timeoutms":
+                    timeout = parseLong(value, "timeoutms");
                     break;
                 case "proxyhost":
                     proxyHost = value;
@@ -898,7 +929,6 @@ public class ConnectionString {
             }
         }
 
-
         MongoCredential credential = null;
         if (mechanism != null) {
             credential = createMongoCredentialWithMechanism(mechanism, userName, password, authSource, gssapiServiceName);
@@ -909,13 +939,18 @@ public class ConnectionString {
 
         if (credential != null && authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
-                String[] mechanismPropertyKeyValue = part.split(":");
+                String[] mechanismPropertyKeyValue = part.split(":", 2);
                 if (mechanismPropertyKeyValue.length != 2) {
                     throw new IllegalArgumentException(format("The connection string contains invalid authentication properties. "
                             + "'%s' is not a key value pair", part));
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
+                if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
+                    throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
+                            + "'%s' must be set on the credential programmatically.", key));
+                }
+
                 if (key.equals("canonicalize_host_name")) {
                     credential = credential.withMechanismProperty(key, Boolean.valueOf(value));
                 } else {
@@ -975,6 +1010,10 @@ public class ConnectionString {
             case MONGODB_AWS:
                 credential = MongoCredential.createAwsCredential(userName, password);
                 break;
+            case MONGODB_OIDC:
+                validateCreateOidcCredential(password);
+                credential = MongoCredential.createOidcCredential(userName);
+                break;
             default:
                 throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
                                                                        + "'%s' is not a supported authentication mechanism",
@@ -1002,12 +1041,12 @@ public class ConnectionString {
 
     private Map<String, List<String>> parseOptions(final String optionsPart) {
         Map<String, List<String>> optionsMap = new HashMap<>();
-        if (optionsPart.length() == 0) {
+        if (optionsPart.isEmpty()) {
             return optionsMap;
         }
 
         for (final String part : optionsPart.split("&|;")) {
-            if (part.length() == 0) {
+            if (part.isEmpty()) {
                 continue;
             }
             int idx = part.indexOf("=");
@@ -1144,6 +1183,15 @@ public class ConnectionString {
         }
     }
 
+    private long parseLong(final String input, final String key) {
+        try {
+            return Long.parseLong(input);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(format("The connection string contains an invalid value for '%s'. "
+                    + "'%s' is not a valid long", key, input));
+        }
+    }
+
     private List<String> parseHosts(final List<String> rawHosts) {
         if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
@@ -1161,7 +1209,7 @@ public class ConnectionString {
                 }
                 int idx = host.indexOf("]:");
                 if (idx != -1) {
-                    validatePort(host, host.substring(idx + 2));
+                    validatePort(host.substring(idx + 2));
                 }
             } else {
                 int colonCount = countOccurrences(host, ":");
@@ -1170,7 +1218,7 @@ public class ConnectionString {
                             + "Reserved characters such as ':' must be escaped according RFC 2396. "
                             + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
                 } else if (colonCount == 1) {
-                    validatePort(host, host.substring(host.indexOf(":") + 1));
+                    validatePort(host.substring(host.indexOf(":") + 1));
                 }
             }
             hosts.add(host);
@@ -1179,19 +1227,17 @@ public class ConnectionString {
         return hosts;
     }
 
-    private void validatePort(final String host, final String port) {
-        boolean invalidPort = false;
+    private void validatePort(final String port) {
         try {
             int portInt = Integer.parseInt(port);
             if (portInt <= 0 || portInt > 65535) {
-                invalidPort = true;
+                throw new IllegalArgumentException("The connection string contains an invalid host and port. "
+                        + "The port must be an integer between 0 and 65535.");
             }
         } catch (NumberFormatException e) {
-            invalidPort = true;
-        }
-        if (invalidPort) {
-            throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
-                    + "The port '%s' is not a valid, it must be an integer between 0 and 65535", host, port));
+            throw new IllegalArgumentException("The connection string contains an invalid host and port. "
+                    + "The port contains non-digit characters, it must be an integer between 0 and 65535. "
+                    + "Hint: username and password must be escaped according to RFC 3986.");
         }
     }
 
@@ -1519,6 +1565,38 @@ public class ConnectionString {
     }
 
     /**
+     * The time limit for the full execution of an operation in milliseconds.
+     *
+     * <p>If set the following deprecated options will be ignored:
+     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
+     *
+     * <ul>
+     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
+     *    <ul>
+     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
+     *        available</li>
+     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
+     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
+     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
+     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
+     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
+     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
+     *   </ul>
+     *   </li>
+     *   <li>{@code 0} means infinite timeout.</li>
+     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
+     * </ul>
+     *
+     * @return the time limit for the full execution of an operation in milliseconds or null.
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    @Nullable
+    public Long getTimeout() {
+        return timeout;
+    }
+
+    /**
      * Gets the socket connect timeout specified in the connection string.
      * @return the socket connect timeout
      */
@@ -1722,6 +1800,7 @@ public class ConnectionString {
                 && Objects.equals(maxConnectionLifeTime, that.maxConnectionLifeTime)
                 && Objects.equals(maxConnecting, that.maxConnecting)
                 && Objects.equals(connectTimeout, that.connectTimeout)
+                && Objects.equals(timeout, that.timeout)
                 && Objects.equals(socketTimeout, that.socketTimeout)
                 && Objects.equals(proxyHost, that.proxyHost)
                 && Objects.equals(proxyPort, that.proxyPort)
@@ -1745,7 +1824,7 @@ public class ConnectionString {
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
-                maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
+                maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
                 serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,
                 proxyPort, proxyUsername, proxyPassword);

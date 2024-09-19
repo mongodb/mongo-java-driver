@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.async;
 
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
@@ -170,12 +171,50 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         return (c) -> {
             this.unsafeFinish((r, e) -> {
                 if (e == null) {
-                    runnable.unsafeFinish(c);
+                    /* If 'runnable' is executed on a different thread from the one that executed the initial 'finish()',
+                     then invoking 'finish()' within 'runnable' will catch and propagate any exceptions to 'c' (the callback). */
+                    runnable.finish(c);
                 } else {
                     c.completeExceptionally(e);
                 }
             });
         };
+    }
+
+    /**
+     * The error check checks if the exception is an instance of the provided class.
+     * @see #thenRunTryCatchAsyncBlocks(AsyncRunnable, java.util.function.Predicate, AsyncFunction)
+     */
+    default <T extends Throwable> AsyncRunnable thenRunTryCatchAsyncBlocks(
+            final AsyncRunnable runnable,
+            final Class<T> exceptionClass,
+            final AsyncFunction<Throwable, Void> errorFunction) {
+        return thenRunTryCatchAsyncBlocks(runnable, e -> exceptionClass.isInstance(e), errorFunction);
+    }
+
+    /**
+     * Convenience method corresponding to a try-catch block in sync code.
+     * This MUST be used to properly handle cases where there is code above
+     * the block, whose errors must not be caught by an ensuing
+     * {@link #onErrorIf(java.util.function.Predicate, AsyncFunction)}.
+     *
+     * @param runnable corresponds to the contents of the try block
+     * @param errorCheck for matching on an error (or, a more complex condition)
+     * @param errorFunction corresponds to the contents of the catch block
+     * @return the composition of this runnable, a runnable that runs the
+     * provided runnable, followed by (composed with) the error function, which
+     * is conditional on there being an exception meeting the error check.
+     */
+    default AsyncRunnable thenRunTryCatchAsyncBlocks(
+            final AsyncRunnable runnable,
+            final Predicate<Throwable> errorCheck,
+            final AsyncFunction<Throwable, Void> errorFunction) {
+        return this.thenRun(c -> {
+            beginAsync()
+                    .thenRun(runnable)
+                    .onErrorIf(errorCheck, errorFunction)
+                    .finish(c);
+        });
     }
 
     /**
@@ -199,7 +238,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                     return;
                 }
                 if (matched) {
-                    runnable.unsafeFinish(callback);
+                    runnable.finish(callback);
                 } else {
                     callback.complete(callback);
                 }
@@ -216,7 +255,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         return (c) -> {
             this.unsafeFinish((r, e) -> {
                 if (e == null) {
-                    supplier.unsafeFinish(c);
+                    supplier.finish(c);
                 } else {
                     c.completeExceptionally(e);
                 }
@@ -231,10 +270,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * @see RetryingAsyncCallbackSupplier
      */
     default AsyncRunnable thenRunRetryingWhile(
-            final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
+            final TimeoutContext timeoutContext, final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryState(),
+                    new RetryState(timeoutContext),
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of

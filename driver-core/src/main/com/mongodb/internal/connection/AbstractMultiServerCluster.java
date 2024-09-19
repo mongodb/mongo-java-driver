@@ -24,20 +24,25 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.UNKNOWN;
@@ -122,14 +127,14 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     @Override
-    public ClusterableServer getServer(final ServerAddress serverAddress) {
+    public ServersSnapshot getServersSnapshot(final Timeout serverSelectionTimeout,
+                                              final TimeoutContext timeoutContext) {
         isTrue("is open", !isClosed());
-
-        ServerTuple serverTuple = addressToServerTupleMap.get(serverAddress);
-        if (serverTuple == null) {
-            return null;
-        }
-        return serverTuple.server;
+        Map<ServerAddress, ServerTuple> nonAtomicSnapshot = new HashMap<>(addressToServerTupleMap);
+        return serverAddress -> {
+            ServerTuple serverTuple = nonAtomicSnapshot.get(serverAddress);
+            return serverTuple == null ? null : serverTuple.server;
+        };
     }
 
     void onChange(final Collection<ServerAddress> newHosts) {
@@ -234,7 +239,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (replicaSetName == null) {
-            replicaSetName = newDescription.getSetName();
+            replicaSetName = assertNotNull(newDescription.getSetName());
         }
 
         if (!replicaSetName.equals(newDescription.getSetName())) {

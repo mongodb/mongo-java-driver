@@ -16,9 +16,7 @@
 
 package com.mongodb.client.unified;
 
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,14 +24,11 @@ import java.util.Collection;
 
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-public class UnifiedTransactionsTest extends UnifiedSyncTest {
-    public UnifiedTransactionsTest(@SuppressWarnings("unused") final String fileDescription,
-                                   @SuppressWarnings("unused") final String testDescription,
-                                   final String schemaVersion, final BsonArray runOnRequirements, final BsonArray entitiesArray,
-                                   final BsonArray initialData, final BsonDocument definition) {
-        super(schemaVersion, runOnRequirements, entitiesArray, initialData, definition);
+final class UnifiedTransactionsTest extends UnifiedSyncTest {
+    @Override
+    protected void skips(final String fileDescription, final String testDescription) {
         assumeFalse(fileDescription.equals("count"));
         if (serverVersionLessThan(4, 4) && isSharded()) {
             assumeFalse(fileDescription.equals("pin-mongos") && testDescription.equals("distinct"));
@@ -43,8 +38,7 @@ public class UnifiedTransactionsTest extends UnifiedSyncTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
+    private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/transactions");
     }
 }

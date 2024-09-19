@@ -28,8 +28,6 @@ import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * An operation that atomically finds and deletes a single document.
  *
@@ -38,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
 
     public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder) {
+            final Decoder<T> decoder) {
         super(namespace, writeConcern, retryWrites, decoder);
     }
 
@@ -51,12 +49,6 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     @Override
     public FindAndDeleteOperation<T> projection(@Nullable final BsonDocument projection) {
         super.projection(projection);
-        return this;
-    }
-
-    @Override
-    public FindAndDeleteOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        super.maxTime(maxTime, timeUnit);
         return this;
     }
 
@@ -97,7 +89,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     protected FieldNameValidator getFieldNameValidator() {
-        return new NoOpFieldNameValidator();
+        return NoOpFieldNameValidator.INSTANCE;
     }
 
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {

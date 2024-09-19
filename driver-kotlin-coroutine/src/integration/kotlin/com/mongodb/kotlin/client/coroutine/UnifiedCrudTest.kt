@@ -15,32 +15,21 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
-import com.mongodb.client.unified.UnifiedCrudTest.customSkips
+import com.mongodb.client.unified.UnifiedCrudTest.doSkips
 import java.io.IOException
 import java.net.URISyntaxException
-import org.bson.BsonArray
-import org.bson.BsonDocument
-import org.junit.runners.Parameterized
+import org.junit.jupiter.params.provider.Arguments
 
-internal class UnifiedCrudTest(
-    fileDescription: String?,
-    testDescription: String,
-    schemaVersion: String,
-    runOnRequirements: BsonArray?,
-    entitiesArray: BsonArray,
-    initialData: BsonArray,
-    definition: BsonDocument
-) : UnifiedTest(fileDescription, schemaVersion, runOnRequirements, entitiesArray, initialData, definition) {
+internal class UnifiedCrudTest() : UnifiedTest() {
 
-    init {
-        customSkips(fileDescription, testDescription)
+    override fun skips(fileDescription: String, testDescription: String) {
+        doSkips(fileDescription, testDescription)
     }
 
     companion object {
         @JvmStatic
-        @Parameterized.Parameters(name = "{0}: {1}")
         @Throws(URISyntaxException::class, IOException::class)
-        fun data(): Collection<Array<Any?>?>? {
+        fun data(): Collection<Arguments>? {
             return getTestData("unified-test-format/crud")
         }
     }

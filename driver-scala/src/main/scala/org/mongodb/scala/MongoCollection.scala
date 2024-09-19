@@ -16,6 +16,7 @@
 
 package org.mongodb.scala
 
+import com.mongodb.annotations.{ Alpha, Reason }
 import com.mongodb.client.model.DropCollectionOptions
 
 import java.util
@@ -27,6 +28,7 @@ import org.mongodb.scala.model._
 import org.mongodb.scala.result._
 
 import scala.collection.JavaConverters._
+import scala.concurrent.duration.{ Duration, MILLISECONDS, TimeUnit }
 import scala.reflect.ClassTag
 
 // scalastyle:off number.of.methods file.size.limit
@@ -84,6 +86,29 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   lazy val readConcern: ReadConcern = wrapped.getReadConcern
 
   /**
+   * The time limit for the full execution of an operation.
+   *
+   * If not null the following deprecated options will be ignored: `waitQueueTimeoutMS`, `socketTimeoutMS`,
+   * `wTimeoutMS`, `maxTimeMS` and `maxCommitTimeMS`.
+   *
+   *   - `null` means that the timeout mechanism for operations will defer to using:
+   *      - `waitQueueTimeoutMS`: The maximum wait time in milliseconds that a thread may wait for a connection to become available
+   *      - `socketTimeoutMS`: How long a send or receive on a socket can take before timing out.
+   *      - `wTimeoutMS`: How long the server will wait for  the write concern to be fulfilled before timing out.
+   *      - `maxTimeMS`: The time limit for processing operations on a cursor.
+   *        See: [cursor.maxTimeMS](https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS").
+   *      - `maxCommitTimeMS`: The maximum amount of time to allow a single `commitTransaction` command to execute.
+   *   - `0` means infinite timeout.
+   *   - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @return the optional timeout duration
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  lazy val timeout: Option[Duration] =
+    Option.apply(wrapped.getTimeout(MILLISECONDS)).map(t => Duration(t, MILLISECONDS))
+
+  /**
    * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
    *
    * @tparam C   The type that the new collection will encode documents from and decode documents to
@@ -135,6 +160,20 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    */
   def withReadConcern(readConcern: ReadConcern): MongoCollection[TResult] =
     MongoCollection(wrapped.withReadConcern(readConcern))
+
+  /**
+   * Sets the time limit for the full execution of an operation.
+   *
+   * - `0` means infinite timeout.
+   * - `> 0` The time limit to use for the full execution of an operation.
+   *
+   * @param timeout the timeout, which must be greater than or equal to 0
+   * @return a new MongoCollection instance with the set time limit for operations
+   * @since 5.2
+   */
+  @Alpha(Array(Reason.CLIENT))
+  def withTimeout(timeout: Duration): MongoCollection[TResult] =
+    MongoCollection(wrapped.withTimeout(timeout.toMillis, MILLISECONDS))
 
   /**
    * Gets an estimate of the count of documents in a collection using collection metadata.
@@ -1375,7 +1414,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param definition the search index mapping definition.
    * @return an Observable with the search index name.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
    */
   def createSearchIndex(indexName: String, definition: Bson): SingleObservable[String] =
@@ -1387,7 +1426,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param definition the search index mapping definition.
    * @return an Observable with search index name.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
    */
   def createSearchIndex(definition: Bson): SingleObservable[String] = wrapped.createSearchIndex(definition)
@@ -1402,7 +1441,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @return an Observable with the names of the search indexes
    *         in the order specified by the given list of [[org.mongodb.scala.model.SearchIndexModel]]s.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/createSearchIndexes/ Create Search Indexes]]
    */
   def createSearchIndexes(searchIndexModels: List[SearchIndexModel]): Observable[String] =
@@ -1415,7 +1454,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param definition the search index mapping definition.
    * @return an Observable that indicates when the operation has completed.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/updateSearchIndex/ Update Search Index]]
    */
   def updateSearchIndex(indexName: String, definition: Bson): SingleObservable[Unit] =
@@ -1427,7 +1466,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param indexName the name of the search index to drop.
    * @return an Observable that indicates when the operation has completed.
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/command/dropSearchIndex/ Drop Search Index]]
    */
   def dropSearchIndex(indexName: String): SingleObservable[Unit] = wrapped.dropSearchIndex(indexName)
@@ -1438,7 +1477,7 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @tparam C the target document type of the observable.
    * @return the fluent list search indexes interface
    * @since 4.11
-   * @note Requires MongoDB 7.0 or greater
+   * @note Requires MongoDB 6.0 or greater
    * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSearchIndexes List Search Indexes]]
    */
   def listSearchIndexes[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ListSearchIndexesObservable[C] =

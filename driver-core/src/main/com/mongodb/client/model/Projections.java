@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.annotations.Beta;
+import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchCount;
@@ -214,7 +215,7 @@ public final class Projections {
 
     /**
      * Creates a projection to the given field name of the vectorSearchScore,
-     * for use with {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, long, VectorSearchOptions)}.
+     * for use with {@link Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)} .
      * Calling this method is equivalent to calling {@link #meta(String, String)} with {@code "vectorSearchScore"} as the second argument.
      *
      * @param fieldName the field name
@@ -223,7 +224,7 @@ public final class Projections {
      * @mongodb.server.release 6.0.10
      * @since 4.11
      */
-    @Beta(Beta.Reason.SERVER)
+    @Beta(Reason.SERVER)
     public static Bson metaVectorSearchScore(final String fieldName) {
         return meta(fieldName, "vectorSearchScore");
     }

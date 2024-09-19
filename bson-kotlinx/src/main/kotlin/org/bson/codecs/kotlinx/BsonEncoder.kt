@@ -25,6 +25,7 @@ import kotlinx.serialization.descriptors.SerialKind
 import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeEncoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.BsonValue
 import org.bson.BsonWriter
@@ -37,31 +38,57 @@ import org.bson.types.ObjectId
  *
  * For custom serialization handlers
  */
-public sealed interface BsonEncoder {
+@ExperimentalSerializationApi
+internal sealed interface BsonEncoder : Encoder, CompositeEncoder {
+
+    /** Factory helper for creating concrete BsonEncoder implementations */
+    companion object {
+        @Suppress("SwallowedException")
+        private val hasJsonEncoder: Boolean by lazy {
+            try {
+                Class.forName("kotlinx.serialization.json.JsonEncoder")
+                true
+            } catch (e: ClassNotFoundException) {
+                false
+            }
+        }
+
+        fun createBsonEncoder(
+            writer: BsonWriter,
+            serializersModule: SerializersModule,
+            configuration: BsonConfiguration
+        ): BsonEncoder {
+            return if (hasJsonEncoder) JsonBsonEncoder(writer, serializersModule, configuration)
+            else BsonEncoderImpl(writer, serializersModule, configuration)
+        }
+    }
 
     /**
      * Encodes an ObjectId
      *
      * @param value the ObjectId
      */
-    public fun encodeObjectId(value: ObjectId)
+    fun encodeObjectId(value: ObjectId)
 
     /**
      * Encodes a BsonValue
      *
      * @param value the BsonValue
      */
-    public fun encodeBsonValue(value: BsonValue)
-
-    /** @return the BsonWriter */
-    public fun writer(): BsonWriter
+    fun encodeBsonValue(value: BsonValue)
 }
 
-@ExperimentalSerializationApi
-internal class DefaultBsonEncoder(
-    private val writer: BsonWriter,
+/**
+ * The default BsonEncoder implementation
+ *
+ * Unlike BsonDecoder implementations, state is shared when encoding, so a single class is used to encode Bson Arrays,
+ * Documents, Polymorphic types and Maps.
+ */
+@OptIn(ExperimentalSerializationApi::class)
+internal open class BsonEncoderImpl(
+    val writer: BsonWriter,
     override val serializersModule: SerializersModule,
-    private val configuration: BsonConfiguration
+    val configuration: BsonConfiguration
 ) : BsonEncoder, AbstractEncoder() {
 
     companion object {
@@ -72,19 +99,19 @@ internal class DefaultBsonEncoder(
     private var isPolymorphic = false
     private var state = STATE.VALUE
     private var mapState = MapState()
-    private var deferredElementName: String? = null
+    internal val deferredElementHandler: DeferredElementHandler = DeferredElementHandler()
 
     override fun shouldEncodeElementDefault(descriptor: SerialDescriptor, index: Int): Boolean =
         configuration.encodeDefaults
 
     override fun beginStructure(descriptor: SerialDescriptor): CompositeEncoder {
         when (descriptor.kind) {
-            is StructureKind.LIST -> writer.writeStartArray()
             is PolymorphicKind -> {
                 writer.writeStartDocument()
                 writer.writeName(configuration.classDiscriminator)
                 isPolymorphic = true
             }
+            is StructureKind.LIST -> writer.writeStartArray()
             is StructureKind.CLASS,
             StructureKind.OBJECT -> {
                 if (isPolymorphic) {
@@ -99,7 +126,7 @@ internal class DefaultBsonEncoder(
             }
             else -> throw SerializationException("Primitives are not supported at top-level")
         }
-        return super.beginStructure(descriptor)
+        return this
     }
 
     override fun endStructure(descriptor: SerialDescriptor) {
@@ -108,7 +135,7 @@ internal class DefaultBsonEncoder(
             StructureKind.MAP,
             StructureKind.CLASS,
             StructureKind.OBJECT -> writer.writeEndDocument()
-            else -> super.endStructure(descriptor)
+            else -> {}
         }
     }
 
@@ -117,7 +144,7 @@ internal class DefaultBsonEncoder(
             is StructureKind.CLASS -> {
                 val elementName = descriptor.getElementName(index)
                 if (descriptor.getElementDescriptor(index).isNullable) {
-                    deferredElementName = elementName
+                    deferredElementHandler.set(elementName)
                 } else {
                     encodeName(elementName)
                 }
@@ -139,14 +166,28 @@ internal class DefaultBsonEncoder(
         return true
     }
 
+    override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
+        deferredElementHandler.with(
+            {
+                // When using generics its possible for `value` to be null
+                // See: https://youtrack.jetbrains.com/issue/KT-66206
+                if (value != null || configuration.explicitNulls) {
+                    encodeName(it)
+                    super<AbstractEncoder>.encodeSerializableValue(serializer, value)
+                }
+            },
+            { super<AbstractEncoder>.encodeSerializableValue(serializer, value) })
+    }
+
     override fun <T : Any> encodeNullableSerializableValue(serializer: SerializationStrategy<T>, value: T?) {
-        deferredElementName?.let {
-            if (value != null || configuration.explicitNulls) {
-                encodeName(it)
-                super.encodeNullableSerializableValue(serializer, value)
-            }
-        }
-            ?: super.encodeNullableSerializableValue(serializer, value)
+        deferredElementHandler.with(
+            {
+                if (value != null || configuration.explicitNulls) {
+                    encodeName(it)
+                    super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value)
+                }
+            },
+            { super<AbstractEncoder>.encodeNullableSerializableValue(serializer, value) })
     }
 
     override fun encodeByte(value: Byte) = encodeInt(value.toInt())
@@ -162,7 +203,7 @@ internal class DefaultBsonEncoder(
 
     override fun encodeString(value: String) {
         when (state) {
-            STATE.NAME -> encodeName(value)
+            STATE.NAME -> deferredElementHandler.set(value)
             STATE.VALUE -> writer.writeString(value)
         }
     }
@@ -183,11 +224,8 @@ internal class DefaultBsonEncoder(
         bsonValueCodec.encode(writer, value, EncoderContext.builder().build())
     }
 
-    override fun writer(): BsonWriter = writer
-
-    private fun encodeName(value: Any) {
+    internal fun encodeName(value: Any) {
         writer.writeName(value.toString())
-        deferredElementName = null
         state = STATE.VALUE
     }
 
@@ -198,7 +236,6 @@ internal class DefaultBsonEncoder(
 
     private class MapState {
         var currentState: STATE = STATE.VALUE
-
         fun getState(): STATE = currentState
 
         fun nextState(): STATE {
@@ -208,6 +245,27 @@ internal class DefaultBsonEncoder(
                     STATE.NAME -> STATE.VALUE
                 }
             return getState()
+        }
+    }
+
+    internal class DeferredElementHandler {
+        private var deferredElementName: String? = null
+
+        fun set(name: String) {
+            assert(deferredElementName == null) { "Overwriting an existing deferred name" }
+            deferredElementName = name
+        }
+
+        fun with(actionWithDeferredElement: (String) -> Unit, actionWithoutDeferredElement: () -> Unit) {
+            deferredElementName?.let {
+                reset()
+                actionWithDeferredElement(it)
+            }
+                ?: actionWithoutDeferredElement()
+        }
+
+        private fun reset() {
+            deferredElementName = null
         }
     }
 }

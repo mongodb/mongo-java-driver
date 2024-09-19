@@ -16,60 +16,41 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.MongoNamespace
+
 import com.mongodb.ReadPreference
-import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterConnectionMode
-import com.mongodb.connection.ClusterId
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ConnectionId
-import com.mongodb.connection.ServerId
-import com.mongodb.internal.IgnorableRequestContext
 import com.mongodb.internal.async.SingleResultCallback
-import com.mongodb.internal.binding.StaticBindingContext
 import com.mongodb.internal.diagnostics.logging.Logger
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
-import spock.lang.Shared
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.getServerApi
+import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.CustomMatchers.compare
-import static com.mongodb.connection.ServerType.SHARD_ROUTER
-import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO_LOWER
 
 class DefaultServerConnectionSpecification extends Specification {
-    def namespace = new MongoNamespace('test', 'test')
     def internalConnection = Mock(InternalConnection)
     def callback = errorHandlingCallback(Mock(SingleResultCallback), Mock(Logger))
-    @Shared
-    def standaloneConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-            3, STANDALONE, 100, 100, 100, [])
-    @Shared
-    def mongosConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-            3, SHARD_ROUTER, 100, 100, 100, [])
 
     def 'should execute command protocol asynchronously'() {
         given:
         def command = new BsonDocument(LEGACY_HELLO_LOWER, new BsonInt32(1))
-        def validator = new NoOpFieldNameValidator()
+        def validator = NoOpFieldNameValidator.INSTANCE
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-        def operationContext = new OperationContext()
-        def context = new StaticBindingContext(NoOpSessionContext.INSTANCE, getServerApi(), IgnorableRequestContext.INSTANCE,
-                operationContext)
+
         when:
-        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, context, callback)
+        connection.commandAsync('test', command, validator, ReadPreference.primary(), codec, OPERATION_CONTEXT, callback)
 
         then:
         1 * executor.executeAsync({
             compare(new CommandProtocolImpl('test', command, validator, ReadPreference.primary(), codec, true, null, null,
-                    ClusterConnectionMode.MULTIPLE, getServerApi(), IgnorableRequestContext.INSTANCE, operationContext), it)
-        }, internalConnection, NoOpSessionContext.INSTANCE, callback)
+                    ClusterConnectionMode.MULTIPLE, OPERATION_CONTEXT), it)
+        }, internalConnection, OPERATION_CONTEXT.getSessionContext(), callback)
     }
 }

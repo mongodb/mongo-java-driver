@@ -61,7 +61,7 @@ import org.bson.types.ObjectId
  */
 @ExperimentalSerializationApi
 public val defaultSerializersModule: SerializersModule =
-    ObjectIdSerializer.serializersModule + BsonValueSerializer.serializersModule
+    ObjectIdSerializer.serializersModule + BsonValueSerializer.serializersModule + dateTimeSerializersModule
 
 @ExperimentalSerializationApi
 @Serializer(forClass = ObjectId::class)

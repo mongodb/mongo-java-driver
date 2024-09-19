@@ -19,16 +19,21 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -48,7 +53,6 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATC
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_ITERATOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
-import static com.mongodb.internal.operation.CommandBatchCursorHelper.NO_OP_FIELD_NAME_VALIDATOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.getKillCursorsCommand;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.getMoreCommandDocument;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.logCommandCursorResult;
@@ -57,7 +61,6 @@ import static com.mongodb.internal.operation.CommandBatchCursorHelper.translateC
 class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
     private final MongoNamespace namespace;
-    private final long maxTimeMS;
     private final Decoder<T> decoder;
     @Nullable
     private final BsonValue comment;
@@ -71,6 +74,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private List<T> nextBatch;
 
     CommandBatchCursor(
+            final TimeoutMode timeoutMode,
             final BsonDocument commandCursorDocument,
             final int batchSize, final long maxTimeMS,
             final Decoder<T> decoder,
@@ -81,14 +85,16 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.commandCursorResult = toCommandCursorResult(connectionDescription.getServerAddress(), FIRST_BATCH, commandCursorDocument);
         this.namespace = commandCursorResult.getNamespace();
         this.batchSize = batchSize;
-        this.maxTimeMS = maxTimeMS;
         this.decoder = decoder;
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
 
+        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeOverride(maxTimeMS);
+
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
-        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
+                commandCursorResult.getServerCursor());
     }
 
     @Override
@@ -101,6 +107,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return true;
         }
 
+        resourceManager.checkTimeoutModeAndResetTimeoutContextIfIteration();
         while (resourceManager.getServerCursor() != null) {
             getMore();
             if (!resourceManager.operable()) {
@@ -229,12 +236,11 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 this.commandCursorResult = toCommandCursorResult(connection.getDescription().getServerAddress(), NEXT_BATCH,
                         assertNotNull(
                             connection.command(namespace.getDatabaseName(),
-                                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize,
-                                         maxTimeMS, comment),
-                                 NO_OP_FIELD_NAME_VALIDATOR,
+                                 getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
+                                 NoOpFieldNameValidator.INSTANCE,
                                  ReadPreference.primary(),
                                  CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
-                                 assertNotNull(resourceManager.getConnectionSource()))));
+                                 assertNotNull(resourceManager.getConnectionSource()).getOperationContext())));
                 nextServerCursor = commandCursorResult.getServerCursor();
             } catch (MongoCommandException e) {
                 throw translateCommandException(e, serverCursor);
@@ -252,15 +258,27 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return commandCursorResult;
     }
 
+    /**
+     * Configures the cursor's behavior to close without resetting its timeout. If {@code true}, the cursor attempts to close immediately
+     * without resetting its {@link TimeoutContext#getTimeout()} if present. This is useful when managing the cursor's close behavior externally.
+     *
+     * @param closeWithoutTimeoutReset
+     */
+    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
+        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
+    }
+
     @ThreadSafe
     private static final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
 
         ResourceManager(
+                final TimeoutMode timeoutMode,
                 final MongoNamespace namespace,
                 final ConnectionSource connectionSource,
                 @Nullable final Connection connectionToPin,
                 @Nullable final ServerCursor serverCursor) {
-            super(namespace, connectionSource, connectionToPin, serverCursor);
+            super(connectionSource.getOperationContext().getTimeoutContext(), timeoutMode, namespace, connectionSource, connectionToPin,
+                    serverCursor);
         }
 
         /**
@@ -291,6 +309,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             if (isSkipReleasingServerResourcesOnClose()) {
                 unsetServerCursor();
             }
+            resetTimeout();
             try {
                 if (getServerCursor() != null) {
                     Connection connection = getConnection();
@@ -315,6 +334,12 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 action.accept(connection);
             } catch (MongoSocketException e) {
                 onCorruptedConnection(connection, e);
+                throw e;
+            } catch (MongoOperationTimeoutException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof MongoSocketException) {
+                    onCorruptedConnection(connection, (MongoSocketException) cause);
+                }
                 throw e;
             } finally {
                 connection.release();
@@ -344,9 +369,12 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final Connection localConnection) {
+            OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.resetToDefaultMaxTime();
+
             localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
-                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec(),
-                    assertNotNull(getConnectionSource()));
+                    NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
         }
     }
 }

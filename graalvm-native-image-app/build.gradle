@@ -111,7 +111,7 @@ dependencies {
     implementation project(':driver-reactive-streams').sourceSets.test.output
     implementation "org.mongodb:mongodb-crypt:$mongoCryptVersion"
     implementation 'org.slf4j:slf4j-api:2.0.12'
-    implementation 'ch.qos.logback:logback-classic:1.5.3'
+    implementation "ch.qos.logback:logback-classic:$logbackVersion"
     implementation platform("io.projectreactor:reactor-bom:$projectReactorVersion")
     implementation 'io.projectreactor:reactor-core'
     implementation "org.graalvm.sdk:nativeimage:$graalSdkVersion"

@@ -15,29 +15,47 @@
  */
 package org.bson.codecs.kotlinx
 
+import java.math.BigDecimal
+import java.util.Base64
+import java.util.stream.Stream
 import kotlin.test.assertEquals
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.plus
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonDouble
+import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonInvalidOperationException
 import org.bson.BsonMaxKey
 import org.bson.BsonMinKey
+import org.bson.BsonString
 import org.bson.BsonUndefined
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.kotlinx.samples.Box
 import org.bson.codecs.kotlinx.samples.DataClassBsonValues
 import org.bson.codecs.kotlinx.samples.DataClassContainsOpen
 import org.bson.codecs.kotlinx.samples.DataClassContainsValueClass
 import org.bson.codecs.kotlinx.samples.DataClassEmbedded
 import org.bson.codecs.kotlinx.samples.DataClassKey
+import org.bson.codecs.kotlinx.samples.DataClassLastItemDefaultsToNull
 import org.bson.codecs.kotlinx.samples.DataClassListOfDataClasses
 import org.bson.codecs.kotlinx.samples.DataClassListOfListOfDataClasses
 import org.bson.codecs.kotlinx.samples.DataClassListOfSealed
@@ -64,18 +82,25 @@ import org.bson.codecs.kotlinx.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonProperty
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonRepresentation
 import org.bson.codecs.kotlinx.samples.DataClassWithCollections
+import org.bson.codecs.kotlinx.samples.DataClassWithContextualDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDataClassMapKey
+import org.bson.codecs.kotlinx.samples.DataClassWithDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDefaults
 import org.bson.codecs.kotlinx.samples.DataClassWithEmbedded
 import org.bson.codecs.kotlinx.samples.DataClassWithEncodeDefault
 import org.bson.codecs.kotlinx.samples.DataClassWithEnum
 import org.bson.codecs.kotlinx.samples.DataClassWithEnumMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithFailingInit
+import org.bson.codecs.kotlinx.samples.DataClassWithJsonElement
+import org.bson.codecs.kotlinx.samples.DataClassWithJsonElements
+import org.bson.codecs.kotlinx.samples.DataClassWithJsonElementsNullable
+import org.bson.codecs.kotlinx.samples.DataClassWithListThatLastItemDefaultsToNull
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableList
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlinx.samples.DataClassWithNestedParameterizedDataClass
+import org.bson.codecs.kotlinx.samples.DataClassWithNullableGeneric
 import org.bson.codecs.kotlinx.samples.DataClassWithNulls
 import org.bson.codecs.kotlinx.samples.DataClassWithPair
 import org.bson.codecs.kotlinx.samples.DataClassWithParameterizedDataClass
@@ -86,14 +111,19 @@ import org.bson.codecs.kotlinx.samples.DataClassWithTriple
 import org.bson.codecs.kotlinx.samples.Key
 import org.bson.codecs.kotlinx.samples.SealedInterface
 import org.bson.codecs.kotlinx.samples.ValueClass
+import org.bson.json.JsonMode
+import org.bson.json.JsonWriterSettings
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 @OptIn(ExperimentalSerializationApi::class)
 @Suppress("LargeClass")
 class KotlinSerializerCodecTest {
-    private val numberLong = "\$numberLong"
     private val oid = "\$oid"
+    private val numberLong = "\$numberLong"
+    private val numberDecimal = "\$numberDecimal"
     private val emptyDocument = "{}"
     private val altConfiguration =
         BsonConfiguration(encodeDefaults = false, classDiscriminator = "_t", explicitNulls = true)
@@ -111,7 +141,7 @@ class KotlinSerializerCodecTest {
     | "binary": {"${'$'}binary": {"base64": "S2Fma2Egcm9ja3Mh", "subType": "00"}},
     | "boolean": true,
     | "code": {"${'$'}code": "int i = 0;"},
-    | "codeWithScope": {"${'$'}code": "int x = y", "${'$'}scope": {"y": {"${'$'}numberInt": "1"}}},
+    | "codeWithScope": {"${'$'}code": "int x = y", "${'$'}scope": {"y": 1}},
     | "dateTime": {"${'$'}date": {"${'$'}numberLong": "1577836801000"}},
     | "decimal128": {"${'$'}numberDecimal": "1.0"},
     | "documentEmpty": {},
@@ -131,16 +161,108 @@ class KotlinSerializerCodecTest {
             .trimMargin()
 
     private val allBsonTypesDocument = BsonDocument.parse(allBsonTypesJson)
+    private val jsonAllSupportedTypesDocument: BsonDocument by
+        lazy<BsonDocument> {
+            val doc = BsonDocument.parse(allBsonTypesJson)
+            listOf("minKey", "maxKey", "code", "codeWithScope", "regex", "symbol", "undefined").forEach {
+                doc.remove(it)
+            }
+            doc
+        }
+
+    companion object {
+        @JvmStatic
+        fun testTypesCastingDataClassWithSimpleValues(): Stream<BsonDocument> {
+            return Stream.of(
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonInt32(1))
+                    .append("short", BsonInt32(2))
+                    .append("int", BsonInt32(10))
+                    .append("long", BsonInt32(10))
+                    .append("float", BsonInt32(2))
+                    .append("double", BsonInt32(3))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")),
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonDouble(1.0))
+                    .append("short", BsonDouble(2.0))
+                    .append("int", BsonDouble(9.9999999999999992))
+                    .append("long", BsonDouble(9.9999999999999992))
+                    .append("float", BsonDouble(2.0))
+                    .append("double", BsonDouble(3.0))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")),
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonDouble(1.0))
+                    .append("short", BsonDouble(2.0))
+                    .append("int", BsonDouble(10.0))
+                    .append("long", BsonDouble(10.0))
+                    .append("float", BsonDouble(2.0))
+                    .append("double", BsonDouble(3.0))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")),
+                BsonDocument()
+                    .append("char", BsonString("c"))
+                    .append("byte", BsonInt64(1))
+                    .append("short", BsonInt64(2))
+                    .append("int", BsonInt64(10))
+                    .append("long", BsonInt64(10))
+                    .append("float", BsonInt64(2))
+                    .append("double", BsonInt64(3))
+                    .append("boolean", BsonBoolean.TRUE)
+                    .append("string", BsonString("String")))
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("testTypesCastingDataClassWithSimpleValues")
+    fun testTypesCastingDataClassWithSimpleValues(data: BsonDocument) {
+        val expectedDataClass = DataClassWithSimpleValues('c', 1, 2, 10, 10L, 2.0f, 3.0, true, "String")
+
+        assertDecodesTo(data, expectedDataClass)
+    }
 
     @Test
-    fun testDataClassWithSimpleValues() {
+    fun testDataClassWithDateValuesContextualSerialization() {
         val expected =
-            """{"char": "c", "byte": 0, "short": 1, "int": 22, "long": {"$numberLong": "42"}, "float": 4.0,
-                | "double": 4.2, "boolean": true, "string": "String"}"""
-                .trimMargin()
-        val dataClass = DataClassWithSimpleValues('c', 0, 1, 22, 42L, 4.0f, 4.2, true, "String")
+            "{\n" +
+                "    \"instant\": {\"\$date\": \"2001-09-09T01:46:40Z\"}, \n" +
+                "    \"localTime\": {\"\$date\": \"1970-01-01T00:00:10Z\"}, \n" +
+                "    \"localDateTime\": {\"\$date\": \"2021-01-01T00:00:04Z\"}, \n" +
+                "    \"localDate\": {\"\$date\": \"1970-10-28T00:00:00Z\"}\n" +
+                "}".trimMargin()
 
-        assertRoundTrips(expected, dataClass)
+        val expectedDataClass =
+            DataClassWithContextualDateValues(
+                Instant.fromEpochMilliseconds(10_000_000_000_00),
+                LocalTime.fromMillisecondOfDay(10_000),
+                LocalDateTime.parse("2021-01-01T00:00:04"),
+                LocalDate.fromEpochDays(300))
+
+        assertRoundTrips(expected, expectedDataClass)
+    }
+
+    @Test
+    fun testDataClassWithDateValuesStandard() {
+        val expected =
+            "{\n" +
+                "    \"instant\": \"1970-01-01T00:00:01Z\", \n" +
+                "    \"localTime\": \"00:00:01\", \n" +
+                "    \"localDateTime\": \"2021-01-01T00:00:04\", \n" +
+                "    \"localDate\":  \"1970-01-02\"\n" +
+                "}".trimMargin()
+
+        val expectedDataClass =
+            DataClassWithDateValues(
+                Instant.fromEpochMilliseconds(1000),
+                LocalTime.fromMillisecondOfDay(1000),
+                LocalDateTime.parse("2021-01-01T00:00:04"),
+                LocalDate.fromEpochDays(1))
+
+        assertRoundTrips(expected, expectedDataClass)
     }
 
     @Test
@@ -200,6 +322,48 @@ class KotlinSerializerCodecTest {
         val dataClass = DataClassWithNulls(null, null, null)
         assertRoundTrips(emptyDocument, dataClass)
         assertRoundTrips(expectedNulls, dataClass, altConfiguration)
+    }
+
+    @Test
+    fun testDataClassWithListThatLastItemDefaultsToNull() {
+        val expectedWithOutNulls =
+            """{
+            | "elements": [{"required": "required"}, {"required": "required"}],
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithListThatLastItemDefaultsToNull(
+                listOf(DataClassLastItemDefaultsToNull("required"), DataClassLastItemDefaultsToNull("required")))
+        assertRoundTrips(expectedWithOutNulls, dataClass)
+
+        val expectedWithNulls =
+            """{
+            | "elements": [{"required": "required", "optional": null}, {"required": "required", "optional": null}],
+            |}"""
+                .trimMargin()
+        assertRoundTrips(expectedWithNulls, dataClass, BsonConfiguration(explicitNulls = true))
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNotNull() {
+        val expected =
+            """{
+            | "box": {"boxed": "String"}
+            |}"""
+                .trimMargin()
+
+        val dataClass = DataClassWithNullableGeneric(Box("String"))
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithNullableGenericsNull() {
+        val expectedDefault = """{"box": {}}"""
+        val dataClass = DataClassWithNullableGeneric(Box(null))
+        assertRoundTrips(expectedDefault, dataClass)
+        val expectedNull = """{"box": {"boxed": null}}"""
+        assertRoundTrips(expectedNull, dataClass, altConfiguration)
     }
 
     @Test
@@ -299,7 +463,7 @@ class KotlinSerializerCodecTest {
             |"nestedParameterized": {
             |  "parameterizedDataClass":
             |  {"number": 4.2, "string": "myString", "parameterizedList": [{"name": "embedded1"}]},
-            |  "other": "myOtherString"
+            |  "other": "myOtherString", "optionalOther": "myOptionalOtherString"
             | }
             |}"""
                 .trimMargin()
@@ -307,7 +471,9 @@ class KotlinSerializerCodecTest {
             DataClassWithNestedParameterizedDataClass(
                 "myId",
                 DataClassWithNestedParameterized(
-                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))), "myOtherString"))
+                    DataClassParameterized(4.2, "myString", listOf(DataClassEmbedded("embedded1"))),
+                    "myOtherString",
+                    "myOptionalOtherString"))
 
         assertRoundTrips(expected, dataClass)
     }
@@ -655,6 +821,233 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
+    fun testDataClassWithJsonElement() {
+        val expected =
+            """{"value": {
+            |"char": "c",
+            |"byte": 0,
+            |"short": 1,
+            |"int":  22,
+            |"long": {"$numberLong": "3000000000"},
+            |"decimal": {"$numberDecimal": "10000000000000000000"}
+            |"decimal2": {"$numberDecimal": "3.1230E+700"}
+            |"float": 4.0,
+            |"double": 4.2,
+            |"boolean": true,
+            |"string": "String"
+            |}}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithJsonElement(
+                buildJsonObject {
+                    put("char", "c")
+                    put("byte", 0)
+                    put("short", 1)
+                    put("int", 22)
+                    put("long", 3_000_000_000)
+                    put("decimal", BigDecimal("10000000000000000000"))
+                    put("decimal2", BigDecimal("3.1230E+700"))
+                    put("float", 4.0)
+                    put("double", 4.2)
+                    put("boolean", true)
+                    put("string", "String")
+                })
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithJsonElements() {
+        val expected =
+            """{
+                | "jsonElement": {"string": "String"},
+                | "jsonArray": [1, 2],
+                | "jsonElements": [{"string": "String"}, {"int": 42}],
+                | "jsonNestedMap": {"nestedString": {"string": "String"},
+                |    "nestedLong": {"long": {"$numberLong": "3000000000"}}}
+                |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithJsonElements(
+                buildJsonObject { put("string", "String") },
+                buildJsonArray {
+                    add(JsonPrimitive(1))
+                    add(JsonPrimitive(2))
+                },
+                listOf(buildJsonObject { put("string", "String") }, buildJsonObject { put("int", 42) }),
+                mapOf(
+                    Pair("nestedString", buildJsonObject { put("string", "String") }),
+                    Pair("nestedLong", buildJsonObject { put("long", 3000000000L) })))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithJsonElementsNullable() {
+        val expected =
+            """{
+                | "jsonElement": {"null": null},
+                | "jsonArray": [1, 2, null],
+                | "jsonElements": [{"null": null}],
+                | "jsonNestedMap": {"nestedNull": null}
+                |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithJsonElementsNullable(
+                buildJsonObject { put("null", null) },
+                buildJsonArray {
+                    add(JsonPrimitive(1))
+                    add(JsonPrimitive(2))
+                    add(JsonPrimitive(null))
+                },
+                listOf(buildJsonObject { put("null", null) }),
+                mapOf(Pair("nestedNull", null)))
+
+        assertRoundTrips(expected, dataClass, altConfiguration)
+
+        val expectedNoNulls =
+            """{
+                | "jsonElement": {},
+                | "jsonArray": [1, 2],
+                | "jsonElements": [{}],
+                | "jsonNestedMap": {}
+                |}"""
+                .trimMargin()
+
+        val dataClassNoNulls =
+            DataClassWithJsonElementsNullable(
+                buildJsonObject {},
+                buildJsonArray {
+                    add(JsonPrimitive(1))
+                    add(JsonPrimitive(2))
+                },
+                listOf(buildJsonObject {}),
+                mapOf())
+        assertEncodesTo(expectedNoNulls, dataClass)
+        assertDecodesTo(expectedNoNulls, dataClassNoNulls)
+    }
+
+    @Test
+    fun testDataClassWithJsonElementNullSupport() {
+        val expected =
+            """{"jsonElement": {"null": null},
+                | "jsonArray": [1, 2, null],
+                | "jsonElements": [{"null": null}],
+                | "jsonNestedMap": {"nestedNull": null}
+                | }
+                | """
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithJsonElements(
+                buildJsonObject { put("null", null) },
+                buildJsonArray {
+                    add(JsonPrimitive(1))
+                    add(JsonPrimitive(2))
+                    add(JsonPrimitive(null))
+                },
+                listOf(buildJsonObject { put("null", null) }),
+                mapOf(Pair("nestedNull", JsonPrimitive(null))))
+
+        assertRoundTrips(expected, dataClass, altConfiguration)
+
+        val expectedNoNulls =
+            """{"jsonElement": {},
+                | "jsonArray": [1, 2],
+                | "jsonElements": [{}],
+                | "jsonNestedMap": {}
+                | }
+                | """
+                .trimMargin()
+
+        val dataClassNoNulls =
+            DataClassWithJsonElements(
+                buildJsonObject {},
+                buildJsonArray {
+                    add(JsonPrimitive(1))
+                    add(JsonPrimitive(2))
+                },
+                listOf(buildJsonObject {}),
+                mapOf())
+        assertEncodesTo(expectedNoNulls, dataClass)
+        assertDecodesTo(expectedNoNulls, dataClassNoNulls)
+    }
+
+    @Test
+    @Suppress("LongMethod")
+    fun testDataClassWithJsonElementBsonSupport() {
+        val dataClassWithAllSupportedJsonTypes =
+            DataClassWithJsonElement(
+                buildJsonObject {
+                    put("id", "111111111111111111111111")
+                    put("arrayEmpty", buildJsonArray {})
+                    put(
+                        "arraySimple",
+                        buildJsonArray {
+                            add(JsonPrimitive(1))
+                            add(JsonPrimitive(2))
+                            add(JsonPrimitive(3))
+                        })
+                    put(
+                        "arrayComplex",
+                        buildJsonArray {
+                            add(buildJsonObject { put("a", JsonPrimitive(1)) })
+                            add(buildJsonObject { put("a", JsonPrimitive(2)) })
+                        })
+                    put(
+                        "arrayMixedTypes",
+                        buildJsonArray {
+                            add(JsonPrimitive(1))
+                            add(JsonPrimitive(2))
+                            add(JsonPrimitive(true))
+                            add(
+                                buildJsonArray {
+                                    add(JsonPrimitive(1))
+                                    add(JsonPrimitive(2))
+                                    add(JsonPrimitive(3))
+                                })
+                            add(buildJsonObject { put("a", JsonPrimitive(2)) })
+                        })
+                    put(
+                        "arrayComplexMixedTypes",
+                        buildJsonArray {
+                            add(buildJsonObject { put("a", JsonPrimitive(1)) })
+                            add(buildJsonObject { put("a", JsonPrimitive("a")) })
+                        })
+                    put("binary", JsonPrimitive("S2Fma2Egcm9ja3Mh"))
+                    put("boolean", JsonPrimitive(true))
+                    put("dateTime", JsonPrimitive(1577836801000))
+                    put("decimal128", JsonPrimitive(1.0))
+                    put("documentEmpty", buildJsonObject {})
+                    put("document", buildJsonObject { put("a", JsonPrimitive(1)) })
+                    put("double", JsonPrimitive(62.0))
+                    put("int32", JsonPrimitive(42))
+                    put("int64", JsonPrimitive(52))
+                    put("objectId", JsonPrimitive("211111111111111111111112"))
+                    put("string", JsonPrimitive("the fox ..."))
+                    put("timestamp", JsonPrimitive(1311768464867721221))
+                })
+
+        val jsonWriterSettings =
+            JsonWriterSettings.builder()
+                .outputMode(JsonMode.RELAXED)
+                .objectIdConverter { oid, writer -> writer.writeString(oid.toHexString()) }
+                .dateTimeConverter { d, writer -> writer.writeNumber(d.toString()) }
+                .timestampConverter { ts, writer -> writer.writeNumber(ts.value.toString()) }
+                .binaryConverter { b, writer -> writer.writeString(Base64.getEncoder().encodeToString(b.data)) }
+                .decimal128Converter { d, writer -> writer.writeNumber(d.toDouble().toString()) }
+                .build()
+        val dataClassWithAllSupportedJsonTypesSimpleJson = jsonAllSupportedTypesDocument.toJson(jsonWriterSettings)
+
+        assertEncodesTo(
+            """{"value": $dataClassWithAllSupportedJsonTypesSimpleJson }""", dataClassWithAllSupportedJsonTypes)
+        assertDecodesTo("""{"value": $jsonAllSupportedTypesDocument}""", dataClassWithAllSupportedJsonTypes)
+    }
+
+    @Test
     fun testDataFailures() {
         assertThrows<MissingFieldException>("Missing data") {
             val codec = KotlinSerializerCodec.create(DataClassWithSimpleValues::class)
@@ -751,6 +1144,7 @@ class KotlinSerializerCodecTest {
     ): BsonDocument {
         val expected = BsonDocument.parse(json)
         val actual = serialize(value, serializersModule, configuration)
+        println(actual.toJson())
         assertEquals(expected, actual)
         return actual
     }
@@ -766,6 +1160,15 @@ class KotlinSerializerCodecTest {
         codec.encode(writer, value, EncoderContext.builder().build())
         writer.flush()
         return document
+    }
+
+    private inline fun <reified T : Any> assertDecodesTo(
+        value: String,
+        expected: T,
+        serializersModule: SerializersModule = defaultSerializersModule,
+        configuration: BsonConfiguration = BsonConfiguration()
+    ) {
+        assertDecodesTo(BsonDocument.parse(value), expected, serializersModule, configuration)
     }
 
     private inline fun <reified T : Any> assertDecodesTo(

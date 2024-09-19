@@ -15,6 +15,9 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
+import com.mongodb.annotations.Alpha
+import com.mongodb.annotations.Reason
+import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +34,31 @@ import org.bson.conversions.Bson
  */
 public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPublisher<T>) :
     Flow<T> by wrapped.asFlow() {
+
+    /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
+     */
+    public fun batchSize(batchSize: Int): ListCollectionsFlow<T> = apply { wrapped.batchSize(batchSize) }
+
+    /**
+     * Sets the timeoutMode for the cursor.
+     *
+     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
+     * [MongoCollection]
+     *
+     * @param timeoutMode the timeout mode
+     * @return this
+     * @since 5.2
+     */
+    @Alpha(Reason.CLIENT)
+    public fun timeoutMode(timeoutMode: TimeoutMode): ListCollectionsFlow<T> = apply {
+        wrapped.timeoutMode(timeoutMode)
+    }
+
     /**
      * Sets the maximum execution time on the server for this operation.
      *
@@ -42,15 +70,6 @@ public class ListCollectionsFlow<T : Any>(private val wrapped: ListCollectionsPu
     public fun maxTime(maxTime: Long, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): ListCollectionsFlow<T> = apply {
         wrapped.maxTime(maxTime, timeUnit)
     }
-
-    /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
-     */
-    public fun batchSize(batchSize: Int): ListCollectionsFlow<T> = apply { wrapped.batchSize(batchSize) }
 
     /**
      * Sets the query filter to apply to the returned database names.

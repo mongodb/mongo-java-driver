@@ -15,12 +15,18 @@
  */
 package org.bson.codecs.kotlinx.samples
 
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
@@ -64,6 +70,22 @@ data class DataClassWithSimpleValues(
 )
 
 @Serializable
+data class DataClassWithContextualDateValues(
+    @Contextual val instant: Instant,
+    @Contextual val localTime: LocalTime,
+    @Contextual val localDateTime: LocalDateTime,
+    @Contextual val localDate: LocalDate,
+)
+
+@Serializable
+data class DataClassWithDateValues(
+    val instant: Instant,
+    val localTime: LocalTime,
+    val localDateTime: LocalDateTime,
+    val localDate: LocalDate,
+)
+
+@Serializable
 data class DataClassWithCollections(
     val listSimple: List<String>,
     val listList: List<List<String>>,
@@ -81,6 +103,11 @@ data class DataClassWithDefaults(
 )
 
 @Serializable data class DataClassWithNulls(val boolean: Boolean?, val string: String?, val listSimple: List<String?>?)
+
+@Serializable
+data class DataClassWithListThatLastItemDefaultsToNull(val elements: List<DataClassLastItemDefaultsToNull>)
+
+@Serializable data class DataClassLastItemDefaultsToNull(val required: String, val optional: String? = null)
 
 @Serializable
 data class DataClassSelfReferential(
@@ -120,7 +147,8 @@ data class DataClassWithNestedParameterizedDataClass(
 @Serializable
 data class DataClassWithNestedParameterized<A, B, C : Number>(
     val parameterizedDataClass: DataClassParameterized<C, A>,
-    val other: B
+    val other: B,
+    val optionalOther: B?
 )
 
 @Serializable data class DataClassWithPair(val pair: Pair<String, Int>)
@@ -294,3 +322,25 @@ data class DataClassWithFailingInit(val id: String) {
 }
 
 @Serializable data class DataClassWithSequence(val value: Sequence<String>)
+
+@Serializable data class Box<T>(val boxed: T)
+
+@Serializable data class DataClassWithNullableGeneric(val box: Box<String?>)
+
+@Serializable data class DataClassWithJsonElement(val value: JsonElement)
+
+@Serializable
+data class DataClassWithJsonElements(
+    val jsonElement: JsonElement,
+    val jsonArray: JsonArray,
+    val jsonElements: List<JsonElement>,
+    val jsonNestedMap: Map<String, JsonElement>
+)
+
+@Serializable
+data class DataClassWithJsonElementsNullable(
+    val jsonElement: JsonElement?,
+    val jsonArray: JsonArray?,
+    val jsonElements: List<JsonElement?>?,
+    val jsonNestedMap: Map<String, JsonElement?>?
+)
