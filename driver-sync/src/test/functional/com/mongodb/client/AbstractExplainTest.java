@@ -136,8 +136,12 @@ public abstract class AbstractExplainTest {
         ListSearchIndexesIterable<Document> iterable = collection.listSearchIndexes()
                 .maxTime(500, TimeUnit.MILLISECONDS);
 
-        //when (we expect exception as listSearchIndexes is only supported in Atlas Search)
-        assertThrows(MongoCommandException.class, iterable::explain);
+        //when
+        try {
+            iterable.explain();
+        } catch (MongoCommandException throwable) {
+            //we expect listSearchIndexes is only supported in Atlas Search in some deployments.
+        }
 
         //then
         assertExplainableCommandContainMaxTimeMS();
