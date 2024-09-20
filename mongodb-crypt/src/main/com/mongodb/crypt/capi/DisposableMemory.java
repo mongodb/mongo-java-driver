@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-present MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -15,12 +15,17 @@
  *
  */
 
-package com.mongodb.benchmark.framework;
+package com.mongodb.crypt.capi;
 
-import java.io.Closeable;
+import com.sun.jna.Memory;
 
-public interface BenchmarkResultWriter extends Closeable {
-    void write(BenchmarkResult benchmarkResult);
+// Subclass of JNA's Memory class so that we can call its protected dispose method
+class DisposableMemory extends Memory {
+    DisposableMemory(final int size) {
+        super(size);
+    }
 
-    void write(MongocryptBecnhmarkResult result);
+    public void dispose() {
+        super.dispose();
+    }
 }

@@ -12,24 +12,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-include ':bson'
-include ':bson-record-codec'
-include ':driver-benchmarks'
-include ':driver-workload-executor'
-include ':driver-lambda'
-include ':driver-core'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-kotlin'
-include ':bson-kotlinx'
-include ':driver-kotlin-sync'
-include ':driver-kotlin-coroutine'
-include ':bson-scala'
-include ':driver-scala'
-include ':mongodb-crypt'
-include 'util:spock'
-include 'util:taglets'
-include ':graalvm-native-image-app'
+package com.mongodb.crypt.capi;
+
+/**
+ * The entry point to the MongoCrypt library.
+ */
+public final class MongoCrypts {
+
+    private MongoCrypts() {
+        //NOP
+    }
+
+    /**
+     * Create a {@code MongoCrypt} instance.
+     *
+     * <p>
+     * Make sure that JNA is able to find the shared library, most likely by setting the jna.library.path system property
+     * </p>
+     *
+     * @param options the options
+     * @return the instance
+     */
+    public static MongoCrypt create(final MongoCryptOptions options) {
+        return new MongoCryptImpl(options);
+    }
+}

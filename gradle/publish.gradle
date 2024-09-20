@@ -105,6 +105,9 @@ configure(javaProjects) { project ->
 
                 suppressPomMetadataWarningsFor("jsonSupportApiElements")
                 suppressPomMetadataWarningsFor("jsonSupportRuntimeElements")
+
+                suppressPomMetadataWarningsFor("mongoCryptSupportApiElements")
+                suppressPomMetadataWarningsFor("mongoCryptSupportRuntimeElements")
             }
         }
 
