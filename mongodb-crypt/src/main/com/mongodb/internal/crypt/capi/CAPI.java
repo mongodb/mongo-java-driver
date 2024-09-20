@@ -15,7 +15,7 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Memory;

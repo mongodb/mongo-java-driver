@@ -15,9 +15,10 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
 import org.bson.BsonDocument;
+
 import java.util.List;
 import java.util.Map;
 

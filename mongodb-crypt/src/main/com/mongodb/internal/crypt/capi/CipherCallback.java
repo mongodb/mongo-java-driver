@@ -15,12 +15,12 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
-import com.mongodb.crypt.capi.CAPI.cstring;
-import com.mongodb.crypt.capi.CAPI.mongocrypt_binary_t;
-import com.mongodb.crypt.capi.CAPI.mongocrypt_crypto_fn;
-import com.mongodb.crypt.capi.CAPI.mongocrypt_status_t;
+import com.mongodb.internal.crypt.capi.CAPI.cstring;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_t;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_crypto_fn;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_t;
 import com.sun.jna.Pointer;
 
 import javax.crypto.Cipher;
@@ -30,10 +30,10 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-import static com.mongodb.crypt.capi.CAPI.MONGOCRYPT_STATUS_ERROR_CLIENT;
-import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_set;
-import static com.mongodb.crypt.capi.CAPIHelper.toByteArray;
-import static com.mongodb.crypt.capi.CAPIHelper.writeByteArrayToBinary;
+import static com.mongodb.internal.crypt.capi.CAPI.MONGOCRYPT_STATUS_ERROR_CLIENT;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_set;
+import static com.mongodb.internal.crypt.capi.CAPIHelper.toByteArray;
+import static com.mongodb.internal.crypt.capi.CAPIHelper.writeByteArrayToBinary;
 
 class CipherCallback implements mongocrypt_crypto_fn {
     private final String algorithm;

@@ -12,38 +12,41 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
 import org.bson.BsonDocument;
 
-import java.util.List;
-
 /**
- * The options for creation of a data key
+ * The rewrap many data key options
+ *
+ * <p>
+ *     The masterKey document MUST have the fields corresponding to the given provider as specified in masterKey.
+ * </p>
+ *
+ * @since 1.5
  */
-public final class MongoDataKeyOptions {
-    private final List<String> keyAltNames;
+public final class MongoRewrapManyDataKeyOptions {
+
+    private final String provider;
     private final BsonDocument masterKey;
-    private final byte[] keyMaterial;
 
     /**
      * Options builder
      */
     public static final class Builder {
-        private List<String> keyAltNames;
+        private String provider;
         private BsonDocument masterKey;
-        private byte[] keyMaterial;
 
         /**
-         * Add alternate key names
-         * @param keyAltNames the alternate key names
+         * The provider
+         *
+         * @param provider the provider
          * @return this
          */
-        public Builder keyAltNames(final List<String> keyAltNames) {
-            this.keyAltNames = keyAltNames;
+        public Builder provider(final String provider) {
+            this.provider = provider;
             return this;
         }
 
@@ -59,24 +62,12 @@ public final class MongoDataKeyOptions {
         }
 
         /**
-         * Add the key material
-         *
-         * @param keyMaterial the optional custom key material for the data key
-         * @return this
-         * @since 1.5
-         */
-        public Builder keyMaterial(final byte[] keyMaterial) {
-            this.keyMaterial = keyMaterial;
-            return this;
-        }
-
-        /**
          * Build the options.
          *
          * @return the options
          */
-        public MongoDataKeyOptions build() {
-            return new MongoDataKeyOptions(this);
+        public MongoRewrapManyDataKeyOptions build() {
+            return new MongoRewrapManyDataKeyOptions(this);
         }
     }
 
@@ -90,12 +81,10 @@ public final class MongoDataKeyOptions {
     }
 
     /**
-     * Gets the alternate key names for the data key.
-     *
-     * @return the alternate key names
+     * @return the provider name
      */
-    public List<String> getKeyAltNames() {
-        return keyAltNames;
+    public String getProvider() {
+        return provider;
     }
 
     /**
@@ -107,19 +96,9 @@ public final class MongoDataKeyOptions {
         return masterKey;
     }
 
-    /**
-     * Gets the custom key material if set.
-     *
-     * @return the custom key material for the data key or null
-     * @since 1.5
-     */
-    public byte[] getKeyMaterial() {
-        return keyMaterial;
-    }
-
-    private MongoDataKeyOptions(final Builder builder) {
-        keyAltNames = builder.keyAltNames;
+    private MongoRewrapManyDataKeyOptions(final Builder builder) {
+        provider = builder.provider;
         masterKey = builder.masterKey;
-        keyMaterial = builder.keyMaterial;
     }
 }
+

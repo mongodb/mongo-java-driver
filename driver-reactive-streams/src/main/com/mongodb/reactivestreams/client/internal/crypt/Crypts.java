@@ -21,8 +21,8 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
-import com.mongodb.crypt.capi.MongoCrypt;
-import com.mongodb.crypt.capi.MongoCrypts;
+import com.mongodb.internal.crypt.capi.MongoCrypt;
+import com.mongodb.internal.crypt.capi.MongoCrypts;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 

@@ -15,7 +15,7 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
 /**
  * This class is not part of the public API.

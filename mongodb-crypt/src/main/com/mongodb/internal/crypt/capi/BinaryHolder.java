@@ -15,11 +15,11 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
-import com.mongodb.crypt.capi.CAPI.mongocrypt_binary_t;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_t;
 
-import static com.mongodb.crypt.capi.CAPI.mongocrypt_binary_destroy;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_destroy;
 
 // Wrap JNA memory and a mongocrypt_binary_t that references that memory, in order to ensure that the JNA Memory is not GC'd before the
 // mongocrypt_binary_t is destroyed

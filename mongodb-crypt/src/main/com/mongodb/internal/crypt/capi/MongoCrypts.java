@@ -15,17 +15,28 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
-import com.sun.jna.Memory;
+/**
+ * The entry point to the MongoCrypt library.
+ */
+public final class MongoCrypts {
 
-// Subclass of JNA's Memory class so that we can call its protected dispose method
-class DisposableMemory extends Memory {
-    DisposableMemory(final int size) {
-        super(size);
+    private MongoCrypts() {
+        //NOP
     }
 
-    public void dispose() {
-        super.dispose();
+    /**
+     * Create a {@code MongoCrypt} instance.
+     *
+     * <p>
+     * Make sure that JNA is able to find the shared library, most likely by setting the jna.library.path system property
+     * </p>
+     *
+     * @param options the options
+     * @return the instance
+     */
+    public static MongoCrypt create(final MongoCryptOptions options) {
+        return new MongoCryptImpl(options);
     }
 }
