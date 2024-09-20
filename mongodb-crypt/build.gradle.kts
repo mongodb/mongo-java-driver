@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "org.mongodb"
-base.archivesBaseName = "mongodb-crypt"
+base.archivesName.set("mongodb-crypt")
 description = "MongoDB client-side crypto support"
 ext.set("pomName", "MongoCrypt")
 

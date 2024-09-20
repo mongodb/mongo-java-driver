@@ -29,9 +29,7 @@ include ':driver-kotlin-sync'
 include ':driver-kotlin-coroutine'
 include ':bson-scala'
 include ':driver-scala'
-include ':mongocrypt'
-// Project name is different from the folder name because "optional plugin" needs project name to match the artifactId.
-project(":mongocrypt").name = "mongodb-crypt"
+include ':mongodb-crypt'
 include 'util:spock'
 include 'util:taglets'
 include ':graalvm-native-image-app'
