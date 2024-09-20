@@ -41,7 +41,9 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
-    @JvmName("eqExt") public infix fun <@OnlyInputTypes T> KProperty<T?>.eq(value: T?): Bson = Filters.eq(path(), value)
+    @JvmSynthetic
+    @JvmName("eqExt")
+    public infix fun <@OnlyInputTypes T> KProperty<T?>.eq(value: T?): Bson = Filters.eq(path(), value)
 
     /**
      * Creates a filter that matches all documents where the value of the property equals the specified value. Note that
@@ -61,7 +63,9 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
-    @JvmName("neExt") public infix fun <@OnlyInputTypes T> KProperty<T?>.ne(value: T?): Bson = Filters.ne(path(), value)
+    @JvmSynthetic
+    @JvmName("neExt")
+    public infix fun <@OnlyInputTypes T> KProperty<T?>.ne(value: T?): Bson = Filters.ne(path(), value)
 
     /**
      * Creates a filter that matches all documents where the value of the property does not equal the specified value.
@@ -81,7 +85,9 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
-    @JvmName("ltExt") public infix fun <@OnlyInputTypes T> KProperty<T?>.lt(value: T): Bson = Filters.lt(path(), value)
+    @JvmSynthetic
+    @JvmName("ltExt")
+    public infix fun <@OnlyInputTypes T> KProperty<T?>.lt(value: T): Bson = Filters.lt(path(), value)
 
     /**
      * Creates a filter that matches all documents where the value of the given property is less than the specified
@@ -102,6 +108,7 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("lteExt")
     public infix fun <@OnlyInputTypes T> KProperty<T?>.lte(value: T): Bson = Filters.lte(path(), value)
 
@@ -124,7 +131,9 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
-    @JvmName("gtExt") public infix fun <@OnlyInputTypes T> KProperty<T>.gt(value: T): Bson = Filters.gt(path(), value)
+    @JvmSynthetic
+    @JvmName("gtExt")
+    public infix fun <@OnlyInputTypes T> KProperty<T>.gt(value: T): Bson = Filters.gt(path(), value)
 
     /**
      * Creates a filter that matches all documents where the value of the given property is greater than the specified
@@ -145,6 +154,7 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("gteExt")
     public infix fun <@OnlyInputTypes T> KProperty<T>.gte(value: T): Bson = Filters.gte(path(), value)
 
@@ -168,6 +178,7 @@ public object Filters {
      * @return the filter
      */
     @Suppress("FunctionNaming")
+    @JvmSynthetic
     @JvmName("inExt")
     public infix fun <@OnlyInputTypes T> KProperty<T?>.`in`(values: Iterable<T?>): Bson = Filters.`in`(path(), values)
 
@@ -192,6 +203,7 @@ public object Filters {
      * @return the filter
      */
     @Suppress("FunctionNaming")
+    @JvmSynthetic
     @JvmName("inIterableExt")
     public infix fun <@OnlyInputTypes T> KProperty<Iterable<T>?>.`in`(values: Iterable<T?>): Bson =
         Filters.`in`(path(), values)
@@ -206,6 +218,7 @@ public object Filters {
      * @return the filter
      */
     @Suppress("FunctionNaming")
+    @JvmSynthetic
     @JvmName("inIterable")
     public fun <@OnlyInputTypes T> `in`(property: KProperty<Iterable<T>?>, values: Iterable<T?>): Bson =
         property.`in`(values)
@@ -218,6 +231,7 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("ninExt")
     public infix fun <@OnlyInputTypes T> KProperty<T?>.nin(values: Iterable<T?>): Bson = Filters.nin(path(), values)
 
@@ -240,6 +254,7 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("ninIterableExt")
     public infix fun <@OnlyInputTypes T> KProperty<Iterable<T>?>.nin(values: Iterable<T?>): Bson =
         Filters.nin(path(), values)
@@ -253,6 +268,7 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("ninIterable")
     public fun <@OnlyInputTypes T> nin(property: KProperty<Iterable<T>?>, values: Iterable<T?>): Bson =
         property.nin(values)
@@ -332,7 +348,7 @@ public object Filters {
      *
      * @return the filter
      */
-    @JvmName("existsExt") public fun <T> KProperty<T?>.exists(): Bson = Filters.exists(path())
+    @JvmSynthetic @JvmName("existsExt") public fun <T> KProperty<T?>.exists(): Bson = Filters.exists(path())
 
     /**
      * Creates a filter that matches all documents that contain the given property.
@@ -349,6 +365,7 @@ public object Filters {
      * @param exists true to check for existence, false to check for absence
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("existsExt")
     public infix fun <T> KProperty<T?>.exists(exists: Boolean): Bson = Filters.exists(path(), exists)
 
@@ -368,7 +385,9 @@ public object Filters {
      * @param type the BSON type
      * @return the filter
      */
-    @JvmName("typeExt") public infix fun <T> KProperty<T?>.type(type: BsonType): Bson = Filters.type(path(), type)
+    @JvmSynthetic
+    @JvmName("typeExt")
+    public infix fun <T> KProperty<T?>.type(type: BsonType): Bson = Filters.type(path(), type)
 
     /**
      * Creates a filter that matches all documents where the value of the property is of the specified BSON type.
@@ -387,6 +406,7 @@ public object Filters {
      * @param remainder the remainder
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("modExt")
     public fun <T> KProperty<T?>.mod(divisor: Long, remainder: Long): Bson = Filters.mod(path(), divisor, remainder)
 
@@ -408,6 +428,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexExt")
     public infix fun KProperty<String?>.regex(pattern: String): Bson = Filters.regex(path(), pattern)
 
@@ -428,6 +449,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexExt")
     public infix fun KProperty<String?>.regex(pattern: Pattern): Bson = Filters.regex(path(), pattern)
 
@@ -449,6 +471,7 @@ public object Filters {
      * @param options the options
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexExt")
     public fun KProperty<String?>.regex(pattern: String, options: String): Bson =
         Filters.regex(path(), pattern, options)
@@ -472,6 +495,7 @@ public object Filters {
      * @param regex the regex
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexExt")
     public infix fun KProperty<String?>.regex(regex: Regex): Bson = Filters.regex(path(), regex.toPattern())
 
@@ -492,6 +516,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterableExt")
     public infix fun KProperty<Iterable<String?>>.regex(pattern: String): Bson = Filters.regex(path(), pattern)
 
@@ -503,6 +528,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterable")
     public fun regex(property: KProperty<Iterable<String?>>, pattern: String): Bson = property.regex(pattern)
 
@@ -513,6 +539,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterableExt")
     public infix fun KProperty<Iterable<String?>>.regex(pattern: Pattern): Bson = Filters.regex(path(), pattern)
 
@@ -524,6 +551,7 @@ public object Filters {
      * @param pattern the pattern
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterable")
     public fun regex(property: KProperty<Iterable<String?>>, pattern: Pattern): Bson = property.regex(pattern)
 
@@ -535,6 +563,7 @@ public object Filters {
      * @param options the options
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterableExt")
     public fun KProperty<Iterable<String?>>.regex(regex: String, options: String): Bson =
         Filters.regex(path(), regex, options)
@@ -548,6 +577,7 @@ public object Filters {
      * @param options the options
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterable")
     public fun regex(property: KProperty<Iterable<String?>>, regex: String, options: String): Bson =
         property.regex(regex, options)
@@ -559,6 +589,7 @@ public object Filters {
      * @param regex the regex
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterableExt")
     public infix fun KProperty<Iterable<String?>>.regex(regex: Regex): Bson = Filters.regex(path(), regex.toPattern())
 
@@ -570,6 +601,7 @@ public object Filters {
      * @param regex the regex
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("regexIterable")
     public fun regex(property: KProperty<Iterable<String?>>, regex: Regex): Bson = property.regex(regex.toPattern())
 
@@ -609,6 +641,7 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("allExt")
     public infix fun <@OnlyInputTypes T> KProperty<Iterable<T>?>.all(values: Iterable<T>): Bson =
         Filters.all(path(), values)
@@ -633,6 +666,7 @@ public object Filters {
      * @param <T> the value type
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("allvargsExt")
     public fun <@OnlyInputTypes T> KProperty<Iterable<T>?>.all(vararg values: T): Bson = Filters.all(path(), *values)
 
@@ -655,6 +689,7 @@ public object Filters {
      * @param filter the filter to apply to each element
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("elemMatchExt")
     public infix fun <T> KProperty<Iterable<T>?>.elemMatch(filter: Bson): Bson = Filters.elemMatch(path(), filter)
 
@@ -674,7 +709,9 @@ public object Filters {
      * @param size the size of the array
      * @return the filter
      */
-    @JvmName("sizeExt") public infix fun <T> KProperty<T?>.size(size: Int): Bson = Filters.size(path(), size)
+    @JvmSynthetic
+    @JvmName("sizeExt")
+    public infix fun <T> KProperty<T?>.size(size: Int): Bson = Filters.size(path(), size)
 
     /**
      * Creates a filter that matches all documents where the value of a property is an array of the specified size.
@@ -691,6 +728,7 @@ public object Filters {
      * @param bitmask the bitmask
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("bitsAllClearExt")
     public infix fun <T> KProperty<T?>.bitsAllClear(bitmask: Long): Bson = Filters.bitsAllClear(path(), bitmask)
 
@@ -709,6 +747,7 @@ public object Filters {
      * @param bitmask the bitmask
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("bitsAllSetExt")
     public infix fun <T> KProperty<T?>.bitsAllSet(bitmask: Long): Bson = Filters.bitsAllSet(path(), bitmask)
 
@@ -727,6 +766,7 @@ public object Filters {
      * @param bitmask the bitmask
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("bitsAnyClearExt")
     public infix fun <T> KProperty<T?>.bitsAnyClear(bitmask: Long): Bson = Filters.bitsAnyClear(path(), bitmask)
 
@@ -745,6 +785,7 @@ public object Filters {
      * @param bitmask the bitmask
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("bitsAnySetExt")
     public infix fun <T> KProperty<T?>.bitsAnySet(bitmask: Long): Bson = Filters.bitsAnySet(path(), bitmask)
 
@@ -764,6 +805,7 @@ public object Filters {
      * @param geometry the bounding GeoJSON geometry object
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoWithinExt")
     public infix fun <T> KProperty<T?>.geoWithin(geometry: Geometry): Bson = Filters.geoWithin(path(), geometry)
 
@@ -784,6 +826,7 @@ public object Filters {
      * @param geometry the bounding GeoJSON geometry object
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoWithinExt")
     public infix fun <T> KProperty<T?>.geoWithin(geometry: Bson): Bson = Filters.geoWithin(path(), geometry)
 
@@ -807,6 +850,7 @@ public object Filters {
      * @param upperRightY the upper left y coordinate of the box
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoWithinBoxExt")
     public fun <T> KProperty<T?>.geoWithinBox(
         lowerLeftX: Double,
@@ -841,6 +885,7 @@ public object Filters {
      * @param points a list of pairs of x, y coordinates. Any extra dimensions are ignored
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoWithinPolygonExt")
     public infix fun <T> KProperty<T?>.geoWithinPolygon(points: List<List<Double>>): Bson =
         Filters.geoWithinPolygon(path(), points)
@@ -865,6 +910,7 @@ public object Filters {
      * @param radius the radius of the circle, as measured in the units used by the coordinate system
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoWithinCenterExt")
     public fun <T> KProperty<T?>.geoWithinCenter(x: Double, y: Double, radius: Double): Bson =
         Filters.geoWithinCenter(path(), x, y, radius)
@@ -892,6 +938,7 @@ public object Filters {
      * @param radius the radius of the circle, in radians
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoWithinCenterSphereExt")
     public fun <T> KProperty<T?>.geoWithinCenterSphere(x: Double, y: Double, radius: Double): Bson =
         Filters.geoWithinCenterSphere(path(), x, y, radius)
@@ -917,6 +964,7 @@ public object Filters {
      * @param geometry the bounding GeoJSON geometry object
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoIntersectsExt")
     public infix fun <T> KProperty<T?>.geoIntersects(geometry: Geometry): Bson = Filters.geoIntersects(path(), geometry)
 
@@ -937,6 +985,7 @@ public object Filters {
      * @param geometry the bounding GeoJSON geometry object
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("geoIntersectsExt")
     public infix fun <T> KProperty<T?>.geoIntersects(geometry: Bson): Bson = Filters.geoIntersects(path(), geometry)
 
@@ -959,6 +1008,7 @@ public object Filters {
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("nearExt")
     public fun <T> KProperty<T?>.near(geometry: Point, maxDistance: Double? = null, minDistance: Double? = null): Bson =
         Filters.near(path(), geometry, maxDistance, minDistance)
@@ -989,6 +1039,7 @@ public object Filters {
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("nearExt")
     public fun <T> KProperty<T?>.near(geometry: Bson, maxDistance: Double? = null, minDistance: Double? = null): Bson =
         Filters.near(path(), geometry, maxDistance, minDistance)
@@ -1020,6 +1071,7 @@ public object Filters {
      * @param minDistance the minimum distance from the point, in radians
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("nearExt")
     public fun <T> KProperty<T?>.near(
         x: Double,
@@ -1056,6 +1108,7 @@ public object Filters {
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("nearSphereExt")
     public fun <T> KProperty<T?>.nearSphere(
         geometry: Bson,
@@ -1089,6 +1142,7 @@ public object Filters {
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("nearSphereExt")
     public fun <T> KProperty<T?>.nearSphere(
         geometry: Point,
@@ -1123,6 +1177,7 @@ public object Filters {
      * @param minDistance the minimum distance from the point, in radians
      * @return the filter
      */
+    @JvmSynthetic
     @JvmName("nearSphereExt")
     public fun <T> KProperty<T?>.nearSphere(
         x: Double,
