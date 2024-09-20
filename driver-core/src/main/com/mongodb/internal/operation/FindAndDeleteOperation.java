@@ -89,7 +89,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     }
 
     protected FieldNameValidator getFieldNameValidator() {
-        return new NoOpFieldNameValidator();
+        return NoOpFieldNameValidator.INSTANCE;
     }
 
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {

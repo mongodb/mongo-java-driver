@@ -25,6 +25,7 @@ import com.mongodb.MongoWriteException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.fixture.EncryptionFixture;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -32,8 +33,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.isServerlessTest;
@@ -41,6 +40,7 @@ import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -83,13 +83,7 @@ public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
                        + "}")
         );
 
-        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
-        Map<String, Object> localProviderMap = new HashMap<>();
-        localProviderMap.put("key",
-                Base64.getDecoder().decode(
-                        "Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZ"
-                                + "GJkTXVyZG9uSjFk"));
-        kmsProviders.put("local", localProviderMap);
+        Map<String, Map<String, Object>> kmsProviders = getKmsProviders(EncryptionFixture.KmsProviderType.LOCAL);
 
         clientEncryption = createClientEncryption(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())

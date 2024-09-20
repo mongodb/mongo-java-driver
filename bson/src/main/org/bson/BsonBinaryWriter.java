@@ -67,7 +67,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      */
     public BsonBinaryWriter(final BsonWriterSettings settings, final BsonBinaryWriterSettings binaryWriterSettings,
                             final BsonOutput bsonOutput) {
-        this(settings, binaryWriterSettings, bsonOutput, new NoOpFieldNameValidator());
+        this(settings, binaryWriterSettings, bsonOutput, NoOpFieldNameValidator.INSTANCE);
     }
 
     /**
