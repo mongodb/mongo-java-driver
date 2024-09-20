@@ -69,14 +69,6 @@
   "fields":[{"name":"TCP_KEEPCOUNT"}, {"name":"TCP_KEEPIDLE"}, {"name":"TCP_KEEPINTERVAL"}]
 },
 {
-  "name":"sun.security.provider.NativePRNG",
-  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
-},
-{
-  "name":"sun.security.provider.SHA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"org.bson.codecs.kotlin.DataClassCodecProvider"
 },
 {
