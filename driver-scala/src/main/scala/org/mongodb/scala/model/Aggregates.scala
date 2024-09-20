@@ -737,7 +737,6 @@ object Aggregates {
    * @note Requires MongoDB 6.0.10 or greater
    * @since 4.11
    */
-  @Beta(Array(Reason.SERVER))
   def vectorSearch(
       path: FieldSearchPath,
       queryVector: Iterable[java.lang.Double],

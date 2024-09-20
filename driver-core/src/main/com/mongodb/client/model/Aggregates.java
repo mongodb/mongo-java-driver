@@ -955,7 +955,6 @@ public final class Aggregates {
      * @mongodb.server.release 6.0.11
      * @since 4.11
      */
-    @Beta(Reason.SERVER)
     public static Bson vectorSearch(
             final FieldSearchPath path,
             final Iterable<Double> queryVector,
