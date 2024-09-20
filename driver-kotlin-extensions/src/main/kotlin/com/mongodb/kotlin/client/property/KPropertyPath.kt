@@ -50,51 +50,51 @@ public open class KPropertyPath<T, R>(
         },
         property)
 
-    private val path: String
-        get() = "${previous?.path?.let { "$it." } ?: ""}${property.path()}"
+    private val path: String by lazy { "${previous?.path?.let { "$it." } ?: ""}${property.path()}" }
 
-    override val annotations: List<Annotation>
-        get() = property.annotations
-    override val getter: KProperty1.Getter<T, R>
-        get() = notImplemented()
-    override val isAbstract: Boolean
-        get() = previous?.isAbstract ?: property.isAbstract
-    override val isConst: Boolean
-        get() = previous?.isConst ?: property.isConst
-    override val isFinal: Boolean
-        get() = previous?.isFinal ?: property.isFinal
-    override val isLateinit: Boolean
-        get() = previous?.isLateinit ?: property.isLateinit
-    override val isOpen: Boolean
-        get() = previous?.isOpen ?: property.isOpen
-    override val isSuspend: Boolean
-        get() = property.isSuspend
     override val name: String
         get() = path
+
+    override val annotations: List<Annotation>
+        get() = unSupportedOperation()
+    override val getter: KProperty1.Getter<T, R>
+        get() = unSupportedOperation()
+    override val isAbstract: Boolean
+        get() = unSupportedOperation()
+    override val isConst: Boolean
+        get() = unSupportedOperation()
+    override val isFinal: Boolean
+        get() = unSupportedOperation()
+    override val isLateinit: Boolean
+        get() = unSupportedOperation()
+    override val isOpen: Boolean
+        get() = unSupportedOperation()
+    override val isSuspend: Boolean
+        get() = unSupportedOperation()
     override val parameters: List<KParameter>
-        get() = property.parameters
+        get() = unSupportedOperation()
     override val returnType: KType
-        get() = property.returnType
+        get() = unSupportedOperation()
     override val typeParameters: List<KTypeParameter>
-        get() = property.typeParameters
+        get() = unSupportedOperation()
     override val visibility: KVisibility?
-        get() = property.visibility
-    override fun invoke(p1: T): R = notImplemented()
-    override fun call(vararg args: Any?): R = notImplemented()
-    override fun callBy(args: Map<KParameter, Any?>): R = notImplemented()
-    override fun get(receiver: T): R = notImplemented()
-    override fun getDelegate(receiver: T): Any? = notImplemented()
+        get() = unSupportedOperation()
+    override fun invoke(p1: T): R = unSupportedOperation()
+    override fun call(vararg args: Any?): R = unSupportedOperation()
+    override fun callBy(args: Map<KParameter, Any?>): R = unSupportedOperation()
+    override fun get(receiver: T): R = unSupportedOperation()
+    override fun getDelegate(receiver: T): Any? = unSupportedOperation()
 
     public companion object {
 
-        private fun notImplemented(): Nothing = throw NotImplementedError()
+        private fun unSupportedOperation(): Nothing = throw UnsupportedOperationException()
 
         internal class CustomProperty<T, R>(val previous: KPropertyPath<*, T>, path: String) : KProperty1<T, R> {
             override val annotations: List<Annotation>
                 get() = emptyList()
 
             override val getter: KProperty1.Getter<T, R>
-                get() = notImplemented()
+                get() = unSupportedOperation()
             override val isAbstract: Boolean
                 get() = previous.isAbstract
             override val isConst: Boolean
@@ -111,16 +111,16 @@ public open class KPropertyPath<T, R>(
             override val parameters: List<KParameter>
                 get() = previous.parameters
             override val returnType: KType
-                get() = notImplemented()
+                get() = unSupportedOperation()
             override val typeParameters: List<KTypeParameter>
                 get() = previous.typeParameters
             override val visibility: KVisibility?
                 get() = previous.visibility
-            override fun call(vararg args: Any?): R = notImplemented()
-            override fun callBy(args: Map<KParameter, Any?>): R = notImplemented()
-            override fun get(receiver: T): R = notImplemented()
-            override fun getDelegate(receiver: T): Any? = notImplemented()
-            override fun invoke(p1: T): R = notImplemented()
+            override fun call(vararg args: Any?): R = unSupportedOperation()
+            override fun callBy(args: Map<KParameter, Any?>): R = unSupportedOperation()
+            override fun get(receiver: T): R = unSupportedOperation()
+            override fun getDelegate(receiver: T): Any? = unSupportedOperation()
+            override fun invoke(p1: T): R = unSupportedOperation()
         }
 
         /** Provides "fake" property with custom name. */
@@ -151,7 +151,7 @@ public open class KCollectionPropertyPath<T, R, MEMBER : KPropertyPath<T, R?>>(
         get() = memberWithAdditionalPath("\$[]")
 
     /**
-     * [The filtered positional operator $[<identifier>]]
+     * [The filtered positional operator $[\<identifier\>]]
      * (https://docs.mongodb.com/manual/reference/operator/update/positional-filtered/)
      */
     public fun filteredPosOp(identifier: String): MEMBER = memberWithAdditionalPath("\$[$identifier]")

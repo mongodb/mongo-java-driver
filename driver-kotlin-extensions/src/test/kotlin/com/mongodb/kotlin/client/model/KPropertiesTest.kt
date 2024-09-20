@@ -116,25 +116,24 @@ class KPropertiesTest {
     @Test
     fun testKPropertyPath() {
         val property = (Restaurant::subDocument / Restaurant::a)
-
-        assertEquals(property.annotations, Restaurant::a.annotations)
-        assertEquals(property.isAbstract, Restaurant::a.isAbstract)
-        assertEquals(property.isConst, Restaurant::a.isConst)
-        assertEquals(property.isFinal, Restaurant::a.isFinal)
-        assertEquals(property.isLateinit, Restaurant::a.isLateinit)
-        assertEquals(property.isOpen, Restaurant::a.isOpen)
-        assertEquals(property.isSuspend, Restaurant::a.isSuspend)
-        assertEquals(property.parameters, Restaurant::a.parameters)
-        assertEquals(property.returnType, Restaurant::a.returnType)
-        assertEquals(property.typeParameters, Restaurant::a.typeParameters)
-        assertEquals(property.visibility, Restaurant::a.visibility)
+        assertThrows<UnsupportedOperationException> { property.annotations }
+        assertThrows<UnsupportedOperationException> { property.isAbstract }
+        assertThrows<UnsupportedOperationException> { property.isConst }
+        assertThrows<UnsupportedOperationException> { property.isFinal }
+        assertThrows<UnsupportedOperationException> { property.isLateinit }
+        assertThrows<UnsupportedOperationException> { property.isOpen }
+        assertThrows<UnsupportedOperationException> { property.isSuspend }
+        assertThrows<UnsupportedOperationException> { property.parameters }
+        assertThrows<UnsupportedOperationException> { property.returnType }
+        assertThrows<UnsupportedOperationException> { property.typeParameters }
+        assertThrows<UnsupportedOperationException> { property.visibility }
 
         val restaurant = Restaurant("a", "b", "c", "name", listOf(), mapOf(), listOf(), null)
-        assertThrows<NotImplementedError> { property.getter }
-        assertThrows<NotImplementedError> { property.invoke(restaurant) }
-        assertThrows<NotImplementedError> { property.call() }
-        assertThrows<NotImplementedError> { property.callBy(mapOf()) }
-        assertThrows<NotImplementedError> { property.get(restaurant) }
-        assertThrows<NotImplementedError> { property.getDelegate(restaurant) }
+        assertThrows<UnsupportedOperationException> { property.getter }
+        assertThrows<UnsupportedOperationException> { property.invoke(restaurant) }
+        assertThrows<UnsupportedOperationException> { property.call() }
+        assertThrows<UnsupportedOperationException> { property.callBy(mapOf()) }
+        assertThrows<UnsupportedOperationException> { property.get(restaurant) }
+        assertThrows<UnsupportedOperationException> { property.getDelegate(restaurant) }
     }
 }

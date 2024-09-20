@@ -456,7 +456,7 @@ class FiltersTest {
         var bson = geoWithin(Person::address, polygon)
         assertEquals(expected, bson.document)
 
-        var kmongoDsl = Person::address.geoWithin(polygon)
+        var kmongoDsl = Person::address geoWithin polygon
         assertEquals(expected, kmongoDsl.document)
 
         // Using Bson
@@ -464,7 +464,7 @@ class FiltersTest {
         bson = geoWithin(Person::address, bsonGeometry)
         assertEquals(expected, bson.document)
 
-        kmongoDsl = Person::address.geoWithin(bsonGeometry)
+        kmongoDsl = Person::address geoWithin bsonGeometry
         assertEquals(expected, kmongoDsl.document)
     }
 

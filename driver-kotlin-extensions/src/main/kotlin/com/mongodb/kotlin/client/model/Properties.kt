@@ -58,7 +58,15 @@ public operator fun <T0, K, T1, T2> KProperty1<T0, Map<out K, T1>?>.div(
     p2: KProperty1<out T1, T2?>
 ): KProperty1<T0, T2?> = KPropertyPath(this, p2)
 
-/** Returns a mongo path of a property. */
+/**
+ * Returns a mongo path of a property.
+ *
+ * The path name is computed by checking the following and picking the first value to exist:
+ * - SerialName annotation value
+ * - BsonId annotation use '_id'
+ * - BsonProperty annotation
+ * - Property name
+ */
 @SuppressWarnings("BC_BAD_CAST_TO_ABSTRACT_COLLECTION")
 internal fun <T> KProperty<T>.path(): String {
     return if (this is KPropertyPath<*, T>) {
@@ -66,19 +74,21 @@ internal fun <T> KProperty<T>.path(): String {
     } else {
         pathCache.computeIfAbsent(this.toString()) {
 
-            // Check serial name
-            val serialName = annotations.firstOrNull { it.annotationClass.simpleName == "SerialName" }
+            // Check serial name - Note kotlinx.serialization.SerialName may not be on the class
+            // path
+            val serialName =
+                annotations.firstOrNull { it.annotationClass.qualifiedName == "kotlinx.serialization.SerialName" }
             var path =
                 serialName?.annotationClass?.members?.firstOrNull { it.name == "value" }?.call(serialName) as String?
 
-            // Check for BsonId / BsonProperty
+            // If no path (serialName) then check for BsonId / BsonProperty
             if (path == null) {
                 val originator = if (this is CustomProperty<*, *>) this.previous.property else this
                 val constructorProperty =
                     originator.javaField!!.declaringClass.kotlin.primaryConstructor?.findParameterByName(this.name)
 
-                path =
-                    path ?: constructorProperty?.annotations?.filterIsInstance<BsonId>()?.firstOrNull()?.let { "_id" }
+                // Prefer BsonId annotation over BsonProperty
+                path = constructorProperty?.annotations?.filterIsInstance<BsonId>()?.firstOrNull()?.let { "_id" }
                 path = path ?: constructorProperty?.annotations?.filterIsInstance<BsonProperty>()?.firstOrNull()?.value
                 path = path ?: this.name
             }
@@ -113,7 +123,7 @@ public val <T> KProperty1<out Any?, Iterable<T>?>.allPosOp: KPropertyPath<out An
 
 @Suppress("MaxLineLength")
 /**
- * [The filtered positional operator $[<identifier>]](https://docs.mongodb.com/manual/reference/operator/update/positional-filtered/)
+ * [The filtered positional operator $[\<identifier\>]](https://docs.mongodb.com/manual/reference/operator/update/positional-filtered/)
  */
 public fun <T> KProperty1<out Any?, Iterable<T>?>.filteredPosOp(identifier: String): KPropertyPath<out Any?, T?> =
     colProperty.filteredPosOp(identifier)
