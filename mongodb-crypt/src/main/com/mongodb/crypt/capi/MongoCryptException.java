@@ -18,17 +18,23 @@
 package com.mongodb.crypt.capi;
 
 
-import com.mongodb.crypt.capi.CAPI.mongocrypt_status_t;
-
-import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_code;
-import static org.bson.assertions.Assertions.isTrue;
-
 /**
- * Top level Exception for all Mongo Crypt CAPI exceptions
+ * Exception thrown for errors originating in the mongodb-crypt module.
  */
 public class MongoCryptException extends RuntimeException {
     private static final long serialVersionUID = -5524416583514807953L;
     private final int code;
+
+    /**
+     * Construct an instance
+     *
+     * @param message the message
+     * @param code the code
+     */
+    public MongoCryptException(final String message, final int code) {
+        super(message);
+        this.code = code;
+    }
 
     /**
      * @param msg the message
@@ -45,17 +51,6 @@ public class MongoCryptException extends RuntimeException {
     public MongoCryptException(final String msg, final Throwable cause) {
         super(msg, cause);
         this.code = -1;
-    }
-
-    /**
-     * Construct an instance from a {@code mongocrypt_status_t}.
-     *
-     * @param status the status
-     */
-    MongoCryptException(final mongocrypt_status_t status) {
-        super(CAPI.mongocrypt_status_message(status, null).toString());
-        isTrue("status not ok", !CAPI.mongocrypt_status_ok(status));
-        code = mongocrypt_status_code(status);
     }
 
     /**

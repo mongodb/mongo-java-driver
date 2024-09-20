@@ -73,7 +73,9 @@ import static com.mongodb.crypt.capi.CAPI.mongocrypt_setopt_schema_map;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_setopt_set_crypt_shared_lib_path_override;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_setopt_use_need_kms_credentials_state;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_status;
+import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_code;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_destroy;
+import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_message;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_new;
 import static com.mongodb.crypt.capi.CAPIHelper.toBinary;
 import static org.bson.assertions.Assertions.isTrue;
@@ -395,7 +397,8 @@ class MongoCryptImpl implements MongoCrypt {
     private void throwExceptionFromStatus() {
         mongocrypt_status_t status = mongocrypt_status_new();
         mongocrypt_status(wrapped, status);
-        MongoCryptException e = new MongoCryptException(status);
+        MongoCryptException e = new MongoCryptException(mongocrypt_status_message(status, null).toString(),
+                mongocrypt_status_code(status));
         mongocrypt_status_destroy(status);
         throw e;
     }

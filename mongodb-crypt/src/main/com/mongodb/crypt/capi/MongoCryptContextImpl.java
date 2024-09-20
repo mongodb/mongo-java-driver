@@ -35,7 +35,9 @@ import static com.mongodb.crypt.capi.CAPI.mongocrypt_ctx_next_kms_ctx;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_ctx_provide_kms_providers;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_ctx_state;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_ctx_status;
+import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_code;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_destroy;
+import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_message;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_new;
 import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_t;
 import static com.mongodb.crypt.capi.CAPIHelper.toBinary;
@@ -153,7 +155,8 @@ class MongoCryptContextImpl implements MongoCryptContext {
     static void throwExceptionFromStatus(final mongocrypt_ctx_t wrapped) {
         mongocrypt_status_t status = mongocrypt_status_new();
         mongocrypt_ctx_status(wrapped, status);
-        MongoCryptException e = new MongoCryptException(status);
+        MongoCryptException e = new MongoCryptException(mongocrypt_status_message(status, null).toString(),
+                mongocrypt_status_code(status));
         mongocrypt_status_destroy(status);
         throw e;
     }
