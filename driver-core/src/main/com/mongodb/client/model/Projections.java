@@ -224,7 +224,6 @@ public final class Projections {
      * @mongodb.server.release 6.0.10
      * @since 4.11
      */
-    @Beta(Reason.SERVER)
     public static Bson metaVectorSearchScore(final String fieldName) {
         return meta(fieldName, "vectorSearchScore");
     }
