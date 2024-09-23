@@ -32,6 +32,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 
+import static com.mongodb.internal.connection.CommandHelper.applyMaxTimeMS;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.MIN_WIRE_VERSION;
 
@@ -155,8 +156,11 @@ public class AggregateOperation<T> implements AsyncExplainableReadOperation<Asyn
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                (operationContext, serverDescription, connectionDescription) ->
-                        asExplainCommand(wrapped.getCommand(operationContext, MIN_WIRE_VERSION), verbosity), resultDecoder);
+                (operationContext, serverDescription, connectionDescription) -> {
+                    BsonDocument command = wrapped.getCommand(operationContext, MIN_WIRE_VERSION);
+                    applyMaxTimeMS(operationContext.getTimeoutContext(), command);
+                    return asExplainCommand(command, verbosity);
+                }, resultDecoder);
     }
 
     MongoNamespace getNamespace() {

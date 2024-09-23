@@ -18,8 +18,11 @@ package com.mongodb.client;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCommandException;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
+import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
@@ -27,10 +30,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -39,17 +45,20 @@ import static org.junit.Assume.assumeTrue;
 public abstract class AbstractExplainTest {
 
     private MongoClient client;
+    private TestCommandListener commandListener;
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @Before
     public void setUp() {
-        client = createMongoClient(Fixture.getMongoClientSettings());
+        commandListener = new TestCommandListener();
+        client = createMongoClient(Fixture.getMongoClientSettingsBuilder().addCommandListener(commandListener).build());
     }
 
     @After
     public void tearDown() {
         client.close();
+        commandListener.reset();
     }
 
     @Test
@@ -81,6 +90,60 @@ public abstract class AbstractExplainTest {
         assertNotNull(explainBsonDocument);
         assertTrue(explainBsonDocument.containsKey("queryPlanner"));
         assertFalse(explainBsonDocument.containsKey("executionStats"));
+    }
+
+    @Test
+    public void testFindContainsMaxTimeMsInExplain() {
+        //given
+        MongoCollection<BsonDocument> collection = client.getDatabase(getDefaultDatabaseName())
+                .getCollection("explainTest", BsonDocument.class);
+
+        FindIterable<BsonDocument> iterable = collection.find()
+                .maxTime(500, TimeUnit.MILLISECONDS);
+
+        //when
+        iterable.explain();
+
+        //then
+        assertExplainableCommandContainMaxTimeMS();
+    }
+
+    @Test
+    public void testAggregateContainsMaxTimeMsInExplain() {
+        //given
+        MongoCollection<BsonDocument> collection = client.getDatabase(getDefaultDatabaseName())
+                .getCollection("explainTest", BsonDocument.class);
+
+        AggregateIterable<BsonDocument> iterable = collection.aggregate(
+                singletonList(Aggregates.match(Filters.eq("_id", 1))))
+                .maxTime(500, TimeUnit.MILLISECONDS);
+
+        //when
+        iterable.explain();
+
+        //then
+        assertExplainableCommandContainMaxTimeMS();
+    }
+
+    @Test
+    public void testListSearchIndexesContainsMaxTimeMsInExplain() {
+        //given
+        assumeTrue(serverVersionAtLeast(6, 0));
+        MongoCollection<BsonDocument> collection = client.getDatabase(getDefaultDatabaseName())
+                .getCollection("explainTest", BsonDocument.class);
+
+        ListSearchIndexesIterable<Document> iterable = collection.listSearchIndexes()
+                .maxTime(500, TimeUnit.MILLISECONDS);
+
+        //when
+        try {
+            iterable.explain();
+        } catch (MongoCommandException throwable) {
+            //we expect listSearchIndexes is only supported in Atlas Search in some deployments.
+        }
+
+        //then
+        assertExplainableCommandContainMaxTimeMS();
     }
 
     @Test
@@ -166,5 +229,15 @@ public abstract class AbstractExplainTest {
 
         explainBsonDocument = iterable.explain(BsonDocument.class, ExplainVerbosity.QUERY_PLANNER);
         assertNotNull(explainBsonDocument);
+    }
+
+    private void assertExplainableCommandContainMaxTimeMS() {
+        assertEquals(1, commandListener.getCommandStartedEvents().size());
+        CommandStartedEvent explain = commandListener.getCommandStartedEvent("explain");
+        BsonDocument explainCommand = explain.getCommand();
+        BsonDocument explainableCommand = explainCommand.getDocument("explain");
+
+        assertFalse(explainCommand.containsKey("maxTimeMS"));
+        assertTrue(explainableCommand.containsKey("maxTimeMS"));
     }
 }
