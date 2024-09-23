@@ -17,8 +17,6 @@
 package com.mongodb.client.model;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.densify.DensifyOptions;
 import com.mongodb.client.model.densify.DensifyRange;
 import com.mongodb.client.model.fill.FillOptions;
