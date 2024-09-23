@@ -86,7 +86,7 @@ spotless {
 
         licenseHeaderFile(rootProject.file("config/mongodb.license"))
             .named("standard")
-            .onlyIfContentMatches("^(?!Copyright .*? Litote).*\$")
+            .onlyIfContentMatches(customLicenseHeader)
     }
 
     format("extraneous") {
