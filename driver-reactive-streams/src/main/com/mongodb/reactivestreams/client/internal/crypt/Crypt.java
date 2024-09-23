@@ -24,13 +24,13 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
-import com.mongodb.crypt.capi.MongoCrypt;
-import com.mongodb.crypt.capi.MongoCryptContext;
 import com.mongodb.crypt.capi.MongoCryptException;
-import com.mongodb.crypt.capi.MongoDataKeyOptions;
-import com.mongodb.crypt.capi.MongoKeyDecryptor;
-import com.mongodb.crypt.capi.MongoRewrapManyDataKeyOptions;
 import com.mongodb.internal.capi.MongoCryptHelper;
+import com.mongodb.internal.crypt.capi.MongoCrypt;
+import com.mongodb.internal.crypt.capi.MongoCryptContext;
+import com.mongodb.internal.crypt.capi.MongoDataKeyOptions;
+import com.mongodb.internal.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.internal.crypt.capi.MongoRewrapManyDataKeyOptions;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.Timeout;
@@ -48,8 +48,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.crypt.capi.MongoCryptContext.State;
 import static com.mongodb.internal.client.vault.EncryptOptionsHelper.asMongoExplicitEncryptOptions;
+import static com.mongodb.internal.crypt.capi.MongoCryptContext.State;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>

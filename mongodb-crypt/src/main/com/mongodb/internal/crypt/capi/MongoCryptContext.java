@@ -15,8 +15,9 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
+import com.mongodb.crypt.capi.MongoCryptException;
 import org.bson.BsonDocument;
 import org.bson.RawBsonDocument;
 

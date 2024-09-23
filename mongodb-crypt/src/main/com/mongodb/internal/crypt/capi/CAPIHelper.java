@@ -15,9 +15,9 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
-import com.mongodb.crypt.capi.CAPI.mongocrypt_binary_t;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_t;
 import com.sun.jna.Pointer;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
@@ -31,7 +31,7 @@ import org.bson.io.BasicOutputBuffer;
 
 import java.nio.ByteBuffer;
 
-import static com.mongodb.crypt.capi.CAPI.mongocrypt_binary_new_from_data;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_new_from_data;
 import static java.lang.String.format;
 
 final class CAPIHelper {

@@ -15,21 +15,21 @@
  *
  */
 
-package com.mongodb.crypt.capi;
+package com.mongodb.internal.crypt.capi;
 
-import com.mongodb.crypt.capi.CAPI.cstring;
-import com.mongodb.crypt.capi.CAPI.mongocrypt_binary_t;
-import com.mongodb.crypt.capi.CAPI.mongocrypt_hmac_fn;
-import com.mongodb.crypt.capi.CAPI.mongocrypt_status_t;
+import com.mongodb.internal.crypt.capi.CAPI.cstring;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_t;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_hmac_fn;
+import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_t;
 import com.sun.jna.Pointer;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import static com.mongodb.crypt.capi.CAPI.MONGOCRYPT_STATUS_ERROR_CLIENT;
-import static com.mongodb.crypt.capi.CAPI.mongocrypt_status_set;
-import static com.mongodb.crypt.capi.CAPIHelper.toByteArray;
-import static com.mongodb.crypt.capi.CAPIHelper.writeByteArrayToBinary;
+import static com.mongodb.internal.crypt.capi.CAPI.MONGOCRYPT_STATUS_ERROR_CLIENT;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_set;
+import static com.mongodb.internal.crypt.capi.CAPIHelper.toByteArray;
+import static com.mongodb.internal.crypt.capi.CAPIHelper.writeByteArrayToBinary;
 
 class MacCallback implements mongocrypt_hmac_fn {
     private final String algorithm;

@@ -22,8 +22,8 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.crypt.capi.MongoCrypt;
-import com.mongodb.crypt.capi.MongoCrypts;
+import com.mongodb.internal.crypt.capi.MongoCrypt;
+import com.mongodb.internal.crypt.capi.MongoCrypts;
 
 import javax.net.ssl.SSLContext;
 import java.util.Map;

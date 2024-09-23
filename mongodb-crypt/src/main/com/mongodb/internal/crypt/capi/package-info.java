@@ -15,28 +15,7 @@
  *
  */
 
-package com.mongodb.crypt.capi;
-
 /**
- * The entry point to the MongoCrypt library.
+ * The mongocrypt internal package
  */
-public final class MongoCrypts {
-
-    private MongoCrypts() {
-        //NOP
-    }
-
-    /**
-     * Create a {@code MongoCrypt} instance.
-     *
-     * <p>
-     * Make sure that JNA is able to find the shared library, most likely by setting the jna.library.path system property
-     * </p>
-     *
-     * @param options the options
-     * @return the instance
-     */
-    public static MongoCrypt create(final MongoCryptOptions options) {
-        return new MongoCryptImpl(options);
-    }
-}
+package com.mongodb.internal.crypt.capi;
