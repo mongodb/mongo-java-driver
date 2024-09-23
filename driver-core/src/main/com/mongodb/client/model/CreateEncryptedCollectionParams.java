@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -29,7 +27,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 4.9
  */
-@Beta(Reason.SERVER)
 public final class CreateEncryptedCollectionParams {
     private final String kmsProvider;
     @Nullable
