@@ -20,6 +20,8 @@ package com.mongodb.crypt.capi;
 
 /**
  * Exception thrown for errors originating in the mongodb-crypt module.
+ *
+ * @serial exclude
  */
 public class MongoCryptException extends RuntimeException {
     private static final long serialVersionUID = -5524416583514807953L;
