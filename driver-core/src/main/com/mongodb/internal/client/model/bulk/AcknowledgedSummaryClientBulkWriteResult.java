@@ -76,7 +76,7 @@ public final class AcknowledgedSummaryClientBulkWriteResult implements ClientBul
     }
 
     @Override
-    public Optional<ClientBulkWriteResult.Verbose> getVerbose() {
+    public Optional<ClientBulkWriteResult.VerboseResults> getVerboseResults() {
         return empty();
     }
 

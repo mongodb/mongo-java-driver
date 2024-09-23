@@ -89,15 +89,15 @@ public interface ClientBulkWriteResult {
      * @throws UnsupportedOperationException If this result is not {@linkplain #isAcknowledged() acknowledged}.
      * @see ClientBulkWriteOptions#verboseResults(Boolean)
      */
-    Optional<ClientBulkWriteResult.Verbose> getVerbose();
+    Optional<ClientBulkWriteResult.VerboseResults> getVerboseResults();
 
     /**
-     * The {@linkplain ClientBulkWriteResult#getVerbose() verbose results} of individual operations.
+     * The {@linkplain ClientBulkWriteResult#getVerboseResults() verbose results} of individual operations.
      *
      * @since 5.3
      */
     @Evolving
-    interface Verbose {
+    interface VerboseResults {
         /**
          * The indexed {@link ClientInsertOneResult}s.
          * The {@linkplain Map#keySet() keys} are the indexes of the corresponding {@link ClientNamespacedWriteModel}s

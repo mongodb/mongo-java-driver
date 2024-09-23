@@ -118,9 +118,9 @@ public final class ClientBulkWriteException extends MongoServerException {
      * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
      *
      * @return The indexed {@link WriteError}s.
-     * @see ClientBulkWriteResult.Verbose#getInsertResults()
-     * @see ClientBulkWriteResult.Verbose#getUpdateResults()
-     * @see ClientBulkWriteResult.Verbose#getDeleteResults()
+     * @see ClientBulkWriteResult.VerboseResults#getInsertResults()
+     * @see ClientBulkWriteResult.VerboseResults#getUpdateResults()
+     * @see ClientBulkWriteResult.VerboseResults#getDeleteResults()
      */
     public Map<Integer, WriteError> getWriteErrors() {
         return writeErrors;
