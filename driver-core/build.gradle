@@ -46,6 +46,7 @@ dependencies {
     api "io.netty:netty-buffer", optional
     api "io.netty:netty-transport", optional
     api "io.netty:netty-handler", optional
+    compileOnly "org.graalvm.sdk:graal-sdk:$graalSdkVersion"
 
     // Optionally depend on both AWS SDK v2 and v1.  The driver will use v2 is present, v1 if present, or built-in functionality if
     // neither are present
