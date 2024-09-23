@@ -19,8 +19,6 @@ package com.mongodb.reactivestreams.client.internal.crypt;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
@@ -191,7 +189,6 @@ public class Crypt implements Closeable {
      * @since 4.9
      * @mongodb.server.release 6.2
      */
-    @Beta(Reason.SERVER)
     public Mono<BsonDocument> encryptExpression(final BsonDocument expression, final EncryptOptions options, @Nullable final Timeout operationTimeout) {
         return executeStateMachine(() ->
                 mongoCrypt.createEncryptExpressionContext(new BsonDocument("v", expression), asMongoExplicitEncryptOptions(options)), operationTimeout
