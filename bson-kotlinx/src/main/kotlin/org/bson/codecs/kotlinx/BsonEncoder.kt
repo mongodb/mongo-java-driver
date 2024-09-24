@@ -39,43 +39,21 @@ import org.bson.types.ObjectId
  * For custom serialization handlers
  */
 @ExperimentalSerializationApi
-internal sealed interface BsonEncoder : Encoder, CompositeEncoder {
-
-    /** Factory helper for creating concrete BsonEncoder implementations */
-    companion object {
-        @Suppress("SwallowedException")
-        private val hasJsonEncoder: Boolean by lazy {
-            try {
-                Class.forName("kotlinx.serialization.json.JsonEncoder")
-                true
-            } catch (e: ClassNotFoundException) {
-                false
-            }
-        }
-
-        fun createBsonEncoder(
-            writer: BsonWriter,
-            serializersModule: SerializersModule,
-            configuration: BsonConfiguration
-        ): BsonEncoder {
-            return if (hasJsonEncoder) JsonBsonEncoder(writer, serializersModule, configuration)
-            else BsonEncoderImpl(writer, serializersModule, configuration)
-        }
-    }
+public sealed interface BsonEncoder : Encoder, CompositeEncoder {
 
     /**
      * Encodes an ObjectId
      *
      * @param value the ObjectId
      */
-    fun encodeObjectId(value: ObjectId)
+    public fun encodeObjectId(value: ObjectId)
 
     /**
      * Encodes a BsonValue
      *
      * @param value the BsonValue
      */
-    fun encodeBsonValue(value: BsonValue)
+    public fun encodeBsonValue(value: BsonValue)
 }
 
 /**

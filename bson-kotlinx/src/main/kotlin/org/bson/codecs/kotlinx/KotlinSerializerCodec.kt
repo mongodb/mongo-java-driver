@@ -34,6 +34,8 @@ import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonEncoder
 import org.bson.codecs.pojo.annotations.BsonCreator
 import org.bson.codecs.pojo.annotations.BsonDiscriminator
 import org.bson.codecs.pojo.annotations.BsonExtraElements
@@ -172,13 +174,13 @@ private constructor(
     }
 
     override fun encode(writer: BsonWriter, value: T, encoderContext: EncoderContext) {
-        serializer.serialize(BsonEncoder.createBsonEncoder(writer, serializersModule, bsonConfiguration), value)
+        serializer.serialize(createBsonEncoder(writer, serializersModule, bsonConfiguration), value)
     }
 
     override fun getEncoderClass(): Class<T> = kClass.java
 
     override fun decode(reader: BsonReader, decoderContext: DecoderContext): T {
         require(reader is AbstractBsonReader)
-        return serializer.deserialize(BsonDecoder.createBsonDecoder(reader, serializersModule, bsonConfiguration))
+        return serializer.deserialize(createBsonDecoder(reader, serializersModule, bsonConfiguration))
     }
 }
