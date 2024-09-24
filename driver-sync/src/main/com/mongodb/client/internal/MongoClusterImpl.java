@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
@@ -30,6 +31,7 @@ import com.mongodb.RequestContext;
 import com.mongodb.ServerApi;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
@@ -37,6 +39,9 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.SynchronousContextProvider;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
@@ -48,6 +53,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
+import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -307,6 +313,42 @@ final class MongoClusterImpl implements MongoCluster {
         return createChangeStreamIterable(clientSession, pipeline, clazz);
     }
 
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        notNull("clientWriteModels", clientWriteModels);
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        notNull("clientWriteModels", clientWriteModels);
+        notNull("options", options);
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        notNull("clientSession", clientSession);
+        notNull("clientWriteModels", clientWriteModels);
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        notNull("clientSession", clientSession);
+        notNull("clientWriteModels", clientWriteModels);
+        notNull("options", options);
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<>(clientSession, clazz, codecRegistry, ReadPreference.primary(), operationExecutor, retryReads, timeoutSettings);
     }
@@ -357,8 +399,9 @@ final class MongoClusterImpl implements MongoCluster {
                 }
                 return operation.execute(binding);
             } catch (MongoException e) {
-                labelException(actualClientSession, e);
-                clearTransactionContextOnTransientTransactionError(session, e);
+                MongoException exceptionToHandle = OperationHelper.unwrap(e);
+                labelException(actualClientSession, exceptionToHandle);
+                clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
                 throw e;
             } finally {
                 binding.release();
@@ -378,8 +421,9 @@ final class MongoClusterImpl implements MongoCluster {
             try {
                 return operation.execute(binding);
             } catch (MongoException e) {
-                labelException(actualClientSession, e);
-                clearTransactionContextOnTransientTransactionError(session, e);
+                MongoException exceptionToHandle = OperationHelper.unwrap(e);
+                labelException(actualClientSession, exceptionToHandle);
+                clearTransactionContextOnTransientTransactionError(session, exceptionToHandle);
                 throw e;
             } finally {
                 binding.release();
