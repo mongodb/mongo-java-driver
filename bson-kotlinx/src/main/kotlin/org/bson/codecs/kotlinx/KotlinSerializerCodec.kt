@@ -34,8 +34,8 @@ import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
-import org.bson.codecs.kotlinx.utils.BsonEncoderDecoderUtils.createBsonDecoder
-import org.bson.codecs.kotlinx.utils.BsonEncoderDecoderUtils.createBsonEncoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonEncoder
 import org.bson.codecs.pojo.annotations.BsonCreator
 import org.bson.codecs.pojo.annotations.BsonDiscriminator
 import org.bson.codecs.pojo.annotations.BsonExtraElements

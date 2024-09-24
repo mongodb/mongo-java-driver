@@ -37,7 +37,7 @@ import org.bson.codecs.kotlinx.JsonBsonMapDecoder
 import org.bson.codecs.kotlinx.JsonBsonPolymorphicDecoder
 
 @ExperimentalSerializationApi
-internal object BsonEncoderDecoderUtils {
+internal object BsonCodecUtils {
 
     @Suppress("SwallowedException")
     private val hasJsonEncoder: Boolean by lazy {

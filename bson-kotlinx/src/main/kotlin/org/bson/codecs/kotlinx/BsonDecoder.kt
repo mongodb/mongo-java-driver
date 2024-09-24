@@ -37,11 +37,11 @@ import org.bson.BsonType
 import org.bson.BsonValue
 import org.bson.codecs.BsonValueCodec
 import org.bson.codecs.DecoderContext
-import org.bson.codecs.kotlinx.utils.BsonEncoderDecoderUtils.createBsonArrayDecoder
-import org.bson.codecs.kotlinx.utils.BsonEncoderDecoderUtils.createBsonDecoder
-import org.bson.codecs.kotlinx.utils.BsonEncoderDecoderUtils.createBsonDocumentDecoder
-import org.bson.codecs.kotlinx.utils.BsonEncoderDecoderUtils.createBsonMapDecoder
-import org.bson.codecs.kotlinx.utils.BsonEncoderDecoderUtils.createBsonPolymorphicDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonArrayDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDocumentDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonMapDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonPolymorphicDecoder
 import org.bson.internal.NumberCodecHelper
 import org.bson.internal.StringCodecHelper
 import org.bson.types.ObjectId
