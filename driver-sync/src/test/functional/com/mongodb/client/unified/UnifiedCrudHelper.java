@@ -1981,7 +1981,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     .append("matchedCount", new BsonInt64(result.getMatchedCount()))
                     .append("modifiedCount", new BsonInt64(result.getModifiedCount()))
                     .append("deletedCount", new BsonInt64(result.getDeletedCount()));
-            result.getVerbose().ifPresent(verbose ->
+            result.getVerboseResults().ifPresent(verbose ->
                 expected.append("insertResults", new BsonDocument(verbose.getInsertResults().entrySet().stream()
                                 .map(entry -> new BsonElement(
                                         entry.getKey().toString(),
