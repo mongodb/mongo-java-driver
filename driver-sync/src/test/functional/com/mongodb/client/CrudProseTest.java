@@ -307,7 +307,7 @@ public class CrudProseTest {
                 );
                 ClientBulkWriteResult result = transaction ? session.withTransaction(action::get) : action.get();
                 assertEquals(2, result.getUpsertedCount());
-                assertEquals(2, result.getVerbose().orElseThrow(Assertions::fail).getUpdateResults().size());
+                assertEquals(2, result.getVerboseResults().orElseThrow(Assertions::fail).getUpdateResults().size());
                 assertEquals(1, commandListener.getCommandStartedEvents("bulkWrite").size());
             }
         }
