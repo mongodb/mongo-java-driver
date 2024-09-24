@@ -44,8 +44,11 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.SearchIndexModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
@@ -357,5 +360,11 @@ public final class SyncOperations<TDocument> {
             final BsonDocument startAfter, final boolean showExpandedEvents) {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, decoder, changeStreamLevel, batchSize,
                 collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+    }
+
+    public WriteOperation<ClientBulkWriteResult> clientBulkWriteOperation(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            @Nullable final ClientBulkWriteOptions options) {
+        return operations.clientBulkWriteOperation(clientWriteModels, options);
     }
 }
