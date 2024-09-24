@@ -260,4 +260,10 @@
         <Bug pattern="NP_NONNULL_RETURN_VIOLATION"/>
     </Match>
 
+    <!-- mongocrypt -->
+    <Match>
+        <Class name="com.mongodb.internal.crypt.capi.CAPI$cstring"/>
+        <Bug pattern="NM_CLASS_NAMING_CONVENTION"/>
+    </Match>
+
 </FindBugsFilter>

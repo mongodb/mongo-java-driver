@@ -134,19 +134,19 @@ public final class ClientBulkWriteException extends MongoServerException {
      * There are no guarantees on mutability or iteration order of the {@link Map} returned.</p>
      *
      * @return The indexed {@link WriteError}s.
-     * @see ClientBulkWriteResult.Verbose#getInsertResults()
-     * @see ClientBulkWriteResult.Verbose#getUpdateResults()
-     * @see ClientBulkWriteResult.Verbose#getDeleteResults()
+     * @see ClientBulkWriteResult.VerboseResults#getInsertResults()
+     * @see ClientBulkWriteResult.VerboseResults#getUpdateResults()
+     * @see ClientBulkWriteResult.VerboseResults#getDeleteResults()
      */
     public Map<Integer, WriteError> getWriteErrors() {
         return writeErrors;
     }
 
     /**
-     * The result of the successful part of a client-level bulk write operation.
+     * The result of the part of a client-level bulk write operation that is known to be successful.
      *
-     * @return The successful partial result. {@linkplain Optional#isPresent() Present} only if at least one
-     * {@linkplain ClientNamespacedWriteModel individual write operation} succeed.
+     * @return The successful partial result. {@linkplain Optional#isPresent() Present} only if the client received a response indicating success
+     * of at least one {@linkplain ClientNamespacedWriteModel individual write operation}.
      */
     public Optional<ClientBulkWriteResult> getPartialResult() {
         return ofNullable(partialResult);

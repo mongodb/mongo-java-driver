@@ -1,0 +1,19 @@
+{
+  "$or": [
+    {
+      "_id": {
+        "$in": [
+          {
+            "$binary": "q83vqxI0mHYSNBI0VniQEg==",
+            "$type": "04"
+          }
+        ]
+      }
+    },
+    {
+      "keyAltNames": {
+        "$in": []
+      }
+    }
+  ]
+}

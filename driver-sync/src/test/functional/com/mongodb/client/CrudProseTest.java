@@ -499,7 +499,7 @@ public class CrudProseTest {
                         (client, collection) -> client.bulkWrite(
                                 singletonList(insertOne(collection.getNamespace(), documentSupplier.get())),
                                 clientBulkWriteOptions().verboseResults(true))
-                                .getVerbose().orElseThrow(Assertions::fail).getInsertResults().get(0).getInsertedId().orElse(null))
+                                .getVerboseResults().orElseThrow(Assertions::fail).getInsertResults().get(0).getInsertedId().orElse(null))
         );
     }
 

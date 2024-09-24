@@ -26,7 +26,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.crypt.capi.MongoCrypt;
+import com.mongodb.internal.crypt.capi.MongoCrypt;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.RawBsonDocument;

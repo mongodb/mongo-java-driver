@@ -17,6 +17,7 @@ package com.mongodb.internal;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.internal.connection.CommandMessage;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -213,13 +214,22 @@ public class TimeoutContext {
 
     /**
      * The override will be provided as the remaining value in
-     * {@link #runMaxTimeMS}, where 0 is ignored.
+     * {@link #runMaxTimeMS}, where 0 is ignored. This is useful for setting timeout
+     * in {@link CommandMessage} as an extra element before we send it to the server.
+     *
      * <p>
      * NOTE: Suitable for static user-defined values only (i.e MaxAwaitTimeMS),
-     * not for running timeouts that adjust dynamically.
+     * not for running timeouts that adjust dynamically (CSOT).
      */
     public void setMaxTimeOverride(final long maxTimeMS) {
         this.maxTimeSupplier = () -> maxTimeMS;
+    }
+    /**
+     * Disable the maxTimeMS override. This way the maxTimeMS will not
+     * be appended to the command in the {@link CommandMessage}.
+     */
+    public void disableMaxTimeOverride() {
+        this.maxTimeSupplier = () -> 0;
     }
 
     /**

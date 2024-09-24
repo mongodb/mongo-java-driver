@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model.vault;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 
@@ -192,7 +190,6 @@ public class EncryptOptions {
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
     @Nullable
-    @Beta(Reason.SERVER)
     public RangeOptions getRangeOptions() {
         return rangeOptions;
     }

@@ -101,7 +101,13 @@ configure(javaProjects) { project ->
                 artifact javadocJar
 
                 suppressPomMetadataWarningsFor("dateTimeSupportApiElements")
-                suppressPomMetadataWarningsFor("dateTimeRuntimeElements")
+                suppressPomMetadataWarningsFor("dateTimeSupportRuntimeElements")
+
+                suppressPomMetadataWarningsFor("jsonSupportApiElements")
+                suppressPomMetadataWarningsFor("jsonSupportRuntimeElements")
+
+                suppressPomMetadataWarningsFor("mongoCryptSupportApiElements")
+                suppressPomMetadataWarningsFor("mongoCryptSupportRuntimeElements")
             }
         }
 

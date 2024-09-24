@@ -17,7 +17,7 @@ package com.mongodb.internal.client.vault;
 
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RangeOptions;
-import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
+import com.mongodb.internal.crypt.capi.MongoExplicitEncryptOptions;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;

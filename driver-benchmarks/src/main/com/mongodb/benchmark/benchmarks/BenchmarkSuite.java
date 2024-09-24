@@ -22,6 +22,8 @@ import com.mongodb.benchmark.framework.BenchmarkResult;
 import com.mongodb.benchmark.framework.BenchmarkResultWriter;
 import com.mongodb.benchmark.framework.BenchmarkRunner;
 import com.mongodb.benchmark.framework.EvergreenBenchmarkResultWriter;
+import com.mongodb.benchmark.framework.MongoCryptBenchmarkRunner;
+import com.mongodb.benchmark.framework.MongocryptBecnhmarkResult;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 
@@ -56,6 +58,7 @@ public class BenchmarkSuite {
     private static void runBenchmarks()
             throws Exception {
 
+        runMongoCryptBenchMarks();
         runBenchmark(new BsonEncodingBenchmark<>("Flat", "extended_bson/flat_bson.json", DOCUMENT_CODEC));
         runBenchmark(new BsonEncodingBenchmark<>("Deep", "extended_bson/deep_bson.json", DOCUMENT_CODEC));
         runBenchmark(new BsonEncodingBenchmark<>("Full", "extended_bson/full_bson.json", DOCUMENT_CODEC));
@@ -85,6 +88,17 @@ public class BenchmarkSuite {
         runBenchmark(new MultiFileExportBenchmark());
         runBenchmark(new GridFSMultiFileUploadBenchmark());
         runBenchmark(new GridFSMultiFileDownloadBenchmark());
+    }
+
+    private static void runMongoCryptBenchMarks() throws InterruptedException {
+        // This runner has been migrated from libmongocrypt as it is.
+        List<MongocryptBecnhmarkResult> results = new MongoCryptBenchmarkRunner().run();
+
+        for (BenchmarkResultWriter writer : WRITERS) {
+            for (MongocryptBecnhmarkResult result : results) {
+                writer.write(result);
+            }
+        }
     }
 
     private static void runBenchmark(final Benchmark benchmark) throws Exception {

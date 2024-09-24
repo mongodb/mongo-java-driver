@@ -35,6 +35,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.CommandHelper.applyMaxTimeMS;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandWriteTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
@@ -243,9 +244,11 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                (operationContext, serverDescription, connectionDescription) ->
-                        asExplainCommand(getCommandCreator().create(operationContext, serverDescription, connectionDescription),
-                                explainVerbosity), new BsonDocumentCodec());
+                (operationContext, serverDescription, connectionDescription) -> {
+                    BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);
+                    applyMaxTimeMS(operationContext.getTimeoutContext(), command);
+                    return asExplainCommand(command, explainVerbosity);
+                }, new BsonDocumentCodec());
     }
 
     private CommandWriteTransformer<BsonDocument, MapReduceStatistics> transformer(final TimeoutContext timeoutContext) {
