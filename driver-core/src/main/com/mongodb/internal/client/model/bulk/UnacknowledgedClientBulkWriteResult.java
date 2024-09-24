@@ -61,7 +61,7 @@ public final class UnacknowledgedClientBulkWriteResult implements ClientBulkWrit
     }
 
     @Override
-    public Optional<Verbose> getVerbose() throws UnsupportedOperationException {
+    public Optional<ClientBulkWriteResult.VerboseResults> getVerboseResults() throws UnsupportedOperationException {
         throw createUnacknowledgedResultsException();
     }
 

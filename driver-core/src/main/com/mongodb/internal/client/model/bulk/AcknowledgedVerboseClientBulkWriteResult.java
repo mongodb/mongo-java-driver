@@ -31,7 +31,7 @@ import static java.util.Optional.of;
  */
 public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBulkWriteResult {
     private final AcknowledgedSummaryClientBulkWriteResult summaryResults;
-    private final Verbose verbose;
+    private final AcknowledgedVerboseClientBulkWriteResult.VerboseResults verboseResults;
 
     public AcknowledgedVerboseClientBulkWriteResult(
             final AcknowledgedSummaryClientBulkWriteResult summaryResults,
@@ -39,7 +39,7 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
             final Map<Integer, ClientUpdateResult> updateResults,
             final Map<Integer, ClientDeleteResult> deleteResults) {
         this.summaryResults = summaryResults;
-        this.verbose = new Verbose(insertResults, updateResults, deleteResults);
+        this.verboseResults = new AcknowledgedVerboseClientBulkWriteResult.VerboseResults(insertResults, updateResults, deleteResults);
     }
 
     @Override
@@ -73,8 +73,8 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
     }
 
     @Override
-    public Optional<ClientBulkWriteResult.Verbose> getVerbose() {
-        return of(verbose);
+    public Optional<ClientBulkWriteResult.VerboseResults> getVerboseResults() {
+        return of(verboseResults);
     }
 
     @Override
@@ -87,12 +87,12 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
         }
         final AcknowledgedVerboseClientBulkWriteResult that = (AcknowledgedVerboseClientBulkWriteResult) o;
         return Objects.equals(summaryResults, that.summaryResults)
-                && Objects.equals(verbose, that.verbose);
+                && Objects.equals(verboseResults, that.verboseResults);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(summaryResults, verbose);
+        return Objects.hash(summaryResults, verboseResults);
     }
 
     @Override
@@ -103,18 +103,18 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
                 + ", matchedCount=" + summaryResults.getMatchedCount()
                 + ", modifiedCount=" + summaryResults.getModifiedCount()
                 + ", deletedCount=" + summaryResults.getDeletedCount()
-                + ", insertResults=" + verbose.insertResults
-                + ", updateResults=" + verbose.updateResults
-                + ", deleteResults=" + verbose.deleteResults
+                + ", insertResults=" + verboseResults.insertResults
+                + ", updateResults=" + verboseResults.updateResults
+                + ", deleteResults=" + verboseResults.deleteResults
                 + '}';
     }
 
-    private static final class Verbose implements ClientBulkWriteResult.Verbose {
+    private static final class VerboseResults implements ClientBulkWriteResult.VerboseResults {
         private final Map<Integer, ClientInsertOneResult> insertResults;
         private final Map<Integer, ClientUpdateResult> updateResults;
         private final Map<Integer, ClientDeleteResult> deleteResults;
 
-        Verbose(
+        VerboseResults(
                 final Map<Integer, ClientInsertOneResult> insertResults,
                 final Map<Integer, ClientUpdateResult> updateResults,
                 final Map<Integer, ClientDeleteResult> deleteResults) {
@@ -146,7 +146,8 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final Verbose verbose = (Verbose) o;
+            final AcknowledgedVerboseClientBulkWriteResult.VerboseResults verbose =
+                    (AcknowledgedVerboseClientBulkWriteResult.VerboseResults) o;
             return Objects.equals(insertResults, verbose.insertResults)
                     && Objects.equals(updateResults, verbose.updateResults)
                     && Objects.equals(deleteResults, verbose.deleteResults);
@@ -159,7 +160,7 @@ public final class AcknowledgedVerboseClientBulkWriteResult implements ClientBul
 
         @Override
         public String toString() {
-            return "AcknowledgedVerboseClientBulkWriteResult.Verbose{"
+            return "AcknowledgedVerboseClientBulkWriteResult.VerboseResults{"
                     + "insertResults=" + insertResults
                     + ", updateResults=" + updateResults
                     + ", deleteResults=" + deleteResults

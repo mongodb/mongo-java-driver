@@ -20,7 +20,7 @@ import com.mongodb.bulk.WriteConcernError;
 
 /**
  * The result of a successful {@linkplain ClientNamespacedWriteModel individual delete operation}.
- * Note that {@link WriteConcernError}s are not considered as making individuals operations unsuccessful.
+ * Note that {@link WriteConcernError}s are not considered as making individual operations unsuccessful.
  *
  * @since 5.3
  */
