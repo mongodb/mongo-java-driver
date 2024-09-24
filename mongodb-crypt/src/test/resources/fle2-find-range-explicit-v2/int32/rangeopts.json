@@ -1,0 +1,14 @@
+{
+    "min": {
+        "$numberInt": "0"
+    },
+    "max": {
+        "$numberInt": "200"
+    },
+    "sparsity": {
+        "$numberLong": "1"
+    },
+    "trimFactor": {
+        "$numberInt": "1"
+    }
+}

@@ -83,6 +83,20 @@ public class TextBasedBenchmarkResultWriter implements BenchmarkResultWriter {
     }
 
     @Override
+    public void write(final MongocryptBecnhmarkResult result) {
+        printStream.println(result.getTestName());
+
+        printStream.println("CreatedAt: " + result.getCreatedAt());
+        printStream.println("CompletedAt: " + result.getCompletedAt());
+        printStream.println("ThreadCount: " + result.getThreadCount());
+        printStream.println("MedianOpsPerSec: " + result.getMedianOpsPerSec());
+        printStream.println("MetricType: " + result.getMetricType());
+
+        printStream.println();
+        printStream.println();
+    }
+
+    @Override
     public void close() {
     }
 }

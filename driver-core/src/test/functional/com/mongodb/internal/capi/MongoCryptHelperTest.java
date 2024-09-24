@@ -21,7 +21,7 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
-import com.mongodb.crypt.capi.MongoCryptOptions;
+import com.mongodb.internal.crypt.capi.MongoCryptOptions;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
 
