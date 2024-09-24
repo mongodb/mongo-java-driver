@@ -51,10 +51,10 @@ import org.bson.types.ObjectId
  * For custom serialization handlers
  */
 @ExperimentalSerializationApi
-internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
+public sealed interface BsonDecoder : Decoder, CompositeDecoder {
 
     /** Factory helper for creating concrete BsonDecoder implementations */
-    companion object {
+    public companion object {
 
         @Suppress("SwallowedException")
         private val hasJsonDecoder: Boolean by lazy {
@@ -66,7 +66,7 @@ internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
             }
         }
 
-        fun createBsonDecoder(
+        internal fun createBsonDecoder(
             reader: AbstractBsonReader,
             serializersModule: SerializersModule,
             configuration: BsonConfiguration
@@ -75,7 +75,7 @@ internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
             else BsonDecoderImpl(reader, serializersModule, configuration)
         }
 
-        fun createBsonArrayDecoder(
+        internal fun createBsonArrayDecoder(
             descriptor: SerialDescriptor,
             reader: AbstractBsonReader,
             serializersModule: SerializersModule,
@@ -85,7 +85,7 @@ internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
             else BsonArrayDecoder(descriptor, reader, serializersModule, configuration)
         }
 
-        fun createBsonDocumentDecoder(
+        internal fun createBsonDocumentDecoder(
             descriptor: SerialDescriptor,
             reader: AbstractBsonReader,
             serializersModule: SerializersModule,
@@ -95,7 +95,7 @@ internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
             else BsonDocumentDecoder(descriptor, reader, serializersModule, configuration)
         }
 
-        fun createBsonPolymorphicDecoder(
+        internal fun createBsonPolymorphicDecoder(
             descriptor: SerialDescriptor,
             reader: AbstractBsonReader,
             serializersModule: SerializersModule,
@@ -105,7 +105,7 @@ internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
             else BsonPolymorphicDecoder(descriptor, reader, serializersModule, configuration)
         }
 
-        fun createBsonMapDecoder(
+        internal fun createBsonMapDecoder(
             descriptor: SerialDescriptor,
             reader: AbstractBsonReader,
             serializersModule: SerializersModule,
@@ -117,9 +117,9 @@ internal sealed interface BsonDecoder : Decoder, CompositeDecoder {
     }
 
     /** @return the decoded ObjectId */
-    fun decodeObjectId(): ObjectId
+    public fun decodeObjectId(): ObjectId
     /** @return the decoded BsonValue */
-    fun decodeBsonValue(): BsonValue
+    public fun decodeBsonValue(): BsonValue
 }
 
 @OptIn(ExperimentalSerializationApi::class)

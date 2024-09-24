@@ -39,10 +39,10 @@ import org.bson.types.ObjectId
  * For custom serialization handlers
  */
 @ExperimentalSerializationApi
-internal sealed interface BsonEncoder : Encoder, CompositeEncoder {
+public sealed interface BsonEncoder : Encoder, CompositeEncoder {
 
     /** Factory helper for creating concrete BsonEncoder implementations */
-    companion object {
+    public companion object {
         @Suppress("SwallowedException")
         private val hasJsonEncoder: Boolean by lazy {
             try {
@@ -53,7 +53,7 @@ internal sealed interface BsonEncoder : Encoder, CompositeEncoder {
             }
         }
 
-        fun createBsonEncoder(
+        public fun createBsonEncoder(
             writer: BsonWriter,
             serializersModule: SerializersModule,
             configuration: BsonConfiguration
@@ -68,14 +68,14 @@ internal sealed interface BsonEncoder : Encoder, CompositeEncoder {
      *
      * @param value the ObjectId
      */
-    fun encodeObjectId(value: ObjectId)
+    public fun encodeObjectId(value: ObjectId)
 
     /**
      * Encodes a BsonValue
      *
      * @param value the BsonValue
      */
-    fun encodeBsonValue(value: BsonValue)
+    public fun encodeBsonValue(value: BsonValue)
 }
 
 /**
