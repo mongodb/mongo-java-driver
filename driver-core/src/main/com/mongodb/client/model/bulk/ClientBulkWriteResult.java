@@ -18,16 +18,15 @@ package com.mongodb.client.model.bulk;
 import com.mongodb.ClientBulkWriteException;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Evolving;
-import com.mongodb.bulk.WriteConcernError;
 
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * The result of a successful or partially successful client-level bulk write operation.
- * Note that if only some of the {@linkplain ClientNamespacedWriteModel individual write operations} succeed,
- * or if there are {@link WriteConcernError}s, then the successful partial result
- * is still accessible via {@link ClientBulkWriteException#getPartialResult()}.
+ * Note that if a client-level bulk write operation fails while some of the
+ * {@linkplain ClientNamespacedWriteModel individual write operations} are known to be successful,
+ * then the successful partial result is still accessible via {@link ClientBulkWriteException#getPartialResult()}.
  *
  * @see ClientBulkWriteException
  * @since 5.3
