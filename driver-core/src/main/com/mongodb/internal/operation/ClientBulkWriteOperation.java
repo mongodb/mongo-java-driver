@@ -509,8 +509,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
          */
         ClientBulkWriteResult build(@Nullable final MongoException topLevelError, final WriteConcern effectiveWriteConcern) throws MongoException {
             boolean verboseResultsSetting = options.isVerboseResults();
-            boolean haveResponses = false;
-            boolean haveSuccessfulIndividualOperations = false;
+            boolean batchResultsHaveResponses = false;
+            boolean batchResultsHaveInfoAboutSuccessfulIndividualOperations = false;
             long insertedCount = 0;
             long upsertedCount = 0;
             long matchedCount = 0;
@@ -523,15 +523,18 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             Map<Integer, WriteError> writeErrors = new HashMap<>();
             for (BatchResult batchResult : batchResults) {
                 if (batchResult.hasResponse()) {
-                    haveResponses = true;
+                    batchResultsHaveResponses = true;
                     MongoWriteConcernException writeConcernException = batchResult.getWriteConcernException();
                     if (writeConcernException != null) {
                         writeConcernErrors.add(writeConcernException.getWriteConcernError());
                     }
                     int batchStartModelIndex = batchResult.getBatchStartModelIndex();
                     ExhaustiveClientBulkWriteCommandOkResponse response = batchResult.getResponse();
-                    haveSuccessfulIndividualOperations = haveSuccessfulIndividualOperations
-                            || response.getNErrors() < batchResult.getBatchModelsCount();
+                    boolean orderedSetting = options.isOrdered();
+                    int nErrors = response.getNErrors();
+                    batchResultsHaveInfoAboutSuccessfulIndividualOperations = batchResultsHaveInfoAboutSuccessfulIndividualOperations
+                            || (orderedSetting && nErrors == 0)
+                            || (!orderedSetting && nErrors < batchResult.getBatchModelsCount());
                     insertedCount += response.getNInserted();
                     upsertedCount += response.getNUpserted();
                     matchedCount += response.getNMatched();
@@ -567,6 +570,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                 fail(writeModel.getClass().toString());
                             }
                         } else {
+                            batchResultsHaveInfoAboutSuccessfulIndividualOperations = batchResultsHaveInfoAboutSuccessfulIndividualOperations
+                                    || (orderedSetting && individualOperationIndexInBatch > 0);
                             WriteError individualOperationWriteError = new WriteError(
                                     individualOperationResponse.getInt32("code").getValue(),
                                     individualOperationResponse.getString("errmsg").getValue(),
@@ -586,8 +591,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 } else {
                     return UnacknowledgedClientBulkWriteResult.INSTANCE;
                 }
-            } else if (haveResponses) {
-                AcknowledgedSummaryClientBulkWriteResult partialSummaryResult = haveSuccessfulIndividualOperations
+            } else if (batchResultsHaveResponses) {
+                AcknowledgedSummaryClientBulkWriteResult partialSummaryResult = batchResultsHaveInfoAboutSuccessfulIndividualOperations
                         ? new AcknowledgedSummaryClientBulkWriteResult(insertedCount, upsertedCount, matchedCount, modifiedCount, deletedCount)
                         : null;
                 throw new ClientBulkWriteException(
