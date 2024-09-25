@@ -72,7 +72,7 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
     /**
      * Construct a new instance
      */
-    public TlsChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver,
+    TlsChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver,
             @Nullable final ExecutorService executorService) {
         this.inetAddressResolver = inetAddressResolver;
         this.group = new AsynchronousTlsChannelGroup(executorService);

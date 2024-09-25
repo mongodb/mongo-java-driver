@@ -22,19 +22,19 @@ import com.mongodb.lang.Nullable;
 import java.util.concurrent.ExecutorService;
 
 /**
- * {@link TransportSettings} for an async transport implementation.
+ * {@link TransportSettings} for a non-<a href="http://netty.io/">Netty</a>-based async transport implementation.
  *
  * @since 5.2
  */
-public class AsyncTransportSettings extends TransportSettings {
+public final class AsyncTransportSettings extends TransportSettings {
 
     private final ExecutorService executorService;
 
-    public AsyncTransportSettings(final Builder builder) {
+    private AsyncTransportSettings(final Builder builder) {
         this.executorService = builder.executorService;
     }
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
@@ -54,6 +54,7 @@ public class AsyncTransportSettings extends TransportSettings {
          * @param executorService the executor service
          * @return this
          * @see #getExecutorService()
+         * @see AsynchronousChannelGroup#withThreadPool(ExecutorService)
          */
         public Builder executorService(final ExecutorService executorService) {
             this.executorService = executorService;

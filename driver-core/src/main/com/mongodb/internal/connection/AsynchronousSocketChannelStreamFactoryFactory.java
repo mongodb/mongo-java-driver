@@ -37,7 +37,7 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
         this(inetAddressResolver, null);
     }
 
-    public AsynchronousSocketChannelStreamFactoryFactory(
+    AsynchronousSocketChannelStreamFactoryFactory(
             final InetAddressResolver inetAddressResolver,
             @Nullable final ExecutorService executorService) {
         this.inetAddressResolver = inetAddressResolver;

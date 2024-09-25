@@ -49,7 +49,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
         this(inetAddressResolver, settings, sslSettings, null);
     }
 
-    public AsynchronousSocketChannelStreamFactory(
+    AsynchronousSocketChannelStreamFactory(
             final InetAddressResolver inetAddressResolver, final SocketSettings settings,
             final SslSettings sslSettings, @Nullable final ExecutorService executorService) {
         assertFalse(sslSettings.isEnabled());
