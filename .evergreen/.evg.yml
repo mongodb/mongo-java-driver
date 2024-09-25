@@ -287,7 +287,7 @@ functions:
 
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" \
           COMPRESSOR="${COMPRESSOR}" JAVA_VERSION="${JAVA_VERSION}" REQUIRE_API_VERSION=${REQUIRE_API_VERSION} \
-          .evergreen/run-tests.sh
+          TESTS="${TESTS}" .evergreen/run-tests.sh
 
   "run load-balancer tests":
     - command: shell.exec
@@ -335,7 +335,7 @@ functions:
         AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" \
         JAVA_VERSION="${JAVA_VERSION}" \
         AZUREKMS_KEY_VAULT_ENDPOINT=${testazurekms_keyvaultendpoint} AZUREKMS_KEY_NAME=${testazurekms_keyname} \
-        SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
+        TESTS="testSlowOnly" .evergreen/run-tests.sh
 
   "run scala tests":
     - command: shell.exec
@@ -861,11 +861,35 @@ tasks:
           vars:
             file: ".evergreen/static-checks.sh"
 
-    - name: "test"
+    - name: "test-bson-and-crypt"
+      commands:
+        - func: "run tests"
+          vars:
+            TESTS: 'bson:test bson-kotlin:test bson-kotlinx:test bson-scala:test bson-record-codec:test mongodb-crypt:test'
+
+    - name: "test-core-and-legacy"
       commands:
         - func: "start-kms-kmip-server"
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+          vars:
+            TESTS: 'driver-core:test driver-legacy:test'
+
+    - name: "test-sync"
+      commands:
+        - func: "start-kms-kmip-server"
+        - func: "bootstrap mongo-orchestration"
+        - func: "run tests"
+          vars:
+            TESTS: 'driver-sync:test driver-kotlin-sync:test'
+
+    - name: "test-reactive"
+      commands:
+        - func: "start-kms-kmip-server"
+        - func: "bootstrap mongo-orchestration"
+        - func: "run tests"
+          vars:
+            TESTS: 'driver-reactive-streams:test driver-kotlin-coroutine:test'
 
     - name: load-balancer-test
       commands:
@@ -2105,14 +2129,18 @@ buildvariants:
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
-     - name: "test"
+     - name: "test-sync"
+     - name: "test-reactive"
+     - name: "test-core-and-legacy"
 
 - matrix_name: "tests-snappy-compression"
   matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
-     - name: "test"
+    - name: "test-sync"
+    - name: "test-reactive"
+    - name: "test-core-and-legacy"
 
 - matrix_name: "tests-zstd-compression"
   matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8",
@@ -2121,7 +2149,16 @@ buildvariants:
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
-    - name: "test"
+    - name: "test-sync"
+    - name: "test-reactive"
+    - name: "test-core-and-legacy"
+
+- matrix_name: "tests-unit"
+  matrix_spec: { jdk: [ "jdk8", "jdk11", "jdk17", "jdk21"], os: "linux" }
+  display_name: "${jdk} ${os} Unit"
+  tags: ["tests-variant"]
+  tasks:
+    - name: "test-bson-and-crypt"
 
 - matrix_name: "tests-jdk8-unsecure"
   matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: ["4.0", "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest"],
@@ -2129,7 +2166,9 @@ buildvariants:
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
-    - name: "test"
+    - name: "test-sync"
+    - name: "test-reactive"
+    - name: "test-core-and-legacy"
 
 - matrix_name: "tests-jdk-secure"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17", "jdk21"],
@@ -2138,14 +2177,18 @@ buildvariants:
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
-     - name: "test"
+    - name: "test-sync"
+    - name: "test-reactive"
+    - name: "test-core-and-legacy"
 
 - matrix_name: "tests-jdk-secure-jdk11"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["7.0"], topology: ["replicaset"], os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
-    - name: "test"
+    - name: "test-sync"
+    - name: "test-reactive"
+    - name: "test-core-and-legacy"
 
 - matrix_name: "tests-require-api-version"
   matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "8.0", "latest"],
@@ -2153,7 +2196,9 @@ buildvariants:
   display_name: "${version} ${topology} ${api-version} "
   tags: ["tests-variant"]
   tasks:
-    - name: "test"
+    - name: "test-sync"
+    - name: "test-reactive"
+    - name: "test-core-and-legacy"
 
 - matrix_name: "tests-load-balancer-secure"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "8.0", "latest"], topology: "sharded-cluster",
