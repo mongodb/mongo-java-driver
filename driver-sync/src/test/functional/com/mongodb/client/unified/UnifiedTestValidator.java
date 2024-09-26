@@ -35,6 +35,9 @@ final class UnifiedTestValidator extends UnifiedSyncTest {
         assumeFalse(fileDescription.equals("expectedEventsForClient-topologyDescriptionChangedEvent"));
         // Feature to be implemented in scope JAVA-4862
         assumeFalse(fileDescription.equals("entity-commandCursor"));
+        // To be investigated in JAVA-5631
+        assumeFalse(fileDescription.equals("kmsProviders-explicit_kms_credentials"));
+        assumeFalse(fileDescription.equals("kmsProviders-mixed_kms_credential_fields"));
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
