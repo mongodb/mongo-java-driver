@@ -41,7 +41,8 @@ class KPropertiesTest {
         @BsonProperty("prop") val bsonProperty: String,
         @SerialName("rating") val score: String,
         val name: String,
-        @BsonProperty("old") val previous: Review?
+        @BsonProperty("old") val previous: Review?,
+        @BsonProperty("nested") val misc: List<String>
     )
 
     @Test
@@ -84,6 +85,7 @@ class KPropertiesTest {
     fun testArrayPositionalOperator() {
         assertEquals("reviews.\$", Restaurant::reviews.posOp.path())
         assertEquals("reviews.rating", (Restaurant::reviews / Review::score).path())
+        assertEquals("reviews.nested.\$", (Restaurant::reviews / Review::misc).posOp.path())
         assertEquals("reviews.\$.rating", (Restaurant::reviews.posOp / Review::score).path())
     }
 
@@ -91,6 +93,7 @@ class KPropertiesTest {
     fun testArrayAllPositionalOperator() {
         assertEquals("reviews.\$[]", Restaurant::reviews.allPosOp.path())
         assertEquals("reviews.\$[].rating", (Restaurant::reviews.allPosOp / Review::score).path())
+        assertEquals("reviews.nested.\$[]", (Restaurant::reviews / Review::misc).allPosOp.path())
     }
 
     @Test
