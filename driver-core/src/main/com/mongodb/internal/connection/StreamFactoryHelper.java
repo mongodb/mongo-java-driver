@@ -38,7 +38,7 @@ public final class StreamFactoryHelper {
         if (transportSettings == null) {
             return new SocketStreamFactory(inetAddressResolver, socketSettings, settings.getSslSettings());
         } else if (transportSettings instanceof AsyncTransportSettings) {
-            throw new MongoClientException("Unsupported async transport settings: " + transportSettings.getClass().getName());
+            throw new MongoClientException("Unsupported transport settings in sync: " + transportSettings.getClass().getName());
         } else if (transportSettings instanceof NettyTransportSettings) {
             return getNettyStreamFactoryFactory(inetAddressResolver, (NettyTransportSettings) transportSettings)
                     .create(socketSettings, settings.getSslSettings());

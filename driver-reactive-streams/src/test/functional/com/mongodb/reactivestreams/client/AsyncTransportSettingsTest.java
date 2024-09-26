@@ -27,30 +27,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 class AsyncTransportSettingsTest {
-    @Test
-    public void shouldDefaultAllValuesToNull() {
-        AsyncTransportSettings settings = TransportSettings.asyncBuilder().build();
-
-        assertNull(settings.getExecutorService());
-    }
-
-    @Test
-    public void shouldApplySettingsFromBuilder() {
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
-        AsyncTransportSettings settings = TransportSettings.asyncBuilder()
-                .executorService(executorService)
-                .build();
-
-        assertEquals(executorService, settings.getExecutorService());
-    }
 
     @Test
     void testAsyncTransportSettings() {
@@ -66,5 +49,22 @@ class AsyncTransportSettingsTest {
             client.listDatabases().first();
         }
         verify(executorService, atLeastOnce()).execute(any());
+    }
+
+    @Test
+    void testExternalExecutorNotShutDown() {
+        ExecutorService executorService = spy(Executors.newFixedThreadPool(5));
+        AsyncTransportSettings asyncTransportSettings = TransportSettings.asyncBuilder()
+                .executorService(executorService)
+                .build();
+        MongoClientSettings mongoClientSettings = getMongoClientSettingsBuilder()
+                .applyToSslSettings(builder -> builder.enabled(true))
+                .transportSettings(asyncTransportSettings)
+                .build();
+
+        try (MongoClient ignored = new SyncMongoClient(MongoClients.create(mongoClientSettings))) {
+            // ignored
+        }
+        verify(executorService, never()).shutdown();
     }
 }

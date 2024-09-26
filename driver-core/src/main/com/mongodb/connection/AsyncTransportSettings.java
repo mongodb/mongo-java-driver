@@ -17,15 +17,20 @@
  */
 package com.mongodb.connection;
 
+import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
+import java.nio.channels.AsynchronousChannelGroup;
 import java.util.concurrent.ExecutorService;
+
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * {@link TransportSettings} for a non-<a href="http://netty.io/">Netty</a>-based async transport implementation.
  *
  * @since 5.2
  */
+@Immutable
 public final class AsyncTransportSettings extends TransportSettings {
 
     private final ExecutorService executorService;
@@ -49,7 +54,8 @@ public final class AsyncTransportSettings extends TransportSettings {
         }
 
         /**
-         * Sets the executor service
+         * Sets the executor service. This executor service will not be shut
+         * down by the driver code, and must be shut down by application code.
          *
          * @param executorService the executor service
          * @return this
@@ -57,7 +63,7 @@ public final class AsyncTransportSettings extends TransportSettings {
          * @see AsynchronousChannelGroup#withThreadPool(ExecutorService)
          */
         public Builder executorService(final ExecutorService executorService) {
-            this.executorService = executorService;
+            this.executorService = notNull("executorService", executorService);
             return this;
         }
 
@@ -79,5 +85,12 @@ public final class AsyncTransportSettings extends TransportSettings {
     @Nullable
     public ExecutorService getExecutorService() {
         return executorService;
+    }
+
+    @Override
+    public String toString() {
+        return "AsyncTransportSettings{" +
+                "executorService=" + executorService +
+                '}';
     }
 }
