@@ -712,7 +712,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     @DisplayName("11. Multi-batch bulkWrites")
     @Test
     @SuppressWarnings("try")
-    void test11MultiBatchBulkWrites() throws InterruptedException {
+    protected void test11MultiBatchBulkWrites() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))

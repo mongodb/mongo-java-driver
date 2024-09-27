@@ -212,7 +212,7 @@ public class CrudProseTest {
     @DisplayName("5. MongoClient.bulkWrite collects WriteConcernErrors across batches")
     @Test
     @SuppressWarnings("try")
-    void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
+    protected void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
@@ -242,7 +242,7 @@ public class CrudProseTest {
     @DisplayName("6. MongoClient.bulkWrite handles individual WriteErrors across batches")
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
+    protected void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
@@ -274,7 +274,7 @@ public class CrudProseTest {
 
     @DisplayName("8. MongoClient.bulkWrite handles a cursor requiring getMore within a transaction")
     @Test
-    void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
+    protected void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         assumeFalse(isStandalone());
@@ -319,7 +319,7 @@ public class CrudProseTest {
     @DisplayName("10. MongoClient.bulkWrite returns error for unacknowledged too-large insert")
     @ParameterizedTest
     @MethodSource("testBulkWriteErrorsForUnacknowledgedTooLargeInsertArgs")
-    void testBulkWriteErrorsForUnacknowledgedTooLargeInsert(final String operationType, final boolean nesting) {
+    protected void testBulkWriteErrorsForUnacknowledgedTooLargeInsert(final String operationType, final boolean nesting) {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
@@ -358,7 +358,7 @@ public class CrudProseTest {
 
     @DisplayName("11. MongoClient.bulkWrite batch splits when the addition of a new namespace exceeds the maximum message size")
     @Test
-    void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
+    protected void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         assertAll(
@@ -429,7 +429,7 @@ public class CrudProseTest {
     @DisplayName("12. MongoClient.bulkWrite returns an error if no operations can be added to ops")
     @ParameterizedTest
     @ValueSource(strings = {"document", "namespace"})
-    void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
+    protected void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
@@ -458,7 +458,7 @@ public class CrudProseTest {
 
     @DisplayName("13. MongoClient.bulkWrite returns an error if auto-encryption is configured")
     @Test
-    void testBulkWriteErrorsForAutoEncryption() {
+    protected void testBulkWriteErrorsForAutoEncryption() {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
         HashMap<String, Object> awsKmsProviderProperties = new HashMap<>();
@@ -482,7 +482,7 @@ public class CrudProseTest {
      */
     @ParameterizedTest
     @MethodSource("insertMustGenerateIdAtMostOnceArgs")
-    <TDocument> void insertMustGenerateIdAtMostOnce(
+    protected <TDocument> void insertMustGenerateIdAtMostOnce(
             final Class<TDocument> documentClass,
             final boolean expectIdGenerated,
             final Supplier<TDocument> documentSupplier) {
