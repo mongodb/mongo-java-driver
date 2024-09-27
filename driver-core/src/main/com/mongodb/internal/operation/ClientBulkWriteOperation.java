@@ -718,8 +718,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 LinkedHashMap<MongoNamespace, Integer> indexedNamespaces = new LinkedHashMap<>();
                 WritersProviderAndLimitsChecker.WriteResult writeResult = OK_LIMIT_NOT_REACHED;
                 boolean commandIsRetryable = effectiveRetryWrites;
-                int modelIndexInBatch = 0;
-                for (; modelIndexInBatch < models.size() && writeResult == OK_LIMIT_NOT_REACHED; modelIndexInBatch++) {
+                int maxModelIndexInBatch = -1;
+                for (int modelIndexInBatch = 0; modelIndexInBatch < models.size() && writeResult == OK_LIMIT_NOT_REACHED; modelIndexInBatch++) {
                     AbstractClientNamespacedWriteModel namespacedModel = getNamespacedModel(models, modelIndexInBatch);
                     MongoNamespace namespace = namespacedModel.getNamespace();
                     int indexedNamespacesSizeBeforeCompute = indexedNamespaces.size();
@@ -737,14 +737,16 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     });
                     if (writeResult == FAIL_LIMIT_EXCEEDED) {
                         batchEncoder.reset(finalModelIndexInBatch);
-                        modelIndexInBatch--;
-                    } else if (commandIsRetryable && doesNotSupportRetries(namespacedModel)) {
-                        commandIsRetryable = false;
-                        logWriteModelDoesNotSupportRetries();
+                    } else {
+                        maxModelIndexInBatch = finalModelIndexInBatch;
+                        if (commandIsRetryable && doesNotSupportRetries(namespacedModel)) {
+                            commandIsRetryable = false;
+                            logWriteModelDoesNotSupportRetries();
+                        }
                     }
                 }
                 return new EncodeResult(
-                        options.isOrdered() && modelIndexInBatch < models.size() - 1,
+                        options.isOrdered() && maxModelIndexInBatch < models.size() - 1,
                         commandIsRetryable ? doIfCommandIsRetryableAndAdvanceGetTxnNumber.get() : null);
             }
 
