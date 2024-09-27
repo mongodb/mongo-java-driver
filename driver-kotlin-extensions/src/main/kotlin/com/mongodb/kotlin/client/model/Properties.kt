@@ -84,7 +84,8 @@ internal fun <T> KProperty<T>.path(): String {
             // If no path (serialName) then check for BsonId / BsonProperty
             if (path == null) {
                 val originator = if (this is CustomProperty<*, *>) this.previous.property else this
-                // If this property is calculated (doesn't have a backing field) ex "(Student::grades / Grades::score).posOp then
+                // If this property is calculated (doesn't have a backing field) ex
+                // "(Student::grades / Grades::score).posOp then
                 // originator.javaField will NPE.
                 // Only read various annotations on a declared property with a backing field
                 if (originator.javaField != null) {
@@ -93,7 +94,8 @@ internal fun <T> KProperty<T>.path(): String {
 
                     // Prefer BsonId annotation over BsonProperty
                     path = constructorProperty?.annotations?.filterIsInstance<BsonId>()?.firstOrNull()?.let { "_id" }
-                    path = path ?: constructorProperty?.annotations?.filterIsInstance<BsonProperty>()?.firstOrNull()?.value
+                    path =
+                        path ?: constructorProperty?.annotations?.filterIsInstance<BsonProperty>()?.firstOrNull()?.value
                 }
                 path = path ?: this.name
             }

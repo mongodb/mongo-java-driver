@@ -23,10 +23,10 @@ import com.mongodb.client.model.Projections
 import com.mongodb.kotlin.client.model.Filters.and
 import com.mongodb.kotlin.client.model.Filters.eq
 import com.mongodb.kotlin.client.model.Filters.gt
+import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.conversions.Bson
 import org.junit.Test
-import kotlin.test.assertEquals
 
 class ProjectionTest {
 
@@ -38,17 +38,18 @@ class ProjectionTest {
 
     @Test
     fun include() {
-        assertEquals("""{"name": 1, "age": 1, "results": 1, "address": 1}""",
+        assertEquals(
+            """{"name": 1, "age": 1, "results": 1, "address": 1}""",
             include(Person::name, Person::age, Person::results, Person::address))
 
         assertEquals("""{"name": 1, "age": 1}""", include(listOf(Person::name, Person::age)))
         assertEquals("""{"name": 1, "age": 1}""", include(listOf(Person::name, Person::age, Person::name)))
-
     }
 
     @Test
     fun exclude() {
-        assertEquals("""{"name": 0, "age": 0, "results": 0, "address": 0}""",
+        assertEquals(
+            """{"name": 0, "age": 0, "results": 0, "address": 0}""",
             exclude(Person::name, Person::age, Person::results, Person::address))
         assertEquals("""{"name": 0, "age": 0}""", exclude(listOf(Person::name, Person::age)))
         assertEquals("""{"name": 0, "age": 0}""", exclude(listOf(Person::name, Person::age, Person::name)))
@@ -56,7 +57,9 @@ class ProjectionTest {
         assertEquals("""{"name": 0, "age": 0}""", exclude(listOf(Person::name, Person::age, Person::name)))
 
         assertEquals("""{"_id": 0}""", excludeId())
-        assertEquals("Projections{projections=[{\"_id\": 0}, {\"name\": 1}]}", fields(excludeId(), include(Person::name)).toString())
+        assertEquals(
+            "Projections{projections=[{\"_id\": 0}, {\"name\": 1}]}",
+            fields(excludeId(), include(Person::name)).toString())
     }
 
     @Test
@@ -80,7 +83,8 @@ class ProjectionTest {
          */
 
         // This projection:
-        val expected = """
+        val expected =
+            """
             {"grades": {"${'$'}elemMatch": {"${'$'}and": [{"subject": "Math"}, {"score": {"${'$'}gt": 80}}]}}}
         """
 
@@ -94,18 +98,14 @@ class ProjectionTest {
         }
          */
 
-        assertEquals(
-            expected,
-            Student::grades.elemMatchProj(and((Grade::subject eq "Math"), (Grade::score gt 80)))
-        )
+        assertEquals(expected, Student::grades.elemMatchProj(and((Grade::subject eq "Math"), (Grade::score gt 80))))
 
         // Should create string representation for elemMatch with filter
         assertEquals(
             "ElemMatch Projection{fieldName='grades'," +
-                    " filter=And Filter{filters=[Filter{fieldName='score', value=90}, " +
-                    "Filter{fieldName='subject', value=Math}]}}",
-            Student::grades.elemMatchProj(and(Grade::score eq 90, Grade::subject eq "Math")).toString()
-        )
+                " filter=And Filter{filters=[Filter{fieldName='score', value=90}, " +
+                "Filter{fieldName='subject', value=Math}]}}",
+            Student::grades.elemMatchProj(and(Grade::score eq 90, Grade::subject eq "Math")).toString())
     }
 
     @Test
@@ -154,10 +154,7 @@ class ProjectionTest {
           }
          */
 
-        assertEquals(
-            expected,
-            Student::grades.slice(1, 2)
-        )
+        assertEquals(expected, Student::grades.slice(1, 2))
 
         // Combining projection
         expected = """
@@ -187,17 +184,15 @@ class ProjectionTest {
         assertEquals(expected, Grade::score.metaTextScore())
 
         // combining
-        expected = """
+        expected =
+            """
             {"_id": 0, "score": {"${'$'}meta": "textScore"}, "grades": {"${'$'}elemMatch": {"score": {"${'$'}gt": 87}}}}
         """
         assertEquals(
             expected,
-            fields(
-                excludeId(), Grade::score.metaTextScore(),
-                Student::grades.elemMatchProj(Grade::score gt 87)
-            )
-        )
-        // find({ $text: { $search: "Doe" } }, { _id: 0, score: { $meta: "textScore" }, grades: {$elemMatch: { score : {$gt: 87}}} } )
+            fields(excludeId(), Grade::score.metaTextScore(), Student::grades.elemMatchProj(Grade::score gt 87)))
+        // find({ $text: { $search: "Doe" } }, { _id: 0, score: { $meta: "textScore" }, grades:
+        // {$elemMatch: { score : {$gt: 87}}} } )
         /*
         { score: 0.75, grades: [ { subject: 'English', score: 90 } ] }
          */
@@ -228,22 +223,16 @@ class ProjectionTest {
     fun `computed projection`() {
         assertEquals(""" {"c": "${'$'}y"} """, "c" computedFrom "\$y")
 
-        assertEquals("""{"${'$'}project": {"c": "${'$'}name", "score": "${'$'}age"}}""",
-            project(fields("c" computedFrom Student::name, Grade::score computedFrom Student::age))
-        )
+        assertEquals(
+            """{"${'$'}project": {"c": "${'$'}name", "score": "${'$'}age"}}""",
+            project(fields("c" computedFrom Student::name, Grade::score computedFrom Student::age)))
 
         // combine fields
-        assertEquals("{name : 1, age : 1, _id : 0}",
-            fields(include(Student::name, Student::age), excludeId())
-        )
+        assertEquals("{name : 1, age : 1, _id : 0}", fields(include(Student::name, Student::age), excludeId()))
 
-        assertEquals("{name : 1, age : 1, _id : 0}",
-            fields(include(listOf(Student::name, Student::age)), excludeId())
-        )
+        assertEquals("{name : 1, age : 1, _id : 0}", fields(include(listOf(Student::name, Student::age)), excludeId()))
 
-        assertEquals("{name : 1, age : 0}",
-            fields(include(Student::name, Student::age), exclude(Student::age))
-        )
+        assertEquals("{name : 1, age : 0}", fields(include(Student::name, Student::age), exclude(Student::age)))
 
         // Should create string representation for include and exclude
         assertEquals("""{"age": 1, "name": 1}""", include(Student::name, Student::age, Student::name).toString())
@@ -258,42 +247,35 @@ class ProjectionTest {
 
     @Test
     fun `array projection`() {
-        assertEquals(
-            "{ \"grades.comments.${'$'}\": 1 }",
-            include((Student::grades / Grade::comments).posOp)
-        )
+        assertEquals("{ \"grades.comments.${'$'}\": 1 }", include((Student::grades / Grade::comments).posOp))
 
-
-        // FIXME: this form is not supported "MongoServerError[Location31395]: positional projection cannot be used with exclusion"
-        //        should we fail before hitting the wire protocol? the existing Java impl (com/mongodb/client/model/Projections.java)
+        // This form is not supported "MongoServerError[Location31395]: positional projection
+        // cannot be used with exclusion"
+        //        should we fail before hitting the wire protocol? the existing Java impl
+        // (com/mongodb/client/model/Projections.java)
         //        doesn't do similar checks AFAIK.
-        //        Likewise using Student::grades.allPosOp should not be allowed ("FieldPath field names may not start with '$'. Consider
+        //        Likewise using Student::grades.allPosOp should not be allowed ("FieldPath field
+        // names may not start with '$'. Consider
         //        using $getField or $setField")
         //
-        assertEquals(
-            "{ \"grades.${'$'}\": 0 }",
-            exclude(Student::grades.posOp)
-        )
+        assertEquals("{ \"grades.${'$'}\": 0 }", exclude(Student::grades.posOp))
     }
 
-   @Test
-   fun `projection in aggregation`() {
+    @Test
+    fun `projection in aggregation`() {
         // Field Reference in Aggregation
-        assertEquals(""" {"${'$'}project": {"score": "${'$'}grades.score"}} """,
-            project((Grade::score computedFrom (Student::grades.projectionWith("score"))))
-        )
+        assertEquals(
+            """ {"${'$'}project": {"score": "${'$'}grades.score"}} """,
+            project((Grade::score computedFrom (Student::grades.projectionWith("score")))))
 
-        assertEquals("{\"${'$'}project\": {\"My Score\": \"${'$'}grades.score\"}}",
-            project("My Score" computedFrom (Student::grades / Grade::score))
-        )
+        assertEquals(
+            "{\"${'$'}project\": {\"My Score\": \"${'$'}grades.score\"}}",
+            project("My Score" computedFrom (Student::grades / Grade::score)))
 
-        assertEquals("{\"${'$'}project\": {\"My Age\": \"${'$'}age\"}}",
-            project("My Age" computedFrom Student::age)
-        )
+        assertEquals("{\"${'$'}project\": {\"My Age\": \"${'$'}age\"}}", project("My Age" computedFrom Student::age))
 
-        assertEquals("{\"${'$'}project\": {\"My Age\": \"${'$'}age\"}}",
-            project("My Age" computedFrom Student::age.projection)
-        )
+        assertEquals(
+            "{\"${'$'}project\": {\"My Age\": \"${'$'}age\"}}", project("My Age" computedFrom Student::age.projection))
     }
 
     // TODO maybe move these inside a Utils file
@@ -302,10 +284,5 @@ class ProjectionTest {
     private data class Grade(val subject: String, val score: Int, val comments: List<String>)
 
     private fun assertEquals(expected: String, result: Bson) =
-        assertEquals(
-            BsonDocument.parse(expected),
-            result.toBsonDocument()
-        )
+        assertEquals(BsonDocument.parse(expected), result.toBsonDocument())
 }
-
-
