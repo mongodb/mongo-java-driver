@@ -120,9 +120,7 @@ spotbugs { showProgress.set(true) }
 
 tasks.spotbugsMain {
     // we need the xml report to find out the "rank" (see config/spotbugs/exclude.xml)
-    reports.getByName("xml") {
-        required.set(true)
-    }
+    reports.getByName("xml") { required.set(true) }
 }
 
 // ===========================
