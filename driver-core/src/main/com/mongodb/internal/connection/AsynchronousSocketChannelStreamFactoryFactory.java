@@ -18,10 +18,11 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.internal.ValueOrExceptionContainer;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
-import java.util.concurrent.ExecutorService;
+import java.nio.channels.AsynchronousChannelGroup;
 
 /**
  * A {@code StreamFactoryFactory} implementation for AsynchronousSocketChannel-based streams.
@@ -31,7 +32,7 @@ import java.util.concurrent.ExecutorService;
 public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
     private final InetAddressResolver inetAddressResolver;
     @Nullable
-    private final ExecutorService executorService;
+    private final ValueOrExceptionContainer<AsynchronousChannelGroup> group;
 
     public AsynchronousSocketChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
         this(inetAddressResolver, null);
@@ -39,18 +40,25 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
 
     AsynchronousSocketChannelStreamFactoryFactory(
             final InetAddressResolver inetAddressResolver,
-            @Nullable final ExecutorService executorService) {
+            @Nullable final ValueOrExceptionContainer<AsynchronousChannelGroup> group) {
         this.inetAddressResolver = inetAddressResolver;
-        this.executorService = executorService;
+        this.group = group;
     }
 
     @Override
     public StreamFactory create(final SocketSettings socketSettings, final SslSettings sslSettings) {
         return new AsynchronousSocketChannelStreamFactory(
-                inetAddressResolver, socketSettings, sslSettings, executorService);
+                inetAddressResolver, socketSettings, sslSettings, group);
     }
 
     @Override
     public void close() {
+        if (group != null && !group.isCompletedExceptionally()) {
+            try {
+                group.get().shutdown();
+            } catch (Exception e) {
+                // will not occur, since it was not completed exceptionally
+            }
+        }
     }
 }

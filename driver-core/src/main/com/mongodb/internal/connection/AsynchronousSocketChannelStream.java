@@ -21,6 +21,7 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.internal.ValueOrExceptionContainer;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -33,7 +34,6 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -49,7 +49,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
     @Nullable
-    private final ExecutorService executorService;
+    private final ValueOrExceptionContainer<AsynchronousChannelGroup> group;
 
     public AsynchronousSocketChannelStream(
             final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
@@ -60,12 +60,12 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     public AsynchronousSocketChannelStream(
             final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
             final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider,
-            @Nullable final ExecutorService executorService) {
+            @Nullable final ValueOrExceptionContainer<AsynchronousChannelGroup> group) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
         this.inetAddressResolver = inetAddressResolver;
         this.settings = settings;
-        this.executorService = executorService;
+        this.group = group;
     }
 
     @Override
@@ -91,9 +91,8 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
 
             try {
                 AsynchronousSocketChannel attemptConnectionChannel;
-                if (executorService != null) {
-                    AsynchronousChannelGroup group = AsynchronousChannelGroup.withThreadPool(executorService);
-                    attemptConnectionChannel = AsynchronousSocketChannel.open(group);
+                if (group != null) {
+                    attemptConnectionChannel = AsynchronousSocketChannel.open(group.get());
                 } else {
                     attemptConnectionChannel = AsynchronousSocketChannel.open();
                 }

@@ -20,7 +20,6 @@ package com.mongodb.connection;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
-import java.nio.channels.AsynchronousChannelGroup;
 import java.util.concurrent.ExecutorService;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -54,13 +53,17 @@ public final class AsyncTransportSettings extends TransportSettings {
         }
 
         /**
-         * Sets the executor service. This executor service will not be shut
-         * down by the driver code, and must be shut down by application code.
+         * The executor service, intended to be used exclusively by the mongo
+         * client. Closing the mongo client will result in orderly shutdown
+         * of the executor service.
+         *
+         * <p>When TLS is not enabled, see
+         * {@link java.nio.channels.AsynchronousChannelGroup#withThreadPool(ExecutorService)}
+         * for additional requirements for the executor service.
          *
          * @param executorService the executor service
          * @return this
          * @see #getExecutorService()
-         * @see AsynchronousChannelGroup#withThreadPool(ExecutorService)
          */
         public Builder executorService(final ExecutorService executorService) {
             this.executorService = notNull("executorService", executorService);
@@ -89,8 +92,8 @@ public final class AsyncTransportSettings extends TransportSettings {
 
     @Override
     public String toString() {
-        return "AsyncTransportSettings{" +
-                "executorService=" + executorService +
-                '}';
+        return "AsyncTransportSettings{"
+                + "executorService=" + executorService
+                + '}';
     }
 }

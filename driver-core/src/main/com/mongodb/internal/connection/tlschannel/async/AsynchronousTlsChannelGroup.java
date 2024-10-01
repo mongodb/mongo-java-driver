@@ -73,7 +73,6 @@ public class AsynchronousTlsChannelGroup {
     private static final int queueLengthMultiplier = 32;
 
     private static final AtomicInteger globalGroupCount = new AtomicInteger();
-    private final boolean executorIsExternal;
 
     class RegisteredSocket {
 
@@ -210,11 +209,9 @@ public class AsynchronousTlsChannelGroup {
         }
         timeoutExecutor.setRemoveOnCancelPolicy(true);
         if (executorService != null) {
-            this.executorIsExternal = true;
             this.executor = executorService;
         } else {
             int nThreads = Runtime.getRuntime().availableProcessors();
-            this.executorIsExternal = false;
             this.executor = new ThreadPoolExecutor(
                     nThreads,
                     nThreads,
@@ -424,9 +421,7 @@ public class AsynchronousTlsChannelGroup {
         } catch (Throwable e) {
             LOGGER.error("error in selector loop", e);
         } finally {
-            if (!executorIsExternal) {
-                executor.shutdown();
-            }
+            executor.shutdown();
             // use shutdownNow to stop delayed tasks
             timeoutExecutor.shutdownNow();
             try {

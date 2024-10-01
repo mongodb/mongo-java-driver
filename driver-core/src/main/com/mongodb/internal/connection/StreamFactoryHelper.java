@@ -22,9 +22,11 @@ import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.TransportSettings;
+import com.mongodb.internal.ValueOrExceptionContainer;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.spi.dns.InetAddressResolver;
 
+import java.nio.channels.AsynchronousChannelGroup;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -57,7 +59,9 @@ public final class StreamFactoryHelper {
             if (settings.getSslSettings().isEnabled()) {
                 return new TlsChannelStreamFactoryFactory(inetAddressResolver, executorService);
             } else {
-                return new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver, executorService);
+                ValueOrExceptionContainer<AsynchronousChannelGroup> group = new ValueOrExceptionContainer<>(
+                        () -> AsynchronousChannelGroup.withThreadPool(executorService));
+                return new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver, group);
             }
         } else  if (transportSettings instanceof NettyTransportSettings) {
             return getNettyStreamFactoryFactory(inetAddressResolver, (NettyTransportSettings) transportSettings);

@@ -22,6 +22,8 @@ import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,8 +31,8 @@ import java.util.concurrent.Executors;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AsyncTransportSettingsTest {
@@ -51,20 +53,26 @@ class AsyncTransportSettingsTest {
         verify(executorService, atLeastOnce()).execute(any());
     }
 
-    @Test
-    void testExternalExecutorNotShutDown() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testExternalExecutorWasShutDown(final boolean tlsEnabled) {
         ExecutorService executorService = spy(Executors.newFixedThreadPool(5));
         AsyncTransportSettings asyncTransportSettings = TransportSettings.asyncBuilder()
                 .executorService(executorService)
                 .build();
         MongoClientSettings mongoClientSettings = getMongoClientSettingsBuilder()
-                .applyToSslSettings(builder -> builder.enabled(true))
+                .applyToSslSettings(builder -> builder.enabled(tlsEnabled))
                 .transportSettings(asyncTransportSettings)
                 .build();
 
         try (MongoClient ignored = new SyncMongoClient(MongoClients.create(mongoClientSettings))) {
             // ignored
         }
-        verify(executorService, never()).shutdown();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        verify(executorService, times(1)).shutdown();
     }
 }

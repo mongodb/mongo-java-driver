@@ -19,10 +19,11 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.internal.ValueOrExceptionContainer;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
-import java.util.concurrent.ExecutorService;
+import java.nio.channels.AsynchronousChannelGroup;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -35,7 +36,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final InetAddressResolver inetAddressResolver;
     @Nullable
-    private final ExecutorService executorService;
+    private final ValueOrExceptionContainer<AsynchronousChannelGroup> group;
 
     /**
      * Create a new factory with the default {@code BufferProvider} and {@code AsynchronousChannelGroup}.
@@ -51,17 +52,17 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
 
     AsynchronousSocketChannelStreamFactory(
             final InetAddressResolver inetAddressResolver, final SocketSettings settings,
-            final SslSettings sslSettings, @Nullable final ExecutorService executorService) {
+            final SslSettings sslSettings, @Nullable final ValueOrExceptionContainer<AsynchronousChannelGroup> group) {
         assertFalse(sslSettings.isEnabled());
         this.inetAddressResolver = inetAddressResolver;
         this.settings = notNull("settings", settings);
-        this.executorService = executorService;
+        this.group = group;
     }
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
         return new AsynchronousSocketChannelStream(
-                serverAddress, inetAddressResolver, settings, bufferProvider, executorService);
+                serverAddress, inetAddressResolver, settings, bufferProvider, group);
     }
 
 }
