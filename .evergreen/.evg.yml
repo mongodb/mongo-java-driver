@@ -876,6 +876,7 @@ tasks:
 
     - name: "test-legacy"
       commands:
+        - func: "start-kms-kmip-server"
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
           vars:
