@@ -31,6 +31,11 @@ functions:
     # Applies the subitted patch, if any
     # Deprecated. Should be removed. But still needed for certain agents (ZAP)
     - command: git.apply_patch
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          git submodule update --init
     # Make an evergreen expansion file with dynamic values
     - command: shell.exec
       params:
