@@ -59,8 +59,33 @@ public val String.projection: String
  * @see Aggregates#project(Bson)
  */
 @JvmSynthetic
+@JvmName("computedFromExt")
 public infix fun <T> KProperty<T>.computedFrom(expression: Any): Bson =
     Projections.computed(path(), (expression as? KProperty<*>)?.projection ?: expression)
+
+/**
+ * Creates a projection of a property whose value is computed from the given expression. Projection with an expression
+ * can be used in the following contexts:
+ * <ul>
+ * <li>$project aggregation pipeline stage.</li>
+ * <li>Starting from MongoDB 4.4, it's also accepted in various find-related methods within the {@code
+ *   MongoCollection}-based API where projection is supported, for example: <ul>
+ * <li>{@code find()}</li>
+ * <li>{@code findOneAndReplace()}</li>
+ * <li>{@code findOneAndUpdate()}</li>
+ * <li>{@code findOneAndDelete()}</li>
+ * </ul>
+ *
+ * </li> </ul>
+ *
+ * @param property the data class property
+ * @param expression the expression
+ * @param <T> the expression type
+ * @return the projection
+ * @see #computedSearchMeta(String)
+ * @see Aggregates#project(Bson)
+ */
+public fun <T> computedFrom(property: KProperty<T>, expression: Any): Bson = property.computedFrom(expression)
 
 /**
  * Creates a projection of a String whose value is computed from the given expression. Projection with an expression can
@@ -83,8 +108,32 @@ public infix fun <T> KProperty<T>.computedFrom(expression: Any): Bson =
  * @see Aggregates#project(Bson)
  */
 @JvmSynthetic
+@JvmName("computedFromExt")
 public infix fun String.computedFrom(expression: Any): Bson =
     @Suppress("UNCHECKED_CAST") Projections.computed(this, (expression as? KProperty<Any>)?.projection ?: expression)
+
+/**
+ * Creates a projection of a String whose value is computed from the given expression. Projection with an expression can
+ * be used in the following contexts:
+ * <ul>
+ * <li>$project aggregation pipeline stage.</li>
+ * <li>Starting from MongoDB 4.4, it's also accepted in various find-related methods within the {@code
+ *   MongoCollection}-based API where projection is supported, for example: <ul>
+ * <li>{@code find()}</li>
+ * <li>{@code findOneAndReplace()}</li>
+ * <li>{@code findOneAndUpdate()}</li>
+ * <li>{@code findOneAndDelete()}</li>
+ * </ul>
+ *
+ * </li> </ul>
+ *
+ * @param property the data class property
+ * @param expression the expression
+ * @return the projection
+ * @see #computedSearchMeta(String)
+ * @see Aggregates#project(Bson)
+ */
+public fun computedFrom(property: String, expression: Any): Bson = property.computedFrom(expression)
 
 /**
  * Creates a projection that includes all of the given properties.
@@ -143,7 +192,19 @@ public val <T> KProperty<T>.elemMatchProj: Bson
  * @param filter the filter to apply
  * @return the projection @mongodb.driver.manual reference/operator/projection/elemMatch elemMatch
  */
+@JvmSynthetic
+@JvmName("elemMatchProjExt")
 public infix fun <T> KProperty<T>.elemMatchProj(filter: Bson): Bson = Projections.elemMatch(path(), filter)
+
+/**
+ * Creates a projection that includes for the given property only the first element of the array value of that field
+ * that matches the given query filter.
+ *
+ * @param property the data class property
+ * @param filter the filter to apply
+ * @return the projection @mongodb.driver.manual reference/operator/projection/elemMatch elemMatch
+ */
+public fun <T> elemMatchProj(property: KProperty<T>, filter: Bson): Bson = property.elemMatchProj(filter)
 
 /**
  * Creates a $meta projection for the given property
@@ -156,7 +217,23 @@ public infix fun <T> KProperty<T>.elemMatchProj(filter: Bson): Bson = Projection
  * @see #metaSearchHighlights(String)
  * @since 4.1
  */
+@JvmSynthetic
+@JvmName("metaExt")
 public infix fun <T> KProperty<T>.meta(metaFieldName: String): Bson = Projections.meta(path(), metaFieldName)
+
+/**
+ * Creates a $meta projection for the given property
+ *
+ * @param property the data class property
+ * @param metaFieldName the meta field name
+ * @return the projection @mongodb.driver.manual reference/operator/aggregation/meta/
+ * @see #metaTextScore(String)
+ * @see #metaSearchScore(String)
+ * @see #metaVectorSearchScore(String)
+ * @see #metaSearchHighlights(String)
+ * @since 4.1
+ */
+public fun <T> meta(property: KProperty<T>, metaFieldName: String): Bson = property.meta(metaFieldName)
 
 /**
  * Creates a textScore projection for the given property, for use with text queries. Calling this method is equivalent
