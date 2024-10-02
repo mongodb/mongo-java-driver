@@ -95,12 +95,14 @@ public final class JsonPoweredTestHelper {
         List<File> files = new ArrayList<>();
         File currentWorkingDirectory = new File(System.getProperty("user.dir"));
         File parentWorkingDirectory = currentWorkingDirectory.getParentFile();
-        addFilesFromDirectory(new File(currentWorkingDirectory, "/specifications/source/" + resourcePath), files);
+        String specificationsRootedResourcePath = "/specifications/source/" + resourcePath;
+        addFilesFromDirectory(new File(currentWorkingDirectory, specificationsRootedResourcePath), files);
         if (files.isEmpty()) {
-            addFilesFromDirectory(new File(parentWorkingDirectory, "/specifications/source/" + resourcePath), files);
+            addFilesFromDirectory(new File(parentWorkingDirectory, specificationsRootedResourcePath), files);
         }
         if (files.isEmpty()) {
-            throw new RuntimeException("Can't find any files in " + resourcePath);
+            throw new RuntimeException("Can't find any files in " + specificationsRootedResourcePath + " with working directory of "
+                    + currentWorkingDirectory.getPath() + " or " + parentWorkingDirectory.getPath());
         }
         return files;
     }
