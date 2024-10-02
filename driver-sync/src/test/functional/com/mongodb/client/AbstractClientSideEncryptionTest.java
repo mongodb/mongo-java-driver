@@ -67,6 +67,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests
 @RunWith(Parameterized.class)
@@ -405,7 +406,7 @@ public abstract class AbstractClientSideEncryptionTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/client-side-encryption/legacy")) {
+        for (File file : getSpecificationTestFiles("client-side-encryption/tests/legacy/")) {
             BsonDocument specDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : specDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(), specDocument,

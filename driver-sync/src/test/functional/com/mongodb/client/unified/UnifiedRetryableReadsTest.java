@@ -42,6 +42,6 @@ public final class UnifiedRetryableReadsTest extends UnifiedSyncTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/retryable-reads");
+        return getTestData("retryable-reads/tests/unified");
     }
 }

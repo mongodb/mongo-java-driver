@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class SessionsTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/sessions");
+        return getTestData("sessions/tests");
     }
 }

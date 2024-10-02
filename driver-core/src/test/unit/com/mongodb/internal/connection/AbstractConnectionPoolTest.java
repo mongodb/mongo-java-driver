@@ -85,8 +85,8 @@ import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -94,6 +94,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // Implementation of
 // https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
@@ -568,7 +569,7 @@ public abstract class AbstractConnectionPoolTest {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/connection-monitoring-and-pooling/cmap-format")) {
+        for (File file : getSpecificationTestFiles("connection-monitoring-and-pooling/tests/cmap-format/")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{
                     file.getName(),

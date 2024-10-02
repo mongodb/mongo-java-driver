@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class UnifiedAuthTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/auth");
+        return getTestData("auth/tests/unified");
     }
 }

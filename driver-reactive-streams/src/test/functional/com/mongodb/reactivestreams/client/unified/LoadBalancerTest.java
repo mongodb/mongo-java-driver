@@ -99,6 +99,6 @@ final class LoadBalancerTest extends UnifiedReactiveStreamsTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/load-balancers");
+        return getTestData("load-balancers/tests");
     }
 }

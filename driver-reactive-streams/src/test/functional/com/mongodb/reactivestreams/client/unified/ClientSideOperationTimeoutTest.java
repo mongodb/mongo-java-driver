@@ -51,7 +51,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     private final AtomicReference<Throwable> atomicReferenceThrowable = new AtomicReference<>();
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/client-side-operation-timeout");
+        return getTestData("client-side-operations-timeout/tests");
     }
 
     @Override

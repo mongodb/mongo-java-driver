@@ -51,6 +51,6 @@ public final class UnifiedCrudTest extends UnifiedSyncTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/crud");
+        return getTestData("crud/tests/unified");
     }
 }

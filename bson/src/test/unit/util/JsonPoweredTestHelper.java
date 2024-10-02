@@ -91,6 +91,20 @@ public final class JsonPoweredTestHelper {
         return files;
     }
 
+    public static List<File> getSpecificationTestFiles(final String resourcePath) throws URISyntaxException {
+        List<File> files = new ArrayList<>();
+        File currentWorkingDirectory = new File(System.getProperty("user.dir"));
+        File parentWorkingDirectory = currentWorkingDirectory.getParentFile();
+        addFilesFromDirectory(new File(currentWorkingDirectory, "/specifications/source/" + resourcePath), files);
+        if (files.isEmpty()) {
+            addFilesFromDirectory(new File(parentWorkingDirectory, "/specifications/source/" + resourcePath), files);
+        }
+        if (files.isEmpty()) {
+            throw new RuntimeException("Can't find any files in " + resourcePath);
+        }
+        return files;
+    }
+
     private static String getFileAsString(final File file) throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         String line;

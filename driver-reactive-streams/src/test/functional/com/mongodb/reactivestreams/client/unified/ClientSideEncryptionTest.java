@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class ClientSideEncryptionTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/client-side-encryption");
+        return getTestData("client-side-encryption/tests/unified");
     }
 }

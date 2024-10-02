@@ -93,6 +93,6 @@ final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/change-streams");
+        return getTestData("change-streams/tests/unified");
     }
 }

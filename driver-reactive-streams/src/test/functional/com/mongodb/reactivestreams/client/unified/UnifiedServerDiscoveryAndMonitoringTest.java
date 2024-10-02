@@ -24,7 +24,7 @@ import java.util.Collection;
 
 final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/server-discovery-and-monitoring");
+        return getTestData("server-discovery-and-monitoring/tests/unified");
     }
 
     @Override

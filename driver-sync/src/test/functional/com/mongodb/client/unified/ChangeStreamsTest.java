@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class ChangeStreamsTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/change-streams");
+        return getTestData("change-streams/tests/unified");
     }
 }

@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class VersionedApiTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("versioned-api");
+        return getTestData("versioned-api/tests");
     }
 }

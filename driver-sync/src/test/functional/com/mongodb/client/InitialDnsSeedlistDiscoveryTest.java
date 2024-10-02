@@ -65,6 +65,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
 @RunWith(Parameterized.class)
@@ -308,7 +309,7 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/initial-dns-seedlist-discovery")) {
+        for (File file : getSpecificationTestFiles("initial-dns-seedlist-discovery/tests")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{
                     file.getName(),

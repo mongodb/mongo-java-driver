@@ -21,9 +21,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.UnixServerAddress;
-import com.mongodb.event.TestServerMonitorListener;
-import com.mongodb.internal.logging.LogMessage;
-import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
@@ -37,10 +34,13 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
+import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.test.AfterBeforeParameterResolver;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -90,8 +90,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 import static util.JsonPoweredTestHelper.getTestDocument;
-import static util.JsonPoweredTestHelper.getTestFiles;
 
 @ExtendWith(AfterBeforeParameterResolver.class)
 public abstract class UnifiedTest {
@@ -153,7 +153,7 @@ public abstract class UnifiedTest {
     @NonNull
     protected static Collection<Arguments> getTestData(final String directory) throws URISyntaxException, IOException {
         List<Arguments> data = new ArrayList<>();
-        for (File file : getTestFiles("/" + directory + "/")) {
+        for (File file : getSpecificationTestFiles(directory)) {
             BsonDocument fileDocument = getTestDocument(file);
 
             for (BsonValue cur : fileDocument.getArray("tests")) {
@@ -162,6 +162,7 @@ public abstract class UnifiedTest {
         }
         return data;
     }
+
 
     @NonNull
     private static Arguments createTestData(final BsonDocument fileDocument, final BsonDocument testDocument) {

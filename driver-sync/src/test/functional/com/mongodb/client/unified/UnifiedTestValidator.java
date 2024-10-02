@@ -34,6 +34,6 @@ final class UnifiedTestValidator extends UnifiedSyncTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/valid-pass");
+        return getTestData("unified-test-format/tests/valid-pass");
     }
 }

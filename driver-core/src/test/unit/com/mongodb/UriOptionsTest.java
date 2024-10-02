@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assume.assumeFalse;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // See https://github.com/mongodb/specifications/tree/master/source/uri-options/tests
 public class UriOptionsTest extends AbstractConnectionStringTest {
@@ -56,7 +57,7 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/uri-options")) {
+        for (File file : getSpecificationTestFiles("uri-options/tests")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),

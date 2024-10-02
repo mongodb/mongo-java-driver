@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class WithTransactionHelperTransactionsTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/transactions-convenient-api");
+        return getTestData("transactions-convenient-api/tests/unified");
     }
 }

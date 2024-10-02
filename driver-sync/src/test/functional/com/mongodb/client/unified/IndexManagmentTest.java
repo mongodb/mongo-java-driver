@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class IndexManagmentTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/index-management");
+        return getTestData("index-management/tests");
     }
 }

@@ -38,6 +38,7 @@ import java.util.List;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
 import static com.mongodb.MongoCredential.OIDC_CALLBACK_KEY;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // See https://github.com/mongodb/specifications/tree/master/source/auth/legacy/tests
 @RunWith(Parameterized.class)
@@ -63,7 +64,7 @@ public class AuthConnectionStringTest extends TestCase {
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/auth/legacy")) {
+        for (File file : getSpecificationTestFiles("auth/tests/legacy/")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),

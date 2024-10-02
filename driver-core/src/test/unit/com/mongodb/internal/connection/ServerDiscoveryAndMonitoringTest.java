@@ -29,6 +29,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
@@ -79,7 +80,13 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        return data("/server-discovery-and-monitoring");
+        Collection<Object[]> data = new ArrayList<>();
+        data.addAll(data("server-discovery-and-monitoring/tests/errors"));
+        data.addAll(data("server-discovery-and-monitoring/tests/load-balanced"));
+        data.addAll(data("server-discovery-and-monitoring/tests/rs"));
+        data.addAll(data("server-discovery-and-monitoring/tests/sharded"));
+        data.addAll(data("server-discovery-and-monitoring/tests/single"));
+        return data;
     }
 
     private void assertServers(final BsonDocument servers) {

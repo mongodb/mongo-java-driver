@@ -32,6 +32,6 @@ final class UnifiedAtlasDataLakeTest extends UnifiedSyncTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/atlas-data-lake-testing");
+        return getTestData("atlas-data-lake-testing/tests/unified");
     }
 }

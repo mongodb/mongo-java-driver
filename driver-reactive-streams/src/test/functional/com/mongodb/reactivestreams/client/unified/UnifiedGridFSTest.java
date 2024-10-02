@@ -34,6 +34,6 @@ final class UnifiedGridFSTest extends UnifiedReactiveStreamsTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/gridfs");
+        return getTestData("gridfs/tests");
     }
 }

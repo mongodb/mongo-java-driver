@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/server-discovery-and-monitoring");
+        return getTestData("server-discovery-and-monitoring/tests/unified");
     }
 
     @Override

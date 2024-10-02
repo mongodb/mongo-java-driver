@@ -24,6 +24,6 @@ import java.util.Collection;
 
 final class LoadBalancerTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/load-balancers");
+        return getTestData("load-balancers/tests");
     }
 }

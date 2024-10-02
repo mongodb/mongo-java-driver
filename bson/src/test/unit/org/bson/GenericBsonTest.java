@@ -48,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // BSON tests powered by language-agnostic JSON-based tests included in test resources
 public class GenericBsonTest {
@@ -308,7 +309,7 @@ public class GenericBsonTest {
 
     private static Stream<Arguments> data() throws URISyntaxException, IOException {
         List<Arguments> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/bson")) {
+        for (File file : getSpecificationTestFiles("bson-corpus/tests")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue curValue : testDocument.getArray("valid", new BsonArray())) {
                 BsonDocument testCaseDocument = curValue.asDocument();

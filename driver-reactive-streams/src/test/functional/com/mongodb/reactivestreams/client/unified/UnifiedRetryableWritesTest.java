@@ -31,6 +31,6 @@ final class UnifiedRetryableWritesTest extends UnifiedReactiveStreamsTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/retryable-writes");
+        return getTestData("retryable-writes/tests/unified");
     }
 }

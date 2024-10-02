@@ -31,6 +31,6 @@ final class UnifiedCrudTest extends UnifiedReactiveStreamsTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/crud");
+        return getTestData("crud/tests/unified");
     }
 }

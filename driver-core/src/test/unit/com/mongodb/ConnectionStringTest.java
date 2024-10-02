@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assume.assumeFalse;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // See https://github.com/mongodb/specifications/tree/master/source/connection-string/tests
 public class ConnectionStringTest extends AbstractConnectionStringTest {
@@ -72,7 +73,7 @@ public class ConnectionStringTest extends AbstractConnectionStringTest {
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/connection-string")) {
+        for (File file : getSpecificationTestFiles("connection-string/tests")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
 @RunWith(Parameterized.class)
@@ -59,7 +60,7 @@ public class ServerSelectionRttTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/rtt")) {
+        for (File file : getSpecificationTestFiles("server-selection/tests/rtt")) {
             data.add(new Object[]{file.getName(), JsonPoweredTestHelper.getTestDocument(file)});
         }
         return data;

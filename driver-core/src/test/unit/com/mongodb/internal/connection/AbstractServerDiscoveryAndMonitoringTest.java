@@ -50,6 +50,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static org.junit.Assert.assertEquals;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 public class AbstractServerDiscoveryAndMonitoringTest {
     private final BsonDocument definition;
@@ -62,7 +63,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
     public static Collection<Object[]> data(final String root) throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles(root)) {
+        for (File file : getSpecificationTestFiles(root)) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{file.getName() + ": " + testDocument.getString("description").getValue(), testDocument});
         }

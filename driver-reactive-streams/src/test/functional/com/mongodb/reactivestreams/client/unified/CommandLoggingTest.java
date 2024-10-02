@@ -33,6 +33,6 @@ final class CommandLoggingTest extends UnifiedReactiveStreamsTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/command-logging");
+        return getTestData("command-logging-and-monitoring/tests/logging");
     }
 }

@@ -39,6 +39,6 @@ final class UnifiedTransactionsTest extends UnifiedReactiveStreamsTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/transactions");
+        return getTestData("transactions/tests/unified");
     }
 }

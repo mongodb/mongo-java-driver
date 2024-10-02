@@ -31,6 +31,6 @@ final class CollectionManagementTest extends UnifiedSyncTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/collection-management");
+        return getTestData("collection-management/tests");
     }
 }

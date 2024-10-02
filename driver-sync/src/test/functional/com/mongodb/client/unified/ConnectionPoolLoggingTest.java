@@ -33,6 +33,6 @@ final class ConnectionPoolLoggingTest extends UnifiedSyncTest {
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
-        return getTestData("unified-test-format/connection-monitoring-and-pooling/logging");
+        return getTestData("connection-monitoring-and-pooling/tests/logging");
     }
 }

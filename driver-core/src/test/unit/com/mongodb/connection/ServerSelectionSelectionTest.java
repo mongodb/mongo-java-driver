@@ -53,6 +53,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+import static util.JsonPoweredTestHelper.getSpecificationTestFiles;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
 @RunWith(Parameterized.class)
@@ -104,10 +105,10 @@ public class ServerSelectionSelectionTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/server_selection")) {
+        for (File file : getSpecificationTestFiles("server-selection/tests/server_selection")) {
             data.add(new Object[]{getServerSelectionTestDescription(file), JsonPoweredTestHelper.getTestDocument(file)});
         }
-        for (File file : JsonPoweredTestHelper.getTestFiles("/max-staleness/server_selection")) {
+        for (File file : getSpecificationTestFiles("max-staleness/tests")) {
             data.add(new Object[]{getMaxStalenessTestDescription(file), JsonPoweredTestHelper.getTestDocument(file)});
         }
         return data;
