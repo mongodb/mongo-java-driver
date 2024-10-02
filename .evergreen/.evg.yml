@@ -865,15 +865,21 @@ tasks:
       commands:
         - func: "run tests"
           vars:
-            TESTS: 'bson:test bson-kotlin:test bson-kotlinx:test bson-scala:test bson-record-codec:test mongodb-crypt:test'
+            TESTS: 'bson:test bson-record-codec:test mongodb-crypt:test'
 
-    - name: "test-core-and-legacy"
+    - name: "test-core"
       commands:
-        - func: "start-kms-kmip-server"
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
           vars:
-            TESTS: 'driver-core:test driver-legacy:test'
+            TESTS: 'driver-core:test'
+
+    - name: "test-legacy"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run tests"
+          vars:
+            TESTS: 'driver-legacy:test'
 
     - name: "test-sync"
       commands:
@@ -881,7 +887,7 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
           vars:
-            TESTS: 'driver-sync:test driver-kotlin-sync:test'
+            TESTS: 'driver-sync:test'
 
     - name: "test-reactive"
       commands:
@@ -889,7 +895,7 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
           vars:
-            TESTS: 'driver-reactive-streams:test driver-kotlin-coroutine:test'
+            TESTS: 'driver-reactive-streams:test'
 
     - name: load-balancer-test
       commands:
@@ -2131,7 +2137,8 @@ buildvariants:
   tasks:
      - name: "test-sync"
      - name: "test-reactive"
-     - name: "test-core-and-legacy"
+     - name: "test-core"
+     - name: "test-legacy"
 
 - matrix_name: "tests-snappy-compression"
   matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "standalone", os: "linux" }
@@ -2140,7 +2147,8 @@ buildvariants:
   tasks:
     - name: "test-sync"
     - name: "test-reactive"
-    - name: "test-core-and-legacy"
+    - name: "test-core"
+    - name: "test-legacy"
 
 - matrix_name: "tests-zstd-compression"
   matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8",
@@ -2151,7 +2159,8 @@ buildvariants:
   tasks:
     - name: "test-sync"
     - name: "test-reactive"
-    - name: "test-core-and-legacy"
+    - name: "test-core"
+    - name: "test-legacy"
 
 - matrix_name: "tests-unit"
   matrix_spec: { jdk: [ "jdk8", "jdk11", "jdk17", "jdk21"], os: "linux" }
@@ -2168,7 +2177,8 @@ buildvariants:
   tasks:
     - name: "test-sync"
     - name: "test-reactive"
-    - name: "test-core-and-legacy"
+    - name: "test-core"
+    - name: "test-legacy"
 
 - matrix_name: "tests-jdk-secure"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17", "jdk21"],
@@ -2179,7 +2189,8 @@ buildvariants:
   tasks:
     - name: "test-sync"
     - name: "test-reactive"
-    - name: "test-core-and-legacy"
+    - name: "test-core"
+    - name: "test-legacy"
 
 - matrix_name: "tests-jdk-secure-jdk11"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk11"], version: ["7.0"], topology: ["replicaset"], os: "linux" }
@@ -2188,7 +2199,8 @@ buildvariants:
   tasks:
     - name: "test-sync"
     - name: "test-reactive"
-    - name: "test-core-and-legacy"
+    - name: "test-core"
+    - name: "test-legacy"
 
 - matrix_name: "tests-require-api-version"
   matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "8.0", "latest"],
@@ -2198,7 +2210,8 @@ buildvariants:
   tasks:
     - name: "test-sync"
     - name: "test-reactive"
-    - name: "test-core-and-legacy"
+    - name: "test-core"
+    - name: "test-legacy"
 
 - matrix_name: "tests-load-balancer-secure"
   matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk21"], version: ["5.0", "6.0", "7.0", "8.0", "latest"], topology: "sharded-cluster",
