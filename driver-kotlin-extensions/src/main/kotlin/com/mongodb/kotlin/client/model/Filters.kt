@@ -30,7 +30,11 @@ import kotlin.reflect.KProperty
 import org.bson.BsonType
 import org.bson.conversions.Bson
 
-/** Filters extension methods to improve Kotlin interop */
+/**
+ * Filters extension methods to improve Kotlin interop
+ *
+ * @since 5.3
+ */
 public object Filters {
 
     /**
