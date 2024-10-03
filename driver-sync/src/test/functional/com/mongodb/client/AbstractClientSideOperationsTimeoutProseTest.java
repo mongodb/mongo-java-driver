@@ -723,8 +723,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 .append("mode", new BsonDocument("times", new BsonInt32(2)))
                 .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("bulkWrite"))))
                         .append("blockConnection", BsonBoolean.TRUE)
-                        .append("blockTimeMS", new BsonInt32(1010)));
-        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().timeout(2000, TimeUnit.MILLISECONDS));
+                        .append("blockTimeMS", new BsonInt32(2020)));
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().timeout(4000, TimeUnit.MILLISECONDS));
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
             MongoDatabase db = client.getDatabase(namespace.getDatabaseName());
             db.drop();
