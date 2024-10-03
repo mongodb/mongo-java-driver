@@ -715,6 +715,10 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected void test11MultiBatchBulkWrites() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
         assumeFalse(isServerlessTest());
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
+            // a workaround for https://jira.mongodb.org/browse/DRIVERS-2997, remove this block when the aforementioned bug is fixed
+            client.getDatabase(namespace.getDatabaseName()).drop();
+        }
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(2)))
                 .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("bulkWrite"))))
