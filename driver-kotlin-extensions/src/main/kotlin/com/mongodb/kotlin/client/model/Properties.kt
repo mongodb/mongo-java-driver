@@ -67,7 +67,6 @@ public operator fun <T0, K, T1, T2> KProperty1<T0, Map<out K, T1>?>.div(
  * - BsonProperty annotation
  * - Property name
  */
-@SuppressWarnings("BC_BAD_CAST_TO_ABSTRACT_COLLECTION")
 internal fun <T> KProperty<T>.path(): String {
     return if (this is KPropertyPath<*, T>) {
         this.name
@@ -84,12 +83,19 @@ internal fun <T> KProperty<T>.path(): String {
             // If no path (serialName) then check for BsonId / BsonProperty
             if (path == null) {
                 val originator = if (this is CustomProperty<*, *>) this.previous.property else this
-                val constructorProperty =
-                    originator.javaField!!.declaringClass.kotlin.primaryConstructor?.findParameterByName(this.name)
+                // If this property is calculated (doesn't have a backing field) ex
+                // "(Student::grades / Grades::score).posOp then
+                // originator.javaField will NPE.
+                // Only read various annotations on a declared property with a backing field
+                if (originator.javaField != null) {
+                    val constructorProperty =
+                        originator.javaField!!.declaringClass.kotlin.primaryConstructor?.findParameterByName(this.name)
 
-                // Prefer BsonId annotation over BsonProperty
-                path = constructorProperty?.annotations?.filterIsInstance<BsonId>()?.firstOrNull()?.let { "_id" }
-                path = path ?: constructorProperty?.annotations?.filterIsInstance<BsonProperty>()?.firstOrNull()?.value
+                    // Prefer BsonId annotation over BsonProperty
+                    path = constructorProperty?.annotations?.filterIsInstance<BsonId>()?.firstOrNull()?.let { "_id" }
+                    path =
+                        path ?: constructorProperty?.annotations?.filterIsInstance<BsonProperty>()?.firstOrNull()?.value
+                }
                 path = path ?: this.name
             }
             path
