@@ -26,6 +26,11 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import org.bson.conversions.Bson
 
+/**
+ * Projection extension methods to improve Kotlin interop
+ *
+ * @since 5.3
+ */
 public object Projections {
 
     /** The projection of the property. This is used in an aggregation pipeline to reference a property from a path. */
@@ -246,7 +251,6 @@ public object Projections {
      * @see #metaSearchScore(String)
      * @see #metaVectorSearchScore(String)
      * @see #metaSearchHighlights(String)
-     * @since 4.1
      */
     @JvmSynthetic
     @JvmName("metaExt")
@@ -262,7 +266,6 @@ public object Projections {
      * @see #metaSearchScore(String)
      * @see #metaVectorSearchScore(String)
      * @see #metaSearchHighlights(String)
-     * @since 4.1
      */
     public fun <T> meta(property: KProperty<T>, metaFieldName: String): Bson = property.meta(metaFieldName)
 
@@ -282,7 +285,6 @@ public object Projections {
      * calling {@link #meta(String, String)} with {@code "searchScore"} as the argument.
      *
      * @return the projection @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @since 4.7
      */
     public fun <T> KProperty<T>.metaSearchScore(): Bson = Projections.metaSearchScore(path())
 
@@ -292,7 +294,6 @@ public object Projections {
      * equivalent to calling {@link #meta(String, String)} with {@code "vectorSearchScore"} as the argument.
      *
      * @return the projection @mongodb.atlas.manual atlas-search/scoring/ Scoring @mongodb.server.release 6.0.10
-     * @since 4.11
      */
     @Beta(Reason.SERVER)
     public fun <T> KProperty<T>.metaVectorSearchScore(): Bson = Projections.metaVectorSearchScore(path())
@@ -306,7 +307,6 @@ public object Projections {
      * @return the projection
      * @see com.mongodb.client.model.search.SearchHighlight @mongodb.atlas.manual atlas-search/highlighting/
      *   Highlighting
-     * @since 4.7
      */
     public fun <T> KProperty<T>.metaSearchHighlights(): Bson = Projections.metaSearchHighlights(path())
 
