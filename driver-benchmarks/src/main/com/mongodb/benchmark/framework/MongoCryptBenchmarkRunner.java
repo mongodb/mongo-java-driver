@@ -17,13 +17,13 @@ package com.mongodb.benchmark.framework;
  *
  */
 
-import com.mongodb.crypt.capi.CAPI;
-import com.mongodb.crypt.capi.MongoCrypt;
-import com.mongodb.crypt.capi.MongoCryptContext;
-import com.mongodb.crypt.capi.MongoCryptOptions;
-import com.mongodb.crypt.capi.MongoCrypts;
-import com.mongodb.crypt.capi.MongoExplicitEncryptOptions;
-import com.mongodb.crypt.capi.MongoLocalKmsProviderOptions;
+import com.mongodb.internal.crypt.capi.CAPI;
+import com.mongodb.internal.crypt.capi.MongoCrypt;
+import com.mongodb.internal.crypt.capi.MongoCryptContext;
+import com.mongodb.internal.crypt.capi.MongoCryptOptions;
+import com.mongodb.internal.crypt.capi.MongoCrypts;
+import com.mongodb.internal.crypt.capi.MongoExplicitEncryptOptions;
+import com.mongodb.internal.crypt.capi.MongoLocalKmsProviderOptions;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonDocument;

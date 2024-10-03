@@ -175,7 +175,7 @@ afterEvaluate {
     tasks.jar {
         manifest {
             attributes(
-                "-exportcontents" to "com.mongodb.crypt.capi.*;-noimport:=true",
+                "-exportcontents" to "com.mongodb.*;-noimport:=true",
                 "Automatic-Module-Name" to "com.mongodb.crypt.capi",
                 "Import-Package" to "org.slf4j.*;resolution:=optional,org.bson.*",
                 "Bundle-Name" to "MongoCrypt",

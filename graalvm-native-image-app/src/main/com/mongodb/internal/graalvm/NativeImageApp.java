@@ -35,6 +35,8 @@ final class NativeImageApp {
         String[] arguments = new String[] {getConnectionStringSystemPropertyOrDefault()};
         LOGGER.info("proper args={}, tour/example arguments={}", Arrays.toString(args), Arrays.toString(arguments));
         List<Throwable> errors = Stream.<ThrowingRunnable>of(
+                new ThrowingRunnable.Named(Substitutions.class,
+                        () -> Substitutions.main(arguments)),
                 new ThrowingRunnable.Named(DnsSpi.class,
                         () -> DnsSpi.main(arguments)),
                 new ThrowingRunnable.Named(gridfs.GridFSTour.class,
@@ -109,11 +111,21 @@ final class NativeImageApp {
 
         final class Named implements ThrowingRunnable {
             private final String name;
-            private final ThrowingRunnable runnable;
+            private final ThrowingRunnable loggingRunnable;
 
             Named(final String name, final ThrowingRunnable runnable) {
                 this.name = name;
-                this.runnable = runnable;
+                this.loggingRunnable = () -> {
+                    LOGGER.info("Begin {}", name);
+                    try {
+                        runnable.run();
+                    } catch (Exception | AssertionError e) {
+                        LOGGER.info("Failure in {}", name, e);
+                        throw e;
+                    } finally {
+                        LOGGER.info("End {}", name);
+                    }
+                };
             }
 
             Named(final Class<?> mainClass, final ThrowingRunnable runnable) {
@@ -122,13 +134,13 @@ final class NativeImageApp {
 
             @Override
             public void run() throws Exception {
-                runnable.run();
+                loggingRunnable.run();
             }
 
             @Override
             @Nullable
             public Throwable runAndCatch() {
-                Throwable t = runnable.runAndCatch();
+                Throwable t = loggingRunnable.runAndCatch();
                 if (t != null) {
                     t = new AssertionError(name, t);
                 }

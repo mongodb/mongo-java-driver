@@ -20,10 +20,12 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 
@@ -115,6 +117,20 @@ public final class CommandHelper {
                         .cryptd(internalConnection.getInitialServerDescription().isCryptd())
                         .build(),
                 clusterConnectionMode, serverApi);
+    }
+
+
+    /**
+     * Appends a user-defined maxTimeMS to the command if CSOT is not enabled.
+     * This is necessary when maxTimeMS must be explicitly set on the command being explained,
+     * rather than appending it lazily to the explain command in the {@link CommandMessage} via {@link TimeoutContext#setMaxTimeOverride(long)}.
+     * This ensures backwards compatibility with pre-CSOT behavior.
+     */
+    public static void applyMaxTimeMS(final TimeoutContext timeoutContext, final BsonDocument command) {
+        if (!timeoutContext.hasTimeoutMS()) {
+            command.append("maxTimeMS", new BsonInt64(timeoutContext.getTimeoutSettings().getMaxTimeMS()));
+            timeoutContext.disableMaxTimeOverride();
+        }
     }
 
     private CommandHelper() {

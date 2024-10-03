@@ -25,7 +25,6 @@ import com.mongodb.client.model.search.{ VectorSearchOptions => JVectorSearchOpt
  * @note Requires MongoDB 6.0.11, or greater
  * @since 4.11
  */
-@Beta(Array(Reason.SERVER))
 object VectorSearchOptions {
 
   /**

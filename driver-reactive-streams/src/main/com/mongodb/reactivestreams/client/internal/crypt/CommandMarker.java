@@ -22,7 +22,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.crypt.capi.MongoCrypt;
+import com.mongodb.internal.crypt.capi.MongoCrypt;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;

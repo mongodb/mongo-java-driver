@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model.search;
 
-import com.mongodb.annotations.Beta;
-import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 
@@ -32,6 +30,5 @@ import com.mongodb.client.model.Aggregates;
  * @since 5.2
  */
 @Sealed
-@Beta(Reason.SERVER)
 public interface ApproximateVectorSearchOptions extends VectorSearchOptions {
 }

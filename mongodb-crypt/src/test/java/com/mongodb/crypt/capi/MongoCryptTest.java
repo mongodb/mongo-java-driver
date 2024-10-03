@@ -17,7 +17,16 @@
 
 package com.mongodb.crypt.capi;
 
-import com.mongodb.crypt.capi.MongoCryptContext.State;
+import com.mongodb.internal.crypt.capi.MongoAwsKmsProviderOptions;
+import com.mongodb.internal.crypt.capi.MongoCrypt;
+import com.mongodb.internal.crypt.capi.MongoCryptContext;
+import com.mongodb.internal.crypt.capi.MongoCryptContext.State;
+import com.mongodb.internal.crypt.capi.MongoCryptOptions;
+import com.mongodb.internal.crypt.capi.MongoCrypts;
+import com.mongodb.internal.crypt.capi.MongoDataKeyOptions;
+import com.mongodb.internal.crypt.capi.MongoExplicitEncryptOptions;
+import com.mongodb.internal.crypt.capi.MongoKeyDecryptor;
+import com.mongodb.internal.crypt.capi.MongoLocalKmsProviderOptions;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonDocument;

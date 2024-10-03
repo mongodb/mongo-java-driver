@@ -46,6 +46,7 @@ dependencies {
     api "io.netty:netty-buffer", optional
     api "io.netty:netty-transport", optional
     api "io.netty:netty-handler", optional
+    compileOnly "org.graalvm.sdk:graal-sdk:$graalSdkVersion"
 
     // Optionally depend on both AWS SDK v2 and v1.  The driver will use v2 is present, v1 if present, or built-in functionality if
     // neither are present
@@ -81,6 +82,7 @@ afterEvaluate {
             '!sun.misc.*',  // Used by DirectBufferDeallocator only for java 8
             '!sun.nio.ch.*',  // Used by DirectBufferDeallocator only for java 8
             '!javax.annotation.*', // Brought in by com.google.code.findbugs:annotations
+            '!com.oracle.svm.core.annotate.*', // this dependency is provided by the GraalVM runtime
             'io.netty.*;resolution:=optional',
             'com.amazonaws.*;resolution:=optional',
             'software.amazon.awssdk.*;resolution:=optional',
@@ -88,7 +90,7 @@ afterEvaluate {
             'com.github.luben.zstd.*;resolution:=optional',
             'org.slf4j.*;resolution:=optional',
             'jnr.unixsocket.*;resolution:=optional',
-            'com.mongodb.crypt.capi.*;resolution:=optional',
+            'com.mongodb.internal.crypt.capi.*;resolution:=optional',
             'jdk.net.*;resolution:=optional', // Used by SocketStreamHelper & depends on JDK version
             'org.bson.codecs.record.*;resolution:=optional', // Depends on JDK version
             'org.bson.codecs.kotlin.*;resolution:=optional',

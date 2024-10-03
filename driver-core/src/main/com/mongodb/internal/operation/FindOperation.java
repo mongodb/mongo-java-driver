@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.CommandHelper.applyMaxTimeMS;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
@@ -364,8 +365,11 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
 
     <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new CommandReadOperation<>(getNamespace().getDatabaseName(),
-                (operationContext, serverDescription, connectionDescription) ->
-                        asExplainCommand(getCommand(operationContext, MIN_WIRE_VERSION), verbosity), resultDecoder);
+                (operationContext, serverDescription, connectionDescription) -> {
+                    BsonDocument command = getCommand(operationContext, MIN_WIRE_VERSION);
+                    applyMaxTimeMS(operationContext.getTimeoutContext(), command);
+                    return asExplainCommand(command, verbosity);
+                }, resultDecoder);
     }
 
     private BsonDocument getCommand(final OperationContext operationContext, final int maxWireVersion) {
@@ -397,7 +401,7 @@ public class FindOperation<T> implements AsyncExplainableReadOperation<AsyncBatc
             if (isAwaitData()) {
                 commandDocument.put("awaitData", BsonBoolean.TRUE);
             } else {
-                operationContext.getTimeoutContext().setMaxTimeOverride(0L);
+                operationContext.getTimeoutContext().disableMaxTimeOverride();
             }
         } else {
             setNonTailableCursorMaxTimeSupplier(timeoutMode, operationContext);
