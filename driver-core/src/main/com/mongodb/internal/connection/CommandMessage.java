@@ -23,6 +23,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
+import com.mongodb.internal.operation.ClientBulkWriteOperation.ClientBulkWriteCommand;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -34,23 +36,28 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
-import org.bson.io.BsonOutput;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
+import static com.mongodb.internal.connection.BsonWriterHelper.appendElementsToDocument;
+import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
+import static com.mongodb.internal.connection.BsonWriterHelper.writeOpsAndNsInfo;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
@@ -64,43 +71,50 @@ import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_W
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class CommandMessage extends RequestMessage {
+    private static final String TXN_NUMBER_KEY = "txnNumber";
+
     private final MongoNamespace namespace;
     private final BsonDocument command;
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
     private final boolean exhaustAllowed;
-    private final SplittablePayload payload;
-    private final FieldNameValidator payloadFieldNameValidator;
+    private final MessageSequences sequences;
     private final boolean responseExpected;
+    /**
+     * {@code null} iff either {@link #sequences} is not of the {@link ClientBulkWriteCommand.OpsAndNsInfo} type,
+     * or it is of that type, but it has not been {@linkplain #encodeMessageBodyWithMetadata(ByteBufferBsonOutput, OperationContext) encoded}.
+     */
+    @Nullable
+    private Boolean opsAndNsInfoRequireResponse;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
                    @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
-                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+                   final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
-                payloadFieldNameValidator, clusterConnectionMode, serverApi);
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false,
+                sequences, clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
-                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+                   final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.namespace = namespace;
@@ -108,9 +122,9 @@ public final class CommandMessage extends RequestMessage {
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
         this.responseExpected = responseExpected;
+        opsAndNsInfoRequireResponse = null;
         this.exhaustAllowed = exhaustAllowed;
-        this.payload = payload;
-        this.payloadFieldNameValidator = payloadFieldNameValidator;
+        this.sequences = sequences;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
         assertTrue(useOpMsg() || responseExpected);
@@ -192,7 +206,16 @@ public final class CommandMessage extends RequestMessage {
         if (responseExpected) {
             return true;
         } else {
-            return payload != null && payload.isOrdered() && payload.hasAnotherSplit();
+            if (sequences instanceof ValidatableSplittablePayload) {
+                ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
+                SplittablePayload payload = validatableSplittablePayload.getSplittablePayload();
+                return payload.isOrdered() && payload.hasAnotherSplit();
+            } else if (sequences instanceof ClientBulkWriteCommand.OpsAndNsInfo) {
+                return assertNotNull(opsAndNsInfoRequireResponse);
+            } else if (!(sequences instanceof EmptyMessageSequences)) {
+                fail(sequences.toString());
+            }
+            return false;
         }
     }
 
@@ -201,7 +224,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final OperationContext operationContext) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
         int commandStartPosition;
         if (useOpMsg()) {
@@ -209,19 +232,45 @@ public final class CommandMessage extends RequestMessage {
             bsonOutput.writeInt32(0);   // flag bits
             bsonOutput.writeByte(0);    // payload type
             commandStartPosition = bsonOutput.getPosition();
+            ArrayList<BsonElement> extraElements = getExtraElements(operationContext);
+            // `OpsAndNsInfo` requires validation only if no response is expected, otherwise we must rely on the server validation
+            boolean validateDocumentSizeLimits = !(sequences instanceof ClientBulkWriteCommand.OpsAndNsInfo) || !responseExpected;
 
-            addDocument(command, bsonOutput, commandFieldNameValidator, getExtraElements(operationContext));
-
-            if (payload != null) {
-                bsonOutput.writeByte(1);          // payload type
-                int payloadBsonOutputStartPosition = bsonOutput.getPosition();
-                bsonOutput.writeInt32(0);         // size
-                bsonOutput.writeCString(payload.getPayloadName());
-                writePayload(new BsonBinaryWriter(bsonOutput, payloadFieldNameValidator), bsonOutput, getSettings(),
-                        messageStartPosition, payload, getSettings().getMaxDocumentSize());
-
-                int payloadBsonOutputLength = bsonOutput.getPosition() - payloadBsonOutputStartPosition;
-                bsonOutput.writeInt32(payloadBsonOutputStartPosition, payloadBsonOutputLength);
+            int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator, validateDocumentSizeLimits);
+            if (sequences instanceof ValidatableSplittablePayload) {
+                appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+                ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
+                SplittablePayload payload = validatableSplittablePayload.getSplittablePayload();
+                writeOpMsgSectionWithPayloadType1(bsonOutput, payload.getPayloadName(), () -> {
+                        writePayload(
+                                new BsonBinaryWriter(bsonOutput, validatableSplittablePayload.getFieldNameValidator()),
+                                bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize()
+                        );
+                        return null;
+                });
+            } else if (sequences instanceof ClientBulkWriteCommand.OpsAndNsInfo) {
+                ClientBulkWriteCommand.OpsAndNsInfo opsAndNsInfo = (ClientBulkWriteCommand.OpsAndNsInfo) sequences;
+                try (ByteBufferBsonOutput.Branch bsonOutputBranch2 = bsonOutput.branch();
+                     ByteBufferBsonOutput.Branch bsonOutputBranch1 = bsonOutput.branch()) {
+                    ClientBulkWriteCommand.OpsAndNsInfo.EncodeResult opsAndNsInfoEncodeResult = writeOpMsgSectionWithPayloadType1(
+                            bsonOutputBranch1, "ops", () ->
+                                    writeOpMsgSectionWithPayloadType1(bsonOutputBranch2, "nsInfo", () ->
+                                            writeOpsAndNsInfo(
+                                                    opsAndNsInfo, commandDocumentSizeInBytes, bsonOutputBranch1,
+                                                    bsonOutputBranch2, getSettings(), validateDocumentSizeLimits)
+                                    )
+                    );
+                    opsAndNsInfoRequireResponse = opsAndNsInfoEncodeResult.isServerResponseRequired();
+                    Long txnNumber = opsAndNsInfoEncodeResult.getTxnNumber();
+                    if (txnNumber != null) {
+                        extraElements.add(new BsonElement(TXN_NUMBER_KEY, new BsonInt64(txnNumber)));
+                    }
+                    appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+                }
+            } else if (sequences instanceof EmptyMessageSequences) {
+                appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+            } else {
+                fail(sequences.toString());
             }
 
             // Write the flag bits
@@ -239,7 +288,8 @@ public final class CommandMessage extends RequestMessage {
                 elements = new ArrayList<>(3);
                 addServerApiElements(elements);
             }
-            addDocument(command, bsonOutput, commandFieldNameValidator, elements);
+            writeDocument(command, bsonOutput, commandFieldNameValidator, true);
+            appendElementsToDocument(bsonOutput, commandStartPosition, elements);
         }
         return new EncodingMetadata(commandStartPosition);
     }
@@ -265,11 +315,11 @@ public final class CommandMessage extends RequestMessage {
         return getOpCode().equals(OpCode.OP_MSG);
     }
 
-    private List<BsonElement> getExtraElements(final OperationContext operationContext) {
+    private ArrayList<BsonElement> getExtraElements(final OperationContext operationContext) {
         SessionContext sessionContext = operationContext.getSessionContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
 
-        List<BsonElement> extraElements = new ArrayList<>();
+        ArrayList<BsonElement> extraElements = new ArrayList<>();
         if (!getSettings().isCryptd()) {
            timeoutContext.runMaxTimeMS(maxTimeMS ->
                    extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)))
@@ -293,7 +343,7 @@ public final class CommandMessage extends RequestMessage {
         assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
         if (sessionContext.hasActiveTransaction()) {
             checkServerVersionForTransactionSupport();
-            extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
+            extraElements.add(new BsonElement(TXN_NUMBER_KEY, new BsonInt64(sessionContext.getTransactionNumber())));
             if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
@@ -339,6 +389,21 @@ public final class CommandMessage extends RequestMessage {
         if (!readConcernDocument.isEmpty()) {
             extraElements.add(new BsonElement("readConcern", readConcernDocument));
         }
+    }
+
+    private <R> R writeOpMsgSectionWithPayloadType1(
+            final ByteBufferBsonOutput bsonOutput,
+            final String sequenceId,
+            final Supplier<R> writeDocumentsAction) {
+        // payload type
+        bsonOutput.writeByte(1);
+        int sequenceStart = bsonOutput.getPosition();
+        // size to be patched back later
+        bsonOutput.writeInt32(0);
+        bsonOutput.writeCString(sequenceId);
+        R result = writeDocumentsAction.get();
+        backpatchLength(sequenceStart, bsonOutput);
+        return result;
     }
 
     private static OpCode getOpCode(final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,

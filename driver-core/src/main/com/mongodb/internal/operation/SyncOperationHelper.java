@@ -334,7 +334,7 @@ final class SyncOperationHelper {
                         connection.getDescription().getServerAddress());
     }
 
-    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final TimeoutMode timeoutMode, final BsonDocument cursorDocument,
+    static <T> CommandBatchCursor<T> cursorDocumentToBatchCursor(final TimeoutMode timeoutMode, final BsonDocument cursorDocument,
             final int batchSize, final Decoder<T> decoder, @Nullable final BsonValue comment, final ConnectionSource source,
             final Connection connection) {
         return new CommandBatchCursor<>(timeoutMode, cursorDocument, batchSize, 0, decoder, comment, source, connection);

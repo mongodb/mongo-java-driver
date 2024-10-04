@@ -31,7 +31,6 @@ import org.bson.BsonWriter
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.io.BasicOutputBuffer
-import org.bson.io.OutputBuffer
 import org.bson.json.JsonReader
 
 import java.nio.ByteBuffer
@@ -170,13 +169,17 @@ class StreamHelper {
         CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
                 new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 MessageSettings.builder().build(), SINGLE, null)
-        OutputBuffer outputBuffer = new BasicOutputBuffer()
-        command.encode(outputBuffer, new OperationContext(
-                IgnorableRequestContext.INSTANCE,
-                NoOpSessionContext.INSTANCE,
-                new TimeoutContext(ClusterFixture.TIMEOUT_SETTINGS), null))
-        nextMessageId++
-        [outputBuffer.byteBuffers, nextMessageId]
+        ByteBufferBsonOutput outputBuffer = new ByteBufferBsonOutput(new SimpleBufferProvider())
+        try {
+            command.encode(outputBuffer, new OperationContext(
+                    IgnorableRequestContext.INSTANCE,
+                    NoOpSessionContext.INSTANCE,
+                    new TimeoutContext(ClusterFixture.TIMEOUT_SETTINGS), null))
+            nextMessageId++
+            [outputBuffer.byteBuffers, nextMessageId]
+        } finally {
+            outputBuffer.close()
+        }
     }
 
     static helloAsync() {

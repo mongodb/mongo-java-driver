@@ -302,9 +302,9 @@ class DefaultServer implements ClusterableServer {
         public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                 final OperationContext operationContext, final boolean responseExpected,
-                @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
+                final MessageSequences sequences) {
             return wrapped.command(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, operationContext,
-                    responseExpected, payload, payloadFieldNameValidator);
+                    responseExpected, sequences);
         }
 
         @Override
@@ -364,10 +364,10 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                 @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-                final OperationContext operationContext, final boolean responseExpected, @Nullable final SplittablePayload payload,
-                @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+                final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences,
+                final SingleResultCallback<T> callback) {
             wrapped.commandAsync(database, command, commandFieldNameValidator, readPreference, commandResultDecoder,
-                    operationContext, responseExpected, payload, payloadFieldNameValidator, callback);
+                    operationContext, responseExpected, sequences, callback);
         }
 
         @Override
