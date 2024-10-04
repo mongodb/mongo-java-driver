@@ -261,7 +261,16 @@ public abstract class UnifiedTest {
     @AfterEach
     public void cleanUp() {
         for (FailPoint failPoint : failPoints) {
-            failPoint.disableFailPoint();
+            try {
+                // BULK-TODO remove the try-catch block
+                failPoint.disableFailPoint();
+            } catch (Throwable e) {
+                for (Throwable suppressed : e.getSuppressed()) {
+                    if (suppressed instanceof TestAbortedException) {
+                        throw (TestAbortedException) suppressed;
+                    }
+                }
+            }
         }
         entities.close();
     }
