@@ -64,13 +64,19 @@ public final class DefaultDnsResolver implements DnsResolver {
 
       The priority and weight are ignored, and we just concatenate the host (after removing the ending '.') and port with a
       ':' in between, as expected by ServerAddress.
-
-      It's required that the srvHost has at least three parts (e.g. foo.bar.baz) and that all of the resolved hosts have a parent
-      domain equal to the domain of the srvHost.
     */
     @Override
     public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName) {
-        String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
+        List<String> srvHostParts = asList(srvHost.split("\\."));
+
+        String srvHostDomain;
+        boolean isShortSrvHost = srvHostParts.size() < 3;
+        if (isShortSrvHost) {
+            srvHostDomain = srvHost; // when dot separated parts less than 3, domain name is the host per se
+        } else {
+            srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
+        }
+
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
         List<String> hosts = new ArrayList<>();
         String resourceName = "_" + srvServiceName + "._tcp." + srvHost;
@@ -83,6 +89,12 @@ public final class DefaultDnsResolver implements DnsResolver {
             for (String srvRecord : srvAttributeValues) {
                 String[] split = srvRecord.split(" ");
                 String resolvedHost = split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3];
+                if (isShortSrvHost && resolvedHost.equals(srvHost)) {
+                    throw new MongoConfigurationException(
+                            format("The SRV host name '%s' has less than three parts and the resolved host '%s' is identical.",
+                                    srvHost, resolvedHost)
+                    );
+                }
                 String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
                 if (!sameParentDomain(srvHostDomainParts, resolvedHostDomain)) {
                     throw new MongoConfigurationException(

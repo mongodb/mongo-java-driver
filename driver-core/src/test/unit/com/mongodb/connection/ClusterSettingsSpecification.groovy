@@ -180,16 +180,6 @@ class ClusterSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'when srvHost contains less than three parts (host, domain, top-level domain, should throw IllegalArgumentException'() {
-        when:
-        def builder = ClusterSettings.builder()
-        builder.srvHost('foo.bar')
-        builder.build()
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
     def 'when connection string is applied to builder, all properties should be set'() {
         when:
         def settings = ClusterSettings.builder()

@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
-import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -606,11 +605,6 @@ public final class ClusterSettings {
         if (builder.srvHost != null) {
             if (builder.srvHost.contains(":")) {
                 throw new IllegalArgumentException("The srvHost can not contain a host name that specifies a port");
-            }
-
-            if (builder.srvHost.split("\\.").length < 3) {
-                throw new IllegalArgumentException(format("An SRV host name '%s' was provided that does not contain at least three parts. "
-                        + "It must contain a hostname, domain name and a top level domain.", builder.srvHost));
             }
         }
 
