@@ -67,6 +67,13 @@ public enum BsonBinarySubType {
     COLUMN((byte) 0x07),
 
     /**
+     * Sensitive data (e.g., HMAC keys) that should be excluded from server-side logging.
+     *
+     * @since 5.3
+     */
+    SENSITIVE((byte) 0x08),
+
+    /**
      * User defined binary data.
      */
     USER_DEFINED((byte) 0x80);
