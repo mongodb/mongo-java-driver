@@ -64,7 +64,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.MixedBulkWriteOperation.commandWriteConcern;
+import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
@@ -111,7 +111,7 @@ public final class BulkWriteBatch {
         }
         if (canRetryWrites && !writeRequestsAreRetryable) {
             canRetryWrites = false;
-            LOGGER.debug("retryWrites set but one or more writeRequests do not support retryable writes");
+            logWriteModelDoesNotSupportRetries();
         }
         return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation,
                 canRetryWrites, new BulkWriteBatchCombiner(connectionDescription.getServerAddress(), ordered, writeConcern),
@@ -384,5 +384,9 @@ public final class BulkWriteBatch {
             return !((DeleteRequest) writeRequest).isMulti();
         }
         return true;
+    }
+
+    static void logWriteModelDoesNotSupportRetries() {
+        LOGGER.debug("retryWrites set but one or more writeRequests do not support retryable writes");
     }
 }

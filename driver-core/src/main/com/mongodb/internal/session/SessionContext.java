@@ -48,7 +48,7 @@ public interface SessionContext {
     /**
      * Advance the transaction number.
      *
-     * @return the next transaction number for the session
+     * @return the next non-negative transaction number for the session
      */
     long advanceTransactionNumber();
 

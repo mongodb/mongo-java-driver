@@ -16,16 +16,21 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -276,6 +281,34 @@ public class SyncMongoCluster implements MongoCluster {
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                          final Class<TResult> resultClass) {
         return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, resultClass));
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        throw Assertions.fail("BULK-TODO implement");
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        throw Assertions.fail("BULK-TODO implement");
     }
 
     private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {
