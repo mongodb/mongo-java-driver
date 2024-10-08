@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
@@ -29,6 +30,7 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.TimeoutContext
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.connection.AsyncConnection
@@ -41,6 +43,8 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 import static OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static com.mongodb.ReadPreference.primary
@@ -520,7 +524,9 @@ class AsyncCommandBatchCursorSpecification extends Specification {
                     .build()
         }
         OperationContext operationContext = Mock(OperationContext)
-        operationContext.getTimeoutContext() >> Mock(TimeoutContext)
+        def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
+                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
+        operationContext.getTimeoutContext() >> timeoutContext
         mock.getOperationContext() >> operationContext
         mock.getConnection(_) >> {
             if (counter == 0) {

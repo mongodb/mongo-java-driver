@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.async;
 
+import com.mongodb.MongoException;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import org.junit.jupiter.api.Test;
@@ -287,6 +288,30 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         async(3, c);
                     }).finish(callback);
                 });
+
+        // empty `else` branch
+        assertBehavesSameVariations(5,
+                () -> {
+                    if (plainTest(1)) {
+                        Integer connection = syncReturns(2);
+                        sync(connection + 5);
+                    } else {
+                        // do nothing
+                    }
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        if (plainTest(1)) {
+                            beginAsync().<Integer>thenSupply(c2 -> {
+                                asyncReturns(2, c2);
+                            }).thenConsume((connection, c3) -> {
+                                async(connection + 5, c3);
+                            }).finish(c);
+                        } else {
+                            c.complete(c); // do nothing
+                        }
+                    }).finish(callback);
+                });
     }
 
     @Test
@@ -477,6 +502,29 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).onErrorIf(t -> t instanceof IllegalStateException, (t, c) -> {
                         async(9, c);
                     }).finish(callback);
+                });
+    }
+
+    @Test
+    void testTryWithEmptyCatch() {
+        assertBehavesSameVariations(4,
+                () -> {
+                    try {
+                        sync(1);
+                    } catch (MongoException e) {
+                        // ignore exceptions
+                    } finally {
+                        plain(2);
+                    }
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        async(1, c);
+                    })
+                    // ignore exceptions when releasing server resources
+                    .thenAlwaysRunAndFinish(() -> {
+                        plain(2);
+                    }, callback);
                 });
     }
 
@@ -694,7 +742,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     @Test
-    void testFinally() {
+    void testFinallyWithPlainInsideTry() {
         // (in try: normal flow + exception + exception) * (in finally: normal + exception) = 6
         assertBehavesSameVariations(6,
                 () -> {
@@ -712,6 +760,29 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).thenAlwaysRunAndFinish(() -> {
                         plain(3);
                     }, callback);
+                });
+    }
+
+    @Test
+    void testFinallyWithPlainOutsideTry() {
+        assertBehavesSameVariations(5,
+                () -> {
+                    plain(1);
+                    try {
+                        sync(2);
+                    } finally {
+                        plain(3);
+                    }
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        plain(1);
+                        beginAsync().thenRun(c2 -> {
+                            async(2, c2);
+                        }).thenAlwaysRunAndFinish(() -> {
+                            plain(3);
+                        }, c);
+                    }).finish(callback);
                 });
     }
 
