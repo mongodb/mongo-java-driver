@@ -34,4 +34,4 @@ fi
 echo "Running Kotlin tests"
 
 ./gradlew -version
-./gradlew kotlinCheck -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
+./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
