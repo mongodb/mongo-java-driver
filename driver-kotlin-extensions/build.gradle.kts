@@ -127,12 +127,11 @@ tasks.spotbugsMain {
 //     Test Configuration
 // ===========================
 
-tasks.create("kotlinCheck") {
-    description = "Runs all the kotlin checks"
+tasks.findByName("check")?.run {
+    description = "Runs static checks and unit test"
     group = "verification"
 
-    dependsOn("clean", "check")
-    tasks.findByName("check")?.mustRunAfter("clean")
+    dependsOn("spotlessCheck", "spotbugsMain", "spotbugsMain", "detekt")
 }
 
 tasks.test { useJUnitPlatform() }
