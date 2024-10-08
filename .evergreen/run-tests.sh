@@ -35,6 +35,7 @@ MONGODB_URI=${MONGODB_URI:-}
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 STREAM_TYPE=${STREAM_TYPE:-nio2}
+TESTS=${TESTS:-test}
 SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 
 export ASYNC_TYPE="-Dorg.mongodb.test.async.type=${STREAM_TYPE}"
@@ -136,15 +137,8 @@ echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI
 echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
 
-if [ "$SLOW_TESTS_ONLY" == "true" ]; then
-    ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-              ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
-              ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
-              --stacktrace --info testSlowOnly
-else
-    ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-              ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
-              ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
-              -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
-              --stacktrace --info --continue test
-fi
+./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+          ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
+          ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+          -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
+          --stacktrace --info --continue ${TESTS}
