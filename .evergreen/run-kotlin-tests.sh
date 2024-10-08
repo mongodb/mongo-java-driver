@@ -31,7 +31,10 @@ if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
     export MULTI_MONGOS_URI_SYSTEM_PROPERTY="-Dorg.mongodb.test.multi.mongos.uri=${MONGODB_URI}"
 fi
 
-echo "Running Kotlin tests"
-
 ./gradlew -version
-./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
+
+echo "Running Kotlin Unit Tests"
+./gradlew :bson-kotlin:test :bson-kotlinx:test :driver-kotlin-sync:test :driver-kotlin-coroutine:test :driver-kotlin-extensions:test
+
+echo "Running Kotlin Integration Tests"
+./gradlew :driver-kotlin-sync:integrationTest :driver-kotlin-coroutine:integrationTest  -Dorg.mongodb.test.uri=${MONGODB_URI} ${MULTI_MONGOS_URI_SYSTEM_PROPERTY}
