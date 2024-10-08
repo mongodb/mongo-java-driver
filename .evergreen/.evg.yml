@@ -144,8 +144,8 @@ functions:
 
   "create and upload SSDLC release assets":
     - command: shell.exec
-      shell: "bash"
       params:
+        shell: "bash"
         working_dir: "src"
         env:
           PRODUCT_NAME: ${product_name}
