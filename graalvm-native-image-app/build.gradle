@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// Note requires a Gradle project flag `-PincludeGraalvm` (see settings.gradle).
+
 plugins {
     id 'application'
     id 'org.graalvm.buildtools.native' version '0.9.23'

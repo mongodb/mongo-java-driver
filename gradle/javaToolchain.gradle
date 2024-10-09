@@ -80,7 +80,7 @@ allprojects {
             options.encoding = "UTF-8"
             options.release.set(17)
         }
-    } else if (project == project(':graalvm-native-image-app')) {
+    } else if (project.name == 'graalvm-native-image-app') {
         tasks.withType(JavaCompile) {
             options.encoding = 'UTF-8'
             options.release.set(DEFAULT_JDK_VERSION)

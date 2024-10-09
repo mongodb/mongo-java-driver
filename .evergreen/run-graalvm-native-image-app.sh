@@ -22,4 +22,4 @@ echo "The Gradle version is"
 ./gradlew --version
 
 echo "Building and running the GraalVM native image app"
-./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} :graalvm-native-image-app:nativeRun
+./gradlew -PincludeGraalvm -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} :graalvm-native-image-app:nativeRun

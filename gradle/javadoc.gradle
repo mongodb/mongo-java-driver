@@ -17,8 +17,9 @@ import static org.gradle.util.CollectionUtils.single
  */
 
 
-def projectsThatDoNotPublishJavaDocs = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor") + project("driver-lambda") + project(":graalvm-native-image-app")
-def javaMainProjects = subprojects - projectsThatDoNotPublishJavaDocs
+def projectNamesThatDoNotPublishJavaDocs =["driver-benchmarks", "driver-lambda", "driver-workload-executor", "graalvm-native-image-app", "util",
+                                           "spock", "taglets"]
+def javaMainProjects = subprojects.findAll { !projectNamesThatDoNotPublishJavaDocs.contains(it.name) }
 
 task docs {
     dependsOn javaMainProjects.collect { it.tasks.withType(Javadoc) + it.tasks.withType(ScalaDoc) }

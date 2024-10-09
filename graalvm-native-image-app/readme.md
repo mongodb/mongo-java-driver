@@ -62,10 +62,12 @@ you can specify the connection string used by the `:graalvm-native-image-app:run
 Gradle tasks, as well as by the built native application by passing the CLI argument
 `-Dorg.mongodb.test.uri="<your connection string>"` to `gradlew` or `NativeImageApp` respectively:
 
+For gradle to include this project in the build you *must* include a project flag: `-PincludeGraalvm`
+
 ```bash
-./gradlew ... -Dorg.mongodb.test.uri="<your connection string>"
+./gradlew ... -PincludeGraalvm -Dorg.mongodb.test.uri="<your connection string>"
 ```
 
 ```bash
-./graalvm-native-image-app/build/native/nativeCompile/NativeImageApp -Dorg.mongodb.test.uri="<your connection string>"
+./graalvm-native-image-app/build/native/nativeCompile/NativeImageApp -PincludeGraalvm -Dorg.mongodb.test.uri="<your connection string>"
 ```
