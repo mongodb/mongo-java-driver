@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.github.luben.zstd.Zstd;
 import com.github.luben.zstd.ZstdInputStream;
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
@@ -27,6 +28,13 @@ import java.io.InputStream;
 import java.util.List;
 
 class ZstdCompressor extends Compressor {
+    private final int level;
+
+    ZstdCompressor(final MongoCompressor mongoCompressor) {
+        int level = mongoCompressor.getPropertyNonNull(MongoCompressor.LEVEL, Zstd.defaultCompressionLevel());
+        this.level = Math.min(Math.max(level, Zstd.minCompressionLevel()), Zstd.maxCompressionLevel());
+    }
+
     @Override
     public String getName() {
         return "zstd";
@@ -46,7 +54,7 @@ class ZstdCompressor extends Compressor {
 
         try {
             byte[] out = new byte[(int) Zstd.compressBound(uncompressedSize)];
-            int compressedSize = (int) Zstd.compress(out, singleByteArraySource, Zstd.defaultCompressionLevel());
+            int compressedSize = (int) Zstd.compress(out, singleByteArraySource, this.level);
             target.writeBytes(out, 0, compressedSize);
         } catch (Exception e) {
             throw new MongoInternalException("Unexpected exception", e);
