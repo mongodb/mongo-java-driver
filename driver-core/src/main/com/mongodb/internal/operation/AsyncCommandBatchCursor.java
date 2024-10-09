@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
@@ -285,7 +286,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         }
 
         private void releaseResourcesAsync(final SingleResultCallback<Void> callback) {
-            beginAsync().thenRun(c -> {
+            beginAsync().thenRunTryCatchAsyncBlocks(c -> {
                 if (isSkipReleasingServerResourcesOnClose()) {
                     unsetServerCursor();
                 }
@@ -302,9 +303,9 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 } else {
                     c.complete(c); // do nothing
                 }
-            })
-            // ignore exceptions when releasing server resources
-            .thenAlwaysRunAndFinish(() -> {
+            }, MongoException.class, (e, c5) -> {
+                c5.complete(c5); // ignore exceptions when releasing server resources
+            }).thenAlwaysRunAndFinish(() -> {
                 // guarantee that regardless of exceptions, `serverCursor` is null and client resources are released
                 unsetServerCursor();
                 releaseClientResources();

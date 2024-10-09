@@ -507,24 +507,31 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testTryWithEmptyCatch() {
-        assertBehavesSameVariations(4,
+        assertBehavesSameVariations(2,
                 () -> {
                     try {
-                        sync(1);
+                        throw new RuntimeException();
                     } catch (MongoException e) {
                         // ignore exceptions
                     } finally {
                         plain(2);
                     }
+                    plain(3);
                 },
                 (callback) -> {
                     beginAsync().thenRun(c -> {
-                        async(1, c);
-                    })
-                    // ignore exceptions when releasing server resources
-                    .thenAlwaysRunAndFinish(() -> {
-                        plain(2);
-                    }, callback);
+                        beginAsync().thenRunTryCatchAsyncBlocks(c2 -> {
+                            c2.completeExceptionally(new RuntimeException());
+                        }, MongoException.class, (e, c3) -> {
+                            c3.complete(c3); // ignore exceptions
+                        })
+                        .thenAlwaysRunAndFinish(() -> {
+                            plain(2);
+                        }, c);
+                    }).thenRun(c4 -> {
+                        plain(3);
+                        c4.complete(c4);
+                    }).finish(callback);
                 });
     }
 
