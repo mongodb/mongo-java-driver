@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
@@ -27,6 +28,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
@@ -41,6 +43,8 @@ import org.bson.codecs.DocumentCodec;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion;
 import static org.mockito.ArgumentMatchers.any;
@@ -85,7 +89,7 @@ class CommandBatchCursorTest {
 
         connectionSource = mock(ConnectionSource.class);
         operationContext = mock(OperationContext.class);
-        timeoutContext = mock(TimeoutContext.class);
+        timeoutContext = new TimeoutContext(TimeoutSettings.create(MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build()));
         serverDescription = mock(ServerDescription.class);
         when(operationContext.getTimeoutContext()).thenReturn(timeoutContext);
         when(connectionSource.getOperationContext()).thenReturn(operationContext);
@@ -128,7 +132,6 @@ class CommandBatchCursorTest {
         when(mockConnection.command(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any())).thenThrow(
                 new MongoOperationTimeoutException("test"));
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-        when(timeoutContext.hasTimeoutMS()).thenReturn(true);
 
         CommandBatchCursor<Document> commandBatchCursor = createBatchCursor();
 
@@ -153,7 +156,6 @@ class CommandBatchCursorTest {
         when(mockConnection.command(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any())).thenThrow(
                 new MongoOperationTimeoutException("test", new MongoSocketException("test", new ServerAddress())));
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-        when(timeoutContext.hasTimeoutMS()).thenReturn(true);
 
         CommandBatchCursor<Document> commandBatchCursor = createBatchCursor();
 
