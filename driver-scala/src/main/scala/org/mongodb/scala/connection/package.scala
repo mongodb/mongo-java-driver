@@ -75,4 +75,11 @@ package object connection {
    * @since 4.11
    */
   type NettyTransportSettings = com.mongodb.connection.NettyTransportSettings
+
+  /**
+   * TransportSettings for an async transport implementation.
+   *
+   * @since 5.2
+   */
+  type AsyncTransportSettings = com.mongodb.connection.AsyncTransportSettings
 }
