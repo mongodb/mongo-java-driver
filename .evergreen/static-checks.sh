@@ -12,4 +12,4 @@ RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
 echo "Compiling JVM drivers"
 
 ./gradlew -version
-./gradlew -PxmlReports.enabled=true --info -x test -x integrationTest -x spotlessApply clean check scalaCheck kotlinCheck jar testClasses docs
+./gradlew -PxmlReports.enabled=true --info -x test -x integrationTest -x spotlessApply clean check scalaCheck jar testClasses docs

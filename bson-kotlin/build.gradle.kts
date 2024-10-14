@@ -111,13 +111,6 @@ spotbugs { showProgress.set(true) }
 // ===========================
 //     Test Configuration
 // ===========================
-tasks.create("kotlinCheck") {
-    description = "Runs all the kotlin checks"
-    group = "verification"
-
-    dependsOn("clean", "check")
-    tasks.findByName("check")?.mustRunAfter("clean")
-}
 
 tasks.test { useJUnitPlatform() }
 
