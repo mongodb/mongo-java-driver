@@ -39,6 +39,15 @@ class ExtensionsApiTest {
         assertTrue(notImplemented.isEmpty(), "Some possible Projections were not implemented: $notImplemented")
     }
 
+    @Test
+    fun shouldHaveAllUpdatesExtensions() {
+        val kotlinExtensions: Set<String> = getKotlinExtensions("Updates")
+        val javaMethods: Set<String> = getJavaMethods("Updates")
+
+        val notImplemented = javaMethods subtract kotlinExtensions
+        assertTrue(notImplemented.isEmpty(), "Some possible Updates were not implemented: $notImplemented")
+    }
+
     private fun getKotlinExtensions(className: String): Set<String> {
         return ClassGraph()
             .enableClassInfo()
