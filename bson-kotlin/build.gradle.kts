@@ -111,12 +111,6 @@ spotbugs { showProgress.set(true) }
 // ===========================
 //     Test Configuration
 // ===========================
-tasks.findByName("check")?.run {
-    description = "Runs static checks and unit test"
-    group = "verification"
-
-    dependsOn("spotlessCheck", "spotbugsMain", "spotbugsMain", "detekt")
-}
 
 tasks.test { useJUnitPlatform() }
 
