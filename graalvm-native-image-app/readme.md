@@ -47,12 +47,12 @@ you need to inform Gradle about that location as specified in https://docs.gradl
 Assuming that your MongoDB deployment is accessible at `mongodb://localhost:27017`,
 run from the driver project root directory:
 
-| &#x23; | Command                                                                                                                                                                                                                          | Description                                                                                                                                   |
-|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| 0      | `env JAVA_HOME="${JDK17}" ./gradlew -PjavaVersion=21 :graalvm-native-image-app:nativeCompile`                                                                                                                                    | Build the application relying on the reachability metadata stored in `graalvm-native-image-app/src/main/resources/META-INF/native-image`.     |
-| 1      | `env JAVA_HOME="${JDK17}" ./gradlew clean && env JAVA_HOME=${JDK21_GRAALVM} ./gradlew -PjavaVersion=21 -Pagent :graalvm-native-image-app:run && env JAVA_HOME=${JDK21_GRAALVM} ./gradlew :graalvm-native-image-app:metadataCopy` | Collect the reachability metadata and update the files storing it. Do this before building the application only if building fails otherwise.  |
-| 2      | `./graalvm-native-image-app/build/native/nativeCompile/NativeImageApp`                                                                                                                                                           | Run the application that has been built.                                                                                                      |
-| 3      | `env JAVA_HOME="${JDK17}" ./gradlew -PjavaVersion=21 :graalvm-native-image-app:nativeRun`                                                                                                                                        | Run the application using Gradle, build it if necessary relying on the stored reachability metadata.                                          |
+| &#x23; | Command                                                                                                                                                                                                                                                            | Description                                                                                                                                   |
+|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| 0      | `env JAVA_HOME="${JDK17}" ./gradlew -PincludeGraalvm -PjavaVersion=21 :graalvm-native-image-app:nativeCompile`                                                                                                                                                     | Build the application relying on the reachability metadata stored in `graalvm-native-image-app/src/main/resources/META-INF/native-image`.     |
+| 1      | `env JAVA_HOME="${JDK17}" ./gradlew clean && env JAVA_HOME=${JDK21_GRAALVM} ./gradlew -PincludeGraalvm -PjavaVersion=21 -Pagent :graalvm-native-image-app:run && env JAVA_HOME=${JDK21_GRAALVM} ./gradlew -PincludeGraalvm :graalvm-native-image-app:metadataCopy` | Collect the reachability metadata and update the files storing it. Do this before building the application only if building fails otherwise.  |
+| 2      | `./graalvm-native-image-app/build/native/nativeCompile/NativeImageApp`                                                                                                                                                                                             | Run the application that has been built.                                                                                                      |
+| 3      | `env JAVA_HOME="${JDK17}" ./gradlew -PincludeGraalvm -PjavaVersion=21 :graalvm-native-image-app:nativeRun`                                                                                                                                                         | Run the application using Gradle, build it if necessary relying on the stored reachability metadata.                                          |
 
 #### Specifying a custom connection string
 
@@ -62,12 +62,10 @@ you can specify the connection string used by the `:graalvm-native-image-app:run
 Gradle tasks, as well as by the built native application by passing the CLI argument
 `-Dorg.mongodb.test.uri="<your connection string>"` to `gradlew` or `NativeImageApp` respectively:
 
-For gradle to include this project in the build you *must* include a project flag: `-PincludeGraalvm`
-
 ```bash
-./gradlew ... -PincludeGraalvm -Dorg.mongodb.test.uri="<your connection string>"
+./gradlew ... -Dorg.mongodb.test.uri="<your connection string>"
 ```
 
 ```bash
-./graalvm-native-image-app/build/native/nativeCompile/NativeImageApp -PincludeGraalvm -Dorg.mongodb.test.uri="<your connection string>"
+./graalvm-native-image-app/build/native/nativeCompile/NativeImageApp -Dorg.mongodb.test.uri="<your connection string>"
 ```
