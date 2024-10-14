@@ -44,7 +44,7 @@ import com.mongodb.kotlin.client.model.Updates.set
 import com.mongodb.kotlin.client.model.Updates.setOnInsert
 import com.mongodb.kotlin.client.model.Updates.unset
 import java.time.Instant
-import java.util.*
+import java.util.Date
 import kotlin.test.assertEquals
 import org.bson.BsonDocument
 import org.bson.Document
