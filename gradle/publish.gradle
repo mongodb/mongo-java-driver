@@ -72,8 +72,10 @@ ext {
     }
 }
 
-def projectsNotPublishedToMaven = project(":util").allprojects + project(":driver-benchmarks") + project("driver-workload-executor") + project("driver-lambda") + project(":graalvm-native-image-app")
-def publishedProjects = subprojects - projectsNotPublishedToMaven
+
+def projectNamesNotToBePublished = ["driver-benchmarks", "driver-lambda", "driver-workload-executor", "graalvm-native-image-app", "util",
+                                    "spock", "taglets"]
+def publishedProjects = subprojects.findAll { !projectNamesNotToBePublished.contains(it.name) }
 def scalaProjects = publishedProjects.findAll { it.name.contains('scala') }
 def javaProjects = publishedProjects - scalaProjects
 def projectsWithManifest = publishedProjects.findAll {it.name != 'driver-legacy' }
