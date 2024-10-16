@@ -109,6 +109,7 @@ configure(javaProjects) {
 
 configure(scalaProjects) {
     apply plugin: 'scala'
+    apply plugin: 'java-library'
     apply plugin: 'idea'
     apply plugin: "com.adtran.scala-multiversion-plugin"
     apply plugin: "com.diffplug.spotless"

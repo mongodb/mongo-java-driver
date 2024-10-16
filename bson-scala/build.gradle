@@ -18,7 +18,7 @@ description = "A Scala wrapper / extension to the bson library"
 archivesBaseName = 'mongo-scala-bson'
 
 dependencies {
-    implementation project(path: ':bson', configuration: 'default')
+    api project(path: ':bson', configuration: 'default')
 }
 
 sourceSets {
