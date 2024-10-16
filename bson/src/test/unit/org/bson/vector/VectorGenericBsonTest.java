@@ -21,6 +21,8 @@ import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Float32Vector;
+import org.bson.PackedBitVector;
 import org.bson.Vector;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -122,24 +124,29 @@ class VectorGenericBsonTest {
         switch (expectedDType) {
             case INT8:
                 byte[] expectedVectorData = toByteArray(arrayVector);
-                byte[] actualVectorData = actualVector.asInt8VectorData();
+                byte[] actualVectorData = actualVector.asInt8Vector().getVectorArray();
                 assertVectorDecoding(
-                        expectedCanonicalBsonHex, expectedVectorData,
-                        expectedDType, expectedPadding, actualDecodedDocument,
-                        actualVectorData, actualVector);
+                        expectedCanonicalBsonHex,
+                        expectedVectorData,
+                        expectedDType,
+                        actualDecodedDocument,
+                        actualVectorData,
+                        actualVector);
 
                 assertThatVectorCreationResultsInCorrectBinary(Vector.int8Vector(expectedVectorData),
                         testKey,
                         actualDecodedDocument,
-                        expectedCanonicalBsonHex, description);
+                        expectedCanonicalBsonHex,
+                        description);
                 break;
             case PACKED_BIT:
-                byte[] actualVectorPackedBitData = actualVector.asPackedBitVectorData();
+                PackedBitVector actualPackedBitVector = actualVector.asPackedBitVector();
                 byte[] expectedVectorPackedBitData = toByteArray(arrayVector);
                 assertVectorDecoding(
                         expectedCanonicalBsonHex, expectedVectorPackedBitData,
-                        expectedDType, expectedPadding, actualDecodedDocument,
-                        actualVectorPackedBitData, actualVector);
+                        expectedDType, expectedPadding,
+                        actualDecodedDocument,
+                        actualPackedBitVector);
 
                 assertThatVectorCreationResultsInCorrectBinary(
                         Vector.packedBitVector(expectedVectorPackedBitData, expectedPadding),
@@ -149,12 +156,14 @@ class VectorGenericBsonTest {
                         description);
                 break;
             case FLOAT32:
-                float[] actualFloatVector = actualVector.asFloatVectorData();
+                Float32Vector actualFloat32Vector = actualVector.asFloat32Vector();
                 float[] expectedFloatVector = toFloatArray(arrayVector);
-//                assertVectorDecoding(
-//                        expectedCanonicalBsonHex, expectedFloatVector,
-//                        expectedDType, expectedPadding, actualDecodedDocument,
-//                        actualFloatVector, actualVector);
+                assertVectorDecoding(
+                        expectedCanonicalBsonHex,
+                        expectedFloatVector,
+                        expectedDType,
+                        actualDecodedDocument,
+                        actualFloat32Vector);
                 assertThatVectorCreationResultsInCorrectBinary(
                         Vector.floatVector(expectedFloatVector),
                         testKey,
@@ -185,7 +194,6 @@ class VectorGenericBsonTest {
     private void assertVectorDecoding(final String expectedCanonicalBsonHex,
                                       final byte[] expectedVectorData,
                                       final Vector.Dtype expectedDType,
-                                      final byte expectedPadding,
                                       final BsonDocument actualDecodedDocument,
                                       final byte[] actualVectorData,
                                       final Vector actualVector) {
@@ -193,21 +201,34 @@ class VectorGenericBsonTest {
         Assertions.assertArrayEquals(actualVectorData, expectedVectorData,
                 () -> "Actual: " + Arrays.toString(actualVectorData) + " !=  Expected:" + Arrays.toString(expectedVectorData));
         assertEquals(expectedDType, actualVector.getDataType());
+    }
+
+    private void assertVectorDecoding(final String expectedCanonicalBsonHex,
+                                      final byte[] expectedVectorData,
+                                      final Vector.Dtype expectedDType,
+                                      final byte expectedPadding,
+                                      final BsonDocument actualDecodedDocument,
+                                      final PackedBitVector actualVector) {
+        byte[] actualVectorData = actualVector.getVectorArray();
+        assertVectorDecoding(expectedCanonicalBsonHex,
+                expectedVectorData,
+                expectedDType,
+                actualDecodedDocument,
+                actualVectorData,
+                actualVector);
         assertEquals(expectedPadding, actualVector.getPadding());
     }
 
     private void assertVectorDecoding(final String expectedCanonicalBsonHex,
                                       final float[] expectedVectorData,
                                       final Vector.Dtype expectedDType,
-                                      final byte expectedPadding,
                                       final BsonDocument actualDecodedDocument,
-                                      final float[] actualVectorData,
-                                      final Vector actualVector) {
+                                      final Float32Vector actualVector) {
         assertEquals(expectedCanonicalBsonHex, encodeToHex(actualDecodedDocument));
-        Assertions.assertArrayEquals(actualVectorData, expectedVectorData,
-                () -> "Actual: " + Arrays.toString(actualVectorData) + " !=  Expected:" + Arrays.toString(expectedVectorData));
+        float[] actualVectorArray = actualVector.getVectorArray();
+        Assertions.assertArrayEquals(actualVectorArray, expectedVectorData,
+                () -> "Actual: " + Arrays.toString(actualVectorArray) + " !=  Expected:" + Arrays.toString(expectedVectorData));
         assertEquals(expectedDType, actualVector.getDataType());
-        assertEquals(expectedPadding, actualVector.getPadding());
     }
 
     private byte[] toByteArray(final BsonArray arrayVector) {

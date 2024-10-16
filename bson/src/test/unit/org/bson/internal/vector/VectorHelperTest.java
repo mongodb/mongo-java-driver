@@ -16,6 +16,9 @@
 
 package org.bson.internal.vector;
 
+import org.bson.Float32Vector;
+import org.bson.Int8Vector;
+import org.bson.PackedBitVector;
 import org.bson.Vector;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,14 +48,13 @@ class VectorHelperTest {
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("provideFloatVectors")
-    void shouldDecodeFloatVector(final Vector expectedFloatVector, final byte[] bsonEncodedVector) {
+    void shouldDecodeFloatVector(final Float32Vector expectedFloatVector, final byte[] bsonEncodedVector) {
         // when
-        Vector decodedVector = VectorHelper.decodeBinaryToVector(bsonEncodedVector);
+        Float32Vector decodedVector = (Float32Vector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
 
         // then
         assertEquals(Vector.Dtype.FLOAT32, decodedVector.getDataType());
-        assertEquals(0, decodedVector.getPadding());
-        assertArrayEquals(expectedFloatVector.asFloatVectorData(), decodedVector.asFloatVectorData());
+        assertArrayEquals(expectedFloatVector.getVectorArray(), decodedVector.getVectorArray());
     }
 
     private static Stream<Object[]> provideFloatVectors() {
@@ -94,13 +96,13 @@ class VectorHelperTest {
 
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("provideInt8Vectors")
-    void shouldDecodeInt8Vector(final Vector expectedInt8Vector, final byte[] bsonEncodedVector) {
+    void shouldDecodeInt8Vector(final Int8Vector expectedInt8Vector, final byte[] bsonEncodedVector) {
         // when
-        Vector decodedVector = VectorHelper.decodeBinaryToVector(bsonEncodedVector);
+        Int8Vector decodedVector = (Int8Vector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
 
         // then
         assertEquals(Vector.Dtype.INT8, decodedVector.getDataType());
-        assertArrayEquals(expectedInt8Vector.asInt8VectorData(), decodedVector.asInt8VectorData());
+        assertArrayEquals(expectedInt8Vector.getVectorArray(), decodedVector.getVectorArray());
     }
 
     private static Stream<Object[]> provideInt8Vectors() {
@@ -127,13 +129,13 @@ class VectorHelperTest {
 
     @ParameterizedTest
     @MethodSource("providePackedBitVectors")
-    void shouldDecodePackedBitVector(final Vector expectedPackedBitVector, final byte[] bsonEncodedVector) {
+    void shouldDecodePackedBitVector(final PackedBitVector expectedPackedBitVector, final byte[] bsonEncodedVector) {
         // when
-        Vector decodedVector = VectorHelper.decodeBinaryToVector(bsonEncodedVector);
+        PackedBitVector decodedVector = (PackedBitVector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
 
         // then
         assertEquals(Vector.Dtype.PACKED_BIT, decodedVector.getDataType());
-        assertArrayEquals(expectedPackedBitVector.asPackedBitVectorData(), decodedVector.asPackedBitVectorData());
+        assertArrayEquals(expectedPackedBitVector.getVectorArray(), decodedVector.getVectorArray());
         assertEquals(expectedPackedBitVector.getPadding(), decodedVector.getPadding());
     }
 

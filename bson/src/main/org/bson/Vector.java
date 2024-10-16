@@ -17,10 +17,6 @@
 package org.bson;
 
 
-import java.util.Arrays;
-import java.util.Objects;
-
-import static org.bson.assertions.Assertions.assertNotNull;
 import static org.bson.assertions.Assertions.isTrue;
 import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
@@ -28,7 +24,7 @@ import static org.bson.assertions.Assertions.notNull;
 /**
  * Represents a vector that is stored and retrieved using the BSON Binary Subtype 9 format.
  * This class supports multiple vector {@link Dtype}'s and provides static methods to create
- * vectors and methods to retrieve their underlying data.
+ * vectors.
  * <p>
  * Vectors are densely packed arrays of numbers, all the same type, which are stored efficiently
  * in BSON using a binary format.
@@ -37,26 +33,12 @@ import static org.bson.assertions.Assertions.notNull;
  * @see BsonBinary
  * @since BINARY_VECTOR
  */
-public final class Vector {
-    private final byte padding;
-    private byte[] vectorData;
-    private float[] floatVectorData;
+
+public class Vector {
     private final Dtype vectorType;
 
-    Vector(final byte padding, final byte[] vectorData, final Dtype vectorType) {
-        this.padding = padding;
-        this.vectorData = assertNotNull(vectorData);
-        this.vectorType = assertNotNull(vectorType);
-    }
-
-    Vector(final byte[] vectorData, final Dtype vectorType) {
-        this((byte) 0, vectorData, vectorType);
-    }
-
-    Vector(final float[] vectorData) {
-        this.padding = 0;
-        this.floatVectorData = assertNotNull(vectorData);
-        this.vectorType = Dtype.FLOAT32;
+    Vector(final Dtype vectorType) {
+        this.vectorType = vectorType;
     }
 
     /**
@@ -72,18 +54,20 @@ public final class Vector {
      * Padding: 4 (ignore the last 4 bits in Byte 2)
      * Resulting vector: 12 bits: 111011101110
      * </pre>
-     * NOTE: The byte array `vectorData` is not copied; changes to the provided array will be reflected in the created {@link Vector} instance.
+     * <p>
+     * NOTE: The byte array `vectorData` is not copied; changes to the provided array will be reflected
+     * in the created {@link PackedBitVector} instance.
      *
      * @param vectorData The byte array representing the packed bit vector data. Each byte can store 8 bits.
      * @param padding    The number of bits (0 to 7) to ignore in the final byte of the vector data.
-     * @return A Vector instance with the {@link Dtype#PACKED_BIT} data type.
+     * @return A {@link PackedBitVector} instance with the {@link Dtype#PACKED_BIT} data type.
      * @throws IllegalArgumentException If the padding value is greater than 7.
      */
-    public static Vector packedBitVector(final byte[] vectorData, final byte padding) {
+    public static PackedBitVector packedBitVector(final byte[] vectorData, final byte padding) {
         isTrueArgument("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
         notNull("Vector data", vectorData);
         isTrue("Padding must be 0 if vector is empty", padding == 0 || vectorData.length > 0);
-        return new Vector(padding, vectorData, Dtype.PACKED_BIT);
+        return new PackedBitVector(vectorData, padding);
     }
 
     /**
@@ -92,96 +76,68 @@ public final class Vector {
      * <p>A {@link Dtype#INT8} vector is a vector of 8-bit signed integers where each byte in the vector represents an element of a vector,
      * with values in the range [-128, 127].</p>
      * <p>
-     * NOTE: The byte array `vectorData` is not copied; changes to the provided array will be reflected in the created {@link Vector} instance.
+     * NOTE: The byte array `vectorData` is not copied; changes to the provided array will be reflected
+     * in the created {@link Int8Vector} instance.
      *
      * @param vectorData The byte array representing the {@link Dtype#INT8} vector data.
-     * @return A Vector instance with the {@link Dtype#INT8} data type.
+     * @return A {@link Int8Vector} instance with the {@link Dtype#INT8} data type.
      */
-    public static Vector int8Vector(final byte[] vectorData) {
+    public static Int8Vector int8Vector(final byte[] vectorData) {
         notNull("vectorData", vectorData);
-        return new Vector(vectorData, Dtype.INT8);
+        return new Int8Vector(vectorData);
     }
 
     /**
      * Creates a vector with the {@link Dtype#FLOAT32} data type.
-     *
-     * <p> A {@link Dtype#FLOAT32} vector is a vector of floating-point numbers, where each element in the vector is a float.</p>
      * <p>
-     * NOTE: The float array `vectorData` is not copied; changes to the provided array will be reflected in the created {@link Vector} instance.
+     * A {@link Dtype#FLOAT32} vector is a vector of floating-point numbers, where each element in the vector is a float.</p>
+     * <p>
+     * NOTE: The float array `vectorData` is not copied; changes to the provided array will be reflected
+     * in the created {@link Float32Vector} instance.
      *
      * @param vectorData The float array representing the {@link Dtype#FLOAT32} vector data.
-     * @return A Vector instance with the {@link Dtype#FLOAT32} data type.
+     * @return A {@link Float32Vector} instance with the {@link Dtype#FLOAT32} data type.
      */
-    public static Vector floatVector(final float[] vectorData) {
+    public static Float32Vector floatVector(final float[] vectorData) {
         notNull("vectorData", vectorData);
-        return new Vector(vectorData);
+        return new Float32Vector(vectorData);
     }
 
     /**
-     * Returns the {@link Dtype#PACKED_BIT} vector data as a byte array.
+     * Returns the {@link PackedBitVector}.
      *
-     * <p> This method is used to retrieve the underlying underlying byte array representing the {@link Dtype#PACKED_BIT} vector, where
-     * each bit represents an element of the vector (either 0 or 1).
-     *
-     * @return the packed bit vector data.
-     * @throws IllegalStateException if this vector is not of type {@link Dtype#PACKED_BIT}. Use {@link #getDataType()} to check the vector type before
-     *                               calling this method.
-     * @see #getPadding() getPadding() specifies how many least-significant bits in the final byte should be ignored.
+     * @return {@link PackedBitVector}.
+     * @throws IllegalStateException if this vector is not of type {@link Dtype#PACKED_BIT}. Use {@link #getDataType()} to check the vector
+     *                                   type before calling this method.
      */
-    public byte[] asPackedBitVectorData() {
-        if (this.vectorType != Dtype.PACKED_BIT) {
-            throw new IllegalStateException("Vector is not binary quantized");
-        }
-        return assertNotNull(vectorData);
+    public PackedBitVector asPackedBitVector() {
+        ensureType(Dtype.PACKED_BIT);
+        return (PackedBitVector) this;
     }
 
     /**
-     * Returns the {@link Dtype#INT8} vector data as a byte array.
+     * Returns the {@link Int8Vector}.
      *
-     * <p> This method is used to retrieve the underlying byte array representing the {@link Dtype#INT8} vector, where each byte represents
-     * an element of a vector.</p>
-     *
-     * @return the {@link Dtype#INT8} vector data.
+     * @return {@link Int8Vector}.
      * @throws IllegalStateException if this vector is not of type {@link Dtype#INT8}. Use {@link #getDataType()} to check the vector
      *                               type before calling this method.
      */
-    public byte[] asInt8VectorData() {
-        if (this.vectorType != Dtype.INT8) {
-            throw new IllegalStateException("Vector is not INT8");
-        }
-        return assertNotNull(vectorData);
+    public Int8Vector asInt8Vector() {
+        ensureType(Dtype.INT8);
+        return (Int8Vector) this;
     }
 
     /**
-     * Returns the {@link Dtype#FLOAT32} vector data as a float array.
+     * Returns the {@link Float32Vector}.
      *
-     * <p> This method is used to retrieve the underlying float array representing the {@link Dtype#FLOAT32} vector, where each float
-     * represents an element of a vector.</p>
-     *
-     * @return the float array representing the FLOAT32 vector.
+     * @return {@link Float32Vector}.
      * @throws IllegalStateException if this vector is not of type {@link Dtype#FLOAT32}. Use {@link #getDataType()} to check the vector
      *                               type before calling this method.
      */
-    public float[] asFloatVectorData() {
-        if (this.vectorType != Dtype.FLOAT32) {
-            throw new IllegalStateException("Vector is not FLOAT32");
-        }
-
-        return assertNotNull(floatVectorData);
+    public Float32Vector asFloat32Vector() {
+        ensureType(Dtype.FLOAT32);
+        return (Float32Vector) this;
     }
-
-    /**
-     * Returns the padding value for this vector.
-     *
-     * <p>Padding refers to the number of least-significant bits in the final byte that are ignored when retrieving the vector data, as not
-     * all {@link Dtype}'s have a bit length equal to a multiple of 8, and hence do not fit squarely into a certain number of bytes.</p>
-     *
-     * @return the padding value (between 0 and 7).
-     */
-    public byte getPadding() {
-        return this.padding;
-    }
-
 
     /**
      * Returns {@link Dtype} of the vector.
@@ -193,36 +149,10 @@ public final class Vector {
     }
 
 
-    @Override
-    public String toString() {
-        return "Vector{"
-                + "padding=" + padding + ", "
-                + "vectorData=" + (vectorData == null ? Arrays.toString(floatVectorData) : Arrays.toString(vectorData))
-                + ", vectorType=" + vectorType
-                + '}';
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    private void ensureType(final Dtype expected) {
+        if (this.vectorType != expected) {
+            throw new IllegalStateException("Expected vector type " + expected + " but found " + this.vectorType);
         }
-        if (!(o instanceof Vector)) {
-            return false;
-        }
-
-        Vector vector = (Vector) o;
-        return padding == vector.padding && Arrays.equals(vectorData, vector.vectorData)
-                && Arrays.equals(floatVectorData, vector.floatVectorData) && vectorType == vector.vectorType;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = padding;
-        result = 31 * result + Arrays.hashCode(vectorData);
-        result = 31 * result + Arrays.hashCode(floatVectorData);
-        result = 31 * result + Objects.hashCode(vectorType);
-        return result;
     }
 
     /**

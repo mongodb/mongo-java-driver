@@ -33,13 +33,12 @@ class VectorTest {
         byte[] data = {1, 2, 3, 4, 5};
 
         // when
-        Vector vector = Vector.int8Vector(data);
+        Int8Vector vector = Vector.int8Vector(data);
 
         // then
         assertNotNull(vector);
         assertEquals(Vector.Dtype.INT8, vector.getDataType());
-        assertArrayEquals(data, vector.asInt8VectorData());
-        assertEquals(0, vector.getPadding());
+        assertArrayEquals(data, vector.getVectorArray());
     }
 
     @Test
@@ -58,13 +57,12 @@ class VectorTest {
         float[] data = {1.0f, 2.0f, 3.0f};
 
         // when
-        Vector vector = Vector.floatVector(data);
+        Float32Vector vector = Vector.floatVector(data);
 
         // then
         assertNotNull(vector);
         assertEquals(Vector.Dtype.FLOAT32, vector.getDataType());
-        assertArrayEquals(data, vector.asFloatVectorData());
-        assertEquals(0, vector.getPadding());
+        assertArrayEquals(data, vector.getVectorArray());
     }
 
     @Test
@@ -85,12 +83,12 @@ class VectorTest {
         byte[] data = {(byte) 0b10101010, (byte) 0b01010101};
 
         // when
-        Vector vector = Vector.packedBitVector(data, validPadding);
+        PackedBitVector vector = Vector.packedBitVector(data, validPadding);
 
         // then
         assertNotNull(vector);
         assertEquals(Vector.Dtype.PACKED_BIT, vector.getDataType());
-        assertArrayEquals(data, vector.asPackedBitVectorData());
+        assertArrayEquals(data, vector.getVectorArray());
         assertEquals(validPadding, vector.getPadding());
     }
 
@@ -125,12 +123,12 @@ class VectorTest {
         byte padding = 0;
 
         // when
-        Vector vector = Vector.packedBitVector(data, padding);
+        PackedBitVector vector = Vector.packedBitVector(data, padding);
 
         // then
         assertNotNull(vector);
         assertEquals(Vector.Dtype.PACKED_BIT, vector.getDataType());
-        assertArrayEquals(data, vector.asPackedBitVectorData());
+        assertArrayEquals(data, vector.getVectorArray());
         assertEquals(padding, vector.getPadding());
     }
 
@@ -153,8 +151,8 @@ class VectorTest {
         Vector vector = Vector.floatVector(data);
 
         // when & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asInt8VectorData);
-        assertEquals("Vector is not INT8", exception.getMessage());
+        IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asInt8Vector);
+        assertEquals("Expected vector type INT8 but found FLOAT32", exception.getMessage());
     }
 
     @Test
@@ -164,8 +162,8 @@ class VectorTest {
         Vector vector = Vector.int8Vector(data);
 
         // when & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asFloatVectorData);
-        assertEquals("Vector is not FLOAT32", exception.getMessage());
+        IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asFloat32Vector);
+        assertEquals("Expected vector type FLOAT32 but found INT8", exception.getMessage());
     }
 
     @Test
@@ -175,7 +173,7 @@ class VectorTest {
         Vector vector = Vector.floatVector(data);
 
         // when & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asPackedBitVectorData);
-        assertEquals("Vector is not binary quantized", exception.getMessage());
+        IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asPackedBitVector);
+        assertEquals("Expected vector type PACKED_BIT but found FLOAT32", exception.getMessage());
     }
 }

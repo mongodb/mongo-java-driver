@@ -17,6 +17,7 @@
 package org.bson.internal.vector;
 
 import org.bson.BsonBinary;
+import org.bson.PackedBitVector;
 import org.bson.Vector;
 
 import java.nio.ByteBuffer;
@@ -26,7 +27,7 @@ import java.nio.FloatBuffer;
 import static org.bson.assertions.Assertions.isTrue;
 
 /**
- * Helper class for encoding and decoding vectors to and from binary.
+ * Helper class for encoding and decoding vectors to and from {@link BsonBinary}.
  *
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
@@ -48,20 +49,25 @@ public final class VectorHelper {
 
     public static byte[] encodeVectorToBinary(final Vector vector) {
         Vector.Dtype dtype = vector.getDataType();
-        byte padding = vector.getPadding();
         switch (dtype) {
             case INT8:
-                return writeVector(dtype.getValue(), padding, vector.asInt8VectorData());
+                return writeVector(dtype.getValue(), (byte) 0, vector.asInt8Vector().getVectorArray());
             case PACKED_BIT:
-                return writeVector(dtype.getValue(), padding, vector.asPackedBitVectorData());
+                PackedBitVector packedBitVector = vector.asPackedBitVector();
+                return writeVector(dtype.getValue(), packedBitVector.getPadding(), packedBitVector.getVectorArray());
             case FLOAT32:
-                return writeVector(dtype.getValue(), padding, vector.asFloatVectorData());
+                return writeVector(dtype.getValue(), (byte) 0, vector.asFloat32Vector().getVectorArray());
 
             default:
                 throw new AssertionError("Unknown vector dtype: " + dtype);
         }
     }
 
+    /**
+     * Decodes a vector from a binary representation.
+     * <p>
+     * encodedVector is not mutated nor stored in the returned {@link Vector}.
+     */
     public static Vector decodeBinaryToVector(final byte[] encodedVector) {
         isTrue("Vector encoded array length must be at least 2.", encodedVector.length >= METADATA_SIZE);
 

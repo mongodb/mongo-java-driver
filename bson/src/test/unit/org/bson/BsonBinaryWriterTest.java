@@ -40,6 +40,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class BsonBinaryWriterTest {
 
+    private static final byte FLOAT32_DTYPE = Vector.Dtype.FLOAT32.getValue();
+    private static final int ZERO_PADDING = 0;
+
     private BsonBinaryWriter writer;
     private BasicOutputBuffer buffer;
 
@@ -299,12 +302,19 @@ public class BsonBinaryWriterTest {
         writer.writeBinaryData("b1", new BsonBinary(new byte[]{0, 0, 0, 0, 0, 0, 0, 0}));
         writer.writeBinaryData("b2", new BsonBinary(BsonBinarySubType.OLD_BINARY, new byte[]{1, 1, 1, 1, 1}));
         writer.writeBinaryData("b3", new BsonBinary(BsonBinarySubType.FUNCTION, new byte[]{}));
+        writer.writeBinaryData("b4", new BsonBinary(BsonBinarySubType.VECTOR, new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
+               (byte) 205, (byte) 204, (byte) 140, (byte) 63}));
+
 
         writer.writeEndDocument();
 
         byte[] expectedValues = {49, 0, 0, 0, 5, 98, 49, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 98, 50, 0,
                                  9, 0,
-                                 0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1, 5, 98, 51, 0, 0, 0, 0, 0, 1, 0};
+                                 0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1,
+                                 5, 98, 51, 0, 0, 0, 0, 0, 1, 0,
+                                 6, BsonBinarySubType.VECTOR.getValue(), FLOAT32_DTYPE, ZERO_PADDING, (byte) 205, (byte) 204, (byte) 140, 63,
+        };
+
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
 
