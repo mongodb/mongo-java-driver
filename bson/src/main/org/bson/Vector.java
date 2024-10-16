@@ -63,8 +63,8 @@ public abstract class Vector {
      * @throws IllegalArgumentException If the padding value is greater than 7.
      */
     public static PackedBitVector packedBitVector(final byte[] vectorData, final byte padding) {
-        isTrueArgument("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
         notNull("Vector data", vectorData);
+        isTrueArgument("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
         isTrue("Padding must be 0 if vector is empty", padding == 0 || vectorData.length > 0);
         return new PackedBitVector(vectorData, padding);
     }

@@ -21,22 +21,22 @@ import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.Float32Vector;
+import org.bson.Vector;
 
 /**
  * Encodes and decodes {@code Vector} objects.
  *
  * @since BINARY_VECTOR
  */
-final class Float32VectorCodec implements Codec<Float32Vector> {
+ final class VectorCodec implements Codec<Vector> {
 
     @Override
-    public void encode(final BsonWriter writer, final Float32Vector vectorToEncode, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final Vector vectorToEncode, final EncoderContext encoderContext) {
         writer.writeBinaryData(new BsonBinary(vectorToEncode));
     }
 
     @Override
-    public Float32Vector decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public Vector decode(final BsonReader reader, final DecoderContext decoderContext) {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
@@ -45,18 +45,18 @@ final class Float32VectorCodec implements Codec<Float32Vector> {
 
         return reader.readBinaryData()
                 .asBinary()
-                .asVector()
-                .asFloat32Vector();
+                .asVector();
     }
 
     @Override
-    public Class<Float32Vector> getEncoderClass() {
-        return Float32Vector.class;
+    public Class<Vector> getEncoderClass() {
+        return Vector.class;
     }
 
     @Override
     public String toString() {
-        return "Float32VectorCodec{}";
+        return "VectorCodec{}";
     }
 }
+
 

@@ -22,6 +22,9 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Document;
+import org.bson.Float32Vector;
+import org.bson.Int8Vector;
+import org.bson.PackedBitVector;
 import org.bson.Vector;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.OutputBuffer;
@@ -52,9 +55,12 @@ class VectorCodecTest extends CodecTestCase {
 
     private static Stream<Arguments> provideVectorsAndCodecsForRoundTrip() {
         return Stream.of(
-                arguments(Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f}), new Float32VectorCodec()),
-                arguments(Vector.int8Vector(new byte[]{10, 20, 30, 40}), new Int8VectorCodec()),
-                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new PackedBitVectorCodec())
+                arguments(Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f}), new Float32VectorCodec(), Float32Vector.class),
+                arguments(Vector.int8Vector(new byte[]{10, 20, 30, 40}), new Int8VectorCodec(), Int8Vector.class),
+                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new PackedBitVectorCodec(), PackedBitVector.class),
+                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new VectorCodec(), Vector.class),
+                arguments(Vector.int8Vector(new byte[]{10, 20, 30, 40}), new VectorCodec(), Vector.class),
+                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new VectorCodec(), Vector.class)
         );
     }
 
@@ -127,12 +133,12 @@ class VectorCodecTest extends CodecTestCase {
 
     @ParameterizedTest
     @MethodSource("provideVectorsAndCodecsForRoundTrip")
-    void shouldReturnCorrectEncoderClass(final Vector vector, final Codec<? extends Vector> codec) {
+    void shouldReturnCorrectEncoderClass(final Vector vector, final Codec<? extends Vector> codec, final Class<? extends Vector> expectedEncoderClass) {
         // when
         Class<? extends Vector> encoderClass = codec.getEncoderClass();
 
         // then
-        assertEquals(vector.getClass(), encoderClass);
+        assertEquals(expectedEncoderClass, encoderClass);
     }
 
     @ParameterizedTest
@@ -147,6 +153,7 @@ class VectorCodecTest extends CodecTestCase {
 
     private static Stream<Codec<? extends Vector>> provideVectorsCodec() {
         return Stream.of(
+                new VectorCodec(),
                 new Float32VectorCodec(),
                 new Int8VectorCodec(),
                 new PackedBitVectorCodec()

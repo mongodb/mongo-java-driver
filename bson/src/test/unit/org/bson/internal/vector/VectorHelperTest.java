@@ -23,6 +23,7 @@ import org.bson.Vector;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.stream.Stream;
 
@@ -142,26 +143,78 @@ class VectorHelperTest {
     private static Stream<Object[]> providePackedBitVectors() {
         return Stream.of(
                 new Object[]{
-                        Vector.packedBitVector(new byte[]{(byte) 15, (byte) 240}, (byte) 2),
-                        new byte[]{PACKED_BIT_DTYPE, 2, (byte) 15, (byte) 240}
+                        Vector.packedBitVector(new byte[]{(byte) 0, (byte) 255, (byte) 10}, (byte) 2),
+                        new byte[]{PACKED_BIT_DTYPE, 2, (byte) 0, (byte) 255, (byte) 10}
                 },
                 new Object[]{
-                        Vector.packedBitVector(new byte[]{(byte) 170}, (byte) 4),
-                        new byte[]{PACKED_BIT_DTYPE, 4, (byte) 170}
+                        Vector.packedBitVector(new byte[0], (byte) 0),
+                        new byte[]{PACKED_BIT_DTYPE, 0}
                 }
         );
     }
 
     @Test
     void shouldThrowExceptionForInvalidFloatArrayLengthWhenDecode() {
-        // given: an encoded vector with an invalid length (not a multiple of 4)
+        // given
         byte[] invalidData = {FLOAT32_DTYPE, 0, 10, 20, 30};
 
         // when & Then
         IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
             VectorHelper.decodeBinaryToVector(invalidData);
         });
-        assertEquals("state should be: Byte array length must be a multiple of 4 for FLOAT32 dtype.", thrown.getMessage());
+        assertEquals("state should be: Byte array length must be a multiple of 4 for FLOAT32 data type.", thrown.getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(bytes = {-1, 1})
+    void shouldThrowExceptionForInvalidFloatArrayPaddingWhenDecode(final byte invalidPadding) {
+        // given
+        byte[] invalidData = {FLOAT32_DTYPE, invalidPadding, 10, 20, 30, 20};
+
+        // when & Then
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
+            VectorHelper.decodeBinaryToVector(invalidData);
+        });
+        assertEquals("state should be: Padding must be 0 for FLOAT32 data type.", thrown.getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(bytes = {-1, 1})
+    void shouldThrowExceptionForInvalidInt8ArrayPaddingWhenDecode(final byte invalidPadding) {
+        // given
+        byte[] invalidData = {INT8_DTYPE, invalidPadding, 10, 20, 30, 20};
+
+        // when & Then
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
+            VectorHelper.decodeBinaryToVector(invalidData);
+        });
+        assertEquals("state should be: Padding must be 0 for INT8 data type.", thrown.getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(bytes = {-1, 8})
+    void shouldThrowExceptionForInvalidPackedBitArrayPaddingWhenDecode(final byte invalidPadding) {
+        // given
+        byte[] invalidData = {PACKED_BIT_DTYPE, invalidPadding, 10, 20, 30, 20};
+
+        // when & Then
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
+            VectorHelper.decodeBinaryToVector(invalidData);
+        });
+        assertEquals("state should be: Padding must be between 0 and 7 bits.", thrown.getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(bytes = {-1, 1, 2, 3, 4, 5, 6, 7, 8})
+    void shouldThrowExceptionForInvalidPackedBitArrayPaddingWhenDecodeEmptyVector(final byte invalidPadding) {
+        // given
+        byte[] invalidData = {PACKED_BIT_DTYPE, invalidPadding};
+
+        // when & Then
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
+            VectorHelper.decodeBinaryToVector(invalidData);
+        });
+        assertEquals("state should be: Padding must be 0 if vector is empty", thrown.getMessage());
     }
 
     @Test

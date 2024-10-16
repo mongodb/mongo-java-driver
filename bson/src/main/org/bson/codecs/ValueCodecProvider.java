@@ -89,6 +89,7 @@ public class ValueCodecProvider implements CodecProvider {
         addCodec(new StringCodec());
         addCodec(new SymbolCodec());
         addCodec(new OverridableUuidRepresentationUuidCodec());
+        addCodec(new VectorCodec());
         addCodec(new Float32VectorCodec());
         addCodec(new Int8VectorCodec());
         addCodec(new PackedBitVectorCodec());

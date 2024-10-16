@@ -75,7 +75,7 @@ public final class PackedBitVector extends Vector {
     }
 
     @Override
-    public final boolean equals(final Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }

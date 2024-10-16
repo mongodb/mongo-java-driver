@@ -76,43 +76,45 @@ public final class VectorHelper {
         byte padding = encodedVector[1];
         switch (dtype) {
             case INT8:
+                isTrue("Padding must be 0 for INT8 data type.", padding == 0);
                 byte[] int8Vector = getVectorBytesWithoutMetadata(encodedVector);
                 return Vector.int8Vector(int8Vector);
             case PACKED_BIT:
                 byte[] packedBitVector = getVectorBytesWithoutMetadata(encodedVector);
+                isTrue("Padding must be 0 if vector is empty.", padding == 0 || packedBitVector.length > 0);
+                isTrue("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
                 return Vector.packedBitVector(packedBitVector, padding);
             case FLOAT32:
-                isTrue("Byte array length must be a multiple of 4 for FLOAT32 dtype.",
+                isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type.",
                         (encodedVector.length - METADATA_SIZE) % FLOAT_SIZE == 0);
+                isTrue("Padding must be 0 for FLOAT32 data type.", padding == 0);
                 return Vector.floatVector(readLittleEndianFloats(encodedVector));
 
             default:
-                throw new AssertionError("Unknown vector dtype: " + dtype);
+                throw new AssertionError("Unknown vector data type: " + dtype);
         }
     }
 
     private static byte[] getVectorBytesWithoutMetadata(final byte[] encodedVector) {
-        int vectorDataLength;
-        byte[] vectorData;
-        vectorDataLength = encodedVector.length - METADATA_SIZE;
-        vectorData = new byte[vectorDataLength];
+        int vectorDataLength = encodedVector.length - METADATA_SIZE;
+        byte[] vectorData = new byte[vectorDataLength];
         System.arraycopy(encodedVector, METADATA_SIZE, vectorData, 0, vectorDataLength);
         return vectorData;
     }
 
 
-    public static byte[] writeVector(final byte dtype, final byte padding, final byte[] vectorData) {
+    public static byte[] writeVector(final byte dType, final byte padding, final byte[] vectorData) {
         final byte[] bytes = new byte[vectorData.length + METADATA_SIZE];
-        bytes[0] = dtype;
+        bytes[0] = dType;
         bytes[1] = padding;
         System.arraycopy(vectorData, 0, bytes, METADATA_SIZE, vectorData.length);
         return bytes;
     }
 
-    public static byte[] writeVector(final byte dtype, final byte padding, final float[] vectorData) {
+    public static byte[] writeVector(final byte dType, final byte padding, final float[] vectorData) {
         final byte[] bytes = new byte[vectorData.length * FLOAT_SIZE + METADATA_SIZE];
 
-        bytes[0] = dtype;
+        bytes[0] = dType;
         bytes[1] = padding;
 
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
@@ -145,13 +147,13 @@ public final class VectorHelper {
         return floatArray;
     }
 
-    public static Vector.Dtype determineVectorDType(final byte dtype) {
+    public static Vector.Dtype determineVectorDType(final byte dType) {
         Vector.Dtype[] values = Vector.Dtype.values();
         for (Vector.Dtype value : values) {
-            if (value.getValue() == dtype) {
+            if (value.getValue() == dType) {
                 return value;
             }
         }
-        throw new IllegalStateException("Unknown vector dtype: " + dtype);
+        throw new IllegalStateException("Unknown vector data type: " + dType);
     }
 }
