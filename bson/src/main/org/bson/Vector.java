@@ -33,8 +33,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @see BsonBinary
  * @since BINARY_VECTOR
  */
-
-public class Vector {
+public abstract class Vector {
     private final Dtype vectorType;
 
     Vector(final Dtype vectorType) {

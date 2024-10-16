@@ -35,7 +35,7 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see Binary#asVector()
  * @since BINARY_VECTOR
  */
-public class PackedBitVector extends Vector {
+public final class PackedBitVector extends Vector {
 
     private final byte padding;
     private final byte[] vectorData;

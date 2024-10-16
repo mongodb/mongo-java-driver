@@ -35,7 +35,7 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see Binary#asVector()
  * @since BINARY_VECTOR
  */
-public class Float32Vector extends Vector {
+public final class Float32Vector extends Vector {
 
     private final float[] vectorData;
 

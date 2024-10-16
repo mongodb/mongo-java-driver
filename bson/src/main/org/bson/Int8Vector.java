@@ -35,7 +35,7 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see Binary#asVector()
  * @since BINARY_VECTOR
  */
-public class Int8Vector extends Vector {
+public final class Int8Vector extends Vector {
 
     private byte[] vectorData;
 

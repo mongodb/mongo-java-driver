@@ -19,6 +19,7 @@ package org.bson.internal.vector;
 import org.bson.BsonBinary;
 import org.bson.PackedBitVector;
 import org.bson.Vector;
+import org.bson.types.Binary;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -27,7 +28,7 @@ import java.nio.FloatBuffer;
 import static org.bson.assertions.Assertions.isTrue;
 
 /**
- * Helper class for encoding and decoding vectors to and from {@link BsonBinary}.
+ * Helper class for encoding and decoding vectors to and from {@link BsonBinary}/{@link Binary}.
  *
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
