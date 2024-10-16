@@ -17,6 +17,7 @@
 package org.bson.codecs
 
 import org.bson.Document
+import org.bson.Vector
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.types.Binary
 import org.bson.types.Code
@@ -32,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Pattern
 
+@SuppressWarnings("VectorIsObsolete")
 class ValueCodecProviderSpecification extends Specification {
     private final provider = new ValueCodecProvider()
     private final registry = CodecRegistries.fromProviders(provider)
@@ -56,6 +58,7 @@ class ValueCodecProviderSpecification extends Specification {
         provider.get(Short, registry) instanceof ShortCodec
         provider.get(byte[], registry) instanceof ByteArrayCodec
         provider.get(Float, registry) instanceof FloatCodec
+        provider.get(Vector, registry) instanceof Float32VectorCodec
 
         provider.get(Binary, registry) instanceof BinaryCodec
         provider.get(MinKey, registry) instanceof MinKeyCodec

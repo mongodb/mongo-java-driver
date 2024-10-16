@@ -85,14 +85,14 @@ abstract class CodecTestCase {
         roundTrip(input, result -> assertEquals(expected, result));
     }
 
-    <T> OutputBuffer encode(final Codec<T> codec, final T value) {
+    protected <T> OutputBuffer encode(final Codec<T> codec, final T value) {
         OutputBuffer buffer = new BasicOutputBuffer();
         BsonWriter writer = new BsonBinaryWriter(buffer);
         codec.encode(writer, value, EncoderContext.builder().build());
         return buffer;
     }
 
-    <T> T decode(final Codec<T> codec, final OutputBuffer buffer) {
+   protected  <T> T decode(final Codec<T> codec, final OutputBuffer buffer) {
         BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))));
         return codec.decode(reader, DecoderContext.builder().build());
     }
