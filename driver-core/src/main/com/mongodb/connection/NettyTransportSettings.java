@@ -137,7 +137,7 @@ public final class NettyTransportSettings extends TransportSettings {
         /**
          * Build an instance of {@code NettyTransportSettings}.
          *
-         * @return factory for {@code NettyTransportSettings}
+         * @return an instance of {@code NettyTransportSettings}
          */
         public NettyTransportSettings build() {
             return new NettyTransportSettings(this);

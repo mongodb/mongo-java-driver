@@ -35,4 +35,14 @@ public abstract class TransportSettings {
     public static NettyTransportSettings.Builder nettyBuilder() {
         return NettyTransportSettings.builder();
     }
+
+    /**
+     * A builder for {@link AsyncTransportSettings}.
+     *
+     * @return a builder for {@link AsyncTransportSettings}
+     * @since 5.2
+     */
+    public static AsyncTransportSettings.Builder asyncBuilder() {
+        return AsyncTransportSettings.builder();
+    }
 }

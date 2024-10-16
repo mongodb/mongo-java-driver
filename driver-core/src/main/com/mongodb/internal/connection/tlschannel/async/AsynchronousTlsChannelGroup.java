@@ -27,6 +27,7 @@ import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
 import com.mongodb.internal.connection.tlschannel.util.Util;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
@@ -199,33 +200,28 @@ public class AsynchronousTlsChannelGroup {
 
     /**
      * Creates an instance of this class.
-     *
-     * @param nThreads number of threads in the executor used to assist the selector loop and run
-     *     completion handlers.
      */
-    public AsynchronousTlsChannelGroup(int nThreads) {
+    public AsynchronousTlsChannelGroup(@Nullable final ExecutorService executorService) {
         try {
             selector = Selector.open();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         timeoutExecutor.setRemoveOnCancelPolicy(true);
-        this.executor =
-                new ThreadPoolExecutor(
-                        nThreads,
-                        nThreads,
-                        0,
-                        TimeUnit.MILLISECONDS,
-                        new LinkedBlockingQueue<>(nThreads * queueLengthMultiplier),
-                        runnable ->
-                                new Thread(runnable, format("async-channel-group-%d-handler-executor", id)),
-                        new ThreadPoolExecutor.CallerRunsPolicy());
+        if (executorService != null) {
+            this.executor = executorService;
+        } else {
+            int nThreads = Runtime.getRuntime().availableProcessors();
+            this.executor = new ThreadPoolExecutor(
+                    nThreads,
+                    nThreads,
+                    0,
+                    TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>(nThreads * queueLengthMultiplier),
+                    runnable -> new Thread(runnable, format("async-channel-group-%d-handler-executor", id)),
+                    new ThreadPoolExecutor.CallerRunsPolicy());
+        }
         selectorThread.start();
-    }
-
-    /** Creates an instance of this class, using as many thread as available processors. */
-    public AsynchronousTlsChannelGroup() {
-        this(Runtime.getRuntime().availableProcessors());
     }
 
     void submit(final Runnable r) {

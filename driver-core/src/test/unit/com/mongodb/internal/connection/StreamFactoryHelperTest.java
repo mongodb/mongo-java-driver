@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.NettyTransportSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
@@ -37,8 +38,13 @@ class StreamFactoryHelperTest {
                 .allocator(PooledByteBufAllocator.DEFAULT)
                 .socketChannelClass(io.netty.channel.socket.oio.OioSocketChannel.class)
                 .build();
+
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .transportSettings(nettyTransportSettings)
+                .build();
+
         assertEquals(NettyStreamFactoryFactory.builder().applySettings(nettyTransportSettings)
                 .inetAddressResolver(inetAddressResolver).build(),
-                StreamFactoryHelper.getStreamFactoryFactoryFromSettings(nettyTransportSettings, inetAddressResolver));
+                StreamFactoryHelper.getAsyncStreamFactoryFactory(settings, inetAddressResolver));
     }
 }
