@@ -56,6 +56,15 @@ class ExtensionsApiTest {
         assertTrue(notImplemented.isEmpty(), "Some possible Indexes were not implemented: $notImplemented")
     }
 
+    @Test
+    fun shouldHaveAllSortsExtensions() {
+        val kotlinExtensions: Set<String> = getKotlinExtensions("Sorts")
+        val javaMethods: Set<String> = getJavaMethods("Sorts")
+
+        val notImplemented = javaMethods subtract kotlinExtensions
+        assertTrue(notImplemented.isEmpty(), "Some possible Sorts were not implemented: $notImplemented")
+    }
+
     private fun getKotlinExtensions(className: String): Set<String> {
         return ClassGraph()
             .enableClassInfo()
