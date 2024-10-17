@@ -40,7 +40,7 @@ public final class Float32Vector extends Vector {
     private final float[] vectorData;
 
     Float32Vector(final float[] vectorData) {
-        super(Dtype.FLOAT32);
+        super(DataType.FLOAT32);
         this.vectorData = assertNotNull(vectorData);
     }
 

@@ -37,7 +37,7 @@ class VectorTest {
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.Dtype.INT8, vector.getDataType());
+        assertEquals(Vector.DataType.INT8, vector.getDataType());
         assertArrayEquals(data, vector.getVectorArray());
     }
 
@@ -61,7 +61,7 @@ class VectorTest {
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.Dtype.FLOAT32, vector.getDataType());
+        assertEquals(Vector.DataType.FLOAT32, vector.getDataType());
         assertArrayEquals(data, vector.getVectorArray());
     }
 
@@ -87,7 +87,7 @@ class VectorTest {
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.Dtype.PACKED_BIT, vector.getDataType());
+        assertEquals(Vector.DataType.PACKED_BIT, vector.getDataType());
         assertArrayEquals(data, vector.getVectorArray());
         assertEquals(validPadding, vector.getPadding());
     }
@@ -127,7 +127,7 @@ class VectorTest {
 
         // then
         assertNotNull(vector);
-        assertEquals(Vector.Dtype.PACKED_BIT, vector.getDataType());
+        assertEquals(Vector.DataType.PACKED_BIT, vector.getDataType());
         assertArrayEquals(data, vector.getVectorArray());
         assertEquals(padding, vector.getPadding());
     }

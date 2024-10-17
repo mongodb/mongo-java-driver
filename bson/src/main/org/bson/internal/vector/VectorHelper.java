@@ -49,18 +49,18 @@ public final class VectorHelper {
     private static final int FLOAT_SIZE = 4;
 
     public static byte[] encodeVectorToBinary(final Vector vector) {
-        Vector.Dtype dtype = vector.getDataType();
-        switch (dtype) {
+        Vector.DataType dataType = vector.getDataType();
+        switch (dataType) {
             case INT8:
-                return writeVector(dtype.getValue(), (byte) 0, vector.asInt8Vector().getVectorArray());
+                return writeVector(dataType.getValue(), (byte) 0, vector.asInt8Vector().getVectorArray());
             case PACKED_BIT:
                 PackedBitVector packedBitVector = vector.asPackedBitVector();
-                return writeVector(dtype.getValue(), packedBitVector.getPadding(), packedBitVector.getVectorArray());
+                return writeVector(dataType.getValue(), packedBitVector.getPadding(), packedBitVector.getVectorArray());
             case FLOAT32:
-                return writeVector(dtype.getValue(), (byte) 0, vector.asFloat32Vector().getVectorArray());
+                return writeVector(dataType.getValue(), (byte) 0, vector.asFloat32Vector().getVectorArray());
 
             default:
-                throw new AssertionError("Unknown vector dtype: " + dtype);
+                throw new AssertionError("Unknown vector dtype: " + dataType);
         }
     }
 
@@ -72,9 +72,9 @@ public final class VectorHelper {
     public static Vector decodeBinaryToVector(final byte[] encodedVector) {
         isTrue("Vector encoded array length must be at least 2.", encodedVector.length >= METADATA_SIZE);
 
-        Vector.Dtype dtype = determineVectorDType(encodedVector[0]);
+        Vector.DataType dataType = determineVectorDType(encodedVector[0]);
         byte padding = encodedVector[1];
-        switch (dtype) {
+        switch (dataType) {
             case INT8:
                 isTrue("Padding must be 0 for INT8 data type.", padding == 0);
                 byte[] int8Vector = getVectorBytesWithoutMetadata(encodedVector);
@@ -91,7 +91,7 @@ public final class VectorHelper {
                 return Vector.floatVector(readLittleEndianFloats(encodedVector));
 
             default:
-                throw new AssertionError("Unknown vector data type: " + dtype);
+                throw new AssertionError("Unknown vector data type: " + dataType);
         }
     }
 
@@ -147,9 +147,9 @@ public final class VectorHelper {
         return floatArray;
     }
 
-    public static Vector.Dtype determineVectorDType(final byte dType) {
-        Vector.Dtype[] values = Vector.Dtype.values();
-        for (Vector.Dtype value : values) {
+    public static Vector.DataType determineVectorDType(final byte dType) {
+        Vector.DataType[] values = Vector.DataType.values();
+        for (Vector.DataType value : values) {
             if (value.getValue() == dType) {
                 return value;
             }

@@ -40,7 +40,7 @@ public final class Int8Vector extends Vector {
     private byte[] vectorData;
 
     Int8Vector(final byte[] vectorData) {
-        super(Dtype.INT8);
+        super(DataType.INT8);
         this.vectorData = assertNotNull(vectorData);
     }
 

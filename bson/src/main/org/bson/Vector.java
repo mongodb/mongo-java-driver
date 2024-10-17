@@ -23,7 +23,7 @@ import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Represents a vector that is stored and retrieved using the BSON Binary Subtype 9 format.
- * This class supports multiple vector {@link Dtype}'s and provides static methods to create
+ * This class supports multiple vector {@link DataType}'s and provides static methods to create
  * vectors.
  * <p>
  * Vectors are densely packed arrays of numbers, all the same type, which are stored efficiently
@@ -34,16 +34,16 @@ import static org.bson.assertions.Assertions.notNull;
  * @since BINARY_VECTOR
  */
 public abstract class Vector {
-    private final Dtype vectorType;
+    private final DataType vectorType;
 
-    Vector(final Dtype vectorType) {
+    Vector(final DataType vectorType) {
         this.vectorType = vectorType;
     }
 
     /**
-     * Creates a vector with the {@link Dtype#PACKED_BIT} data type.
+     * Creates a vector with the {@link DataType#PACKED_BIT} data type.
      * <p>
-     * A {@link Dtype#PACKED_BIT} vector is a binary quantized vector where each element of a vector is represented by a single bit (0 or 1). Each byte
+     * A {@link DataType#PACKED_BIT} vector is a binary quantized vector where each element of a vector is represented by a single bit (0 or 1). Each byte
      * can hold up to 8 bits (vector elements). The padding parameter is used to specify how many bits in the final byte should be ignored.</p>
      *
      * <p>For example, a vector with two bytes and a padding of 4 would have the following structure:</p>
@@ -59,7 +59,7 @@ public abstract class Vector {
      *
      * @param vectorData The byte array representing the packed bit vector data. Each byte can store 8 bits.
      * @param padding    The number of bits (0 to 7) to ignore in the final byte of the vector data.
-     * @return A {@link PackedBitVector} instance with the {@link Dtype#PACKED_BIT} data type.
+     * @return A {@link PackedBitVector} instance with the {@link DataType#PACKED_BIT} data type.
      * @throws IllegalArgumentException If the padding value is greater than 7.
      */
     public static PackedBitVector packedBitVector(final byte[] vectorData, final byte padding) {
@@ -70,16 +70,16 @@ public abstract class Vector {
     }
 
     /**
-     * Creates a vector with the {@link Dtype#INT8} data type.
+     * Creates a vector with the {@link DataType#INT8} data type.
      *
-     * <p>A {@link Dtype#INT8} vector is a vector of 8-bit signed integers where each byte in the vector represents an element of a vector,
+     * <p>A {@link DataType#INT8} vector is a vector of 8-bit signed integers where each byte in the vector represents an element of a vector,
      * with values in the range [-128, 127].</p>
      * <p>
      * NOTE: The byte array `vectorData` is not copied; changes to the provided array will be reflected
      * in the created {@link Int8Vector} instance.
      *
-     * @param vectorData The byte array representing the {@link Dtype#INT8} vector data.
-     * @return A {@link Int8Vector} instance with the {@link Dtype#INT8} data type.
+     * @param vectorData The byte array representing the {@link DataType#INT8} vector data.
+     * @return A {@link Int8Vector} instance with the {@link DataType#INT8} data type.
      */
     public static Int8Vector int8Vector(final byte[] vectorData) {
         notNull("vectorData", vectorData);
@@ -87,15 +87,15 @@ public abstract class Vector {
     }
 
     /**
-     * Creates a vector with the {@link Dtype#FLOAT32} data type.
+     * Creates a vector with the {@link DataType#FLOAT32} data type.
      * <p>
-     * A {@link Dtype#FLOAT32} vector is a vector of floating-point numbers, where each element in the vector is a float.</p>
+     * A {@link DataType#FLOAT32} vector is a vector of floating-point numbers, where each element in the vector is a float.</p>
      * <p>
      * NOTE: The float array `vectorData` is not copied; changes to the provided array will be reflected
      * in the created {@link Float32Vector} instance.
      *
-     * @param vectorData The float array representing the {@link Dtype#FLOAT32} vector data.
-     * @return A {@link Float32Vector} instance with the {@link Dtype#FLOAT32} data type.
+     * @param vectorData The float array representing the {@link DataType#FLOAT32} vector data.
+     * @return A {@link Float32Vector} instance with the {@link DataType#FLOAT32} data type.
      */
     public static Float32Vector floatVector(final float[] vectorData) {
         notNull("vectorData", vectorData);
@@ -106,11 +106,11 @@ public abstract class Vector {
      * Returns the {@link PackedBitVector}.
      *
      * @return {@link PackedBitVector}.
-     * @throws IllegalStateException if this vector is not of type {@link Dtype#PACKED_BIT}. Use {@link #getDataType()} to check the vector
+     * @throws IllegalStateException if this vector is not of type {@link DataType#PACKED_BIT}. Use {@link #getDataType()} to check the vector
      *                                   type before calling this method.
      */
     public PackedBitVector asPackedBitVector() {
-        ensureType(Dtype.PACKED_BIT);
+        ensureType(DataType.PACKED_BIT);
         return (PackedBitVector) this;
     }
 
@@ -118,11 +118,11 @@ public abstract class Vector {
      * Returns the {@link Int8Vector}.
      *
      * @return {@link Int8Vector}.
-     * @throws IllegalStateException if this vector is not of type {@link Dtype#INT8}. Use {@link #getDataType()} to check the vector
+     * @throws IllegalStateException if this vector is not of type {@link DataType#INT8}. Use {@link #getDataType()} to check the vector
      *                               type before calling this method.
      */
     public Int8Vector asInt8Vector() {
-        ensureType(Dtype.INT8);
+        ensureType(DataType.INT8);
         return (Int8Vector) this;
     }
 
@@ -130,25 +130,25 @@ public abstract class Vector {
      * Returns the {@link Float32Vector}.
      *
      * @return {@link Float32Vector}.
-     * @throws IllegalStateException if this vector is not of type {@link Dtype#FLOAT32}. Use {@link #getDataType()} to check the vector
+     * @throws IllegalStateException if this vector is not of type {@link DataType#FLOAT32}. Use {@link #getDataType()} to check the vector
      *                               type before calling this method.
      */
     public Float32Vector asFloat32Vector() {
-        ensureType(Dtype.FLOAT32);
+        ensureType(DataType.FLOAT32);
         return (Float32Vector) this;
     }
 
     /**
-     * Returns {@link Dtype} of the vector.
+     * Returns {@link DataType} of the vector.
      *
      * @return the data type of the vector.
      */
-    public Dtype getDataType() {
+    public DataType getDataType() {
         return this.vectorType;
     }
 
 
-    private void ensureType(final Dtype expected) {
+    private void ensureType(final DataType expected) {
         if (this.vectorType != expected) {
             throw new IllegalStateException("Expected vector type " + expected + " but found " + this.vectorType);
         }
@@ -160,7 +160,7 @@ public abstract class Vector {
      * Each dtype determines how the data in the vector is stored, including how many bits are used to represent each element
      * in the vector.
      */
-    public enum Dtype {
+    public enum DataType {
         /**
          * An INT8 vector is a vector of 8-bit signed integers. The vector is stored as an array of bytes, where each byte
          * represents a signed integer in the range [-128, 127].
@@ -178,16 +178,16 @@ public abstract class Vector {
 
         private final byte value;
 
-        Dtype(final byte value) {
+        DataType(final byte value) {
             this.value = value;
         }
 
         /**
-         * Returns the byte value associated with this {@link Dtype}.
+         * Returns the byte value associated with this {@link DataType}.
          *
          * <p>This value is used in the BSON binary format to indicate the data type of the vector.</p>
          *
-         * @return the byte value representing the {@link Dtype}.
+         * @return the byte value representing the {@link DataType}.
          */
         public byte getValue() {
             return value;

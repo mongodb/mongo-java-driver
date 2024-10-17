@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class BsonBinaryWriterTest {
 
-    private static final byte FLOAT32_DTYPE = Vector.Dtype.FLOAT32.getValue();
+    private static final byte FLOAT32_DTYPE = Vector.DataType.FLOAT32.getValue();
     private static final int ZERO_PADDING = 0;
 
     private BsonBinaryWriter writer;

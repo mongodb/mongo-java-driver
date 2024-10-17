@@ -87,7 +87,7 @@ class VectorGenericBsonTest {
         BsonArray arrayVector = testCase.getArray("vector");
         byte expectedPadding = (byte) testCase.getInt32("padding").getValue();
         byte dtypeByte = Byte.decode(testCase.getString("dtype_hex").getValue());
-        Vector.Dtype expectedDType = determineVectorDType(dtypeByte);
+        Vector.DataType expectedDType = determineVectorDType(dtypeByte);
 
         switch (expectedDType) {
             case INT8:
@@ -114,7 +114,7 @@ class VectorGenericBsonTest {
         byte dtypeByte = Byte.decode(testCase.getString("dtype_hex").getValue());
 
         byte expectedPadding = (byte) testCase.getInt32("padding").getValue();
-        Vector.Dtype expectedDType = determineVectorDType(dtypeByte);
+        Vector.DataType expectedDType = determineVectorDType(dtypeByte);
         String expectedCanonicalBsonHex = testCase.getString("canonical_bson").getValue().toUpperCase();
 
         BsonArray arrayVector = testCase.getArray("vector");
@@ -187,7 +187,7 @@ class VectorGenericBsonTest {
     }
 
     private void assertVectorDecoding(final byte[] expectedVectorData,
-                                      final Vector.Dtype expectedDType,
+                                      final Vector.DataType expectedDType,
                                       final byte[] actualVectorData,
                                       final Vector actualVector) {
         Assertions.assertArrayEquals(actualVectorData, expectedVectorData,
@@ -196,7 +196,7 @@ class VectorGenericBsonTest {
     }
 
     private void assertVectorDecoding(final byte[] expectedVectorData,
-                                      final Vector.Dtype expectedDType,
+                                      final Vector.DataType expectedDType,
                                       final byte expectedPadding,
                                       final PackedBitVector actualVector) {
         byte[] actualVectorData = actualVector.getVectorArray();
@@ -209,7 +209,7 @@ class VectorGenericBsonTest {
     }
 
     private void assertVectorDecoding(final float[] expectedVectorData,
-                                      final Vector.Dtype expectedDType,
+                                      final Vector.DataType expectedDType,
                                       final Float32Vector actualVector) {
         float[] actualVectorArray = actualVector.getVectorArray();
         Assertions.assertArrayEquals(actualVectorArray, expectedVectorData,

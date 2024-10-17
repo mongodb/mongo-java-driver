@@ -32,9 +32,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class VectorHelperTest {
-    private static final byte FLOAT32_DTYPE = Vector.Dtype.FLOAT32.getValue();
-    private static final byte INT8_DTYPE = Vector.Dtype.INT8.getValue();
-    private static final byte PACKED_BIT_DTYPE = Vector.Dtype.PACKED_BIT.getValue();
+    private static final byte FLOAT32_DTYPE = Vector.DataType.FLOAT32.getValue();
+    private static final byte INT8_DTYPE = Vector.DataType.INT8.getValue();
+    private static final byte PACKED_BIT_DTYPE = Vector.DataType.PACKED_BIT.getValue();
     public static final int ZERO_PADDING = 0;
 
     @ParameterizedTest(name = "{index}: {0}")
@@ -54,7 +54,7 @@ class VectorHelperTest {
         Float32Vector decodedVector = (Float32Vector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
 
         // then
-        assertEquals(Vector.Dtype.FLOAT32, decodedVector.getDataType());
+        assertEquals(Vector.DataType.FLOAT32, decodedVector.getDataType());
         assertArrayEquals(expectedFloatVector.getVectorArray(), decodedVector.getVectorArray());
     }
 
@@ -102,7 +102,7 @@ class VectorHelperTest {
         Int8Vector decodedVector = (Int8Vector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
 
         // then
-        assertEquals(Vector.Dtype.INT8, decodedVector.getDataType());
+        assertEquals(Vector.DataType.INT8, decodedVector.getDataType());
         assertArrayEquals(expectedInt8Vector.getVectorArray(), decodedVector.getVectorArray());
     }
 
@@ -135,7 +135,7 @@ class VectorHelperTest {
         PackedBitVector decodedVector = (PackedBitVector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
 
         // then
-        assertEquals(Vector.Dtype.PACKED_BIT, decodedVector.getDataType());
+        assertEquals(Vector.DataType.PACKED_BIT, decodedVector.getDataType());
         assertArrayEquals(expectedPackedBitVector.getVectorArray(), decodedVector.getVectorArray());
         assertEquals(expectedPackedBitVector.getPadding(), decodedVector.getPadding());
     }
@@ -220,12 +220,12 @@ class VectorHelperTest {
     @Test
     void shouldDetermineVectorDType() {
         // given
-        Vector.Dtype[] values = Vector.Dtype.values();
+        Vector.DataType[] values = Vector.DataType.values();
 
-        for (Vector.Dtype value : values) {
+        for (Vector.DataType value : values) {
             // when
             byte dtype = value.getValue();
-            Vector.Dtype actual = VectorHelper.determineVectorDType(dtype);
+            Vector.DataType actual = VectorHelper.determineVectorDType(dtype);
 
             // then
             assertEquals(value, actual);

@@ -41,7 +41,7 @@ public final class PackedBitVector extends Vector {
     private final byte[] vectorData;
 
     PackedBitVector(final byte[] vectorData, final byte padding) {
-        super(Dtype.PACKED_BIT);
+        super(DataType.PACKED_BIT);
         this.vectorData = assertNotNull(vectorData);
         this.padding = padding;
     }
@@ -64,7 +64,7 @@ public final class PackedBitVector extends Vector {
      * Returns the padding value for this vector.
      *
      * <p>Padding refers to the number of least-significant bits in the final byte that are ignored when retrieving the vector data, as not
-     * all {@link Dtype}'s have a bit length equal to a multiple of 8, and hence do not fit squarely into a certain number of bytes.</p>
+     * all {@link DataType}'s have a bit length equal to a multiple of 8, and hence do not fit squarely into a certain number of bytes.</p>
      * <p>
      * NOTE: The underlying byte array is not copied; changes to the returned array will be reflected in this instance.
      *

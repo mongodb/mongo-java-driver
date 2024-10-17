@@ -47,9 +47,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
-import static org.bson.Vector.Dtype.FLOAT32;
-import static org.bson.Vector.Dtype.INT8;
-import static org.bson.Vector.Dtype.PACKED_BIT;
+import static org.bson.Vector.DataType.FLOAT32;
+import static org.bson.Vector.DataType.INT8;
+import static org.bson.Vector.DataType.PACKED_BIT;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
