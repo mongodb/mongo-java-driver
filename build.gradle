@@ -117,8 +117,8 @@ configure(scalaProjects) {
     group = 'org.mongodb.scala'
 
     dependencies {
-        implementation ('org.scala-lang:scala-library:%scala-version%')
-        implementation ('org.scala-lang:scala-reflect:%scala-version%')
+        api ('org.scala-lang:scala-library:%scala-version%')
+        api ('org.scala-lang:scala-reflect:%scala-version%')
 
         testImplementation(platform("org.junit:junit-bom:$junitBomVersion"))
         testImplementation("org.junit.vintage:junit-vintage-engine")
