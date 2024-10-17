@@ -17,6 +17,9 @@
 package org.bson.codecs
 
 import org.bson.Document
+import org.bson.Float32Vector
+import org.bson.Int8Vector
+import org.bson.PackedBitVector
 import org.bson.Vector
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.types.Binary
@@ -58,7 +61,10 @@ class ValueCodecProviderSpecification extends Specification {
         provider.get(Short, registry) instanceof ShortCodec
         provider.get(byte[], registry) instanceof ByteArrayCodec
         provider.get(Float, registry) instanceof FloatCodec
-        provider.get(Vector, registry) instanceof Float32VectorCodec
+        provider.get(Vector, registry) instanceof VectorCodec
+        provider.get(Float32Vector, registry) instanceof Float32VectorCodec
+        provider.get(Int8Vector, registry) instanceof Int8VectorCodec
+        provider.get(PackedBitVector, registry) instanceof PackedBitVectorCodec
 
         provider.get(Binary, registry) instanceof BinaryCodec
         provider.get(MinKey, registry) instanceof MinKeyCodec

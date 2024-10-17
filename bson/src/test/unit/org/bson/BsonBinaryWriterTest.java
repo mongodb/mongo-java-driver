@@ -305,14 +305,33 @@ public class BsonBinaryWriterTest {
         writer.writeBinaryData("b4", new BsonBinary(BsonBinarySubType.VECTOR, new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
                (byte) 205, (byte) 204, (byte) 140, (byte) 63}));
 
-
         writer.writeEndDocument();
+        byte[] expectedValues = new byte[]{
+                64,  // total document length
+                0, 0, 0,
 
-        byte[] expectedValues = {49, 0, 0, 0, 5, 98, 49, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 98, 50, 0,
-                                 9, 0,
-                                 0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1,
-                                 5, 98, 51, 0, 0, 0, 0, 0, 1, 0,
-                                 6, BsonBinarySubType.VECTOR.getValue(), FLOAT32_DTYPE, ZERO_PADDING, (byte) 205, (byte) 204, (byte) 140, 63,
+                //Binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 49, 0,  // name "b1"
+                8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                // Old binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 50, 0, // name "b2"
+                9, 0, 0, 0, 2, 5, 0, 0, 0, 1, 1, 1, 1, 1,
+
+                // Function binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 51, 0, // name "b3"
+                0, 0, 0, 0, 1,
+
+                //Vector binary
+                (byte) BsonType.BINARY.getValue(),
+                98, 52, 0,  // name "b4"
+                6, 0, 0, 0, // total length, int32 (little endian)
+                BsonBinarySubType.VECTOR.getValue(), FLOAT32_DTYPE, ZERO_PADDING, (byte) 205, (byte) 204, (byte) 140, 63,
+
+                0 //end of document
         };
 
         assertArrayEquals(expectedValues, buffer.toByteArray());

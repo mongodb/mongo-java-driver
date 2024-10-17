@@ -214,7 +214,7 @@ class VectorHelperTest {
         IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
             VectorHelper.decodeBinaryToVector(invalidData);
         });
-        assertEquals("state should be: Padding must be 0 if vector is empty", thrown.getMessage());
+        assertEquals("state should be: Padding must be 0 if vector is empty.", thrown.getMessage());
     }
 
     @Test

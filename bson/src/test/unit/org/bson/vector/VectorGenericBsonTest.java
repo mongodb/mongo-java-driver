@@ -126,10 +126,8 @@ class VectorGenericBsonTest {
                 byte[] expectedVectorData = toByteArray(arrayVector);
                 byte[] actualVectorData = actualVector.asInt8Vector().getVectorArray();
                 assertVectorDecoding(
-                        expectedCanonicalBsonHex,
                         expectedVectorData,
                         expectedDType,
-                        actualDecodedDocument,
                         actualVectorData,
                         actualVector);
 
@@ -143,9 +141,8 @@ class VectorGenericBsonTest {
                 PackedBitVector actualPackedBitVector = actualVector.asPackedBitVector();
                 byte[] expectedVectorPackedBitData = toByteArray(arrayVector);
                 assertVectorDecoding(
-                        expectedCanonicalBsonHex, expectedVectorPackedBitData,
+                        expectedVectorPackedBitData,
                         expectedDType, expectedPadding,
-                        actualDecodedDocument,
                         actualPackedBitVector);
 
                 assertThatVectorCreationResultsInCorrectBinary(
@@ -159,10 +156,8 @@ class VectorGenericBsonTest {
                 Float32Vector actualFloat32Vector = actualVector.asFloat32Vector();
                 float[] expectedFloatVector = toFloatArray(arrayVector);
                 assertVectorDecoding(
-                        expectedCanonicalBsonHex,
                         expectedFloatVector,
                         expectedDType,
-                        actualDecodedDocument,
                         actualFloat32Vector);
                 assertThatVectorCreationResultsInCorrectBinary(
                         Vector.floatVector(expectedFloatVector),
@@ -191,40 +186,31 @@ class VectorGenericBsonTest {
                 format("Failed to create expected BSON for document with description '%s'", description));
     }
 
-    private void assertVectorDecoding(final String expectedCanonicalBsonHex,
-                                      final byte[] expectedVectorData,
+    private void assertVectorDecoding(final byte[] expectedVectorData,
                                       final Vector.Dtype expectedDType,
-                                      final BsonDocument actualDecodedDocument,
                                       final byte[] actualVectorData,
                                       final Vector actualVector) {
-        assertEquals(expectedCanonicalBsonHex, encodeToHex(actualDecodedDocument));
         Assertions.assertArrayEquals(actualVectorData, expectedVectorData,
                 () -> "Actual: " + Arrays.toString(actualVectorData) + " !=  Expected:" + Arrays.toString(expectedVectorData));
         assertEquals(expectedDType, actualVector.getDataType());
     }
 
-    private void assertVectorDecoding(final String expectedCanonicalBsonHex,
-                                      final byte[] expectedVectorData,
+    private void assertVectorDecoding(final byte[] expectedVectorData,
                                       final Vector.Dtype expectedDType,
                                       final byte expectedPadding,
-                                      final BsonDocument actualDecodedDocument,
                                       final PackedBitVector actualVector) {
         byte[] actualVectorData = actualVector.getVectorArray();
-        assertVectorDecoding(expectedCanonicalBsonHex,
+        assertVectorDecoding(
                 expectedVectorData,
                 expectedDType,
-                actualDecodedDocument,
                 actualVectorData,
                 actualVector);
         assertEquals(expectedPadding, actualVector.getPadding());
     }
 
-    private void assertVectorDecoding(final String expectedCanonicalBsonHex,
-                                      final float[] expectedVectorData,
+    private void assertVectorDecoding(final float[] expectedVectorData,
                                       final Vector.Dtype expectedDType,
-                                      final BsonDocument actualDecodedDocument,
                                       final Float32Vector actualVector) {
-        assertEquals(expectedCanonicalBsonHex, encodeToHex(actualDecodedDocument));
         float[] actualVectorArray = actualVector.getVectorArray();
         Assertions.assertArrayEquals(actualVectorArray, expectedVectorData,
                 () -> "Actual: " + Arrays.toString(actualVectorArray) + " !=  Expected:" + Arrays.toString(expectedVectorData));
