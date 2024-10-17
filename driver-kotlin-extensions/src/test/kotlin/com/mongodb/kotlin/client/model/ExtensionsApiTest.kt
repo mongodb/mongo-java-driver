@@ -48,15 +48,24 @@ class ExtensionsApiTest {
         assertTrue(notImplemented.isEmpty(), "Some possible Updates were not implemented: $notImplemented")
     }
 
+    @Test
+    fun shouldHaveAllIndexesExtensions() {
+        val kotlinExtensions: Set<String> = getKotlinExtensions("Indexes")
+        val javaMethods: Set<String> = getJavaMethods("Indexes")
+        val notImplemented = javaMethods subtract kotlinExtensions
+        assertTrue(notImplemented.isEmpty(), "Some possible Indexes were not implemented: $notImplemented")
+    }
+
     private fun getKotlinExtensions(className: String): Set<String> {
         return ClassGraph()
             .enableClassInfo()
             .enableMethodInfo()
             .acceptPackages("com.mongodb.kotlin.client.model")
             .scan()
-            .use {
-                it.allClasses
-                    .filter { it.simpleName == "${className}" }
+            .use { result ->
+                result.allClasses
+                    .filter { it.simpleName == className }
+                    .asSequence()
                     .flatMap { it.methodInfo }
                     .filter { it.isPublic }
                     .map { it.name }
@@ -69,10 +78,14 @@ class ExtensionsApiTest {
         return ClassGraph().enableClassInfo().enableMethodInfo().acceptPackages("com.mongodb.client.model").scan().use {
             it.getClassInfo("com.mongodb.client.model.$className")
                 .methodInfo
-                .filter {
-                    it.isPublic &&
-                        it.parameterInfo.isNotEmpty() &&
-                        it.parameterInfo[0].typeDescriptor.toStringWithSimpleNames().equals("String")
+                .filter { methodInfo ->
+                    methodInfo.isPublic &&
+                        methodInfo.parameterInfo.isNotEmpty() &&
+                        methodInfo.parameterInfo[0]
+                            .typeDescriptor
+                            .toStringWithSimpleNames()
+                            .equals("String") // only method starting
+                    // with a String (property name)
                 }
                 .map { m -> m.name }
                 .toSet()
