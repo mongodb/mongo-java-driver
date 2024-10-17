@@ -19,8 +19,9 @@ archivesBaseName = 'mongo-scala-driver'
 
 
 dependencies {
-    implementation project(path: ':bson-scala', configuration: 'default')
-    implementation project(path: ':driver-reactive-streams', configuration: 'default')
+    api project(path: ':bson-scala', configuration: 'default')
+    api project(path: ':driver-reactive-streams', configuration: 'default')
+    compileOnly 'com.google.code.findbugs:jsr305:1.3.9'
 
     testImplementation project(':driver-sync')
     testImplementation project(':bson').sourceSets.test.output
