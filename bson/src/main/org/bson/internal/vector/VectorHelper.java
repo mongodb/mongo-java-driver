@@ -87,8 +87,6 @@ public final class VectorHelper {
     }
 
     private static Float32Vector decodeFloat32Vector(final byte[] encodedVector, final byte padding) {
-        isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type.",
-                (encodedVector.length - METADATA_SIZE) % FLOAT_SIZE == 0);
         isTrue("Padding must be 0 for FLOAT32 data type.", padding == 0);
         return Vector.floatVector(decodeLittleEndianFloats(encodedVector));
     }
@@ -142,6 +140,9 @@ public final class VectorHelper {
     }
 
     private static float[] decodeLittleEndianFloats(final byte[] encodedVector) {
+        isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type.",
+                (encodedVector.length - METADATA_SIZE) % FLOAT_SIZE == 0);
+
         int vectorSize = encodedVector.length - METADATA_SIZE;
 
         int numFloats = vectorSize / FLOAT_SIZE;
