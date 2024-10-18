@@ -26,7 +26,7 @@ import org.bson.PackedBitVector;
 /**
  * Encodes and decodes {@link PackedBitVector} objects.
  *
- * @since BINARY_VECTOR
+ * @since 5.3
  */
 final class PackedBitVectorCodec implements Codec<PackedBitVector> {
 

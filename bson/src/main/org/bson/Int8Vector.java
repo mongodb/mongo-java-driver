@@ -33,7 +33,7 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see BsonBinary#asVector()
  * @see Binary#Binary(Vector)
  * @see Binary#asVector()
- * @since BINARY_VECTOR
+ * @since 5.3
  */
 public final class Int8Vector extends Vector {
 

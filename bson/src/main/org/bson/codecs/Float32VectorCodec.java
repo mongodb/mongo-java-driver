@@ -24,9 +24,9 @@ import org.bson.BsonWriter;
 import org.bson.Float32Vector;
 
 /**
- * Encodes and decodes {@code Vector} objects.
+ * Encodes and decodes {@link Float32Vector} objects.
  *
- * @since BINARY_VECTOR
+ * @since 5.3
  */
 final class Float32VectorCodec implements Codec<Float32Vector> {
 

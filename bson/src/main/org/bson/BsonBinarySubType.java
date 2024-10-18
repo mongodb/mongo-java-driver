@@ -76,7 +76,7 @@ public enum BsonBinarySubType {
     /**
      * Vector data.
      *
-     * @since BINARY_VECTOR
+     * @since 5.3
      * @see Vector
      */
     VECTOR((byte) 0x09),
@@ -99,6 +99,13 @@ public enum BsonBinarySubType {
         return value == UUID_LEGACY.getValue() || value == UUID_STANDARD.getValue();
     }
 
+    /**
+     * Returns true if the given value is a {@link #VECTOR} subtype.
+     *
+     * @param value the subtype value as a byte.
+     * @return true if value is a {@link #VECTOR} subtype.
+     * @since 5.3
+     */
     public static boolean isVector(final byte value) {
         return value == VECTOR.getValue();
     }

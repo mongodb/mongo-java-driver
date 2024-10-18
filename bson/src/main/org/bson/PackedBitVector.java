@@ -33,7 +33,7 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see BsonBinary#asVector()
  * @see Binary#Binary(Vector)
  * @see Binary#asVector()
- * @since BINARY_VECTOR
+ * @since 5.3
  */
 public final class PackedBitVector extends Vector {
 
@@ -63,9 +63,11 @@ public final class PackedBitVector extends Vector {
     /**
      * Returns the padding value for this vector.
      *
-     * <p>Padding refers to the number of least-significant bits in the final byte that are ignored when retrieving the vector data, as not
-     * all {@link DataType}'s have a bit length equal to a multiple of 8, and hence do not fit squarely into a certain number of bytes.</p>
+     * <p>Padding refers to the number of least-significant bits in the final byte that are ignored when retrieving
+     * {@linkplain #getVectorArray() the vector array). For instance, if the padding value is 3, this means that the last byte contains
+     * 3 least-significant unused bits, which should be disregarded during operations.</p>
      * <p>
+     *
      * NOTE: The underlying byte array is not copied; changes to the returned array will be reflected in this instance.
      *
      * @return the padding value (between 0 and 7).

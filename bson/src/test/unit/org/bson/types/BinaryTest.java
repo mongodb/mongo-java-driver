@@ -86,14 +86,14 @@ class BinaryTest {
         switch (actualVector.getDataType()) {
             case FLOAT32:
                 Float32Vector actualFloat32Vector = actualVector.asFloat32Vector();
-                Float32Vector decodedFloat32Vector1 = decodedVector.asFloat32Vector();
-                assertArrayEquals(actualFloat32Vector.getVectorArray(), decodedFloat32Vector1.getVectorArray(),
+                Float32Vector decodedFloat32Vector = decodedVector.asFloat32Vector();
+                assertArrayEquals(actualFloat32Vector.getVectorArray(), decodedFloat32Vector.getVectorArray(),
                         "Float vector data should match after decoding");
                 break;
             case INT8:
                 Int8Vector actualInt8Vector = actualVector.asInt8Vector();
-                Int8Vector decodedInt8Vector1 = decodedVector.asInt8Vector();
-                assertArrayEquals(actualInt8Vector.getVectorArray(), decodedInt8Vector1.getVectorArray(),
+                Int8Vector decodedInt8Vector = decodedVector.asInt8Vector();
+                assertArrayEquals(actualInt8Vector.getVectorArray(), decodedInt8Vector.getVectorArray(),
                         "Int8 vector data should match after decoding");
                 break;
             case PACKED_BIT:

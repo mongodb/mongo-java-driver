@@ -42,6 +42,7 @@ import java.util.Map;
  *     <li>{@link org.bson.codecs.StringCodec}</li>
  *     <li>{@link org.bson.codecs.SymbolCodec}</li>
  *     <li>{@link org.bson.codecs.UuidCodec}</li>
+ *     <li>{@link VectorCodec}</li>
  *     <li>{@link Float32VectorCodec}</li>
  *     <li>{@link Int8VectorCodec}</li>
  *     <li>{@link PackedBitVectorCodec}</li>

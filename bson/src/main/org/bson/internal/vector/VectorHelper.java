@@ -17,6 +17,8 @@
 package org.bson.internal.vector;
 
 import org.bson.BsonBinary;
+import org.bson.Float32Vector;
+import org.bson.Int8Vector;
 import org.bson.PackedBitVector;
 import org.bson.Vector;
 import org.bson.types.Binary;
@@ -52,13 +54,12 @@ public final class VectorHelper {
         Vector.DataType dataType = vector.getDataType();
         switch (dataType) {
             case INT8:
-                return writeVector(dataType.getValue(), (byte) 0, vector.asInt8Vector().getVectorArray());
+                return encodeVector(dataType.getValue(), (byte) 0, vector.asInt8Vector().getVectorArray());
             case PACKED_BIT:
                 PackedBitVector packedBitVector = vector.asPackedBitVector();
-                return writeVector(dataType.getValue(), packedBitVector.getPadding(), packedBitVector.getVectorArray());
+                return encodeVector(dataType.getValue(), packedBitVector.getPadding(), packedBitVector.getVectorArray());
             case FLOAT32:
-                return writeVector(dataType.getValue(), (byte) 0, vector.asFloat32Vector().getVectorArray());
-
+                return encodeVector(dataType.getValue(), (byte) 0, vector.asFloat32Vector().getVectorArray());
             default:
                 throw new AssertionError("Unknown vector dtype: " + dataType);
         }
@@ -71,39 +72,48 @@ public final class VectorHelper {
      */
     public static Vector decodeBinaryToVector(final byte[] encodedVector) {
         isTrue("Vector encoded array length must be at least 2.", encodedVector.length >= METADATA_SIZE);
-
         Vector.DataType dataType = determineVectorDType(encodedVector[0]);
         byte padding = encodedVector[1];
         switch (dataType) {
             case INT8:
-                isTrue("Padding must be 0 for INT8 data type.", padding == 0);
-                byte[] int8Vector = getVectorBytesWithoutMetadata(encodedVector);
-                return Vector.int8Vector(int8Vector);
+                return decodeInt8Vector(encodedVector, padding);
             case PACKED_BIT:
-                byte[] packedBitVector = getVectorBytesWithoutMetadata(encodedVector);
-                isTrue("Padding must be 0 if vector is empty.", padding == 0 || packedBitVector.length > 0);
-                isTrue("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
-                return Vector.packedBitVector(packedBitVector, padding);
+                return decodePackedBitVector(encodedVector, padding);
             case FLOAT32:
-                isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type.",
-                        (encodedVector.length - METADATA_SIZE) % FLOAT_SIZE == 0);
-                isTrue("Padding must be 0 for FLOAT32 data type.", padding == 0);
-                return Vector.floatVector(readLittleEndianFloats(encodedVector));
-
+                return decodeFloat32Vector(encodedVector, padding);
             default:
                 throw new AssertionError("Unknown vector data type: " + dataType);
         }
     }
 
-    private static byte[] getVectorBytesWithoutMetadata(final byte[] encodedVector) {
+    private static Float32Vector decodeFloat32Vector(final byte[] encodedVector, final byte padding) {
+        isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type.",
+                (encodedVector.length - METADATA_SIZE) % FLOAT_SIZE == 0);
+        isTrue("Padding must be 0 for FLOAT32 data type.", padding == 0);
+        return Vector.floatVector(decodeLittleEndianFloats(encodedVector));
+    }
+
+    private static PackedBitVector decodePackedBitVector(final byte[] encodedVector, final byte padding) {
+        byte[] packedBitVector = extractVectorData(encodedVector);
+        isTrue("Padding must be 0 if vector is empty.", padding == 0 || packedBitVector.length > 0);
+        isTrue("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
+        return Vector.packedBitVector(packedBitVector, padding);
+    }
+
+    private static Int8Vector decodeInt8Vector(final byte[] encodedVector, final byte padding) {
+        isTrue("Padding must be 0 for INT8 data type.", padding == 0);
+        byte[] int8Vector = extractVectorData(encodedVector);
+        return Vector.int8Vector(int8Vector);
+    }
+
+    private static byte[] extractVectorData(final byte[] encodedVector) {
         int vectorDataLength = encodedVector.length - METADATA_SIZE;
         byte[] vectorData = new byte[vectorDataLength];
         System.arraycopy(encodedVector, METADATA_SIZE, vectorData, 0, vectorDataLength);
         return vectorData;
     }
 
-
-    public static byte[] writeVector(final byte dType, final byte padding, final byte[] vectorData) {
+    public static byte[] encodeVector(final byte dType, final byte padding, final byte[] vectorData) {
         final byte[] bytes = new byte[vectorData.length + METADATA_SIZE];
         bytes[0] = dType;
         bytes[1] = padding;
@@ -111,7 +121,7 @@ public final class VectorHelper {
         return bytes;
     }
 
-    public static byte[] writeVector(final byte dType, final byte padding, final float[] vectorData) {
+    public static byte[] encodeVector(final byte dType, final byte padding, final float[] vectorData) {
         final byte[] bytes = new byte[vectorData.length * FLOAT_SIZE + METADATA_SIZE];
 
         bytes[0] = dType;
@@ -131,7 +141,7 @@ public final class VectorHelper {
         return bytes;
     }
 
-    private static float[] readLittleEndianFloats(final byte[] encodedVector) {
+    private static float[] decodeLittleEndianFloats(final byte[] encodedVector) {
         int vectorSize = encodedVector.length - METADATA_SIZE;
 
         int numFloats = vectorSize / FLOAT_SIZE;

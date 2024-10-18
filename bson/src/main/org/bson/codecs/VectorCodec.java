@@ -24,9 +24,9 @@ import org.bson.BsonWriter;
 import org.bson.Vector;
 
 /**
- * Encodes and decodes {@code Vector} objects.
+ * Encodes and decodes {@link Vector} objects.
  *
- * @since BINARY_VECTOR
+ * @since 5.3
  */
  final class VectorCodec implements Codec<Vector> {
 

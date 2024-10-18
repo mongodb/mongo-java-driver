@@ -31,7 +31,7 @@ import static org.bson.assertions.Assertions.notNull;
  *
  * @mongodb.server.release 6.0
  * @see BsonBinary
- * @since BINARY_VECTOR
+ * @since 5.3
  */
 public abstract class Vector {
     private final DataType vectorType;
@@ -44,7 +44,8 @@ public abstract class Vector {
      * Creates a vector with the {@link DataType#PACKED_BIT} data type.
      * <p>
      * A {@link DataType#PACKED_BIT} vector is a binary quantized vector where each element of a vector is represented by a single bit (0 or 1). Each byte
-     * can hold up to 8 bits (vector elements). The padding parameter is used to specify how many bits in the final byte should be ignored.</p>
+     * can hold up to 8 bits (vector elements). The padding parameter is used to specify how many least-significant bits in the final byte
+     * should be ignored.</p>
      *
      * <p>For example, a vector with two bytes and a padding of 4 would have the following structure:</p>
      * <pre>
@@ -58,7 +59,7 @@ public abstract class Vector {
      * in the created {@link PackedBitVector} instance.
      *
      * @param vectorData The byte array representing the packed bit vector data. Each byte can store 8 bits.
-     * @param padding    The number of bits (0 to 7) to ignore in the final byte of the vector data.
+     * @param padding    The number of least-significant bits (0 to 7) to ignore in the final byte of the vector data.
      * @return A {@link PackedBitVector} instance with the {@link DataType#PACKED_BIT} data type.
      * @throws IllegalArgumentException If the padding value is greater than 7.
      */

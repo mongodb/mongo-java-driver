@@ -26,7 +26,7 @@ import org.bson.Int8Vector;
 /**
  * Encodes and decodes {@link Int8Vector} objects.
  *
- * @since BINARY_VECTOR
+ * @since 5.3
  */
 final class Int8VectorCodec implements Codec<Int8Vector> {
 

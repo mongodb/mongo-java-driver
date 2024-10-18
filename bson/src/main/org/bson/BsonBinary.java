@@ -96,7 +96,7 @@ public class BsonBinary extends BsonValue {
      * Construct a Type 9 BsonBinary from the given Vector.
      *
      * @param vector the {@link Vector}
-     * @since BINARY_VECTOR
+     * @since 5.3
      */
     public BsonBinary(final Vector vector) {
         if (vector == null) {
@@ -149,7 +149,7 @@ public class BsonBinary extends BsonValue {
      *
      * @return the vector
      * @throws IllegalArgumentException if the binary subtype is not {@link BsonBinarySubType#VECTOR}.
-     * @since BINARY_VECTOR
+     * @since 5.3
      */
     public Vector asVector() {
         if (!BsonBinarySubType.isVector(type)) {
