@@ -16,10 +16,6 @@
 
 package org.bson;
 
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
-import org.bson.io.BasicOutputBuffer;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonParseException;
 import org.bson.json.JsonWriterSettings;
@@ -27,7 +23,6 @@ import org.bson.types.Decimal128;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import util.Hex;
 import util.JsonPoweredTestHelper;
 
 import java.io.File;
@@ -35,7 +30,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +38,8 @@ import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static org.bson.BsonDocument.parse;
+import static org.bson.BsonHelper.decodeToDocument;
+import static org.bson.BsonHelper.encodeToHex;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -205,25 +201,6 @@ public class GenericBsonTest {
             default:
                 return true;
         }
-    }
-
-    private BsonDocument decodeToDocument(final String subjectHex, final String description) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(Hex.decode(subjectHex));
-        BsonDocument actualDecodedDocument = new BsonDocumentCodec().decode(new BsonBinaryReader(byteBuffer),
-                DecoderContext.builder().build());
-
-        if (byteBuffer.hasRemaining()) {
-            throw new BsonSerializationException(format("Should have consumed all bytes, but " + byteBuffer.remaining()
-                            + " still remain in the buffer for document with description ",
-                    description));
-        }
-        return actualDecodedDocument;
-    }
-
-    private String encodeToHex(final BsonDocument decodedDocument) {
-        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
-        new BsonDocumentCodec().encode(new BsonBinaryWriter(outputBuffer), decodedDocument, EncoderContext.builder().build());
-        return Hex.encode(outputBuffer.toByteArray());
     }
 
     private void runDecodeError(final BsonDocument testCase) {
