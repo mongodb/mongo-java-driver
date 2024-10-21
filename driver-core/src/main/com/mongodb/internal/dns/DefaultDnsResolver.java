@@ -70,9 +70,9 @@ public final class DefaultDnsResolver implements DnsResolver {
         List<String> srvHostParts = asList(srvHost.split("\\."));
 
         String srvHostDomain;
-        boolean isShortSrvHost = srvHostParts.size() < 3;
-        if (isShortSrvHost) {
-            srvHostDomain = srvHost; // when dot separated parts less than 3, domain name is the host per se
+        boolean srvHostHasLessThanThreeParts = srvHostParts.size() < 3;
+        if (srvHostHasLessThanThreeParts) {
+            srvHostDomain = srvHost;
         } else {
             srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
         }
@@ -89,7 +89,7 @@ public final class DefaultDnsResolver implements DnsResolver {
             for (String srvRecord : srvAttributeValues) {
                 String[] split = srvRecord.split(" ");
                 String resolvedHost = split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3];
-                if (isShortSrvHost && resolvedHost.equals(srvHost)) {
+                if (srvHostHasLessThanThreeParts && resolvedHost.equals(srvHost)) {
                     throw new MongoConfigurationException(
                             format("The SRV host name '%s' has less than three parts and the resolved host '%s' is identical.",
                                     srvHost, resolvedHost)
