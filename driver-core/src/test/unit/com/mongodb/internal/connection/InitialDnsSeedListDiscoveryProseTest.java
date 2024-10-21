@@ -28,18 +28,15 @@ import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.internal.dns.DnsResolver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.Mock;
 
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 /**
  * See https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery/tests/README.md
@@ -47,21 +44,7 @@ import static org.mockito.MockitoAnnotations.openMocks;
 class InitialDnsSeedListDiscoveryProseTest {
     private static final String SRV_SERVICE_NAME = "mongodb";
 
-    @Mock
-    private ClusterableServerFactory serverFactory;
-
-    @Mock
-    private DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory;
-
     private DnsMultiServerCluster cluster;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        try (AutoCloseable ignored = openMocks(this)) {
-            when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
-            when(serverFactory.create(any(Cluster.class), any(ServerAddress.class))).thenReturn(mock(ClusterableServer.class));
-        }
-    }
 
     @AfterEach
     void tearDown() {
@@ -118,6 +101,7 @@ class InitialDnsSeedListDiscoveryProseTest {
         final DnsResolver dnsResolver = new DefaultDnsResolver((name, type) -> singletonList(String.format("10 5 27017 %s",
                 resolvedHost)));
 
+        final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
         when(dnsSrvRecordMonitorFactory.create(eq(srvHost), eq(SRV_SERVICE_NAME), any(DnsSrvRecordInitializer.class))).thenAnswer(
                 invocation -> new DefaultDnsSrvRecordMonitor(srvHost, SRV_SERVICE_NAME, 10, 10,
                             invocation.getArgument(2), clusterId, dnsResolver));
@@ -126,6 +110,10 @@ class InitialDnsSeedListDiscoveryProseTest {
                 .mode(ClusterConnectionMode.MULTIPLE)
                 .requiredClusterType(ClusterType.SHARDED)
                 .srvHost(srvHost);
+
+        final ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
+        when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
+        when(serverFactory.create(any(Cluster.class), any(ServerAddress.class))).thenReturn(mock(ClusterableServer.class));
 
         cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.build(),
                 serverFactory,
