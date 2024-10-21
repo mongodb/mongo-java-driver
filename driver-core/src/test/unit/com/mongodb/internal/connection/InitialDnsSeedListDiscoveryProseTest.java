@@ -59,7 +59,7 @@ class InitialDnsSeedListDiscoveryProseTest {
             "mongo.local, driver.mongo.local"
     })
     @DisplayName("1. Allow SRVs with fewer than 3 '.' separated parts")
-    void test_allow_SRVs_with_fewer_than_three_parts(final String srvHost, final String resolvedHost) {
+    void testAllowSRVsWithFewerThanThreeParts(final String srvHost, final String resolvedHost) {
         doTest(srvHost, resolvedHost, false);
     }
 
@@ -70,7 +70,7 @@ class InitialDnsSeedListDiscoveryProseTest {
             "blogs.mongodb.com, blogs.evil.com"
     })
     @DisplayName("2. Throw when return address does not end with SRV domain")
-    void test_throw_when_return_address_doesnot_end_with_SRV_domain(final String srvHost, final String resolvedHost) {
+    void testThrowWhenReturnAddressDoesnotEndWithSRVDomain(final String srvHost, final String resolvedHost) {
         doTest(srvHost, resolvedHost, true);
     }
 
@@ -80,7 +80,7 @@ class InitialDnsSeedListDiscoveryProseTest {
             "mongo.local, mongo.local"
     })
     @DisplayName("3. Throw when return address is identical to SRV hostname and the SRV hostname has fewer than three `.` separated parts")
-    void test_throw_when_return_address_is_identical_to_SRV_hostname(final String srvHost, final String resolvedHost) {
+    void testThrowWhenReturnAddressIsIdenticalToSRVHostname(final String srvHost, final String resolvedHost) {
         doTest(srvHost, resolvedHost, true);
     }
 
@@ -91,7 +91,7 @@ class InitialDnsSeedListDiscoveryProseTest {
             "blogs.mongodb.com, cluster.testmongodb.com"
     })
     @DisplayName("4. Throw when return address does not contain '.' separating shared part of domain")
-    void test_throw_when_return_address_doesnot_contain_shared_part_of_domain(final String srvHost, final String resolvedHost) {
+    void testThrowWhenReturnAddressDoesnotContainSharedPartOfDomain(final String srvHost, final String resolvedHost) {
         doTest(srvHost, resolvedHost, true);
     }
 
