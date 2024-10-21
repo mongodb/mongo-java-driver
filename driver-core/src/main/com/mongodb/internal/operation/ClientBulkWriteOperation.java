@@ -30,12 +30,12 @@ import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientNamespacedReplaceOneModel;
-import com.mongodb.client.model.bulk.ClientNamespacedUpdateOneModel;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientDeleteResult;
 import com.mongodb.client.model.bulk.ClientInsertOneResult;
+import com.mongodb.client.model.bulk.ClientNamespacedReplaceOneModel;
+import com.mongodb.client.model.bulk.ClientNamespacedUpdateOneModel;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientUpdateResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutContext;
@@ -45,12 +45,16 @@ import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.client.model.bulk.AbstractClientDeleteModel;
 import com.mongodb.internal.client.model.bulk.AbstractClientNamespacedWriteModel;
 import com.mongodb.internal.client.model.bulk.AbstractClientUpdateModel;
+import com.mongodb.internal.client.model.bulk.AcknowledgedSummaryClientBulkWriteResult;
+import com.mongodb.internal.client.model.bulk.AcknowledgedVerboseClientBulkWriteResult;
 import com.mongodb.internal.client.model.bulk.ClientWriteModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientBulkWriteOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteResult;
 import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneResult;
 import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedDeleteManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedDeleteOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedInsertOneModel;
@@ -62,10 +66,6 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOptions;
-import com.mongodb.internal.client.model.bulk.AcknowledgedSummaryClientBulkWriteResult;
-import com.mongodb.internal.client.model.bulk.AcknowledgedVerboseClientBulkWriteResult;
-import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteResult;
-import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneResult;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateResult;
 import com.mongodb.internal.client.model.bulk.UnacknowledgedClientBulkWriteResult;
 import com.mongodb.internal.connection.Connection;
@@ -82,8 +82,9 @@ import com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
+import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
@@ -111,10 +112,10 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.operation.BulkWriteBatch.logWriteModelDoesNotSupportRetries;
 import static com.mongodb.internal.operation.ClientBulkWriteOperation.ClientBulkWriteCommand.OpsAndNsInfo.WritersProviderAndLimitsChecker.WriteResult.FAIL_LIMIT_EXCEEDED;
 import static com.mongodb.internal.operation.ClientBulkWriteOperation.ClientBulkWriteCommand.OpsAndNsInfo.WritersProviderAndLimitsChecker.WriteResult.OK_LIMIT_NOT_REACHED;
+import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.shouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
-import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
 import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
@@ -256,7 +257,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
     /**
      * @throws MongoWriteConcernWithResponseException This internal exception must be handled to avoid it being observed by an application.
-     * It {@linkplain MongoWriteConcernWithResponseException#getResponse() bears} the OK response to the {@code lazilyEncodedCommand},
+     * It {@linkplain MongoWriteConcernWithResponseException#getResponse() bears} the OK response to the {@code bulkWriteCommand},
      * which must be
      * {@linkplain ResultAccumulator#onBulkWriteCommandOkResponseWithWriteConcernError(int, MongoWriteConcernWithResponseException, BatchEncoder.EncodedBatchInfo) accumulated}
      * iff this exception is the failed result of retries.
@@ -271,7 +272,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
         BsonDocument bulkWriteCommandOkResponse = connection.command(
                 "admin",
-                bulkWriteCommand.getLazilyEncodedCommandDocument(),
+                bulkWriteCommand.getCommandDocument(),
                 NoOpFieldNameValidator.INSTANCE,
                 null,
                 CommandResultDocumentCodec.create(codecRegistry.get(BsonDocument.class), CommandBatchCursorHelper.FIRST_BATCH),
@@ -337,39 +338,19 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final List<? extends ClientNamespacedWriteModel> unexecutedModels,
             final BatchEncoder batchEncoder,
             final Runnable retriesEnabler) {
-        BsonDocumentWrapper<?> lazilyEncodedCommandDocument = new BsonDocumentWrapper<>(
-                BULK_WRITE_COMMAND_NAME,
-                new Encoder<String>() {
-                    @Override
-                    public void encode(final BsonWriter writer, final String commandName, final EncoderContext encoderContext) {
-                        writer.writeStartDocument();
-                        writer.writeInt32(commandName, 1);
-                        writer.writeBoolean("errorsOnly", !options.isVerboseResults());
-                        writer.writeBoolean("ordered", options.isOrdered());
-                        options.isBypassDocumentValidation().ifPresent(value -> writer.writeBoolean("bypassDocumentValidation", value));
-                        options.getComment().ifPresent(value -> {
-                            writer.writeName("comment");
-                            encodeUsingRegistry(writer, value);
-                        });
-                        options.getLet().ifPresent(value -> {
-                            writer.writeName("let");
-                            encodeUsingRegistry(writer, value);
-                        });
-                        commandWriteConcern(effectiveWriteConcern, sessionContext).ifPresent(value -> {
-                            writer.writeName("writeConcern");
-                            encodeUsingRegistry(writer, value.asDocument());
-                        });
-                        writer.writeEndDocument();
-                    }
-
-                    @Override
-                    public Class<String> getEncoderClass() {
-                        throw fail();
-                    }
-                }
-        );
+        BsonDocument commandDocument = new BsonDocument(BULK_WRITE_COMMAND_NAME, new BsonInt32(1))
+                .append("errorsOnly", BsonBoolean.valueOf(!options.isVerboseResults()))
+                .append("ordered", BsonBoolean.valueOf(options.isOrdered()));
+        options.isBypassDocumentValidation().ifPresent(value ->
+                commandDocument.append("bypassDocumentValidation", BsonBoolean.valueOf(value)));
+        options.getComment().ifPresent(value ->
+                commandDocument.append("comment", value));
+        options.getLet().ifPresent(let ->
+                commandDocument.append("let", let.toBsonDocument(BsonDocument.class, codecRegistry)));
+        commandWriteConcern(effectiveWriteConcern, sessionContext).ifPresent(value->
+                commandDocument.append("writeConcern", value.asDocument()));
         return new ClientBulkWriteCommand(
-                lazilyEncodedCommandDocument,
+                commandDocument,
                 new ClientBulkWriteCommand.OpsAndNsInfo(
                         effectiveRetryWrites, unexecutedModels, batchEncoder, options,
                         () -> {
@@ -666,18 +647,18 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     public static final class ClientBulkWriteCommand {
-        private final BsonDocumentWrapper<?> lazilyEncodedCommandDocument;
+        private final BsonDocument commandDocument;
         private final OpsAndNsInfo opsAndNsInfo;
 
         ClientBulkWriteCommand(
-                final BsonDocumentWrapper<?> lazilyEncodedCommandDocument,
+                final BsonDocument commandDocument,
                 final OpsAndNsInfo opsAndNsInfo) {
-            this.lazilyEncodedCommandDocument = lazilyEncodedCommandDocument;
+            this.commandDocument = commandDocument;
             this.opsAndNsInfo = opsAndNsInfo;
         }
 
-        BsonDocumentWrapper<?> getLazilyEncodedCommandDocument() {
-            return lazilyEncodedCommandDocument;
+        BsonDocument getCommandDocument() {
+            return commandDocument;
         }
 
         OpsAndNsInfo getOpsAndNsInfo() {
