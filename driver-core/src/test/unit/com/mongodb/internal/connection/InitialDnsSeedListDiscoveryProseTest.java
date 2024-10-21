@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -129,12 +130,8 @@ class InitialDnsSeedListDiscoveryProseTest {
         cluster = new DnsMultiServerCluster(clusterId, settingsBuilder.build(),
                 serverFactory,
                 dnsSrvRecordMonitorFactory);
-        try {
-            Thread.sleep(100); // racy
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            // ignore
-        }
+
+        ClusterFixture.sleep(100);
 
         final MongoException mongoException = cluster.getSrvResolutionException();
         if (throwException) {
