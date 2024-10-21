@@ -70,8 +70,7 @@ public final class DefaultDnsResolver implements DnsResolver {
         List<String> srvHostParts = asList(srvHost.split("\\."));
 
         String srvHostDomain;
-        boolean srvHostHasLessThanThreeParts = srvHostParts.size() < 3;
-        if (srvHostHasLessThanThreeParts) {
+        if (srvHostParts.size() < 3) {
             srvHostDomain = srvHost;
         } else {
             srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
@@ -89,14 +88,14 @@ public final class DefaultDnsResolver implements DnsResolver {
             for (String srvRecord : srvAttributeValues) {
                 String[] split = srvRecord.split(" ");
                 String resolvedHost = split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3];
-                if (srvHostHasLessThanThreeParts && resolvedHost.equals(srvHost)) {
-                    throw new MongoConfigurationException(
-                            format("The SRV host name '%s' has less than three parts and the resolved host '%s' is identical.",
-                                    srvHost, resolvedHost)
-                    );
+                boolean sameParentDomain;
+                if (!resolvedHost.contains(".")) {
+                    sameParentDomain = false;
+                } else {
+                    String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
+                    sameParentDomain = sameParentDomain(srvHostDomainParts, resolvedHostDomain);
                 }
-                String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
-                if (!sameParentDomain(srvHostDomainParts, resolvedHostDomain)) {
+                if (!sameParentDomain) {
                     throw new MongoConfigurationException(
                             format("The SRV host name '%s' resolved to a host '%s 'that is not in a sub-domain of the SRV host.",
                                     srvHost, resolvedHost));
