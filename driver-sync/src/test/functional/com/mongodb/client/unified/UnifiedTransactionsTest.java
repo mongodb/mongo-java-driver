@@ -36,6 +36,8 @@ final class UnifiedTransactionsTest extends UnifiedSyncTest {
             assumeFalse(fileDescription.equals("read-concern") && testDescription.equals("distinct ignores collection readConcern"));
             assumeFalse(fileDescription.equals("reads") && testDescription.equals("distinct"));
         }
+        // `MongoCluster.getWriteConcern`/`MongoCollection.getWriteConcern` are silently ignored in a transaction
+        assumeFalse(testDescription.equals("client bulkWrite with writeConcern in a transaction causes a transaction error"));
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {

@@ -48,7 +48,7 @@ public final class UpdateFieldNameValidator implements org.bson.FieldNameValidat
 
     @Override
     public void start() {
-        encounteredField = false;
+        reset();
     }
 
     @Override
@@ -56,5 +56,10 @@ public final class UpdateFieldNameValidator implements org.bson.FieldNameValidat
         if (!encounteredField) {
             throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
         }
+    }
+
+    public UpdateFieldNameValidator reset() {
+        encounteredField = false;
+        return this;
     }
 }
