@@ -42,6 +42,13 @@ public final class MessageSettings {
      * {@code maxWriteBatchSize}</a>.
      */
     private static final int DEFAULT_MAX_BATCH_COUNT = 1000;
+    /**
+     * The headroom for documents that are not intended to be stored in a database.
+     * A command document is an example of such a document.
+     * This headroom allows a command document to specify a document that is intended to be stored in a database,
+     * even if the specified document is of the maximum size.
+     */
+    static final int DOCUMENT_HEADROOM_SIZE = 16 * (1 << 10);
 
     private final int maxDocumentSize;
     private final int maxMessageSize;

@@ -51,7 +51,7 @@ public interface Connection extends ReferenceCounted {
     @Nullable
     <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
             @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, OperationContext operationContext,
-            boolean responseExpected, @Nullable SplittablePayload payload, @Nullable FieldNameValidator payloadFieldNameValidator);
+            boolean responseExpected, MessageSequences sequences);
 
 
     enum PinningMode {

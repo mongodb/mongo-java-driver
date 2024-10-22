@@ -50,8 +50,7 @@ public interface AsyncConnection extends ReferenceCounted {
 
     <T> void commandAsync(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
             @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder,
-            OperationContext operationContext, boolean responseExpected, @Nullable SplittablePayload payload,
-            @Nullable FieldNameValidator payloadFieldNameValidator, SingleResultCallback<T> callback);
+            OperationContext operationContext, boolean responseExpected, MessageSequences sequences, SingleResultCallback<T> callback);
 
     void markAsPinned(Connection.PinningMode pinningMode);
 }

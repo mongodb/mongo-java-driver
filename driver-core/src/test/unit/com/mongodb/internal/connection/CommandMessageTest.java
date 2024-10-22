@@ -23,12 +23,12 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
-import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.Test;
 
 import static com.mongodb.internal.mockito.MongoMockito.mock;
@@ -53,21 +53,22 @@ class CommandMessageTest {
                         .serverType(ServerType.REPLICA_SET_SECONDARY)
                         .sessionSupported(true)
                         .build(),
-                true, null, null, ClusterConnectionMode.MULTIPLE, null);
+                true, EmptyMessageSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, null);
 
-        BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
-        SessionContext sessionContext = mock(SessionContext.class);
-        TimeoutContext timeoutContext = mock(TimeoutContext.class, mock -> {
-            doThrow(new MongoOperationTimeoutException("test")).when(mock).runMaxTimeMS(any());
-        });
-        OperationContext operationContext = mock(OperationContext.class, mock -> {
-            when(mock.getSessionContext()).thenReturn(sessionContext);
-            when(mock.getTimeoutContext()).thenReturn(timeoutContext);
-        });
+        try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            SessionContext sessionContext = mock(SessionContext.class);
+            TimeoutContext timeoutContext = mock(TimeoutContext.class, mock -> {
+                doThrow(new MongoOperationTimeoutException("test")).when(mock).runMaxTimeMS(any());
+            });
+            OperationContext operationContext = mock(OperationContext.class, mock -> {
+                when(mock.getSessionContext()).thenReturn(sessionContext);
+                when(mock.getTimeoutContext()).thenReturn(timeoutContext);
+            });
 
-        //when & then
-        assertThrows(MongoOperationTimeoutException.class, () ->
-                commandMessage.encode(bsonOutput, operationContext));
+            //when & then
+            assertThrows(MongoOperationTimeoutException.class, () ->
+                    commandMessage.encode(bsonOutput, operationContext));
+        }
     }
 
     @Test
@@ -80,27 +81,28 @@ class CommandMessageTest {
                         .sessionSupported(true)
                         .cryptd(true)
                         .build(),
-                true, null, null, ClusterConnectionMode.MULTIPLE, null);
+                true, EmptyMessageSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, null);
 
-        BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
-        SessionContext sessionContext = mock(SessionContext.class, mock -> {
-            when(mock.getClusterTime()).thenReturn(new BsonDocument("clusterTime", new BsonTimestamp(42, 1)));
-            when(mock.hasSession()).thenReturn(false);
-            when(mock.getReadConcern()).thenReturn(ReadConcern.DEFAULT);
-            when(mock.notifyMessageSent()).thenReturn(true);
-            when(mock.hasActiveTransaction()).thenReturn(false);
-            when(mock.isSnapshot()).thenReturn(false);
-        });
-        TimeoutContext timeoutContext = mock(TimeoutContext.class);
-        OperationContext operationContext = mock(OperationContext.class, mock -> {
-            when(mock.getSessionContext()).thenReturn(sessionContext);
-            when(mock.getTimeoutContext()).thenReturn(timeoutContext);
-        });
+        try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            SessionContext sessionContext = mock(SessionContext.class, mock -> {
+                when(mock.getClusterTime()).thenReturn(new BsonDocument("clusterTime", new BsonTimestamp(42, 1)));
+                when(mock.hasSession()).thenReturn(false);
+                when(mock.getReadConcern()).thenReturn(ReadConcern.DEFAULT);
+                when(mock.notifyMessageSent()).thenReturn(true);
+                when(mock.hasActiveTransaction()).thenReturn(false);
+                when(mock.isSnapshot()).thenReturn(false);
+            });
+            TimeoutContext timeoutContext = mock(TimeoutContext.class);
+            OperationContext operationContext = mock(OperationContext.class, mock -> {
+                when(mock.getSessionContext()).thenReturn(sessionContext);
+                when(mock.getTimeoutContext()).thenReturn(timeoutContext);
+            });
 
-        //when
-        commandMessage.encode(bsonOutput, operationContext);
+            //when
+            commandMessage.encode(bsonOutput, operationContext);
 
-        //then
-        verifyNoInteractions(timeoutContext);
+            //then
+            verifyNoInteractions(timeoutContext);
+        }
     }
 }
