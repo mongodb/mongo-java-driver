@@ -26,6 +26,7 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Encoder;
@@ -54,8 +55,9 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class SplittablePayload {
+public final class SplittablePayload extends MessageSequences {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
+    private final FieldNameValidator fieldNameValidator;
     private final WriteRequestEncoder writeRequestEncoder = new WriteRequestEncoder();
     private final Type payloadType;
     private final List<WriteRequestWithIndex> writeRequestWithIndexes;
@@ -94,10 +96,19 @@ public final class SplittablePayload {
      * @param payloadType the payload type
      * @param writeRequestWithIndexes the writeRequests
      */
-    public SplittablePayload(final Type payloadType, final List<WriteRequestWithIndex> writeRequestWithIndexes, final boolean ordered) {
+    public SplittablePayload(
+            final Type payloadType,
+            final List<WriteRequestWithIndex> writeRequestWithIndexes,
+            final boolean ordered,
+            final FieldNameValidator fieldNameValidator) {
         this.payloadType = notNull("batchType", payloadType);
         this.writeRequestWithIndexes = notNull("writeRequests", writeRequestWithIndexes);
         this.ordered = ordered;
+        this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
+    }
+
+    public FieldNameValidator getFieldNameValidator() {
+        return fieldNameValidator;
     }
 
     /**
@@ -175,7 +186,7 @@ public final class SplittablePayload {
     public SplittablePayload getNextSplit() {
         isTrue("hasAnotherSplit", hasAnotherSplit());
         List<WriteRequestWithIndex> nextPayLoad = writeRequestWithIndexes.subList(position, writeRequestWithIndexes.size());
-        return new SplittablePayload(payloadType, nextPayLoad, ordered);
+        return new SplittablePayload(payloadType, nextPayLoad, ordered, fieldNameValidator);
     }
 
     /**

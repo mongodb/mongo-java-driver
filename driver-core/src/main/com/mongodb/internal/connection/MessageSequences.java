@@ -16,7 +16,10 @@
 package com.mongodb.internal.connection;
 
 /**
- * This class is not part of the public API and may be removed or changed at any time.
+ * Zero or more identifiable sequences contained in the {@code OP_MSG} section with payload type 1.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.</p>
+ * @see <a href="https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.md">OP_MSG</a>
  */
 public abstract class MessageSequences {
     public static final class EmptyMessageSequences extends MessageSequences {

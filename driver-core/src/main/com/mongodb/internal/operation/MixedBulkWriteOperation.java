@@ -39,7 +39,6 @@ import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ProtocolHelper;
-import com.mongodb.internal.connection.ValidatableSplittablePayload;
 import com.mongodb.internal.operation.retry.AttachmentKeys;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -422,8 +421,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final Connection connection,
             final BulkWriteBatch batch) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext, shouldExpectResponse(batch, effectiveWriteConcern),
-                new ValidatableSplittablePayload(batch.getPayload(), batch.getFieldNameValidator()));
+                operationContext, shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
     }
 
     private void executeCommandAsync(
@@ -433,8 +431,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext, shouldExpectResponse(batch, effectiveWriteConcern),
-                new ValidatableSplittablePayload(batch.getPayload(), batch.getFieldNameValidator()), callback);
+                operationContext, shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload(), callback);
     }
 
     private boolean shouldExpectResponse(final BulkWriteBatch batch, final WriteConcern effectiveWriteConcern) {

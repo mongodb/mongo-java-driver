@@ -47,7 +47,6 @@ import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.connection.SplittablePayload
-import com.mongodb.internal.connection.ValidatableSplittablePayload
 import com.mongodb.internal.operation.AsyncReadOperation
 import com.mongodb.internal.operation.AsyncWriteOperation
 import com.mongodb.internal.operation.MixedBulkWriteOperation
@@ -316,7 +315,7 @@ class OperationFunctionalSpecification extends Specification {
             1 * connection.command(*_) >> {
                 assert it[1] == expectedCommand
                 if (it.size() > 6) {
-                    SplittablePayload payload = ((ValidatableSplittablePayload) it[7]).getSplittablePayload()
+                    SplittablePayload payload = it[7]
                     payload.setPosition(payload.size())
                 }
                 result
@@ -394,7 +393,7 @@ class OperationFunctionalSpecification extends Specification {
             1 * connection.commandAsync(*_) >> {
                 assert it[1] == expectedCommand
                 if (it.size() > 7) {
-                    SplittablePayload payload = ((ValidatableSplittablePayload) it[7]).getSplittablePayload()
+                    SplittablePayload payload = it[7]
                     payload.setPosition(payload.size())
                 }
                 it.last().onResult(result, null)

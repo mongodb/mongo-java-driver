@@ -154,7 +154,7 @@ public final class BulkWriteBatch {
 
         this.indexMap = indexMap;
         this.unprocessed = unprocessedItems;
-        this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems, ordered);
+        this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems, ordered, getFieldNameValidator());
         this.operationContext = operationContext;
         this.comment = comment;
         this.variables = variables;
@@ -270,7 +270,7 @@ public final class BulkWriteBatch {
         }
     }
 
-    FieldNameValidator getFieldNameValidator() {
+    private FieldNameValidator getFieldNameValidator() {
         if (batchType == UPDATE || batchType == REPLACE) {
             Map<String, FieldNameValidator> rootMap;
             if (batchType == REPLACE) {

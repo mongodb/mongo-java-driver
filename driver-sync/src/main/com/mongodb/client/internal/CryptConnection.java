@@ -26,7 +26,6 @@ import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.SplittablePayload;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
-import com.mongodb.internal.connection.ValidatableSplittablePayload;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -102,10 +101,9 @@ public final class CryptConnection implements Connection {
 
         SplittablePayload payload = null;
         FieldNameValidator payloadFieldNameValidator = null;
-        if (sequences instanceof ValidatableSplittablePayload) {
-            ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
-            payload = validatableSplittablePayload.getSplittablePayload();
-            payloadFieldNameValidator = validatableSplittablePayload.getFieldNameValidator();
+        if (sequences instanceof SplittablePayload) {
+            payload = (SplittablePayload) sequences;
+            payloadFieldNameValidator = payload.getFieldNameValidator();
         } else if (!(sequences instanceof EmptyMessageSequences)) {
             fail(sequences.toString());
         }

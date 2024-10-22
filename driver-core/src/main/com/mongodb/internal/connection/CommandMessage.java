@@ -24,7 +24,6 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
-import com.mongodb.internal.operation.ClientBulkWriteOperation.ClientBulkWriteCommand;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -57,7 +56,7 @@ import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.internal.connection.BsonWriterHelper.appendElementsToDocument;
 import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
-import static com.mongodb.internal.connection.BsonWriterHelper.writeOpsAndNsInfo;
+import static com.mongodb.internal.connection.BsonWriterHelper.writeDocumentsOfDualMessageSequences;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
@@ -81,11 +80,11 @@ public final class CommandMessage extends RequestMessage {
     private final MessageSequences sequences;
     private final boolean responseExpected;
     /**
-     * {@code null} iff either {@link #sequences} is not of the {@link ClientBulkWriteCommand.OpsAndNsInfo} type,
+     * {@code null} iff either {@link #sequences} is not of the {@link DualMessageSequences} type,
      * or it is of that type, but it has not been {@linkplain #encodeMessageBodyWithMetadata(ByteBufferBsonOutput, OperationContext) encoded}.
      */
     @Nullable
-    private Boolean opsAndNsInfoRequireResponse;
+    private Boolean dualMessageSequencesRequireResponse;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
 
@@ -122,7 +121,7 @@ public final class CommandMessage extends RequestMessage {
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
         this.responseExpected = responseExpected;
-        opsAndNsInfoRequireResponse = null;
+        dualMessageSequencesRequireResponse = null;
         this.exhaustAllowed = exhaustAllowed;
         this.sequences = sequences;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
@@ -206,12 +205,11 @@ public final class CommandMessage extends RequestMessage {
         if (responseExpected) {
             return true;
         } else {
-            if (sequences instanceof ValidatableSplittablePayload) {
-                ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
-                SplittablePayload payload = validatableSplittablePayload.getSplittablePayload();
+            if (sequences instanceof SplittablePayload) {
+                SplittablePayload payload = (SplittablePayload) sequences;
                 return payload.isOrdered() && payload.hasAnotherSplit();
-            } else if (sequences instanceof ClientBulkWriteCommand.OpsAndNsInfo) {
-                return assertNotNull(opsAndNsInfoRequireResponse);
+            } else if (sequences instanceof DualMessageSequences) {
+                return assertNotNull(dualMessageSequencesRequireResponse);
             } else if (!(sequences instanceof EmptyMessageSequences)) {
                 fail(sequences.toString());
             }
@@ -233,38 +231,34 @@ public final class CommandMessage extends RequestMessage {
             bsonOutput.writeByte(0);    // payload type
             commandStartPosition = bsonOutput.getPosition();
             ArrayList<BsonElement> extraElements = getExtraElements(operationContext);
-            // `OpsAndNsInfo` requires validation only if no response is expected, otherwise we must rely on the server validation
-            boolean validateDocumentSizeLimits = !(sequences instanceof ClientBulkWriteCommand.OpsAndNsInfo) || !responseExpected;
+            // `DualMessageSequences` requires validation only if no response is expected, otherwise we must rely on the server validation
+            boolean validateDocumentSizeLimits = !(sequences instanceof DualMessageSequences) || !responseExpected;
 
             int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator, validateDocumentSizeLimits);
-            if (sequences instanceof ValidatableSplittablePayload) {
+            if (sequences instanceof SplittablePayload) {
                 appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
-                ValidatableSplittablePayload validatableSplittablePayload = (ValidatableSplittablePayload) sequences;
-                SplittablePayload payload = validatableSplittablePayload.getSplittablePayload();
+                SplittablePayload payload = (SplittablePayload) sequences;
                 writeOpMsgSectionWithPayloadType1(bsonOutput, payload.getPayloadName(), () -> {
                         writePayload(
-                                new BsonBinaryWriter(bsonOutput, validatableSplittablePayload.getFieldNameValidator()),
+                                new BsonBinaryWriter(bsonOutput, payload.getFieldNameValidator()),
                                 bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize()
                         );
                         return null;
                 });
-            } else if (sequences instanceof ClientBulkWriteCommand.OpsAndNsInfo) {
-                ClientBulkWriteCommand.OpsAndNsInfo opsAndNsInfo = (ClientBulkWriteCommand.OpsAndNsInfo) sequences;
+            } else if (sequences instanceof DualMessageSequences) {
+                DualMessageSequences dualMessageSequences = (DualMessageSequences) sequences;
                 try (ByteBufferBsonOutput.Branch bsonOutputBranch2 = bsonOutput.branch();
                      ByteBufferBsonOutput.Branch bsonOutputBranch1 = bsonOutput.branch()) {
-                    ClientBulkWriteCommand.OpsAndNsInfo.EncodeResult opsAndNsInfoEncodeResult = writeOpMsgSectionWithPayloadType1(
-                            bsonOutputBranch1, "ops", () ->
-                                    writeOpMsgSectionWithPayloadType1(bsonOutputBranch2, "nsInfo", () ->
-                                            writeOpsAndNsInfo(
-                                                    opsAndNsInfo, commandDocumentSizeInBytes, bsonOutputBranch1,
+                    DualMessageSequences.EncodeDocumentsResult encodeDocumentsResult = writeOpMsgSectionWithPayloadType1(
+                            bsonOutputBranch1, dualMessageSequences.getFirstSequenceId(), () ->
+                                    writeOpMsgSectionWithPayloadType1(bsonOutputBranch2, dualMessageSequences.getSecondSequenceId(), () ->
+                                            writeDocumentsOfDualMessageSequences(
+                                                    dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
                                                     bsonOutputBranch2, getSettings(), validateDocumentSizeLimits)
                                     )
                     );
-                    opsAndNsInfoRequireResponse = opsAndNsInfoEncodeResult.isServerResponseRequired();
-                    Long txnNumber = opsAndNsInfoEncodeResult.getTxnNumber();
-                    if (txnNumber != null) {
-                        extraElements.add(new BsonElement(TXN_NUMBER_KEY, new BsonInt64(txnNumber)));
-                    }
+                    dualMessageSequencesRequireResponse = encodeDocumentsResult.isServerResponseRequired();
+                    extraElements.addAll(encodeDocumentsResult.getExtraElements());
                     appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
                 }
             } else if (sequences instanceof EmptyMessageSequences) {
@@ -391,6 +385,11 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
+    /**
+     * @param sequenceId The identifier of the sequence contained in the {@code OP_MSG} section to be written.
+     * @param writeDocumentsAction The action that writes the documents of the sequence.
+     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.md">OP_MSG</a>
+     */
     private <R> R writeOpMsgSectionWithPayloadType1(
             final ByteBufferBsonOutput bsonOutput,
             final String sequenceId,
