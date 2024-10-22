@@ -55,8 +55,8 @@ class InitialDnsSeedListDiscoveryProseTest {
 
     @ParameterizedTest(name = "mongodb+srv://{0} => {1}")
     @CsvSource({
-            "localhost, mongo.localhost",
-            "mongo.local, driver.mongo.local"
+            "localhost, test.mongo.localhost",
+            "mongo.local, test.driver.mongo.local"
     })
     @DisplayName("1. Allow SRVs with fewer than 3 '.' separated parts")
     void testAllowSRVsWithFewerThanThreeParts(final String srvHost, final String resolvedHost) {
