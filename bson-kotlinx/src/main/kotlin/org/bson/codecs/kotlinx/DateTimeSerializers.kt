@@ -54,11 +54,16 @@ import org.bson.codecs.kotlinx.utils.SerializationModuleUtils.isClassAvailable
 public val dateTimeSerializersModule: SerializersModule by lazy {
     var module = SerializersModule {}
     if (isClassAvailable("kotlinx.datetime.Instant")) {
-        module +=
-            InstantAsBsonDateTime.serializersModule +
-                LocalDateAsBsonDateTime.serializersModule +
-                LocalDateTimeAsBsonDateTime.serializersModule +
-                LocalTimeAsBsonDateTime.serializersModule
+        module += InstantAsBsonDateTime.serializersModule
+    }
+    if (isClassAvailable("kotlinx.datetime.LocalDate")) {
+        module += LocalDateAsBsonDateTime.serializersModule
+    }
+    if (isClassAvailable("kotlinx.datetime.LocalDateTime")) {
+        module += LocalDateTimeAsBsonDateTime.serializersModule
+    }
+    if (isClassAvailable("kotlinx.datetime.LocalTime")) {
+        module += LocalTimeAsBsonDateTime.serializersModule
     }
     module
 }
