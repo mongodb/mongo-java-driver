@@ -195,8 +195,8 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         TimeoutContext timeoutContext = binding.getOperationContext().getTimeoutContext();
-        CommandBatchCursor<RawBsonDocument> cursor = (CommandBatchCursor<RawBsonDocument>) getAggregateOperation(timeoutContext).execute(binding);
-        cursor.setCloseWithoutTimeoutReset(true);
+        CommandBatchCursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(timeoutContext).execute(binding))
+                .disableTimeoutResetWhenClosing();
 
             return new ChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                     setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
@@ -210,8 +210,8 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                AsyncCommandBatchCursor<RawBsonDocument> cursor = (AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result);
-                cursor.setCloseWithoutTimeoutReset(true);
+                AsyncCommandBatchCursor<RawBsonDocument> cursor = ((AsyncCommandBatchCursor<RawBsonDocument>) assertNotNull(result))
+                        .disableTimeoutResetWhenClosing();
 
                 callback.onResult(new AsyncChangeStreamBatchCursor<>(ChangeStreamOperation.this, cursor, binding,
                         setChangeStreamOptions(cursor.getPostBatchResumeToken(), cursor.getOperationTime(),
