@@ -16,27 +16,17 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.{ TransportSettings => JTransportSettings }
+import com.mongodb.connection.{ AsyncTransportSettings => JAsyncTransportSettings }
 
 /**
- * An immutable class representing transport settings used for connections to a MongoDB server.
+ * Async transport settings for the driver.
  *
- * @since 4.11
+ * @since 5.2
  */
-object TransportSettings {
+object AsyncTransportSettings {
 
   /**
-   * Creates a builder for NettyTransportSettings.
-   *
-   * @return a new Builder for creating NettyTransportSettings.
+   * AsyncTransportSettings builder type
    */
-  def nettyBuilder(): NettyTransportSettings.Builder = JTransportSettings.nettyBuilder()
-
-  /**
-   * Creates a builder for AsyncTransportSettings.
-   *
-   * @return a new Builder for creating AsyncTransportSettings.
-   * @since 5.2
-   */
-  def asyncBuilder(): AsyncTransportSettings.Builder = JTransportSettings.asyncBuilder()
+  type Builder = JAsyncTransportSettings.Builder
 }
