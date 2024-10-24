@@ -64,13 +64,19 @@ public final class DefaultDnsResolver implements DnsResolver {
 
       The priority and weight are ignored, and we just concatenate the host (after removing the ending '.') and port with a
       ':' in between, as expected by ServerAddress.
-
-      It's required that the srvHost has at least three parts (e.g. foo.bar.baz) and that all of the resolved hosts have a parent
-      domain equal to the domain of the srvHost.
     */
     @Override
     public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName) {
-        String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
+        List<String> srvHostParts = asList(srvHost.split("\\."));
+
+        String srvHostDomain;
+        boolean srvHasLessThanThreeParts = srvHostParts.size() < 3;
+        if (srvHasLessThanThreeParts) {
+            srvHostDomain = srvHost;
+        } else {
+            srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
+        }
+
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
         List<String> hosts = new ArrayList<>();
         String resourceName = "_" + srvServiceName + "._tcp." + srvHost;
@@ -84,9 +90,15 @@ public final class DefaultDnsResolver implements DnsResolver {
                 String[] split = srvRecord.split(" ");
                 String resolvedHost = split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3];
                 String resolvedHostDomain = resolvedHost.substring(resolvedHost.indexOf('.') + 1);
-                if (!sameParentDomain(srvHostDomainParts, resolvedHostDomain)) {
+                List<String> resolvedHostDomainParts = asList(resolvedHostDomain.split("\\."));
+                if (!sameDomain(srvHostDomainParts, resolvedHostDomainParts)) {
                     throw new MongoConfigurationException(
-                            format("The SRV host name '%s' resolved to a host '%s 'that is not in a sub-domain of the SRV host.",
+                            format("The SRV host name '%s' resolved to a host '%s' that does not share domain name",
+                                    srvHost, resolvedHost));
+                }
+                if (srvHasLessThanThreeParts && resolvedHostDomainParts.size() <= srvHostDomainParts.size()) {
+                    throw new MongoConfigurationException(
+                            format("The SRV host name '%s' resolved to a host '%s' that does not have at least one more domain level",
                                     srvHost, resolvedHost));
                 }
                 hosts.add(resolvedHost + ":" + split[2]);
@@ -98,8 +110,7 @@ public final class DefaultDnsResolver implements DnsResolver {
         return hosts;
     }
 
-    private static boolean sameParentDomain(final List<String> srvHostDomainParts, final String resolvedHostDomain) {
-        List<String> resolvedHostDomainParts = asList(resolvedHostDomain.split("\\."));
+    private static boolean sameDomain(final List<String> srvHostDomainParts, final List<String> resolvedHostDomainParts) {
         if (srvHostDomainParts.size() > resolvedHostDomainParts.size()) {
             return false;
         }
