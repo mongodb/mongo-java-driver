@@ -91,9 +91,7 @@ public final class PackedBitVector extends Vector {
 
     @Override
     public int hashCode() {
-        int result = padding;
-        result = 31 * result + Arrays.hashCode(vectorData);
-        return result;
+        return Objects.hash(padding, Arrays.hashCode(vectorData));
     }
 
     @Override
