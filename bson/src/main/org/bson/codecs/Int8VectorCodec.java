@@ -54,10 +54,5 @@ final class Int8VectorCodec implements Codec<Int8Vector> {
     public Class<Int8Vector> getEncoderClass() {
         return Int8Vector.class;
     }
-
-    @Override
-    public String toString() {
-        return "Int8VectorCodec{}";
-    }
 }
 

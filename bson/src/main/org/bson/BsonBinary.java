@@ -93,7 +93,7 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
-     * Construct a Type 9 BsonBinary from the given Vector.
+     * Construct a {@linkplain BsonBinarySubType#VECTOR subtype 9} {@link BsonBinary} from the given {@link @Vector}.
      *
      * @param vector the {@link Vector}
      * @since 5.3
@@ -145,10 +145,10 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
-     * Returns the binary as a {@link Vector}. The binary type must be 9.
+     * Returns the binary as a {@link Vector}. The {@linkplain #getType() subtype} must be {@linkplain BsonBinarySubType#VECTOR 9}.
      *
      * @return the vector
-     * @throws IllegalArgumentException if the binary subtype is not {@link BsonBinarySubType#VECTOR}.
+     * @throws BsonInvalidOperationException if the binary subtype is not {@link BsonBinarySubType#VECTOR}.
      * @since 5.3
      */
     public Vector asVector() {

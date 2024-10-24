@@ -84,7 +84,7 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
         }
     }
 
-    private MongoClientSettings.Builder getMongoClientSettingsBuilder() {
+    private static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
         return Fixture.getMongoClientSettingsBuilder()
                 .readConcern(ReadConcern.MAJORITY)
                 .writeConcern(WriteConcern.MAJORITY)
@@ -163,7 +163,7 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
 
     @ParameterizedTest
     @MethodSource("provideValidVectors")
-    void shouldStoreAndRetrieveValidVectorWithCodec(final Vector actualVector) {
+    void shouldStoreAndRetrieveValidVector(final Vector actualVector) {
         // Given
         Document documentToInsert = new Document(FIELD_VECTOR, actualVector);
         documentCollection.insertOne(documentToInsert);

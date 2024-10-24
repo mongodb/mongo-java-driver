@@ -64,9 +64,9 @@ public abstract class Vector {
      * @throws IllegalArgumentException If the padding value is greater than 7.
      */
     public static PackedBitVector packedBitVector(final byte[] vectorData, final byte padding) {
-        notNull("Vector data", vectorData);
+        notNull("vectorData", vectorData);
         isTrueArgument("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
-        isTrue("Padding must be 0 if vector is empty", padding == 0 || vectorData.length > 0);
+        isTrueArgument("Padding must be 0 if vector is empty", padding == 0 || vectorData.length > 0);
         return new PackedBitVector(vectorData, padding);
     }
 
@@ -160,6 +160,9 @@ public abstract class Vector {
      * <p>
      * Each dtype determines how the data in the vector is stored, including how many bits are used to represent each element
      * in the vector.
+     *
+     * @mongodb.server.release 6.0
+     * @since 5.3
      */
     public enum DataType {
         /**

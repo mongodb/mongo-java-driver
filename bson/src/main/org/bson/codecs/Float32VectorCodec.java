@@ -54,9 +54,3 @@ final class Float32VectorCodec implements Codec<Float32Vector> {
         return Float32Vector.class;
     }
 
-    @Override
-    public String toString() {
-        return "Float32VectorCodec{}";
-    }
-}
-

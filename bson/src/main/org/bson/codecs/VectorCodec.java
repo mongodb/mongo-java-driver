@@ -52,11 +52,6 @@ import org.bson.Vector;
     public Class<Vector> getEncoderClass() {
         return Vector.class;
     }
-
-    @Override
-    public String toString() {
-        return "VectorCodec{}";
-    }
 }
 
 

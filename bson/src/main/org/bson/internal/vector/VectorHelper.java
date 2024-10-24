@@ -111,7 +111,7 @@ public final class VectorHelper {
         return vectorData;
     }
 
-    public static byte[] encodeVector(final byte dType, final byte padding, final byte[] vectorData) {
+    private static byte[] encodeVector(final byte dType, final byte padding, final byte[] vectorData) {
         final byte[] bytes = new byte[vectorData.length + METADATA_SIZE];
         bytes[0] = dType;
         bytes[1] = padding;
@@ -119,7 +119,7 @@ public final class VectorHelper {
         return bytes;
     }
 
-    public static byte[] encodeVector(final byte dType, final byte padding, final float[] vectorData) {
+    private static byte[] encodeVector(final byte dType, final byte padding, final float[] vectorData) {
         final byte[] bytes = new byte[vectorData.length * FLOAT_SIZE + METADATA_SIZE];
 
         bytes[0] = dType;
@@ -158,7 +158,7 @@ public final class VectorHelper {
         return floatArray;
     }
 
-    public static Vector.DataType determineVectorDType(final byte dType) {
+    private static Vector.DataType determineVectorDType(final byte dType) {
         Vector.DataType[] values = Vector.DataType.values();
         for (Vector.DataType value : values) {
             if (value.getValue() == dType) {
