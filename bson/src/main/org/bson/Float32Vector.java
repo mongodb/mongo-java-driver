@@ -16,8 +16,6 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
-
 import java.util.Arrays;
 
 import static org.bson.assertions.Assertions.assertNotNull;
@@ -31,17 +29,15 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see Vector#floatVector(float[])
  * @see BsonBinary#BsonBinary(Vector)
  * @see BsonBinary#asVector()
- * @see Binary#Binary(Vector)
- * @see Binary#asVector()
  * @since 5.3
  */
 public final class Float32Vector extends Vector {
 
-    private final float[] vectorData;
+    private final float[] data;
 
     Float32Vector(final float[] vectorData) {
         super(DataType.FLOAT32);
-        this.vectorData = assertNotNull(vectorData);
+        this.data = assertNotNull(vectorData);
     }
 
     /**
@@ -52,8 +48,8 @@ public final class Float32Vector extends Vector {
      *
      * @return the underlying float array representing this {@link Float32Vector} vector.
      */
-    public float[] getVectorArray() {
-        return assertNotNull(vectorData);
+    public float[] getData() {
+        return assertNotNull(data);
     }
 
     @Override
@@ -61,24 +57,23 @@ public final class Float32Vector extends Vector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Float32Vector)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         Float32Vector that = (Float32Vector) o;
-        return Arrays.equals(vectorData, that.vectorData);
+        return Arrays.equals(data, that.data);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(vectorData);
+        return Arrays.hashCode(data);
     }
 
     @Override
     public String toString() {
         return "Float32Vector{"
-                + "vectorData=" + Arrays.toString(vectorData)
-                + ", vectorType=" + getDataType()
+                + "data=" + Arrays.toString(data)
+                + ", dataType=" + getDataType()
                 + '}';
     }
 }

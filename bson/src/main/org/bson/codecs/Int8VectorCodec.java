@@ -40,7 +40,7 @@ final class Int8VectorCodec implements Codec<Int8Vector> {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
-            throw new BSONException("Unexpected BsonBinarySubType");
+            throw new BSONException("Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found: " + subType);
         }
 
         return reader.readBinaryData()

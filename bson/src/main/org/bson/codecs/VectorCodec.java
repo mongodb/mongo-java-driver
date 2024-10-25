@@ -26,7 +26,6 @@ import org.bson.Vector;
 /**
  * Encodes and decodes {@link Vector} objects.
  *
- * @since 5.3
  */
  final class VectorCodec implements Codec<Vector> {
 
@@ -40,7 +39,7 @@ import org.bson.Vector;
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
-            throw new BSONException("Unexpected BsonBinarySubType");
+            throw new BSONException("Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found " + subType);
         }
 
         return reader.readBinaryData()

@@ -26,7 +26,6 @@ import org.bson.Float32Vector;
 /**
  * Encodes and decodes {@link Float32Vector} objects.
  *
- * @since 5.3
  */
 final class Float32VectorCodec implements Codec<Float32Vector> {
 
@@ -40,7 +39,7 @@ final class Float32VectorCodec implements Codec<Float32Vector> {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
-            throw new BSONException("Unexpected BsonBinarySubType");
+            throw new BSONException("Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found: " + subType);
         }
 
         return reader.readBinaryData()
@@ -53,4 +52,5 @@ final class Float32VectorCodec implements Codec<Float32Vector> {
     public Class<Float32Vector> getEncoderClass() {
         return Float32Vector.class;
     }
+}
 

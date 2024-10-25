@@ -16,9 +16,8 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
-
 import java.util.Arrays;
+import java.util.Objects;
 
 import static org.bson.assertions.Assertions.assertNotNull;
 
@@ -31,17 +30,15 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see Vector#int8Vector(byte[])
  * @see BsonBinary#BsonBinary(Vector)
  * @see BsonBinary#asVector()
- * @see Binary#Binary(Vector)
- * @see Binary#asVector()
  * @since 5.3
  */
 public final class Int8Vector extends Vector {
 
-    private byte[] vectorData;
+    private byte[] data;
 
-    Int8Vector(final byte[] vectorData) {
+    Int8Vector(final byte[] data) {
         super(DataType.INT8);
-        this.vectorData = assertNotNull(vectorData);
+        this.data = assertNotNull(data);
     }
 
     /**
@@ -52,8 +49,8 @@ public final class Int8Vector extends Vector {
      *
      * @return the underlying byte array representing this {@link Int8Vector} vector.
      */
-    public byte[] getVectorArray() {
-        return assertNotNull(vectorData);
+    public byte[] getData() {
+        return assertNotNull(data);
     }
 
     @Override
@@ -61,24 +58,23 @@ public final class Int8Vector extends Vector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Int8Vector)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         Int8Vector that = (Int8Vector) o;
-        return Arrays.equals(vectorData, that.vectorData);
+        return Objects.deepEquals(data, that.data);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(vectorData);
+        return Arrays.hashCode(data);
     }
 
     @Override
     public String toString() {
         return "Int8Vector{"
-                + "vectorData=" + Arrays.toString(vectorData)
-                + ", vectorType=" + getDataType()
+                + "data=" + Arrays.toString(data)
+                + ", dataType=" + getDataType()
                 + '}';
     }
 }

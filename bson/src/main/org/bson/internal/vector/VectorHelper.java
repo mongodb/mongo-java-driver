@@ -17,17 +17,17 @@
 package org.bson.internal.vector;
 
 import org.bson.BsonBinary;
+import org.bson.BsonInvalidOperationException;
 import org.bson.Float32Vector;
 import org.bson.Int8Vector;
 import org.bson.PackedBitVector;
 import org.bson.Vector;
+import org.bson.assertions.Assertions;
 import org.bson.types.Binary;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-
-import static org.bson.assertions.Assertions.isTrue;
 
 /**
  * Helper class for encoding and decoding vectors to and from {@link BsonBinary}/{@link Binary}.
@@ -42,26 +42,27 @@ import static org.bson.assertions.Assertions.isTrue;
 public final class VectorHelper {
 
     private static final ByteOrder STORED_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
+    private static final String ERROR_MESSAGE_UNKNOWN_VECTOR_DATA_TYPE = "Unknown vector data type: ";
+    private static final byte ZERO_PADDING = 0;
 
     private VectorHelper() {
         //NOP
     }
 
     private static final int METADATA_SIZE = 2;
-    private static final int FLOAT_SIZE = 4;
 
     public static byte[] encodeVectorToBinary(final Vector vector) {
         Vector.DataType dataType = vector.getDataType();
         switch (dataType) {
             case INT8:
-                return encodeVector(dataType.getValue(), (byte) 0, vector.asInt8Vector().getVectorArray());
+                return encodeVector(dataType.getValue(), ZERO_PADDING, vector.asInt8Vector().getData());
             case PACKED_BIT:
                 PackedBitVector packedBitVector = vector.asPackedBitVector();
-                return encodeVector(dataType.getValue(), packedBitVector.getPadding(), packedBitVector.getVectorArray());
+                return encodeVector(dataType.getValue(), packedBitVector.getPadding(), packedBitVector.getData());
             case FLOAT32:
-                return encodeVector(dataType.getValue(), (byte) 0, vector.asFloat32Vector().getVectorArray());
+                return encodeVector(dataType.getValue(), vector.asFloat32Vector().getData());
             default:
-                throw new AssertionError("Unknown vector dtype: " + dataType);
+                throw Assertions.fail(ERROR_MESSAGE_UNKNOWN_VECTOR_DATA_TYPE + dataType);
         }
     }
 
@@ -82,24 +83,24 @@ public final class VectorHelper {
             case FLOAT32:
                 return decodeFloat32Vector(encodedVector, padding);
             default:
-                throw new AssertionError("Unknown vector data type: " + dataType);
+                throw Assertions.fail(ERROR_MESSAGE_UNKNOWN_VECTOR_DATA_TYPE + dataType);
         }
     }
 
     private static Float32Vector decodeFloat32Vector(final byte[] encodedVector, final byte padding) {
-        isTrue("Padding must be 0 for FLOAT32 data type.", padding == 0);
+        isTrue("Padding must be 0 for FLOAT32 data type, but found: " + padding, padding == 0);
         return Vector.floatVector(decodeLittleEndianFloats(encodedVector));
     }
 
     private static PackedBitVector decodePackedBitVector(final byte[] encodedVector, final byte padding) {
         byte[] packedBitVector = extractVectorData(encodedVector);
-        isTrue("Padding must be 0 if vector is empty.", padding == 0 || packedBitVector.length > 0);
-        isTrue("Padding must be between 0 and 7 bits.", padding >= 0 && padding <= 7);
+        isTrue("Padding must be 0 if vector is empty, but found: " + padding, padding == 0 || packedBitVector.length > 0);
+        isTrue("Padding must be between 0 and 7 bits, but found: " + padding, padding >= 0 && padding <= 7);
         return Vector.packedBitVector(packedBitVector, padding);
     }
 
     private static Int8Vector decodeInt8Vector(final byte[] encodedVector, final byte padding) {
-        isTrue("Padding must be 0 for INT8 data type.", padding == 0);
+        isTrue("Padding must be 0 for INT8 data type, but found: " + padding, padding == 0);
         byte[] int8Vector = extractVectorData(encodedVector);
         return Vector.int8Vector(int8Vector);
     }
@@ -119,11 +120,11 @@ public final class VectorHelper {
         return bytes;
     }
 
-    private static byte[] encodeVector(final byte dType, final byte padding, final float[] vectorData) {
-        final byte[] bytes = new byte[vectorData.length * FLOAT_SIZE + METADATA_SIZE];
+    private static byte[] encodeVector(final byte dType, final float[] vectorData) {
+        final byte[] bytes = new byte[vectorData.length * Float.BYTES + METADATA_SIZE];
 
         bytes[0] = dType;
-        bytes[1] = padding;
+        bytes[1] = ZERO_PADDING;
 
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(STORED_BYTE_ORDER);
@@ -141,11 +142,11 @@ public final class VectorHelper {
 
     private static float[] decodeLittleEndianFloats(final byte[] encodedVector) {
         isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type.",
-                (encodedVector.length - METADATA_SIZE) % FLOAT_SIZE == 0);
+                (encodedVector.length - METADATA_SIZE) % Float.BYTES == 0);
 
         int vectorSize = encodedVector.length - METADATA_SIZE;
 
-        int numFloats = vectorSize / FLOAT_SIZE;
+        int numFloats = vectorSize / Float.BYTES;
         float[] floatArray = new float[numFloats];
 
         ByteBuffer buffer = ByteBuffer.wrap(encodedVector, METADATA_SIZE, vectorSize);
@@ -158,13 +159,19 @@ public final class VectorHelper {
         return floatArray;
     }
 
-    private static Vector.DataType determineVectorDType(final byte dType) {
+    public static Vector.DataType determineVectorDType(final byte dType) {
         Vector.DataType[] values = Vector.DataType.values();
         for (Vector.DataType value : values) {
             if (value.getValue() == dType) {
                 return value;
             }
         }
-        throw new IllegalStateException("Unknown vector data type: " + dType);
+        throw new BsonInvalidOperationException(ERROR_MESSAGE_UNKNOWN_VECTOR_DATA_TYPE + dType);
+    }
+
+    private static void isTrue(final String message, final boolean condition) {
+        if (!condition) {
+            throw new BsonInvalidOperationException(message);
+        }
     }
 }

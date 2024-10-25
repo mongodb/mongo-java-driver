@@ -26,7 +26,6 @@ import org.bson.PackedBitVector;
 /**
  * Encodes and decodes {@link PackedBitVector} objects.
  *
- * @since 5.3
  */
 final class PackedBitVectorCodec implements Codec<PackedBitVector> {
 
@@ -40,7 +39,7 @@ final class PackedBitVectorCodec implements Codec<PackedBitVector> {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
-            throw new BSONException("Unexpected BsonBinarySubType");
+            throw new BSONException("Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found: " + subType);
         }
 
         return reader.readBinaryData()
@@ -53,11 +52,6 @@ final class PackedBitVectorCodec implements Codec<PackedBitVector> {
     @Override
     public Class<PackedBitVector> getEncoderClass() {
         return PackedBitVector.class;
-    }
-
-    @Override
-    public String toString() {
-        return "PackedBitVectorCodec{}";
     }
 }
 

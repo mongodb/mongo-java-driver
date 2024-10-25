@@ -38,7 +38,7 @@ class VectorTest {
         // then
         assertNotNull(vector);
         assertEquals(Vector.DataType.INT8, vector.getDataType());
-        assertArrayEquals(data, vector.getVectorArray());
+        assertArrayEquals(data, vector.getData());
     }
 
     @Test
@@ -48,7 +48,7 @@ class VectorTest {
 
         // when & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Vector.int8Vector(data));
-        assertEquals("vectorData can not be null", exception.getMessage());
+        assertEquals("data can not be null", exception.getMessage());
     }
 
     @Test
@@ -62,7 +62,7 @@ class VectorTest {
         // then
         assertNotNull(vector);
         assertEquals(Vector.DataType.FLOAT32, vector.getDataType());
-        assertArrayEquals(data, vector.getVectorArray());
+        assertArrayEquals(data, vector.getData());
     }
 
     @Test
@@ -72,7 +72,7 @@ class VectorTest {
 
         // when & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Vector.floatVector(data));
-        assertEquals("vectorData can not be null", exception.getMessage());
+        assertEquals("data can not be null", exception.getMessage());
     }
 
 
@@ -88,7 +88,7 @@ class VectorTest {
         // then
         assertNotNull(vector);
         assertEquals(Vector.DataType.PACKED_BIT, vector.getDataType());
-        assertArrayEquals(data, vector.getVectorArray());
+        assertArrayEquals(data, vector.getData());
         assertEquals(validPadding, vector.getPadding());
     }
 
@@ -101,7 +101,7 @@ class VectorTest {
         // when & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                 Vector.packedBitVector(data, invalidPadding));
-        assertEquals("state should be: Padding must be between 0 and 7 bits.", exception.getMessage());
+        assertEquals("state should be: Padding must be between 0 and 7 bits. Provided padding: " + invalidPadding, exception.getMessage());
     }
 
     @Test
@@ -113,7 +113,7 @@ class VectorTest {
         // when & Then
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                 Vector.packedBitVector(data, padding));
-        assertEquals("Vector data can not be null", exception.getMessage());
+        assertEquals("data can not be null", exception.getMessage());
     }
 
     @Test
@@ -128,7 +128,7 @@ class VectorTest {
         // then
         assertNotNull(vector);
         assertEquals(Vector.DataType.PACKED_BIT, vector.getDataType());
-        assertArrayEquals(data, vector.getVectorArray());
+        assertArrayEquals(data, vector.getData());
         assertEquals(padding, vector.getPadding());
     }
 
@@ -139,9 +139,9 @@ class VectorTest {
         byte padding = 1;
 
         // when & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                 Vector.packedBitVector(data, padding));
-        assertEquals("state should be: Padding must be 0 if vector is empty", exception.getMessage());
+        assertEquals("state should be: Padding must be 0 if vector is empty. Provided padding: " + padding, exception.getMessage());
     }
 
     @Test
@@ -152,7 +152,7 @@ class VectorTest {
 
         // when & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asInt8Vector);
-        assertEquals("Expected vector type INT8 but found FLOAT32", exception.getMessage());
+        assertEquals("Expected vector data type INT8, but found FLOAT32", exception.getMessage());
     }
 
     @Test
@@ -163,7 +163,7 @@ class VectorTest {
 
         // when & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asFloat32Vector);
-        assertEquals("Expected vector type FLOAT32 but found INT8", exception.getMessage());
+        assertEquals("Expected vector data type FLOAT32, but found INT8", exception.getMessage());
     }
 
     @Test
@@ -174,6 +174,6 @@ class VectorTest {
 
         // when & Then
         IllegalStateException exception = assertThrows(IllegalStateException.class, vector::asPackedBitVector);
-        assertEquals("Expected vector type PACKED_BIT but found FLOAT32", exception.getMessage());
+        assertEquals("Expected vector data type PACKED_BIT, but found FLOAT32", exception.getMessage());
     }
 }

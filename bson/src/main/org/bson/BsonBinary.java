@@ -93,7 +93,7 @@ public class BsonBinary extends BsonValue {
     }
 
     /**
-     * Construct a {@linkplain BsonBinarySubType#VECTOR subtype 9} {@link BsonBinary} from the given {@link @Vector}.
+     * Constructs a {@linkplain BsonBinarySubType#VECTOR subtype 9} {@link BsonBinary} from the given {@link Vector}.
      *
      * @param vector the {@link Vector}
      * @since 5.3
@@ -152,7 +152,7 @@ public class BsonBinary extends BsonValue {
      * @since 5.3
      */
     public Vector asVector() {
-        if (!BsonBinarySubType.isVector(type)) {
+        if (type != BsonBinarySubType.VECTOR.getValue()) {
             throw new BsonInvalidOperationException("type must be a Vector subtype.");
         }
 

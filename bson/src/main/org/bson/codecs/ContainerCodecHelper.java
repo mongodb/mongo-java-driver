@@ -16,10 +16,12 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.Transformer;
 import org.bson.UuidRepresentation;
+import org.bson.Vector;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -42,28 +44,53 @@ final class ContainerCodecHelper {
             reader.readNull();
             return null;
         } else {
-            Codec<?> codec = bsonTypeCodecMap.get(bsonType);
+            Codec<?> currentCodec = bsonTypeCodecMap.get(bsonType);
 
-            if (bsonType == BsonType.BINARY && reader.peekBinarySize() == 16) {
-                switch (reader.peekBinarySubType()) {
-                    case 3:
-                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
-                                || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
-                                || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
-                            codec = registry.get(UUID.class);
-                        }
-                        break;
-                    case 4:
-                        if (uuidRepresentation == UuidRepresentation.STANDARD) {
-                            codec = registry.get(UUID.class);
-                        }
-                        break;
-                    default:
-                        break;
-                }
+            if (bsonType == BsonType.BINARY) {
+                byte binarySubType = reader.peekBinarySubType();
+                currentCodec = getBinarySubTypeCodec(reader,
+                        uuidRepresentation,
+                        registry, binarySubType,
+                        currentCodec);
             }
-            return valueTransformer.transform(codec.decode(reader, decoderContext));
+
+            return valueTransformer.transform(currentCodec.decode(reader, decoderContext));
         }
+    }
+
+    private static Codec<?> getBinarySubTypeCodec(final BsonReader reader,
+                                                  final UuidRepresentation uuidRepresentation,
+                                                  final CodecRegistry registry,
+                                                  final byte binarySubType,
+                                                  final Codec<?> currentTypeCodec) {
+
+        if (binarySubType == BsonBinarySubType.VECTOR.getValue()) {
+            Codec<Vector> vectorCodec = registry.get(Vector.class, registry);
+            if (vectorCodec != null) {
+                return vectorCodec;
+            }
+        }
+
+        if (reader.peekBinarySize() == 16) {
+            switch (binarySubType) {
+                case 3:
+                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+                            || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+                            || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
+                        return registry.get(UUID.class);
+                    }
+                    break;
+                case 4:
+                    if (uuidRepresentation == UuidRepresentation.STANDARD) {
+                        return  registry.get(UUID.class);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return currentTypeCodec;
     }
 
     static Codec<?> getCodec(final CodecRegistry codecRegistry, final Type type) {

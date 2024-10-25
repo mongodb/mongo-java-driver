@@ -17,14 +17,9 @@
 package org.bson.types;
 
 import org.bson.BsonBinarySubType;
-import org.bson.BsonInvalidOperationException;
-import org.bson.Vector;
-import org.bson.internal.vector.VectorHelper;
 
 import java.io.Serializable;
 import java.util.Arrays;
-
-import static org.bson.internal.vector.VectorHelper.encodeVectorToBinary;
 
 /**
  * Generic binary holder.
@@ -70,35 +65,6 @@ public class Binary implements Serializable {
     public Binary(final byte type, final byte[] data) {
         this.type = type;
         this.data = data.clone();
-    }
-
-    /**
-     * Construct a Type 9 BsonBinary from the given Vector.
-     *
-     * @param vector the {@link Vector}
-     * @since 5.3
-     */
-    public Binary(final Vector vector) {
-        if (vector == null) {
-            throw new IllegalArgumentException("Vector must not be null");
-        }
-        this.data = encodeVectorToBinary(vector);
-        type = BsonBinarySubType.VECTOR.getValue();
-    }
-
-    /**
-     * Returns the binary as a {@link Vector}. The binary type must be 9.
-     *
-     * @return the vector
-     * @throws IllegalArgumentException if the binary subtype is not {@link BsonBinarySubType#VECTOR}.
-     * @since 5.3
-     */
-    public Vector asVector() {
-        if (!BsonBinarySubType.isVector(type)) {
-            throw new BsonInvalidOperationException("type must be a Vector subtype.");
-        }
-
-        return VectorHelper.decodeBinaryToVector(this.data);
     }
 
     /**

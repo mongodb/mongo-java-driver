@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package org.bson.internal.vector;
+package org.bson;
 
-import org.bson.Float32Vector;
-import org.bson.Int8Vector;
-import org.bson.PackedBitVector;
-import org.bson.Vector;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -30,20 +28,46 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-class VectorHelperTest {
+class BsonBinaryVectorTest {
+
     private static final byte FLOAT32_DTYPE = Vector.DataType.FLOAT32.getValue();
     private static final byte INT8_DTYPE = Vector.DataType.INT8.getValue();
     private static final byte PACKED_BIT_DTYPE = Vector.DataType.PACKED_BIT.getValue();
     public static final int ZERO_PADDING = 0;
 
+    @Test
+    void shouldThrowExceptionWhenCreatingBsonBinaryWithNullVector() {
+        // given
+        Vector vector = null;
+
+        // when & then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new BsonBinary(vector));
+        assertEquals("Vector must not be null", exception.getMessage());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = BsonBinarySubType.class, mode = EnumSource.Mode.EXCLUDE, names = {"VECTOR"})
+    void shouldThrowExceptionWhenBsonBinarySubTypeIsNotVector(final BsonBinarySubType bsonBinarySubType) {
+        // given
+        byte[] data = new byte[]{1, 2, 3, 4};
+        BsonBinary bsonBinary = new BsonBinary(bsonBinarySubType.getValue(), data);
+
+        // when & then
+        BsonInvalidOperationException exception = assertThrows(BsonInvalidOperationException.class, bsonBinary::asVector);
+        assertEquals("type must be a Vector subtype.", exception.getMessage());
+    }
+
     @ParameterizedTest(name = "{index}: {0}")
     @MethodSource("provideFloatVectors")
     void shouldEncodeFloatVector(final Vector actualFloat32Vector, final byte[] expectedBsonEncodedVector) {
         // when
-        byte[] actualBsonEncodedVector = VectorHelper.encodeVectorToBinary(actualFloat32Vector);
+        BsonBinary actualBsonBinary = new BsonBinary(actualFloat32Vector);
+        byte[] actualBsonEncodedVector = actualBsonBinary.getData();
 
-        //Then
+        // then
+        assertEquals(BsonBinarySubType.VECTOR.getValue(), actualBsonBinary.getType(), "The subtype must be VECTOR");
         assertArrayEquals(expectedBsonEncodedVector, actualBsonEncodedVector);
     }
 
@@ -51,18 +75,17 @@ class VectorHelperTest {
     @MethodSource("provideFloatVectors")
     void shouldDecodeFloatVector(final Float32Vector expectedFloatVector, final byte[] bsonEncodedVector) {
         // when
-        Float32Vector decodedVector = (Float32Vector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
+        Float32Vector decodedVector = (Float32Vector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
 
         // then
-        assertEquals(Vector.DataType.FLOAT32, decodedVector.getDataType());
-        assertArrayEquals(expectedFloatVector.getVectorArray(), decodedVector.getVectorArray());
+        assertEquals(expectedFloatVector, decodedVector);
     }
 
-    private static Stream<Object[]> provideFloatVectors() {
+    private static Stream<Arguments> provideFloatVectors() {
         return Stream.of(
-                new Object[]{
-                        Vector.floatVector(
-                                new float[]{1.1f, 2.2f, 3.3f, -1.0f, Float.MAX_VALUE, Float.MIN_VALUE, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY}),
+                arguments(
+                        Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f, -1.0f, Float.MAX_VALUE, Float.MIN_VALUE, Float.POSITIVE_INFINITY,
+                                Float.NEGATIVE_INFINITY}),
                         new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
                                 (byte) 205, (byte) 204, (byte) 140, (byte) 63, // 1.1f in little-endian
                                 (byte) 205, (byte) 204, (byte) 12, (byte) 64, // 2.2f in little-endian
@@ -71,17 +94,19 @@ class VectorHelperTest {
                                 (byte) 255, (byte) 255, (byte) 127, (byte) 127, // Float.MAX_VALUE in little-endian
                                 (byte) 1, (byte) 0, (byte) 0, (byte) 0,     // Float.MIN_VALUE in little-endian
                                 (byte) 0, (byte) 0, (byte) 128, (byte) 127,   // Float.POSITIVE_INFINITY in little-endian
-                                (byte) 0, (byte) 0, (byte) 128, (byte) 255,    // Float.NEGATIVE_INFINITY in little-endian
-                        }},
-                new Object[]{
+                                (byte) 0, (byte) 0, (byte) 128, (byte) 255    // Float.NEGATIVE_INFINITY in little-endian
+                        }
+                ),
+                arguments(
                         Vector.floatVector(new float[]{0.0f}),
                         new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
                                 (byte) 0, (byte) 0, (byte) 0, (byte) 0  // 0.0f in little-endian
-                        }},
-                new Object[]{
+                        }
+                ),
+                arguments(
                         Vector.floatVector(new float[]{}),
-                        new byte[]{FLOAT32_DTYPE, ZERO_PADDING,
-                        }}
+                        new byte[]{FLOAT32_DTYPE, ZERO_PADDING}
+                )
         );
     }
 
@@ -89,9 +114,11 @@ class VectorHelperTest {
     @MethodSource("provideInt8Vectors")
     void shouldEncodeInt8Vector(final Vector actualInt8Vector, final byte[] expectedBsonEncodedVector) {
         // when
-        byte[] actualBsonEncodedVector = VectorHelper.encodeVectorToBinary(actualInt8Vector);
+        BsonBinary actualBsonBinary = new BsonBinary(actualInt8Vector);
+        byte[] actualBsonEncodedVector = actualBsonBinary.getData();
 
         // then
+        assertEquals(BsonBinarySubType.VECTOR.getValue(), actualBsonBinary.getType(), "The subtype must be VECTOR");
         assertArrayEquals(expectedBsonEncodedVector, actualBsonEncodedVector);
     }
 
@@ -99,22 +126,21 @@ class VectorHelperTest {
     @MethodSource("provideInt8Vectors")
     void shouldDecodeInt8Vector(final Int8Vector expectedInt8Vector, final byte[] bsonEncodedVector) {
         // when
-        Int8Vector decodedVector = (Int8Vector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
+        Int8Vector decodedVector = (Int8Vector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
 
         // then
-        assertEquals(Vector.DataType.INT8, decodedVector.getDataType());
-        assertArrayEquals(expectedInt8Vector.getVectorArray(), decodedVector.getVectorArray());
+        assertEquals(expectedInt8Vector, decodedVector);
     }
 
-    private static Stream<Object[]> provideInt8Vectors() {
+    private static Stream<Arguments> provideInt8Vectors() {
         return Stream.of(
-                new Object[]{
+                arguments(
                         Vector.int8Vector(new byte[]{Byte.MAX_VALUE, 1, 2, 3, 4, Byte.MIN_VALUE}),
                         new byte[]{INT8_DTYPE, ZERO_PADDING, Byte.MAX_VALUE, 1, 2, 3, 4, Byte.MIN_VALUE
-                }},
-                new Object[]{Vector.int8Vector(new byte[]{}),
+                        }),
+                arguments(Vector.int8Vector(new byte[]{}),
                         new byte[]{INT8_DTYPE, ZERO_PADDING}
-                }
+                )
         );
     }
 
@@ -122,9 +148,11 @@ class VectorHelperTest {
     @MethodSource("providePackedBitVectors")
     void shouldEncodePackedBitVector(final Vector actualPackedBitVector, final byte[] expectedBsonEncodedVector) {
         // when
-        byte[] actualBsonEncodedVector = VectorHelper.encodeVectorToBinary(actualPackedBitVector);
+        BsonBinary actualBsonBinary = new BsonBinary(actualPackedBitVector);
+        byte[] actualBsonEncodedVector = actualBsonBinary.getData();
 
         // then
+        assertEquals(BsonBinarySubType.VECTOR.getValue(), actualBsonBinary.getType(), "The subtype must be VECTOR");
         assertArrayEquals(expectedBsonEncodedVector, actualBsonEncodedVector);
     }
 
@@ -132,25 +160,22 @@ class VectorHelperTest {
     @MethodSource("providePackedBitVectors")
     void shouldDecodePackedBitVector(final PackedBitVector expectedPackedBitVector, final byte[] bsonEncodedVector) {
         // when
-        PackedBitVector decodedVector = (PackedBitVector) VectorHelper.decodeBinaryToVector(bsonEncodedVector);
+        PackedBitVector decodedVector = (PackedBitVector) new BsonBinary(BsonBinarySubType.VECTOR, bsonEncodedVector).asVector();
 
         // then
-        assertEquals(Vector.DataType.PACKED_BIT, decodedVector.getDataType());
-        assertArrayEquals(expectedPackedBitVector.getVectorArray(), decodedVector.getVectorArray());
-        assertEquals(expectedPackedBitVector.getPadding(), decodedVector.getPadding());
+        assertEquals(expectedPackedBitVector, decodedVector);
     }
 
-    private static Stream<Object[]> providePackedBitVectors() {
+    private static Stream<Arguments> providePackedBitVectors() {
         return Stream.of(
-                new Object[]{
+                arguments(
                         Vector.packedBitVector(new byte[]{(byte) 0, (byte) 255, (byte) 10}, (byte) 2),
                         new byte[]{PACKED_BIT_DTYPE, 2, (byte) 0, (byte) 255, (byte) 10}
-                },
-                new Object[]{
+                ),
+                arguments(
                         Vector.packedBitVector(new byte[0], (byte) 0),
                         new byte[]{PACKED_BIT_DTYPE, 0}
-                }
-        );
+                ));
     }
 
     @Test
@@ -159,10 +184,10 @@ class VectorHelperTest {
         byte[] invalidData = {FLOAT32_DTYPE, 0, 10, 20, 30};
 
         // when & Then
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
-            VectorHelper.decodeBinaryToVector(invalidData);
+        BsonInvalidOperationException thrown = assertThrows(BsonInvalidOperationException.class, () -> {
+           new BsonBinary(BsonBinarySubType.VECTOR, invalidData).asVector();
         });
-        assertEquals("state should be: Byte array length must be a multiple of 4 for FLOAT32 data type.", thrown.getMessage());
+        assertEquals("Byte array length must be a multiple of 4 for FLOAT32 data type.", thrown.getMessage());
     }
 
     @ParameterizedTest
@@ -172,10 +197,10 @@ class VectorHelperTest {
         byte[] invalidData = {FLOAT32_DTYPE, invalidPadding, 10, 20, 30, 20};
 
         // when & Then
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
-            VectorHelper.decodeBinaryToVector(invalidData);
+        BsonInvalidOperationException thrown = assertThrows(BsonInvalidOperationException.class, () -> {
+            new BsonBinary(BsonBinarySubType.VECTOR, invalidData).asVector();
         });
-        assertEquals("state should be: Padding must be 0 for FLOAT32 data type.", thrown.getMessage());
+        assertEquals("Padding must be 0 for FLOAT32 data type, but found: " + invalidPadding, thrown.getMessage());
     }
 
     @ParameterizedTest
@@ -185,10 +210,10 @@ class VectorHelperTest {
         byte[] invalidData = {INT8_DTYPE, invalidPadding, 10, 20, 30, 20};
 
         // when & Then
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
-            VectorHelper.decodeBinaryToVector(invalidData);
+        BsonInvalidOperationException thrown = assertThrows(BsonInvalidOperationException.class, () -> {
+            new BsonBinary(BsonBinarySubType.VECTOR, invalidData).asVector();
         });
-        assertEquals("state should be: Padding must be 0 for INT8 data type.", thrown.getMessage());
+        assertEquals("Padding must be 0 for INT8 data type, but found: " + invalidPadding, thrown.getMessage());
     }
 
     @ParameterizedTest
@@ -197,11 +222,11 @@ class VectorHelperTest {
         // given
         byte[] invalidData = {PACKED_BIT_DTYPE, invalidPadding, 10, 20, 30, 20};
 
-        // when & Then
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
-            VectorHelper.decodeBinaryToVector(invalidData);
+        // when & then
+        BsonInvalidOperationException thrown = assertThrows(BsonInvalidOperationException.class, () -> {
+            new BsonBinary(BsonBinarySubType.VECTOR, invalidData).asVector();
         });
-        assertEquals("state should be: Padding must be between 0 and 7 bits.", thrown.getMessage());
+        assertEquals("Padding must be between 0 and 7 bits, but found: " + invalidPadding, thrown.getMessage());
     }
 
     @ParameterizedTest
@@ -211,29 +236,16 @@ class VectorHelperTest {
         byte[] invalidData = {PACKED_BIT_DTYPE, invalidPadding};
 
         // when & Then
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
-            VectorHelper.decodeBinaryToVector(invalidData);
+        BsonInvalidOperationException thrown = assertThrows(BsonInvalidOperationException.class, () -> {
+            new BsonBinary(BsonBinarySubType.VECTOR, invalidData).asVector();
         });
-        assertEquals("state should be: Padding must be 0 if vector is empty.", thrown.getMessage());
-    }
-
-    @Test
-    void shouldDetermineVectorDType() {
-        // given
-        Vector.DataType[] values = Vector.DataType.values();
-
-        for (Vector.DataType value : values) {
-            // when
-            byte dtype = value.getValue();
-            Vector.DataType actual = VectorHelper.determineVectorDType(dtype);
-
-            // then
-            assertEquals(value, actual);
-        }
+        assertEquals("Padding must be 0 if vector is empty, but found: " + invalidPadding, thrown.getMessage());
     }
 
     @Test
     void shouldThrowWhenUnknownVectorDType() {
-        assertThrows(IllegalStateException.class, () -> VectorHelper.determineVectorDType((byte) 0));
+        // when
+        BsonBinary bsonBinary = new BsonBinary(BsonBinarySubType.VECTOR, new byte[]{(byte) 0});
+        assertThrows(BsonInvalidOperationException.class, bsonBinary::asVector);
     }
 }

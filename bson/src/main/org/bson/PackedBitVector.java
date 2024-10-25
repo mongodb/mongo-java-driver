@@ -16,9 +16,8 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
-
 import java.util.Arrays;
+import java.util.Objects;
 
 import static org.bson.assertions.Assertions.assertNotNull;
 
@@ -31,18 +30,16 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see Vector#packedBitVector(byte[], byte)
  * @see BsonBinary#BsonBinary(Vector)
  * @see BsonBinary#asVector()
- * @see Binary#Binary(Vector)
- * @see Binary#asVector()
  * @since 5.3
  */
 public final class PackedBitVector extends Vector {
 
     private final byte padding;
-    private final byte[] vectorData;
+    private final byte[] data;
 
-    PackedBitVector(final byte[] vectorData, final byte padding) {
+    PackedBitVector(final byte[] data, final byte padding) {
         super(DataType.PACKED_BIT);
-        this.vectorData = assertNotNull(vectorData);
+        this.data = assertNotNull(data);
         this.padding = padding;
     }
 
@@ -56,15 +53,15 @@ public final class PackedBitVector extends Vector {
      * @return the underlying byte array representing this {@link PackedBitVector} vector.
      * @see #getPadding()
      */
-    public byte[] getVectorArray() {
-        return assertNotNull(vectorData);
+    public byte[] getData() {
+        return assertNotNull(data);
     }
 
     /**
      * Returns the padding value for this vector.
      *
      * <p>Padding refers to the number of least-significant bits in the final byte that are ignored when retrieving
-     * {@linkplain #getVectorArray() the vector array). For instance, if the padding value is 3, this means that the last byte contains
+     * {@linkplain #getData() the vector array}. For instance, if the padding value is 3, this means that the last byte contains
      * 3 least-significant unused bits, which should be disregarded during operations.</p>
      * <p>
      *
@@ -81,25 +78,24 @@ public final class PackedBitVector extends Vector {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof PackedBitVector)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         PackedBitVector that = (PackedBitVector) o;
-        return padding == that.padding && Arrays.equals(vectorData, that.vectorData);
+        return padding == that.padding && Arrays.equals(data, that.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(padding, Arrays.hashCode(vectorData));
+        return Objects.hash(padding, Arrays.hashCode(data));
     }
 
     @Override
     public String toString() {
         return "PackedBitVector{"
                 + "padding=" + padding
-                + ", vectorData=" + Arrays.toString(vectorData)
-                + ", vectorType=" + getDataType()
+                + ", data=" + Arrays.toString(data)
+                + ", dataType=" + getDataType()
                 + '}';
     }
 }

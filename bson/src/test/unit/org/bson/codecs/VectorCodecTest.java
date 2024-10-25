@@ -18,40 +18,38 @@ package org.bson.codecs;
 
 import org.bson.BSONException;
 import org.bson.BsonBinary;
+import org.bson.BsonBinaryReader;
 import org.bson.BsonBinarySubType;
-import org.bson.BsonReader;
+import org.bson.BsonBinaryWriter;
+import org.bson.BsonDocument;
+import org.bson.BsonType;
 import org.bson.BsonWriter;
-import org.bson.Document;
+import org.bson.ByteBufNIO;
 import org.bson.Float32Vector;
 import org.bson.Int8Vector;
 import org.bson.PackedBitVector;
 import org.bson.Vector;
-import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.io.BasicOutputBuffer;
+import org.bson.io.ByteBufferBsonInput;
 import org.bson.io.OutputBuffer;
-import org.bson.types.Binary;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mockito;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.BsonHelper.toBson;
+import static org.bson.assertions.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 class VectorCodecTest extends CodecTestCase {
-
-    private static final CodecRegistry CODEC_REGISTRIES = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider()));
 
     private static Stream<Arguments> provideVectorsAndCodecsForRoundTrip() {
         return Stream.of(
@@ -66,47 +64,56 @@ class VectorCodecTest extends CodecTestCase {
 
     @ParameterizedTest
     @MethodSource("provideVectorsAndCodecsForRoundTrip")
-    void shouldRoundTripVectors(final Vector vectorToEncode) {
-        //given
-        Document expectedDocument = new Document("vector", vectorToEncode);
-
-        //when
-        Codec<Document> codec = CODEC_REGISTRIES.get(Document.class);
-        OutputBuffer buffer = encode(codec, expectedDocument);
-        Document actualDecodedDocument = decode(codec, buffer);
-
-        //then
-        Binary binaryVector = (Binary) actualDecodedDocument.get("vector");
-        assertNotEquals(actualDecodedDocument, expectedDocument);
-        Vector actualVector = binaryVector.asVector();
-        assertEquals(actualVector, vectorToEncode);
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideVectorsAndCodecsForRoundTrip")
-    void shouldEncodeVector(final Vector vectorToEncode, final Codec<Vector> vectorCodec) {
+    void shouldEncodeVector(final Vector vectorToEncode, final Codec<Vector> vectorCodec) throws IOException {
         // given
-        BsonWriter mockWriter = Mockito.mock(BsonWriter.class);
+        BsonBinary bsonBinary = new BsonBinary(vectorToEncode);
+        byte[] encodedVector = bsonBinary.getData();
+        ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
+        // Start of document with total length of 4 bytes (little-endian format)
+        byte totalDocumentLength = (byte) (14 + encodedVector.length);
+        expectedStream.write(new byte[]{totalDocumentLength, 0, 0, 0});
+        // Bson type for vector
+        expectedStream.write((byte) BsonType.BINARY.getValue());
+        // Field name "b4" (ASCII for 'b', '4', null terminator)
+        expectedStream.write(new byte[]{98, 52, 0});
+        // Total length of binary data (little-endian format)
+        expectedStream.write(new byte[]{(byte) encodedVector.length, 0, 0, 0});
+        // Vector binary subtype
+        expectedStream.write(BsonBinarySubType.VECTOR.getValue());
+        // Actual BSON binary data
+        expectedStream.write(encodedVector);
+        // End of document
+        expectedStream.write(0);
+
+        OutputBuffer buffer = new BasicOutputBuffer();
+        BsonWriter writer = new BsonBinaryWriter(buffer);
+        writer.writeStartDocument();
+        writer.writeName("b4");
 
         // when
-        vectorCodec.encode(mockWriter, vectorToEncode, EncoderContext.builder().build());
+        vectorCodec.encode(writer, vectorToEncode, EncoderContext.builder().build());
+        writer.writeEndDocument();
 
         // then
-        verify(mockWriter, times(1)).writeBinaryData(new BsonBinary(vectorToEncode));
-        verifyNoMoreInteractions(mockWriter);
+        assertArrayEquals(expectedStream.toByteArray(), buffer.toByteArray());
     }
 
     @ParameterizedTest
     @MethodSource("provideVectorsAndCodecsForRoundTrip")
     void shouldDecodeVector(final Vector vectorToDecode, final Codec<Vector> vectorCodec) {
         // given
-        BsonReader mockReader = Mockito.mock(BsonReader.class);
-        BsonBinary bsonBinary = new BsonBinary(vectorToDecode);
-        when(mockReader.peekBinarySubType()).thenReturn(BsonBinarySubType.VECTOR.getValue());
-        when(mockReader.readBinaryData()).thenReturn(bsonBinary);
+        OutputBuffer buffer = new BasicOutputBuffer();
+        BsonWriter writer = new BsonBinaryWriter(buffer);
+        writer.writeStartDocument();
+        writer.writeName("vector");
+        writer.writeBinaryData(new BsonBinary(vectorToDecode));
+        writer.writeEndDocument();
+
+        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))));
+        reader.readStartDocument();
 
         // when
-        Vector decodedVector = vectorCodec.decode(mockReader, DecoderContext.builder().build());
+        Vector decodedVector = vectorCodec.decode(reader, DecoderContext.builder().build());
 
         // then
         assertNotNull(decodedVector);
@@ -118,37 +125,30 @@ class VectorCodecTest extends CodecTestCase {
     @EnumSource(value = BsonBinarySubType.class, mode = EnumSource.Mode.EXCLUDE, names = {"VECTOR"})
     void shouldThrowExceptionForInvalidSubType(final BsonBinarySubType subType) {
         // given
-        BsonReader mockReader = Mockito.mock(BsonReader.class);
-        when(mockReader.peekBinarySubType()).thenReturn(subType.getValue());
+        BsonDocument document = new BsonDocument("name", new BsonBinary(subType.getValue(), new byte[]{}));
+        BsonBinaryReader reader = new BsonBinaryReader(toBson(document));
+        reader.readStartDocument();
 
+        // when & then
         Stream.of(new Float32VectorCodec(), new Int8VectorCodec(), new PackedBitVectorCodec())
                 .forEach(codec -> {
-                    // when & then
                     BSONException exception = assertThrows(BSONException.class, () ->
-                            codec.decode(mockReader, DecoderContext.builder().build()));
-                    assertEquals("Unexpected BsonBinarySubType", exception.getMessage());
+                            codec.decode(reader, DecoderContext.builder().build()));
+                    assertEquals("Expected vector binary subtype 9 but found: " + subType.getValue(), exception.getMessage());
                 });
     }
 
 
     @ParameterizedTest
     @MethodSource("provideVectorsAndCodecsForRoundTrip")
-    void shouldReturnCorrectEncoderClass(final Vector vector, final Codec<? extends Vector> codec, final Class<? extends Vector> expectedEncoderClass) {
+    void shouldReturnCorrectEncoderClass(final Vector vector,
+                                         final Codec<? extends Vector> codec,
+                                         final Class<? extends Vector> expectedEncoderClass) {
         // when
         Class<? extends Vector> encoderClass = codec.getEncoderClass();
 
         // then
         assertEquals(expectedEncoderClass, encoderClass);
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideVectorsCodec")
-    void shouldConvertToString(final Codec<Vector> codec) {
-        // when
-        String result = codec.toString();
-
-        // then
-        assertEquals(codec.getClass().getSimpleName() + "{}", result);
     }
 
     private static Stream<Codec<? extends Vector>> provideVectorsCodec() {

@@ -26,6 +26,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.OperationTest;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
+import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
 import org.bson.Float32Vector;
 import org.bson.Int8Vector;
@@ -52,8 +53,9 @@ import static org.bson.Vector.DataType.INT8;
 import static org.bson.Vector.DataType.PACKED_BIT;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public abstract class VectorAbstractFunctionalTest extends OperationTest {
+public abstract class AbstractVectorFunctionalTest extends OperationTest {
 
     private static final byte VECTOR_SUBTYPE = BsonBinarySubType.VECTOR.getValue();
     private static final String FIELD_VECTOR = "vector";
@@ -77,11 +79,12 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
     }
 
     @AfterEach
+    @SuppressWarnings("try")
     public void afterEach() {
         super.afterEach();
-        if (mongoClient != null) {
-            mongoClient.close();
-        }
+       try (MongoClient ignore = mongoClient) {
+           //NOOP
+       }
     }
 
     private static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
@@ -101,11 +104,11 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
         documentCollection.insertOne(new Document(FIELD_VECTOR, invalidVector));
 
         // when & then
-        Binary invalidVectorBinary = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Binary.class);
-
-        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, invalidVectorBinary::asVector);
-        Assertions.assertEquals("state should be: Padding must be 0 if vector is empty.", exception.getMessage());
+        BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
+            findExactlyOne(documentCollection)
+                    .get(FIELD_VECTOR, Vector.class);
+        });
+        assertEquals("Padding must be 0 if vector is empty, but found: " + invalidPadding, exception.getMessage());
     }
 
     @ParameterizedTest
@@ -116,11 +119,11 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
         documentCollection.insertOne(new Document(FIELD_VECTOR, invalidVector));
 
         // when & then
-        Binary invalidVectorBinary = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Binary.class);
-
-        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, invalidVectorBinary::asVector);
-        Assertions.assertEquals("state should be: Padding must be 0 for FLOAT32 data type.", exception.getMessage());
+       BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
+            findExactlyOne(documentCollection)
+                    .get(FIELD_VECTOR, Vector.class);
+        });
+        assertEquals("Padding must be 0 for FLOAT32 data type, but found: " + invalidPadding, exception.getMessage());
     }
 
     @ParameterizedTest
@@ -131,11 +134,11 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
         documentCollection.insertOne(new Document(FIELD_VECTOR, invalidVector));
 
         // when & then
-        Binary invalidVectorBinary = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Binary.class);
-
-        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, invalidVectorBinary::asVector);
-        Assertions.assertEquals("state should be: Padding must be 0 for INT8 data type.", exception.getMessage());
+        BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
+            findExactlyOne(documentCollection)
+                    .get(FIELD_VECTOR, Vector.class);
+        });
+        assertEquals("Padding must be 0 for INT8 data type, but found: " + invalidPadding, exception.getMessage());
     }
 
     @ParameterizedTest
@@ -146,11 +149,11 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
         documentCollection.insertOne(new Document(FIELD_VECTOR, invalidVector));
 
         // when & then
-        Binary invalidVectorBinary = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Binary.class);
-
-        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, invalidVectorBinary::asVector);
-        Assertions.assertEquals("state should be: Padding must be between 0 and 7 bits.", exception.getMessage());
+        BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
+            findExactlyOne(documentCollection)
+                    .get(FIELD_VECTOR, Vector.class);
+        });
+        assertEquals("Padding must be between 0 and 7 bits, but found: " + invalidPadding, exception.getMessage());
     }
 
     private static Stream<Vector> provideValidVectors() {
@@ -163,44 +166,31 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
 
     @ParameterizedTest
     @MethodSource("provideValidVectors")
-    void shouldStoreAndRetrieveValidVector(final Vector actualVector) {
+    void shouldStoreAndRetrieveValidVector(final Vector expectedVector) {
         // Given
-        Document documentToInsert = new Document(FIELD_VECTOR, actualVector);
+        Document documentToInsert = new Document(FIELD_VECTOR, expectedVector)
+                .append("otherField", 1); // to test that the next field is not affected
         documentCollection.insertOne(documentToInsert);
 
         // when & then
-        Binary vectorBinary = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Binary.class);
+        Vector actualVector = findExactlyOne(documentCollection)
+                .get(FIELD_VECTOR, Vector.class);
 
-        Assertions.assertEquals(actualVector, vectorBinary.asVector());
+        assertEquals(expectedVector, actualVector);
     }
 
     @ParameterizedTest
     @MethodSource("provideValidVectors")
-    void shouldStoreAndRetrieveValidVectorWithBinary(final Vector actualVector) {
-        // given
-        Document documentToInsert = new Document(FIELD_VECTOR, new Binary(actualVector));
-        documentCollection.insertOne(documentToInsert);
-
-        // when & then
-        Binary vectorBinary = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Binary.class);
-
-        Assertions.assertEquals(actualVector, vectorBinary.asVector());
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideValidVectors")
-    void shouldStoreAndRetrieveValidVectorWithBsonBinary(final Vector actualVector) {
+    void shouldStoreAndRetrieveValidVectorWithBsonBinary(final Vector expectedVector) {
         // Given
-        Document documentToInsert = new Document(FIELD_VECTOR, new BsonBinary(actualVector));
+        Document documentToInsert = new Document(FIELD_VECTOR, new BsonBinary(expectedVector));
         documentCollection.insertOne(documentToInsert);
 
         // when & then
-        Binary vectorBinary = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Binary.class);
+        Vector actualVector = findExactlyOne(documentCollection)
+                .get(FIELD_VECTOR, Vector.class);
 
-        Assertions.assertEquals(actualVector, vectorBinary.asVector());
+        assertEquals(actualVector, actualVector);
     }
 
     @Test
@@ -217,7 +207,7 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
 
         // then
         Assertions.assertNotNull(floatVectorPojo);
-        Assertions.assertEquals(vector, floatVectorPojo.getVector());
+        assertEquals(vector, floatVectorPojo.getVector());
     }
 
     @Test
@@ -234,7 +224,7 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
 
         // then
         Assertions.assertNotNull(int8VectorPojo);
-        Assertions.assertEquals(vector, int8VectorPojo.getVector());
+        assertEquals(vector, int8VectorPojo.getVector());
     }
 
     @Test
@@ -252,7 +242,7 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
 
         // then
         Assertions.assertNotNull(packedBitVectorPojo);
-        Assertions.assertEquals(vector, packedBitVectorPojo.getVector());
+        assertEquals(vector, packedBitVectorPojo.getVector());
     }
 
     @ParameterizedTest
@@ -269,15 +259,13 @@ public abstract class VectorAbstractFunctionalTest extends OperationTest {
 
         //then
         Assertions.assertNotNull(vectorPojo);
-        Assertions.assertEquals(actualVector, vectorPojo.getVector());
+        assertEquals(actualVector, vectorPojo.getVector());
     }
 
     private Document findExactlyOne(final MongoCollection<Document> collection) {
         List<Document> documents = new ArrayList<>();
         collection.find().into(documents);
-        if (documents.size() != 1) {
-            throw new IllegalStateException("Expected exactly one document, but found: " + documents.size());
-        }
+        assertEquals(1, documents.size(), "Expected exactly one document, but found: " + documents.size());
         return documents.get(0);
     }
 

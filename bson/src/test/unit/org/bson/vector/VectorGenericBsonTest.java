@@ -47,24 +47,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-// BSON tests powered by language-agnostic JSON-based tests included in test resources
+/**
+ * See
+ * <a href="https://github.com/mongodb/specifications/tree/master/source/bson-binary-vector/tests">JSON-based tests that included in test resources</a>.
+ */
 class VectorGenericBsonTest {
 
     private static final List<String> TEST_NAMES_TO_IGNORE = Arrays.asList(
-            //NO API to set padding for Floats available
+            //NO API to set padding for floats available.
             "FLOAT32 with padding",
-            //NO API to set padding for Floats available
+            //NO API to set padding for floats available.
             "INT8 with padding",
-            //It is impossible to provide float inputs for INT8 in the API
+            //It is impossible to provide float inputs for INT8 in the API.
             "INT8 with float inputs",
-            //It is impossible to provide float inputs for INT8
+            //It is impossible to provide float inputs for INT8.
             "Underflow Vector PACKED_BIT",
-            //It is impossible to provide float inputs for PACKED_BIT in the API
+            //It is impossible to provide float inputs for PACKED_BIT in the API.
             "Vector with float values PACKED_BIT",
-            //It is impossible to provide float inputs for INT8
+            //It is impossible to provide float inputs for INT8.
             "Overflow Vector PACKED_BIT",
+            //It is impossible to overflow byte with values higher than 127 in the API.
             "Overflow Vector INT8",
-            // It is impossible to provide -129 for byte.
+            //It is impossible to underflow byte with values lower than -128 in the API.
             "Underflow Vector INT8");
 
 
@@ -83,7 +87,7 @@ class VectorGenericBsonTest {
         }
     }
 
-    private void runInvalidTestCase(final BsonDocument testCase) {
+    private static void runInvalidTestCase(final BsonDocument testCase) {
         BsonArray arrayVector = testCase.getArray("vector");
         byte expectedPadding = (byte) testCase.getInt32("padding").getValue();
         byte dtypeByte = Byte.decode(testCase.getString("dtype_hex").getValue());
@@ -109,7 +113,7 @@ class VectorGenericBsonTest {
         }
     }
 
-    private void runValidTestCase(final String testKey, final BsonDocument testCase) {
+    private static void runValidTestCase(final String testKey, final BsonDocument testCase) {
         String description = testCase.getString("description").getValue();
         byte dtypeByte = Byte.decode(testCase.getString("dtype_hex").getValue());
 
@@ -124,7 +128,7 @@ class VectorGenericBsonTest {
         switch (expectedDType) {
             case INT8:
                 byte[] expectedVectorData = toByteArray(arrayVector);
-                byte[] actualVectorData = actualVector.asInt8Vector().getVectorArray();
+                byte[] actualVectorData = actualVector.asInt8Vector().getData();
                 assertVectorDecoding(
                         expectedVectorData,
                         expectedDType,
@@ -186,7 +190,7 @@ class VectorGenericBsonTest {
                 format("Failed to create expected BSON for document with description '%s'", description));
     }
 
-    private void assertVectorDecoding(final byte[] expectedVectorData,
+    private static void assertVectorDecoding(final byte[] expectedVectorData,
                                       final Vector.DataType expectedDType,
                                       final byte[] actualVectorData,
                                       final Vector actualVector) {
@@ -195,11 +199,11 @@ class VectorGenericBsonTest {
         assertEquals(expectedDType, actualVector.getDataType());
     }
 
-    private void assertVectorDecoding(final byte[] expectedVectorData,
+    private static void assertVectorDecoding(final byte[] expectedVectorData,
                                       final Vector.DataType expectedDType,
                                       final byte expectedPadding,
                                       final PackedBitVector actualVector) {
-        byte[] actualVectorData = actualVector.getVectorArray();
+        byte[] actualVectorData = actualVector.getData();
         assertVectorDecoding(
                 expectedVectorData,
                 expectedDType,
@@ -208,16 +212,16 @@ class VectorGenericBsonTest {
         assertEquals(expectedPadding, actualVector.getPadding());
     }
 
-    private void assertVectorDecoding(final float[] expectedVectorData,
+    private static void assertVectorDecoding(final float[] expectedVectorData,
                                       final Vector.DataType expectedDType,
                                       final Float32Vector actualVector) {
-        float[] actualVectorArray = actualVector.getVectorArray();
+        float[] actualVectorArray = actualVector.getData();
         Assertions.assertArrayEquals(actualVectorArray, expectedVectorData,
                 () -> "Actual: " + Arrays.toString(actualVectorArray) + " !=  Expected:" + Arrays.toString(expectedVectorData));
         assertEquals(expectedDType, actualVector.getDataType());
     }
 
-    private byte[] toByteArray(final BsonArray arrayVector) {
+    private static byte[] toByteArray(final BsonArray arrayVector) {
         byte[] bytes = new byte[arrayVector.size()];
         for (int i = 0; i < arrayVector.size(); i++) {
             bytes[i] = (byte) arrayVector.get(i).asInt32().getValue();
@@ -225,7 +229,7 @@ class VectorGenericBsonTest {
         return bytes;
     }
 
-    private float[] toFloatArray(final BsonArray arrayVector) {
+    private static float[] toFloatArray(final BsonArray arrayVector) {
         float[] floats = new float[arrayVector.size()];
         for (int i = 0; i < arrayVector.size(); i++) {
             BsonValue bsonValue = arrayVector.get(i);
@@ -265,8 +269,8 @@ class VectorGenericBsonTest {
     private static String createTestCaseDescription(final BsonDocument testDocument,
                                                     final BsonDocument testCaseDocument) {
         boolean isValidTestCase = testCaseDocument.getBoolean("valid").getValue();
-        String testSuiteDescription = testDocument.getString("description").getValue();
-        String testCaseDescription = testCaseDocument.getString("description").getValue();
-        return "[Valid input: " + isValidTestCase + "] " + testSuiteDescription + ": " + testCaseDescription;
+        String fileDescription = testDocument.getString("description").getValue();
+        String testDescription = testCaseDocument.getString("description").getValue();
+        return "[Valid input: " + isValidTestCase + "] " + fileDescription + ": " + testDescription;
     }
 }
