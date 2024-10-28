@@ -16,7 +16,7 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONException;
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonBinary;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinarySubType;
@@ -132,7 +132,7 @@ class VectorCodecTest extends CodecTestCase {
         // when & then
         Stream.of(new Float32VectorCodec(), new Int8VectorCodec(), new PackedBitVectorCodec())
                 .forEach(codec -> {
-                    BSONException exception = assertThrows(BSONException.class, () ->
+                    BsonInvalidOperationException exception = assertThrows(BsonInvalidOperationException.class, () ->
                             codec.decode(reader, DecoderContext.builder().build()));
                     assertEquals("Expected vector binary subtype 9 but found: " + subType.getValue(), exception.getMessage());
                 });
