@@ -18,8 +18,6 @@ package org.mongodb.scala.model
 
 import com.mongodb.client.model.GeoNearOptions.geoNearOptions
 import com.mongodb.client.model.fill.FillOutputField
-
-import java.lang.reflect.Modifier._
 import org.bson.BsonDocument
 import org.mongodb.scala.bson.BsonArray
 import org.mongodb.scala.bson.collection.immutable.Document
@@ -34,15 +32,19 @@ import org.mongodb.scala.model.Windows.{ documents, range }
 import org.mongodb.scala.model.densify.DensifyRange.fullRangeWithStep
 import org.mongodb.scala.model.fill.FillOptions.fillOptions
 import org.mongodb.scala.model.geojson.{ Point, Position }
+import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
-import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchOperator.exists
 import org.mongodb.scala.model.search.SearchOptions.searchOptions
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 import org.mongodb.scala.model.search.VectorSearchOptions.{ approximateVectorSearchOptions, exactVectorSearchOptions }
 import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
+import org.scalatest.prop.TableDrivenPropertyChecks.forAll
+import org.scalatest.prop.Tables.Table
+
+import java.lang.reflect.Modifier._
 
 class AggregatesSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY
@@ -763,11 +765,85 @@ class AggregatesSpec extends BaseSpec {
     )
   }
 
-  it should "render approximate $vectorSearch" in {
+  val vectorTestCases = Table(
+    ("vector", "queryVector"),
+    (
+      org.bson.Vector.int8Vector(Array(127.toByte, 7.toByte)),
+      """{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}"""
+    ),
+    (
+      org.bson.Vector.floatVector(Array(127.0f, 7.0f)),
+      """{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}"""
+    ),
+    (
+      org.bson.Vector.packedBitVector(Array(127.toByte, 7.toByte), 0.toByte),
+      """{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}"""
+    )
+  )
+
+  it should "render approximate $vectorSearch with Vector" in {
+    forAll(vectorTestCases) { (vector: org.bson.Vector, expectedSerializedVector: String) =>
+      toBson(
+        Aggregates.vectorSearch(
+          fieldPath("fieldName").multi("ignored"),
+          vector,
+          "indexName",
+          1,
+          approximateVectorSearchOptions(2)
+            .filter(Filters.ne("fieldName", "fieldValue"))
+        )
+      ) should equal(
+        Document(
+          s"""{
+             |  "$$vectorSearch": {
+             |    "path": "fieldName",
+             |    "queryVector": $expectedSerializedVector,
+             |    "index": "indexName",
+             |    "limit": {"$$numberLong": "1"},
+             |    "numCandidates": {"$$numberLong": "2"},
+             |    "filter": {"fieldName": {"$$ne": "fieldValue"}}
+             |  }
+             |}""".stripMargin
+        )
+      )
+    }
+  }
+
+  it should "render exact $vectorSearch with Vector" in {
+    forAll(vectorTestCases) { (vector: org.bson.Vector, expectedSerializedVector: String) =>
+      toBson(
+        Aggregates.vectorSearch(
+          fieldPath("fieldName").multi("ignored"),
+          vector,
+          "indexName",
+          1,
+          exactVectorSearchOptions()
+            .filter(Filters.ne("fieldName", "fieldValue"))
+        )
+      ) should equal(
+        Document(
+          s"""{
+             |  "$$vectorSearch": {
+             |    "path": "fieldName",
+             |    "queryVector": $expectedSerializedVector,
+             |    "index": "indexName",
+             |    "exact": true,
+             |    "limit": {"$$numberLong": "1"},
+             |    "filter": {"fieldName": {"$$ne": "fieldValue"}}
+             |  }
+             |}""".stripMargin
+        )
+      )
+    }
+  }
+
+  it should "render approximate $vectorSearch with List" in {
+    val queryVectorJava: List[java.lang.Double] = List(1.0d, 2.0d)
+
     toBson(
       Aggregates.vectorSearch(
         fieldPath("fieldName").multi("ignored"),
-        List(1.0d, 2.0d),
+        queryVectorJava,
         "indexName",
         1,
         approximateVectorSearchOptions(2)
@@ -789,11 +865,13 @@ class AggregatesSpec extends BaseSpec {
     )
   }
 
-  it should "render exact $vectorSearch" in {
+  it should "render exact $vectorSearch with List" in {
+    val queryVectorJava: List[java.lang.Double] = List(1.0d, 2.0d)
+
     toBson(
       Aggregates.vectorSearch(
         fieldPath("fieldName").multi("ignored"),
-        List(1.0d, 2.0d),
+        queryVectorJava,
         "indexName",
         1,
         exactVectorSearchOptions()

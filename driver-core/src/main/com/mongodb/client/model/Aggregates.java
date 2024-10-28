@@ -37,6 +37,7 @@ import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.Vector;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -963,28 +964,37 @@ public final class Aggregates {
         notNull("queryVector", queryVector);
         notNull("index", index);
         notNull("options", options);
-        return new Bson() {
-            @Override
-            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-                Document specificationDoc = new Document("path", path.toValue())
-                        .append("queryVector", queryVector)
-                        .append("index", index)
-                        .append("limit", limit);
-                specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
-                return new Document("$vectorSearch", specificationDoc).toBsonDocument(documentClass, codecRegistry);
-            }
+        return new VectorSearchBson<>(path, queryVector, index, limit, options);
+    }
 
-            @Override
-            public String toString() {
-                return "Stage{name=$vectorSearch"
-                        + ", path=" + path
-                        + ", queryVector=" + queryVector
-                        + ", index=" + index
-                        + ", limit=" + limit
-                        + ", options=" + options
-                        + '}';
-            }
-        };
+    /**
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     *
+     * @param queryVector The {@linkplain Vector query vector}. The number of dimensions must match that of the {@code index}.
+     * @param path        The field to be searched.
+     * @param index       The name of the index to use.
+     * @param limit       The limit on the number of documents produced by the pipeline stage.
+     * @param options     Optional {@code $vectorSearch} pipeline stage fields.
+     * @return The {@code $vectorSearch} pipeline stage.
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @mongodb.server.release 6.0.11
+     * @see Vector
+     * @since 5.3
+     */
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final Vector queryVector,
+            final String index,
+            final long limit,
+            final VectorSearchOptions options) {
+        notNull("path", path);
+        notNull("queryVector", queryVector);
+        notNull("index", index);
+        notNull("options", options);
+        return new VectorSearchBson<>(path, queryVector, index, limit, options);
     }
 
     /**
@@ -2140,6 +2150,45 @@ public final class Aggregates {
             return "Stage{"
                     + "name='" + name + "'"
                     + ", operatorOrCollector=" + operatorOrCollector
+                    + ", options=" + options
+                    + '}';
+        }
+    }
+
+    private static class VectorSearchBson<T> implements Bson {
+        private final FieldSearchPath path;
+        private final T queryVector;
+        private final String index;
+        private final long limit;
+        private final VectorSearchOptions options;
+
+        VectorSearchBson(final FieldSearchPath path, final T queryVector,
+                                final String index, final long limit,
+                                final VectorSearchOptions options) {
+            this.path = path;
+            this.queryVector = queryVector;
+            this.index = index;
+            this.limit = limit;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            Document specificationDoc = new Document("path", path.toValue())
+                    .append("queryVector", queryVector)
+                    .append("index", index)
+                    .append("limit", limit);
+            specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+            return new Document("$vectorSearch", specificationDoc).toBsonDocument(documentClass, codecRegistry);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$vectorSearch"
+                    + ", path=" + path
+                    + ", queryVector=" + queryVector
+                    + ", index=" + index
+                    + ", limit=" + limit
                     + ", options=" + options
                     + '}';
         }

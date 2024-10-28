@@ -23,6 +23,7 @@ import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
+import org.bson.Vector
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -30,59 +31,12 @@ import spock.lang.Specification
 import static BucketGranularity.R5
 import static MongoTimeUnit.DAY
 import static com.mongodb.ClusterFixture.serverVersionLessThan
-import static com.mongodb.client.model.Accumulators.accumulator
-import static com.mongodb.client.model.Accumulators.addToSet
-import static com.mongodb.client.model.Accumulators.avg
-import static com.mongodb.client.model.Accumulators.bottom
-import static com.mongodb.client.model.Accumulators.bottomN
-import static com.mongodb.client.model.Accumulators.first
-import static com.mongodb.client.model.Accumulators.firstN
-import static com.mongodb.client.model.Accumulators.last
-import static com.mongodb.client.model.Accumulators.lastN
-import static com.mongodb.client.model.Accumulators.max
-import static com.mongodb.client.model.Accumulators.maxN
-import static com.mongodb.client.model.Accumulators.mergeObjects
-import static com.mongodb.client.model.Accumulators.min
-import static com.mongodb.client.model.Accumulators.minN
-import static com.mongodb.client.model.Accumulators.push
-import static com.mongodb.client.model.Accumulators.stdDevPop
-import static com.mongodb.client.model.Accumulators.stdDevSamp
-import static com.mongodb.client.model.Accumulators.sum
-import static com.mongodb.client.model.Accumulators.top
-import static com.mongodb.client.model.Accumulators.topN
-import static com.mongodb.client.model.Aggregates.addFields
-import static com.mongodb.client.model.Aggregates.bucket
-import static com.mongodb.client.model.Aggregates.bucketAuto
-import static com.mongodb.client.model.Aggregates.count
-import static com.mongodb.client.model.Aggregates.densify
-import static com.mongodb.client.model.Aggregates.fill
-import static com.mongodb.client.model.Aggregates.graphLookup
-import static com.mongodb.client.model.Aggregates.group
-import static com.mongodb.client.model.Aggregates.limit
-import static com.mongodb.client.model.Aggregates.lookup
-import static com.mongodb.client.model.Aggregates.match
-import static com.mongodb.client.model.Aggregates.merge
-import static com.mongodb.client.model.Aggregates.out
-import static com.mongodb.client.model.Aggregates.project
-import static com.mongodb.client.model.Aggregates.replaceRoot
-import static com.mongodb.client.model.Aggregates.replaceWith
-import static com.mongodb.client.model.Aggregates.sample
-import static com.mongodb.client.model.Aggregates.search
-import static com.mongodb.client.model.Aggregates.searchMeta
-import static com.mongodb.client.model.Aggregates.set
-import static com.mongodb.client.model.Aggregates.setWindowFields
-import static com.mongodb.client.model.Aggregates.skip
-import static com.mongodb.client.model.Aggregates.sort
-import static com.mongodb.client.model.Aggregates.sortByCount
-import static com.mongodb.client.model.Aggregates.unionWith
-import static com.mongodb.client.model.Aggregates.unwind
-import static com.mongodb.client.model.Aggregates.vectorSearch
+import static com.mongodb.client.model.Accumulators.*
+import static com.mongodb.client.model.Aggregates.*
 import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
-import static com.mongodb.client.model.Projections.computed
-import static com.mongodb.client.model.Projections.fields
-import static com.mongodb.client.model.Projections.include
+import static com.mongodb.client.model.Projections.*
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Windows.Bound.CURRENT
@@ -855,7 +809,7 @@ class AggregatesSpecification extends Specification {
         BsonDocument vectorSearchDoc = toBson(
                 vectorSearch(
                         fieldPath('fieldName').multi('ignored'),
-                        [1.0d, 2.0d],
+                        vector,
                         'indexName',
                         1,
                         approximateVectorSearchOptions(2)
@@ -868,13 +822,20 @@ class AggregatesSpecification extends Specification {
         vectorSearchDoc == parse('''{
                 "$vectorSearch": {
                     "path": "fieldName",
-                    "queryVector": [1.0, 2.0],
+                    "queryVector": ''' + queryVector + ''',
                     "index": "indexName",
                     "numCandidates": {"$numberLong": "2"},
                     "limit": {"$numberLong": "1"},
                     "filter": {"fieldName": {"$ne": "fieldValue"}}
                 }
         }''')
+
+        where:
+        vectorType | vector                                      | queryVector
+        "int8"     | Vector.int8Vector(new byte[]{127, 7})         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        "float32"  | Vector.floatVector(new float[]{127.0f, 7.0f}) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        "packedBit"  | Vector.packedBitVector(new byte[]{127, 7}, (byte) 0) | '{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}'
+        "double"   | [1.0d, 2.0d]                                | "[1.0, 2.0]"
     }
 
     def 'should render exact $vectorSearch'() {
@@ -882,7 +843,7 @@ class AggregatesSpecification extends Specification {
         BsonDocument vectorSearchDoc = toBson(
                 vectorSearch(
                         fieldPath('fieldName').multi('ignored'),
-                        [1.0d, 2.0d],
+                        vector,
                         'indexName',
                         1,
                         exactVectorSearchOptions()
@@ -895,13 +856,19 @@ class AggregatesSpecification extends Specification {
         vectorSearchDoc == parse('''{
                 "$vectorSearch": {
                     "path": "fieldName",
-                    "queryVector": [1.0, 2.0],
+                     "queryVector": ''' + queryVector + ''',
                     "index": "indexName",
                     "exact": true,
                     "limit": {"$numberLong": "1"},
                     "filter": {"fieldName": {"$ne": "fieldValue"}}
                 }
         }''')
+
+        where:
+        vectorType | vector                                      | queryVector
+        "int8"     | Vector.int8Vector(new byte[]{127, 7})         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        "float32"  | Vector.floatVector(new float[]{127.0f, 7.0f}) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        "double"   | [1.0d, 2.0d]                                | "[1.0, 2.0]"
     }
 
     def 'should create string representation for simple stages'() {
