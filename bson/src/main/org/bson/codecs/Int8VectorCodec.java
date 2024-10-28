@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONException;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Int8Vector;
@@ -40,7 +40,7 @@ final class Int8VectorCodec implements Codec<Int8Vector> {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
-            throw new BSONException("Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found: " + subType);
+            throw new BsonInvalidOperationException("Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found: " + subType);
         }
 
         return reader.readBinaryData()
