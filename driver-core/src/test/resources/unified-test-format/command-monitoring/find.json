@@ -390,7 +390,6 @@
     },
     {
       "description": "A successful find event with a getmore and the server kills the cursor (<= 4.4)",
-      "comment": "UPDATED final batchSize to 3 as batchSize is no longer calculated see: DRIVERS-1448 ",
       "runOnRequirements": [
         {
           "minServerVersion": "3.1",
@@ -484,7 +483,7 @@
                     ]
                   },
                   "collection": "test",
-                  "batchSize": 3
+                  "batchSize": 1
                 },
                 "commandName": "getMore",
                 "databaseName": "command-monitoring-tests"

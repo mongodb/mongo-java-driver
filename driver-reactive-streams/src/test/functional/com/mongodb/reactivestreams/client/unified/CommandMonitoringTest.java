@@ -30,6 +30,7 @@ final class CommandMonitoringTest extends UnifiedReactiveStreamsTest {
         // The driver has a hack where getLastError command is executed as part of the handshake in order to get a connectionId
         // even when the hello command response doesn't contain it.
         assumeFalse(fileDescription.equals("pre-42-server-connection-id"));
+        assumeFalse(fileDescription.equals("unacknowledged-client-bulkWrite"), "Skipping until JAVA-5545 is implemented");
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
