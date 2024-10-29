@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Pattern
 
+//Codenarc
 @SuppressWarnings("VectorIsObsolete")
 class ValueCodecProviderSpecification extends Specification {
     private final provider = new ValueCodecProvider()

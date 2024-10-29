@@ -27,8 +27,7 @@ import static org.bson.assertions.Assertions.notNull;
  * Vectors are densely packed arrays of numbers, all the same type, which are stored efficiently
  * in BSON using a binary format.
  * <p>
- * <b>NOTE:</b> This class is intended to be treated as <b>sealed</b>. Any subclasses added outside the library are not guaranteed to
- * function correctly in the current and future releases.
+ * <b>NOTE:</b> This class should be treated as <b>sealed</b>: it must not be extended or implemented by consumers of the library.
  *
  * @mongodb.server.release 6.0
  * @see BsonBinary
