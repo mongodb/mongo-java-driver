@@ -22,7 +22,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static com.mongodb.client.unified.UnifiedTestSkips.TestDef;
+import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
 
 public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
@@ -31,30 +32,30 @@ public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTe
 
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(fileDescription, testDescription);
+        doSkips(testDef("unified-test-format/server-discovery-and-monitoring", fileDescription, testDescription));
     }
 
-    public static void doSkips(final String fileDescription, final String testDescription) {
-        assumeFalse(testDescription.equals("connect with serverMonitoringMode=auto >=4.4"),
-                "Skipping because our server monitoring events behave differently for now");
-        assumeFalse(testDescription.equals("connect with serverMonitoringMode=stream >=4.4"),
-                "Skipping because our server monitoring events behave differently for now");
+    public static void doSkips(final TestDef def) {
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5230")
+                .file("server-discovery-and-monitoring", "connect with serverMonitoringMode=auto >=4.4")
+                .file("server-discovery-and-monitoring", "connect with serverMonitoringMode=stream >=4.4");
 
-        assumeFalse(fileDescription.equals("standalone-logging"), "Skipping until JAVA-4770 is implemented");
-        assumeFalse(fileDescription.equals("replicaset-logging"), "Skipping until JAVA-4770 is implemented");
-        assumeFalse(fileDescription.equals("sharded-logging"), "Skipping until JAVA-4770 is implemented");
-        assumeFalse(fileDescription.equals("loadbalanced-logging"), "Skipping until JAVA-4770 is implemented");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-4770")
+                .file("server-discovery-and-monitoring", "standalone-logging")
+                .file("server-discovery-and-monitoring", "replicaset-logging")
+                .file("server-discovery-and-monitoring", "sharded-logging")
+                .file("server-discovery-and-monitoring", "loadbalanced-logging");
 
-        assumeFalse(fileDescription.equals("standalone-emit-topology-description-changed-before-close"),
-                "Skipping until JAVA-5229 is implemented");
-        assumeFalse(fileDescription.equals("replicaset-emit-topology-description-changed-before-close"),
-                "Skipping until JAVA-5229 is implemented");
-        assumeFalse(fileDescription.equals("sharded-emit-topology-description-changed-before-close"),
-                "Skipping until JAVA-5229 is implemented");
-        assumeFalse(fileDescription.equals("loadbalanced-emit-topology-description-changed-before-close"),
-                "Skipping until JAVA-5229 is implemented");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5229")
+                .file("server-discovery-and-monitoring", "standalone-emit-topology-description-changed-before-close")
+                .file("server-discovery-and-monitoring", "replicaset-emit-topology-description-changed-before-close")
+                .file("server-discovery-and-monitoring", "sharded-emit-topology-description-changed-before-close")
+                .file("server-discovery-and-monitoring", "loadbalanced-emit-topology-description-changed-before-close");
 
-        assumeFalse(testDescription.equals("poll waits after successful heartbeat"), "Skipping until JAVA-5564 is implemented");
-        assumeFalse(fileDescription.equals("interruptInUse"), "Skipping until JAVA-4536 is implemented");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5564")
+                .test("server-discovery-and-monitoring", "serverMonitoringMode", "poll waits after successful heartbeat");
+
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-4536")
+                .file("server-discovery-and-monitoring", "interruptInUse");
     }
 }

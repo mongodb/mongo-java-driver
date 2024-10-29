@@ -16,6 +16,7 @@
 
 package com.mongodb.client.unified;
 
+import com.mongodb.client.unified.UnifiedTestSkips.TestDef;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
@@ -25,24 +26,27 @@ import java.util.Collection;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
 
 public final class UnifiedRetryableWritesTest extends UnifiedSyncTest {
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(testDescription);
+        doSkips(testDef("unified-test-format/retryable-writes", fileDescription, testDescription));
     }
 
-    public static void doSkips(final String description) {
+    public static void doSkips(final TestDef def) {
         if (isSharded() && serverVersionLessThan(5, 0)) {
-            assumeFalse(description.contains("succeeds after WriteConcernError"));
-            assumeFalse(description.contains("succeeds after retryable writeConcernError"));
+            def.skipJira("https://jira.mongodb.org/browse/JAVA-5125")
+                    .testContains("retryable-writes", "succeeds after WriteConcernError")
+                    .testContains("retryable-writes", "succeeds after retryable writeConcernError");
         }
         if (isDiscoverableReplicaSet() && serverVersionLessThan(4, 4)) {
-            assumeFalse(description.equals("RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response"));
+            def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
+                    .test("retryable-writes", "insertOne-serverErrors", "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
         }
-        assumeFalse(description.contains("client bulkWrite"), "JAVA-4586");
-        assumeFalse(description.contains("client.clientBulkWrite"), "JAVA-4586");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-4586")
+                .testContains("retryable-writes", "client bulkWrite")
+                .testContains("retryable-writes", "client.clientBulkWrite");
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
