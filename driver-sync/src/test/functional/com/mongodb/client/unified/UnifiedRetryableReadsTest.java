@@ -39,6 +39,11 @@ public final class UnifiedRetryableReadsTest extends UnifiedSyncTest {
         assumeFalse(fileDescription.equals("listDatabaseObjects-serverErrors"));
         assumeFalse(fileDescription.equals("listCollectionObjects"));
         assumeFalse(fileDescription.equals("listCollectionObjects-serverErrors"));
+
+        // JAVA-5224
+        assumeFalse(fileDescription.equals("ReadConcernMajorityNotAvailableYet is a retryable read")
+                && testDescription.equals("Find succeeds on second attempt after ReadConcernMajorityNotAvailableYet"),
+                "JAVA-5224");
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {

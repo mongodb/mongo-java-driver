@@ -41,6 +41,7 @@ public final class UnifiedRetryableWritesTest extends UnifiedSyncTest {
         if (isDiscoverableReplicaSet() && serverVersionLessThan(4, 4)) {
             assumeFalse(description.equals("RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response"));
         }
+        assumeFalse(description.contains("client bulkWrite"), "JAVA-4586");
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
