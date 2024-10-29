@@ -36,6 +36,10 @@ final class UnifiedTransactionsTest extends UnifiedSyncTest {
             assumeFalse(fileDescription.equals("read-concern") && testDescription.equals("distinct ignores collection readConcern"));
             assumeFalse(fileDescription.equals("reads") && testDescription.equals("distinct"));
         }
+        assumeFalse(fileDescription.equals("mongos-pin-auto")
+                && testDescription.contains(" clientBulkWrite "),
+                "Skipping until JAVA-4586 is implemented");
+
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
