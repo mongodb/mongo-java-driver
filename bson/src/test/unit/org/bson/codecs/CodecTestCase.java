@@ -92,10 +92,6 @@ abstract class CodecTestCase {
         return buffer;
     }
 
-    <T> void encode(final Codec<T> codec, final T value, final BsonWriter writer) {
-        codec.encode(writer, value, EncoderContext.builder().build());
-    }
-
     <T> T decode(final Codec<T> codec, final OutputBuffer buffer) {
         BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))));
         return codec.decode(reader, DecoderContext.builder().build());
