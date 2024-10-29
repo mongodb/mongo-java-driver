@@ -32,10 +32,6 @@ final class CommandMonitoringTest extends UnifiedSyncTest {
         // The driver has a hack where getLastError command is executed as part of the handshake in order to get a connectionId
         // even when the hello command response doesn't contain it.
         assumeFalse(fileDescription.equals("pre-42-server-connection-id"));
-        assumeFalse(fileDescription.equals("unacknowledged-client-bulkWrite"), "Skipping until JAVA-4586 is implemented");
-        assumeFalse(fileDescription.equals("find")
-                        && testDescription.equals("A successful find event with a getmore and the server kills the cursor (<= 4.4)"),
-                "UPDATED final batchSize to 3 as batchSize is no longer calculated see: DRIVERS-1448 ");
     }
 
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
