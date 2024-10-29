@@ -43,14 +43,12 @@ public final class UnifiedCrudTest extends UnifiedSyncTest {
             assumeFalse(testDescription.equals("Aggregate with $out includes read preference for 5.0+ server"));
             assumeFalse(testDescription.equals("Database-level aggregate with $out includes read preference for 5.0+ server"));
         }
-        assumeFalse(testDescription.endsWith("updateOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is " +
-                "implemented");
-        assumeFalse(testDescription.endsWith("replaceOne with sort option unsupported (server-side error)"), "Skipping until " +
-                "JAVA-5622 is implemented");
-        assumeFalse(testDescription.equals("BulkWrite with string comment"), "Skipping until we decide " +
-                "whether to update the spec or test https://mongodb.slack.com/archives/C72LB5RPV/p1730225657999979");
-        assumeFalse(testDescription.equals("BulkWrite with document comment"), "Skipping until we decide " +
-                "whether to update the spec or test https://mongodb.slack.com/archives/C72LB5RPV/p1730225657999979");
+        assumeFalse(testDescription.toLowerCase().contains("updateone with sort option"), "Skipping until JAVA-5622 is implemented");
+        assumeFalse(testDescription.toLowerCase().contains("replaceone with sort option"), "Skipping until JAVA-5622 is implemented");
+        assumeFalse(testDescription.equals("BulkWrite with string comment"), "Skipping until we decide "
+                + "whether to update the spec or test https://mongodb.slack.com/archives/C72LB5RPV/p1730225657999979");
+        assumeFalse(testDescription.equals("BulkWrite with document comment"), "Skipping until we decide "
+                + "whether to update the spec or test https://mongodb.slack.com/archives/C72LB5RPV/p1730225657999979");
     }
 
     @Override
