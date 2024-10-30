@@ -51,7 +51,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class VectorCodecTest extends CodecTestCase {
 
-    private static Stream<Arguments> provideVectorsAndCodecsForRoundTrip() {
+    private static Stream<Arguments> provideVectorsAndCodecs() {
         return Stream.of(
                 arguments(Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f}), new Float32VectorCodec(), Float32Vector.class),
                 arguments(Vector.int8Vector(new byte[]{10, 20, 30, 40}), new Int8VectorCodec(), Int8Vector.class),
@@ -63,7 +63,7 @@ class VectorCodecTest extends CodecTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("provideVectorsAndCodecsForRoundTrip")
+    @MethodSource("provideVectorsAndCodecs")
     void shouldEncodeVector(final Vector vectorToEncode, final Codec<Vector> vectorCodec) throws IOException {
         // given
         BsonBinary bsonBinary = new BsonBinary(vectorToEncode);
@@ -99,7 +99,7 @@ class VectorCodecTest extends CodecTestCase {
     }
 
     @ParameterizedTest
-    @MethodSource("provideVectorsAndCodecsForRoundTrip")
+    @MethodSource("provideVectorsAndCodecs")
     void shouldDecodeVector(final Vector vectorToDecode, final Codec<Vector> vectorCodec) {
         // given
         OutputBuffer buffer = new BasicOutputBuffer();
@@ -140,7 +140,7 @@ class VectorCodecTest extends CodecTestCase {
 
 
     @ParameterizedTest
-    @MethodSource("provideVectorsAndCodecsForRoundTrip")
+    @MethodSource("provideVectorsAndCodecs")
     void shouldReturnCorrectEncoderClass(final Vector vector,
                                          final Codec<? extends Vector> codec,
                                          final Class<? extends Vector> expectedEncoderClass) {
@@ -149,14 +149,5 @@ class VectorCodecTest extends CodecTestCase {
 
         // then
         assertEquals(expectedEncoderClass, encoderClass);
-    }
-
-    private static Stream<Codec<? extends Vector>> provideVectorsCodec() {
-        return Stream.of(
-                new VectorCodec(),
-                new Float32VectorCodec(),
-                new Int8VectorCodec(),
-                new PackedBitVectorCodec()
-        );
     }
 }

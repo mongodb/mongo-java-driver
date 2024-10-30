@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-class BsonBinaryVectorTest {
+class BsonBinaryTest {
 
     private static final byte FLOAT32_DTYPE = Vector.DataType.FLOAT32.getValue();
     private static final byte INT8_DTYPE = Vector.DataType.INT8.getValue();

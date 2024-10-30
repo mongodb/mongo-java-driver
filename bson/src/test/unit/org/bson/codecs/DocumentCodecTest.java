@@ -37,9 +37,6 @@ import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,13 +44,11 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class DocumentCodecTest {
     private BasicOutputBuffer buffer;
@@ -70,9 +65,8 @@ public class DocumentCodecTest {
         writer.close();
     }
 
-    @ParameterizedTest
-    @MethodSource("provideVectorsForRoundTrip")
-    public void testPrimitiveBSONTypeCodecs(final Vector vector) throws IOException {
+    @Test
+    public void testPrimitiveBSONTypeCodecs() throws IOException {
         DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
         doc.put("oid", new ObjectId());
@@ -87,7 +81,9 @@ public class DocumentCodecTest {
         doc.put("code", new Code("var i = 0"));
         doc.put("minkey", new MinKey());
         doc.put("maxkey", new MaxKey());
-        doc.put("vector", vector);
+        doc.put("vectorFloat", Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f}));
+        doc.put("vectorInt8", Vector.int8Vector(new byte[]{10, 20, 30, 40}));
+        doc.put("vectorPackedBit", Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3));
         //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
         doc.put("null", null);
 
@@ -96,14 +92,6 @@ public class DocumentCodecTest {
         BsonInput bsonInput = createInputBuffer();
         Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
-    }
-
-    private static Stream<Arguments> provideVectorsForRoundTrip() {
-        return Stream.of(
-                arguments(Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f})),
-                arguments(Vector.int8Vector(new byte[]{10, 20, 30, 40})),
-                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3))
-        );
     }
 
     @Test
