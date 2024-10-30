@@ -48,9 +48,14 @@ class BsonBinarySpecification extends Specification {
         data == bsonBinary.getData()
 
         where:
-        subType << [BsonBinarySubType.BINARY, BsonBinarySubType.FUNCTION, BsonBinarySubType.MD5,
-                    BsonBinarySubType.OLD_BINARY, BsonBinarySubType.USER_DEFINED, BsonBinarySubType.UUID_LEGACY,
-                    BsonBinarySubType.UUID_STANDARD]
+        subType << [BsonBinarySubType.BINARY,
+                    BsonBinarySubType.FUNCTION,
+                    BsonBinarySubType.MD5,
+                    BsonBinarySubType.OLD_BINARY,
+                    BsonBinarySubType.USER_DEFINED,
+                    BsonBinarySubType.UUID_LEGACY,
+                    BsonBinarySubType.UUID_STANDARD,
+                    BsonBinarySubType.VECTOR]
     }
 
     @Unroll

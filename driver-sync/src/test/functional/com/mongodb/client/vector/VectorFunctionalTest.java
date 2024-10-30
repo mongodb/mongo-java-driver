@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-package org.bson
+package com.mongodb.client.vector;
 
-import spock.lang.Specification
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 
-class BsonBinarySubTypeSpecification extends Specification {
-
-    def 'should be uuid only for legacy and uuid types'() {
-        expect:
-        BsonBinarySubType.isUuid(value as byte) == isUuid
-
-        where:
-        value | isUuid
-        1     | false
-        2     | false
-        3     | true
-        4     | true
-        5     | false
-        6     | false
-        7     | false
-        8     | false
-        9     | false
+public class VectorFunctionalTest extends AbstractVectorFunctionalTest {
+    @Override
+    protected MongoClient getMongoClient(final MongoClientSettings settings) {
+        return MongoClients.create(settings);
     }
 }

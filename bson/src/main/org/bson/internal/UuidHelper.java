@@ -124,6 +124,12 @@ public final class UuidHelper {
         return new UUID(readLongFromArrayBigEndian(localData, 0), readLongFromArrayBigEndian(localData, 8));
     }
 
+    public static boolean isLegacyUUID(final UuidRepresentation uuidRepresentation) {
+        return uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+                || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+                || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY;
+    }
+
     private UuidHelper() {
     }
 }

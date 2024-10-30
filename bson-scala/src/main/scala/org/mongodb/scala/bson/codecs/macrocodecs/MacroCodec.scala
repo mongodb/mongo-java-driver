@@ -22,6 +22,7 @@ import scala.collection.mutable
 import org.bson._
 import org.bson.codecs.configuration.{ CodecRegistries, CodecRegistry }
 import org.bson.codecs.{ Codec, DecoderContext, Encoder, EncoderContext }
+import scala.collection.immutable.Vector
 
 import org.mongodb.scala.bson.BsonNull
 
