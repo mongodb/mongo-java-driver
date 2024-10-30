@@ -831,11 +831,11 @@ class AggregatesSpecification extends Specification {
         }''')
 
         where:
-        vectorType | vector                                      | queryVector
-        "int8"     | Vector.int8Vector(new byte[]{127, 7})         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
-        "float32"  | Vector.floatVector(new float[]{127.0f, 7.0f}) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
-        "packedBit"  | Vector.packedBitVector(new byte[]{127, 7}, (byte) 0) | '{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}'
-        "double"   | [1.0d, 2.0d]                                | "[1.0, 2.0]"
+        vector                                               | queryVector
+        Vector.int8Vector(new byte[]{127, 7})                | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        Vector.floatVector(new float[]{127.0f, 7.0f})        | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        Vector.packedBitVector(new byte[]{127, 7}, (byte) 0) | '{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}'
+        [1.0d, 2.0d]                                         | "[1.0, 2.0]"
     }
 
     def 'should render exact $vectorSearch'() {
@@ -865,10 +865,10 @@ class AggregatesSpecification extends Specification {
         }''')
 
         where:
-        vectorType | vector                                      | queryVector
-        "int8"     | Vector.int8Vector(new byte[]{127, 7})         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
-        "float32"  | Vector.floatVector(new float[]{127.0f, 7.0f}) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
-        "double"   | [1.0d, 2.0d]                                | "[1.0, 2.0]"
+        vector                                        | queryVector
+        Vector.int8Vector(new byte[]{127, 7})         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        Vector.floatVector(new float[]{127.0f, 7.0f}) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        [1.0d, 2.0d]                                  | "[1.0, 2.0]"
     }
 
     def 'should create string representation for simple stages'() {
