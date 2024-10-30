@@ -103,6 +103,8 @@ class AggregatesVectorSearchIntegrationTest {
 
     @BeforeAll
     static void beforeAll() {
+        assumeTrue(isAtlasSearchTest());
+
         collectionHelper =
                 new CollectionHelper<>(new DocumentCodec(), new MongoNamespace("test", "test"));
         collectionHelper.drop();
@@ -182,7 +184,6 @@ class AggregatesVectorSearchIntegrationTest {
 
     @BeforeEach
     void beforeEach() {
-        assumeTrue(isAtlasSearchTest());
         assumeTrue(serverVersionAtLeast(6, 0));
     }
 
