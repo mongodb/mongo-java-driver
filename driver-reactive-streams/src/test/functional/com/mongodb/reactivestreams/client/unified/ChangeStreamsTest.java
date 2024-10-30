@@ -48,6 +48,12 @@ final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
                     "Test that comment is not set on getMore - pre 4.4"
             );
 
+    private static final List<String> TESTS_WITH_EXTRA_EVENTS =
+            Arrays.asList(
+                    "Test with document comment",
+                    "Test with string comment"
+            );
+
     private static final List<String> REQUIRES_BATCH_CURSOR_CREATION_WAITING =
             Arrays.asList(
                     "Change Stream should error when an invalid aggregation stage is passed in",
@@ -59,6 +65,7 @@ final class ChangeStreamsTest extends UnifiedReactiveStreamsTest {
     protected void skips(final String fileDescription, final String testDescription) {
         assumeFalse(ERROR_REQUIRED_FROM_CHANGE_STREAM_INITIALIZATION_TESTS.contains(testDescription));
         assumeFalse(EVENT_SENSITIVE_TESTS.contains(testDescription));
+        assumeFalse(TESTS_WITH_EXTRA_EVENTS.contains(testDescription));
     }
 
     @BeforeEach
