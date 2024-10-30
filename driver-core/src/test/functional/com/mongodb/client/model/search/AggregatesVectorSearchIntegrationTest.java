@@ -179,7 +179,9 @@ class AggregatesVectorSearchIntegrationTest {
 
     @AfterAll
     static void afterAll() {
-        collectionHelper.drop();
+        if (collectionHelper != null) {
+            collectionHelper.drop();
+        }
     }
 
     private static Stream<Arguments> provideSupportedVectors() {
