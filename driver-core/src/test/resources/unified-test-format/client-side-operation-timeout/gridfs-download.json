@@ -1,6 +1,5 @@
 {
   "description": "timeoutMS behaves correctly for GridFS download operations",
-  "comment": "Manually increased timeouts to reduce races",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -19,7 +18,7 @@
       "client": {
         "id": "client",
         "uriOptions": {
-          "timeoutMS": 200
+          "timeoutMS": 75
         },
         "useMultipleMongoses": false,
         "observeEvents": [
@@ -132,7 +131,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 250
+                "blockTimeMS": 100
               }
             }
           }
@@ -167,7 +166,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 250
+                "blockTimeMS": 100
               }
             }
           }
@@ -226,7 +225,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 250
+                "blockTimeMS": 100
               }
             }
           }
@@ -300,7 +299,7 @@
                   "find"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 100
+                "blockTimeMS": 50
               }
             }
           }

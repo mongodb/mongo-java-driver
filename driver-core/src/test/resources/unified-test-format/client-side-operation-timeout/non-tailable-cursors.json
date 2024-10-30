@@ -1,6 +1,5 @@
 {
   "description": "timeoutMS behaves correctly for non-tailable cursors",
-  "comment": "Manually reduced blockTimeMS for tests to pass in serverless",
   "schemaVersion": "1.9",
   "runOnRequirements": [
     {
@@ -144,7 +143,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 101
+                "blockTimeMS": 125
               }
             }
           }
@@ -222,7 +221,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 101
+                "blockTimeMS": 150
               }
             }
           }
@@ -356,7 +355,7 @@
                   "getMore"
                 ],
                 "blockConnection": true,
-                "blockTimeMS": 101
+                "blockTimeMS": 125
               }
             }
           }
