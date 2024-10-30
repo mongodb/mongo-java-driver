@@ -122,6 +122,7 @@
       "expectEvents": [
         {
           "client": "client0",
+          "note": "Events split due to : JAVA-4537 ",
           "events": [
             {
               "commandStartedEvent": {
@@ -157,7 +158,18 @@
                       "upsert": {
                         "$$unsetOrMatches": false
                       }
-                    },
+                    }
+                  ],
+                  "ordered": true,
+                  "comment": "comment"
+                }
+              }
+            },
+            {
+              "commandStartedEvent": {
+                "command": {
+                  "update": "BulkWrite_comment",
+                  "updates": [
                     {
                       "q": {
                         "_id": 2
@@ -299,6 +311,7 @@
       "expectEvents": [
         {
           "client": "client0",
+          "note": "Events split due to : JAVA-4537 ",
           "events": [
             {
               "commandStartedEvent": {
@@ -336,7 +349,20 @@
                       "upsert": {
                         "$$unsetOrMatches": false
                       }
-                    },
+                    }
+                  ],
+                  "ordered": true,
+                  "comment": {
+                    "key": "value"
+                  }
+                }
+              }
+            },
+            {
+              "commandStartedEvent": {
+                "command": {
+                  "update": "BulkWrite_comment",
+                  "updates": [
                     {
                       "q": {
                         "_id": 2
