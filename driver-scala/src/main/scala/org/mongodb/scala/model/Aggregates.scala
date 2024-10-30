@@ -16,12 +16,12 @@
 
 package org.mongodb.scala.model
 
+import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.fill.FillOutputField
 import com.mongodb.client.model.search.FieldSearchPath
 
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
-import org.bson.Vector
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.densify.{ DensifyOptions, DensifyRange }
@@ -745,31 +745,6 @@ object Aggregates {
       options: VectorSearchOptions
   ): Bson =
     JAggregates.vectorSearch(path, queryVector.asJava, index, limit, options)
-
-  /**
-   * Creates a `\$vectorSearch` pipeline stage supported by MongoDB Atlas.
-   * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
-   * to extract the relevance score assigned to each found document.
-   *
-   * @param queryVector The query vector. The number of dimensions must match that of the `index`.
-   * @param path The field to be searched.
-   * @param index The name of the index to use.
-   * @param limit The limit on the number of documents produced by the pipeline stage.
-   * @param options Optional `\$vectorSearch` pipeline stage fields.
-   * @return The `\$vectorSearch` pipeline stage.
-   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
-   * @note Requires MongoDB 6.0.10 or greater
-   * @see [[org.bson.Vector]]
-   * @since 5.3
-   */
-  def vectorSearch(
-      path: FieldSearchPath,
-      queryVector: org.bson.Vector,
-      index: String,
-      limit: Long,
-      options: VectorSearchOptions
-  ): Bson =
-    JAggregates.vectorSearch(path, queryVector, index, limit, options)
 
   /**
    * Creates an `\$unset` pipeline stage that removes/excludes fields from documents
