@@ -16,12 +16,12 @@
 
 package org.bson.codecs;
 
-import org.bson.BsonInvalidOperationException;
 import org.bson.BsonBinary;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 import static org.bson.BsonHelper.toBson;
 import static org.bson.assertions.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -69,12 +70,12 @@ class VectorCodecTest extends CodecTestCase {
         BsonBinary bsonBinary = new BsonBinary(vectorToEncode);
         byte[] encodedVector = bsonBinary.getData();
         ByteArrayOutputStream expectedStream = new ByteArrayOutputStream();
-        // Start of document with total length of 4 bytes (little-endian format)
-        byte totalDocumentLength = (byte) (14 + encodedVector.length);
-        expectedStream.write(new byte[]{totalDocumentLength, 0, 0, 0});
-        // Bson type for vector
+        // Total length of a Document (int 32). It is 0, because we do not expect
+        // codec to write the end of the document (that is when we back-patch the length of the document).
+        expectedStream.write(new byte[]{0, 0, 0, 0});
+        // Bson type
         expectedStream.write((byte) BsonType.BINARY.getValue());
-        // Field name "b4" (ASCII for 'b', '4', null terminator)
+        // Field name "b4"
         expectedStream.write(new byte[]{98, 52, 0});
         // Total length of binary data (little-endian format)
         expectedStream.write(new byte[]{(byte) encodedVector.length, 0, 0, 0});
@@ -82,8 +83,6 @@ class VectorCodecTest extends CodecTestCase {
         expectedStream.write(BsonBinarySubType.VECTOR.getValue());
         // Actual BSON binary data
         expectedStream.write(encodedVector);
-        // End of document
-        expectedStream.write(0);
 
         OutputBuffer buffer = new BasicOutputBuffer();
         BsonWriter writer = new BsonBinaryWriter(buffer);
@@ -92,7 +91,6 @@ class VectorCodecTest extends CodecTestCase {
 
         // when
         vectorCodec.encode(writer, vectorToEncode, EncoderContext.builder().build());
-        writer.writeEndDocument();
 
         // then
         assertArrayEquals(expectedStream.toByteArray(), buffer.toByteArray());
@@ -116,6 +114,7 @@ class VectorCodecTest extends CodecTestCase {
         Vector decodedVector = vectorCodec.decode(reader, DecoderContext.builder().build());
 
         // then
+        assertDoesNotThrow(reader::readEndDocument);
         assertNotNull(decodedVector);
         assertEquals(vectorToDecode, decodedVector);
     }
