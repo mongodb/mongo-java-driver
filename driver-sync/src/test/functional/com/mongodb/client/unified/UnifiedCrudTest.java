@@ -44,20 +44,20 @@ public final class UnifiedCrudTest extends UnifiedSyncTest {
             assumeFalse(testDescription.equals("Database-level aggregate with $out includes read preference for 5.0+ server"));
         }
         if (fileDescription.equals("updateOne-sort")) {
-            assumeFalse(testDescription.equals("UpdateOne with sort option"));
-            assumeFalse(testDescription.equals("updateOne with sort option unsupported (server-side error)"));
+            assumeFalse(testDescription.equals("UpdateOne with sort option"), "Skipping until JAVA-5622 is implemented");
+            assumeFalse(testDescription.equals("updateOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
         }
         if (fileDescription.equals("replaceOne-sort")) {
-            assumeFalse(testDescription.equals("ReplaceOne with sort option"));
-            assumeFalse(testDescription.equals("replaceOne with sort option unsupported (server-side error)"));
+            assumeFalse(testDescription.equals("ReplaceOne with sort option"), "Skipping until JAVA-5622 is implemented");
+            assumeFalse(testDescription.equals("replaceOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
         }
         if (fileDescription.equals("BulkWrite updateOne-sort")) {
-            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option"));
-            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option unsupported (server-side error)"));
+            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option"), "Skipping until JAVA-5622 is implemented");
+            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
         }
         if (fileDescription.equals("BulkWrite replaceOne-sort")) {
-            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option"));
-            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option unsupported (server-side error)"));
+            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option"), "Skipping until JAVA-5622 is implemented");
+            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
         }
     }
 
