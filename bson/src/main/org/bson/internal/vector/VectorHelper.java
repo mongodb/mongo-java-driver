@@ -141,7 +141,7 @@ public final class VectorHelper {
     }
 
     private static float[] decodeLittleEndianFloats(final byte[] encodedVector) {
-        isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type.",
+        isTrue("Byte array length must be a multiple of 4 for FLOAT32 data type, but found: " + encodedVector.length,
                 (encodedVector.length - METADATA_SIZE) % Float.BYTES == 0);
 
         int vectorSize = encodedVector.length - METADATA_SIZE;

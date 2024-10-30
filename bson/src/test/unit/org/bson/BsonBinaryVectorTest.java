@@ -187,7 +187,8 @@ class BsonBinaryVectorTest {
         BsonInvalidOperationException thrown = assertThrows(BsonInvalidOperationException.class, () -> {
            new BsonBinary(BsonBinarySubType.VECTOR, invalidData).asVector();
         });
-        assertEquals("Byte array length must be a multiple of 4 for FLOAT32 data type.", thrown.getMessage());
+        assertEquals("Byte array length must be a multiple of 4 for FLOAT32 data type, but found: " + invalidData.length,
+                thrown.getMessage());
     }
 
     @ParameterizedTest

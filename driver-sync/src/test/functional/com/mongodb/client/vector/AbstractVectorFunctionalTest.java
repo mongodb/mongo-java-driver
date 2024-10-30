@@ -81,10 +81,9 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
     @AfterEach
     @SuppressWarnings("try")
     public void afterEach() {
-        super.afterEach();
-       try (MongoClient ignore = mongoClient) {
-           //NOOP
-       }
+        try (MongoClient ignore = mongoClient) {
+            super.afterEach();
+        }
     }
 
     private static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
