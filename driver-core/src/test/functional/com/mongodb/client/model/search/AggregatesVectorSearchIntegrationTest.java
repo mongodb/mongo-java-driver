@@ -29,7 +29,6 @@ import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -104,6 +103,7 @@ class AggregatesVectorSearchIntegrationTest {
     @BeforeAll
     static void beforeAll() {
         assumeTrue(isAtlasSearchTest());
+        assumeTrue(serverVersionAtLeast(6, 0));
 
         collectionHelper =
                 new CollectionHelper<>(new DocumentCodec(), new MongoNamespace("test", "test"));
@@ -180,11 +180,6 @@ class AggregatesVectorSearchIntegrationTest {
     @AfterAll
     static void afterAll() {
         collectionHelper.drop();
-    }
-
-    @BeforeEach
-    void beforeEach() {
-        assumeTrue(serverVersionAtLeast(6, 0));
     }
 
     private static Stream<Arguments> provideSupportedVectors() {
