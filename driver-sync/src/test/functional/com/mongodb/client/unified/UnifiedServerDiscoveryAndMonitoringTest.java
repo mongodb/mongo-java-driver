@@ -16,8 +16,6 @@
 
 package com.mongodb.client.unified;
 
-import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
@@ -33,14 +31,30 @@ public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTe
 
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(getDefinition());
+        doSkips(fileDescription, testDescription);
     }
 
-    public static void doSkips(final BsonDocument definition) {
-        String description = definition.getString("description", new BsonString("")).getValue();
-        assumeFalse(description.equals("connect with serverMonitoringMode=auto >=4.4"),
+    public static void doSkips(final String fileDescription, final String testDescription) {
+        assumeFalse(testDescription.equals("connect with serverMonitoringMode=auto >=4.4"),
                 "Skipping because our server monitoring events behave differently for now");
-        assumeFalse(description.equals("connect with serverMonitoringMode=stream >=4.4"),
+        assumeFalse(testDescription.equals("connect with serverMonitoringMode=stream >=4.4"),
                 "Skipping because our server monitoring events behave differently for now");
+
+        assumeFalse(fileDescription.equals("standalone-logging"), "Skipping until JAVA-4770 is implemented");
+        assumeFalse(fileDescription.equals("replicaset-logging"), "Skipping until JAVA-4770 is implemented");
+        assumeFalse(fileDescription.equals("sharded-logging"), "Skipping until JAVA-4770 is implemented");
+        assumeFalse(fileDescription.equals("loadbalanced-logging"), "Skipping until JAVA-4770 is implemented");
+
+        assumeFalse(fileDescription.equals("standalone-emit-topology-description-changed-before-close"),
+                "Skipping until JAVA-5229 is implemented");
+        assumeFalse(fileDescription.equals("replicaset-emit-topology-description-changed-before-close"),
+                "Skipping until JAVA-5229 is implemented");
+        assumeFalse(fileDescription.equals("sharded-emit-topology-description-changed-before-close"),
+                "Skipping until JAVA-5229 is implemented");
+        assumeFalse(fileDescription.equals("loadbalanced-emit-topology-description-changed-before-close"),
+                "Skipping until JAVA-5229 is implemented");
+
+        assumeFalse(testDescription.equals("poll waits after successful heartbeat"), "Skipping until JAVA-5564 is implemented");
+        assumeFalse(fileDescription.equals("interruptInUse"), "Skipping until JAVA-4536 is implemented");
     }
 }

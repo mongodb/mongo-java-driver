@@ -158,7 +158,7 @@ configure(scalaProjects) {
                     "-feature",
                     "-unchecked",
                     "-language:reflectiveCalls",
-                    "-Wconf:cat=deprecation:ws,any:e",
+                    "-Wconf:cat=deprecation:ws",
                     "-Wconf:msg=While parsing annotations in:silent",
                     "-Xlint:strict-unsealed-patmat"
             ]

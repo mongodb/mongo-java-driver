@@ -29,6 +29,6 @@ final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStrea
 
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
-        com.mongodb.client.unified.UnifiedServerDiscoveryAndMonitoringTest.doSkips(getDefinition());
+        com.mongodb.client.unified.UnifiedServerDiscoveryAndMonitoringTest.doSkips(fileDescription, testDescription);
     }
 }
