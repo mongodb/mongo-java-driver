@@ -43,14 +43,22 @@ public final class UnifiedCrudTest extends UnifiedSyncTest {
             assumeFalse(testDescription.equals("Aggregate with $out includes read preference for 5.0+ server"));
             assumeFalse(testDescription.equals("Database-level aggregate with $out includes read preference for 5.0+ server"));
         }
-        assumeFalse(fileDescription.equals("updateOne-sort") && testDescription.equals("updateOne with sort option unsupported "
-                + "(server-side error)"));
-        assumeFalse(fileDescription.equals("replaceOne-sort") && testDescription.equals("replaceOne with sort option unsupported "
-                + "(server-side error)"));
-        assumeFalse(fileDescription.equals("BulkWrite updateOne-sort") && testDescription.equals(
-                "BulkWrite updateOne with sort option unsupported (server-side error)"));
-        assumeFalse(fileDescription.equals("BulkWrite replaceOne-sort") && testDescription.equals(
-                "BulkWrite replaceOne with sort option unsupported (server-side error)"));
+        if (fileDescription.equals("updateOne-sort")) {
+            assumeFalse(testDescription.equals("updateOne with sort option"));
+            assumeFalse(testDescription.equals("updateOne with sort option unsupported (server-side error)"));
+        }
+        if (fileDescription.equals("replaceOne-sort")) {
+            assumeFalse(testDescription.equals("replaceOne with sort option"));
+            assumeFalse(testDescription.equals("replaceOne with sort option unsupported (server-side error)"));
+        }
+        if (fileDescription.equals("BulkWrite updateOne-sort")) {
+            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option"));
+            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option unsupported (server-side error)"));
+        }
+        if (fileDescription.equals("BulkWrite replaceOne-sort")) {
+            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option"));
+            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option unsupported (server-side error)"));
+        }
     }
 
     @Override
