@@ -72,7 +72,7 @@ public final class VectorHelper {
      * encodedVector is not mutated nor stored in the returned {@link Vector}.
      */
     public static Vector decodeBinaryToVector(final byte[] encodedVector) {
-        isTrue("Vector encoded array length must be at least 2.", encodedVector.length >= METADATA_SIZE);
+        isTrue("Vector encoded array length must be at least 2, but found: " + encodedVector.length, encodedVector.length >= METADATA_SIZE);
         Vector.DataType dataType = determineVectorDType(encodedVector[0]);
         byte padding = encodedVector[1];
         switch (dataType) {

@@ -192,6 +192,20 @@ class BsonBinaryTest {
     }
 
     @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void shouldThrowExceptionWhenEncodedVectorLengthIsLessThenMetadataLength(final int encodedVectorLength) {
+        // given
+        byte[] invalidData = new byte[encodedVectorLength];
+
+        // when & Then
+        BsonInvalidOperationException thrown = assertThrows(BsonInvalidOperationException.class, () -> {
+            new BsonBinary(BsonBinarySubType.VECTOR, invalidData).asVector();
+        });
+        assertEquals("Vector encoded array length must be at least 2, but found: " + encodedVectorLength,
+                thrown.getMessage());
+    }
+
+    @ParameterizedTest
     @ValueSource(bytes = {-1, 1})
     void shouldThrowExceptionForInvalidFloatArrayPaddingWhenDecode(final byte invalidPadding) {
         // given

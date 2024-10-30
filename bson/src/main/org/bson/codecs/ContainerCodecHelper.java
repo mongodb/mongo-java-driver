@@ -30,6 +30,8 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.UUID;
 
+import static org.bson.internal.UuidHelper.isLegacyUUID;
+
 /**
  * Helper methods for Codec implementations for containers, e.g. {@code Map} and {@code Iterable}.
  */
@@ -48,7 +50,8 @@ final class ContainerCodecHelper {
 
             if (bsonType == BsonType.BINARY) {
                 byte binarySubType = reader.peekBinarySubType();
-                currentCodec = getBinarySubTypeCodec(reader,
+                currentCodec = getBinarySubTypeCodec(
+                        reader,
                         uuidRepresentation,
                         registry, binarySubType,
                         currentCodec);
@@ -62,21 +65,17 @@ final class ContainerCodecHelper {
                                                   final UuidRepresentation uuidRepresentation,
                                                   final CodecRegistry registry,
                                                   final byte binarySubType,
-                                                  final Codec<?> currentTypeCodec) {
+                                                  final Codec<?> binaryTypeCodec) {
 
         if (binarySubType == BsonBinarySubType.VECTOR.getValue()) {
             Codec<Vector> vectorCodec = registry.get(Vector.class, registry);
             if (vectorCodec != null) {
                 return vectorCodec;
             }
-        }
-
-        if (reader.peekBinarySize() == 16) {
+        } else if (reader.peekBinarySize() == 16) {
             switch (binarySubType) {
                 case 3:
-                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
-                            || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
-                            || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
+                    if (isLegacyUUID(uuidRepresentation)) {
                         return registry.get(UUID.class);
                     }
                     break;
@@ -90,7 +89,7 @@ final class ContainerCodecHelper {
             }
         }
 
-        return currentTypeCodec;
+        return binaryTypeCodec;
     }
 
     static Codec<?> getCodec(final CodecRegistry codecRegistry, final Type type) {
@@ -103,7 +102,6 @@ final class ContainerCodecHelper {
             throw new CodecConfigurationException("Unsupported generic type of container: " + type);
         }
     }
-
 
     private ContainerCodecHelper() {
     }
