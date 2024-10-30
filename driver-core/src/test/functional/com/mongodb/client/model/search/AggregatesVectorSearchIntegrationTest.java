@@ -106,7 +106,7 @@ class AggregatesVectorSearchIntegrationTest {
         assumeTrue(serverVersionAtLeast(6, 0));
 
         collectionHelper =
-                new CollectionHelper<>(new DocumentCodec(), new MongoNamespace("test", "test"));
+                new CollectionHelper<>(new DocumentCodec(), new MongoNamespace("javaVectorSearchTest", AggregatesVectorSearchIntegrationTest.class.getSimpleName()));
         collectionHelper.drop();
         collectionHelper.insertDocuments(
                 new Document()
@@ -331,11 +331,15 @@ class AggregatesVectorSearchIntegrationTest {
             }
 
             try {
-                TimeUnit.SECONDS.sleep(1);
+                TimeUnit.SECONDS.sleep(5);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
+        collectionHelper.listSearchIndex(VECTOR_INDEX).ifPresent(document -> {
+            Assertions.fail("Exceeded maximum attempts waiting for Search Index creation in Atlas cluster.  Index document: " + document.toJson());
+        });
+
         Assertions.fail("Exceeded maximum attempts waiting for Search Index creation in Atlas cluster");
     }
 }
