@@ -102,7 +102,7 @@ class AggregatesVectorSearchIntegrationTest {
                     + "}");
 
     @BeforeAll
-    static void beforeAll() throws InterruptedException {
+    static void beforeAll() {
         collectionHelper =
                 new CollectionHelper<>(new DocumentCodec(), new MongoNamespace("test", "test"));
         collectionHelper.drop();
@@ -192,9 +192,15 @@ class AggregatesVectorSearchIntegrationTest {
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_INT_8).multi("ignored"),
                         approximateVectorSearchOptions(LIMIT * 2)),
+                arguments(Vector.int8Vector(new byte[]{0, 1, 2, 3, 4}),
+                        fieldPath(VECTOR_FIELD_INT_8),
+                        approximateVectorSearchOptions(LIMIT * 2)),
 
                 arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         // `multi` is used here only to verify that it is tolerated
+                        fieldPath(VECTOR_FIELD_FLOAT_32).multi("ignored"),
+                        approximateVectorSearchOptions(LIMIT * 2)),
+                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         fieldPath(VECTOR_FIELD_FLOAT_32),
                         approximateVectorSearchOptions(LIMIT * 2)),
 
@@ -202,22 +208,31 @@ class AggregatesVectorSearchIntegrationTest {
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_FLOAT_32).multi("ignored"),
                         exactVectorSearchOptions()),
-
                 arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
-                        // `multi` is used here only to verify that it is tolerated
-                        fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST).multi("ignored"),
+                        fieldPath(VECTOR_FIELD_FLOAT_32),
                         exactVectorSearchOptions()),
 
                 arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST).multi("ignored"),
+                        exactVectorSearchOptions()),
+                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                        fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST),
+                        exactVectorSearchOptions()),
+
+                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                        // `multi` is used here only to verify that it is tolerated
+                        fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST).multi("ignored"),
+                        approximateVectorSearchOptions(LIMIT * 2)),
+                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                        fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST),
                         approximateVectorSearchOptions(LIMIT * 2))
         );
     }
 
     @ParameterizedTest
     @MethodSource("provideSupportedVectors")
-    void shouldSearchBySupportedVectorWithSearchScore(final Vector vector,
+    void shouldSearchByVectorWithSearchScore(final Vector vector,
                                                       final FieldSearchPath fieldSearchPath,
                                                       final VectorSearchOptions vectorSearchOptions) {
         //given
@@ -245,7 +260,7 @@ class AggregatesVectorSearchIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("provideSupportedVectors")
-    void shouldSearchBySupportedVector(final Vector vector,
+    void shouldSearchByVector(final Vector vector,
                                        final FieldSearchPath fieldSearchPath,
                                        final VectorSearchOptions vectorSearchOptions) {
         //given
@@ -270,7 +285,7 @@ class AggregatesVectorSearchIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("provideSupportedVectors")
-    void provideSupportedVectors(final Vector vector,
+    void shouldSearchByVectorWithFilter(final Vector vector,
                                  final FieldSearchPath fieldSearchPath,
                                  final VectorSearchOptions vectorSearchOptions) {
         Consumer<Bson> asserter = filter -> {
@@ -308,8 +323,8 @@ class AggregatesVectorSearchIntegrationTest {
         }
     }
 
-    private static void awaitIndexCreation() throws InterruptedException {
-        int attempts = 5;
+    private static void awaitIndexCreation() {
+        int attempts = 10;
         while (attempts-- > 0) {
             if (collectionHelper.listSearchIndex(VECTOR_INDEX)
                     .filter(document -> document.getBoolean("queryable"))
@@ -317,7 +332,11 @@ class AggregatesVectorSearchIntegrationTest {
                 return;
             }
 
-            TimeUnit.SECONDS.sleep(1);
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
         Assertions.fail("Exceeded maximum attempts waiting for Search Index creation in Atlas cluster");
     }
