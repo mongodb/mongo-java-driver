@@ -34,6 +34,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -323,9 +324,11 @@ class AggregatesVectorSearchIntegrationTest {
 
     private static void awaitIndexCreation() {
         int attempts = 10;
+        Optional<Document> searchIndex = Optional.empty();
+
         while (attempts-- > 0) {
-            if (collectionHelper.listSearchIndex(VECTOR_INDEX)
-                    .filter(document -> document.getBoolean("queryable"))
+            searchIndex = collectionHelper.listSearchIndex(VECTOR_INDEX);
+            if (searchIndex.filter(document -> document.getBoolean("queryable"))
                     .isPresent()) {
                 return;
             }
@@ -336,10 +339,9 @@ class AggregatesVectorSearchIntegrationTest {
                 Thread.currentThread().interrupt();
             }
         }
-        collectionHelper.listSearchIndex(VECTOR_INDEX).ifPresent(document -> {
-            Assertions.fail("Exceeded maximum attempts waiting for Search Index creation in Atlas cluster.  Index document: " + document.toJson());
-        });
 
-        Assertions.fail("Exceeded maximum attempts waiting for Search Index creation in Atlas cluster");
+        String message = "Exceeded maximum attempts waiting for Search Index creation in Atlas cluster.";
+        searchIndex.ifPresent(document -> Assertions.fail(message + " Index document: " + document.toJson()));
+        Assertions.fail(message);
     }
 }
