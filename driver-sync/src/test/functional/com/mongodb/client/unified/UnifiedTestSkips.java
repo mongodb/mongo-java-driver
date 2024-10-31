@@ -22,6 +22,9 @@ public class UnifiedTestSkips {
         }
 
         /**
+         * Test is skipped because it is pending implementation, and there is
+         * a Jira ticket tracking this which has more information.
+         *
          * @param skip reason for skipping the test; must start with a Jira URL
          */
         public Skip skipJira(final String skip) {
@@ -30,9 +33,21 @@ public class UnifiedTestSkips {
         }
 
         /**
+         * Test is skipped because the feature under test was deprecated, and
+         * was removed in the Java driver.
+         *
          * @param skip reason for skipping the test
          */
         public Skip skipDeprecated(final String skip) {
+            return new Skip(this, skip);
+        }
+
+        /**
+         * Test is skipped because the Java driver cannot comply with the spec.
+         *
+         * @param skip reason for skipping the test
+         */
+        public Skip skipNoncompliant(final String skip) {
             return new Skip(this, skip);
         }
     }
