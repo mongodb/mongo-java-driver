@@ -964,7 +964,7 @@ public final class Aggregates {
         notNull("queryVector", queryVector);
         notNull("index", index);
         notNull("options", options);
-        return new VectorSearchBson<>(path, queryVector, index, limit, options);
+        return new VectorSearchBson(path, queryVector, index, limit, options);
     }
 
     /**
@@ -980,7 +980,7 @@ public final class Aggregates {
      * @return The {@code $vectorSearch} pipeline stage.
      * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
      * @mongodb.atlas.manual atlas-search/scoring/ Scoring
-     * @mongodb.server.release 6.0.11
+     * @mongodb.server.release 6.0
      * @see Vector
      * @since 5.3
      */
@@ -994,7 +994,7 @@ public final class Aggregates {
         notNull("queryVector", queryVector);
         notNull("index", index);
         notNull("options", options);
-        return new VectorSearchBson<>(path, queryVector, index, limit, options);
+        return new VectorSearchBson(path, queryVector, index, limit, options);
     }
 
     /**
@@ -2155,14 +2155,14 @@ public final class Aggregates {
         }
     }
 
-    private static class VectorSearchBson<T> implements Bson {
+    private static class VectorSearchBson implements Bson {
         private final FieldSearchPath path;
-        private final T queryVector;
+        private final Object queryVector;
         private final String index;
         private final long limit;
         private final VectorSearchOptions options;
 
-        VectorSearchBson(final FieldSearchPath path, final T queryVector,
+        VectorSearchBson(final FieldSearchPath path, final Object queryVector,
                                 final String index, final long limit,
                                 final VectorSearchOptions options) {
             this.path = path;

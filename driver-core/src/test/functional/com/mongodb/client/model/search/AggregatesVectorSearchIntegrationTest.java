@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.search;
 
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.SearchIndexType;
@@ -56,6 +57,7 @@ import static com.mongodb.client.model.Projections.metaVectorSearchScore;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
 import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -66,6 +68,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class AggregatesVectorSearchIntegrationTest {
+    private static final String EXCEED_WAIT_ATTEMPTS_ERROR_MESSAGE =
+            "Exceeded maximum attempts waiting for Search Index creation in Atlas cluster. Index document: %s";
+
     private static final String VECTOR_INDEX = "vector_search_index";
     private static final String VECTOR_FIELD_INT_8 = "int8Vector";
     private static final String VECTOR_FIELD_FLOAT_32 = "float32Vector";
@@ -73,7 +78,7 @@ class AggregatesVectorSearchIntegrationTest {
     private static final int LIMIT = 5;
     private static final String FIELD_YEAR = "year";
     private static CollectionHelper<Document> collectionHelper;
-    private static final BsonDocument VECTOR_SEARCH_DEFINITION = BsonDocument.parse(
+    private static final BsonDocument VECTOR_SEARCH_INDEX_DEFINITION = BsonDocument.parse(
             "{"
                     + "  fields: ["
                     + "     {"
@@ -173,7 +178,7 @@ class AggregatesVectorSearchIntegrationTest {
         );
 
         collectionHelper.createSearchIndex(
-                new SearchIndexRequest(VECTOR_SEARCH_DEFINITION, VECTOR_INDEX,
+                new SearchIndexRequest(VECTOR_SEARCH_INDEX_DEFINITION, VECTOR_INDEX,
                         SearchIndexType.vectorSearch()));
         awaitIndexCreation();
     }
@@ -341,8 +346,8 @@ class AggregatesVectorSearchIntegrationTest {
             }
         }
 
-        String message = "Exceeded maximum attempts waiting for Search Index creation in Atlas cluster.";
-        searchIndex.ifPresent(document -> Assertions.fail(message + " Index document: " + document.toJson()));
-        Assertions.fail(message);
+        searchIndex.ifPresent(document ->
+                Assertions.fail(format(EXCEED_WAIT_ATTEMPTS_ERROR_MESSAGE, document.toJson())));
+        Assertions.fail(format(EXCEED_WAIT_ATTEMPTS_ERROR_MESSAGE, "null"));
     }
 }
