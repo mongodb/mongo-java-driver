@@ -337,6 +337,7 @@ class AggregatesVectorSearchIntegrationTest {
                 TimeUnit.SECONDS.sleep(5);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                throw new MongoInterruptedException(null, e);
             }
         }
 
