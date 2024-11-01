@@ -22,30 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.client.unified.UnifiedTestSkips.TestDef;
-import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
-
 public final class UnifiedRetryableReadsTest extends UnifiedSyncTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(testDef("unified-test-format/retryable-reads", fileDescription, testDescription));
-    }
-
-    public static void doSkips(final TestDef def) {
-        def.skipDeprecated("Deprecated feature removed")
-                .file("retryable-reads", "count")
-                .file("retryable-reads", "count-serverErrors");
-
-        def.skipDeprecated("Deprecated feature never implemented")
-                .file("retryable-reads", "listDatabaseObjects")
-                .file("retryable-reads", "listDatabaseObjects-serverErrors")
-                .file("retryable-reads", "listCollectionObjects")
-                .file("retryable-reads", "listCollectionObjects-serverErrors");
-
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5224")
-                .test("retryable-reads", "ReadConcernMajorityNotAvailableYet is a retryable read", "Find succeeds on second attempt after ReadConcernMajorityNotAvailableYet");
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/retryable-reads");
     }

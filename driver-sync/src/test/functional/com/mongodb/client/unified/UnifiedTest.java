@@ -21,6 +21,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.UnixServerAddress;
+import com.mongodb.client.unified.UnifiedTestSkips.TestDef;
 import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.logging.TestLoggingInterceptor;
@@ -80,6 +81,7 @@ import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
 import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
+import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -114,6 +116,7 @@ public abstract class UnifiedTest {
     private UnifiedTestContext rootContext;
     private boolean ignoreExtraEvents;
     private BsonDocument startingClusterTime;
+    private TestDef testDef;
 
     private class UnifiedTestContext {
         private final AssertionContext context = new AssertionContext();
@@ -157,17 +160,19 @@ public abstract class UnifiedTest {
             BsonDocument fileDocument = getTestDocument(file);
 
             for (BsonValue cur : fileDocument.getArray("tests")) {
-                data.add(UnifiedTest.createTestData(fileDocument, cur.asDocument()));
+                data.add(UnifiedTest.createTestData(directory, fileDocument, cur.asDocument()));
             }
         }
         return data;
     }
 
     @NonNull
-    private static Arguments createTestData(final BsonDocument fileDocument, final BsonDocument testDocument) {
+    private static Arguments createTestData(
+            final String directory, final BsonDocument fileDocument, final BsonDocument testDocument) {
         return Arguments.of(
                 fileDocument.getString("description").getValue(),
                 testDocument.getString("description").getValue(),
+                directory,
                 fileDocument.getString("schemaVersion").getValue(),
                 fileDocument.getArray("runOnRequirements", null),
                 fileDocument.getArray("createEntities", new BsonArray()),
@@ -189,6 +194,7 @@ public abstract class UnifiedTest {
     public void setUp(
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            @Nullable final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -208,6 +214,8 @@ public abstract class UnifiedTest {
         rootContext = new UnifiedTestContext();
         rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
+        testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
+        UnifiedTestSkips.doSkips(testDef);
         skips(fileDescription, testDescription);
         assertTrue(
                 schemaVersion.equals("1.0")
@@ -255,6 +263,11 @@ public abstract class UnifiedTest {
                 this::createMongoClient,
                 this::createGridFSBucket,
                 this::createClientEncryption);
+
+        postSetUp(testDef);
+    }
+
+    protected void postSetUp(final TestDef def) {
     }
 
     @AfterEach
@@ -263,13 +276,21 @@ public abstract class UnifiedTest {
             failPoint.disableFailPoint();
         }
         entities.close();
+        postCleanUp(testDef);
+    }
+
+    protected void postCleanUp(final TestDef testDef) {
     }
 
     /**
-     * This method is called once per {@link #setUp(String, String, String, BsonArray, BsonArray, BsonArray, BsonDocument)},
-     * unless {@link #setUp(String, String, String, BsonArray, BsonArray, BsonArray, BsonDocument)} fails unexpectedly.
+     * This method is called once per {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)},
+     * unless {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)} fails unexpectedly.
      */
     protected void skips(final String fileDescription, final String testDescription) {
+    }
+
+    protected boolean isReactive() {
+        return false;
     }
 
     @ParameterizedTest(name = "{0}: {1}")
@@ -277,6 +298,7 @@ public abstract class UnifiedTest {
     public void shouldPassAllOutcomes(
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            @Nullable final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,

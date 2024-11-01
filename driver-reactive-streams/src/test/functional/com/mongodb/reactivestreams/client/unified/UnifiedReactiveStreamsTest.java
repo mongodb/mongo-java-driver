@@ -22,6 +22,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.unified.UnifiedTest;
+import com.mongodb.client.unified.UnifiedTestSkips;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
@@ -30,6 +31,14 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoDatabase;
+
+import static com.mongodb.client.unified.UnifiedTestSkips.Modifier;
+import static com.mongodb.client.unified.UnifiedTestSkips.TestDef;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableWaitForBatchCursorCreation;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorClose;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorOpen;
+import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableWaitForBatchCursorCreation;
 
 public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
     protected UnifiedReactiveStreamsTest() {
@@ -48,5 +57,41 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
     @Override
     protected ClientEncryption createClientEncryption(final MongoClient keyVaultClient, final ClientEncryptionSettings clientEncryptionSettings) {
         return new SyncClientEncryption(new ClientEncryptionImpl(((SyncMongoClient) keyVaultClient).getWrapped(), clientEncryptionSettings));
+    }
+
+    @Override
+    protected boolean isReactive() {
+        return true;
+    }
+
+    @Override
+    protected void postSetUp(final TestDef testDef) {
+        super.postSetUp(testDef);
+        if (testDef.wasAssignedModifier(UnifiedTestSkips.Modifier.IGNORE_EXTRA_EVENTS)) {
+            ignoreExtraEvents(); // no disable needed
+        }
+        if (testDef.wasAssignedModifier(Modifier.SLEEP_AFTER_CURSOR_OPEN)) {
+            enableSleepAfterCursorOpen(256);
+        }
+        if (testDef.wasAssignedModifier(Modifier.SLEEP_AFTER_CURSOR_CLOSE)) {
+            enableSleepAfterCursorClose(256);
+        }
+        if (testDef.wasAssignedModifier(Modifier.WAIT_FOR_BATCH_CURSOR_CREATION)) {
+            enableWaitForBatchCursorCreation();
+        }
+    }
+
+    @Override
+    protected void postCleanUp(final TestDef testDef) {
+        super.postCleanUp(testDef);
+        if (testDef.wasAssignedModifier(Modifier.WAIT_FOR_BATCH_CURSOR_CREATION)) {
+            disableWaitForBatchCursorCreation();
+        }
+        if (testDef.wasAssignedModifier(Modifier.SLEEP_AFTER_CURSOR_CLOSE)) {
+            disableSleep();
+        }
+        if (testDef.wasAssignedModifier(Modifier.SLEEP_AFTER_CURSOR_OPEN)) {
+            disableSleep();
+        }
     }
 }

@@ -22,16 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 final class CommandLoggingTest extends UnifiedReactiveStreamsTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        // The driver has a hack where getLastError command is executed as part of the handshake in order to get a connectionId
-        // even when the hello command response doesn't contain it.
-        assumeFalse(fileDescription.equals("pre-42-server-connection-id"));
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/command-logging");
     }
