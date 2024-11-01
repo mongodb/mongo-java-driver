@@ -29,7 +29,6 @@ import static com.mongodb.ClusterFixture.isDataLakeTest;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.IGNORE_EXTRA_EVENTS;
 import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.SLEEP_AFTER_CURSOR_OPEN;
@@ -136,10 +135,10 @@ public final class UnifiedTestSkips {
                 .test("crud", "findOneAndUpdate-hint-unacknowledged", "Unacknowledged findOneAndUpdate with hint document on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint string on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint document on 4.4+ server");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5481") // TODO this is completed?
-                .onlyWhen(() -> isDiscoverableReplicaSet() && serverVersionAtLeast(8, 0))
-                .test("crud", "aggregate-write-readPreference", "Aggregate with $out includes read preference for 5.0+ server")
-                .test("crud", "db-aggregate-write-readPreference", "Database-level aggregate with $out includes read preference for 5.0+ server");
+//        def.skipJira("https://jira.mongodb.org/browse/JAVA-5481") // TODO this is completed?
+//                .onlyWhen(() -> isDiscoverableReplicaSet() && serverVersionAtLeast(8, 0))
+//                .test("crud", "aggregate-write-readPreference", "Aggregate with $out includes read preference for 5.0+ server")
+//                .test("crud", "db-aggregate-write-readPreference", "Database-level aggregate with $out includes read preference for 5.0+ server");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5622")
                 .test("crud", "updateOne-sort", "UpdateOne with sort option")
                 .test("crud", "updateOne-sort", "updateOne with sort option unsupported (server-side error)")
