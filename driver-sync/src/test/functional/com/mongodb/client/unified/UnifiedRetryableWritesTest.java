@@ -42,7 +42,7 @@ public final class UnifiedRetryableWritesTest extends UnifiedSyncTest {
         }
         if (isDiscoverableReplicaSet() && serverVersionLessThan(4, 4)) {
             def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
-                    .test("retryable-writes", "insertOne-serverErrors", "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
+                    .test("retryable-writes", "retryable-writes insertOne serverErrors", "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
         }
         def.skipJira("https://jira.mongodb.org/browse/JAVA-4586")
                 .testContains("retryable-writes", "client bulkWrite")

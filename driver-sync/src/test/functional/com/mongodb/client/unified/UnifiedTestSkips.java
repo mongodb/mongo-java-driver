@@ -81,6 +81,9 @@ public final class UnifiedTestSkips {
 
         /**
          * All tests in file under dir skipped.
+         * @param dir the directory name
+         * @param file the test file's "description" field
+         * @return this
          */
         public Skip file(final String dir, final String file) {
             boolean match = ("unified-test-format/" + dir).equals(testDef.dir)
@@ -91,6 +94,10 @@ public final class UnifiedTestSkips {
 
         /**
          * Test skipped if dir, file, and test match.
+         * @param dir the directory name
+         * @param file the test file's "description" field
+         * @param test the individual test's "description" field
+         * @return this
          */
         public Skip test(final String dir, final String file, final String test) {
             boolean match = ("unified-test-format/" + dir).equals(testDef.dir)
@@ -102,6 +109,10 @@ public final class UnifiedTestSkips {
 
         /**
          * Test skipped if the test description contains the fragment as a substring
+         * Avoid using this, except during development.
+         * @param dir the directory name
+         * @param fragment the substring to check in the test "description" field
+         * @return this
          */
         public Skip testContains(final String dir, final String fragment) {
             boolean match = ("unified-test-format/" + dir).equals(testDef.dir)
