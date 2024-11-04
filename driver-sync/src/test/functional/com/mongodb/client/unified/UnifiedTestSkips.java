@@ -31,6 +31,7 @@ import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.IGNORE_EXTRA_EVENTS;
+import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.SLEEP_AFTER_CURSOR_CLOSE;
 import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.SLEEP_AFTER_CURSOR_OPEN;
 import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -102,7 +103,7 @@ public final class UnifiedTestSkips {
                 .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "no connection is pinned if all documents are returned in the initial batch")
                 .test("load-balancers", "transactions are correctly pinned to connections for load-balanced clusters", "a connection can be shared by a transaction and a cursor")
                 .test("load-balancers", "wait queue timeout errors include details about checked out connections", "wait queue timeout errors include cursor statistics");
-        def.modify(SLEEP_AFTER_CURSOR_OPEN)
+        def.modify(SLEEP_AFTER_CURSOR_CLOSE)
                 .test("load-balancers", "state change errors are correctly handled", "only connections for a specific serviceId are closed when pools are cleared")
                 .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned to the pool when the cursor is closed")
                 .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request")
@@ -135,10 +136,6 @@ public final class UnifiedTestSkips {
                 .test("crud", "findOneAndUpdate-hint-unacknowledged", "Unacknowledged findOneAndUpdate with hint document on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint string on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint document on 4.4+ server");
-//        def.skipJira("https://jira.mongodb.org/browse/JAVA-5481") // TODO this is completed?
-//                .onlyWhen(() -> isDiscoverableReplicaSet() && serverVersionAtLeast(8, 0))
-//                .test("crud", "aggregate-write-readPreference", "Aggregate with $out includes read preference for 5.0+ server")
-//                .test("crud", "db-aggregate-write-readPreference", "Database-level aggregate with $out includes read preference for 5.0+ server");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5622")
                 .test("crud", "updateOne-sort", "UpdateOne with sort option")
                 .test("crud", "updateOne-sort", "updateOne with sort option unsupported (server-side error)")
