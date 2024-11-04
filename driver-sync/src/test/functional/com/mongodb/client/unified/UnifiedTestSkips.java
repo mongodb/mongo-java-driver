@@ -41,7 +41,8 @@ public final class UnifiedTestSkips {
 
         // atlas-data-lake
 
-        def.skipToComplyWhen("Data lake tests can only run on data lake", () -> !isDataLakeTest())
+        def.skipAccordingToSpec("Data lake tests should only run on data lake")
+                .when(() -> !isDataLakeTest())
                 .directory("atlas-data-lake-testing");
 
         // change-streams
@@ -60,7 +61,6 @@ public final class UnifiedTestSkips {
                 .test("change-streams", "change-streams-errors", "Change Stream should error when an invalid aggregation stage is passed in")
                 .test("change-streams", "change-streams-errors", "The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error");
 
-
         // client-side-operation-timeout (CSOT)
 
         // TODO
@@ -73,7 +73,7 @@ public final class UnifiedTestSkips {
         // command-logging-and-monitoring
 
         def.skipNoncompliant("TODO")
-                .onlyWhen(() -> !def.isReactive() && isServerlessTest())
+                .when(() -> !def.isReactive() && isServerlessTest()) // TODO why reactive check?
                 .directory("command-logging")
                 .directory("command-monitoring");
 
@@ -184,7 +184,7 @@ public final class UnifiedTestSkips {
         // retryable-writes
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5125")
-                .onlyWhen(() -> isSharded() && serverVersionLessThan(5, 0))
+                .when(() -> isSharded() && serverVersionLessThan(5, 0))
                 //.testContains("retryable-writes", "succeeds after WriteConcernError")
                 .test("retryable-writes", "bulkWrite-errorLabels", "BulkWrite succeeds after WriteConcernError ShutdownInProgress")
                 .test("retryable-writes", "updateOne-errorLabels", "UpdateOne succeeds after WriteConcernError ShutdownInProgress")
@@ -203,7 +203,7 @@ public final class UnifiedTestSkips {
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "InsertOne succeeds after retryable writeConcernError")
                 .test("retryable-writes", "retryable-writes bulkWrite serverErrors", "BulkWrite succeeds after retryable writeConcernError in first batch");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
-                .onlyWhen(() -> isDiscoverableReplicaSet() && serverVersionLessThan(4, 4))
+                .when(() -> isDiscoverableReplicaSet() && serverVersionLessThan(4, 4))
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-4586")
                 //.testContains("retryable-writes", "client bulkWrite")
@@ -243,7 +243,7 @@ public final class UnifiedTestSkips {
         def.skipDeprecated("Deprecated feature removed")
                 .file("transactions", "count");
         def.skipDeprecated("Only affects 4.2, which is EOL, see https://github.com/mongodb/mongo-java-driver/pull/1310/files#r1491812405")
-                .onlyWhen(() -> serverVersionLessThan(4, 4) && isSharded())
+                .when(() -> serverVersionLessThan(4, 4) && isSharded())
                 .test("transactions", "pin-mongos", "distinct")
                 .test("transactions", "read-concern", "only first distinct includes readConcern")
                 .test("transactions", "read-concern", "distinct ignores collection readConcern")
@@ -256,7 +256,7 @@ public final class UnifiedTestSkips {
                         + "document instead of as a top-level field. Rather "
                         + "than handle that in code, we skip the test on older "
                         + "server versions.")
-                .onlyWhen(() -> serverVersionLessThan(4, 4))
+                .when(() -> serverVersionLessThan(4, 4))
                 .test("valid-pass", "poc-retryable-writes", "InsertOne fails after multiple retryable writeConcernErrors");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5389")
                 .file("valid-pass", "expectedEventsForClient-topologyDescriptionChangedEvent");
@@ -328,19 +328,18 @@ public final class UnifiedTestSkips {
         }
 
         /**
-         * The test is skipped for an unknown reason.
+         * The test is skipped, as specified. This should be paired with a
+         * "when" clause.
          */
-        public TestApplicator skipTodo(final String skip) {
+        public TestApplicator skipAccordingToSpec(final String skip) {
             return new TestApplicator(this, skip);
         }
 
         /**
-         * As per the relevant spec, the test is skipped only when the condition
-         * is not satisfied.
+         * The test is skipped for an unknown reason.
          */
-        public TestApplicator skipToComplyWhen(final String reason, final Supplier<Boolean> condition) {
-            return new TestApplicator(this, reason)
-                    .onlyWhen(condition);
+        public TestApplicator skipTodo(final String skip) {
+            return new TestApplicator(this, skip);
         }
 
         public TestApplicator modify(final Modifier... modifiers) {
@@ -483,7 +482,7 @@ public final class UnifiedTestSkips {
          * @param condition the condition; methods are no-op when false.
          * @return this
          */
-        public TestApplicator onlyWhen(final Supplier<Boolean> condition) {
+        public TestApplicator when(final Supplier<Boolean> condition) {
             if (this.shouldApply != null || this.matchWasPerformed) {
                 throw new IllegalStateException("Condition must be specified first and once.");
             }
