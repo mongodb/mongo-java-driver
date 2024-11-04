@@ -23,6 +23,7 @@ import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
+import org.bson.Vector
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -855,7 +856,7 @@ class AggregatesSpecification extends Specification {
         BsonDocument vectorSearchDoc = toBson(
                 vectorSearch(
                         fieldPath('fieldName').multi('ignored'),
-                        [1.0d, 2.0d],
+                        vector,
                         'indexName',
                         1,
                         approximateVectorSearchOptions(2)
@@ -868,13 +869,20 @@ class AggregatesSpecification extends Specification {
         vectorSearchDoc == parse('''{
                 "$vectorSearch": {
                     "path": "fieldName",
-                    "queryVector": [1.0, 2.0],
+                    "queryVector": ''' + queryVector + ''',
                     "index": "indexName",
                     "numCandidates": {"$numberLong": "2"},
                     "limit": {"$numberLong": "1"},
                     "filter": {"fieldName": {"$ne": "fieldValue"}}
                 }
         }''')
+
+        where:
+        vector                                               | queryVector
+        Vector.int8Vector(new byte[]{127, 7})                | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        Vector.floatVector(new float[]{127.0f, 7.0f})        | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        Vector.packedBitVector(new byte[]{127, 7}, (byte) 0) | '{"$binary": {"base64": "EAB/Bw==", "subType": "09"}}'
+        [1.0d, 2.0d]                                         | "[1.0, 2.0]"
     }
 
     def 'should render exact $vectorSearch'() {
@@ -882,7 +890,7 @@ class AggregatesSpecification extends Specification {
         BsonDocument vectorSearchDoc = toBson(
                 vectorSearch(
                         fieldPath('fieldName').multi('ignored'),
-                        [1.0d, 2.0d],
+                        vector,
                         'indexName',
                         1,
                         exactVectorSearchOptions()
@@ -895,13 +903,19 @@ class AggregatesSpecification extends Specification {
         vectorSearchDoc == parse('''{
                 "$vectorSearch": {
                     "path": "fieldName",
-                    "queryVector": [1.0, 2.0],
+                     "queryVector": ''' + queryVector + ''',
                     "index": "indexName",
                     "exact": true,
                     "limit": {"$numberLong": "1"},
                     "filter": {"fieldName": {"$ne": "fieldValue"}}
                 }
         }''')
+
+        where:
+        vector                                        | queryVector
+        Vector.int8Vector(new byte[]{127, 7})         | '{"$binary": {"base64": "AwB/Bw==", "subType": "09"}}'
+        Vector.floatVector(new float[]{127.0f, 7.0f}) | '{"$binary": {"base64": "JwAAAP5CAADgQA==", "subType": "09"}}'
+        [1.0d, 2.0d]                                  | "[1.0, 2.0]"
     }
 
     def 'should create string representation for simple stages'() {

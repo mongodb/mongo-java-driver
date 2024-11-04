@@ -42,7 +42,7 @@ import static java.util.Collections.singletonList;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-final class ListSearchIndexesOperation<T>
+public final class ListSearchIndexesOperation<T>
         implements AsyncExplainableReadOperation<AsyncBatchCursor<T>>, ExplainableReadOperation<BatchCursor<T>> {
     private static final String STAGE_LIST_SEARCH_INDEXES = "$listSearchIndexes";
     private final MongoNamespace namespace;
@@ -59,9 +59,10 @@ final class ListSearchIndexesOperation<T>
     private final String indexName;
     private final boolean retryReads;
 
-    ListSearchIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder, @Nullable final String indexName,
-            @Nullable final Integer batchSize, @Nullable final Collation collation, @Nullable final BsonValue comment,
-            @Nullable final Boolean allowDiskUse, final boolean retryReads) {
+    public ListSearchIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder, @Nullable final String indexName,
+                                      @Nullable final Integer batchSize, @Nullable final Collation collation,
+                                      @Nullable final BsonValue comment,
+                                      @Nullable final Boolean allowDiskUse, final boolean retryReads) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
