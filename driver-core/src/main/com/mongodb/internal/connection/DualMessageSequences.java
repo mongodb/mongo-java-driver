@@ -16,10 +16,9 @@
 
 package com.mongodb.internal.connection;
 
+import org.bson.BsonBinaryWriter;
 import org.bson.BsonElement;
-import org.bson.BsonWriter;
 import org.bson.FieldNameValidator;
-import org.bson.io.BsonOutput;
 
 import java.util.List;
 
@@ -70,7 +69,7 @@ public abstract class DualMessageSequences extends MessageSequences {
     public interface WritersProviderAndLimitsChecker {
         /**
          * Provides writers to the specified {@link WriteAction},
-         * {@linkplain WriteAction#doAndGetBatchCount(OrdinaryAndStoredBsonWriters, OrdinaryAndStoredBsonWriters) executes} it,
+         * {@linkplain WriteAction#doAndGetBatchCount(BsonBinaryWriter, BsonBinaryWriter) executes} it,
          * checks the {@linkplain MessageSettings limits}.
          * <p>
          * May be called multiple times per {@link #encodeDocuments(WritersProviderAndLimitsChecker)}.</p>
@@ -78,7 +77,7 @@ public abstract class DualMessageSequences extends MessageSequences {
         WriteResult tryWrite(WriteAction write);
 
         /**
-         * @see #doAndGetBatchCount(OrdinaryAndStoredBsonWriters, OrdinaryAndStoredBsonWriters)
+         * @see #doAndGetBatchCount(BsonBinaryWriter, BsonBinaryWriter)
          */
         interface WriteAction {
             /**
@@ -87,18 +86,7 @@ public abstract class DualMessageSequences extends MessageSequences {
              * @return The resulting batch count since the beginning of {@link #encodeDocuments(WritersProviderAndLimitsChecker)}.
              * It is generally allowed to be greater than {@link MessageSettings#getMaxBatchCount()}.
              */
-            int doAndGetBatchCount(OrdinaryAndStoredBsonWriters firstWriter, OrdinaryAndStoredBsonWriters secondWriter);
-        }
-
-        interface OrdinaryAndStoredBsonWriters {
-            BsonWriter getWriter();
-
-            /**
-             * A {@link BsonWriter} to use for writing documents that are intended to be stored in a database.
-             * Must write to the same {@linkplain BsonOutput output} as {@link #getWriter()} does,
-             * and may be the same as {@link #getWriter()}.
-             */
-            BsonWriter getStoredDocumentWriter();
+            int doAndGetBatchCount(BsonBinaryWriter firstWriter, BsonBinaryWriter secondWriter);
         }
 
         enum WriteResult {

@@ -110,14 +110,10 @@ public final class BsonWriterHelper {
             final BsonOutput secondOutput,
             final MessageSettings messageSettings,
             final boolean validateDocumentSizeLimits) {
-        BinaryOrdinaryAndStoredBsonWriters firstWriters = new BinaryOrdinaryAndStoredBsonWriters(
-                firstOutput,
-                dualMessageSequences.getFirstFieldNameValidator(),
-                validateDocumentSizeLimits ? messageSettings : null);
-        BinaryOrdinaryAndStoredBsonWriters secondWriters = new BinaryOrdinaryAndStoredBsonWriters(
-                secondOutput,
-                dualMessageSequences.getSecondFieldNameValidator(),
-                validateDocumentSizeLimits ? messageSettings : null);
+        BsonBinaryWriter firstWriter = createBsonBinaryWriter(
+                firstOutput, dualMessageSequences.getFirstFieldNameValidator(), validateDocumentSizeLimits ? messageSettings : null);
+        BsonBinaryWriter secondWriter = createBsonBinaryWriter(
+                secondOutput, dualMessageSequences.getSecondFieldNameValidator(), validateDocumentSizeLimits ? messageSettings : null);
         // the size of operation-agnostic command fields (a.k.a. extra elements) is counted towards `messageOverheadInBytes`
         int messageOverheadInBytes = 1000;
         int maxSizeInBytes = messageSettings.getMaxMessageSize() - (messageOverheadInBytes + commandDocumentSizeInBytes);
@@ -127,7 +123,7 @@ public final class BsonWriterHelper {
         return dualMessageSequences.encodeDocuments(write -> {
             int firstBeforeWritePosition = firstOutput.getPosition();
             int secondBeforeWritePosition = secondOutput.getPosition();
-            int batchCountAfterWrite = write.doAndGetBatchCount(firstWriters, secondWriters);
+            int batchCountAfterWrite = write.doAndGetBatchCount(firstWriter, secondWriter);
             assertTrue(batchCountAfterWrite <= maxBatchCount);
             int writtenSizeInBytes =
                     firstOutput.getPosition() - firstStart
@@ -235,64 +231,43 @@ public final class BsonWriterHelper {
         return false;
     }
 
+    /**
+     * @return {@code writer} if {@code maxDocumentSize} is {@code null}, otherwise decorates it.
+     */
+    public static BsonWriter decorateWithDocumentSizeChecking(final BsonBinaryWriter writer, @Nullable final Integer maxDocumentSize) {
+        return maxDocumentSize == null ? writer : new DocumentSizeLimitCheckingBsonBinaryWriter(writer, maxDocumentSize);
+    }
 
     private BsonWriterHelper() {
     }
 
-    private static final class BinaryOrdinaryAndStoredBsonWriters implements WritersProviderAndLimitsChecker.OrdinaryAndStoredBsonWriters {
-        private final BsonBinaryWriter writer;
-        private final BsonWriter storedDocumentWriter;
+    private static final class DocumentSizeLimitCheckingBsonBinaryWriter extends LevelCountingBsonWriter {
+        private final int maxStoredDocumentSize;
+        private final BsonOutput out;
+        private int documentStart;
 
-        /**
-         * @param messageSettings Non-{@code null} iff the document size limits must be validated.
-         */
-        BinaryOrdinaryAndStoredBsonWriters(
-                final BsonOutput out,
-                final FieldNameValidator validator,
-                @Nullable final MessageSettings messageSettings) {
-            writer = createBsonBinaryWriter(out, validator, messageSettings);
-            storedDocumentWriter = messageSettings == null
-                    ? writer
-                    : new StoredDocumentSizeLimitCheckingBsonBinaryWriter(writer, messageSettings.getMaxDocumentSize());
+        DocumentSizeLimitCheckingBsonBinaryWriter(final BsonBinaryWriter writer, final int maxStoredDocumentSize) {
+            super(writer);
+            assertTrue(maxStoredDocumentSize > 0);
+            this.maxStoredDocumentSize = maxStoredDocumentSize;
+            this.out = writer.getBsonOutput();
         }
 
         @Override
-        public BsonWriter getWriter() {
-            return writer;
+        public void writeStartDocument() {
+            if (getCurrentLevel() == INITIAL_LEVEL) {
+                documentStart = out.getPosition();
+            }
+            super.writeStartDocument();
         }
 
         @Override
-        public BsonWriter getStoredDocumentWriter() {
-            return storedDocumentWriter;
-        }
-
-        private static final class StoredDocumentSizeLimitCheckingBsonBinaryWriter extends LevelCountingBsonWriter {
-            private final int maxStoredDocumentSize;
-            private final BsonOutput out;
-            private int documentStart;
-
-            StoredDocumentSizeLimitCheckingBsonBinaryWriter(final BsonBinaryWriter writer, final int maxStoredDocumentSize) {
-                super(writer);
-                this.maxStoredDocumentSize = maxStoredDocumentSize;
-                this.out = writer.getBsonOutput();
-            }
-
-            @Override
-            public void writeStartDocument() {
-                if (getCurrentLevel() == INITIAL_LEVEL) {
-                    documentStart = out.getPosition();
-                }
-                super.writeStartDocument();
-            }
-
-            @Override
-            public void writeEndDocument() throws BsonMaximumSizeExceededException {
-                super.writeEndDocument();
-                if (getCurrentLevel() == INITIAL_LEVEL) {
-                    int documentSize = out.getPosition() - documentStart;
-                    if (documentSize > maxStoredDocumentSize) {
-                        throw createBsonMaximumSizeExceededException(maxStoredDocumentSize);
-                    }
+        public void writeEndDocument() throws BsonMaximumSizeExceededException {
+            super.writeEndDocument();
+            if (getCurrentLevel() == INITIAL_LEVEL) {
+                int documentSize = out.getPosition() - documentStart;
+                if (documentSize > maxStoredDocumentSize) {
+                    throw createBsonMaximumSizeExceededException(maxStoredDocumentSize);
                 }
             }
         }
