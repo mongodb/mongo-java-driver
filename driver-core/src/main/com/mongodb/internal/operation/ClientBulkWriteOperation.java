@@ -39,6 +39,7 @@ import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientUpdateResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.WriteBinding;
@@ -109,6 +110,8 @@ import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PACKAGE;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.BsonWriterHelper.decorateWithDocumentSizeChecking;
 import static com.mongodb.internal.connection.DualMessageSequences.WritersProviderAndLimitsChecker.WriteResult.FAIL_LIMIT_EXCEEDED;
 import static com.mongodb.internal.connection.DualMessageSequences.WritersProviderAndLimitsChecker.WriteResult.OK_LIMIT_NOT_REACHED;
@@ -682,7 +685,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             private final ConcreteClientBulkWriteOptions options;
             private final Supplier<Long> doIfCommandIsRetryableAndAdvanceGetTxnNumber;
 
-            OpsAndNsInfo(
+            @VisibleForTesting(otherwise = PACKAGE)
+            public OpsAndNsInfo(
                     final boolean effectiveRetryWrites,
                     final List<? extends ClientNamespacedWriteModel> models,
                     @Nullable final Integer maxStoredDocumentSize,
@@ -941,10 +945,12 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     /**
      * Exactly one instance must be used per {@linkplain #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator) batch}.
      */
-    private final class BatchEncoder {
+    @VisibleForTesting(otherwise = PRIVATE)
+    public final class BatchEncoder {
         private EncodedBatchInfo encodedBatchInfo;
 
-        BatchEncoder() {
+        @VisibleForTesting(otherwise = PACKAGE)
+        public BatchEncoder() {
             encodedBatchInfo = new EncodedBatchInfo();
         }
 

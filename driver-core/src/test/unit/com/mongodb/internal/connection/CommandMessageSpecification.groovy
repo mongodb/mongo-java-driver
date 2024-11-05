@@ -46,6 +46,9 @@ import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION
 
+/**
+ * New tests must be added to {@link CommandMessageTest}.
+ */
 class CommandMessageSpecification extends Specification {
 
     def namespace = new MongoNamespace('db.test')
