@@ -30,13 +30,13 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.IGNORE_EXTRA_EVENTS;
-import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.SLEEP_AFTER_CURSOR_CLOSE;
-import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.SLEEP_AFTER_CURSOR_OPEN;
-import static com.mongodb.client.unified.UnifiedTestSkips.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_CLOSE;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_OPEN;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-public final class UnifiedTestSkips {
+public final class UnifiedTestModifications {
     public static void doSkips(final TestDef def) {
 
         // atlas-data-lake
@@ -267,7 +267,7 @@ public final class UnifiedTestSkips {
                 .file("valid-pass", "kmsProviders-mixed_kms_credential_fields");
     }
 
-    private UnifiedTestSkips() {}
+    private UnifiedTestModifications() {}
 
     public static TestDef testDef(final String dir, final String file, final String test, final boolean reactive) {
         return new TestDef(dir, file, test, reactive);
@@ -365,7 +365,7 @@ public final class UnifiedTestSkips {
         @Nullable
         private final String reasonToApply;
         private final List<Modifier> modifiersToApply;
-        private Supplier<Boolean> shouldApply;
+        private Supplier<Boolean> precondition;
         private boolean matchWasPerformed = false;
 
         private TestApplicator(
@@ -389,7 +389,7 @@ public final class UnifiedTestSkips {
 
         private TestApplicator onMatch(final boolean match) {
             matchWasPerformed = true;
-            if (shouldApply != null && !shouldApply.get()) {
+            if (precondition != null && !precondition.get()) {
                 return this;
             }
             if (shouldSkip) {
@@ -479,14 +479,14 @@ public final class UnifiedTestSkips {
          * For example, if tests should only be skipped (or modified) on
          * serverless, check for serverless in the condition.
          * Must be the first method called in the chain.
-         * @param condition the condition; methods are no-op when false.
+         * @param precondition the condition; methods are no-op when false.
          * @return this
          */
-        public TestApplicator when(final Supplier<Boolean> condition) {
-            if (this.shouldApply != null || this.matchWasPerformed) {
+        public TestApplicator when(final Supplier<Boolean> precondition) {
+            if (this.precondition != null || this.matchWasPerformed) {
                 throw new IllegalStateException("Condition must be specified first and once.");
             }
-            this.shouldApply = condition;
+            this.precondition = precondition;
             return this;
         }
     }

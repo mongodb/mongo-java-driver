@@ -22,7 +22,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.unified.UnifiedTest;
-import com.mongodb.client.unified.UnifiedTestSkips;
+import com.mongodb.client.unified.UnifiedTestModifications;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
@@ -32,8 +32,8 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoDatabase;
 
-import static com.mongodb.client.unified.UnifiedTestSkips.Modifier;
-import static com.mongodb.client.unified.UnifiedTestSkips.TestDef;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
+import static com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableWaitForBatchCursorCreation;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableSleepAfterCursorClose;
@@ -67,7 +67,7 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
     @Override
     protected void postSetUp(final TestDef testDef) {
         super.postSetUp(testDef);
-        if (testDef.wasAssignedModifier(UnifiedTestSkips.Modifier.IGNORE_EXTRA_EVENTS)) {
+        if (testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS)) {
             ignoreExtraEvents(); // no disable needed
         }
         if (testDef.wasAssignedModifier(Modifier.SLEEP_AFTER_CURSOR_OPEN)) {

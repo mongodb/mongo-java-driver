@@ -21,7 +21,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.UnixServerAddress;
-import com.mongodb.client.unified.UnifiedTestSkips.TestDef;
+import com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.logging.TestLoggingInterceptor;
@@ -81,7 +81,7 @@ import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
 import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
-import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
+import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -215,7 +215,7 @@ public abstract class UnifiedTest {
         rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
         testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
-        UnifiedTestSkips.doSkips(testDef);
+        UnifiedTestModifications.doSkips(testDef);
         skips(fileDescription, testDescription);
         assertTrue(
                 schemaVersion.equals("1.0")
