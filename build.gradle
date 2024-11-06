@@ -74,7 +74,7 @@ configure(coreProjects) {
     apply plugin: 'idea'
 
     group = 'org.mongodb'
-    version = '4.11.5'
+    version = '4.11.6-SNAPSHOT'
 
     repositories {
         mavenLocal()
