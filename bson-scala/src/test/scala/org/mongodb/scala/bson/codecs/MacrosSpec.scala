@@ -30,6 +30,7 @@ import org.mongodb.scala.bson.annotations.{ BsonIgnore, BsonProperty }
 import org.mongodb.scala.bson.codecs.Macros.{ createCodecProvider, createCodecProviderIgnoreNone }
 import org.mongodb.scala.bson.codecs.Registry.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson.collection.immutable.Document
+import scala.collection.immutable.Vector
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag

@@ -32,11 +32,11 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
+public final class CreateSearchIndexesOperation extends AbstractWriteSearchIndexOperation {
     private static final String COMMAND_NAME = "createSearchIndexes";
     private final List<SearchIndexRequest> indexRequests;
 
-    CreateSearchIndexesOperation(final MongoNamespace namespace, final List<SearchIndexRequest> indexRequests) {
+    public CreateSearchIndexesOperation(final MongoNamespace namespace, final List<SearchIndexRequest> indexRequests) {
         super(namespace);
         this.indexRequests = assertNotNull(indexRequests);
     }

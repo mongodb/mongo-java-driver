@@ -43,11 +43,14 @@ import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CountDocumentsOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
 import com.mongodb.internal.operation.CreateIndexesOperation;
+import com.mongodb.internal.operation.CreateSearchIndexesOperation;
 import com.mongodb.internal.operation.DropCollectionOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.internal.operation.ListIndexesOperation;
+import com.mongodb.internal.operation.ListSearchIndexesOperation;
 import com.mongodb.internal.operation.MixedBulkWriteOperation;
+import com.mongodb.internal.operation.SearchIndexRequest;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -56,6 +59,7 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.assertions.Assertions;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
@@ -65,6 +69,7 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.executeAsync;
@@ -295,6 +300,25 @@ public final class CollectionHelper<T> {
 
     public List<T> find() {
         return find(codec);
+    }
+
+    public Optional<T> listSearchIndex(final String indexName) {
+        ListSearchIndexesOperation<T> listSearchIndexesOperation =
+                new ListSearchIndexesOperation<>(namespace, codec, indexName, null, null, null, null, true);
+        BatchCursor<T> cursor = listSearchIndexesOperation.execute(getBinding());
+
+        List<T> results = new ArrayList<>();
+        while (cursor.hasNext()) {
+            results.addAll(cursor.next());
+        }
+        Assertions.assertTrue("Expected at most one result, but found " + results.size(), results.size() <= 1);
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    public void createSearchIndex(final SearchIndexRequest searchIndexModel) {
+        CreateSearchIndexesOperation searchIndexesOperation =
+                new CreateSearchIndexesOperation(namespace, singletonList(searchIndexModel));
+         searchIndexesOperation.execute(getBinding());
     }
 
     public <D> List<D> find(final Codec<D> codec) {

@@ -28,13 +28,14 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.mongodb.client.unified.UnifiedRetryableReadsTest.doSkips;
+import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableWaitForBatchCursorCreation;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.enableWaitForBatchCursorCreation;
 
 final class UnifiedRetryableReadsTest extends UnifiedReactiveStreamsTest {
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(fileDescription, testDescription);
+        doSkips(testDef("unified-test-format/retryable-reads", fileDescription, testDescription));
     }
 
     @Override

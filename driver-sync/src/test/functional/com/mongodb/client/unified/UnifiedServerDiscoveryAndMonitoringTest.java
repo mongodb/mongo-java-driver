@@ -16,15 +16,14 @@
 
 package com.mongodb.client.unified;
 
-import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static com.mongodb.client.unified.UnifiedTestSkips.TestDef;
+import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
 
 public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
@@ -33,14 +32,26 @@ public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTe
 
     @Override
     protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(getDefinition());
+        doSkips(testDef("unified-test-format/server-discovery-and-monitoring", fileDescription, testDescription));
     }
 
-    public static void doSkips(final BsonDocument definition) {
-        String description = definition.getString("description", new BsonString("")).getValue();
-        assumeFalse(description.equals("connect with serverMonitoringMode=auto >=4.4"),
-                "Skipping because our server monitoring events behave differently for now");
-        assumeFalse(description.equals("connect with serverMonitoringMode=stream >=4.4"),
-                "Skipping because our server monitoring events behave differently for now");
+    public static void doSkips(final TestDef def) {
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5230")
+                .test("server-discovery-and-monitoring", "serverMonitoringMode", "connect with serverMonitoringMode=auto >=4.4")
+                .test("server-discovery-and-monitoring", "serverMonitoringMode", "connect with serverMonitoringMode=stream >=4.4");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-4770")
+                .file("server-discovery-and-monitoring", "standalone-logging")
+                .file("server-discovery-and-monitoring", "replicaset-logging")
+                .file("server-discovery-and-monitoring", "sharded-logging")
+                .file("server-discovery-and-monitoring", "loadbalanced-logging");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5229")
+                .file("server-discovery-and-monitoring", "standalone-emit-topology-description-changed-before-close")
+                .file("server-discovery-and-monitoring", "replicaset-emit-topology-description-changed-before-close")
+                .file("server-discovery-and-monitoring", "sharded-emit-topology-description-changed-before-close")
+                .file("server-discovery-and-monitoring", "loadbalanced-emit-topology-description-changed-before-close");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5564")
+                .test("server-discovery-and-monitoring", "serverMonitoringMode", "poll waits after successful heartbeat");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-4536")
+                .file("server-discovery-and-monitoring", "interruptInUse");
     }
 }
