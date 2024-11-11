@@ -37,6 +37,8 @@ description = "The MongoDB Kotlin Driver Extensions"
 
 ext.set("pomName", "MongoDB Kotlin Driver Extensions")
 
+java { registerFeature("kotlinDrivers") { usingSourceSet(sourceSets["main"]) } }
+
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
@@ -44,10 +46,16 @@ dependencies {
 
     api(project(path = ":driver-core", configuration = "default"))
 
+    // Some extensions require higher API like MongoCollection which are defined in the sync &
+    // coroutine Kotlin driver
+    "kotlinDriversImplementation"(project(path = ":driver-kotlin-sync", configuration = "default"))
+    "kotlinDriversImplementation"(project(path = ":driver-kotlin-coroutine", configuration = "default"))
+
     testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("io.github.classgraph:classgraph:4.8.154")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
 }
 
 kotlin { explicitApi() }
