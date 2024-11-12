@@ -55,7 +55,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("io.github.classgraph:classgraph:4.8.154")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0") {
+        exclude("org.mockito", module = "mockito-core")
+    }
 }
 
 kotlin { explicitApi() }
