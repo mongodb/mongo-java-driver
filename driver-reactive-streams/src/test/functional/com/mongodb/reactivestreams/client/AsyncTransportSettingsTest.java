@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.AsyncTransportSettings;
@@ -68,11 +69,7 @@ class AsyncTransportSettingsTest {
         try (MongoClient ignored = new SyncMongoClient(MongoClients.create(mongoClientSettings))) {
             // ignored
         }
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        ClusterFixture.sleep(100);
         verify(executorService, times(1)).shutdown();
     }
 }

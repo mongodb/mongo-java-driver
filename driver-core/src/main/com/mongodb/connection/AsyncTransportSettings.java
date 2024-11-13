@@ -17,7 +17,6 @@
  */
 package com.mongodb.connection;
 
-import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.ExecutorService;
@@ -26,10 +25,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * {@link TransportSettings} for a non-<a href="http://netty.io/">Netty</a>-based async transport implementation.
+ * Shallowly immutable.
  *
  * @since 5.2
  */
-@Immutable
 public final class AsyncTransportSettings extends TransportSettings {
 
     private final ExecutorService executorService;

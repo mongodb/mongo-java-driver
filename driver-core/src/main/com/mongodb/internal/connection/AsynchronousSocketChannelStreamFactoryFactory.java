@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.ValueOrExceptionContainer;
@@ -53,12 +54,15 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
 
     @Override
     public void close() {
-        if (group != null && !group.isCompletedExceptionally()) {
+        if (group != null && !group.containsException()) {
+            AsynchronousChannelGroup asynchronousChannelGroup = null;
             try {
-                group.get().shutdown();
+                asynchronousChannelGroup = group.get();
             } catch (Exception e) {
                 // will not occur, since it was not completed exceptionally
+                Assertions.fail();
             }
+            asynchronousChannelGroup.shutdown();
         }
     }
 }

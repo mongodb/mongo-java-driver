@@ -38,13 +38,13 @@ public final class ValueOrExceptionContainer<T> {
     }
 
     public T get() throws Exception {
-        if (isCompletedExceptionally()) {
+        if (containsException()) {
             throw exception;
         }
         return value;
     }
 
-    public boolean isCompletedExceptionally() {
+    public boolean containsException() {
         return exception != null;
     }
 }

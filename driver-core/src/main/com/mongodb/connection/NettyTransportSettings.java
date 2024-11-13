@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
@@ -33,10 +32,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * {@code TransportSettings} for a <a href="http://netty.io/">Netty</a>-based transport implementation.
+ * Shallowly immutable.
  *
  * @since 4.11
  */
-@Immutable
 public final class NettyTransportSettings extends TransportSettings {
 
     private final EventLoopGroup eventLoopGroup;
