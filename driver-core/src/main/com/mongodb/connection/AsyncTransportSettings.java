@@ -54,10 +54,10 @@ public final class AsyncTransportSettings extends TransportSettings {
 
         /**
          * The executor service, intended to be used exclusively by the mongo
-         * client. Closing the mongo client will result in orderly shutdown
+         * client. Closing the mongo client will result in {@linkplain ExecutorService#shutdown() orderly shutdown}
          * of the executor service.
          *
-         * <p>When TLS is not enabled, see
+         * <p>When {@linkplain SslSettings#isEnabled() TLS is not enabled}, see
          * {@link java.nio.channels.AsynchronousChannelGroup#withThreadPool(ExecutorService)}
          * for additional requirements for the executor service.
          *

@@ -51,7 +51,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     @Nullable
     private final ValueOrExceptionContainer<AsynchronousChannelGroup> group;
 
-    public AsynchronousSocketChannelStream(
+    AsynchronousSocketChannelStream(
             final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
             final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider) {
         this(serverAddress, inetAddressResolver, settings, bufferProvider, null);
@@ -91,11 +91,9 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
 
             try {
                 AsynchronousSocketChannel attemptConnectionChannel;
-                if (group != null) {
-                    attemptConnectionChannel = AsynchronousSocketChannel.open(group.get());
-                } else {
-                    attemptConnectionChannel = AsynchronousSocketChannel.open();
-                }
+                attemptConnectionChannel = group == null
+                        ? AsynchronousSocketChannel.open()
+                        : AsynchronousSocketChannel.open(group.get());
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {

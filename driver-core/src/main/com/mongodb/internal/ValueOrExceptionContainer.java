@@ -21,7 +21,7 @@ import com.mongodb.internal.function.CheckedSupplier;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ValueOrExceptionContainer<T> {
+public final class ValueOrExceptionContainer<T> {
     private final T value;
     private final Exception exception;
 
