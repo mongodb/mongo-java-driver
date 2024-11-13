@@ -21,7 +21,7 @@
         },
         {
             "description": "Timestamp with high-order bit set on both seconds and increment (not UINT32_MAX)",
-            "canonical_bson": "1000000011610000286BEE00286BEE00",
+            "canonical_bson": "1000000011610000286BEE00286BEE00", 
             "canonical_extjson": "{\"a\" : {\"$timestamp\" : {\"t\" : 4000000000, \"i\" :  4000000000} } }"
         }
     ],
