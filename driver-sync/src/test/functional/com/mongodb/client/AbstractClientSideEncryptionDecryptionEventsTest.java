@@ -30,7 +30,6 @@ import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.fixture.EncryptionFixture;
 import com.mongodb.internal.connection.TestCommandListener;
-import com.mongodb.test.FlakyTest;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -175,7 +174,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
         assertDoesNotThrow(() -> commandListener.getCommandFailedEvent("aggregate"));
     }
 
-    @FlakyTest(maxAttempts = 3)
+    @Test
     public void decryptError() {
         MongoCollection<Document> decryptionEvents = encryptedClient
                 .getDatabase(getDefaultDatabaseName())
