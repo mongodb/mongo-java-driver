@@ -58,15 +58,16 @@ public final class StreamFactoryHelper {
                     : ((AsyncTransportSettings) transportSettings).getExecutorService();
             if (settings.getSslSettings().isEnabled()) {
                 return new TlsChannelStreamFactoryFactory(inetAddressResolver, executorService);
-            } else {
-                AsynchronousChannelGroup group;
+            }
+            AsynchronousChannelGroup group = null;
+            if (executorService != null) {
                 try {
                     group = AsynchronousChannelGroup.withThreadPool(executorService);
                 } catch (IOException e) {
                     throw new MongoClientException("Unable to create an asynchronous channel group", e);
                 }
-                return new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver, group);
             }
+            return new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver, group);
         } else  if (transportSettings instanceof NettyTransportSettings) {
             return getNettyStreamFactoryFactory(inetAddressResolver, (NettyTransportSettings) transportSettings);
         } else {
