@@ -141,7 +141,6 @@ class CommandMessageTest {
         OpsAndNsInfo opsAndNsInfo = new OpsAndNsInfo(
                 retryWrites,
                 writeModels,
-                null,
                 new ClientBulkWriteOperation(
                         writeModels,
                         clientBulkWriteOptions(),

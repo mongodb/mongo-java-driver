@@ -231,10 +231,8 @@ public final class CommandMessage extends RequestMessage {
             bsonOutput.writeByte(0);    // payload type
             commandStartPosition = bsonOutput.getPosition();
             ArrayList<BsonElement> extraElements = getExtraElements(operationContext);
-            // `DualMessageSequences` requires validation only if no response is expected, otherwise we must rely on the server validation
-            boolean validateDocumentSizeLimits = !(sequences instanceof DualMessageSequences) || !responseExpected;
 
-            int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator, validateDocumentSizeLimits);
+            int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator);
             if (sequences instanceof SplittablePayload) {
                 appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
                 SplittablePayload payload = (SplittablePayload) sequences;
@@ -254,7 +252,7 @@ public final class CommandMessage extends RequestMessage {
                                     writeOpMsgSectionWithPayloadType1(bsonOutputBranch2, dualMessageSequences.getSecondSequenceId(), () ->
                                             writeDocumentsOfDualMessageSequences(
                                                     dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
-                                                    bsonOutputBranch2, getSettings(), validateDocumentSizeLimits)
+                                                    bsonOutputBranch2, getSettings())
                                     )
                     );
                     dualMessageSequencesRequireResponse = encodeDocumentsResult.isServerResponseRequired();
@@ -282,7 +280,7 @@ public final class CommandMessage extends RequestMessage {
                 elements = new ArrayList<>(3);
                 addServerApiElements(elements);
             }
-            writeDocument(command, bsonOutput, commandFieldNameValidator, true);
+            writeDocument(command, bsonOutput, commandFieldNameValidator);
             appendElementsToDocument(bsonOutput, commandStartPosition, elements);
         }
         return new EncodingMetadata(commandStartPosition);

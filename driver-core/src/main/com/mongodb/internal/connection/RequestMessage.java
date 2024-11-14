@@ -153,9 +153,8 @@ abstract class RequestMessage {
      */
     protected abstract EncodingMetadata encodeMessageBodyWithMetadata(ByteBufferBsonOutput bsonOutput, OperationContext operationContext);
 
-    protected int writeDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                               final FieldNameValidator validator, final boolean validateMaxBsonObjectSize) {
-        BsonBinaryWriter writer = createBsonBinaryWriter(bsonOutput, validator, validateMaxBsonObjectSize ? getSettings() : null);
+    protected int writeDocument(final BsonDocument document, final BsonOutput bsonOutput, final FieldNameValidator validator) {
+        BsonBinaryWriter writer = createBsonBinaryWriter(bsonOutput, validator, getSettings());
         int documentStart = bsonOutput.getPosition();
         encodeUsingRegistry(writer, document);
         return bsonOutput.getPosition() - documentStart;

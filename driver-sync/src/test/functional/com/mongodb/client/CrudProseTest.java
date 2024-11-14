@@ -24,7 +24,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
-import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
@@ -310,40 +309,6 @@ public class CrudProseTest {
                 assertEquals(2, result.getVerboseResults().orElseThrow(Assertions::fail).getUpdateResults().size());
                 assertEquals(1, commandListener.getCommandStartedEvents("bulkWrite").size());
             }
-        }
-    }
-
-    /**
-     * This test extends the one required by the specification.
-     */
-    @DisplayName("10. MongoClient.bulkWrite returns error for unacknowledged too-large insert")
-    @ParameterizedTest
-    @MethodSource("testBulkWriteErrorsForUnacknowledgedTooLargeInsertArgs")
-    protected void testBulkWriteErrorsForUnacknowledgedTooLargeInsert(final String operationType, final boolean nesting) {
-        assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
-        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
-                .writeConcern(WriteConcern.UNACKNOWLEDGED))) {
-            int maxBsonObjectSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
-            Document document = nesting
-                    ? new Document("a", join("", nCopies(maxBsonObjectSize / 2, "b")))
-                            .append("nested", new Document("c", join("", nCopies(maxBsonObjectSize / 2, "d"))))
-                    : new Document("a", join("", nCopies(maxBsonObjectSize, "b")));
-            ClientNamespacedWriteModel model;
-            switch (operationType) {
-                case "insert": {
-                    model = ClientNamespacedWriteModel.insertOne(NAMESPACE, document);
-                    break;
-                }
-                case "replace": {
-                    model = ClientNamespacedWriteModel.replaceOne(NAMESPACE, Filters.empty(), document);
-                    break;
-                }
-                default: {
-                    throw Assertions.fail(operationType);
-                }
-            }
-            assertThrows(BsonMaximumSizeExceededException.class, () -> client.bulkWrite(singletonList(model)));
         }
     }
 

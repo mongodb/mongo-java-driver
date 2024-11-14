@@ -60,14 +60,6 @@ final class CrudProseTest extends com.mongodb.client.CrudProseTest {
         assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement");
     }
 
-    @DisplayName("10. MongoClient.bulkWrite returns error for unacknowledged too-large insert")
-    @ParameterizedTest
-    @MethodSource("testBulkWriteErrorsForUnacknowledgedTooLargeInsertArgs")
-    @Override
-    protected void testBulkWriteErrorsForUnacknowledgedTooLargeInsert(final String operationType, final boolean nesting) {
-        assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement");
-    }
-
     @DisplayName("11. MongoClient.bulkWrite batch splits when the addition of a new namespace exceeds the maximum message size")
     @Test
     @Override
