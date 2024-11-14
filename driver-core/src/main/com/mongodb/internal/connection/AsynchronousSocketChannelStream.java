@@ -21,7 +21,6 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.internal.ValueOrExceptionContainer;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -49,7 +48,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
     @Nullable
-    private final ValueOrExceptionContainer<AsynchronousChannelGroup> group;
+    private final AsynchronousChannelGroup group;
 
     AsynchronousSocketChannelStream(
             final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
@@ -60,7 +59,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     public AsynchronousSocketChannelStream(
             final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
             final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider,
-            @Nullable final ValueOrExceptionContainer<AsynchronousChannelGroup> group) {
+            @Nullable final AsynchronousChannelGroup group) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
         this.inetAddressResolver = inetAddressResolver;
@@ -93,7 +92,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
                 AsynchronousSocketChannel attemptConnectionChannel;
                 attemptConnectionChannel = group == null
                         ? AsynchronousSocketChannel.open()
-                        : AsynchronousSocketChannel.open(group.get());
+                        : AsynchronousSocketChannel.open(group);
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {

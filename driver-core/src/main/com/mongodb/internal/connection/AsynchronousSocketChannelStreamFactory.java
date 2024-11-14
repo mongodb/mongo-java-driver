@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.ValueOrExceptionContainer;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -36,7 +35,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final InetAddressResolver inetAddressResolver;
     @Nullable
-    private final ValueOrExceptionContainer<AsynchronousChannelGroup> group;
+    private final AsynchronousChannelGroup group;
 
     /**
      * Create a new factory with the default {@code BufferProvider} and {@code AsynchronousChannelGroup}.
@@ -52,7 +51,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
 
     AsynchronousSocketChannelStreamFactory(
             final InetAddressResolver inetAddressResolver, final SocketSettings settings,
-            final SslSettings sslSettings, @Nullable final ValueOrExceptionContainer<AsynchronousChannelGroup> group) {
+            final SslSettings sslSettings, @Nullable final AsynchronousChannelGroup group) {
         assertFalse(sslSettings.isEnabled());
         this.inetAddressResolver = inetAddressResolver;
         this.settings = notNull("settings", settings);

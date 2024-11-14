@@ -16,10 +16,8 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.ValueOrExceptionContainer;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -33,7 +31,7 @@ import java.nio.channels.AsynchronousChannelGroup;
 public final class AsynchronousSocketChannelStreamFactoryFactory implements StreamFactoryFactory {
     private final InetAddressResolver inetAddressResolver;
     @Nullable
-    private final ValueOrExceptionContainer<AsynchronousChannelGroup> group;
+    private final AsynchronousChannelGroup group;
 
     public AsynchronousSocketChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
         this(inetAddressResolver, null);
@@ -41,7 +39,7 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
 
     AsynchronousSocketChannelStreamFactoryFactory(
             final InetAddressResolver inetAddressResolver,
-            @Nullable final ValueOrExceptionContainer<AsynchronousChannelGroup> group) {
+            @Nullable final AsynchronousChannelGroup group) {
         this.inetAddressResolver = inetAddressResolver;
         this.group = group;
     }
@@ -54,15 +52,8 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
 
     @Override
     public void close() {
-        if (group != null && !group.containsException()) {
-            AsynchronousChannelGroup asynchronousChannelGroup = null;
-            try {
-                asynchronousChannelGroup = group.get();
-            } catch (Exception e) {
-                // will not occur, since it was not completed exceptionally
-                Assertions.fail();
-            }
-            asynchronousChannelGroup.shutdown();
+        if (group != null) {
+            group.shutdown();
         }
     }
 }
