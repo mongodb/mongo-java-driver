@@ -43,10 +43,15 @@ import org.bson.codecs.DocumentCodec;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion;
+import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -68,6 +73,7 @@ class AsyncCommandBatchCursorTest {
                             .append("firstBatch", new BsonArrayWrapper<>(new BsonArray())));
 
     private static final Decoder<Document> DOCUMENT_CODEC = new DocumentCodec();
+    private static final Duration TIMEOUT = Duration.ofMillis(3_000);
 
 
     private AsyncConnection mockConnection;
@@ -90,7 +96,8 @@ class AsyncCommandBatchCursorTest {
 
         connectionSource = mock(AsyncConnectionSource.class);
         operationContext = mock(OperationContext.class);
-        timeoutContext = new TimeoutContext(TimeoutSettings.create(MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build()));
+        timeoutContext = new TimeoutContext(TimeoutSettings.create(
+                MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build()));
         serverDescription = mock(ServerDescription.class);
         when(operationContext.getTimeoutContext()).thenReturn(timeoutContext);
         when(connectionSource.getOperationContext()).thenReturn(operationContext);
@@ -112,7 +119,7 @@ class AsyncCommandBatchCursorTest {
             return null;
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor();
+        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
 
         //when
         commandBatchCursor.next((result, t) -> {
@@ -137,7 +144,7 @@ class AsyncCommandBatchCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor();
+        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
 
         //when
         commandBatchCursor.next((result, t) -> {
@@ -168,7 +175,7 @@ class AsyncCommandBatchCursorTest {
         }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
         when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
 
-        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor();
+        AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0);
 
         //when
         commandBatchCursor.next((result, t) -> {
@@ -188,13 +195,69 @@ class AsyncCommandBatchCursorTest {
                 argThat(bsonDocument -> bsonDocument.containsKey("killCursors")), any(), any(), any(), any(), any());
     }
 
+    @Test
+    void closeShouldResetTimeoutContextToDefaultMaxTime() {
+        long maxTimeMS = 10;
+        com.mongodb.assertions.Assertions.assertTrue(maxTimeMS < TIMEOUT.toMillis());
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(maxTimeMS)) {
+            // verify that the `maxTimeMS` override was applied
+            timeoutContext.runMaxTimeMS(remainingMillis -> assertTrue(remainingMillis <= maxTimeMS));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        timeoutContext.runMaxTimeMS(remainingMillis -> {
+            // verify that the `maxTimeMS` override was reset
+            assertTrue(remainingMillis > maxTimeMS);
+            assertTrue(remainingMillis <= TIMEOUT.toMillis());
+        });
+    }
 
-    private AsyncCommandBatchCursor<Document> createBatchCursor() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void closeShouldNotResetOriginalTimeout(final boolean disableTimeoutResetWhenClosing) {
+        doAnswer(invocation -> {
+            SingleResultCallback<Object> argument = invocation.getArgument(6);
+            argument.onResult(null, null);
+            return null;
+        }).when(mockConnection).commandAsync(any(), any(), any(), any(), any(), any(), any());
+        Duration thirdOfTimeout = TIMEOUT.dividedBy(3);
+        com.mongodb.assertions.Assertions.assertTrue(thirdOfTimeout.toMillis() > 0);
+        try (AsyncCommandBatchCursor<Document> commandBatchCursor = createBatchCursor(0)) {
+            if (disableTimeoutResetWhenClosing) {
+                commandBatchCursor.disableTimeoutResetWhenClosing();
+            }
+            try {
+                Thread.sleep(thirdOfTimeout.toMillis());
+            } catch (InterruptedException e) {
+                throw interruptAndCreateMongoInterruptedException(null, e);
+            }
+            when(mockConnection.release()).then(invocation -> {
+                Thread.sleep(thirdOfTimeout.toMillis());
+                return null;
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        verify(mockConnection, times(1)).release();
+        // at this point at least (2 * thirdOfTimeout) have passed
+        com.mongodb.assertions.Assertions.assertNotNull(timeoutContext.getTimeout()).run(
+                MILLISECONDS,
+                com.mongodb.assertions.Assertions::fail,
+                remainingMillis -> {
+                    // Verify that the original timeout has not been intact.
+                    // If `close` had reset it, we would have observed more than `thirdOfTimeout` left.
+                    assertTrue(remainingMillis <= thirdOfTimeout.toMillis());
+                },
+                Assertions::fail);
+    }
+
+
+    private AsyncCommandBatchCursor<Document> createBatchCursor(final long maxTimeMS) {
         return new AsyncCommandBatchCursor<Document>(
                 TimeoutMode.CURSOR_LIFETIME,
                 COMMAND_CURSOR_DOCUMENT,
                 0,
-                0,
+                maxTimeMS,
                 DOCUMENT_CODEC,
                 null,
                 connectionSource,

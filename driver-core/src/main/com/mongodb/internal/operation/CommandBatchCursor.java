@@ -335,8 +335,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                     } finally {
                         connection.release();
                     }
-                } else {
-                    // do nothing
                 }
             } catch (MongoException e) {
                 // ignore exceptions when releasing server resources
@@ -380,8 +378,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
                 ServerCursor localServerCursor = super.getServerCursor();
                 if (localServerCursor != null) {
                     killServerCursor(getNamespace(), localServerCursor, connection);
-                } else {
-                    // do nothing
                 }
             } finally {
                 unsetServerCursor();

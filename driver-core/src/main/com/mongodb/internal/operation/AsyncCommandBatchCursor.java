@@ -301,7 +301,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                         }, c3);
                     }).finish(c);
                 } else {
-                    c.complete(c); // do nothing
+                    c.complete(c);
                 }
             }, MongoException.class, (e, c5) -> {
                 c5.complete(c5); // ignore exceptions when releasing server resources
@@ -352,7 +352,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
                 if (localServerCursor != null) {
                     killServerCursorAsync(getNamespace(), localServerCursor, connection, callback);
                 } else {
-                    c.complete(c); // do nothing
+                    c.complete(c);
                 }
             }).thenAlwaysRunAndFinish(() -> {
                 unsetServerCursor();
