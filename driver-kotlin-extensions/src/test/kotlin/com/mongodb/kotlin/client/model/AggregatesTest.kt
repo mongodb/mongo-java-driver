@@ -75,12 +75,10 @@ import org.mockito.kotlin.whenever
 class AggregatesTest {
 
     companion object {
-        @Mock
-        internal val wrappedEmployee: com.mongodb.client.MongoCollection<Employee> = mock()
+        @Mock internal val wrappedEmployee: com.mongodb.client.MongoCollection<Employee> = mock()
         @Mock
         internal val wrappedEmployeeCoroutine: com.mongodb.reactivestreams.client.MongoCollection<Employee> = mock()
-        @Mock
-        internal val wrappedCustomer: com.mongodb.client.MongoCollection<Customer> = mock()
+        @Mock internal val wrappedCustomer: com.mongodb.client.MongoCollection<Customer> = mock()
         @Mock
         internal val wrappedCustomerCoroutine: com.mongodb.reactivestreams.client.MongoCollection<Customer> = mock()
 
