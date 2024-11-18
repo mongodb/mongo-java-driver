@@ -40,10 +40,10 @@ declare -r EVERGREEN_BUILD_URL_PREFIX="https://spruce.mongodb.com/version"
 declare -r GIT_TAG="r${PRODUCT_VERSION}"
 GIT_COMMIT_HASH="$(git rev-list --ignore-missing -n 1 "${GIT_TAG}")"
 set +e
-    GIT_BRANCH_MASTER="$(git branch -a --contains "${GIT_TAG}" | grep 'master$')"
+    GIT_BRANCH_DEFAULT="$(git branch -a --contains "${GIT_TAG}" | grep 'main$')"
     GIT_BRANCH_PATCH="$(git branch -a --contains "${GIT_TAG}" | grep '\.x$')"
 set -e
-if [ -n "${GIT_BRANCH_MASTER}" ]; then
+if [ -n "${GIT_BRANCH_DEFAULT}" ]; then
     declare -r EVERGREEN_BUILD_URL="${EVERGREEN_BUILD_URL_PREFIX}/${EVERGREEN_PROJECT_NAME_PREFIX}_${GIT_COMMIT_HASH}"
 elif [ -n "${GIT_BRANCH_PATCH}" ]; then
     # strip out the patch version
