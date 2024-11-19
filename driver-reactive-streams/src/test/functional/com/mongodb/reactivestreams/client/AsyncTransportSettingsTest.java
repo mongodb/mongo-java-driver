@@ -56,6 +56,7 @@ class AsyncTransportSettingsTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
+    @SuppressWarnings("try")
     void testExternalExecutorWasShutDown(final boolean tlsEnabled) {
         ExecutorService executorService = spy(Executors.newFixedThreadPool(5));
         AsyncTransportSettings asyncTransportSettings = TransportSettings.asyncBuilder()
