@@ -65,6 +65,24 @@ class ExtensionsApiTest {
         assertTrue(notImplemented.isEmpty(), "Some possible Sorts were not implemented: $notImplemented")
     }
 
+    @Test
+    fun shouldHaveAllAggregatesExtensions() {
+        val kotlinExtensions: Set<String> = getKotlinExtensions("Aggregates")
+        val javaMethods: Set<String> = getJavaMethods("Aggregates")
+
+        val notImplemented = javaMethods subtract kotlinExtensions
+        assertTrue(notImplemented.isEmpty(), "Some possible Aggregates were not implemented: $notImplemented")
+    }
+
+    @Test
+    fun shouldHaveAllAccumulatorsExtensions() {
+        val kotlinExtensions: Set<String> = getKotlinExtensions("Accumulators")
+        val javaMethods: Set<String> = getJavaMethods("Accumulators")
+
+        val notImplemented = javaMethods subtract kotlinExtensions
+        assertTrue(notImplemented.isEmpty(), "Some possible Accumulators were not implemented: $notImplemented")
+    }
+
     private fun getKotlinExtensions(className: String): Set<String> {
         return ClassGraph()
             .enableClassInfo()
