@@ -22,16 +22,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.client.unified.UnifiedTestSkips.testDef;
-
 final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStreamsTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/server-discovery-and-monitoring");
-    }
-
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        com.mongodb.client.unified.UnifiedServerDiscoveryAndMonitoringTest.doSkips(
-                testDef("unified-test-format/server-discovery-and-monitoring", fileDescription, testDescription));
     }
 }

@@ -101,6 +101,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
     public void shouldPassAllOutcomes(
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            @Nullable final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -109,6 +110,7 @@ public class ClientSideOperationTimeoutTest extends UnifiedReactiveStreamsTest {
         try {
             super.shouldPassAllOutcomes(fileDescription,
                     testDescription,
+                    directoryName,
                     schemaVersion,
                     runOnRequirements,
                     entitiesArray,

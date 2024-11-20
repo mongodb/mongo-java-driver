@@ -22,50 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 public final class UnifiedCrudTest extends UnifiedSyncTest {
-    public static void doSkips(final String fileDescription, final String testDescription) {
-        assumeFalse(testDescription.equals("Deprecated count with empty collection"));
-        assumeFalse(testDescription.equals("Deprecated count with collation"));
-        assumeFalse(testDescription.equals("Deprecated count without a filter"));
-        assumeFalse(testDescription.equals("Deprecated count with a filter"));
-        assumeFalse(testDescription.equals("Deprecated count with skip and limit"));
-        assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint string on 4.4+ server"));
-        assumeFalse(testDescription.equals("Unacknowledged findOneAndReplace with hint document on 4.4+ server"));
-        assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint string on 4.4+ server"));
-        assumeFalse(testDescription.equals("Unacknowledged findOneAndUpdate with hint document on 4.4+ server"));
-        assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint string on 4.4+ server"));
-        assumeFalse(testDescription.equals("Unacknowledged findOneAndDelete with hint document on 4.4+ server"));
-        if (isDiscoverableReplicaSet() && serverVersionAtLeast(8, 0)) {
-            assumeFalse(testDescription.equals("Aggregate with $out includes read preference for 5.0+ server"));
-            assumeFalse(testDescription.equals("Database-level aggregate with $out includes read preference for 5.0+ server"));
-        }
-        if (fileDescription.equals("updateOne-sort")) {
-            assumeFalse(testDescription.equals("UpdateOne with sort option"), "Skipping until JAVA-5622 is implemented");
-            assumeFalse(testDescription.equals("updateOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
-        }
-        if (fileDescription.equals("replaceOne-sort")) {
-            assumeFalse(testDescription.equals("ReplaceOne with sort option"), "Skipping until JAVA-5622 is implemented");
-            assumeFalse(testDescription.equals("replaceOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
-        }
-        if (fileDescription.equals("BulkWrite updateOne-sort")) {
-            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option"), "Skipping until JAVA-5622 is implemented");
-            assumeFalse(testDescription.equals("BulkWrite updateOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
-        }
-        if (fileDescription.equals("BulkWrite replaceOne-sort")) {
-            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option"), "Skipping until JAVA-5622 is implemented");
-            assumeFalse(testDescription.equals("BulkWrite replaceOne with sort option unsupported (server-side error)"), "Skipping until JAVA-5622 is implemented");
-        }
-    }
-
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(fileDescription, testDescription);
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/crud");
     }

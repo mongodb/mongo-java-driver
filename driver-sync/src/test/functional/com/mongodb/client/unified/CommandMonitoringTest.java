@@ -22,18 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
-final class CommandMonitoringTest extends UnifiedSyncTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        assumeFalse(isServerlessTest());
-        // The driver has a hack where getLastError command is executed as part of the handshake in order to get a connectionId
-        // even when the hello command response doesn't contain it.
-        assumeFalse(fileDescription.equals("pre-42-server-connection-id"));
-    }
-
+public final class CommandMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/command-monitoring");
     }
