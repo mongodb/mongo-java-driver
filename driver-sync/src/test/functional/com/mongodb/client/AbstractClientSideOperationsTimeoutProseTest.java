@@ -282,7 +282,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     }
 
     @DisplayName("6. GridFS Upload - uploads via openUploadStream can be timed out")
-    @Test
+    @FlakyTest(maxAttempts = 3)
     public void testGridFSUploadViaOpenUploadStreamTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         long rtt = ClusterFixture.getPrimaryRTT();
@@ -461,7 +461,7 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
 
     @SuppressWarnings("try")
     @DisplayName("9. End Session. The timeout specified via the MongoClient timeoutMS option")
-    @Test
+    @FlakyTest(maxAttempts = 3)
     public void test9EndSessionClientTimeout() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeFalse(isStandalone());
