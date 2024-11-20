@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.connection.AsyncTransportSettings;
@@ -28,12 +27,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class AsyncTransportSettingsTest {
@@ -57,8 +57,8 @@ class AsyncTransportSettingsTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @SuppressWarnings("try")
-    void testExternalExecutorWasShutDown(final boolean tlsEnabled) {
-        ExecutorService executorService = spy(Executors.newFixedThreadPool(5));
+    void testExternalExecutorWasShutDown(final boolean tlsEnabled) throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(5);
         AsyncTransportSettings asyncTransportSettings = TransportSettings.asyncBuilder()
                 .executorService(executorService)
                 .build();
@@ -70,7 +70,7 @@ class AsyncTransportSettingsTest {
         try (MongoClient ignored = new SyncMongoClient(MongoClients.create(mongoClientSettings))) {
             // ignored
         }
-        ClusterFixture.sleep(100);
-        verify(executorService, times(1)).shutdown();
+
+        assertTrue(executorService.awaitTermination(100, TimeUnit.MILLISECONDS));
     }
 }
