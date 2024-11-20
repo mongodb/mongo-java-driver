@@ -57,14 +57,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.AssertionFailedError;
 import org.opentest4j.TestAbortedException;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -81,6 +84,7 @@ import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
 import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
+import static com.mongodb.client.unified.UnifiedTestModifications.doSkips;
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -100,6 +104,9 @@ import static util.JsonPoweredTestHelper.getTestFiles;
 public abstract class UnifiedTest {
     private static final Set<String> PRESTART_POOL_ASYNC_WORK_MANAGER_FILE_DESCRIPTIONS = Collections.singleton(
             "wait queue timeout errors include details about checked out connections");
+
+    public static final int ATTEMPTS = 3;
+    private static Set<String> completed = new HashSet<>();
 
     @Nullable
     private String fileDescription;
@@ -156,30 +163,49 @@ public abstract class UnifiedTest {
     }
 
     @NonNull
-    protected static Collection<Arguments> getTestData(final String directory) throws URISyntaxException, IOException {
+    protected static Collection<Arguments> getTestData(final String directory, final boolean isReactive)
+            throws URISyntaxException, IOException {
         List<Arguments> data = new ArrayList<>();
         for (File file : getTestFiles("/" + directory + "/")) {
             BsonDocument fileDocument = getTestDocument(file);
-
             for (BsonValue cur : fileDocument.getArray("tests")) {
-                data.add(UnifiedTest.createTestData(directory, fileDocument, cur.asDocument()));
+
+                final BsonDocument testDocument = cur.asDocument();
+                String testDescription = testDocument.getString("description").getValue();
+                String fileDescription = fileDocument.getString("description").getValue();
+                TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive);
+                doSkips(testDef);
+
+                boolean forceFlaky = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.FORCE_FLAKY);
+                boolean retry = forceFlaky || testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.RETRY);
+
+                int attempts = retry ? ATTEMPTS : 1;
+                if (forceFlaky) {
+                    attempts = 10;
+                }
+
+                for (int attempt = 1; attempt <= attempts; attempt++) {
+                    String testName = !retry
+                            ? MessageFormat.format("{0}: {1}", fileDescription, testDescription)
+                            : MessageFormat.format(
+                                    "{0}: {1} ({2} of {3})",
+                                    fileDescription, testDescription, attempt, attempts);
+                    data.add(Arguments.of(
+                            testName,
+                            fileDescription,
+                            testDescription,
+                            directory,
+                            attempt,
+                            attempts * (forceFlaky ? -1 : 1),
+                            fileDocument.getString("schemaVersion").getValue(),
+                            fileDocument.getArray("runOnRequirements", null),
+                            fileDocument.getArray("createEntities", new BsonArray()),
+                            fileDocument.getArray("initialData", new BsonArray()),
+                            testDocument));
+                }
             }
         }
         return data;
-    }
-
-    @NonNull
-    private static Arguments createTestData(
-            final String directory, final BsonDocument fileDocument, final BsonDocument testDocument) {
-        return Arguments.of(
-                fileDocument.getString("description").getValue(),
-                testDocument.getString("description").getValue(),
-                directory,
-                fileDocument.getString("schemaVersion").getValue(),
-                fileDocument.getArray("runOnRequirements", null),
-                fileDocument.getArray("createEntities", new BsonArray()),
-                fileDocument.getArray("initialData", new BsonArray()),
-                testDocument);
     }
 
     protected BsonDocument getDefinition() {
@@ -194,9 +220,12 @@ public abstract class UnifiedTest {
 
     @BeforeEach
     public void setUp(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -295,8 +324,9 @@ public abstract class UnifiedTest {
     }
 
     /**
-     * This method is called once per {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)},
-     * unless {@link #setUp(String, String, String, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)} fails unexpectedly.
+     * This method is called once per
+     * {@link #setUp(String, String, String, String, int, int, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)}, unless
+     * {@link #setUp(String, String, String, String, int, int, String, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonArray, org.bson.BsonDocument)} fails unexpectedly.
      */
     protected void skips(final String fileDescription, final String testDescription) {
     }
@@ -305,40 +335,58 @@ public abstract class UnifiedTest {
         return false;
     }
 
-    @ParameterizedTest(name = "{0}: {1}")
+    @ParameterizedTest(name = "{0}")
     @MethodSource("data")
     public void shouldPassAllOutcomes(
+            final String testName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
             @Nullable final String directoryName,
+            final int attemptNumber,
+            final int totalAttempts,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
             final BsonArray initialData,
             final BsonDocument definition) {
-        BsonArray operations = definition.getArray("operations");
-        for (int i = 0; i < operations.size(); i++) {
-            BsonValue cur = operations.get(i);
-            assertOperation(rootContext, cur.asDocument(), i);
+        boolean forceFlaky = totalAttempts < 0;
+        if (!forceFlaky) {
+            assumeFalse(completed.contains(testName), "Skipping retryable test that succeeded");
+            completed.add(testName);
         }
-
-        if (definition.containsKey("outcome")) {
-            assertOutcome(rootContext);
-        }
-
-        if (definition.containsKey("expectEvents")) {
-            compareEvents(rootContext, definition);
-        }
-
-        if (definition.containsKey("expectLogMessages")) {
-            ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
-                    // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
-                    LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
-            if (getMongoClientSettings().getClusterSettings()
-                    .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
-                tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
+        try {
+            BsonArray operations = definition.getArray("operations");
+            for (int i = 0; i < operations.size(); i++) {
+                BsonValue cur = operations.get(i);
+                assertOperation(rootContext, cur.asDocument(), i);
             }
-            compareLogMessages(rootContext, definition, tweaks);
+
+            if (definition.containsKey("outcome")) {
+                assertOutcome(rootContext);
+            }
+
+            if (definition.containsKey("expectEvents")) {
+                compareEvents(rootContext, definition);
+            }
+
+            if (definition.containsKey("expectLogMessages")) {
+                ArrayList<LogMatcher.Tweak> tweaks = new ArrayList<>(singletonList(
+                        // `LogMessage.Entry.Name.OPERATION` is not supported, therefore we skip matching its value
+                        LogMatcher.Tweak.skip(LogMessage.Entry.Name.OPERATION)));
+                if (getMongoClientSettings().getClusterSettings()
+                        .getHosts().stream().anyMatch(serverAddress -> serverAddress instanceof UnixServerAddress)) {
+                    tweaks.add(LogMatcher.Tweak.skip(LogMessage.Entry.Name.SERVER_PORT));
+                }
+                compareLogMessages(rootContext, definition, tweaks);
+            }
+        } catch (AssertionFailedError e) {
+            completed.remove(testName);
+            boolean lastAttempt = attemptNumber == Math.abs(totalAttempts);
+            if (forceFlaky || lastAttempt) {
+                throw e;
+            } else {
+                assumeFalse(completed.contains(testName), "Ignoring failure and retrying attempt " + attemptNumber);
+            }
         }
     }
 

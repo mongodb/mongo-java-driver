@@ -28,6 +28,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.FORCE_FLAKY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SKIP;
@@ -37,6 +38,14 @@ import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_
 
 public final class UnifiedTestModifications {
     public static void doSkips(final TestDef def) {
+
+        // TODO reasons for retry
+        def.modify(FORCE_FLAKY)
+                // Exception in encryption library: ChangeCipherSpec message sequence violation
+                .test("client-side-encryption", "namedKMS-createDataKey", "create datakey with named KMIP KMS provider")
+                // Number of checked out connections must match expected
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request")
+                .test("client-side-encryption", "namedKMS-rewrapManyDataKey", "rewrap to kmip:name1");
 
         // atlas-data-lake
 
@@ -478,5 +487,13 @@ public final class UnifiedTestModifications {
          * Skip the test.
          */
         SKIP,
+        /**
+         * Retry the test on failure.
+         */
+        RETRY,
+        /**
+         * Retry the test multiple times, without ignoring failures.
+         */
+        FORCE_FLAKY,
     }
 }
