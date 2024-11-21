@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
@@ -30,6 +31,7 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.TimeoutContext
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.OperationContext
@@ -41,6 +43,8 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR
@@ -570,7 +574,9 @@ class CommandBatchCursorSpecification extends Specification {
                     .build()
         }
         OperationContext operationContext = Mock(OperationContext)
-        operationContext.getTimeoutContext() >> Mock(TimeoutContext)
+        def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
+                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
+        operationContext.getTimeoutContext() >> timeoutContext
         mock.getOperationContext() >> operationContext
         mock.getConnection() >> {
             if (counter == 0) {

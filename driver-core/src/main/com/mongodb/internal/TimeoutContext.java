@@ -17,6 +17,8 @@ package com.mongodb.internal;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoOperationTimeoutException;
+import com.mongodb.internal.async.AsyncRunnable;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.CommandMessage;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
@@ -24,12 +26,16 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.LongConsumer;
 
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
+import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -262,10 +268,53 @@ public class TimeoutContext {
                 () -> throwMongoTimeoutException("The operation exceeded the timeout limit.")));
     }
 
+    /**
+     * @see #hasTimeoutMS()
+     * @see #doWithResetTimeout(Runnable)
+     * @see #doWithResetTimeout(AsyncRunnable, SingleResultCallback)
+     */
     public void resetTimeoutIfPresent() {
+        getAndResetTimeoutIfPresent();
+    }
+
+    /**
+     * @see #hasTimeoutMS()
+     * @return A {@linkplain Optional#isPresent() non-empty} previous {@linkplain Timeout} iff {@link #hasTimeoutMS()},
+     * i.e., iff it was reset.
+     */
+    private Optional<Timeout> getAndResetTimeoutIfPresent() {
+        Timeout result = timeout;
         if (hasTimeoutMS()) {
             timeout = startTimeout(timeoutSettings.getTimeoutMS());
+            return ofNullable(result);
         }
+        return empty();
+    }
+
+    /**
+     * @see #resetTimeoutIfPresent()
+     */
+    public void doWithResetTimeout(final Runnable action) {
+        Optional<Timeout> originalTimeout = getAndResetTimeoutIfPresent();
+        try {
+            action.run();
+        } finally {
+            originalTimeout.ifPresent(original -> timeout = original);
+        }
+    }
+
+    /**
+     * @see #resetTimeoutIfPresent()
+     */
+    public void doWithResetTimeout(final AsyncRunnable action, final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun(c -> {
+            Optional<Timeout> originalTimeout = getAndResetTimeoutIfPresent();
+            beginAsync().thenRun(c2 -> {
+                action.finish(c2);
+            }).thenAlwaysRunAndFinish(() -> {
+                originalTimeout.ifPresent(original -> timeout = original);
+            }, c);
+        }).finish(callback);
     }
 
     /**
