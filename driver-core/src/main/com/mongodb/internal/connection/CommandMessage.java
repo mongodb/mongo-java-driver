@@ -230,67 +230,72 @@ public final class CommandMessage extends RequestMessage {
 
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
-        int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
-        int commandStartPosition;
-        if (useOpMsg()) {
-            int flagPosition = bsonOutput.getPosition();
-            bsonOutput.writeInt32(0);   // flag bits
-            bsonOutput.writeByte(PAYLOAD_TYPE_0_DOCUMENT);
-            commandStartPosition = bsonOutput.getPosition();
-            List<BsonElement> extraElements = getExtraElements(operationContext);
-
-            int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator);
-            if (sequences instanceof SplittablePayload) {
-                appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
-                SplittablePayload payload = (SplittablePayload) sequences;
-                writeOpMsgSectionWithPayloadType1(bsonOutput, payload.getPayloadName(), () -> {
-                        writePayload(
-                                new BsonBinaryWriter(bsonOutput, payload.getFieldNameValidator()),
-                                bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize()
-                        );
-                        return null;
-                });
-            } else if (sequences instanceof DualMessageSequences) {
-                DualMessageSequences dualMessageSequences = (DualMessageSequences) sequences;
-                try (ByteBufferBsonOutput.Branch bsonOutputBranch2 = bsonOutput.branch();
-                     ByteBufferBsonOutput.Branch bsonOutputBranch1 = bsonOutput.branch()) {
-                    DualMessageSequences.EncodeDocumentsResult encodeDocumentsResult = writeOpMsgSectionWithPayloadType1(
-                            bsonOutputBranch1, dualMessageSequences.getFirstSequenceId(), () ->
-                                    writeOpMsgSectionWithPayloadType1(bsonOutputBranch2, dualMessageSequences.getSecondSequenceId(), () ->
-                                            writeDocumentsOfDualMessageSequences(
-                                                    dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
-                                                    bsonOutputBranch2, getSettings())
-                                    )
-                    );
-                    dualMessageSequencesRequireResponse = encodeDocumentsResult.isServerResponseRequired();
-                    extraElements.addAll(encodeDocumentsResult.getExtraElements());
-                    appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
-                }
-            } else if (sequences instanceof EmptyMessageSequences) {
-                appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
-            } else {
-                fail(sequences.toString());
-            }
-
-            // Write the flag bits
-            bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
-        } else {
-            bsonOutput.writeInt32(0);
-            bsonOutput.writeCString(namespace.getFullName());
-            bsonOutput.writeInt32(0);
-            bsonOutput.writeInt32(-1);
-
-            commandStartPosition = bsonOutput.getPosition();
-
-            List<BsonElement> elements = null;
-            if (serverApi != null) {
-                elements = new ArrayList<>(3);
-                addServerApiElements(elements);
-            }
-            writeDocument(command, bsonOutput, commandFieldNameValidator);
-            appendElementsToDocument(bsonOutput, commandStartPosition, elements);
-        }
+        int commandStartPosition = useOpMsg() ? writeOpMsg(bsonOutput, operationContext) : writeOpQuery(bsonOutput);
         return new EncodingMetadata(commandStartPosition);
+    }
+
+    private int writeOpMsg(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
+        int flagPosition = bsonOutput.getPosition();
+        bsonOutput.writeInt32(0);   // flag bits
+        bsonOutput.writeByte(PAYLOAD_TYPE_0_DOCUMENT);
+        int commandStartPosition = bsonOutput.getPosition();
+        List<BsonElement> extraElements = getExtraElements(operationContext);
+
+        int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator);
+        if (sequences instanceof SplittablePayload) {
+            appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+            SplittablePayload payload = (SplittablePayload) sequences;
+            writeOpMsgSectionWithPayloadType1(bsonOutput, payload.getPayloadName(), () -> {
+                writePayload(
+                        new BsonBinaryWriter(bsonOutput, payload.getFieldNameValidator()),
+                        bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize()
+                );
+                return null;
+            });
+        } else if (sequences instanceof DualMessageSequences) {
+            DualMessageSequences dualMessageSequences = (DualMessageSequences) sequences;
+            try (ByteBufferBsonOutput.Branch bsonOutputBranch2 = bsonOutput.branch();
+                 ByteBufferBsonOutput.Branch bsonOutputBranch1 = bsonOutput.branch()) {
+                DualMessageSequences.EncodeDocumentsResult encodeDocumentsResult = writeOpMsgSectionWithPayloadType1(
+                        bsonOutputBranch1, dualMessageSequences.getFirstSequenceId(), () ->
+                                writeOpMsgSectionWithPayloadType1(bsonOutputBranch2, dualMessageSequences.getSecondSequenceId(), () ->
+                                        writeDocumentsOfDualMessageSequences(
+                                                dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
+                                                bsonOutputBranch2, getSettings())
+                                )
+                );
+                dualMessageSequencesRequireResponse = encodeDocumentsResult.isServerResponseRequired();
+                extraElements.addAll(encodeDocumentsResult.getExtraElements());
+                appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+            }
+        } else if (sequences instanceof EmptyMessageSequences) {
+            appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+        } else {
+            fail(sequences.toString());
+        }
+
+        // Write the flag bits
+        bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
+        return commandStartPosition;
+    }
+
+    private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {
+        bsonOutput.writeInt32(0);
+        bsonOutput.writeCString(namespace.getFullName());
+        bsonOutput.writeInt32(0);
+        bsonOutput.writeInt32(-1);
+
+        int commandStartPosition = bsonOutput.getPosition();
+
+        List<BsonElement> elements = null;
+        if (serverApi != null) {
+            elements = new ArrayList<>(3);
+            addServerApiElements(elements);
+        }
+        writeDocument(command, bsonOutput, commandFieldNameValidator);
+        appendElementsToDocument(bsonOutput, commandStartPosition, elements);
+        return commandStartPosition;
     }
 
     private int getOpMsgFlagBits() {
