@@ -121,7 +121,7 @@ public final class CommandMessage extends RequestMessage {
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
         this.responseExpected = responseExpected;
-        dualMessageSequencesRequireResponse = null;
+        this.dualMessageSequencesRequireResponse = null;
         this.exhaustAllowed = exhaustAllowed;
         this.sequences = sequences;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
