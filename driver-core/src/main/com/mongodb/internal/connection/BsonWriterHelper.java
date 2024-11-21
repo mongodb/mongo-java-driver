@@ -56,19 +56,20 @@ public final class BsonWriterHelper {
             final BsonOutput bsonOutputWithDocument,
             final int documentStartPosition,
             @Nullable final List<BsonElement> bsonElements) {
+        if ((bsonElements == null) || bsonElements.isEmpty()) {
+            return;
+        }
         int bsonDocumentEndingSize = 1;
         int appendFrom = bsonOutputWithDocument.getPosition() - bsonDocumentEndingSize;
         BsonBinaryWriter writer = createBsonBinaryWriter(bsonOutputWithDocument, NoOpFieldNameValidator.INSTANCE, null);
         // change `writer`s state so that we can append elements
         writer.writeStartDocument();
         bsonOutputWithDocument.truncateToPosition(appendFrom);
-        if (bsonElements != null) {
-            for (BsonElement element : bsonElements) {
-                String name = element.getName();
-                BsonValue value = element.getValue();
-                writer.writeName(name);
-                encodeUsingRegistry(writer, value);
-            }
+        for (BsonElement element : bsonElements) {
+            String name = element.getName();
+            BsonValue value = element.getValue();
+            writer.writeName(name);
+            encodeUsingRegistry(writer, value);
         }
         // write the BSON document ending
         bsonOutputWithDocument.writeByte(0);
@@ -117,10 +118,10 @@ public final class BsonWriterHelper {
         int firstStart = firstOutput.getPosition();
         int secondStart = secondOutput.getPosition();
         int maxBatchCount = messageSettings.getMaxBatchCount();
-        return dualMessageSequences.encodeDocuments(write -> {
+        return dualMessageSequences.encodeDocuments(writeAction -> {
             int firstBeforeWritePosition = firstOutput.getPosition();
             int secondBeforeWritePosition = secondOutput.getPosition();
-            int batchCountAfterWrite = write.doAndGetBatchCount(firstWriter, secondWriter);
+            int batchCountAfterWrite = writeAction.doAndGetBatchCount(firstWriter, secondWriter);
             assertTrue(batchCountAfterWrite <= maxBatchCount);
             int writtenSizeInBytes =
                     firstOutput.getPosition() - firstStart

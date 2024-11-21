@@ -215,7 +215,8 @@ public final class SplittablePayload extends MessageSequences {
                                     writer,
                                     // Reuse `writeRequestDocumentId` if it may have been generated
                                     // by `IdHoldingBsonWriter` in a previous attempt.
-                                    // If its type is not `BsonObjectId`, we know it could not have been generated.
+                                    // If its type is not `BsonObjectId`, which happens only if `_id` was specified by the application,
+                                    // we know it could not have been generated.
                                     writeRequestDocumentId instanceof BsonObjectId ? writeRequestDocumentId.asObjectId() : null);
                             getCodec(document).encode(idHoldingBsonWriter, document,
                                     EncoderContext.builder().isEncodingCollectibleDocument(true).build());

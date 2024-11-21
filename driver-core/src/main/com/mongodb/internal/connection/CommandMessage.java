@@ -70,7 +70,14 @@ import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_W
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class CommandMessage extends RequestMessage {
-    private static final String TXN_NUMBER_KEY = "txnNumber";
+    /**
+     * Specifies that the `OP_MSG` section payload is a BSON document.
+     */
+    private static final byte PAYLOAD_TYPE_0_DOCUMENT = 0;
+    /**
+     * Specifies that the `OP_MSG` section payload is a sequence of BSON documents.
+     */
+    private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
 
     private final MongoNamespace namespace;
     private final BsonDocument command;
@@ -132,8 +139,8 @@ public final class CommandMessage extends RequestMessage {
     /**
      * Create a BsonDocument representing the logical document encoded by an OP_MSG.
      * <p>
-     * The returned document will contain all the fields from the Body (Kind 0) Section, as well as all fields represented by
-     * OP_MSG Document Sequence (Kind 1) Sections.
+     * The returned document will contain all the fields from the `PAYLOAD_TYPE_0_DOCUMENT` section, as well as all fields represented by
+     * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections.
      */
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
@@ -143,14 +150,14 @@ public final class CommandMessage extends RequestMessage {
                 byteBuf.position(getEncodingMetadata().getFirstDocumentPosition());
                 ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
-                // If true, it means there is at least one Kind 1:Document Sequence in the OP_MSG
+                // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
                 if (byteBuf.hasRemaining()) {
                     BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
                     // Each loop iteration processes one Document Sequence
                     // When there are no more bytes remaining, there are no more Document Sequences
                     while (byteBuf.hasRemaining()) {
-                        // skip reading the payload type, we know it is 1
+                        // skip reading the payload type, we know it is `PAYLOAD_TYPE_1`
                         byteBuf.position(byteBuf.position() + 1);
                         int sequenceStart = byteBuf.position();
                         int sequenceSizeInBytes = byteBuf.getInt();
@@ -183,7 +190,7 @@ public final class CommandMessage extends RequestMessage {
 
     /**
      * Get the field name from a buffer positioned at the start of the document sequence identifier of an OP_MSG Section of type
-     * Document Sequence (Kind 1).
+     * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE`.
      * <p>
      * Upon normal completion of the method, the buffer will be positioned at the start of the first BSON object in the sequence.
     */
@@ -228,9 +235,9 @@ public final class CommandMessage extends RequestMessage {
         if (useOpMsg()) {
             int flagPosition = bsonOutput.getPosition();
             bsonOutput.writeInt32(0);   // flag bits
-            bsonOutput.writeByte(0);    // payload type
+            bsonOutput.writeByte(PAYLOAD_TYPE_0_DOCUMENT);
             commandStartPosition = bsonOutput.getPosition();
-            ArrayList<BsonElement> extraElements = getExtraElements(operationContext);
+            List<BsonElement> extraElements = getExtraElements(operationContext);
 
             int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator);
             if (sequences instanceof SplittablePayload) {
@@ -307,7 +314,7 @@ public final class CommandMessage extends RequestMessage {
         return getOpCode().equals(OpCode.OP_MSG);
     }
 
-    private ArrayList<BsonElement> getExtraElements(final OperationContext operationContext) {
+    private List<BsonElement> getExtraElements(final OperationContext operationContext) {
         SessionContext sessionContext = operationContext.getSessionContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
 
@@ -335,7 +342,7 @@ public final class CommandMessage extends RequestMessage {
         assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
         if (sessionContext.hasActiveTransaction()) {
             checkServerVersionForTransactionSupport();
-            extraElements.add(new BsonElement(TXN_NUMBER_KEY, new BsonInt64(sessionContext.getTransactionNumber())));
+            extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
             if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
@@ -392,8 +399,7 @@ public final class CommandMessage extends RequestMessage {
             final ByteBufferBsonOutput bsonOutput,
             final String sequenceId,
             final Supplier<R> writeDocumentsAction) {
-        // payload type
-        bsonOutput.writeByte(1);
+        bsonOutput.writeByte(PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE);
         int sequenceStart = bsonOutput.getPosition();
         // size to be patched back later
         bsonOutput.writeInt32(0);
