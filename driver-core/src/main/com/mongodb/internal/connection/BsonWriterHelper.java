@@ -18,10 +18,10 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.internal.connection.DualMessageSequences.EncodeDocumentsResult;
 import com.mongodb.internal.connection.DualMessageSequences.WritersProviderAndLimitsChecker;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
+import org.bson.BsonContextType;
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
 import org.bson.BsonMaximumSizeExceededException;
@@ -59,21 +59,14 @@ public final class BsonWriterHelper {
         if ((bsonElements == null) || bsonElements.isEmpty()) {
             return;
         }
-        int bsonDocumentEndingSize = 1;
-        int appendFrom = bsonOutputWithDocument.getPosition() - bsonDocumentEndingSize;
-        BsonBinaryWriter writer = createBsonBinaryWriter(bsonOutputWithDocument, NoOpFieldNameValidator.INSTANCE, null);
-        // change `writer`s state so that we can append elements
-        writer.writeStartDocument();
-        bsonOutputWithDocument.truncateToPosition(appendFrom);
-        for (BsonElement element : bsonElements) {
-            String name = element.getName();
-            BsonValue value = element.getValue();
-            writer.writeName(name);
-            encodeUsingRegistry(writer, value);
+        try (AppendingBsonWriter writer = new AppendingBsonWriter(bsonOutputWithDocument, documentStartPosition)) {
+            for (BsonElement element : bsonElements) {
+                String name = element.getName();
+                BsonValue value = element.getValue();
+                writer.writeName(name);
+                encodeUsingRegistry(writer, value);
+            }
         }
-        // write the BSON document ending
-        bsonOutputWithDocument.writeByte(0);
-        backpatchLength(documentStartPosition, bsonOutputWithDocument);
     }
 
     static void writePayloadArray(final BsonWriter writer, final BsonOutput bsonOutput, final MessageSettings settings,
@@ -227,6 +220,50 @@ public final class BsonWriterHelper {
             return true;
         }
         return false;
+    }
+
+    /**
+     * A {@link BsonWriter} that allows appending key/value pairs to a document that has been fully written to a {@link BsonOutput}.
+     */
+    private static final class AppendingBsonWriter extends LevelCountingBsonWriter implements AutoCloseable {
+        private static final int INITIAL_LEVEL = DEFAULT_INITIAL_LEVEL + 1;
+
+        /**
+         * @param bsonOutputWithDocument A {@link BsonOutput} {@linkplain BsonOutput#getPosition() positioned}
+         * immediately after the end of the document.
+         * @param documentStartPosition The {@linkplain BsonOutput#getPosition() position} of the start of the document
+         * in {@code bsonOutputWithDocument}.
+         */
+        AppendingBsonWriter(final BsonOutput bsonOutputWithDocument, final int documentStartPosition) {
+            super(
+                    new InternalAppendingBsonBinaryWriter(bsonOutputWithDocument, documentStartPosition),
+                    INITIAL_LEVEL);
+        }
+
+        @Override
+        public void writeEndDocument() {
+            assertTrue(getCurrentLevel() > INITIAL_LEVEL);
+            super.writeEndDocument();
+        }
+
+        @Override
+        public void close() {
+            try (InternalAppendingBsonBinaryWriter writer = (InternalAppendingBsonBinaryWriter) getBsonWriter()) {
+                writer.writeEndDocument();
+            }
+        }
+
+        private static final class InternalAppendingBsonBinaryWriter extends BsonBinaryWriter {
+            InternalAppendingBsonBinaryWriter(final BsonOutput bsonOutputWithDocument, final int documentStartPosition) {
+                super(bsonOutputWithDocument);
+                int documentEndPosition = bsonOutputWithDocument.getPosition();
+                int bsonDocumentEndingSize = 1;
+                int appendFromPosition = documentEndPosition - bsonDocumentEndingSize;
+                bsonOutputWithDocument.truncateToPosition(appendFromPosition);
+                setState(State.NAME);
+                setContext(new Context(null, BsonContextType.DOCUMENT, documentStartPosition));
+            }
+        }
     }
 
     private BsonWriterHelper() {

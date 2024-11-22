@@ -63,7 +63,7 @@ public class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
 
     @Override
     public void writeEndDocument() {
-        if (getCurrentLevel() == INITIAL_LEVEL + 1 && payload.hasPayload()) {
+        if (getCurrentLevel() == DEFAULT_INITIAL_LEVEL + 1 && payload.hasPayload()) {
             writePayloadArray(writer, bsonOutput, settings, messageStartPosition, payload, maxSplittableDocumentSize);
         }
         super.writeEndDocument();

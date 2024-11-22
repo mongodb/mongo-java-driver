@@ -20,12 +20,21 @@ import org.bson.BsonWriter;
 
 
 abstract class LevelCountingBsonWriter extends BsonWriterDecorator {
-    static final int INITIAL_LEVEL = -1;
+    static final int DEFAULT_INITIAL_LEVEL = -1;
 
-    private int level = INITIAL_LEVEL;
+    private int level;
 
     LevelCountingBsonWriter(final BsonWriter bsonWriter) {
+        this(bsonWriter, DEFAULT_INITIAL_LEVEL);
+    }
+
+    /**
+     * @param initialLevel This parameter allows initializing the {@linkplain #getCurrentLevel() current level}
+     * with a value different from {@link #DEFAULT_INITIAL_LEVEL}.
+     */
+    LevelCountingBsonWriter(final BsonWriter bsonWriter, final int initialLevel) {
         super(bsonWriter);
+        level = initialLevel;
     }
 
     int getCurrentLevel() {
