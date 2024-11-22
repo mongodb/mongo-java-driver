@@ -41,7 +41,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
@@ -234,6 +233,7 @@ public final class CommandMessage extends RequestMessage {
         return new EncodingMetadata(commandStartPosition);
     }
 
+    @SuppressWarnings("try")
     private int writeOpMsg(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
         int flagPosition = bsonOutput.getPosition();
@@ -246,25 +246,25 @@ public final class CommandMessage extends RequestMessage {
         if (sequences instanceof SplittablePayload) {
             appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
             SplittablePayload payload = (SplittablePayload) sequences;
-            writeOpMsgSectionWithPayloadType1(bsonOutput, payload.getPayloadName(), () -> {
+            try (FinishOpMsgSectionWithPayloadType1 finishSection = startOpMsgSectionWithPayloadType1(
+                    bsonOutput, payload.getPayloadName())) {
                 writePayload(
                         new BsonBinaryWriter(bsonOutput, payload.getFieldNameValidator()),
-                        bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize()
-                );
-                return null;
-            });
+                        bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize());
+            }
         } else if (sequences instanceof DualMessageSequences) {
             DualMessageSequences dualMessageSequences = (DualMessageSequences) sequences;
             try (ByteBufferBsonOutput.Branch bsonOutputBranch2 = bsonOutput.branch();
                  ByteBufferBsonOutput.Branch bsonOutputBranch1 = bsonOutput.branch()) {
-                DualMessageSequences.EncodeDocumentsResult encodeDocumentsResult = writeOpMsgSectionWithPayloadType1(
-                        bsonOutputBranch1, dualMessageSequences.getFirstSequenceId(), () ->
-                                writeOpMsgSectionWithPayloadType1(bsonOutputBranch2, dualMessageSequences.getSecondSequenceId(), () ->
-                                        writeDocumentsOfDualMessageSequences(
-                                                dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
-                                                bsonOutputBranch2, getSettings())
-                                )
-                );
+                DualMessageSequences.EncodeDocumentsResult encodeDocumentsResult;
+                try (FinishOpMsgSectionWithPayloadType1 finishSection1 = startOpMsgSectionWithPayloadType1(
+                        bsonOutputBranch1, dualMessageSequences.getFirstSequenceId());
+                    FinishOpMsgSectionWithPayloadType1 finishSection2 = startOpMsgSectionWithPayloadType1(
+                        bsonOutputBranch2, dualMessageSequences.getSecondSequenceId())) {
+                    encodeDocumentsResult = writeDocumentsOfDualMessageSequences(
+                            dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
+                            bsonOutputBranch2, getSettings());
+                }
                 dualMessageSequencesRequireResponse = encodeDocumentsResult.isServerResponseRequired();
                 extraElements.addAll(encodeDocumentsResult.getExtraElements());
                 appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
@@ -397,21 +397,15 @@ public final class CommandMessage extends RequestMessage {
 
     /**
      * @param sequenceId The identifier of the sequence contained in the {@code OP_MSG} section to be written.
-     * @param writeDocumentsAction The action that writes the documents of the sequence.
      * @see <a href="https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.md">OP_MSG</a>
      */
-    private <R> R writeOpMsgSectionWithPayloadType1(
-            final ByteBufferBsonOutput bsonOutput,
-            final String sequenceId,
-            final Supplier<R> writeDocumentsAction) {
+    private FinishOpMsgSectionWithPayloadType1 startOpMsgSectionWithPayloadType1(final ByteBufferBsonOutput bsonOutput, final String sequenceId) {
         bsonOutput.writeByte(PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE);
         int sequenceStart = bsonOutput.getPosition();
         // size to be patched back later
         bsonOutput.writeInt32(0);
         bsonOutput.writeCString(sequenceId);
-        R result = writeDocumentsAction.get();
-        backpatchLength(sequenceStart, bsonOutput);
-        return result;
+        return () -> backpatchLength(sequenceStart, bsonOutput);
     }
 
     private static OpCode getOpCode(final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
@@ -423,5 +417,10 @@ public final class CommandMessage extends RequestMessage {
 
     private static boolean isServerVersionKnown(final MessageSettings settings) {
         return settings.getMaxWireVersion() >= FOUR_DOT_ZERO_WIRE_VERSION;
+    }
+
+    @FunctionalInterface
+    private interface FinishOpMsgSectionWithPayloadType1 extends AutoCloseable {
+        void close();
     }
 }
