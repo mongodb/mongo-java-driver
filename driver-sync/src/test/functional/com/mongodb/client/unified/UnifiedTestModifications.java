@@ -17,7 +17,6 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.assertions.Assertions;
-import com.mongodb.lang.NonNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +28,9 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SKIP;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_CLOSE;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_OPEN;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
@@ -294,7 +295,7 @@ public final class UnifiedTestModifications {
          */
         public TestApplicator skipJira(final String ticket) {
             Assertions.assertTrue(ticket.startsWith("https://jira.mongodb.org/browse/JAVA-"));
-            return new TestApplicator(this, ticket);
+            return new TestApplicator(this, ticket, SKIP);
         }
 
         /**
@@ -304,7 +305,7 @@ public final class UnifiedTestModifications {
          * @param reason reason for skipping the test
          */
         public TestApplicator skipDeprecated(final String reason) {
-            return new TestApplicator(this, reason);
+            return new TestApplicator(this, reason, SKIP);
         }
 
         /**
@@ -313,7 +314,7 @@ public final class UnifiedTestModifications {
          * @param reason reason for skipping the test
          */
         public TestApplicator skipNoncompliant(final String reason) {
-            return new TestApplicator(this, reason);
+            return new TestApplicator(this, reason, SKIP);
         }
 
         /**
@@ -322,7 +323,7 @@ public final class UnifiedTestModifications {
          * @param reason reason for skipping the test
          */
         public TestApplicator skipNoncompliantReactive(final String reason) {
-            return new TestApplicator(this, reason);
+            return new TestApplicator(this, reason, SKIP);
         }
 
         /**
@@ -330,18 +331,18 @@ public final class UnifiedTestModifications {
          * "when" clause.
          */
         public TestApplicator skipAccordingToSpec(final String reason) {
-            return new TestApplicator(this, reason);
+            return new TestApplicator(this, reason, SKIP);
         }
 
         /**
          * The test is skipped for an unknown reason.
          */
         public TestApplicator skipUnknownReason(final String reason) {
-            return new TestApplicator(this, reason);
+            return new TestApplicator(this, reason, SKIP);
         }
 
         public TestApplicator modify(final Modifier... modifiers) {
-            return new TestApplicator(this, Arrays.asList(modifiers));
+            return new TestApplicator(this, null, modifiers);
         }
 
         public boolean isReactive() {
@@ -364,17 +365,13 @@ public final class UnifiedTestModifications {
 
         private TestApplicator(
                 final TestDef testDef,
-                final List<Modifier> modifiersToApply) {
+                final String reason,
+                final Modifier... modifiersToApply) {
             this.testDef = testDef;
-            this.modifiersToApply = modifiersToApply;
-        }
-
-        private TestApplicator(
-                final TestDef testDef,
-                @NonNull
-                final String skipReason) {
-            this.testDef = testDef;
-            this.modifiersToApply = Collections.singletonList(Modifier.SKIP);
+            this.modifiersToApply = Arrays.asList(modifiersToApply);
+            if (this.modifiersToApply.contains(SKIP)) {
+                assertNotNull(reason);
+            }
         }
 
         private TestApplicator onMatch(final boolean match) {
