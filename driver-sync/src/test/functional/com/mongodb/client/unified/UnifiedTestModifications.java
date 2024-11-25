@@ -374,7 +374,7 @@ public final class UnifiedTestModifications {
                 @NonNull
                 final String skipReason) {
             this.testDef = testDef;
-            this.modifiersToApply = Arrays.asList(Modifier.SKIP);
+            this.modifiersToApply = Collections.singletonList(Modifier.SKIP);
         }
 
         private TestApplicator onMatch(final boolean match) {
