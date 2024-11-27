@@ -196,6 +196,7 @@ class AsyncCommandBatchCursorTest {
     }
 
     @Test
+    @SuppressWarnings("try")
     void closeShouldResetTimeoutContextToDefaultMaxTime() {
         long maxTimeMS = 10;
         com.mongodb.assertions.Assertions.assertTrue(maxTimeMS < TIMEOUT.toMillis());
