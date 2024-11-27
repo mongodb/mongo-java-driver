@@ -31,4 +31,12 @@ object TransportSettings {
    * @return a new Builder for creating NettyTransportSettings.
    */
   def nettyBuilder(): NettyTransportSettings.Builder = JTransportSettings.nettyBuilder()
+
+  /**
+   * Creates a builder for AsyncTransportSettings.
+   *
+   * @return a new Builder for creating AsyncTransportSettings.
+   * @since 5.2
+   */
+  def asyncBuilder(): AsyncTransportSettings.Builder = JTransportSettings.asyncBuilder()
 }

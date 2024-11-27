@@ -22,14 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.client.unified.UnifiedCrudTest.doSkips;
-
 final class UnifiedCrudTest extends UnifiedReactiveStreamsTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(fileDescription, testDescription);
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/crud");
     }

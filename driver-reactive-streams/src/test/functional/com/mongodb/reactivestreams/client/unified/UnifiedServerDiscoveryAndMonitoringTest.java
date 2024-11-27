@@ -26,9 +26,4 @@ final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedReactiveStrea
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/server-discovery-and-monitoring");
     }
-
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        com.mongodb.client.unified.UnifiedServerDiscoveryAndMonitoringTest.doSkips(getDefinition());
-    }
 }

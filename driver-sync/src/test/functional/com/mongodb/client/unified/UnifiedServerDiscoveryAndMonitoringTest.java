@@ -16,31 +16,14 @@
 
 package com.mongodb.client.unified;
 
-import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 public final class UnifiedServerDiscoveryAndMonitoringTest extends UnifiedSyncTest {
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/server-discovery-and-monitoring");
-    }
-
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(getDefinition());
-    }
-
-    public static void doSkips(final BsonDocument definition) {
-        String description = definition.getString("description", new BsonString("")).getValue();
-        assumeFalse(description.equals("connect with serverMonitoringMode=auto >=4.4"),
-                "Skipping because our server monitoring events behave differently for now");
-        assumeFalse(description.equals("connect with serverMonitoringMode=stream >=4.4"),
-                "Skipping because our server monitoring events behave differently for now");
     }
 }

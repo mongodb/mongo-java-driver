@@ -67,11 +67,14 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final int maxWireVersion;
     private final boolean firstBatchEmpty;
     private final ResourceManager resourceManager;
+    private final OperationContext operationContext;
+    private final TimeoutMode timeoutMode;
 
     private int batchSize;
     private CommandCursorResult<T> commandCursorResult;
     @Nullable
     private List<T> nextBatch;
+    private boolean resetTimeoutWhenClosing;
 
     CommandBatchCursor(
             final TimeoutMode timeoutMode,
@@ -89,12 +92,14 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
+        operationContext = connectionSource.getOperationContext();
+        this.timeoutMode = timeoutMode;
 
-        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeOverride(maxTimeMS);
+        operationContext.getTimeoutContext().setMaxTimeOverride(maxTimeMS);
 
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
-        resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
-                commandCursorResult.getServerCursor());
+        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        resetTimeoutWhenClosing = true;
     }
 
     @Override
@@ -107,7 +112,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
             return true;
         }
 
-        resourceManager.checkTimeoutModeAndResetTimeoutContextIfIteration();
+        checkTimeoutModeAndResetTimeoutContextIfIteration();
         while (resourceManager.getServerCursor() != null) {
             getMore();
             if (!resourceManager.operable()) {
@@ -228,6 +233,12 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
         return maxWireVersion;
     }
 
+    void checkTimeoutModeAndResetTimeoutContextIfIteration() {
+        if (timeoutMode == TimeoutMode.ITERATION) {
+            operationContext.getTimeoutContext().resetTimeoutIfPresent();
+        }
+    }
+
     private void getMore() {
         ServerCursor serverCursor = assertNotNull(resourceManager.getServerCursor());
         resourceManager.executeWithConnection(connection -> {
@@ -259,26 +270,23 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     }
 
     /**
-     * Configures the cursor's behavior to close without resetting its timeout. If {@code true}, the cursor attempts to close immediately
-     * without resetting its {@link TimeoutContext#getTimeout()} if present. This is useful when managing the cursor's close behavior externally.
-     *
-     * @param closeWithoutTimeoutReset
+     * Configures the cursor to {@link #close()}
+     * without {@linkplain TimeoutContext#resetTimeoutIfPresent() resetting} its {@linkplain TimeoutContext#getTimeout() timeout}.
+     * This is useful when managing the {@link #close()} behavior externally.
      */
-    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
-        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
+    CommandBatchCursor<T> disableTimeoutResetWhenClosing() {
+        resetTimeoutWhenClosing = false;
+        return this;
     }
 
     @ThreadSafe
-    private static final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
-
+    private final class ResourceManager extends CursorResourceManager<ConnectionSource, Connection> {
         ResourceManager(
-                final TimeoutMode timeoutMode,
                 final MongoNamespace namespace,
                 final ConnectionSource connectionSource,
                 @Nullable final Connection connectionToPin,
                 @Nullable final ServerCursor serverCursor) {
-            super(connectionSource.getOperationContext().getTimeoutContext(), timeoutMode, namespace, connectionSource, connectionToPin,
-                    serverCursor);
+            super(namespace, connectionSource, connectionToPin, serverCursor);
         }
 
         /**
@@ -306,12 +314,21 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         @Override
         void doClose() {
-            if (isSkipReleasingServerResourcesOnClose()) {
-                unsetServerCursor();
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.resetToDefaultMaxTime();
+            if (resetTimeoutWhenClosing) {
+                timeoutContext.doWithResetTimeout(this::releaseResources);
+            } else {
+                releaseResources();
             }
-            resetTimeout();
+        }
+
+        private void releaseResources() {
             try {
-                if (getServerCursor() != null) {
+                if (isSkipReleasingServerResourcesOnClose()) {
+                    unsetServerCursor();
+                }
+                if (super.getServerCursor() != null) {
                     Connection connection = getConnection();
                     try {
                         releaseServerResources(connection);
@@ -358,7 +375,7 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         private void releaseServerResources(final Connection connection) {
             try {
-                ServerCursor localServerCursor = getServerCursor();
+                ServerCursor localServerCursor = super.getServerCursor();
                 if (localServerCursor != null) {
                     killServerCursor(getNamespace(), localServerCursor, connection);
                 }
@@ -369,10 +386,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
         private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final Connection localConnection) {
-            OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
-            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            timeoutContext.resetToDefaultMaxTime();
-
             localConnection.command(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
         }

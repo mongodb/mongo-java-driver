@@ -15,10 +15,8 @@
  */
 package com.mongodb.internal.operation;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.connection.Connection;
@@ -32,8 +30,6 @@ final class CursorResourceManagerTest {
     @Test
     void doubleCloseExecutedConcurrentlyWithOperationBeingInProgressShouldNotFail() {
         CursorResourceManager<?, ?> cursorResourceManager = new CursorResourceManager<ReferenceCounted, ReferenceCounted>(
-                ClusterFixture.OPERATION_CONTEXT.getTimeoutContext(),
-                TimeoutMode.CURSOR_LIFETIME,
                 new MongoNamespace("db", "coll"),
                 MongoMockito.mock(AsyncConnectionSource.class, mock -> {
                     when(mock.retain()).thenReturn(mock);

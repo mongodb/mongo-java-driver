@@ -22,17 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 final class UnifiedGridFSTest extends UnifiedReactiveStreamsTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        // contentType is deprecated in GridFS spec, and 4.x Java driver no longer support it, so skipping this test
-        assumeFalse(testDescription.equals("upload when contentType is provided"));
-        // Re-enable when JAVA-4214 is fixed
-        assumeFalse(testDescription.equals("delete when files entry does not exist and there are orphaned chunks"));
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/gridfs");
     }

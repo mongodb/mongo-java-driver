@@ -82,6 +82,7 @@ afterEvaluate {
             '!sun.misc.*',  // Used by DirectBufferDeallocator only for java 8
             '!sun.nio.ch.*',  // Used by DirectBufferDeallocator only for java 8
             '!javax.annotation.*', // Brought in by com.google.code.findbugs:annotations
+            '!com.oracle.svm.core.annotate.*', // this dependency is provided by the GraalVM runtime
             'io.netty.*;resolution:=optional',
             'com.amazonaws.*;resolution:=optional',
             'software.amazon.awssdk.*;resolution:=optional',

@@ -31,14 +31,15 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-final class SearchIndexRequest {
+public final class SearchIndexRequest {
     private final BsonDocument definition;
     @Nullable
     private final String indexName;
     @Nullable
     private final SearchIndexType searchIndexType;
 
-    SearchIndexRequest(final BsonDocument definition, @Nullable final String indexName, @Nullable final SearchIndexType searchIndexType) {
+    public SearchIndexRequest(final BsonDocument definition, @Nullable final String indexName,
+                              @Nullable final SearchIndexType searchIndexType) {
         assertNotNull(definition);
         this.definition = definition;
         this.indexName = indexName;

@@ -329,7 +329,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 options.getComment().orElse(null),
                 connectionSource,
                 connection)) {
-            cursor.setCloseWithoutTimeoutReset(true);
             return stream(spliteratorUnknownSize(cursor, ORDERED | IMMUTABLE), false).collect(toList());
         }
     }

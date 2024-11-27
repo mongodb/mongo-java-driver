@@ -237,7 +237,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
                 : "" + TimeUnit.MILLISECONDS.convert(currentNanos() - assertNotNull(nanos), NANOSECONDS);
         return "TimePoint{"
                 + "nanos=" + nanos
-                + "remainingMs=" + remainingMs
+                + ", remainingMs=" + remainingMs
                 + '}';
     }
 }

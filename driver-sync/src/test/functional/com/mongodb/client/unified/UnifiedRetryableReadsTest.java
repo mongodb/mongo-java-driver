@@ -22,25 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 public final class UnifiedRetryableReadsTest extends UnifiedSyncTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        doSkips(fileDescription, testDescription);
-    }
-
-    public static void doSkips(final String fileDescription, @SuppressWarnings("unused") final String testDescription) {
-        // Skipped because driver removed the deprecated count methods
-        assumeFalse(fileDescription.equals("count"));
-        assumeFalse(fileDescription.equals("count-serverErrors"));
-        // Skipped because the driver never had these methods
-        assumeFalse(fileDescription.equals("listDatabaseObjects"));
-        assumeFalse(fileDescription.equals("listDatabaseObjects-serverErrors"));
-        assumeFalse(fileDescription.equals("listCollectionObjects"));
-        assumeFalse(fileDescription.equals("listCollectionObjects-serverErrors"));
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/retryable-reads");
     }

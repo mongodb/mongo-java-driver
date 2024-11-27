@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
@@ -51,6 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.doesNotThrow;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
@@ -63,16 +65,18 @@ import static java.util.Collections.emptyList;
 class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
     private final MongoNamespace namespace;
-    private final long maxTimeMS;
     private final Decoder<T> decoder;
     @Nullable
     private final BsonValue comment;
     private final int maxWireVersion;
     private final boolean firstBatchEmpty;
     private final ResourceManager resourceManager;
+    private final OperationContext operationContext;
+    private final TimeoutMode timeoutMode;
     private final AtomicBoolean processedInitial = new AtomicBoolean();
     private int batchSize;
     private volatile CommandCursorResult<T> commandCursorResult;
+    private boolean resetTimeoutWhenClosing;
 
     AsyncCommandBatchCursor(
             final TimeoutMode timeoutMode,
@@ -86,24 +90,25 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         this.commandCursorResult = toCommandCursorResult(connectionDescription.getServerAddress(), FIRST_BATCH, commandCursorDocument);
         this.namespace = commandCursorResult.getNamespace();
         this.batchSize = batchSize;
-        this.maxTimeMS = maxTimeMS;
         this.decoder = decoder;
         this.comment = comment;
         this.maxWireVersion = connectionDescription.getMaxWireVersion();
         this.firstBatchEmpty = commandCursorResult.getResults().isEmpty();
+        operationContext = connectionSource.getOperationContext();
+        this.timeoutMode = timeoutMode;
 
-        connectionSource.getOperationContext().getTimeoutContext().setMaxTimeOverride(maxTimeMS);
+        operationContext.getTimeoutContext().setMaxTimeOverride(maxTimeMS);
 
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
-        resourceManager = new ResourceManager(timeoutMode, namespace, connectionSource, connectionToPin,
-                commandCursorResult.getServerCursor());
+        resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        resetTimeoutWhenClosing = true;
     }
 
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
         resourceManager.execute(funcCallback -> {
-            resourceManager.checkTimeoutModeAndResetTimeoutContextIfIteration();
+            checkTimeoutModeAndResetTimeoutContextIfIteration();
             ServerCursor localServerCursor = resourceManager.getServerCursor();
             boolean serverCursorIsNull = localServerCursor == null;
             List<T> batchResults = emptyList();
@@ -168,6 +173,12 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         return maxWireVersion;
     }
 
+    void checkTimeoutModeAndResetTimeoutContextIfIteration() {
+        if (timeoutMode == TimeoutMode.ITERATION) {
+            operationContext.getTimeoutContext().resetTimeoutIfPresent();
+        }
+    }
+
     private void getMore(final ServerCursor cursor, final SingleResultCallback<List<T>> callback) {
         resourceManager.executeWithConnection((connection, wrappedCallback) ->
                 getMoreLoop(assertNotNull(connection), cursor, wrappedCallback), callback);
@@ -216,21 +227,24 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
         return commandCursorResult;
     }
 
-    void setCloseWithoutTimeoutReset(final boolean closeWithoutTimeoutReset) {
-        this.resourceManager.setCloseWithoutTimeoutReset(closeWithoutTimeoutReset);
+    /**
+     * Configures the cursor to {@link #close()}
+     * without {@linkplain TimeoutContext#resetTimeoutIfPresent() resetting} its {@linkplain TimeoutContext#getTimeout() timeout}.
+     * This is useful when managing the {@link #close()} behavior externally.
+     */
+    AsyncCommandBatchCursor<T> disableTimeoutResetWhenClosing() {
+        resetTimeoutWhenClosing = false;
+        return this;
     }
 
     @ThreadSafe
-    private static final class ResourceManager extends CursorResourceManager<AsyncConnectionSource, AsyncConnection> {
-
+    private final class ResourceManager extends CursorResourceManager<AsyncConnectionSource, AsyncConnection> {
         ResourceManager(
-                final TimeoutMode timeoutMode,
                 final MongoNamespace namespace,
                 final AsyncConnectionSource connectionSource,
                 @Nullable final AsyncConnection connectionToPin,
                 @Nullable final ServerCursor serverCursor) {
-            super(connectionSource.getOperationContext().getTimeoutContext(), timeoutMode, namespace, connectionSource, connectionToPin,
-                    serverCursor);
+            super(namespace, connectionSource, connectionToPin, serverCursor);
         }
 
         /**
@@ -244,7 +258,7 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             } else {
                 operation.whenComplete(() -> {
                     endOperation();
-                    if (getServerCursor() == null) {
+                    if (super.getServerCursor() == null) {
                         // At this point all resources have been released,
                         // but `isClose` may still be returning `false` if `close` have not been called.
                         // Self-close to update the state managed by `ResourceManger`, and so that `isClosed` return `true`.
@@ -261,23 +275,41 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
 
         @Override
         void doClose() {
-            if (isSkipReleasingServerResourcesOnClose()) {
-                unsetServerCursor();
-            }
-
-            resetTimeout();
-            if (getServerCursor() != null) {
-                getConnection((connection, t) -> {
-                    if (connection != null) {
-                        releaseServerAndClientResources(connection);
-                    } else {
-                        unsetServerCursor();
-                        releaseClientResources();
-                    }
-                });
+            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
+            timeoutContext.resetToDefaultMaxTime();
+            SingleResultCallback<Void> thenDoNothing = (r, t) -> {};
+            if (resetTimeoutWhenClosing) {
+                timeoutContext.doWithResetTimeout(this::releaseResourcesAsync, thenDoNothing);
             } else {
-                releaseClientResources();
+                releaseResourcesAsync(thenDoNothing);
             }
+        }
+
+        private void releaseResourcesAsync(final SingleResultCallback<Void> callback) {
+            beginAsync().thenRunTryCatchAsyncBlocks(c -> {
+                if (isSkipReleasingServerResourcesOnClose()) {
+                    unsetServerCursor();
+                }
+                if (super.getServerCursor() != null) {
+                    beginAsync().<AsyncConnection>thenSupply(c2 -> {
+                        getConnection(c2);
+                    }).thenConsume((connection, c3) -> {
+                        beginAsync().thenRun(c4 -> {
+                            releaseServerResourcesAsync(connection, c4);
+                        }).thenAlwaysRunAndFinish(() -> {
+                            connection.release();
+                        }, c3);
+                    }).finish(c);
+                } else {
+                    c.complete(c);
+                }
+            }, MongoException.class, (e, c5) -> {
+                c5.complete(c5); // ignore exceptions when releasing server resources
+            }).thenAlwaysRunAndFinish(() -> {
+                // guarantee that regardless of exceptions, `serverCursor` is null and client resources are released
+                unsetServerCursor();
+                releaseClientResources();
+            }, callback);
         }
 
         <R> void executeWithConnection(final AsyncCallableConnectionWithCallback<R> callable, final SingleResultCallback<R> callback) {
@@ -314,25 +346,21 @@ class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T>
             }
         }
 
-        private void releaseServerAndClientResources(final AsyncConnection connection) {
-            AsyncCallbackSupplier<Void> callbackSupplier = funcCallback -> {
-                ServerCursor localServerCursor = getServerCursor();
+        private void releaseServerResourcesAsync(final AsyncConnection connection, final SingleResultCallback<Void> callback) {
+            beginAsync().thenRun((c) -> {
+                ServerCursor localServerCursor = super.getServerCursor();
                 if (localServerCursor != null) {
-                    killServerCursor(getNamespace(), localServerCursor, connection, funcCallback);
+                    killServerCursorAsync(getNamespace(), localServerCursor, connection, callback);
+                } else {
+                    c.complete(c);
                 }
-            };
-            callbackSupplier.whenComplete(() -> {
+            }).thenAlwaysRunAndFinish(() -> {
                 unsetServerCursor();
-                releaseClientResources();
-            }).whenComplete(connection::release).get((r, t) -> { /* do nothing */ });
+            }, callback);
         }
 
-        private void killServerCursor(final MongoNamespace namespace, final ServerCursor localServerCursor,
+        private void killServerCursorAsync(final MongoNamespace namespace, final ServerCursor localServerCursor,
                 final AsyncConnection localConnection, final SingleResultCallback<Void> callback) {
-            OperationContext operationContext = assertNotNull(getConnectionSource()).getOperationContext();
-            TimeoutContext timeoutContext = operationContext.getTimeoutContext();
-            timeoutContext.resetToDefaultMaxTime();
-
             localConnection.commandAsync(namespace.getDatabaseName(), getKillCursorsCommand(namespace, localServerCursor),
                     NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), new BsonDocumentCodec(),
                     operationContext, (r, t) -> callback.onResult(null, null));

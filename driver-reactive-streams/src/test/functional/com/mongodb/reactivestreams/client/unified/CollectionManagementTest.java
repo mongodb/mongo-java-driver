@@ -22,14 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 final class CollectionManagementTest extends UnifiedReactiveStreamsTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        assumeFalse(testDescription.equals("modifyCollection to changeStreamPreAndPostImages enabled"));
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/collection-management");
     }

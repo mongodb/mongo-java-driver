@@ -22,16 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 final class ConnectionPoolLoggingTest extends UnifiedReactiveStreamsTest {
-    @Override
-    protected void skips(final String fileDescription, final String testDescription) {
-        // The implementation of the functionality related to clearing the connection pool before closing the connection
-        // will be carried out once the specification is finalized and ready.
-        assumeFalse(testDescription.equals("Connection checkout fails due to error establishing connection"));
-    }
-
     private static Collection<Arguments> data() throws URISyntaxException, IOException {
         return getTestData("unified-test-format/connection-monitoring-and-pooling/logging");
     }
