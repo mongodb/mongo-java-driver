@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -34,7 +35,6 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
-import org.bson.io.BsonOutput;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -45,12 +45,17 @@ import java.util.List;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ClusterConnectionMode.LOAD_BALANCED;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
+import static com.mongodb.internal.connection.BsonWriterHelper.appendElementsToDocument;
+import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
+import static com.mongodb.internal.connection.BsonWriterHelper.writeDocumentsOfDualMessageSequences;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
@@ -64,43 +69,57 @@ import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_W
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class CommandMessage extends RequestMessage {
+    /**
+     * Specifies that the `OP_MSG` section payload is a BSON document.
+     */
+    private static final byte PAYLOAD_TYPE_0_DOCUMENT = 0;
+    /**
+     * Specifies that the `OP_MSG` section payload is a sequence of BSON documents.
+     */
+    private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
+
     private final MongoNamespace namespace;
     private final BsonDocument command;
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
     private final boolean exhaustAllowed;
-    private final SplittablePayload payload;
-    private final FieldNameValidator payloadFieldNameValidator;
+    private final MessageSequences sequences;
     private final boolean responseExpected;
+    /**
+     * {@code null} iff either {@link #sequences} is not of the {@link DualMessageSequences} type,
+     * or it is of that type, but it has not been {@linkplain #encodeMessageBodyWithMetadata(ByteBufferBsonOutput, OperationContext) encoded}.
+     */
+    @Nullable
+    private Boolean dualMessageSequencesRequireResponse;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
                    @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean exhaustAllowed,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, null, null,
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, exhaustAllowed, EmptyMessageSequences.INSTANCE,
                 clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
-                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+                   final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false, payload,
-                payloadFieldNameValidator, clusterConnectionMode, serverApi);
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, responseExpected, false,
+                sequences, clusterConnectionMode, serverApi);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings,
                    final boolean responseExpected, final boolean exhaustAllowed,
-                   @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
+                   final MessageSequences sequences,
                    final ClusterConnectionMode clusterConnectionMode, @Nullable final ServerApi serverApi) {
         super(namespace.getFullName(), getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.namespace = namespace;
@@ -108,9 +127,9 @@ public final class CommandMessage extends RequestMessage {
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
         this.responseExpected = responseExpected;
+        this.dualMessageSequencesRequireResponse = null;
         this.exhaustAllowed = exhaustAllowed;
-        this.payload = payload;
-        this.payloadFieldNameValidator = payloadFieldNameValidator;
+        this.sequences = sequences;
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.serverApi = serverApi;
         assertTrue(useOpMsg() || responseExpected);
@@ -119,8 +138,8 @@ public final class CommandMessage extends RequestMessage {
     /**
      * Create a BsonDocument representing the logical document encoded by an OP_MSG.
      * <p>
-     * The returned document will contain all the fields from the Body (Kind 0) Section, as well as all fields represented by
-     * OP_MSG Document Sequence (Kind 1) Sections.
+     * The returned document will contain all the fields from the `PAYLOAD_TYPE_0_DOCUMENT` section, as well as all fields represented by
+     * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections.
      */
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
@@ -130,14 +149,14 @@ public final class CommandMessage extends RequestMessage {
                 byteBuf.position(getEncodingMetadata().getFirstDocumentPosition());
                 ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
-                // If true, it means there is at least one Kind 1:Document Sequence in the OP_MSG
+                // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
                 if (byteBuf.hasRemaining()) {
                     BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
                     // Each loop iteration processes one Document Sequence
                     // When there are no more bytes remaining, there are no more Document Sequences
                     while (byteBuf.hasRemaining()) {
-                        // skip reading the payload type, we know it is 1
+                        // skip reading the payload type, we know it is `PAYLOAD_TYPE_1`
                         byteBuf.position(byteBuf.position() + 1);
                         int sequenceStart = byteBuf.position();
                         int sequenceSizeInBytes = byteBuf.getInt();
@@ -170,7 +189,7 @@ public final class CommandMessage extends RequestMessage {
 
     /**
      * Get the field name from a buffer positioned at the start of the document sequence identifier of an OP_MSG Section of type
-     * Document Sequence (Kind 1).
+     * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE`.
      * <p>
      * Upon normal completion of the method, the buffer will be positioned at the start of the first BSON object in the sequence.
     */
@@ -192,7 +211,15 @@ public final class CommandMessage extends RequestMessage {
         if (responseExpected) {
             return true;
         } else {
-            return payload != null && payload.isOrdered() && payload.hasAnotherSplit();
+            if (sequences instanceof SplittablePayload) {
+                SplittablePayload payload = (SplittablePayload) sequences;
+                return payload.isOrdered() && payload.hasAnotherSplit();
+            } else if (sequences instanceof DualMessageSequences) {
+                return assertNotNull(dualMessageSequencesRequireResponse);
+            } else if (!(sequences instanceof EmptyMessageSequences)) {
+                fail(sequences.toString());
+            }
+            return false;
         }
     }
 
@@ -201,47 +228,74 @@ public final class CommandMessage extends RequestMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final OperationContext operationContext) {
-        int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
-        int commandStartPosition;
-        if (useOpMsg()) {
-            int flagPosition = bsonOutput.getPosition();
-            bsonOutput.writeInt32(0);   // flag bits
-            bsonOutput.writeByte(0);    // payload type
-            commandStartPosition = bsonOutput.getPosition();
-
-            addDocument(command, bsonOutput, commandFieldNameValidator, getExtraElements(operationContext));
-
-            if (payload != null) {
-                bsonOutput.writeByte(1);          // payload type
-                int payloadBsonOutputStartPosition = bsonOutput.getPosition();
-                bsonOutput.writeInt32(0);         // size
-                bsonOutput.writeCString(payload.getPayloadName());
-                writePayload(new BsonBinaryWriter(bsonOutput, payloadFieldNameValidator), bsonOutput, getSettings(),
-                        messageStartPosition, payload, getSettings().getMaxDocumentSize());
-
-                int payloadBsonOutputLength = bsonOutput.getPosition() - payloadBsonOutputStartPosition;
-                bsonOutput.writeInt32(payloadBsonOutputStartPosition, payloadBsonOutputLength);
-            }
-
-            // Write the flag bits
-            bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
-        } else {
-            bsonOutput.writeInt32(0);
-            bsonOutput.writeCString(namespace.getFullName());
-            bsonOutput.writeInt32(0);
-            bsonOutput.writeInt32(-1);
-
-            commandStartPosition = bsonOutput.getPosition();
-
-            List<BsonElement> elements = null;
-            if (serverApi != null) {
-                elements = new ArrayList<>(3);
-                addServerApiElements(elements);
-            }
-            addDocument(command, bsonOutput, commandFieldNameValidator, elements);
-        }
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        int commandStartPosition = useOpMsg() ? writeOpMsg(bsonOutput, operationContext) : writeOpQuery(bsonOutput);
         return new EncodingMetadata(commandStartPosition);
+    }
+
+    @SuppressWarnings("try")
+    private int writeOpMsg(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
+        int flagPosition = bsonOutput.getPosition();
+        bsonOutput.writeInt32(0);   // flag bits
+        bsonOutput.writeByte(PAYLOAD_TYPE_0_DOCUMENT);
+        int commandStartPosition = bsonOutput.getPosition();
+        List<BsonElement> extraElements = getExtraElements(operationContext);
+
+        int commandDocumentSizeInBytes = writeDocument(command, bsonOutput, commandFieldNameValidator);
+        if (sequences instanceof SplittablePayload) {
+            appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+            SplittablePayload payload = (SplittablePayload) sequences;
+            try (FinishOpMsgSectionWithPayloadType1 finishSection = startOpMsgSectionWithPayloadType1(
+                    bsonOutput, payload.getPayloadName())) {
+                writePayload(
+                        new BsonBinaryWriter(bsonOutput, payload.getFieldNameValidator()),
+                        bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize());
+            }
+        } else if (sequences instanceof DualMessageSequences) {
+            DualMessageSequences dualMessageSequences = (DualMessageSequences) sequences;
+            try (ByteBufferBsonOutput.Branch bsonOutputBranch2 = bsonOutput.branch();
+                 ByteBufferBsonOutput.Branch bsonOutputBranch1 = bsonOutput.branch()) {
+                DualMessageSequences.EncodeDocumentsResult encodeDocumentsResult;
+                try (FinishOpMsgSectionWithPayloadType1 finishSection1 = startOpMsgSectionWithPayloadType1(
+                        bsonOutputBranch1, dualMessageSequences.getFirstSequenceId());
+                    FinishOpMsgSectionWithPayloadType1 finishSection2 = startOpMsgSectionWithPayloadType1(
+                        bsonOutputBranch2, dualMessageSequences.getSecondSequenceId())) {
+                    encodeDocumentsResult = writeDocumentsOfDualMessageSequences(
+                            dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
+                            bsonOutputBranch2, getSettings());
+                }
+                dualMessageSequencesRequireResponse = encodeDocumentsResult.isServerResponseRequired();
+                extraElements.addAll(encodeDocumentsResult.getExtraElements());
+                appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+            }
+        } else if (sequences instanceof EmptyMessageSequences) {
+            appendElementsToDocument(bsonOutput, commandStartPosition, extraElements);
+        } else {
+            fail(sequences.toString());
+        }
+
+        // Write the flag bits
+        bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
+        return commandStartPosition;
+    }
+
+    private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {
+        bsonOutput.writeInt32(0);
+        bsonOutput.writeCString(namespace.getFullName());
+        bsonOutput.writeInt32(0);
+        bsonOutput.writeInt32(-1);
+
+        int commandStartPosition = bsonOutput.getPosition();
+
+        List<BsonElement> elements = null;
+        if (serverApi != null) {
+            elements = new ArrayList<>(3);
+            addServerApiElements(elements);
+        }
+        writeDocument(command, bsonOutput, commandFieldNameValidator);
+        appendElementsToDocument(bsonOutput, commandStartPosition, elements);
+        return commandStartPosition;
     }
 
     private int getOpMsgFlagBits() {
@@ -269,7 +323,7 @@ public final class CommandMessage extends RequestMessage {
         SessionContext sessionContext = operationContext.getSessionContext();
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
 
-        List<BsonElement> extraElements = new ArrayList<>();
+        ArrayList<BsonElement> extraElements = new ArrayList<>();
         if (!getSettings().isCryptd()) {
            timeoutContext.runMaxTimeMS(maxTimeMS ->
                    extraElements.add(new BsonElement("maxTimeMS", new BsonInt64(maxTimeMS)))
@@ -341,6 +395,19 @@ public final class CommandMessage extends RequestMessage {
         }
     }
 
+    /**
+     * @param sequenceId The identifier of the sequence contained in the {@code OP_MSG} section to be written.
+     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/message/OP_MSG.md">OP_MSG</a>
+     */
+    private FinishOpMsgSectionWithPayloadType1 startOpMsgSectionWithPayloadType1(final ByteBufferBsonOutput bsonOutput, final String sequenceId) {
+        bsonOutput.writeByte(PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE);
+        int sequenceStart = bsonOutput.getPosition();
+        // size to be patched back later
+        bsonOutput.writeInt32(0);
+        bsonOutput.writeCString(sequenceId);
+        return () -> backpatchLength(sequenceStart, bsonOutput);
+    }
+
     private static OpCode getOpCode(final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
             @Nullable final ServerApi serverApi) {
         return isServerVersionKnown(settings) || clusterConnectionMode == LOAD_BALANCED || serverApi != null
@@ -350,5 +417,10 @@ public final class CommandMessage extends RequestMessage {
 
     private static boolean isServerVersionKnown(final MessageSettings settings) {
         return settings.getMaxWireVersion() >= FOUR_DOT_ZERO_WIRE_VERSION;
+    }
+
+    @FunctionalInterface
+    private interface FinishOpMsgSectionWithPayloadType1 extends AutoCloseable {
+        void close();
     }
 }

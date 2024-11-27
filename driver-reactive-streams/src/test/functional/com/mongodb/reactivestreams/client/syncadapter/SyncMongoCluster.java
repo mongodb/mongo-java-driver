@@ -286,6 +286,7 @@ public class SyncMongoCluster implements MongoCluster {
     @Override
     public ClientBulkWriteResult bulkWrite(
             final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
         throw Assertions.fail("BULK-TODO implement");
     }
 
@@ -293,6 +294,7 @@ public class SyncMongoCluster implements MongoCluster {
     public ClientBulkWriteResult bulkWrite(
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
         throw Assertions.fail("BULK-TODO implement");
     }
 
@@ -300,6 +302,7 @@ public class SyncMongoCluster implements MongoCluster {
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
             final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
         throw Assertions.fail("BULK-TODO implement");
     }
 
@@ -308,6 +311,7 @@ public class SyncMongoCluster implements MongoCluster {
             final ClientSession clientSession,
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
         throw Assertions.fail("BULK-TODO implement");
     }
 

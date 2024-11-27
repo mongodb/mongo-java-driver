@@ -748,6 +748,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
                                                        methodName, validStatesString, state));
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The {@link #flush()} method of {@link AbstractBsonWriter} does nothing.</p>
+     */
+    @Override
+    public void flush() {
+    }
+
     @Override
     public void close() {
         closed = true;

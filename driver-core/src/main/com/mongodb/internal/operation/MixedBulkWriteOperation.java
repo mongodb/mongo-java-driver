@@ -421,8 +421,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final Connection connection,
             final BulkWriteBatch batch) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext, shouldExpectResponse(batch, effectiveWriteConcern),
-                batch.getPayload(), batch.getFieldNameValidator());
+                operationContext, shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
     }
 
     private void executeCommandAsync(
@@ -432,8 +431,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final BulkWriteBatch batch,
             final SingleResultCallback<BsonDocument> callback) {
         connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NoOpFieldNameValidator.INSTANCE, null, batch.getDecoder(),
-                operationContext, shouldExpectResponse(batch, effectiveWriteConcern),
-                batch.getPayload(), batch.getFieldNameValidator(), callback);
+                operationContext, shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload(), callback);
     }
 
     private boolean shouldExpectResponse(final BulkWriteBatch batch, final WriteConcern effectiveWriteConcern) {
