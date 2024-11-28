@@ -36,9 +36,9 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
     @Override
     @BeforeEach
     public void setUp(
-            final String directoryName,
             @Nullable final String fileDescription,
             @Nullable final String testDescription,
+            final String directoryName,
             final String schemaVersion,
             @Nullable final BsonArray runOnRequirements,
             final BsonArray entitiesArray,
@@ -46,9 +46,9 @@ final class UnifiedTestFailureValidator extends UnifiedSyncTest {
             final BsonDocument definition) {
         try {
             super.setUp(
-                    directoryName,
                     fileDescription,
                     testDescription,
+                    directoryName,
                     schemaVersion,
                     runOnRequirements,
                     entitiesArray,
