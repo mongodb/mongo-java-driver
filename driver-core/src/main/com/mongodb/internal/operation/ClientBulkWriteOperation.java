@@ -16,6 +16,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.ClientBulkWriteException;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
@@ -119,7 +120,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.commandWrite
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.shouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
-import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWriteWithRetries;
@@ -169,8 +169,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
     @Override
     public ClientBulkWriteResult execute(final WriteBinding binding) throws ClientBulkWriteException {
-        WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(
-                writeConcernSetting, binding.getOperationContext().getSessionContext());
+        WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(binding.getOperationContext().getSessionContext());
         ResultAccumulator resultAccumulator = new ResultAccumulator();
         MongoException transformedTopLevelError = null;
         try {
@@ -364,6 +363,19 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     ? sessionContext.advanceTransactionNumber()
                                     : sessionContext.getTransactionNumber();
                         }));
+    }
+
+    private WriteConcern validateAndGetEffectiveWriteConcern(final SessionContext sessionContext) {
+        WriteConcern effectiveWriteConcern = CommandOperationHelper.validateAndGetEffectiveWriteConcern(writeConcernSetting, sessionContext);
+        if (!effectiveWriteConcern.isAcknowledged()) {
+            if (options.isVerboseResults()) {
+                throw new MongoClientException("Cannot request unacknowledged write concern and verbose results");
+            }
+            if (options.isOrdered()) {
+                throw new MongoClientException("Cannot request unacknowledged write concern and ordered writes");
+            }
+        }
+        return effectiveWriteConcern;
     }
 
     private <T> void encodeUsingRegistry(final BsonWriter writer, final T value) {

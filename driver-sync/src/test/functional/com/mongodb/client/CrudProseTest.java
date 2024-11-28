@@ -24,6 +24,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
+import com.mongodb.WriteConcern;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
@@ -312,15 +313,6 @@ public class CrudProseTest {
         }
     }
 
-    private static Stream<Arguments> testBulkWriteErrorsForUnacknowledgedTooLargeInsertArgs() {
-        return Stream.of(
-                arguments("insert", false),
-                arguments("insert", true),
-                arguments("replace", false),
-                arguments("replace", true)
-        );
-    }
-
     @DisplayName("11. MongoClient.bulkWrite batch splits when the addition of a new namespace exceeds the maximum message size")
     @Test
     protected void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
@@ -439,6 +431,40 @@ public class CrudProseTest {
                             IllegalStateException.class,
                             () -> client.bulkWrite(singletonList(ClientNamespacedWriteModel.insertOne(NAMESPACE, new Document("a", "b")))))
                     .getMessage().contains("bulkWrite does not currently support automatic encryption"));
+        }
+    }
+
+    @DisplayName("15. MongoClient.bulkWrite with unacknowledged write concern uses w:0 for all batches")
+    @Test
+    protected void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        assumeFalse(isServerlessTest());
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener)
+                .writeConcern(WriteConcern.UNACKNOWLEDGED))) {
+            MongoDatabase database = droppedDatabase(client);
+            database.createCollection(NAMESPACE.getCollectionName());
+            Document helloResponse = database.runCommand(new Document("hello", 1));
+            int maxBsonObjectSize = helloResponse.getInteger("maxBsonObjectSize");
+            int maxMessageSizeBytes = helloResponse.getInteger("maxMessageSizeBytes");
+            ClientNamespacedWriteModel model = ClientNamespacedWriteModel.insertOne(
+                    NAMESPACE,
+                    new Document("a", join("", nCopies(maxBsonObjectSize - 500, "b"))));
+            int numModels = maxMessageSizeBytes / maxBsonObjectSize + 1;
+            ClientBulkWriteResult result = client.bulkWrite(nCopies(numModels, model), clientBulkWriteOptions().ordered(false));
+            assertFalse(result.isAcknowledged());
+            List<CommandStartedEvent> startedBulkWriteCommandEvents = commandListener.getCommandStartedEvents("bulkWrite");
+            assertEquals(2, startedBulkWriteCommandEvents.size());
+            CommandStartedEvent firstEvent = startedBulkWriteCommandEvents.get(0);
+            BsonDocument firstCommand = firstEvent.getCommand();
+            CommandStartedEvent secondEvent = startedBulkWriteCommandEvents.get(1);
+            BsonDocument secondCommand = secondEvent.getCommand();
+            assertEquals(numModels - 1, firstCommand.getArray("ops").size());
+            assertEquals(1, secondCommand.getArray("ops").size());
+            assertEquals(firstEvent.getOperationId(), secondEvent.getOperationId());
+            assertEquals(0, firstCommand.getDocument("writeConcern").getInt32("w").intValue());
+            assertEquals(0, secondCommand.getDocument("writeConcern").getInt32("w").intValue());
+            assertEquals(numModels, database.getCollection(NAMESPACE.getCollectionName()).countDocuments());
         }
     }
 

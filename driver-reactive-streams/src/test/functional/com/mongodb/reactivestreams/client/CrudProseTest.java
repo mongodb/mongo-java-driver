@@ -82,6 +82,12 @@ final class CrudProseTest extends com.mongodb.client.CrudProseTest {
         assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement");
     }
 
+    @DisplayName("15. MongoClient.bulkWrite with unacknowledged write concern uses w:0 for all batches")
+    @Test
+    protected void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
+        assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement");
+    }
+
     @ParameterizedTest
     @MethodSource("insertMustGenerateIdAtMostOnceArgs")
     @Override
