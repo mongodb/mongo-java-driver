@@ -76,9 +76,10 @@ ext {
 def projectNamesNotToBePublished = ["driver-benchmarks", "driver-lambda", "driver-workload-executor", "graalvm-native-image-app", "util",
                                     "spock", "taglets"]
 def publishedProjects = subprojects.findAll { !projectNamesNotToBePublished.contains(it.name) }
-def scalaProjects = publishedProjects.findAll { it.name.contains('scala') }
-def javaProjects = publishedProjects - scalaProjects
-def projectsWithManifest = publishedProjects.findAll {it.name != 'driver-legacy' }
+def bomProjects = project(":bom")
+def scalaProjects = publishedProjects.findAll { it.name.contains('scala') } - bomProjects
+def javaProjects = publishedProjects - scalaProjects - bomProjects
+def projectsWithManifest = publishedProjects.findAll {it.name != 'driver-legacy' } - bomProjects
 
 configure(javaProjects) { project ->
     apply plugin: 'maven-publish'
@@ -167,5 +168,73 @@ configure(projectsWithManifest) { project ->
     apply plugin: 'biz.aQute.bnd.builder'
     afterEvaluate {
         jar configureJarManifestAttributes(project)
+    }
+}
+
+configure(bomProjects) { project ->
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+    apply plugin: 'java-platform'
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.javaPlatform // Use the BOM component
+                artifactId = project.archivesBaseName
+            }
+        }
+
+        repositories configureMavenRepositories(project)
+    }
+
+    afterEvaluate {
+        publishing.publications.mavenJava.pom configurePom(project)
+        signing {
+            useInMemoryPgpKeys(findProperty("signingKey"), findProperty("signingPassword"))
+            sign publishing.publications.mavenJava
+        }
+    }
+
+    //TODO do we need to generate Gradle module metadata for the BOM?
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
+
+    // Analyze dependencies to include transitive optional dependencies
+//    project.afterEvaluate {
+//        dependencies.constraints {
+//            configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.each { dependency ->
+//                dependency.moduleArtifacts.each { artifact ->
+//                    artifact.moduleDependency.artifacts.each { transitiveDep ->
+//                        if (transitiveDep.optional) {
+//                            api("${transitiveDep.group}:${transitiveDep.name}:${transitiveDep.version}") {
+//                                because "Automatically added optional transitive dependency"
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    tasks.withType(GenerateMavenPom).configureEach {
+        doLast {
+            def xml = file(destination).text
+            assert xml.indexOf("<dependencies>") == xml.lastIndexOf("<dependencies>"):
+                    "BOM must contain exactly one <dependencies> element but contained multiple:\n$destination"
+            assert xml.contains("<dependencyManagement>"):
+                    "BOM must contain a <dependencyManagement> element:\n$destination"
+
+            /*
+            The <scope> and <optional> tags should be omitted in BOM dependencies.
+            This ensures that consuming projects have the flexibility to decide whether a
+            dependency is optional in their context. The BOM's role is to provide version information,
+            not to dictate inclusion or exclusion of dependencies.
+             */
+            assert !xml.contains("<scope>"):
+                    "BOM must not contain <scope> elements:\n$destination"
+            assert !xml.contains("<optional>"):
+                    "BOM must not contain <optional> elements:\n$destination"
+        }
     }
 }
