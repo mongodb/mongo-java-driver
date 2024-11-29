@@ -91,6 +91,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 import static util.JsonPoweredTestHelper.getTestFiles;
@@ -216,7 +217,11 @@ public abstract class UnifiedTest {
         ignoreExtraEvents = false;
         testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
         UnifiedTestModifications.doSkips(testDef);
+
+        boolean skip = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.SKIP);
+        assumeFalse(skip, "Skipping test");
         skips(fileDescription, testDescription);
+
         assertTrue(
                 schemaVersion.equals("1.0")
                         || schemaVersion.equals("1.1")
