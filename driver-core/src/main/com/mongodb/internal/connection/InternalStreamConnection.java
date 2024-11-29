@@ -586,6 +586,12 @@ public class InternalStreamConnection implements InternalConnection {
 
         boolean[] shouldReturn = {false};
         Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
+            // VAKOTODO
+            // https://github.com/mongodb/specifications/blob/master/source/client-side-operations-timeout/client-side-operations-timeout.md#command-execution
+            // "If the timeout has expired or the amount of time remaining is less than the selected server's minimum RTT, drivers
+            // MUST return the connection to the pool and raise a timeout exception."
+            //
+            // Where do we decide whether we close a connection due to `MongoOperationTimeoutException` or not?
             callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
             shouldReturn[0] = true;
         });

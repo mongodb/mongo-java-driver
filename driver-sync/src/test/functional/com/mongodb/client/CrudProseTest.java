@@ -312,15 +312,6 @@ public class CrudProseTest {
         }
     }
 
-    private static Stream<Arguments> testBulkWriteErrorsForUnacknowledgedTooLargeInsertArgs() {
-        return Stream.of(
-                arguments("insert", false),
-                arguments("insert", true),
-                arguments("replace", false),
-                arguments("replace", true)
-        );
-    }
-
     @DisplayName("11. MongoClient.bulkWrite batch splits when the addition of a new namespace exceeds the maximum message size")
     @Test
     protected void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
