@@ -179,8 +179,8 @@ configure(bomProjects) { project ->
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                from components.javaPlatform // Use the BOM component
-                artifactId = project.archivesBaseName
+                artifactId = "bom".equals(project.archivesBaseName) ? "mongodb-driver-bom" : project.archivesBaseName
+                from components.javaPlatform
             }
         }
 
@@ -200,41 +200,24 @@ configure(bomProjects) { project ->
         enabled = false
     }
 
-    // Analyze dependencies to include transitive optional dependencies
-//    project.afterEvaluate {
-//        dependencies.constraints {
-//            configurations.compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.each { dependency ->
-//                dependency.moduleArtifacts.each { artifact ->
-//                    artifact.moduleDependency.artifacts.each { transitiveDep ->
-//                        if (transitiveDep.optional) {
-//                            api("${transitiveDep.group}:${transitiveDep.name}:${transitiveDep.version}") {
-//                                because "Automatically added optional transitive dependency"
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     tasks.withType(GenerateMavenPom).configureEach {
         doLast {
             def xml = file(destination).text
-            assert xml.indexOf("<dependencies>") == xml.lastIndexOf("<dependencies>"):
-                    "BOM must contain exactly one <dependencies> element but contained multiple:\n$destination"
-            assert xml.contains("<dependencyManagement>"):
-                    "BOM must contain a <dependencyManagement> element:\n$destination"
+            def root = new groovy.xml.XmlSlurper().parseText(xml)
 
-            /*
-            The <scope> and <optional> tags should be omitted in BOM dependencies.
-            This ensures that consuming projects have the flexibility to decide whether a
-            dependency is optional in their context. The BOM's role is to provide version information,
-            not to dictate inclusion or exclusion of dependencies.
-             */
-            assert !xml.contains("<scope>"):
-                    "BOM must not contain <scope> elements:\n$destination"
-            assert !xml.contains("<optional>"):
-                    "BOM must not contain <optional> elements:\n$destination"
+            def dependencies = root.dependencyManagement.dependencies.children()
+            assert dependencies.children().size() > 1 : "BOM must contain more then one <dependency> element:\n$destination"
+
+            dependencies.each { dependency ->
+                def groupId = dependency.groupId.text()
+                assert groupId.startsWith('org.mongodb') : "BOM must contain only 'org.mongodb' dependencies, but found '$groupId':\n$destination"
+                /* The <scope> and <optional> tags should be omitted in BOM dependencies.
+                   This ensures that consuming projects have the flexibility to decide whether a
+                   dependency is optional in their context. The BOM's role is to provide version information,
+                   not to dictate inclusion or exclusion of dependencies. */
+                assert dependency.scope.size() == 0 : "BOM must not contain <scope> elements in dependency:\n$destination"
+                assert dependency.optional.size() == 0 : "BOM must not contain <optional> elements in dependency:\n$destination"
+            }
         }
     }
 }
