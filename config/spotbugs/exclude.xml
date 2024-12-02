@@ -223,6 +223,30 @@
         <Method name="~.*validateAnnotations.*"/>
         <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
     </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.PropertiesKt$path$1"/>
+        <Method name="~.*invoke.*"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.Projections"/>
+        <Method name="~include|exclude"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.Indexes"/>
+        <Method name="~ascending|descending|geo2dsphere"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <Class name="com.mongodb.kotlin.client.model.Sorts"/>
+        <Method name="~ascending|descending"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
 
     <!-- Spotbugs reports false positives for suspendable operations with default params
          see: https://github.com/Kotlin/kotlinx.coroutines/issues/3099

@@ -31,31 +31,51 @@ repositories {
     google()
 }
 
-base.archivesName.set("bson-kotlin")
+base.archivesName.set("mongodb-driver-kotlin-extensions")
 
-description = "Bson Kotlin Codecs"
+description = "The MongoDB Kotlin Driver Extensions"
 
-ext.set("pomName", "Bson Kotlin")
+ext.set("pomName", "MongoDB Kotlin Driver Extensions")
+
+java { registerFeature("kotlinDrivers") { usingSourceSet(sourceSets["main"]) } }
 
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-    api(project(path = ":bson", configuration = "default"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    api(project(path = ":driver-core", configuration = "default"))
 
+    // Some extensions require higher API like MongoCollection which are defined in the sync &
+    // coroutine Kotlin driver
+    "kotlinDriversImplementation"(project(path = ":driver-kotlin-sync", configuration = "default"))
+    "kotlinDriversImplementation"(project(path = ":driver-kotlin-coroutine", configuration = "default"))
+
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
-    testImplementation(project(path = ":driver-core", configuration = "default"))
+    testImplementation("org.assertj:assertj-core:3.24.2")
+    testImplementation("io.github.classgraph:classgraph:4.8.154")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
 }
 
 kotlin { explicitApi() }
 
-tasks.withType<KotlinCompile> { kotlinOptions.jvmTarget = "1.8" }
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs =
+            listOf(
+                // Adds OnlyInputTypes support
+                "-Xallow-kotlin-package",
+            )
+    }
+}
 
 // ===========================
 //     Code Quality checks
 // ===========================
+val customLicenseHeader = "/^(?s)(?!.*@custom-license-header).*/"
+
 spotless {
     kotlinGradle {
         ktfmt("0.39").dropboxStyle().configure { it.setMaxWidth(120) }
@@ -71,7 +91,10 @@ spotless {
         trimTrailingWhitespace()
         indentWithSpaces()
         endWithNewline()
+
         licenseHeaderFile(rootProject.file("config/mongodb.license"))
+            .named("standard")
+            .onlyIfContentMatches(customLicenseHeader)
     }
 
     format("extraneous") {
@@ -90,12 +113,7 @@ detekt {
     config = rootProject.files("config/detekt/detekt.yml") // point to your custom config defining rules to run,
     // overwriting default behavior
     baseline = rootProject.file("config/detekt/baseline.xml") // a way of suppressing issues before introducing detekt
-    source =
-        files(
-            file("src/main/kotlin"),
-            file("src/test/kotlin"),
-            file("src/integrationTest/kotlin"),
-        )
+    source = files(file("src/main/kotlin"), file("src/test/kotlin"))
 }
 
 tasks.withType<Detekt>().configureEach {
@@ -107,6 +125,11 @@ tasks.withType<Detekt>().configureEach {
 }
 
 spotbugs { showProgress.set(true) }
+
+tasks.spotbugsMain {
+    // we need the xml report to find out the "rank" (see config/spotbugs/exclude.xml)
+    reports.getByName("xml") { required.set(true) }
+}
 
 // ===========================
 //     Test Configuration
@@ -142,4 +165,4 @@ tasks.javadocJar.configure {
 // ===========================
 tasks.sourcesJar { from(project.sourceSets.main.map { it.kotlin }) }
 
-afterEvaluate { tasks.jar { manifest { attributes["Automatic-Module-Name"] = "org.mongodb.bson.kotlin" } } }
+afterEvaluate { tasks.jar { manifest { attributes["Automatic-Module-Name"] = "org.mongodb.driver.kotlin.core" } } }
