@@ -99,7 +99,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -736,8 +735,8 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                     new Document("a", join("", nCopies(maxBsonObjectSize - 500, "b"))));
             MongoException topLevelError = assertThrows(ClientBulkWriteException.class, () ->
                     client.bulkWrite(nCopies(maxMessageSizeBytes / maxBsonObjectSize + 1, model)))
-                    .getError()
-                    .<AssertionError>orElseThrow(() -> fail("Expected a top-level error"));
+                    .getCause();
+            assertNotNull(topLevelError);
             assertInstanceOf(MongoOperationTimeoutException.class, topLevelError);
             assertEquals(2, commandListener.getCommandStartedEvents("bulkWrite").size());
         }

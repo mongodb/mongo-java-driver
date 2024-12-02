@@ -215,7 +215,8 @@ public final class OperationHelper {
     public static MongoException unwrap(final MongoException exception) {
         MongoException result = exception;
         if (exception instanceof ClientBulkWriteException) {
-            result = ((ClientBulkWriteException) exception).getError().orElse(exception);
+            MongoException topLevelError = ((ClientBulkWriteException) exception).getCause();
+            result = topLevelError == null ? exception : topLevelError;
         }
         return result;
     }

@@ -36,7 +36,7 @@ import static java.util.Optional.ofNullable;
 /**
  * The result of an unsuccessful or partially unsuccessful client-level bulk write operation.
  * Note that the {@linkplain #getCode() code} and {@linkplain #getErrorLabels() labels} from this exception are not useful.
- * An application should use those from the {@linkplain #getError() top-level error}.
+ * An application should use those from the {@linkplain #getCause() top-level error}.
  *
  * @see ClientBulkWriteResult
  * @since 5.3
@@ -45,8 +45,6 @@ import static java.util.Optional.ofNullable;
 public final class ClientBulkWriteException extends MongoServerException {
     private static final long serialVersionUID = 1;
 
-    @Nullable
-    private final MongoException error;
     private final List<WriteConcernError> writeConcernErrors;
     private final Map<Integer, WriteError> writeErrors;
     @Nullable
@@ -55,7 +53,7 @@ public final class ClientBulkWriteException extends MongoServerException {
     /**
      * Constructs a new instance.
      *
-     * @param error The {@linkplain #getError() top-level error}.
+     * @param error The {@linkplain #getCause() top-level error}.
      * @param writeConcernErrors The {@linkplain #getWriteConcernErrors() write concern errors}.
      * @param writeErrors The {@linkplain #getWriteErrors() write errors}.
      * @param partialResult The {@linkplain #getPartialResult() partial result}.
@@ -74,11 +72,11 @@ public final class ClientBulkWriteException extends MongoServerException {
                         error, writeConcernErrors, writeErrors, partialResult,
                         notNull("serverAddress", serverAddress)),
                 validateServerAddress(error, serverAddress));
+        initCause(error);
         isTrueArgument("At least one of `writeConcernErrors`, `writeErrors`, `partialResult` must be non-null or non-empty",
                 !(writeConcernErrors == null || writeConcernErrors.isEmpty())
                         || !(writeErrors == null || writeErrors.isEmpty())
                         || partialResult != null);
-        this.error = error;
         this.writeConcernErrors = writeConcernErrors == null ? emptyList() : unmodifiableList(writeConcernErrors);
         this.writeErrors = writeErrors == null ? emptyMap() : unmodifiableMap(writeErrors);
         this.partialResult = partialResult;
@@ -109,10 +107,12 @@ public final class ClientBulkWriteException extends MongoServerException {
      * The top-level error. That is an error that is neither a {@linkplain #getWriteConcernErrors() write concern error},
      * nor is an {@linkplain #getWriteErrors() error of an individual write operation}.
      *
-     * @return The top-level error. {@linkplain Optional#isPresent() Present} only if a top-level error occurred.
+     * @return The top-level error. Non-{@code null} only if a top-level error occurred.
      */
-    public Optional<MongoException> getError() {
-        return ofNullable(error);
+    @Override
+    @Nullable
+    public MongoException getCause() {
+        return (MongoException) super.getCause();
     }
 
     /**
