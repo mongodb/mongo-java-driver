@@ -185,11 +185,7 @@ public abstract class UnifiedTest {
                 }
 
                 for (int attempt = 1; attempt <= attempts; attempt++) {
-                    String testName = !retry
-                            ? MessageFormat.format("{0}: {1}", fileDescription, testDescription)
-                            : MessageFormat.format(
-                                    "{0}: {1} ({2} of {3})",
-                                    fileDescription, testDescription, attempt, attempts);
+                    String testName = MessageFormat.format("{0}: {1}", fileDescription, testDescription);
                     data.add(Arguments.of(
                             testName,
                             fileDescription,
