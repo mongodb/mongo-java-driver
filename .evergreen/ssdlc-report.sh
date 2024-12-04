@@ -65,7 +65,7 @@ printf "\nCreating SpotBugs SARIF reports\n"
 set +e
     # This `gradlew` command is expected to exit with a non-zero exit status,
     # because it reports all the findings that we normally explicitly exclude as "No Fix Needed"/"False Positive".
-    ./gradlew -PssdlcReport.enabled=true --continue -x test -x integrationTest -x spotlessApply check scalaCheck kotlinCheck
+    ./gradlew -PssdlcReport.enabled=true --continue -x test -x integrationTest -x spotlessApply check scalaCheck
 set -e
 printf "\nSpotBugs created the following SARIF reports\n"
 IFS=$'\n'
