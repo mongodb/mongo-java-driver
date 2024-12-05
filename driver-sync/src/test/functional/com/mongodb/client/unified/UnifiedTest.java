@@ -84,7 +84,8 @@ import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.test.CollectionHelper.getCurrentClusterTime;
 import static com.mongodb.client.test.CollectionHelper.killAllSessions;
 import static com.mongodb.client.unified.RunOnRequirementsMatcher.runOnRequirementsMet;
-import static com.mongodb.client.unified.UnifiedTestModifications.doSkips;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
+import static com.mongodb.client.unified.UnifiedTestModifications.applyCustomizations;
 import static com.mongodb.client.unified.UnifiedTestModifications.testDef;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -174,10 +175,10 @@ public abstract class UnifiedTest {
                 String testDescription = testDocument.getString("description").getValue();
                 String fileDescription = fileDocument.getString("description").getValue();
                 TestDef testDef = testDef(directory, fileDescription, testDescription, isReactive);
-                doSkips(testDef);
+                applyCustomizations(testDef);
 
-                boolean forceFlaky = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.FORCE_FLAKY);
-                boolean retry = forceFlaky || testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.RETRY);
+                boolean forceFlaky = testDef.wasAssignedModifier(Modifier.FORCE_FLAKY);
+                boolean retry = forceFlaky || testDef.wasAssignedModifier(Modifier.RETRY);
 
                 int attempts = retry ? ATTEMPTS : 1;
                 if (forceFlaky) {
@@ -243,9 +244,9 @@ public abstract class UnifiedTest {
         ignoreExtraEvents = false;
         if (directoryName != null && fileDescription != null && testDescription != null) {
             testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
-            UnifiedTestModifications.doSkips(testDef);
+            applyCustomizations(testDef);
 
-            boolean skip = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.SKIP);
+            boolean skip = testDef.wasAssignedModifier(Modifier.SKIP);
             assumeFalse(skip, "Skipping test");
         }
         skips(fileDescription, testDescription);
@@ -376,6 +377,12 @@ public abstract class UnifiedTest {
                 compareLogMessages(rootContext, definition, tweaks);
             }
         } catch (AssertionFailedError e) {
+            assertTrue(testDef.wasAssignedModifier(Modifier.RETRY));
+            if (!testDef.matchesError(e)) {
+                // if the error is not matched, test definitions were not intended to apply; throw it
+                throw e;
+            }
+
             completed.remove(testName);
             boolean lastAttempt = attemptNumber == Math.abs(totalAttempts);
             if (forceFlaky || lastAttempt) {

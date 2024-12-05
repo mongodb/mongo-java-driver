@@ -17,10 +17,12 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.assertions.Assertions;
+import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.isDataLakeTest;
@@ -28,23 +30,28 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
-import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.FORCE_FLAKY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.RETRY;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SKIP;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_CLOSE;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_OPEN;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
 
 public final class UnifiedTestModifications {
-    public static void doSkips(final TestDef def) {
+    public static void applyCustomizations(final TestDef def) {
 
         // TODO reasons for retry
-        def.modify(FORCE_FLAKY)
-                // Exception in encryption library: ChangeCipherSpec message sequence violation
-                .test("client-side-encryption", "namedKMS-createDataKey", "create datakey with named KMIP KMS provider")
-                // Number of checked out connections must match expected
-                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request")
+        // Exception in encryption library: ChangeCipherSpec message sequence violation
+        def.retry("TODO reason")
+                .whenExceptionContains("ChangeCipherSpec message sequence violation")
+                .test("client-side-encryption", "namedKMS-createDataKey", "create datakey with named KMIP KMS provider");
+
+        def.retry("TODO reason")
+                .whenExceptionContains("Number of checked out connections must match expected")
+                .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request");
+
+        def.retry("TODO reason")
                 .test("client-side-encryption", "namedKMS-rewrapManyDataKey", "rewrap to kmip:name1");
 
         // atlas-data-lake
@@ -268,6 +275,7 @@ public final class UnifiedTestModifications {
         private final boolean reactive;
 
         private final List<Modifier> modifiers = new ArrayList<>();
+        private Function<AssertionFailedError, Boolean> matchesError;
 
         private TestDef(final String dir, final String file, final String test, final boolean reactive) {
             this.dir = assertNotNull(dir);
@@ -331,6 +339,14 @@ public final class UnifiedTestModifications {
             return new TestApplicator(this, reason, SKIP);
         }
 
+
+        /**
+         * The test will be retried, for the reason provided
+         */
+        public TestApplicator retry(final String reason) {
+            return new TestApplicator(this, reason, RETRY);
+        }
+
         public TestApplicator modify(final Modifier... modifiers) {
             return new TestApplicator(this, null, modifiers);
         }
@@ -342,6 +358,13 @@ public final class UnifiedTestModifications {
         public boolean wasAssignedModifier(final Modifier modifier) {
             return this.modifiers.contains(modifier);
         }
+
+        public boolean matchesError(final AssertionFailedError e) {
+            if (matchesError != null) {
+                return matchesError.apply(e);
+            }
+            return false;
+        }
     }
 
     /**
@@ -349,9 +372,11 @@ public final class UnifiedTestModifications {
      */
     public static final class TestApplicator {
         private final TestDef testDef;
-        private final List<Modifier> modifiersToApply;
         private Supplier<Boolean> precondition;
         private boolean matchWasPerformed = false;
+
+        private final List<Modifier> modifiersToApply;
+        private Function<AssertionFailedError, Boolean> matchesError;
 
         private TestApplicator(
                 final TestDef testDef,
@@ -359,7 +384,7 @@ public final class UnifiedTestModifications {
                 final Modifier... modifiersToApply) {
             this.testDef = testDef;
             this.modifiersToApply = Arrays.asList(modifiersToApply);
-            if (this.modifiersToApply.contains(SKIP)) {
+            if (this.modifiersToApply.contains(SKIP) || this.modifiersToApply.contains(RETRY)) {
                 assertNotNull(reason);
             }
         }
@@ -371,6 +396,7 @@ public final class UnifiedTestModifications {
             }
             if (match) {
                 this.testDef.modifiers.addAll(this.modifiersToApply);
+                this.testDef.matchesError = this.matchesError;
             }
             return this;
         }
@@ -460,6 +486,13 @@ public final class UnifiedTestModifications {
                 throw new IllegalStateException("Condition must be specified first and once.");
             }
             this.precondition = precondition;
+            return this;
+        }
+
+        public TestApplicator whenExceptionContains(final String fragment) {
+            this.matchesError = (final AssertionFailedError e) -> {
+                return e.getCause().getMessage().contains(fragment);
+            };
             return this;
         }
     }
