@@ -98,7 +98,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.event.ConnectionClosedEvent.Reason.ERROR;
 import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.withLock;
-import static com.mongodb.internal.Locks.withUnfairLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
@@ -896,7 +895,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         private final Deque<MutableReference<PooledConnection>> desiredConnectionSlots;
 
         OpenConcurrencyLimiter(final int maxConnecting) {
-            lock = new ReentrantLock(true);
+            lock = new ReentrantLock(false);
             permitAvailableOrHandedOverOrClosedOrPausedCondition = lock.newCondition();
             maxPermits = maxConnecting;
             permits = maxPermits;
@@ -1054,10 +1053,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                      * 2. Thread#2 checks in a connection. Tries to hand it over, but there are no threads desiring to get one.
                      * 3. Thread#1 executes the current code. Expresses the desire to get a connection via the hand-over mechanism,
                      *   but thread#2 has already tried handing over and released its connection to the pool.
-                     * As a result, thread#1 is waiting for a permit to open a connection despite one being available in the pool.
-                     *
-                     * This attempt should be unfair because the current thread (Thread#1) has already waited for its turn fairly.
-                     * Waiting fairly again puts the current thread behind other threads, which is unfair to the current thread. */
+                     * As a result, thread#1 is waiting for a permit to open a connection despite one being available in the pool. */
                     availableConnection = getPooledConnectionImmediateUnfair();
                     if (availableConnection != null) {
                         return availableConnection;
@@ -1093,7 +1089,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         private void releasePermit() {
-            withUnfairLock(lock, () -> {
+            withLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 permits++;
                 permitAvailableOrHandedOverOrClosedOrPausedCondition.signal();
@@ -1128,7 +1124,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          * from threads that are waiting for a permit to open a connection.
          */
         void tryHandOverOrRelease(final UsageTrackingInternalConnection openConnection) {
-            boolean handedOver = withUnfairLock(lock, () -> {
+            boolean handedOver = withLock(lock, () -> {
                 for (//iterate from first (head) to last (tail)
                         MutableReference<PooledConnection> desiredConnectionSlot : desiredConnectionSlots) {
                     if (desiredConnectionSlot.reference == null) {
@@ -1145,7 +1141,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         }
 
         void signalClosedOrPaused() {
-            withUnfairLock(lock, permitAvailableOrHandedOverOrClosedOrPausedCondition::signalAll);
+            withLock(lock, permitAvailableOrHandedOverOrClosedOrPausedCondition::signalAll);
         }
     }
 
