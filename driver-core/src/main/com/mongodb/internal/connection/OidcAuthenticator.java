@@ -38,6 +38,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.RawBsonDocument;
+import org.jetbrains.annotations.NotNull;
 
 import javax.security.sasl.SaslClient;
 import java.io.IOException;
@@ -76,10 +77,11 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final String TEST_ENVIRONMENT = "test";
     private static final String AZURE_ENVIRONMENT = "azure";
     private static final String GCP_ENVIRONMENT = "gcp";
+    private static final String K8S_ENVIRONMENT = "k8s";
     private static final List<String> IMPLEMENTED_ENVIRONMENTS = Arrays.asList(
-            AZURE_ENVIRONMENT, GCP_ENVIRONMENT, TEST_ENVIRONMENT);
+            AZURE_ENVIRONMENT, GCP_ENVIRONMENT, K8S_ENVIRONMENT, TEST_ENVIRONMENT);
     private static final List<String> USER_SUPPORTED_ENVIRONMENTS = Arrays.asList(
-            AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
+            AZURE_ENVIRONMENT, GCP_ENVIRONMENT, K8S_ENVIRONMENT);
     private static final List<String> REQUIRES_TOKEN_RESOURCE = Arrays.asList(
             AZURE_ENVIRONMENT, GCP_ENVIRONMENT);
     private static final List<String> ALLOWS_USERNAME = Arrays.asList(
@@ -89,6 +91,10 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static final Duration HUMAN_CALLBACK_TIMEOUT = Duration.ofMinutes(5);
 
     public static final String OIDC_TOKEN_FILE = "OIDC_TOKEN_FILE";
+
+    private static final String K8S_FALLBACK_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/token";
+    private static final String K8S_AZURE_FILE = "AZURE_FEDERATED_TOKEN_FILE";
+    private static final String K8S_AWS_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE";
 
     private static final int CALLBACK_API_VERSION_NUMBER = 1;
 
@@ -192,6 +198,8 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             machine = getAzureCallback(getMongoCredential());
         } else if (GCP_ENVIRONMENT.equals(environment)) {
             machine = getGcpCallback(getMongoCredential());
+        } else if (K8S_ENVIRONMENT.equals(environment)) {
+            machine = getK8sCallback();
         } else {
             machine = getOidcCallbackMechanismProperty(OIDC_CALLBACK_KEY);
         }
@@ -202,6 +210,24 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private static OidcCallback getTestCallback() {
         return (context) -> {
             String accessToken = readTokenFromFile();
+            return new OidcCallbackResult(accessToken);
+        };
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
+    static OidcCallback getK8sCallback() {
+        return (context) -> {
+            String azure = System.getenv(K8S_AZURE_FILE);
+            String aws = System.getenv(K8S_AWS_FILE);
+            String path;
+            if (azure != null) {
+                path = azure;
+            } else if (aws != null) {
+                path = aws;
+            } else {
+                path = K8S_FALLBACK_FILE;
+            }
+            String accessToken = readTokenFromFile(path);
             return new OidcCallbackResult(accessToken);
         };
     }
@@ -499,6 +525,11 @@ public final class OidcAuthenticator extends SaslAuthenticator {
             throw new MongoClientException(
                     format("Environment variable must be specified: %s", OIDC_TOKEN_FILE));
         }
+        return readTokenFromFile(path);
+    }
+
+    @NotNull
+    private static String readTokenFromFile(final String path) {
         try {
             return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
         } catch (IOException e) {
