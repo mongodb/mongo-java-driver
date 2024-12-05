@@ -837,6 +837,30 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" JAVA_VERSION="${JAVA_VERSION}" .evergreen/run-graalvm-native-image-app.sh
 
+  "oidc-auth-test-k8s-func":
+      - command: shell.exec
+        type: test
+        params:
+          shell: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          script: |-
+            set -o errexit
+            ${PREPARE_SHELL}
+            export K8S_VARIANT=${VARIANT}
+            cd src
+            git add .
+            git commit --allow-empty -m "add files"
+            # uncompressed tar used to allow appending .git folder
+            export K8S_DRIVERS_TAR_FILE=/tmp/mongo-java-driver.tar
+            git archive -o $K8S_DRIVERS_TAR_FILE HEAD
+            tar -rf $K8S_DRIVERS_TAR_FILE .git
+            export K8S_TEST_CMD="OIDC_ENV=k8s ./.evergreen/run-mongodb-oidc-test.sh"
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/setup-pod.sh
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-self-test.sh
+            source $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/secrets-export.sh
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/run-driver-test.sh
+            bash $DRIVERS_TOOLS/.evergreen/auth_oidc/k8s/teardown-pod.sh
+
 # Anchors
 
 pre:
@@ -959,6 +983,22 @@ tasks:
               # and then run our test suite on the vm.
               export GCPOIDC_TEST_CMD="OIDC_ENV=gcp ./.evergreen/run-mongodb-oidc-test.sh"
               bash $DRIVERS_TOOLS/.evergreen/auth_oidc/gcp/run-driver-test.sh
+
+    - name: "oidc-auth-test-k8s"
+      commands:
+        - command: ec2.assume_role
+          params:
+            role_arn: ${aws_test_secrets_role}
+            duration_seconds: 1800
+        - func: "oidc-auth-test-k8s-func"
+          vars:
+            VARIANT: eks
+#        - func: "oidc-auth-test-k8s-func" TODO disabled, memory issue, consider forking and increasing here: https://github.com/mongodb-labs/drivers-evergreen-tools/commit/4bc3e500b6f0e8ab01f052c4a1bfb782d6a29b4e
+#          vars:
+#            VARIANT: gke
+        - func: "oidc-auth-test-k8s-func"
+          vars:
+            VARIANT: aks
 
     - name: serverless-test
       commands:
@@ -2122,6 +2162,33 @@ task_groups:
     tasks:
       - oidc-auth-test-gcp
 
+  - name: test_oidc_k8s_task_group
+    setup_group_can_fail_task: true
+    setup_group_timeout_secs: 1800
+    teardown_task_can_fail_task: true
+    teardown_group_timeout_secs: 180
+    setup_group:
+      - func: fetch source
+      - func: prepare resources
+      - func: fix absolute paths
+      - command: ec2.assume_role
+        params:
+          role_arn: ${aws_test_secrets_role}
+      - command: subprocess.exec
+        params:
+          binary: bash
+          include_expansions_in_env: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/setup.sh
+    teardown_group:
+      - command: subprocess.exec
+        params:
+          binary: bash
+          args:
+            - ${DRIVERS_TOOLS}/.evergreen/auth_oidc/k8s/teardown.sh
+    tasks:
+      - oidc-auth-test-k8s
+
 buildvariants:
 
 # Test packaging and other release related routines
@@ -2320,6 +2387,13 @@ buildvariants:
   run_on: ubuntu2204-small
   tasks:
     - name: testgcpoidc_task_group
+      batchtime: 20160 # 14 days
+
+- name: testk8soidc-variant
+  display_name: "OIDC Auth K8S"
+  run_on: ubuntu2204-small
+  tasks:
+    - name: test_oidc_k8s_task_group
       batchtime: 20160 # 14 days
 
 - matrix_name: "aws-auth-test"
