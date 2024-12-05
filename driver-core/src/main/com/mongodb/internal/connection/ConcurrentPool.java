@@ -30,10 +30,8 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -41,8 +39,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.lockInterruptibly;
-import static com.mongodb.internal.Locks.lockInterruptiblyUnfair;
-import static com.mongodb.internal.Locks.withUnfairLock;
+import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -321,48 +318,17 @@ public class ConcurrentPool<T> implements Pool<T> {
         private volatile boolean closed;
         private final int maxPermits;
         private volatile int permits;
-        /** When there are not enough available permits to serve all threads requesting a permit, threads are queued and wait on
-         * {@link #permitAvailableOrClosedOrPausedCondition}. Because of this waiting, we want threads to acquire the lock fairly,
-         * to avoid a situation when some threads are sitting in the queue for a long time while others barge in and acquire
-         * the lock without waiting in the queue. Fair locking reduces high percentiles of {@link #acquirePermit(long, TimeUnit)} latencies
-         * but reduces its throughput: it makes latencies roughly equally high for everyone, while keeping them lower than the highest
-         * latencies with unfair locking. The fair approach is in accordance with the
-         * <a href="https://github.com/mongodb/specifications/blob/568093ce7f0e1394cf4952c417e1e7dacc5fef53/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst#waitqueue">
-         * connection pool specification</a>.
-         * <p>
-         * When there are enough available permits to serve all threads requesting a permit, threads still have to acquire the lock,
-         * and still are queued, but since they are not waiting on {@link #permitAvailableOrClosedOrPausedCondition},
-         * threads spend less time in the queue. This results in having smaller high percentiles
-         * of {@link #acquirePermit(long, TimeUnit)} latencies, and we do not want to sacrifice the throughput
-         * to further reduce the high percentiles by acquiring the lock fairly.</p>
-         * <p>
-         * While there is a chance that the expressed reasoning is flawed, it is supported by the results of experiments reported in
-         * comments in <a href="https://jira.mongodb.org/browse/JAVA-4452">JAVA-4452</a>.</p>
-         * <p>
-         * {@link ReentrantReadWriteLock#hasWaiters(Condition)} requires holding the lock to be called, therefore we cannot use it
-         * to discriminate between the two cases described above, and we use {@link #waitersEstimate} instead.
-         * This approach results in sometimes acquiring a lock unfairly when it should have been acquired fairly, and vice versa.
-         * But it appears to be a good enough compromise, that results in having enough throughput when there are enough
-         * available permits and tolerable high percentiles of latencies when there are not enough available permits.</p>
-         * <p>
-         * It may seem viable to use {@link #permits} > 0 as a way to decide that there are likely no waiters,
-         * but benchmarking shows that with this approach high percentiles of contended {@link #acquirePermit(long, TimeUnit)} latencies
-         * (when the number of threads that use the pool is higher than the maximum pool size) become similar to a situation when no
-         * fair locking is used. That is, this approach does not result in the behavior we want.</p>
-         */
-        private final AtomicInteger waitersEstimate;
         @Nullable
         private Supplier<MongoException> causeSupplier;
 
         StateAndPermits(final int maxPermits, final Supplier<MongoServerUnavailableException> poolClosedExceptionSupplier) {
             this.poolClosedExceptionSupplier = poolClosedExceptionSupplier;
-            lock = new ReentrantLock(true);
+            lock = new ReentrantLock();
             permitAvailableOrClosedOrPausedCondition = lock.newCondition();
             paused = false;
             closed = false;
             this.maxPermits = maxPermits;
             permits = maxPermits;
-            waitersEstimate = new AtomicInteger();
             causeSupplier = null;
         }
 
@@ -371,7 +337,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         boolean acquirePermitImmediateUnfair() {
-            return withUnfairLock(lock, () -> {
+            return withLock(lock, () -> {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
                     //noinspection NonAtomicOperationOnVolatileField
@@ -391,17 +357,12 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean acquirePermit(final long timeout, final TimeUnit unit) throws MongoInterruptedException {
             long remainingNanos = unit.toNanos(timeout);
-            if (waitersEstimate.get() == 0) {
-                lockInterruptiblyUnfair(lock);
-            } else {
-                lockInterruptibly(lock);
-            }
+            lockInterruptibly(lock);
             try {
                 while (permits == 0
                         // the absence of short-circuiting is of importance
                         & !throwIfClosedOrPaused()) {
                     try {
-                        waitersEstimate.incrementAndGet();
                         if (timeout < 0 || remainingNanos == Long.MAX_VALUE) {
                             permitAvailableOrClosedOrPausedCondition.await();
                         } else if (remainingNanos >= 0) {
@@ -411,8 +372,6 @@ public class ConcurrentPool<T> implements Pool<T> {
                         }
                     } catch (InterruptedException e) {
                         throw interruptAndCreateMongoInterruptedException(null, e);
-                    } finally {
-                        waitersEstimate.decrementAndGet();
                     }
                 }
                 assertTrue(permits > 0);
@@ -425,7 +384,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void releasePermit() {
-            withUnfairLock(lock, () -> {
+            withLock(lock, () -> {
                 assertTrue(permits < maxPermits);
                 //noinspection NonAtomicOperationOnVolatileField
                 permits++;
@@ -434,7 +393,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
 
         void pause(final Supplier<MongoException> causeSupplier) {
-            withUnfairLock(lock, () -> {
+            withLock(lock, () -> {
                 if (!paused) {
                     this.paused = true;
                     permitAvailableOrClosedOrPausedCondition.signalAll();
@@ -445,7 +404,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         void ready() {
             if (paused) {
-                withUnfairLock(lock, () -> {
+                withLock(lock, () -> {
                     this.paused = false;
                     this.causeSupplier = null;
                 });
@@ -457,7 +416,7 @@ public class ConcurrentPool<T> implements Pool<T> {
          */
         boolean close() {
             if (!closed) {
-                return withUnfairLock(lock, () -> {
+                return withLock(lock, () -> {
                     if (!closed) {
                         closed = true;
                         permitAvailableOrClosedOrPausedCondition.signalAll();

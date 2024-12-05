@@ -20,7 +20,6 @@ import com.mongodb.MongoInterruptedException;
 import com.mongodb.internal.function.CheckedSupplier;
 
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 
@@ -91,54 +90,6 @@ public final class Locks {
             lock.lockInterruptibly();
         } catch (InterruptedException e) {
             throw interruptAndCreateMongoInterruptedException("Interrupted waiting for lock", e);
-        }
-    }
-
-    /**
-     * See {@link #lockInterruptiblyUnfair(ReentrantLock)} before using this method.
-     */
-    public static void withUnfairLock(final ReentrantLock lock, final Runnable action) {
-        withUnfairLock(lock, () -> {
-            action.run();
-            return null;
-        });
-    }
-
-    /**
-     * See {@link #lockInterruptiblyUnfair(ReentrantLock)} before using this method.
-     */
-    public static <V> V withUnfairLock(final ReentrantLock lock, final Supplier<V> supplier) {
-        lockUnfair(lock);
-        try {
-            return supplier.get();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private static void lockUnfair(
-            // The type must be `ReentrantLock`, not `Lock`,
-            // because only `ReentrantLock.tryLock` is documented to have the barging (unfair) behavior.
-            final ReentrantLock lock) {
-        if (!lock.tryLock()) {
-            lock.lock();
-        }
-    }
-
-    /**
-     * This method allows a thread to attempt acquiring the {@code lock} unfairly despite the {@code lock}
-     * being {@linkplain ReentrantLock#ReentrantLock(boolean) fair}. In most cases you should create an unfair lock,
-     * instead of using this method.
-     */
-    public static void lockInterruptiblyUnfair(
-            // The type must be `ReentrantLock`, not `Lock`,
-            // because only `ReentrantLock.tryLock` is documented to have the barging (unfair) behavior.
-            final ReentrantLock lock) throws MongoInterruptedException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw interruptAndCreateMongoInterruptedException(null, null);
-        }
-        if (!lock.tryLock()) {
-            lockInterruptibly(lock);
         }
     }
 
