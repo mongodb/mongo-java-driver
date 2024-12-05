@@ -489,6 +489,12 @@ public final class UnifiedTestModifications {
             return this;
         }
 
+        /**
+         * The modification, if it is a RETRY, will only be applied when the
+         * failure message contains the provided message fragment. If an
+         * {@code AssertionFailedError} occurs, and has a cause, the cause's
+         * message will be checked. Otherwise, the throwable will be checked.
+         */
         public TestApplicator whenFailureContains(final String messageFragment) {
             this.matchesThrowable = (final Throwable e) -> {
                 // inspect the cause for failed assertions with a cause
@@ -526,11 +532,15 @@ public final class UnifiedTestModifications {
          */
         SKIP,
         /**
-         * Retry the test on failure.
+         * Ignore results and retry the test on failure. Will not repeat the
+         * test if the test succeeds. Multiple copies of the test are used to
+         * facilitate retries.
          */
         RETRY,
         /**
-         * Retry the test multiple times, without ignoring failures.
+         * The test will be retried multiple times, without the results being
+         * ignored. This is a helper that can be used, in patches, to check
+         * if certain tests are (still) flaky.
          */
         FORCE_FLAKY,
     }
