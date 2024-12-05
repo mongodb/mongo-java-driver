@@ -57,7 +57,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.opentest4j.AssertionFailedError;
 import org.opentest4j.TestAbortedException;
 
 import java.io.File;
@@ -96,6 +95,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.abort;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
@@ -107,7 +107,7 @@ public abstract class UnifiedTest {
             "wait queue timeout errors include details about checked out connections");
 
     public static final int ATTEMPTS = 3;
-    private static Set<String> completed = new HashSet<>();
+    private static Set<String> ignoreRemaining = new HashSet<>();
 
     @Nullable
     private String fileDescription;
@@ -348,8 +348,9 @@ public abstract class UnifiedTest {
             final BsonDocument definition) {
         boolean forceFlaky = totalAttempts < 0;
         if (!forceFlaky) {
-            assumeFalse(completed.contains(testName), "Skipping retryable test that succeeded");
-            completed.add(testName);
+            boolean ignoreThisTest = ignoreRemaining.contains(testName);
+            assumeFalse(ignoreThisTest, "Skipping a retryable test that already succeeded");
+            ignoreRemaining.add(testName);
         }
         try {
             BsonArray operations = definition.getArray("operations");
@@ -376,20 +377,21 @@ public abstract class UnifiedTest {
                 }
                 compareLogMessages(rootContext, definition, tweaks);
             }
-        } catch (AssertionFailedError e) {
-            assertTrue(testDef.wasAssignedModifier(Modifier.RETRY));
-            if (!testDef.matchesError(e)) {
-                // if the error is not matched, test definitions were not intended to apply; throw it
+        } catch (Throwable e) {
+            if (forceFlaky) {
                 throw e;
             }
-
-            completed.remove(testName);
-            boolean lastAttempt = attemptNumber == Math.abs(totalAttempts);
-            if (forceFlaky || lastAttempt) {
+            if (!testDef.matchesThrowable(e)) {
+                // if the throwable is not matched, test definitions were not intended to apply; rethrow it
                 throw e;
-            } else {
-                assumeFalse(completed.contains(testName), "Ignoring failure and retrying attempt " + attemptNumber);
             }
+            boolean isLastAttempt = attemptNumber == Math.abs(totalAttempts);
+            if (isLastAttempt) {
+                throw e;
+            }
+            
+            ignoreRemaining.remove(testName);
+            abort("Ignoring failure and retrying attempt " + attemptNumber);
         }
     }
 

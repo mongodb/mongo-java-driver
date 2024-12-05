@@ -44,11 +44,11 @@ public final class UnifiedTestModifications {
         // TODO reasons for retry
         // Exception in encryption library: ChangeCipherSpec message sequence violation
         def.retry("TODO reason")
-                .whenExceptionContains("ChangeCipherSpec message sequence violation")
+                .whenFailureContains("ChangeCipherSpec message sequence violation")
                 .test("client-side-encryption", "namedKMS-createDataKey", "create datakey with named KMIP KMS provider");
 
         def.retry("TODO reason")
-                .whenExceptionContains("Number of checked out connections must match expected")
+                .whenFailureContains("Number of checked out connections must match expected")
                 .test("load-balancers", "cursors are correctly pinned to connections for load-balanced clusters", "pinned connections are returned after a network error during a killCursors request");
 
         def.retry("TODO reason")
@@ -275,7 +275,7 @@ public final class UnifiedTestModifications {
         private final boolean reactive;
 
         private final List<Modifier> modifiers = new ArrayList<>();
-        private Function<AssertionFailedError, Boolean> matchesError;
+        private Function<Throwable, Boolean> matchesThrowable;
 
         private TestDef(final String dir, final String file, final String test, final boolean reactive) {
             this.dir = assertNotNull(dir);
@@ -359,9 +359,9 @@ public final class UnifiedTestModifications {
             return this.modifiers.contains(modifier);
         }
 
-        public boolean matchesError(final AssertionFailedError e) {
-            if (matchesError != null) {
-                return matchesError.apply(e);
+        public boolean matchesThrowable(final Throwable e) {
+            if (matchesThrowable != null) {
+                return matchesThrowable.apply(e);
             }
             return false;
         }
@@ -376,7 +376,7 @@ public final class UnifiedTestModifications {
         private boolean matchWasPerformed = false;
 
         private final List<Modifier> modifiersToApply;
-        private Function<AssertionFailedError, Boolean> matchesError;
+        private Function<Throwable, Boolean> matchesThrowable;
 
         private TestApplicator(
                 final TestDef testDef,
@@ -396,7 +396,7 @@ public final class UnifiedTestModifications {
             }
             if (match) {
                 this.testDef.modifiers.addAll(this.modifiersToApply);
-                this.testDef.matchesError = this.matchesError;
+                this.testDef.matchesThrowable = this.matchesThrowable;
             }
             return this;
         }
@@ -489,9 +489,14 @@ public final class UnifiedTestModifications {
             return this;
         }
 
-        public TestApplicator whenExceptionContains(final String fragment) {
-            this.matchesError = (final AssertionFailedError e) -> {
-                return e.getCause().getMessage().contains(fragment);
+        public TestApplicator whenFailureContains(final String messageFragment) {
+            this.matchesThrowable = (final Throwable e) -> {
+                // inspect the cause for failed assertions with a cause
+                if (e instanceof AssertionFailedError && e.getCause() != null) {
+                    return e.getCause().getMessage().contains(messageFragment);
+                } else {
+                    return e.getMessage().contains(messageFragment);
+                }
             };
             return this;
         }
