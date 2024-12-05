@@ -382,7 +382,7 @@ public abstract class UnifiedTest {
             if (isLastAttempt) {
                 throw e;
             }
-            
+
             ignoreRemaining.remove(testName);
             abort("Ignoring failure and retrying attempt " + attemptNumber);
         }
