@@ -117,6 +117,7 @@ public abstract class UnifiedTest {
     private UnifiedTestContext rootContext;
     private boolean ignoreExtraEvents;
     private BsonDocument startingClusterTime;
+    @Nullable
     private TestDef testDef;
 
     private class UnifiedTestContext {
@@ -215,11 +216,13 @@ public abstract class UnifiedTest {
         rootContext = new UnifiedTestContext();
         rootContext.getAssertionContext().push(ContextElement.ofTest(definition));
         ignoreExtraEvents = false;
-        testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
-        UnifiedTestModifications.doSkips(testDef);
+        if (directoryName != null && fileDescription != null && testDescription != null) {
+            testDef = testDef(directoryName, fileDescription, testDescription, isReactive());
+            UnifiedTestModifications.doSkips(testDef);
 
-        boolean skip = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.SKIP);
-        assumeFalse(skip, "Skipping test");
+            boolean skip = testDef.wasAssignedModifier(UnifiedTestModifications.Modifier.SKIP);
+            assumeFalse(skip, "Skipping test");
+        }
         skips(fileDescription, testDescription);
 
         assertTrue(
@@ -268,8 +271,9 @@ public abstract class UnifiedTest {
                 this::createMongoClient,
                 this::createGridFSBucket,
                 this::createClientEncryption);
-
-        postSetUp(testDef);
+        if (testDef != null) {
+            postSetUp(testDef);
+        }
     }
 
     protected void postSetUp(final TestDef def) {
@@ -281,7 +285,9 @@ public abstract class UnifiedTest {
             failPoint.disableFailPoint();
         }
         entities.close();
-        postCleanUp(testDef);
+        if (testDef != null) {
+            postCleanUp(testDef);
+        }
     }
 
     protected void postCleanUp(final TestDef testDef) {
