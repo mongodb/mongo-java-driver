@@ -33,6 +33,7 @@ include ':driver-scala'
 include ':mongodb-crypt'
 include 'util:spock'
 include 'util:taglets'
+include ':bom'
 
 if(hasProperty("includeGraalvm")) {
     include ':graalvm-native-image-app'
