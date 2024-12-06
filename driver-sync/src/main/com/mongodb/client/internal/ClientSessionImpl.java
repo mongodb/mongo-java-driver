@@ -30,6 +30,7 @@ import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
+import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
@@ -241,7 +242,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     abortTransaction();
                 }
                 if (e instanceof MongoException && !(e instanceof MongoOperationTimeoutException)) {
-                    if (((MongoException) e).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
+                    MongoException exceptionToHandle = OperationHelper.unwrap((MongoException) e);
+                    if (exceptionToHandle.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
                             && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
                         continue;
                     }

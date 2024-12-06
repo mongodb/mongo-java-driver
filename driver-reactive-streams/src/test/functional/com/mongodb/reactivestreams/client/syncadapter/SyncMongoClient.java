@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -27,6 +28,9 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.reactivestreams.client.internal.BatchCursor;
 import org.bson.Document;
@@ -273,6 +277,34 @@ public class SyncMongoClient implements MongoClient {
         wrapped.close();
     }
 
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientWriteModels, options);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels);
+    }
+
+    @Override
+    public ClientBulkWriteResult bulkWrite(
+            final ClientSession clientSession,
+            final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+            final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+        return delegate.bulkWrite(clientSession, clientWriteModels, options);
+    }
 
     @Override
     public ClusterDescription getClusterDescription() {

@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
@@ -70,18 +71,17 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext) {
-        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, null, null);
+        return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, operationContext, true, EmptyMessageSequences.INSTANCE);
     }
 
     @Nullable
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
-            final OperationContext operationContext, final boolean responseExpected,
-            @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator) {
+            final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences) {
         return executeProtocol(
                 new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference, commandResultDecoder,
-                        responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, operationContext),
+                        responseExpected, sequences, clusterConnectionMode, operationContext),
                 operationContext.getSessionContext());
     }
 
@@ -90,16 +90,15 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
             final SingleResultCallback<T> callback) {
         commandAsync(database, command, fieldNameValidator, readPreference, commandResultDecoder,
-                operationContext, true, null, null, callback);
+                operationContext, true, EmptyMessageSequences.INSTANCE, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
             @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final OperationContext operationContext,
-            final boolean responseExpected, @Nullable final SplittablePayload payload,
-            @Nullable final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
+            final boolean responseExpected, final MessageSequences sequences, final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<>(database, command, commandFieldNameValidator, readPreference,
-                        commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode, operationContext),
+                        commandResultDecoder, responseExpected, sequences, clusterConnectionMode, operationContext),
                 operationContext.getSessionContext(), callback);
     }
 

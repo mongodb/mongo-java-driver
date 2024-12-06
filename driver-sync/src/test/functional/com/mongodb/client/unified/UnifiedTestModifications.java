@@ -247,6 +247,9 @@ public final class UnifiedTestModifications {
                 .test("transactions", "read-concern", "only first distinct includes readConcern")
                 .test("transactions", "read-concern", "distinct ignores collection readConcern")
                 .test("transactions", "reads", "distinct");
+        def.skipNoncompliant("`MongoCluster.getWriteConcern`/`MongoCollection.getWriteConcern` are silently ignored in a transaction")
+                .test("transactions", "client bulkWrite transactions",
+                        "client bulkWrite with writeConcern in a transaction causes a transaction error");
 
         // valid-pass
 
