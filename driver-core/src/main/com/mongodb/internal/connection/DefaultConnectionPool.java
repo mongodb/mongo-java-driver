@@ -350,11 +350,11 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Nullable
-    private PooledConnection getPooledConnectionImmediateUnfair() {
-        UsageTrackingInternalConnection internalConnection = pool.getImmediateUnfair();
+    private PooledConnection getPooledConnectionImmediate() {
+        UsageTrackingInternalConnection internalConnection = pool.getImmediate();
         while (internalConnection != null && shouldPrune(internalConnection)) {
             pool.release(internalConnection, true);
-            internalConnection = pool.getImmediateUnfair();
+            internalConnection = pool.getImmediate();
         }
         return internalConnection == null ? null : new PooledConnection(internalConnection);
     }
@@ -1054,7 +1054,7 @@ final class DefaultConnectionPool implements ConnectionPool {
                      * 3. Thread#1 executes the current code. Expresses the desire to get a connection via the hand-over mechanism,
                      *   but thread#2 has already tried handing over and released its connection to the pool.
                      * As a result, thread#1 is waiting for a permit to open a connection despite one being available in the pool. */
-                    availableConnection = getPooledConnectionImmediateUnfair();
+                    availableConnection = getPooledConnectionImmediate();
                     if (availableConnection != null) {
                         return availableConnection;
                     }

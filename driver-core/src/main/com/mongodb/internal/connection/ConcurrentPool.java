@@ -168,9 +168,9 @@ public class ConcurrentPool<T> implements Pool<T> {
      * and returns {@code null} instead of throwing {@link MongoTimeoutException}.
      */
     @Nullable
-    T getImmediateUnfair() {
+    T getImmediate() {
         T element = null;
-        if (stateAndPermits.acquirePermitImmediateUnfair()) {
+        if (stateAndPermits.acquirePermitImmediate()) {
             element = available.pollLast();
             if (element == null) {
                 stateAndPermits.releasePermit();
@@ -336,7 +336,7 @@ public class ConcurrentPool<T> implements Pool<T> {
             return permits;
         }
 
-        boolean acquirePermitImmediateUnfair() {
+        boolean acquirePermitImmediate() {
             return withLock(lock, () -> {
                 throwIfClosedOrPaused();
                 if (permits > 0) {
