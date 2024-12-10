@@ -281,9 +281,9 @@ public final class UnifiedTestModifications {
         private final List<Modifier> modifiers = new ArrayList<>();
 
         private TestDef(final String dir, final String file, final String test, final boolean reactive) {
-            this.dir = dir;
-            this.file = file;
-            this.test = test;
+            this.dir = assertNotNull(dir);
+            this.file = assertNotNull(file);
+            this.test = assertNotNull(test);
             this.reactive = reactive;
         }
 
