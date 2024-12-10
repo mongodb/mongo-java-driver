@@ -64,7 +64,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.MixedBulkWriteOperation.commandWriteConcern;
+import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
@@ -111,7 +111,7 @@ public final class BulkWriteBatch {
         }
         if (canRetryWrites && !writeRequestsAreRetryable) {
             canRetryWrites = false;
-            LOGGER.debug("retryWrites set but one or more writeRequests do not support retryable writes");
+            logWriteModelDoesNotSupportRetries();
         }
         return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation,
                 canRetryWrites, new BulkWriteBatchCombiner(connectionDescription.getServerAddress(), ordered, writeConcern),
@@ -154,7 +154,7 @@ public final class BulkWriteBatch {
 
         this.indexMap = indexMap;
         this.unprocessed = unprocessedItems;
-        this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems, ordered);
+        this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems, ordered, getFieldNameValidator());
         this.operationContext = operationContext;
         this.comment = comment;
         this.variables = variables;
@@ -270,7 +270,7 @@ public final class BulkWriteBatch {
         }
     }
 
-    FieldNameValidator getFieldNameValidator() {
+    private FieldNameValidator getFieldNameValidator() {
         if (batchType == UPDATE || batchType == REPLACE) {
             Map<String, FieldNameValidator> rootMap;
             if (batchType == REPLACE) {
@@ -384,5 +384,9 @@ public final class BulkWriteBatch {
             return !((DeleteRequest) writeRequest).isMulti();
         }
         return true;
+    }
+
+    static void logWriteModelDoesNotSupportRetries() {
+        LOGGER.debug("retryWrites set but one or more writeRequests do not support retryable writes");
     }
 }

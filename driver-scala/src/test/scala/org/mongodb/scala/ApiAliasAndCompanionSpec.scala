@@ -150,7 +150,9 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       .asScala
       .map(_.getSimpleName)
       .toSet +
-      "MongoException" - "MongoGridFSException" - "MongoConfigurationException" - "MongoWriteConcernWithResponseException"
+      "MongoException" - "MongoGridFSException" - "MongoConfigurationException" - "MongoWriteConcernWithResponseException" -
+      // BULK-TODO remove this exclusion
+      "ClientBulkWriteException"
 
     val objects = new Reflections(
       new ConfigurationBuilder()

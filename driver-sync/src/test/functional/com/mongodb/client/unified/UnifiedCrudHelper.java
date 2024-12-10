@@ -27,6 +27,7 @@ import com.mongodb.Tag;
 import com.mongodb.TagSet;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
@@ -75,6 +76,11 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientDeleteOptions;
+import com.mongodb.client.model.bulk.ClientReplaceOptions;
+import com.mongodb.client.model.bulk.ClientUpdateOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
@@ -82,7 +88,10 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientUpdateResult;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -101,15 +110,23 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
+import static com.mongodb.client.model.bulk.ClientDeleteOptions.clientDeleteOptions;
+import static com.mongodb.client.model.bulk.ClientReplaceOptions.clientReplaceOptions;
+import static com.mongodb.client.model.bulk.ClientUpdateOptions.clientUpdateOptions;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -215,6 +232,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         }
     }
 
+    @Nullable
     private ClientSession getSession(final BsonDocument arguments) {
         if (arguments.containsKey("session")) {
             return entities.getSession(arguments.getString("session").asString().getValue());
@@ -1758,6 +1776,234 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     new BsonString(createRandomEntityId())).getValue(), changeStreamWrappingCursor);
             return null;
         });
+    }
+
+    public OperationResult clientBulkWrite(final BsonDocument operation) {
+        Set<String> unexpectedOperationKeys = singleton("saveResultAsEntity");
+        if (operation.keySet().stream().anyMatch(unexpectedOperationKeys::contains)) {
+            throw new UnsupportedOperationException("Unexpected field in operation. One of " + unexpectedOperationKeys);
+        }
+        String clientId = operation.getString("object").getValue();
+        MongoCluster cluster = entities.getClient(clientId);
+        BsonDocument arguments = operation.getDocument("arguments");
+        ClientSession session = getSession(arguments);
+        List<ClientNamespacedWriteModel> models = arguments.getArray("models").stream()
+                .map(BsonValue::asDocument)
+                .map(UnifiedCrudHelper::toClientNamespacedWriteModel)
+                .collect(toList());
+        ClientBulkWriteOptions options = clientBulkWriteOptions();
+        for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
+            String key = entry.getKey();
+            BsonValue argument = entry.getValue();
+            switch (key) {
+                case "models":
+                case "session":
+                    break;
+                case "writeConcern":
+                    cluster = cluster.withWriteConcern(asWriteConcern(argument.asDocument()));
+                    break;
+                case "ordered":
+                    options.ordered(argument.asBoolean().getValue());
+                    break;
+                case "bypassDocumentValidation":
+                    options.bypassDocumentValidation(argument.asBoolean().getValue());
+                    break;
+                case "let":
+                    options.let(argument.asDocument());
+                    break;
+                case "comment":
+                    options.comment(argument);
+                    break;
+                case "verboseResults":
+                    options.verboseResults(argument.asBoolean().getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
+            }
+        }
+        MongoCluster clusterWithWriteConcern = cluster;
+        return resultOf(() -> {
+            if (session == null) {
+                return toMatchableValue(clusterWithWriteConcern.bulkWrite(models, options));
+            } else {
+                return toMatchableValue(clusterWithWriteConcern.bulkWrite(session, models, options));
+            }
+        });
+    }
+
+    private static ClientNamespacedWriteModel toClientNamespacedWriteModel(final BsonDocument model) {
+        String modelType = model.getFirstKey();
+        BsonDocument arguments = model.getDocument(modelType);
+        MongoNamespace namespace = new MongoNamespace(arguments.getString("namespace").getValue());
+        switch (modelType) {
+            case "insertOne":
+                Set<String> expectedArguments = new HashSet<>(asList("namespace", "document"));
+                if (!expectedArguments.containsAll(arguments.keySet())) {
+                    // for other `modelType`s a conceptually similar check is done when creating their options objects
+                    throw new UnsupportedOperationException("Unsupported argument, one of: " + arguments.keySet());
+                }
+                return ClientNamespacedWriteModel.insertOne(
+                        namespace,
+                        arguments.getDocument("document"));
+            case "replaceOne":
+                return ClientNamespacedWriteModel.replaceOne(
+                        namespace,
+                        arguments.getDocument("filter"),
+                        arguments.getDocument("replacement"),
+                        getClientReplaceOptions(arguments));
+            case "updateOne":
+                return arguments.isDocument("update")
+                        ? ClientNamespacedWriteModel.updateOne(
+                                namespace,
+                                arguments.getDocument("filter"),
+                                arguments.getDocument("update"),
+                                getClientUpdateOptions(arguments))
+                        : ClientNamespacedWriteModel.updateOne(
+                                namespace,
+                                arguments.getDocument("filter"),
+                                arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
+                                getClientUpdateOptions(arguments));
+            case "updateMany":
+                return arguments.isDocument("update")
+                        ? ClientNamespacedWriteModel.updateMany(
+                                namespace,
+                                arguments.getDocument("filter"),
+                                arguments.getDocument("update"),
+                                getClientUpdateOptions(arguments))
+                        : ClientNamespacedWriteModel.updateMany(
+                                namespace,
+                                arguments.getDocument("filter"),
+                                arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
+                                getClientUpdateOptions(arguments));
+            case "deleteOne":
+                return ClientNamespacedWriteModel.deleteOne(
+                        namespace,
+                        arguments.getDocument("filter"),
+                        getClientDeleteOptions(arguments));
+            case "deleteMany":
+                return ClientNamespacedWriteModel.deleteMany(
+                        namespace,
+                        arguments.getDocument("filter"),
+                        getClientDeleteOptions(arguments));
+            default:
+                throw new UnsupportedOperationException("Unsupported client write model type: " + modelType);
+        }
+    }
+
+    private static ClientReplaceOptions getClientReplaceOptions(final BsonDocument arguments) {
+        ClientReplaceOptions options = clientReplaceOptions();
+        arguments.forEach((key, argument) -> {
+            switch (key) {
+                case "namespace":
+                case "filter":
+                case "replacement":
+                    break;
+                case "collation":
+                    options.collation(asCollation(argument.asDocument()));
+                    break;
+                case "hint":
+                    if (argument.isDocument()) {
+                        options.hint(argument.asDocument());
+                    } else {
+                        options.hintString(argument.asString().getValue());
+                    }
+                    break;
+                case "upsert":
+                    options.upsert(argument.asBoolean().getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
+            }
+        });
+        return options;
+    }
+
+    private static ClientUpdateOptions getClientUpdateOptions(final BsonDocument arguments) {
+        ClientUpdateOptions options = clientUpdateOptions();
+        arguments.forEach((key, argument) -> {
+            switch (key) {
+                case "namespace":
+                case "filter":
+                case "update":
+                    break;
+                case "arrayFilters":
+                    options.arrayFilters(argument.asArray().stream().map(BsonValue::asDocument).collect(toList()));
+                    break;
+                case "collation":
+                    options.collation(asCollation(argument.asDocument()));
+                    break;
+                case "hint":
+                    if (argument.isDocument()) {
+                        options.hint(argument.asDocument());
+                    } else {
+                        options.hintString(argument.asString().getValue());
+                    }
+                    break;
+                case "upsert":
+                    options.upsert(argument.asBoolean().getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
+            }
+        });
+        return options;
+    }
+
+    private static ClientDeleteOptions getClientDeleteOptions(final BsonDocument arguments) {
+        ClientDeleteOptions options = clientDeleteOptions();
+        arguments.forEach((key, argument) -> {
+            switch (key) {
+                case "namespace":
+                case "filter":
+                    break;
+                case "collation":
+                    options.collation(asCollation(argument.asDocument()));
+                    break;
+                case "hint":
+                    if (argument.isDocument()) {
+                        options.hint(argument.asDocument());
+                    } else {
+                        options.hintString(argument.asString().getValue());
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
+            }
+        });
+        return options;
+    }
+
+    static BsonDocument toMatchableValue(final ClientBulkWriteResult result) {
+        BsonDocument expected = new BsonDocument();
+        if (result.isAcknowledged()) {
+            expected.append("insertedCount", new BsonInt64(result.getInsertedCount()))
+                    .append("upsertedCount", new BsonInt64(result.getUpsertedCount()))
+                    .append("matchedCount", new BsonInt64(result.getMatchedCount()))
+                    .append("modifiedCount", new BsonInt64(result.getModifiedCount()))
+                    .append("deletedCount", new BsonInt64(result.getDeletedCount()));
+            result.getVerboseResults().ifPresent(verbose ->
+                expected.append("insertResults", new BsonDocument(verbose.getInsertResults().entrySet().stream()
+                                .map(entry -> new BsonElement(
+                                        entry.getKey().toString(),
+                                        new BsonDocument("insertedId", entry.getValue().getInsertedId().orElseThrow(Assertions::fail))))
+                                .collect(toList())))
+                        .append("updateResults", new BsonDocument(verbose.getUpdateResults().entrySet().stream()
+                                .map(entry -> {
+                                    ClientUpdateResult updateResult = entry.getValue();
+                                    BsonDocument updateResultDocument = new BsonDocument(
+                                            "matchedCount", new BsonInt64(updateResult.getMatchedCount()))
+                                            .append("modifiedCount", new BsonInt64(updateResult.getModifiedCount()));
+                                    updateResult.getUpsertedId().ifPresent(upsertedId -> updateResultDocument.append("upsertedId", upsertedId));
+                                    return new BsonElement(entry.getKey().toString(), updateResultDocument);
+                                })
+                                .collect(toList())))
+                        .append("deleteResults", new BsonDocument(verbose.getDeleteResults().entrySet().stream()
+                                .map(entry -> new BsonElement(
+                                        entry.getKey().toString(),
+                                        new BsonDocument("deletedCount", new BsonInt64(entry.getValue().getDeletedCount()))))
+                                .collect(toList()))));
+        }
+        return expected;
     }
 
     public OperationResult executeIterateUntilDocumentOrError(final BsonDocument operation) {
