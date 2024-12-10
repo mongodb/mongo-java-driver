@@ -582,17 +582,19 @@ public class InternalStreamConnection implements InternalConnection {
     private <T> void sendCommandMessageAsync(final int messageId, final Decoder<T> decoder, final OperationContext operationContext,
                                              final SingleResultCallback<T> callback, final ByteBufferBsonOutput bsonOutput,
                                              final CommandEventSender commandEventSender, final boolean responseExpected) {
-        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
-
         boolean[] shouldReturn = {false};
         Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
-            callback.onResult(null, createMongoOperationTimeoutExceptionAndClose(commandEventSender));
+            bsonOutput.close();
+            MongoOperationTimeoutException operationTimeoutException = TimeoutContext.createMongoRoundTripTimeoutException();
+            commandEventSender.sendFailedEvent(operationTimeoutException);
+            callback.onResult(null, operationTimeoutException);
             shouldReturn[0] = true;
         });
         if (shouldReturn[0]) {
             return;
         }
 
+        List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         sendMessageAsync(byteBuffers, messageId, operationContext, (result, t) -> {
             ResourceUtil.release(byteBuffers);
             bsonOutput.close();
@@ -636,13 +638,6 @@ public class InternalStreamConnection implements InternalConnection {
                 }));
             }
         });
-    }
-
-    private MongoOperationTimeoutException createMongoOperationTimeoutExceptionAndClose(final CommandEventSender commandEventSender) {
-        MongoOperationTimeoutException e = TimeoutContext.createMongoRoundTripTimeoutException();
-        close();
-        commandEventSender.sendFailedEvent(e);
-        return e;
     }
 
     private <T> T getCommandResult(final Decoder<T> decoder,
