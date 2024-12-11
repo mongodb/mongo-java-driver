@@ -17,6 +17,8 @@
 package org.bson.types;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,29 +26,54 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class ObjectIdTest {
-    @Test
-    public void testToBytes() {
+
+    /**
+     * MethodSource for valid ByteBuffers that can hold an ObjectID
+     */
+    public static List<ByteBuffer> outputBuffers() {
+        List<ByteBuffer> result = new ArrayList<>();
+        result.add(ByteBuffer.allocate(12));
+        result.add(ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN));
+        result.add(ByteBuffer.allocate(24).position(12));
+        return result;
+    }
+
+    @MethodSource("outputBuffers")
+    @ParameterizedTest
+    public void testToBytes(final ByteBuffer output) {
+        int originalPosition = output.position();
+        ByteOrder originalOrder = output.order();
         byte[] expectedBytes = {81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
+        byte[] result = new byte[12];
         ObjectId objectId = new ObjectId(expectedBytes);
 
         assertArrayEquals(expectedBytes, objectId.toByteArray());
 
-        ByteBuffer buffer = ByteBuffer.allocate(12);
-        objectId.putToByteBuffer(buffer);
-        assertArrayEquals(expectedBytes, buffer.array());
+        objectId.putToByteBuffer(output);
+        output.position(output.position() - result.length); // read last 12 bytes leaving position intact
+        output.get(result);
+
+        assertArrayEquals(expectedBytes, result);
+        assertEquals(originalPosition + 12, output.position());
+        assertEquals(originalOrder, output.order());
     }
 
     @Test
@@ -141,6 +168,55 @@ public class ObjectIdTest {
     }
 
     @Test
+    public void testRandomConstructors() {
+        assertNotEquals(new ObjectId(new Date(1_000)), new ObjectId(new Date(1_000)));
+        assertEquals(new ObjectId(new Date(1_000), 1), new ObjectId(new Date(1_000), 1));
+        assertEquals(new ObjectId(1_000, 1), new ObjectId(1_000, 1));
+
+        assertEquals("00000001", new ObjectId(new Date(1_000)).toHexString().substring(0, 8));
+        assertEquals("00000001", new ObjectId(new Date(1_000), 1).toHexString().substring(0, 8));
+        assertEquals("7fffffff", new ObjectId(Integer.MAX_VALUE, 1).toHexString().substring(0, 8));
+
+        assertThrows(NullPointerException.class, () -> new ObjectId(null, Integer.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId(new Date(1_000), Integer.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId((ByteBuffer) null));
+        assertThrows(IllegalArgumentException.class, () -> new ObjectId(ByteBuffer.allocate(11)));
+    }
+
+    /**
+     * MethodSource for valid ByteBuffers containing an ObjectID at the current position.
+     */
+    public static List<ByteBuffer> inputBuffers() {
+        byte[] data = new byte[12];
+        for (byte i = 0; i < data.length; ++i) {
+            data[i] = i;
+        }
+
+        List<ByteBuffer> result = new ArrayList<>();
+        result.add(ByteBuffer.wrap(data));
+        result.add(ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN));
+        result.add(ByteBuffer.allocateDirect(data.length).put(data).rewind());
+        result.add(ByteBuffer.allocateDirect(data.length).put(data).order(ByteOrder.LITTLE_ENDIAN).rewind());
+        result.add(ByteBuffer.allocate(2 * data.length).put(data).rewind());
+        result.add(ByteBuffer.allocate(2 * data.length).put(new byte[12]).put(data).position(data.length));
+        return result;
+    }
+
+    @ParameterizedTest
+    @MethodSource(value = "inputBuffers")
+    public void testByteBufferCons(final ByteBuffer input) {
+        ByteOrder order = input.order();
+        int position = input.position();
+
+        byte[] result = new ObjectId(input).toByteArray();
+
+        assertArrayEquals(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, result);
+        assertEquals(order, input.order());
+        assertEquals(position + 12, input.position());
+    }
+
+    @Test
     public void testHexStringConstructor() {
         ObjectId id = new ObjectId();
         assertEquals(id, new ObjectId(id.toHexString()));
@@ -162,6 +238,23 @@ public class ObjectIdTest {
         assertEquals(-1, first.compareTo(third));
         assertEquals(1, second.compareTo(first));
         assertEquals(1, third.compareTo(first));
+        assertThrows(NullPointerException.class, () -> first.compareTo(null));
+    }
+
+    @Test
+    public void testEquals() {
+        Date dateOne = new Date();
+        Date dateTwo = new Date(dateOne.getTime() + 10000);
+        ObjectId first = new ObjectId(dateOne, 0);
+        ObjectId second = new ObjectId(dateOne, 1);
+        ObjectId third = new ObjectId(dateTwo, 0);
+        ObjectId fourth = new ObjectId(first.toByteArray());
+        assertEquals(first, first);
+        assertEquals(first, fourth);
+        assertNotEquals(first, second);
+        assertNotEquals(first, third);
+        assertNotEquals(second, third);
+        assertFalse(first.equals(null));
     }
 
     @Test
