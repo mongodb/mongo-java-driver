@@ -19,6 +19,7 @@ import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
+import com.mongodb.lang.Nullable
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.Flow
@@ -102,6 +103,22 @@ public class DistinctFlow<T : Any>(private val wrapped: DistinctPublisher<T>) : 
      * @return this
      */
     public fun comment(comment: BsonValue?): DistinctFlow<T> = apply { wrapped.comment(comment) }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     */
+    public fun hint(@Nullable hint: Bson?): DistinctFlow<T> = apply { wrapped.hint(hint) }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     */
+    public fun hintString(@Nullable hint: String?): DistinctFlow<T> = apply { wrapped.hintString(hint) }
 
     public override suspend fun collect(collector: FlowCollector<T>): Unit = wrapped.asFlow().collect(collector)
 }

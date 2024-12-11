@@ -54,6 +54,8 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private BsonDocument filter;
     private Collation collation;
     private BsonValue comment;
+    private BsonValue hint;
+    private String hintString;
 
     public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
@@ -97,6 +99,24 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return this;
     }
 
+    public BsonValue getHint() {
+        return hint;
+    }
+
+    public DistinctOperation<T> hint(@Nullable final BsonValue hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    public String getHintString() {
+        return hintString;
+    }
+
+    public DistinctOperation<T> hintString(@Nullable final String hint) {
+        this.hintString = hint;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
@@ -124,6 +144,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
                 commandDocument.put("collation", collation.asDocument());
             }
             putIfNotNull(commandDocument, "comment", comment);
+            putIfNotNull(commandDocument, "hint", hint);
             return commandDocument;
         };
     }

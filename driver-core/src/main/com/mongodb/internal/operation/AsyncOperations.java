@@ -181,8 +181,9 @@ public final class AsyncOperations<TDocument> {
     }
 
     public <TResult> AsyncReadOperation<AsyncBatchCursor<TResult>> distinct(final String fieldName, final Bson filter,
-            final Class<TResult> resultClass, final Collation collation, final BsonValue comment) {
-        return operations.distinct(fieldName, filter, resultClass, collation, comment);
+            final Class<TResult> resultClass, final Collation collation, final BsonValue comment, final Bson hint,
+            final String hintString) {
+        return operations.distinct(fieldName, filter, resultClass, collation, comment, hint, hintString);
     }
 
     public <TResult> AsyncExplainableReadOperation<AsyncBatchCursor<TResult>> aggregate(
