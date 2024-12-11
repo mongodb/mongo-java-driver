@@ -471,19 +471,19 @@
       ]
     },
     {
-      "description" : "upload when metadata is provided",
-      "operations" : [
+      "description": "upload when metadata is provided",
+      "operations": [
         {
-          "name" : "upload",
-          "object" : "bucket0",
-          "arguments" : {
-            "filename" : "filename",
-            "source" : {
-              "$$hexBytes" : "11"
+          "name": "upload",
+          "object": "bucket0",
+          "arguments": {
+            "filename": "filename",
+            "source": {
+              "$$hexBytes": "11"
             },
-            "chunkSizeBytes" : 4,
-            "metadata" : {
-              "x" : 1
+            "chunkSizeBytes": 4,
+            "metadata": {
+              "x": 1
             }
           },
           "expectResult" : {
