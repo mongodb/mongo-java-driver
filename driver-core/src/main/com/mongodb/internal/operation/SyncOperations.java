@@ -165,8 +165,9 @@ public final class SyncOperations<TDocument> {
 
     public <TResult> ReadOperation<BatchCursor<TResult>> distinct(final String fieldName, final Bson filter,
                                                                   final Class<TResult> resultClass,
-                                                                  final Collation collation, final BsonValue comment) {
-        return operations.distinct(fieldName, filter, resultClass, collation, comment);
+                                                                  final Collation collation, final BsonValue comment,
+                                                                  final Bson hint, final String hintString) {
+        return operations.distinct(fieldName, filter, resultClass, collation, comment, hint, hintString);
     }
 
     public <TResult> ExplainableReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline,
