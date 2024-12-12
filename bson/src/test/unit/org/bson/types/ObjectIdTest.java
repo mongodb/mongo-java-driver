@@ -68,9 +68,9 @@ public class ObjectIdTest {
 
         assertArrayEquals(expectedBytes, objectId.toByteArray());
 
+        output.mark();
         objectId.putToByteBuffer(output);
-        ((Buffer) output).position(output.position() - result.length); // read last 12 bytes leaving position intact
-        output.get(result);
+        output.reset().get(result); // read last 12 bytes leaving position intact
 
         assertArrayEquals(expectedBytes, result);
         assertEquals(originalPosition + 12, output.position());
