@@ -46,6 +46,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class ObjectIdTest {
 
+    /** Calls the base method of ByteBuffer.position(int) since the override is not available in jdk8. */
+    private static ByteBuffer setPosition(final ByteBuffer buf, final int pos) {
+        ((Buffer) buf).position(pos);
+        return buf;
+    }
+
     /**
      * MethodSource for valid ByteBuffers that can hold an ObjectID
      */
@@ -53,7 +59,9 @@ public class ObjectIdTest {
         List<ByteBuffer> result = new ArrayList<>();
         result.add(ByteBuffer.allocate(12));
         result.add(ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN));
-        result.add(ByteBuffer.allocate(24).put(new byte[12])); // Avoid ByteBuffer.position(int) on jdk8
+        result.add(ByteBuffer.allocate(24).put(new byte[12]));
+        result.add(ByteBuffer.allocateDirect(12));
+        result.add(ByteBuffer.allocateDirect(12).order(ByteOrder.LITTLE_ENDIAN));
         return result;
     }
 
@@ -197,10 +205,10 @@ public class ObjectIdTest {
         List<ByteBuffer> result = new ArrayList<>();
         result.add(ByteBuffer.wrap(data));
         result.add(ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN));
-        result.add(ByteBuffer.allocateDirect(data.length).put(data).rewind());
-        result.add(ByteBuffer.allocateDirect(data.length).put(data).order(ByteOrder.LITTLE_ENDIAN).rewind());
-        result.add(ByteBuffer.allocate(2 * data.length).put(data).rewind());
-        result.add(ByteBuffer.allocate(2 * data.length).put(new byte[12]).put(data).rewind().put(new byte[12]));
+        result.add(setPosition(ByteBuffer.allocateDirect(data.length).put(data), 0));
+        result.add(setPosition(ByteBuffer.allocateDirect(data.length).put(data).order(ByteOrder.LITTLE_ENDIAN), 0));
+        result.add(setPosition(ByteBuffer.allocate(2 * data.length).put(data), 0));
+        result.add(setPosition(ByteBuffer.allocate(2 * data.length).put(new byte[12]).put(data), 12));
         return result;
     }
 
