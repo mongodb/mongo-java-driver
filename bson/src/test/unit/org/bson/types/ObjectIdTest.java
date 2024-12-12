@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.ParseException;
@@ -67,9 +68,9 @@ public class ObjectIdTest {
 
         assertArrayEquals(expectedBytes, objectId.toByteArray());
 
-        output.mark();
         objectId.putToByteBuffer(output);
-        output.reset().get(result); // read last 12 bytes leaving position intact
+        ((Buffer) output).position(output.position() - 12);
+        output.get(result); // read last 12 bytes leaving position intact
 
         assertArrayEquals(expectedBytes, result);
         assertEquals(originalPosition + 12, output.position());
@@ -199,7 +200,7 @@ public class ObjectIdTest {
         result.add(ByteBuffer.allocateDirect(data.length).put(data).rewind());
         result.add(ByteBuffer.allocateDirect(data.length).put(data).order(ByteOrder.LITTLE_ENDIAN).rewind());
         result.add(ByteBuffer.allocate(2 * data.length).put(data).rewind());
-        result.add(ByteBuffer.allocate(2 * data.length).put(new byte[12]).mark().put(data).reset());
+        result.add(ByteBuffer.allocate(2 * data.length).put(new byte[12]).put(data).rewind().put(new byte[12]));
         return result;
     }
 
