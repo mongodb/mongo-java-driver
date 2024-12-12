@@ -112,6 +112,31 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
   }
 
   /**
+   * Sets the hint for this operation. A null value means no hint is set.
+   *
+   * @param hint the hint
+   * @return this
+   * @note if [[hint]] is set that will be used instead of any hint string.
+   * @since 5.3
+   */
+  def hint(hint: Bson): DistinctObservable[TResult] = {
+    wrapped.hint(hint)
+    this
+  }
+
+  /**
+   * Sets the hint for this operation. A null value means no hint is set.
+   *
+   * @param hint the name of the index which should be used for the operation
+   * @return this
+   * @since 5.3
+   */
+  def hintString(hint: String): DistinctObservable[TResult] = {
+    wrapped.hintString(hint)
+    this
+  }
+
+  /**
    * Sets the timeoutMode for the cursor.
    *
    * Requires the `timeout` to be set, either in the [[MongoClientSettings]],

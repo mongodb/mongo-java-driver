@@ -72,6 +72,18 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
     }
 
     @Override
+    public DistinctIterable<T> hint(@Nullable final Bson hint) {
+        wrapped.hint(hint);
+        return this;
+    }
+
+    @Override
+    public DistinctIterable<T> hintString(@Nullable final String hint) {
+        wrapped.hintString(hint);
+        return this;
+    }
+
+    @Override
     public DistinctIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
         wrapped.timeoutMode(timeoutMode);
         return this;
