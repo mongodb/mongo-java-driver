@@ -218,13 +218,19 @@ final class Operations<TDocument> {
 
     <TResult> DistinctOperation<TResult> distinct(final String fieldName, @Nullable final Bson filter, final Class<TResult> resultClass,
             final Collation collation, final BsonValue comment, @Nullable final Bson hint, @Nullable final String hintString) {
-        return new DistinctOperation<>(assertNotNull(namespace),
+        DistinctOperation<TResult> operation = new DistinctOperation<>(assertNotNull(namespace),
                 fieldName, codecRegistry.get(resultClass))
                 .retryReads(retryReads)
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .collation(collation)
-                .comment(comment)
-                .hint(hint != null ? toBsonDocument(hint) : (hintString != null ? new BsonString(hintString) : null));
+                .comment(comment);
+
+        if (hint != null) {
+            operation.hint(toBsonDocument(hint));
+        } else if (hintString != null) {
+            operation.hint(new BsonString(hintString));
+        }
+        return operation;
     }
 
     <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,

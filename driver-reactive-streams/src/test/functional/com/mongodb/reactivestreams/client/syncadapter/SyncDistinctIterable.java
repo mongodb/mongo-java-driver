@@ -78,7 +78,7 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
     }
 
     @Override
-    public DistinctIterable<T> hintString(final String hint) {
+    public DistinctIterable<T> hintString(@Nullable final String hint) {
         wrapped.hintString(hint);
         return this;
     }

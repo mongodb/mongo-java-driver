@@ -112,6 +112,8 @@ public class DistinctIterable<T : Any?>(private val wrapped: JDistinctIterable<T
     /**
      * Sets the hint for which index to use. A null value means no hint is set.
      *
+     * Note: If [DistinctFlow.hint] is set that will be used instead of any hint string.
+     *
      * @param hint the name of the index which should be used for the operation
      * @return this
      */

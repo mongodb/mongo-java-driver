@@ -116,6 +116,7 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    *
    * @param hint the hint
    * @return this
+   * @note if [[hint]] is set that will be used instead of any hint string.
    * @since 5.3
    */
   def hint(hint: Bson): DistinctObservable[TResult] = {
