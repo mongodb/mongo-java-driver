@@ -20,6 +20,7 @@ import com.mongodb.annotations.Reason
 import com.mongodb.client.DistinctIterable as JDistinctIterable
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
+import com.mongodb.lang.Nullable
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.conversions.Bson
@@ -99,4 +100,22 @@ public class DistinctIterable<T : Any?>(private val wrapped: JDistinctIterable<T
      * @return this
      */
     public fun comment(comment: BsonValue?): DistinctIterable<T> = apply { wrapped.comment(comment) }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     */
+    public fun hint(@Nullable hint: Bson?): DistinctIterable<T> = apply { wrapped.hint(hint) }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * Note: If [DistinctFlow.hint] is set that will be used instead of any hint string.
+     *
+     * @param hint the name of the index which should be used for the operation
+     * @return this
+     */
+    public fun hintString(@Nullable hint: String?): DistinctIterable<T> = apply { wrapped.hintString(hint) }
 }
