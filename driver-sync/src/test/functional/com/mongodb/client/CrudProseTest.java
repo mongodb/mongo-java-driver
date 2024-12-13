@@ -32,8 +32,8 @@ import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
@@ -171,7 +171,7 @@ public class CrudProseTest {
             int maxWriteBatchSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxWriteBatchSize");
             ClientBulkWriteResult result = client.bulkWrite(nCopies(
                     maxWriteBatchSize + 1,
-                    ClientNamespacedWriteModel.insertOne(NAMESPACE, new Document("a", "b"))));
+                    insertOne(NAMESPACE, new Document("a", "b"))));
             assertEquals(maxWriteBatchSize + 1, result.getInsertedCount());
             List<CommandStartedEvent> startedBulkWriteCommandEvents = commandListener.getCommandStartedEvents("bulkWrite");
             assertEquals(2, startedBulkWriteCommandEvents.size());
@@ -193,7 +193,7 @@ public class CrudProseTest {
             Document helloResponse = droppedDatabase(client).runCommand(new Document("hello", 1));
             int maxBsonObjectSize = helloResponse.getInteger("maxBsonObjectSize");
             int maxMessageSizeBytes = helloResponse.getInteger("maxMessageSizeBytes");
-            ClientNamespacedWriteModel model = ClientNamespacedWriteModel.insertOne(
+            ClientNamespacedWriteModel model = insertOne(
                     NAMESPACE,
                     new Document("a", join("", nCopies(maxBsonObjectSize - 500, "b"))));
             int numModels = maxMessageSizeBytes / maxBsonObjectSize + 1;
@@ -227,7 +227,7 @@ public class CrudProseTest {
                 .addCommandListener(commandListener));
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
             int maxWriteBatchSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxWriteBatchSize");
-            ClientNamespacedWriteModel model = ClientNamespacedWriteModel.insertOne(NAMESPACE, new Document("a", "b"));
+            ClientNamespacedWriteModel model = insertOne(NAMESPACE, new Document("a", "b"));
             int numModels = maxWriteBatchSize + 1;
             ClientBulkWriteException error = assertThrows(ClientBulkWriteException.class, () ->
                     client.bulkWrite(nCopies(numModels, model)));
@@ -253,7 +253,7 @@ public class CrudProseTest {
             Document document = new Document("_id", 1);
             MongoCollection<Document> collection = droppedCollection(client, Document.class);
             collection.insertOne(document);
-            ClientNamespacedWriteModel model = ClientNamespacedWriteModel.insertOne(collection.getNamespace(), document);
+            ClientNamespacedWriteModel model = insertOne(collection.getNamespace(), document);
             int numModels = maxWriteBatchSize + 1;
             ClientBulkWriteException error = assertThrows(ClientBulkWriteException.class, () ->
                     client.bulkWrite(nCopies(numModels, model), clientBulkWriteOptions().ordered(ordered)));
@@ -279,6 +279,8 @@ public class CrudProseTest {
         assumeFalse(isServerlessTest());
         assumeFalse(isStandalone());
         assertBulkWriteHandlesCursorRequiringGetMore(true);
+
+        //TODO consider removing withTransaction and use start and end transaction.
     }
 
     private void assertBulkWriteHandlesCursorRequiringGetMore(final boolean transaction) {
@@ -305,7 +307,8 @@ public class CrudProseTest {
                                 clientUpdateOptions().upsert(true))),
                         clientBulkWriteOptions().verboseResults(true)
                 );
-                ClientBulkWriteResult result = transaction ? session.withTransaction(action::get) : action.get();
+
+                ClientBulkWriteResult result = transaction ? runInTransaction(session, action) : action.get();
                 assertEquals(2, result.getUpsertedCount());
                 assertEquals(2, result.getVerboseResults().orElseThrow(Assertions::fail).getUpdateResults().size());
                 assertEquals(1, commandListener.getCommandStartedEvents("bulkWrite").size());
@@ -322,7 +325,7 @@ public class CrudProseTest {
                 () -> {
                     // Case 1: No batch-splitting required
                     testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo((client, models, commandListener) -> {
-                        models.add(ClientNamespacedWriteModel.insertOne(NAMESPACE, new Document("a", "b")));
+                        models.add(insertOne(NAMESPACE, new Document("a", "b")));
                         ClientBulkWriteResult result = client.bulkWrite(models);
                         assertEquals(models.size(), result.getInsertedCount());
                         List<CommandStartedEvent> startedBulkWriteCommandEvents = commandListener.getCommandStartedEvents("bulkWrite");
@@ -339,7 +342,7 @@ public class CrudProseTest {
                     // Case 2: Batch-splitting required
                     testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo((client, models, commandListener) -> {
                         MongoNamespace namespace = new MongoNamespace(NAMESPACE.getDatabaseName(), join("", nCopies(200, "c")));
-                        models.add(ClientNamespacedWriteModel.insertOne(namespace, new Document("a", "b")));
+                        models.add(insertOne(namespace, new Document("a", "b")));
                         ClientBulkWriteResult result = client.bulkWrite(models);
                         assertEquals(models.size(), result.getInsertedCount());
                         List<CommandStartedEvent> startedBulkWriteCommandEvents = commandListener.getCommandStartedEvents("bulkWrite");
@@ -371,11 +374,11 @@ public class CrudProseTest {
             int remainderBytes = opsBytes % maxBsonObjectSize;
             List<ClientNamespacedWriteModel> models = new ArrayList<>(nCopies(
                     numModels,
-                    ClientNamespacedWriteModel.insertOne(
+                    insertOne(
                             NAMESPACE,
                             new Document("a", join("", nCopies(maxBsonObjectSize - 57, "b"))))));
             if (remainderBytes >= 217) {
-                models.add(ClientNamespacedWriteModel.insertOne(
+                models.add(insertOne(
                         NAMESPACE,
                         new Document("a", join("", nCopies(remainderBytes - 57, "b")))));
             }
@@ -394,13 +397,13 @@ public class CrudProseTest {
             ClientNamespacedWriteModel model;
             switch (tooLarge) {
                 case "document": {
-                    model = ClientNamespacedWriteModel.insertOne(
+                    model = insertOne(
                             NAMESPACE,
                             new Document("a", join("", nCopies(maxMessageSizeBytes, "b"))));
                     break;
                 }
                 case "namespace": {
-                    model = ClientNamespacedWriteModel.insertOne(
+                    model = insertOne(
                             new MongoNamespace(NAMESPACE.getDatabaseName(), join("", nCopies(maxMessageSizeBytes, "b"))),
                             new Document("a", "b"));
                     break;
@@ -429,8 +432,8 @@ public class CrudProseTest {
             assertTrue(
                     assertThrows(
                             IllegalStateException.class,
-                            () -> client.bulkWrite(singletonList(ClientNamespacedWriteModel.insertOne(NAMESPACE, new Document("a", "b")))))
-                    .getMessage().contains("bulkWrite does not currently support automatic encryption"));
+                            () -> client.bulkWrite(singletonList(insertOne(NAMESPACE, new Document("a", "b")))))
+                            .getMessage().contains("bulkWrite does not currently support automatic encryption"));
         }
     }
 
@@ -447,7 +450,7 @@ public class CrudProseTest {
             Document helloResponse = database.runCommand(new Document("hello", 1));
             int maxBsonObjectSize = helloResponse.getInteger("maxBsonObjectSize");
             int maxMessageSizeBytes = helloResponse.getInteger("maxMessageSizeBytes");
-            ClientNamespacedWriteModel model = ClientNamespacedWriteModel.insertOne(
+            ClientNamespacedWriteModel model = insertOne(
                     NAMESPACE,
                     new Document("a", join("", nCopies(maxBsonObjectSize - 500, "b"))));
             int numModels = maxMessageSizeBytes / maxBsonObjectSize + 1;
@@ -593,5 +596,22 @@ public class CrudProseTest {
     @FunctionalInterface
     private interface TriConsumer<A1, A2, A3> {
         void accept(A1 a1, A2 a2, A3 a3);
+    }
+
+    /**
+     * This method is used instead of {@link ClientSession#withTransaction(TransactionBody)}
+     * because reactive {@link com.mongodb.reactivestreams.client;.ClientSession} do not support it.
+     */
+    private static ClientBulkWriteResult runInTransaction(final ClientSession session,
+                                                          final Supplier<ClientBulkWriteResult> action) {
+        session.startTransaction();
+        try {
+            ClientBulkWriteResult result = action.get();
+            session.commitTransaction();
+            return result;
+        } catch (Throwable throwable) {
+            session.abortTransaction();
+            throw throwable;
+        }
     }
 }

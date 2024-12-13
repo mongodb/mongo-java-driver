@@ -46,7 +46,8 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        com.mongodb.reactivestreams.client.MongoClient wrapped = MongoClients.create(settings);
+        return new SyncMongoClient(wrapped);
     }
 
     @Override

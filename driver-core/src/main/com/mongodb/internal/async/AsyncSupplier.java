@@ -82,6 +82,26 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     /**
+     * The runnable will always be executed, including on the exceptional path.
+     * @param runnable the runnable
+     * @param callback the callback
+     */
+    default void thenAlwaysRunAndFinish(final Runnable runnable, final SingleResultCallback<T> callback) {
+        this.finish((r, e) -> {
+            try {
+                runnable.run();
+            } catch (Throwable t) {
+                if (e != null) {
+                    t.addSuppressed(e);
+                }
+                callback.completeExceptionally(t);
+                return;
+            }
+            callback.onResult(r, e);
+        });
+    }
+
+    /**
      * @param function The async function to run after this supplier
      * @return the composition of this supplier and the function, a supplier
      * @param <R> The return type of the resulting supplier

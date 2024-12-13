@@ -34,7 +34,7 @@ public interface AsyncFunction<T, R> {
      * @param value A {@code @}{@link Nullable} argument of the asynchronous function.
      * @param callback the callback
      */
-    void unsafeFinish(T value, SingleResultCallback<R> callback);
+    void unsafeFinish(@Nullable T value, SingleResultCallback<R> callback);
 
     /**
      * Must be invoked at end of async chain or when executing a callback handler supplied by the caller.

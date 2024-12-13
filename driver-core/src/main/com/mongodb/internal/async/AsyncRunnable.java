@@ -17,6 +17,8 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.async.function.AsyncCallbackLoop;
+import com.mongodb.internal.async.function.LoopState;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
@@ -181,6 +183,27 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         };
     }
 
+//    /**
+//     * @param runnable The async runnable to run after this runnable
+//     * @return the composition of this runnable and the runnable, a runnable
+//     */
+//    default AsyncSupplier<T> thenSupplyUntil(
+//            final AsyncSupplier supplier,
+//            final Predicate<Boolean> condition,
+//            final Consumer<T> runnable) {
+//        return (c) -> {
+//            this.unsafeFinish((r, e) -> {
+//                if (e == null) {
+//                    /* If 'runnable' is executed on a different thread from the one that executed the initial 'finish()',
+//                     then invoking 'finish()' within 'runnable' will catch and propagate any exceptions to 'c' (the callback). */
+//                    supplier.finish(c);
+//                } else {
+//                    c.completeExceptionally(e);
+//                }
+//            });
+//        };
+//    }
+
     /**
      * The error check checks if the exception is an instance of the provided class.
      * @see #thenRunTryCatchAsyncBlocks(AsyncRunnable, java.util.function.Predicate, AsyncFunction)
@@ -212,6 +235,18 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         return this.thenRun(c -> {
             beginAsync()
                     .thenRun(runnable)
+                    .onErrorIf(errorCheck, errorFunction)
+                    .finish(c);
+        });
+    }
+
+    default <R> AsyncSupplier<R> thenSupplyTryCatchAsyncBlocks(
+            final AsyncSupplier<R> supplier,
+            final Predicate<Throwable> errorCheck,
+            final AsyncFunction<Throwable, R> errorFunction) {
+        return this.thenSupply(c -> {
+            beginAsync()
+                    .thenSupply(supplier)
                     .onErrorIf(errorCheck, errorFunction)
                     .finish(c);
         });
@@ -280,6 +315,53 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                     // `AsyncCallbackSupplier.get`, which we implement here
                     cb -> runnable.finish(cb)
             ).get(callback);
+        });
+    }
+
+    /**
+     * In order to break the loop and complete the ongoing iteration, use
+     * {@link LoopState#breakAndCompleteIf(Supplier, SingleResultCallback)} in the loopBodyRunnable.
+     *
+     * <p>
+     * This is equivalent to while(true) with break.
+     *
+     * @param loopBodyRunnable the loopBodyRunnable to loop
+     * @return the composition of this, and the looping branch
+     * @see AsyncCallbackLoop
+     */
+    default AsyncRunnable thenRunWhileLoop(final AsyncRunnable loopBodyRunnable, final LoopState loopState) {
+        return thenRun(callback -> {
+            new AsyncCallbackLoop(loopState, loopBodyRunnable::finish).run(callback);
+        });
+    }
+
+    /**
+     * This method is equivalent to a do-while loop, where the loop body is executed first and
+     * then the condition is checked to determine whether the loop should continue.
+     *
+     * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
+     * @param whileCheck a condition to check after each iteration; the loop continues as long as this condition returns true
+     * @return the composition of this and the looping branch
+     * @see AsyncCallbackLoop
+     */
+
+    default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final Supplier<Boolean> whileCheck) {
+        return thenRun(finalCallback -> {
+            LoopState loopState = new LoopState();
+            new AsyncCallbackLoop(loopState, iterationCallback -> {
+
+                loopBodyRunnable.finish((result, t) -> {
+                    if (t != null) {
+                        iterationCallback.completeExceptionally(t);
+                        return;
+                    }
+                    if (loopState.breakAndCompleteIf(() -> !whileCheck.get(), iterationCallback)) {
+                        return;
+                    }
+                    iterationCallback.complete(iterationCallback);
+                });
+
+            }).run(finalCallback);
         });
     }
 }

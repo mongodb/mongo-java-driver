@@ -45,10 +45,9 @@ public final class UnifiedTestModifications {
                 .directory("atlas-data-lake-testing");
 
         // change-streams
-
         def.skipNoncompliantReactive("error required from change stream initialization") // TODO reason?
                 .test("change-streams", "change-streams", "Test with document comment - pre 4.4");
-        def.skipNoncompliantReactive("event sensitive tests") // TODO reason?
+        def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
                 .test("change-streams", "change-streams", "Test that comment is not set on getMore - pre 4.4");
         def.modify(IGNORE_EXTRA_EVENTS)
