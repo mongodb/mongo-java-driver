@@ -749,6 +749,26 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     @Test
+    void testDoWhileLoop() {
+        assertBehavesSameVariations(67,
+                () -> {
+                    do {
+                        plain(0);
+                        sync(1);
+                    } while (plainTest(2));
+                },
+                (finalCallback) -> {
+                    beginAsync().thenRunDoWhileLoop(
+                          callback -> {
+                              plain(0);
+                              async(1, callback);
+                          },
+                          () -> plainTest(2)
+                    ).finish(finalCallback);
+                });
+    }
+
+    @Test
     void testFinallyWithPlainInsideTry() {
         // (in try: normal flow + exception + exception) * (in finally: normal + exception) = 6
         assertBehavesSameVariations(6,
@@ -767,6 +787,50 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).thenAlwaysRunAndFinish(() -> {
                         plain(3);
                     }, callback);
+                });
+    }
+
+    @Test
+    void testSupplyFinallyWithPlainInsideTry() {
+        assertBehavesSameVariations(6,
+                () -> {
+                    try {
+                        plain(1);
+                        return syncReturns(2);
+                    } finally {
+                        plain(3);
+                    }
+                },
+                (callback) -> {
+                    beginAsync().<Integer>thenSupply(c -> {
+                        plain(1);
+                        asyncReturns(2, c);
+                    }).thenAlwaysRunAndFinish(() -> {
+                        plain(3);
+                    }, callback);
+                });
+    }
+
+    @Test
+    void testSupplyFinallyWithPlainOutsideTry() {
+        assertBehavesSameVariations(5,
+                () -> {
+                    plain(1);
+                    try {
+                       return syncReturns(2);
+                    } finally {
+                        plain(3);
+                    }
+                },
+                (callback) -> {
+                    beginAsync().<Integer>thenSupply(c -> {
+                        plain(1);
+                        beginAsync().<Integer>thenSupply(c2 -> {
+                            asyncReturns(2, c2);
+                        }).thenAlwaysRunAndFinish(() -> {
+                            plain(3);
+                        }, c);
+                    }).finish(callback);
                 });
     }
 

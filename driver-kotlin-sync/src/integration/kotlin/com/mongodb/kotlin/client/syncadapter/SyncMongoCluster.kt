@@ -114,24 +114,27 @@ internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoClu
         SyncChangeStreamIterable(wrapped.watch(clientSession.unwrapped(), pipeline, resultClass))
 
     override fun bulkWrite(models: MutableList<out ClientNamespacedWriteModel>): ClientBulkWriteResult {
-        org.junit.jupiter.api.Assumptions.assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement")
-        TODO("BULK-TODO implement")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            java.lang.Boolean.parseBoolean(toString()), "BULK-TODO Kotlin implement")
+        TODO("BULK-TODO Kotlin implement")
     }
 
     override fun bulkWrite(
         models: MutableList<out ClientNamespacedWriteModel>,
         options: ClientBulkWriteOptions
     ): ClientBulkWriteResult {
-        org.junit.jupiter.api.Assumptions.assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement")
-        TODO("BULK-TODO implement")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            java.lang.Boolean.parseBoolean(toString()), "BULK-TODO Kotlin implement")
+        TODO("BULK-TODO Kotlin implement")
     }
 
     override fun bulkWrite(
         clientSession: ClientSession,
         models: MutableList<out ClientNamespacedWriteModel>
     ): ClientBulkWriteResult {
-        org.junit.jupiter.api.Assumptions.assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement")
-        TODO("BULK-TODO implement")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            java.lang.Boolean.parseBoolean(toString()), "BULK-TODO Kotlin implement")
+        TODO("BULK-TODO Kotlin implement")
     }
 
     override fun bulkWrite(
@@ -139,8 +142,9 @@ internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoClu
         models: MutableList<out ClientNamespacedWriteModel>,
         options: ClientBulkWriteOptions
     ): ClientBulkWriteResult {
-        org.junit.jupiter.api.Assumptions.assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement")
-        TODO("BULK-TODO implement")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            java.lang.Boolean.parseBoolean(toString()), "BULK-TODO Kotlin implement")
+        TODO("BULK-TODO Kotlin implement")
     }
 
     private fun ClientSession.unwrapped() = (this as SyncClientSession).wrapped
