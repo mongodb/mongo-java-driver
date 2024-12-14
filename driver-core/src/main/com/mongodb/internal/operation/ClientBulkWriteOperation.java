@@ -685,8 +685,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             } else if (cursorExhaustBatches.size() == 1) {
                 cursorExhaust = cursorExhaustBatches.get(0);
             } else {
-                //TODO-VALENTIN-question can we do this flatmap in cursor exasust method to simplify the flow?
-                // we can do either flat map above or change getCursorExhaust to return List of Lists (if any perf benefit)
                 cursorExhaust = cursorExhaustBatches.stream().flatMap(Collection::stream).collect(toList());
             }
         }
