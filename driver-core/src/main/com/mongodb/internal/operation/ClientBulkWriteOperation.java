@@ -125,7 +125,7 @@ import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.DualMessageSequences.WritersProviderAndLimitsChecker.WriteResult.FAIL_LIMIT_EXCEEDED;
 import static com.mongodb.internal.connection.DualMessageSequences.WritersProviderAndLimitsChecker.WriteResult.OK_LIMIT_NOT_REACHED;
 import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
-import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWriteWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.BulkWriteBatch.logWriteModelDoesNotSupportRetries;
 import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
@@ -349,7 +349,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         RetryState retryState = initialRetryState(retryWritesSetting, timeoutContext);
         BatchEncoder batchEncoder = new BatchEncoder();
 
-        AsyncCallbackSupplier<ExhaustiveClientBulkWriteCommandOkResponse> retryingBatchExecutor = decorateReadWithRetriesAsync(
+        AsyncCallbackSupplier<ExhaustiveClientBulkWriteCommandOkResponse> retryingBatchExecutor = decorateWriteWithRetriesAsync(
                 retryState, operationContext,
                 // Each batch re-selects a server and re-checks out a connection because this is simpler,
                 // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
