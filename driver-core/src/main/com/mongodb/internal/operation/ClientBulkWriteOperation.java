@@ -244,7 +244,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
      *     <li>consume the cursor, which may involve executing `getMore` commands.</li>
      * </ul>
      *
-     * @throws MongoException When a {@linkplain ClientBulkWriteException#getCause() top-level error} happens.
+     * {@link SingleResultCallback<Void>} propagates {@link MongoException} when a {@linkplain ClientBulkWriteException#getCause() top-level error} happens.
      */
     private void executeAllBatchesAsync(
             final WriteConcern effectiveWriteConcern,
@@ -330,7 +330,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     * @return The start model index of the next batch, provided that the operation
+     *  @param finalCallback A callback that accepts the start model index of the next batch, provided that the operation
      * {@linkplain ExhaustiveClientBulkWriteCommandOkResponse#operationMayContinue(ConcreteClientBulkWriteOptions) may continue}
      * and there are unexecuted {@linkplain ClientNamespacedWriteModel models} left.
      */

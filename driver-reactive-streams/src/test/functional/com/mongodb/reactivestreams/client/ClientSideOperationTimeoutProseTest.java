@@ -489,13 +489,6 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
         }
     }
 
-//    @DisplayName("11. Multi-batch bulkWrites")
-//    @Test
-//    @Override
-//    protected void test11MultiBatchBulkWrites() {
-//        assumeTrue(java.lang.Boolean.parseBoolean(toString()), "BULK-TODO implement");
-//    }
-
     private static void assertCommandStartedEventsInOder(final List<String> expectedCommandNames,
                                                          final List<CommandStartedEvent> commandStartedEvents) {
         assertEquals(expectedCommandNames.size(), commandStartedEvents.size(), "Expected: " + expectedCommandNames + ". Actual: "
