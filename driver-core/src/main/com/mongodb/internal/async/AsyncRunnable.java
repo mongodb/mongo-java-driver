@@ -219,18 +219,6 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         });
     }
 
-    default <R> AsyncSupplier<R> thenSupplyTryCatchAsyncBlocks(
-            final AsyncSupplier<R> supplier,
-            final Predicate<Throwable> errorCheck,
-            final AsyncFunction<Throwable, R> errorFunction) {
-        return this.thenSupply(c -> {
-            beginAsync()
-                    .thenSupply(supplier)
-                    .onErrorIf(errorCheck, errorFunction)
-                    .finish(c);
-        });
-    }
-
     /**
      * @param condition the condition to check
      * @param runnable The async runnable to run after this runnable,
