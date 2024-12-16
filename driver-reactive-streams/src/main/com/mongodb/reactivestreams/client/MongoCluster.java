@@ -391,7 +391,7 @@ public interface MongoCluster {
      * @mongodb.server.release 8.0
      * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
      */
-    Publisher<ClientBulkWriteResult> bulkWrite(List<? extends ClientNamespacedWriteModel> models) throws ClientBulkWriteException;
+    Publisher<ClientBulkWriteResult> bulkWrite(List<? extends ClientNamespacedWriteModel> models);
 
     /**
      * Executes a client-level bulk write operation.
@@ -406,18 +406,24 @@ public interface MongoCluster {
      *
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
      * @param options The options.
-     * @return The {@link Publisher} with a single element which could be: The {@link ClientBulkWriteResult} if the operation is successful.
-     * The {@link ClientBulkWriteException} if and only if the operation is unsuccessful or partially unsuccessful,
-     * and there is at least one of the following pieces of information to report:
-     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
-     * {@link ClientBulkWriteException#getPartialResult()}. The {@link MongoException} only if the operation is unsuccessful.
+     * @return The {@link Publisher} signalling at most one element {@link ClientBulkWriteResult} if the operation is successful,
+     * or the following errors:
+     * <ul>
+     *     <li>
+     *     {@link ClientBulkWriteException} - If and only if the operation is unsuccessful or partially unsuccessful,
+     *     and there is at least one of the following pieces of information to report:
+     *     {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     *     {@link ClientBulkWriteException#getPartialResult()}.</li>
+     *     <li>
+     *     {@link MongoException} - Only if the operation is unsuccessful.</li>
+     * </ul>
      * @since 5.3
      * @mongodb.server.release 8.0
      * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
      */
     Publisher<ClientBulkWriteResult> bulkWrite(
             List<? extends ClientNamespacedWriteModel> models,
-            ClientBulkWriteOptions options) throws ClientBulkWriteException;
+            ClientBulkWriteOptions options);
 
     /**
      * Executes a client-level bulk write operation.
@@ -434,18 +440,24 @@ public interface MongoCluster {
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
-     * @return The {@link Publisher} with a single element which could be: The {@link ClientBulkWriteResult} if the operation is successful.
-     * The {@link ClientBulkWriteException} if and only if the operation is unsuccessful or partially unsuccessful,
-     * and there is at least one of the following pieces of information to report:
-     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
-     * {@link ClientBulkWriteException#getPartialResult()}. The {@link MongoException} only if the operation is unsuccessful.
+     * @return The {@link Publisher} signalling at most one element {@link ClientBulkWriteResult} if the operation is successful,
+     * or the following errors:
+     * <ul>
+     *     <li>
+     *     {@link ClientBulkWriteException} - If and only if the operation is unsuccessful or partially unsuccessful,
+     *     and there is at least one of the following pieces of information to report:
+     *     {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     *     {@link ClientBulkWriteException#getPartialResult()}.</li>
+     *     <li>
+     *     {@link MongoException} - Only if the operation is unsuccessful.</li>
+     * </ul>
      * @since 5.3
      * @mongodb.server.release 8.0
      * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
      */
     Publisher<ClientBulkWriteResult> bulkWrite(
             ClientSession clientSession,
-            List<? extends ClientNamespacedWriteModel> models) throws ClientBulkWriteException;
+            List<? extends ClientNamespacedWriteModel> models);
 
     /**
      * Executes a client-level bulk write operation.
@@ -461,11 +473,17 @@ public interface MongoCluster {
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
      * @param options The options.
-     * @return The {@link Publisher} with a single element which could be: The {@link ClientBulkWriteResult} if the operation is successful.
-     * The {@link ClientBulkWriteException} if and only if the operation is unsuccessful or partially unsuccessful,
-     * and there is at least one of the following pieces of information to report:
-     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
-     * {@link ClientBulkWriteException#getPartialResult()}. The {@link MongoException} only if the operation is unsuccessful.
+     * @return The {@link Publisher} signalling at most one element {@link ClientBulkWriteResult} if the operation is successful,
+     * or the following errors:
+     * <ul>
+     *     <li>
+     *     {@link ClientBulkWriteException} - If and only if the operation is unsuccessful or partially unsuccessful,
+     *     and there is at least one of the following pieces of information to report:
+     *     {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     *     {@link ClientBulkWriteException#getPartialResult()}.</li>
+     *     <li>
+     *     {@link MongoException} - Only if the operation is unsuccessful.</li>
+     * </ul>
      * @since 5.3
      * @mongodb.server.release 8.0
      * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
@@ -473,5 +491,5 @@ public interface MongoCluster {
     Publisher<ClientBulkWriteResult> bulkWrite(
             ClientSession clientSession,
             List<? extends ClientNamespacedWriteModel> models,
-            ClientBulkWriteOptions options) throws ClientBulkWriteException;
+            ClientBulkWriteOptions options);
 }

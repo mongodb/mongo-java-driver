@@ -123,49 +123,6 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     }
 
     /**
-     * Must be invoked at end of async chain
-     * @param runnable the sync code to invoke (under non-exceptional flow)
-     *                 prior to the callback
-     * @param callback the callback provided by the method the chain is used in
-     */
-    default void thenRunAndFinish(final Runnable runnable, final SingleResultCallback<Void> callback) {
-        this.finish((r, e) -> {
-            if (e != null) {
-                callback.completeExceptionally(e);
-                return;
-            }
-            try {
-                runnable.run();
-            } catch (Throwable t) {
-                callback.completeExceptionally(t);
-                return;
-            }
-            callback.complete(callback);
-        });
-    }
-
-    /**
-     * See {@link #thenRunAndFinish(Runnable, SingleResultCallback)}, but the runnable
-     * will always be executed, including on the exceptional path.
-     * @param runnable the runnable
-     * @param callback the callback
-     */
-    default void thenAlwaysRunAndFinish(final Runnable runnable, final SingleResultCallback<Void> callback) {
-        this.finish((r, e) -> {
-            try {
-                runnable.run();
-            } catch (Throwable t) {
-                if (e != null) {
-                    t.addSuppressed(e);
-                }
-                callback.completeExceptionally(t);
-                return;
-            }
-            callback.onResult(r, e);
-        });
-    }
-
-    /**
      * @param runnable The async runnable to run after this runnable
      * @return the composition of this runnable and the runnable, a runnable
      */

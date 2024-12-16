@@ -82,7 +82,30 @@ public interface AsyncSupplier<T> extends AsyncFunction<Void, T> {
     }
 
     /**
-     * The runnable will always be executed, including on the exceptional path.
+     * Must be invoked at end of async chain
+     * @param runnable the sync code to invoke (under non-exceptional flow)
+     *                 prior to the callback
+     * @param callback the callback provided by the method the chain is used in
+     */
+    default void thenRunAndFinish(final Runnable runnable, final SingleResultCallback<T> callback) {
+        this.finish((r, e) -> {
+            if (e != null) {
+                callback.completeExceptionally(e);
+                return;
+            }
+            try {
+                runnable.run();
+            } catch (Throwable t) {
+                callback.completeExceptionally(t);
+                return;
+            }
+            callback.onResult(r, null);
+        });
+    }
+
+    /**
+     * See {@link #thenRunAndFinish(Runnable, SingleResultCallback)}, but the runnable
+     * will always be executed, including on the exceptional path.
      * @param runnable the runnable
      * @param callback the callback
      */

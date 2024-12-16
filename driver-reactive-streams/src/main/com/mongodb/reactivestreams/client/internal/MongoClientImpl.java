@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.AutoEncryptionSettings;
-import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ContextProvider;
 import com.mongodb.MongoClientSettings;
@@ -234,29 +233,26 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> models)
-            throws ClientBulkWriteException {
+    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> models) {
         return delegate.bulkWrite(models);
     }
 
     @Override
     public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> models,
-                                                      final ClientBulkWriteOptions options)
-            throws ClientBulkWriteException {
+                                                      final ClientBulkWriteOptions options) {
         return delegate.bulkWrite(models, options);
     }
 
     @Override
     public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
-                                                      final List<? extends ClientNamespacedWriteModel> models)
-            throws ClientBulkWriteException {
+                                                      final List<? extends ClientNamespacedWriteModel> models) {
         return delegate.bulkWrite(clientSession, models);
     }
 
     @Override
     public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
                                                       final List<? extends ClientNamespacedWriteModel> models,
-                                                      final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+                                                      final ClientBulkWriteOptions options) {
         return delegate.bulkWrite(clientSession, models, options);
     }
 

@@ -16,8 +16,9 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
+
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
 @NotThreadSafe
 public final class MutableValue<T> {
@@ -32,7 +33,7 @@ public final class MutableValue<T> {
     }
 
     public T get() {
-        return Assertions.assertNotNull(value);
+        return assertNotNull(value);
     }
 
     @Nullable

@@ -95,6 +95,7 @@ public final class MongoOperationPublisher<T> {
 
     private final AsyncOperations<T> operations;
     private final UuidRepresentation uuidRepresentation;
+    @Nullable
     private final AutoEncryptionSettings autoEncryptionSettings;
     private final OperationExecutor executor;
 
@@ -249,7 +250,7 @@ public final class MongoOperationPublisher<T> {
             @Nullable final ClientSession clientSession, final String collectionName, final CreateCollectionOptions options) {
         return createWriteOperationMono(
                 operations::getTimeoutSettings,
-                operations.createCollection(collectionName, options, autoEncryptionSettings), clientSession);
+                () -> operations.createCollection(collectionName, options, autoEncryptionSettings), clientSession);
     }
 
     Publisher<Void> createView(
@@ -519,11 +520,6 @@ public final class MongoOperationPublisher<T> {
     <R> Mono<R> createWriteOperationMono(final Supplier<TimeoutSettings> timeoutSettingsSupplier,
             final Supplier<AsyncWriteOperation<R>> operationSupplier, @Nullable final ClientSession clientSession) {
         AsyncWriteOperation<R> writeOperation = operationSupplier.get();
-        return  getExecutor(timeoutSettingsSupplier.get())
-                .execute(writeOperation, getReadConcern(), clientSession);
-    }
-    <R> Mono<R> createWriteOperationMono(final Supplier<TimeoutSettings> timeoutSettingsSupplier,
-                                         final AsyncWriteOperation<R> writeOperation, @Nullable final ClientSession clientSession) {
         return  getExecutor(timeoutSettingsSupplier.get())
                 .execute(writeOperation, getReadConcern(), clientSession);
     }

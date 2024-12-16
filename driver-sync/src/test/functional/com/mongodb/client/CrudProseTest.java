@@ -430,8 +430,9 @@ public class CrudProseTest {
             assertTrue(
                     assertThrows(
                             IllegalStateException.class,
-                            () -> client.bulkWrite(singletonList(insertOne(NAMESPACE, new Document("a", "b")))))
-                            .getMessage().contains("bulkWrite does not currently support automatic encryption"));
+                            () -> client.bulkWrite(singletonList(insertOne(NAMESPACE, new Document("a", "b"))))
+                    ).getMessage().contains("bulkWrite does not currently support automatic encryption")
+            );
         }
     }
 

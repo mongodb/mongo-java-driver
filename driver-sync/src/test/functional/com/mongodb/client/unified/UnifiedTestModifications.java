@@ -47,7 +47,7 @@ public final class UnifiedTestModifications {
         // change-streams
         def.skipNoncompliantReactive("error required from change stream initialization") // TODO reason?
                 .test("change-streams", "change-streams", "Test with document comment - pre 4.4");
-        def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
+        def.skipNoncompliantReactive("event sensitive tests") // TODO reason?
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
                 .test("change-streams", "change-streams", "Test that comment is not set on getMore - pre 4.4");
         def.modify(IGNORE_EXTRA_EVENTS)
@@ -197,7 +197,6 @@ public final class UnifiedTestModifications {
                 .test("retryable-writes", "findOneAndDelete-errorLabels", "FindOneAndDelete succeeds after WriteConcernError ShutdownInProgress")
                 .test("retryable-writes", "findOneAndReplace-errorLabels", "FindOneAndReplace succeeds after WriteConcernError ShutdownInProgress")
                 //.testContains("retryable-writes", "succeeds after retryable writeConcernError")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with no multi: true operations succeeds after retryable writeConcernError")
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "InsertOne succeeds after retryable writeConcernError")
                 .test("retryable-writes", "retryable-writes bulkWrite serverErrors", "BulkWrite succeeds after retryable writeConcernError in first batch");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
