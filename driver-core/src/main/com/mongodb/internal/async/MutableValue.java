@@ -20,7 +20,7 @@ import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
 
 @NotThreadSafe
-public class MutableValue<T> {
+public final class MutableValue<T> {
     private T value;
 
     public MutableValue(@Nullable final T value) {
