@@ -294,7 +294,6 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * @return the composition of this and the looping branch
      * @see AsyncCallbackLoop
      */
-
     default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final Supplier<Boolean> whileCheck) {
         return thenRun(finalCallback -> {
             LoopState loopState = new LoopState();
