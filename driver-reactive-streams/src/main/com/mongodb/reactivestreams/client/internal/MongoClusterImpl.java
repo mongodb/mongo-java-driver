@@ -269,9 +269,13 @@ final class MongoClusterImpl implements MongoCluster {
 
     @Override
     public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
-                                                      final List<? extends ClientNamespacedWriteModel> models,
-                                                      final ClientBulkWriteOptions options) throws ClientBulkWriteException {
-        return mongoOperationPublisher.clientBulkWrite(clientSession, models, options);
+                                                      final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+                                                      final ClientBulkWriteOptions options) {
+        notNull("clientSession", clientSession);
+        notNull("clientWriteModels", clientWriteModels);
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
+        notNull("options", options);
+        return mongoOperationPublisher.clientBulkWrite(clientSession, clientWriteModels, options);
     }
 
 }

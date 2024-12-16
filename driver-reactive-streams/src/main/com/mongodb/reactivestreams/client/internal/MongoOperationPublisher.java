@@ -292,6 +292,7 @@ public final class MongoOperationPublisher<T> {
                 operations::getTimeoutSettings,
                 () -> operations.bulkWrite(notNull("requests", requests), notNull("options", options)), clientSession);
     }
+
     Publisher<ClientBulkWriteResult> clientBulkWrite(
             @Nullable final ClientSession clientSession,
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
