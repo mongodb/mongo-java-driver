@@ -279,8 +279,6 @@ public class CrudProseTest {
         assumeFalse(isServerlessTest());
         assumeFalse(isStandalone());
         assertBulkWriteHandlesCursorRequiringGetMore(true);
-
-        //TODO consider removing withTransaction and use start and end transaction.
     }
 
     private void assertBulkWriteHandlesCursorRequiringGetMore(final boolean transaction) {
