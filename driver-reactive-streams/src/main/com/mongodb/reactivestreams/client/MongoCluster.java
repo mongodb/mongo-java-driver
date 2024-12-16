@@ -376,11 +376,17 @@ public interface MongoCluster {
      * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
-     * @return The {@link Publisher} with a single element which could be: The {@link ClientBulkWriteResult} if the operation is successful.
-     * The {@link ClientBulkWriteException} if and only if the operation is unsuccessful or partially unsuccessful,
-     * and there is at least one of the following pieces of information to report:
-     * {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
-     * {@link ClientBulkWriteException#getPartialResult()}. The {@link MongoException} only if the operation is unsuccessful.
+     * @return The {@link Publisher} signalling at most one element {@link ClientBulkWriteResult} if the operation is successful,
+     * or the following errors:
+     * <ul>
+     *     <li>
+     *     {@link ClientBulkWriteException} - If and only if the operation is unsuccessful or partially unsuccessful,
+     *     and there is at least one of the following pieces of information to report:
+     *     {@link ClientBulkWriteException#getWriteConcernErrors()}, {@link ClientBulkWriteException#getWriteErrors()},
+     *     {@link ClientBulkWriteException#getPartialResult()}.</li>
+     *     <li>
+     *     {@link MongoException} - Only if the operation is unsuccessful.</li>
+     * </ul>
      * @since 5.3
      * @mongodb.server.release 8.0
      * @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
