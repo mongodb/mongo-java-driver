@@ -203,18 +203,6 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5341")
                 .when(() -> isDiscoverableReplicaSet() && serverVersionLessThan(4, 4))
                 .test("retryable-writes", "retryable-writes insertOne serverErrors", "RetryableWriteError label is added based on writeConcernError in pre-4.4 mongod response");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-4586")
-                //.testContains("retryable-writes", "client bulkWrite")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with no multi: true operations succeeds after retryable top-level error")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with multi: true operations fails after retryable top-level error")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with no multi: true operations succeeds after retryable writeConcernError")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with multi: true operations fails after retryable writeConcernError")
-                .test("retryable-writes", "client bulkWrite retryable writes", "client bulkWrite with retryWrites: false does not retry")
-                .test("retryable-writes", "client bulkWrite retryable writes with client errors", "client bulkWrite with one network error succeeds after retry")
-                .test("retryable-writes", "client bulkWrite retryable writes with client errors", "client bulkWrite with two network errors fails after retry")
-                //.testContains("retryable-writes", "client.clientBulkWrite")
-                .test("retryable-writes", "retryable writes handshake failures", "client.clientBulkWrite succeeds after retryable handshake network error")
-                .test("retryable-writes", "retryable writes handshake failures", "client.clientBulkWrite succeeds after retryable handshake server error (ShutdownInProgress)");
 
         // server-discovery-and-monitoring (SDAM)
 
