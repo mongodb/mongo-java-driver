@@ -118,6 +118,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
 
         int totalDocuments = result.stream().mapToInt(List::size).sum();
         assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
+        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
     }
 
     @Test
@@ -149,6 +150,7 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
 
         // then
         assertTrue(result.isEmpty(), "Expected no batches for an empty cursor.");
+        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
     }
 
     @Test

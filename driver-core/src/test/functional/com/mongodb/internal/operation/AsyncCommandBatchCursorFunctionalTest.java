@@ -133,6 +133,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
 
             int totalDocuments = resultBatches.stream().mapToInt(List::size).sum();
             assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
+            assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
         });
     }
 
@@ -190,8 +191,8 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         // then
         assertDoesNotThrow(() -> {
             List<List<Document>> resultBatches = futureResult.get(5, TimeUnit.SECONDS);
-
             assertTrue(resultBatches.isEmpty(), "Expected no batches for an empty cursor.");
+            assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
         });
     }
 

@@ -357,17 +357,17 @@ public final class CollectionHelper<T> {
     }
 
     public void deleteOne(final Bson filter) {
-        new MixedBulkWriteOperation(namespace,
-                                    singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
-                                    true, WriteConcern.ACKNOWLEDGED, false)
-                .execute(getBinding());
+        delete(filter, false);
     }
 
     public void deleteMany(final Bson filter) {
+        delete(filter, true);
+    }
+
+    private void delete(final Bson filter, final boolean multi) {
         new MixedBulkWriteOperation(namespace,
-                singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry)).multi(true)),
-                true, WriteConcern.ACKNOWLEDGED, false)
-                .execute(getBinding());
+                singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
+                true, WriteConcern.ACKNOWLEDGED, false);
     }
 
     public List<T> find(final Bson filter) {
