@@ -363,31 +363,29 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContext, resultCallback);
                         }));
 
-        beginAsync()
-                .<ExhaustiveClientBulkWriteCommandOkResponse>thenSupply(callback -> {
-                    retryingBatchExecutor.get(callback);
-                })
-                .<Integer>thenApply((bulkWriteCommandOkResponse, callback) -> {
-                    callback.complete(resultAccumulator.onBulkWriteCommandOkResponseOrNoResponse(
-                            batchStartModelIndex, bulkWriteCommandOkResponse, batchEncoder.intoEncodedBatchInfo()));
-                }).onErrorIf(throwable -> true, (t, callback) -> {
-                    if (t instanceof MongoWriteConcernWithResponseException) {
-                        callback.complete(resultAccumulator.onBulkWriteCommandOkResponseWithWriteConcernError(
-                                batchStartModelIndex, (MongoWriteConcernWithResponseException) t, batchEncoder.intoEncodedBatchInfo()));
-                    } else if (t instanceof MongoCommandException) {
-                        resultAccumulator.onBulkWriteCommandErrorResponse((MongoCommandException) t);
-                        callback.completeExceptionally(t);
-                    } else if (t instanceof MongoException) {
-                        // The server does not have a chance to add "RetryableWriteError" label to `e`,
-                        // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
-                        // to add the label. So we do that explicitly.
-                        shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, t);
-                        resultAccumulator.onBulkWriteCommandErrorWithoutResponse((MongoException) t);
-                        callback.completeExceptionally(t);
-                    } else {
-                        callback.completeExceptionally(t);
-                    }
-                }).finish(finalCallback);
+        beginAsync().<ExhaustiveClientBulkWriteCommandOkResponse>thenSupply(callback -> {
+            retryingBatchExecutor.get(callback);
+        }).<Integer>thenApply((bulkWriteCommandOkResponse, callback) -> {
+            callback.complete(resultAccumulator.onBulkWriteCommandOkResponseOrNoResponse(
+                    batchStartModelIndex, bulkWriteCommandOkResponse, batchEncoder.intoEncodedBatchInfo()));
+        }).onErrorIf(throwable -> true, (t, callback) -> {
+            if (t instanceof MongoWriteConcernWithResponseException) {
+                callback.complete(resultAccumulator.onBulkWriteCommandOkResponseWithWriteConcernError(
+                        batchStartModelIndex, (MongoWriteConcernWithResponseException) t, batchEncoder.intoEncodedBatchInfo()));
+            } else if (t instanceof MongoCommandException) {
+                resultAccumulator.onBulkWriteCommandErrorResponse((MongoCommandException) t);
+                callback.completeExceptionally(t);
+            } else if (t instanceof MongoException) {
+                // The server does not have a chance to add "RetryableWriteError" label to `e`,
+                // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
+                // to add the label. So we do that explicitly.
+                shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, t);
+                resultAccumulator.onBulkWriteCommandErrorWithoutResponse((MongoException) t);
+                callback.completeExceptionally(t);
+            } else {
+                callback.completeExceptionally(t);
+            }
+        }).finish(finalCallback);
     }
 
     /**
