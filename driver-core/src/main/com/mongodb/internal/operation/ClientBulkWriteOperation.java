@@ -241,7 +241,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final ResultAccumulator resultAccumulator,
             final SingleResultCallback<Void> finalCallback) {
         MutableValue<Integer> nextBatchStartModelIndex = new MutableValue<>(INITIAL_BATCH_MODEL_START_INDEX);
-
         beginAsync().thenRunDoWhileLoop(iterationCallback -> {
             beginAsync().<Integer>thenSupply(c -> {
                 executeBatchAsync(nextBatchStartModelIndex.get(), effectiveWriteConcern, binding, resultAccumulator, c);
