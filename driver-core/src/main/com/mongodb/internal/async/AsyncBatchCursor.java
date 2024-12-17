@@ -80,17 +80,17 @@ public interface AsyncBatchCursor<T> extends Closeable {
         List<List<T>> results = new ArrayList<>();
 
         beginAsync().thenRunDoWhileLoop(iterationCallback -> {
-                    beginAsync().
-                            thenSupply(this::next)
-                            .thenConsume((batch, callback) -> {
-                                if (batch != null && !batch.isEmpty()) {
-                                    results.add(batch);
-                                }
-                                callback.complete(callback);
-                            }).finish(iterationCallback);
-                }, () -> !this.isClosed())
-                .<List<List<T>>>thenSupply(callback -> {
-                    callback.complete(results);
-                }).finish(finalCallback);
+            beginAsync().<List<T>>thenSupply(c -> {
+                next(c);
+            }).thenConsume((batch, c) -> {
+                if (batch != null && !batch.isEmpty()) {
+                    results.add(batch);
+                }
+                c.complete(c);
+            }).finish(iterationCallback);
+        }, () -> !this.isClosed()
+        ).<List<List<T>>>thenSupply(c -> {
+            c.complete(results);
+        }).finish(finalCallback);
      }
 }
