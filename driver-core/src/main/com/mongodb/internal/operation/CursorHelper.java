@@ -33,8 +33,8 @@ final class CursorHelper {
         return batchSize == null ? new BsonDocument() : new BsonDocument("batchSize", new BsonInt32(batchSize));
     }
 
-    public static void exhaustCursorAsync(final AsyncBatchCursor<BsonDocument> cursor, final SingleResultCallback<List<List<BsonDocument>>> finalCallback) {
-        List<List<BsonDocument>> results = new ArrayList<>();
+    public static <T> void exhaustCursorAsync(final AsyncBatchCursor<T> cursor, final SingleResultCallback<List<List<T>>> finalCallback) {
+        List<List<T>> results = new ArrayList<>();
 
         beginAsync().thenRunDoWhileLoop(iterationCallback -> {
                     beginAsync().
@@ -46,7 +46,7 @@ final class CursorHelper {
                                 callback.complete(callback);
                             }).finish(iterationCallback);
                 }, () -> !cursor.isClosed())
-                .<List<List<BsonDocument>>>thenSupply(callback -> {
+                .<List<List<T>>>thenSupply(callback -> {
                     callback.complete(results);
                 }).finish(finalCallback);
     }
