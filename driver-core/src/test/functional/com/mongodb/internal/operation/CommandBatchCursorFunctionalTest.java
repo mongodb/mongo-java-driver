@@ -104,26 +104,25 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
 
     @Test
     @DisplayName("should exhaust cursor with multiple batches")
-    void shouldExhaustCursorAsyncWithMultipleBatches() {
+    void shouldExhaustCursorWithMultipleBatches() {
         // given
         BsonDocument commandResult = executeFindCommand(0, 3); // Fetch in batches of size 3
         cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
                 null, connectionSource, connection);
 
         // when
-        List<List<Document>> result = cursor.exhaustCursor();
+        List<List<Document>> result = cursor.exhaust();
 
         // then
         assertEquals(4, result.size(), "Expected 4 batches for 10 documents with batch size of 3.");
 
         int totalDocuments = result.stream().mapToInt(List::size).sum();
         assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
-        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
     }
 
     @Test
     @DisplayName("should exhaust cursor with closed cursor")
-    void shouldExhaustCursorAsyncWithClosedCursor() {
+    void shouldExhaustCursorWithClosedCursor() {
         // given
         BsonDocument commandResult = executeFindCommand(0, 3);
         cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
@@ -131,13 +130,13 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
         cursor.close();
 
         // when & then
-        IllegalStateException illegalStateException = assertThrows(IllegalStateException.class, cursor::exhaustCursor);
+        IllegalStateException illegalStateException = assertThrows(IllegalStateException.class, cursor::exhaust);
         assertEquals("Cursor has been closed", illegalStateException.getMessage());
     }
 
     @Test
-    @DisplayName("should exhaust cursor async with empty cursor")
-    void shouldExhaustCursorAsyncWithEmptyCursor() {
+    @DisplayName("should exhaust cursor with empty cursor")
+    void shouldExhaustCursorWithEmptyCursor() {
         // given
         getCollectionHelper().deleteMany(Filters.empty());
 
@@ -146,11 +145,10 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
                 null, connectionSource, connection);
 
         // when
-        List<List<Document>> result = cursor.exhaustCursor();
+        List<List<Document>> result = cursor.exhaust();
 
         // then
         assertTrue(result.isEmpty(), "Expected no batches for an empty cursor.");
-        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
     }
 
     @Test

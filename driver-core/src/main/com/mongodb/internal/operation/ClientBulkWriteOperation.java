@@ -153,6 +153,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     private static final EncoderContext COLLECTIBLE_DOCUMENT_ENCODER_CONTEXT = EncoderContext.builder()
             .isEncodingCollectibleDocument(true).build();
     private static final int INITIAL_BATCH_MODEL_START_INDEX = 0;
+    private static final int SERVER_DEFAULT_CURSOR_BATCH_SIZE = 0;
 
     private final List<? extends ClientNamespacedWriteModel> models;
     private final ConcreteClientBulkWriteOptions options;
@@ -181,6 +182,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(binding.getOperationContext().getSessionContext());
         ResultAccumulator resultAccumulator = new ResultAccumulator();
         MongoException transformedTopLevelError = null;
+
         try {
             executeAllBatches(effectiveWriteConcern, binding, resultAccumulator);
         } catch (MongoException topLevelError) {
@@ -189,27 +191,21 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         return resultAccumulator.build(transformedTopLevelError, effectiveWriteConcern);
     }
 
+
     @Override
     public void executeAsync(final AsyncWriteBinding binding,
                              final SingleResultCallback<ClientBulkWriteResult> finalCallback) {
         WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(binding.getOperationContext().getSessionContext());
         ResultAccumulator resultAccumulator = new ResultAccumulator();
+        MutableValue<MongoException> transformedTopLevelError = new MutableValue<>();
 
-        beginAsync().<MongoException>thenSupply(callback -> {
-            executeAllBatchesAsync(effectiveWriteConcern, binding, resultAccumulator, (result, t) -> {
-                MongoException transformedTopLevelError = null;
-                if (t != null) {
-                    if (t instanceof MongoException) {
-                        transformedTopLevelError = transformWriteException((MongoException) t);
-                    } else {
-                        callback.completeExceptionally(t);
-                        return;
-                    }
-                }
-                callback.onResult(transformedTopLevelError, null);
-            });
-        }).<ClientBulkWriteResult>thenApply((transformedTopLevelError, callback1) -> {
-            callback1.onResult(resultAccumulator.build(transformedTopLevelError, effectiveWriteConcern), null);
+        beginAsync().<Void>thenSupply(c -> {
+            executeAllBatchesAsync(effectiveWriteConcern, binding, resultAccumulator, c);
+        }).onErrorIf(topLevelError -> topLevelError instanceof MongoException, (topLevelError, c) -> {
+            transformedTopLevelError.set(transformWriteException((MongoException) topLevelError));
+            c.complete(c);
+        }).<ClientBulkWriteResult>thenApply((ignored, c) -> {
+            c.complete(resultAccumulator.build(transformedTopLevelError.getNullable(), effectiveWriteConcern));
         }).finish(finalCallback);
     }
 
@@ -227,9 +223,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final WriteBinding binding,
             final ResultAccumulator resultAccumulator) throws MongoException {
         Integer nextBatchStartModelIndex = INITIAL_BATCH_MODEL_START_INDEX;
+
         do {
             nextBatchStartModelIndex = executeBatch(nextBatchStartModelIndex, effectiveWriteConcern, binding, resultAccumulator);
-        } while (shouldExecuteNextBatch(nextBatchStartModelIndex));
+        } while (nextBatchStartModelIndex != null);
     }
 
     /**
@@ -241,6 +238,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final ResultAccumulator resultAccumulator,
             final SingleResultCallback<Void> finalCallback) {
         MutableValue<Integer> nextBatchStartModelIndex = new MutableValue<>(INITIAL_BATCH_MODEL_START_INDEX);
+
         beginAsync().thenRunDoWhileLoop(iterationCallback -> {
             beginAsync().<Integer>thenSupply(c -> {
                 executeBatchAsync(nextBatchStartModelIndex.get(), effectiveWriteConcern, binding, resultAccumulator, c);
@@ -274,26 +272,28 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         RetryState retryState = initialRetryState(retryWritesSetting, timeoutContext);
         BatchEncoder batchEncoder = new BatchEncoder();
+
         Supplier<ExhaustiveClientBulkWriteCommandOkResponse> retryingBatchExecutor = decorateWriteWithRetries(
                 retryState, operationContext,
                 // Each batch re-selects a server and re-checks out a connection because this is simpler,
                 // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
-                // If connection pinning is required, {@code binding} handles that,
+                // If connection pinning is required, binding handles that,
                 // and `ClientSession`, `TransactionContext` are aware of that.
-                () -> withSourceAndConnection(binding::getWriteConnectionSource, true, (connectionSource, connection) -> {
-                    ConnectionDescription connectionDescription = connection.getDescription();
-                    boolean effectiveRetryWrites = isRetryableWrite(
-                            retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
-                    retryState.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
-                    resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
-                    retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true)
-                            .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME, false);
-                    ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
-                            retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
-                            () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
-                    return executeBulkWriteCommandAndExhaustOkResponse(
-                            retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContext);
-                })
+                () -> withSourceAndConnection(binding::getWriteConnectionSource, true,
+                        (connectionSource, connection) -> {
+                            ConnectionDescription connectionDescription = connection.getDescription();
+                            boolean effectiveRetryWrites = isRetryableWrite(
+                                    retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
+                            retryState.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
+                            resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
+                            retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true)
+                                    .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME, false);
+                            ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
+                                    retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
+                                    () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
+                            return executeBulkWriteCommandAndExhaustOkResponse(
+                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContext);
+                        })
         );
 
         try {
@@ -306,13 +306,13 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         } catch (MongoCommandException bulkWriteCommandException) {
             resultAccumulator.onBulkWriteCommandErrorResponse(bulkWriteCommandException);
             throw bulkWriteCommandException;
-        } catch (MongoException e) {
+        } catch (MongoException mongoException) {
             // The server does not have a chance to add "RetryableWriteError" label to `e`,
             // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
             // to add the label. So we do that explicitly.
-            shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, e);
-            resultAccumulator.onBulkWriteCommandErrorWithoutResponse(e);
-            throw e;
+            shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, mongoException);
+            resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
+            throw mongoException;
         }
     }
 
@@ -337,7 +337,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 retryState, operationContext,
                 // Each batch re-selects a server and re-checks out a connection because this is simpler,
                 // and it is allowed by https://jira.mongodb.org/browse/DRIVERS-2502.
-                // If connection pinning is required, {@code binding} handles that,
+                // If connection pinning is required, binding handles that,
                 // and `ClientSession`, `TransactionContext` are aware of that.
                 funcCallback -> withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, funcCallback,
                         (connectionSource, connection, resultCallback) -> {
@@ -362,18 +362,21 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     batchStartModelIndex, bulkWriteCommandOkResponse, batchEncoder.intoEncodedBatchInfo()));
         }).onErrorIf(throwable -> true, (t, callback) -> {
             if (t instanceof MongoWriteConcernWithResponseException) {
+                MongoWriteConcernWithResponseException mongoWriteConcernWithOkResponseException = (MongoWriteConcernWithResponseException) t;
                 callback.complete(resultAccumulator.onBulkWriteCommandOkResponseWithWriteConcernError(
-                        batchStartModelIndex, (MongoWriteConcernWithResponseException) t, batchEncoder.intoEncodedBatchInfo()));
+                        batchStartModelIndex, mongoWriteConcernWithOkResponseException, batchEncoder.intoEncodedBatchInfo()));
             } else if (t instanceof MongoCommandException) {
-                resultAccumulator.onBulkWriteCommandErrorResponse((MongoCommandException) t);
+                MongoCommandException bulkWriteCommandException = (MongoCommandException) t;
+                resultAccumulator.onBulkWriteCommandErrorResponse(bulkWriteCommandException);
                 callback.completeExceptionally(t);
             } else if (t instanceof MongoException) {
+                MongoException mongoException = (MongoException) t;
                 // The server does not have a chance to add "RetryableWriteError" label to `e`,
                 // and if it is the last attempt failure, `RetryingSyncSupplier` also may not have a chance
                 // to add the label. So we do that explicitly.
-                shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, t);
-                resultAccumulator.onBulkWriteCommandErrorWithoutResponse((MongoException) t);
-                callback.completeExceptionally(t);
+                shouldAttemptToRetryWriteAndAddRetryableLabel(retryState, mongoException);
+                resultAccumulator.onBulkWriteCommandErrorWithoutResponse(mongoException);
+                callback.completeExceptionally(mongoException);
             } else {
                 callback.completeExceptionally(t);
             }
@@ -410,13 +413,12 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         List<List<BsonDocument>> cursorExhaustBatches = doWithRetriesDisabledForCommand(retryState, "getMore", () ->
                 exhaustBulkWriteCommandOkResponseCursor(connectionSource, connection, bulkWriteCommandOkResponse));
 
-        return getExhaustiveClientBulkWriteCommandOkResponse(
+        return createExhaustiveClientBulkWriteCommandOkResponse(
                 bulkWriteCommandOkResponse,
                 cursorExhaustBatches,
                 connection.getDescription());
     }
 
-    @Nullable
     private void executeBulkWriteCommandAndExhaustOkResponseAsync(
             final RetryState retryState,
             final AsyncConnectionSource connectionSource,
@@ -424,8 +426,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final ClientBulkWriteCommand bulkWriteCommand,
             final WriteConcern effectiveWriteConcern,
             final OperationContext operationContext,
-            final SingleResultCallback<ExhaustiveClientBulkWriteCommandOkResponse> finalCallback)
-            throws MongoWriteConcernWithResponseException {
+            final SingleResultCallback<ExhaustiveClientBulkWriteCommandOkResponse> finalCallback) {
         beginAsync().<BsonDocument>thenSupply(callback -> {
             connection.commandAsync(
                     "admin",
@@ -446,26 +447,24 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, bulkWriteCommandOkResponse, c1);
                 }, c);
             }).<ExhaustiveClientBulkWriteCommandOkResponse>thenApply((cursorExhaustBatches, c) -> {
-                ExhaustiveClientBulkWriteCommandOkResponse exhaustiveBulkWriteCommandOkResponse =
-                        getExhaustiveClientBulkWriteCommandOkResponse(
-                                bulkWriteCommandOkResponse,
-                                cursorExhaustBatches,
-                                connection.getDescription());
-                c.complete(exhaustiveBulkWriteCommandOkResponse);
+                c.complete(createExhaustiveClientBulkWriteCommandOkResponse(
+                        bulkWriteCommandOkResponse,
+                        cursorExhaustBatches,
+                        connection.getDescription()));
             }).finish(callback);
         }).finish(finalCallback);
     }
 
-    private static ExhaustiveClientBulkWriteCommandOkResponse getExhaustiveClientBulkWriteCommandOkResponse(
+    private static ExhaustiveClientBulkWriteCommandOkResponse createExhaustiveClientBulkWriteCommandOkResponse(
             final BsonDocument bulkWriteCommandOkResponse, final List<List<BsonDocument>> cursorExhaustBatches,
-            final ConnectionDescription connection) {
+            final ConnectionDescription connectionDescription) {
         ExhaustiveClientBulkWriteCommandOkResponse exhaustiveBulkWriteCommandOkResponse =
                 new ExhaustiveClientBulkWriteCommandOkResponse(
                         bulkWriteCommandOkResponse, cursorExhaustBatches);
 
         // `Connection.command` does not throw `MongoWriteConcernException`, so we have to construct it ourselves
         MongoWriteConcernException writeConcernException = Exceptions.createWriteConcernException(
-                bulkWriteCommandOkResponse, connection.getServerAddress());
+                bulkWriteCommandOkResponse, connectionDescription.getServerAddress());
         if (writeConcernException != null) {
             throw new MongoWriteConcernWithResponseException(writeConcernException, exhaustiveBulkWriteCommandOkResponse);
         }
@@ -479,6 +478,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         Optional<Boolean> originalRetryableCommandFlag = retryState.attachment(AttachmentKeys.retryableCommandFlag());
         Supplier<String> originalCommandDescriptionSupplier = retryState.attachment(AttachmentKeys.commandDescriptionSupplier())
                 .orElseThrow(Assertions::fail);
+
         try {
             retryState.attach(AttachmentKeys.retryableCommandFlag(), false, true)
                     .attach(AttachmentKeys.commandDescriptionSupplier(), () -> commandDescription, false);
@@ -512,16 +512,15 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final ConnectionSource connectionSource,
             final Connection connection,
             final BsonDocument response) {
-        int serverDefaultCursorBatchSize = 0;
         try (CommandBatchCursor<BsonDocument> cursor = cursorDocumentToBatchCursor(
                 TimeoutMode.CURSOR_LIFETIME,
                 response,
-                serverDefaultCursorBatchSize,
+                SERVER_DEFAULT_CURSOR_BATCH_SIZE,
                 codecRegistry.get(BsonDocument.class),
                 options.getComment().orElse(null),
                 connectionSource,
                 connection)) {
-           return cursor.exhaustCursor();
+           return cursor.exhaust();
         }
     }
 
@@ -532,18 +531,17 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         AsyncBatchCursor<BsonDocument> cursor = cursorDocumentToAsyncBatchCursor(
                 TimeoutMode.CURSOR_LIFETIME,
                 bulkWriteCommandOkResponse,
-                0,
+                SERVER_DEFAULT_CURSOR_BATCH_SIZE,
                 codecRegistry.get(BsonDocument.class),
                 options.getComment().orElse(null),
                 connectionSource,
                 connection);
 
         beginAsync().<List<List<BsonDocument>>>thenSupply(callback -> {
-             cursor.exhaustCursor(callback);
+             cursor.exhaust(callback);
         }).thenAlwaysRunAndFinish(() -> {
-            if (!cursor.isClosed()) {
-                cursor.close();
-            }}, finalCallback);
+             cursor.close();
+        }, finalCallback);
     }
 
 

@@ -76,14 +76,14 @@ public interface AsyncBatchCursor<T> extends Closeable {
     @Override
     void close();
 
-    default void exhaustCursor(final SingleResultCallback<List<List<T>>> finalCallback) {
+    default void exhaust(final SingleResultCallback<List<List<T>>> finalCallback) {
         List<List<T>> results = new ArrayList<>();
 
         beginAsync().thenRunDoWhileLoop(iterationCallback -> {
             beginAsync().<List<T>>thenSupply(c -> {
                 next(c);
             }).thenConsume((batch, c) -> {
-                if (batch != null && !batch.isEmpty()) {
+                if (!batch.isEmpty()) {
                     results.add(batch);
                 }
                 c.complete(c);

@@ -105,7 +105,7 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
 
     ServerAddress getServerAddress();
 
-    default List<List<T>> exhaustCursor() {
+    default List<List<T>> exhaust() {
         return stream(spliteratorUnknownSize(this, ORDERED | IMMUTABLE), false)
                 .collect(toList());
     }

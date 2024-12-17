@@ -791,6 +791,29 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     @Test
+    void testFinallyWithPlainOutsideTry() {
+        assertBehavesSameVariations(5,
+                () -> {
+                    plain(1);
+                    try {
+                        sync(2);
+                    } finally {
+                        plain(3);
+                    }
+                },
+                (callback) -> {
+                    beginAsync().thenRun(c -> {
+                        plain(1);
+                        beginAsync().thenRun(c2 -> {
+                            async(2, c2);
+                        }).thenAlwaysRunAndFinish(() -> {
+                            plain(3);
+                        }, c);
+                    }).finish(callback);
+                });
+    }
+
+    @Test
     void testSupplyFinallyWithPlainInsideTry() {
         assertBehavesSameVariations(6,
                 () -> {
@@ -817,7 +840,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 () -> {
                     plain(1);
                     try {
-                       return syncReturns(2);
+                        return syncReturns(2);
                     } finally {
                         plain(3);
                     }
@@ -834,28 +857,6 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 });
     }
 
-    @Test
-    void testFinallyWithPlainOutsideTry() {
-        assertBehavesSameVariations(5,
-                () -> {
-                    plain(1);
-                    try {
-                        sync(2);
-                    } finally {
-                        plain(3);
-                    }
-                },
-                (callback) -> {
-                    beginAsync().thenRun(c -> {
-                        plain(1);
-                        beginAsync().thenRun(c2 -> {
-                            async(2, c2);
-                        }).thenAlwaysRunAndFinish(() -> {
-                            plain(3);
-                        }, c);
-                    }).finish(callback);
-                });
-    }
 
     @Test
     void testUsedAsLambda() {

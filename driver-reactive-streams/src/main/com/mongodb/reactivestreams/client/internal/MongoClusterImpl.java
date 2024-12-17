@@ -243,7 +243,7 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
-    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> clientWriteModels) {
         notNull("clientWriteModels", clientWriteModels);
         isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
         return mongoOperationPublisher.clientBulkWrite(null, clientWriteModels, null);
@@ -260,7 +260,7 @@ final class MongoClusterImpl implements MongoCluster {
 
     @Override
     public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
-                                                      final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
+                                                      final List<? extends ClientNamespacedWriteModel> clientWriteModels) {
         notNull("clientSession", clientSession);
         notNull("clientWriteModels", clientWriteModels);
         isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());

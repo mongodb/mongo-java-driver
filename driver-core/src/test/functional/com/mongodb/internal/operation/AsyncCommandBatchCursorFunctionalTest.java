@@ -21,6 +21,7 @@ import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
+import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
@@ -114,27 +115,18 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
                 null, connectionSource, connection);
 
-        CompletableFuture<List<List<Document>>> futureResult = new CompletableFuture<>();
-
        // when
-        cursor.exhaustCursor((result, throwable) -> {
-            if (throwable != null) {
-                futureResult.completeExceptionally(throwable);
-            } else {
-                futureResult.complete(result);
-            }
-        });
+        FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
+        cursor.exhaust(futureCallback);
 
         // then
-        assertDoesNotThrow(() -> {
-            List<List<Document>> resultBatches = futureResult.get(5, TimeUnit.SECONDS);
+        List<List<Document>> resultBatches = futureCallback.get(5, TimeUnit.SECONDS);
 
-            assertEquals(4, resultBatches.size(), "Expected 4 batches for 10 documents with batch size of 3.");
+        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
+        assertEquals(4, resultBatches.size(), "Expected 4 batches for 10 documents with batch size of 3.");
 
-            int totalDocuments = resultBatches.stream().mapToInt(List::size).sum();
-            assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
-            assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
-        });
+        int totalDocuments = resultBatches.stream().mapToInt(List::size).sum();
+        assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
     }
 
     @Test
@@ -147,20 +139,13 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
 
         cursor.close();
 
-        CompletableFuture<List<List<Document>>> futureResult = new CompletableFuture<>();
-
         // when
-        cursor.exhaustCursor((result, throwable) -> {
-            if (throwable != null) {
-                futureResult.completeExceptionally(throwable);
-            } else {
-                futureResult.complete(result);
-            }
-        });
+        FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
+        cursor.exhaust(futureCallback);
 
         //then
         ExecutionException executionException = assertThrows(ExecutionException.class, () -> {
-            futureResult.get(5, TimeUnit.SECONDS);
+            futureCallback.get(5, TimeUnit.SECONDS);
         }, "Expected an exception when operating on a closed cursor.");
 
         IllegalStateException illegalStateException = (IllegalStateException) executionException.getCause();
@@ -177,23 +162,14 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
                 null, connectionSource, connection);
 
-        CompletableFuture<List<List<Document>>> futureResult = new CompletableFuture<>();
-
         // when
-        cursor.exhaustCursor((result, throwable) -> {
-            if (throwable != null) {
-                futureResult.completeExceptionally(throwable);
-            } else {
-                futureResult.complete(result);
-            }
-        });
+        FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
+        cursor.exhaust(futureCallback);
 
         // then
-        assertDoesNotThrow(() -> {
-            List<List<Document>> resultBatches = futureResult.get(5, TimeUnit.SECONDS);
-            assertTrue(resultBatches.isEmpty(), "Expected no batches for an empty cursor.");
-            assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
-        });
+        List<List<Document>> resultBatches = futureCallback.get(5, TimeUnit.SECONDS);
+        assertTrue(resultBatches.isEmpty(), "Expected no batches for an empty cursor.");
+        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
     }
 
     @Test

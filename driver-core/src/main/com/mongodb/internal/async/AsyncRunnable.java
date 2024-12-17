@@ -22,6 +22,7 @@ import com.mongodb.internal.async.function.LoopState;
 import com.mongodb.internal.async.function.RetryState;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -251,7 +252,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * @return the composition of this and the looping branch
      * @see AsyncCallbackLoop
      */
-    default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final Supplier<Boolean> whileCheck) {
+    default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final BooleanSupplier whileCheck) {
         return thenRun(finalCallback -> {
             LoopState loopState = new LoopState();
             new AsyncCallbackLoop(loopState, iterationCallback -> {
@@ -261,7 +262,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
                         iterationCallback.completeExceptionally(t);
                         return;
                     }
-                    if (loopState.breakAndCompleteIf(() -> !whileCheck.get(), iterationCallback)) {
+                    if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
                         return;
                     }
                     iterationCallback.complete(iterationCallback);
