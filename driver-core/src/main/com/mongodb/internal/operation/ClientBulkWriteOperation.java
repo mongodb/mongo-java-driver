@@ -242,16 +242,15 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final SingleResultCallback<Void> finalCallback) {
         MutableValue<Integer> nextBatchStartModelIndex = new MutableValue<>(INITIAL_BATCH_MODEL_START_INDEX);
 
-        beginAsync()
-                .thenRunDoWhileLoop(iterationCallback -> {
-                    beginAsync().<Integer>thenSupply(c -> {
-                        executeBatchAsync(nextBatchStartModelIndex.get(), effectiveWriteConcern, binding, resultAccumulator, c);
-                    }).<Void>thenApply((nextBatchStartModelIdx, c) -> {
-                        nextBatchStartModelIndex.set(nextBatchStartModelIdx);
-                        c.complete(c);
-                    }).finish(iterationCallback);
-                }, () -> shouldExecuteNextBatch(nextBatchStartModelIndex.getNullable()))
-                .finish(finalCallback);
+        beginAsync().thenRunDoWhileLoop(iterationCallback -> {
+            beginAsync().<Integer>thenSupply(c -> {
+                executeBatchAsync(nextBatchStartModelIndex.get(), effectiveWriteConcern, binding, resultAccumulator, c);
+            }).<Void>thenApply((nextBatchStartModelIdx, c) -> {
+                nextBatchStartModelIndex.set(nextBatchStartModelIdx);
+                c.complete(c);
+            }).finish(iterationCallback);
+        }, () -> shouldExecuteNextBatch(nextBatchStartModelIndex.getNullable())
+        ).finish(finalCallback);
     }
 
     private static boolean shouldExecuteNextBatch(@Nullable final Integer nextBatchStartModelIndex) {
