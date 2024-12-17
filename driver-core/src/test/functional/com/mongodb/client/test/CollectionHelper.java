@@ -363,6 +363,13 @@ public final class CollectionHelper<T> {
                 .execute(getBinding());
     }
 
+    public void deleteMany(final Bson filter) {
+        new MixedBulkWriteOperation(namespace,
+                singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry)).multi(true)),
+                true, WriteConcern.ACKNOWLEDGED, false)
+                .execute(getBinding());
+    }
+
     public List<T> find(final Bson filter) {
         return find(filter, null);
     }

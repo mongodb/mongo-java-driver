@@ -25,6 +25,12 @@ import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterator.ORDERED;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+
 /**
  * MongoDB returns query results as batches, and this interface provideds an iterator over those batches.  The first call to
  * the {@code next} method will return the first batch, and subsequent calls will trigger a  request to get the next batch
@@ -98,4 +104,9 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
     ServerCursor getServerCursor();
 
     ServerAddress getServerAddress();
+
+    default List<List<T>> exhaustCursor() {
+        return stream(spliteratorUnknownSize(this, ORDERED | IMMUTABLE), false)
+                .collect(toList());
+    }
 }

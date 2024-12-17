@@ -19,7 +19,10 @@ package com.mongodb.internal.async;
 import com.mongodb.internal.operation.BatchCursor;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 /**
  * MongoDB returns query results as batches, and this interface provides an asynchronous iterator over those batches.  The first call to
@@ -72,4 +75,22 @@ public interface AsyncBatchCursor<T> extends Closeable {
      */
     @Override
     void close();
+
+    default void exhaustCursor(final SingleResultCallback<List<List<T>>> finalCallback) {
+        List<List<T>> results = new ArrayList<>();
+
+        beginAsync().thenRunDoWhileLoop(iterationCallback -> {
+                    beginAsync().
+                            thenSupply(this::next)
+                            .thenConsume((batch, callback) -> {
+                                if (batch != null && !batch.isEmpty()) {
+                                    results.add(batch);
+                                }
+                                callback.complete(callback);
+                            }).finish(iterationCallback);
+                }, () -> !this.isClosed())
+                .<List<List<T>>>thenSupply(callback -> {
+                    callback.complete(results);
+                }).finish(finalCallback);
+     }
 }

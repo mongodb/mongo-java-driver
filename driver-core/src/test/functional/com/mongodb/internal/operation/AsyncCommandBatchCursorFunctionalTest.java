@@ -23,6 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -46,7 +47,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -100,6 +103,95 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         ifNotNull(connection, c -> {
             getReferenceCountAfterTimeout(c, 1);
             c.release();
+        });
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with multiple batches")
+    void shouldExhaustCursorAsyncWithMultipleBatches() {
+        // given
+        BsonDocument commandResult = executeFindCommand(0, 3); // Fetch in batches of size 3
+        cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+        CompletableFuture<List<List<Document>>> futureResult = new CompletableFuture<>();
+
+       // when
+        cursor.exhaustCursor((result, throwable) -> {
+            if (throwable != null) {
+                futureResult.completeExceptionally(throwable);
+            } else {
+                futureResult.complete(result);
+            }
+        });
+
+        // then
+        assertDoesNotThrow(() -> {
+            List<List<Document>> resultBatches = futureResult.get(5, TimeUnit.SECONDS);
+
+            assertEquals(4, resultBatches.size(), "Expected 4 batches for 10 documents with batch size of 3.");
+
+            int totalDocuments = resultBatches.stream().mapToInt(List::size).sum();
+            assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
+        });
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with closed cursor")
+    void shouldExhaustCursorAsyncWithClosedCursor() {
+        // given
+        BsonDocument commandResult = executeFindCommand(0, 3);
+        cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+        cursor.close();
+
+        CompletableFuture<List<List<Document>>> futureResult = new CompletableFuture<>();
+
+        // when
+        cursor.exhaustCursor((result, throwable) -> {
+            if (throwable != null) {
+                futureResult.completeExceptionally(throwable);
+            } else {
+                futureResult.complete(result);
+            }
+        });
+
+        //then
+        ExecutionException executionException = assertThrows(ExecutionException.class, () -> {
+            futureResult.get(5, TimeUnit.SECONDS);
+        }, "Expected an exception when operating on a closed cursor.");
+
+        IllegalStateException illegalStateException = (IllegalStateException) executionException.getCause();
+        assertEquals("Cursor has been closed", illegalStateException.getMessage());
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with empty cursor")
+    void shouldExhaustCursorAsyncWithEmptyCursor() {
+        // given
+        getCollectionHelper().deleteMany(Filters.empty());
+
+        BsonDocument commandResult = executeFindCommand(0, 3); // No documents to fetch
+        cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+        CompletableFuture<List<List<Document>>> futureResult = new CompletableFuture<>();
+
+        // when
+        cursor.exhaustCursor((result, throwable) -> {
+            if (throwable != null) {
+                futureResult.completeExceptionally(throwable);
+            } else {
+                futureResult.complete(result);
+            }
+        });
+
+        // then
+        assertDoesNotThrow(() -> {
+            List<List<Document>> resultBatches = futureResult.get(5, TimeUnit.SECONDS);
+
+            assertTrue(resultBatches.isEmpty(), "Expected no batches for an empty cursor.");
         });
     }
 

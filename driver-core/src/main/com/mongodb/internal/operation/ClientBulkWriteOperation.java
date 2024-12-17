@@ -132,7 +132,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.commandWrite
 import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
 import static com.mongodb.internal.operation.CommandOperationHelper.shouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
-import static com.mongodb.internal.operation.CursorHelper.exhaustCursorAsync;
 import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWriteWithRetries;
@@ -141,12 +140,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
-import static java.util.Spliterator.IMMUTABLE;
-import static java.util.Spliterator.ORDERED;
-import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -544,7 +539,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 options.getComment().orElse(null),
                 connectionSource,
                 connection)) {
-            return stream(spliteratorUnknownSize(cursor, ORDERED | IMMUTABLE), false).collect(toList());
+           return cursor.exhaustCursor();
         }
     }
 
@@ -562,7 +557,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 connection);
 
         beginAsync().<List<List<BsonDocument>>>thenSupply(callback -> {
-            exhaustCursorAsync(cursor, callback);
+             cursor.exhaustCursor(callback);
         }).thenAlwaysRunAndFinish(() -> {
             if (!cursor.isClosed()) {
                 cursor.close();

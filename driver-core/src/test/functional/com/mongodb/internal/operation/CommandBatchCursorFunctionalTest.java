@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
@@ -99,6 +100,55 @@ public class CommandBatchCursorFunctionalTest extends OperationTest {
             getReferenceCountAfterTimeout(c, 1);
             c.release();
         });
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with multiple batches")
+    void shouldExhaustCursorAsyncWithMultipleBatches() {
+        // given
+        BsonDocument commandResult = executeFindCommand(0, 3); // Fetch in batches of size 3
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+        // when
+        List<List<Document>> result = cursor.exhaustCursor();
+
+        // then
+        assertEquals(4, result.size(), "Expected 4 batches for 10 documents with batch size of 3.");
+
+        int totalDocuments = result.stream().mapToInt(List::size).sum();
+        assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with closed cursor")
+    void shouldExhaustCursorAsyncWithClosedCursor() {
+        // given
+        BsonDocument commandResult = executeFindCommand(0, 3);
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+        cursor.close();
+
+        // when & then
+        IllegalStateException illegalStateException = assertThrows(IllegalStateException.class, cursor::exhaustCursor);
+        assertEquals("Cursor has been closed", illegalStateException.getMessage());
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor async with empty cursor")
+    void shouldExhaustCursorAsyncWithEmptyCursor() {
+        // given
+        getCollectionHelper().deleteMany(Filters.empty());
+
+        BsonDocument commandResult = executeFindCommand(0, 3); // No documents to fetch
+        cursor = new CommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+        // when
+        List<List<Document>> result = cursor.exhaustCursor();
+
+        // then
+        assertTrue(result.isEmpty(), "Expected no batches for an empty cursor.");
     }
 
     @Test

@@ -16,39 +16,14 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 
 final class CursorHelper {
 
     static BsonDocument getCursorDocumentFromBatchSize(@Nullable final Integer batchSize) {
         return batchSize == null ? new BsonDocument() : new BsonDocument("batchSize", new BsonInt32(batchSize));
-    }
-
-    public static <T> void exhaustCursorAsync(final AsyncBatchCursor<T> cursor, final SingleResultCallback<List<List<T>>> finalCallback) {
-        List<List<T>> results = new ArrayList<>();
-
-        beginAsync().thenRunDoWhileLoop(iterationCallback -> {
-                    beginAsync().
-                            thenSupply(cursor::next)
-                            .thenConsume((batch, callback) -> {
-                                if (batch != null && !batch.isEmpty()) {
-                                    results.add(batch);
-                                }
-                                callback.complete(callback);
-                            }).finish(iterationCallback);
-                }, () -> !cursor.isClosed())
-                .<List<List<T>>>thenSupply(callback -> {
-                    callback.complete(results);
-                }).finish(finalCallback);
     }
 
     private CursorHelper() {
