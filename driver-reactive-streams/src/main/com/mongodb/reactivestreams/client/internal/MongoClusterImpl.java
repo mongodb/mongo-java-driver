@@ -251,7 +251,7 @@ final class MongoClusterImpl implements MongoCluster {
 
     @Override
     public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> clientWriteModels,
-                                                      final ClientBulkWriteOptions options) throws ClientBulkWriteException {
+                                                      final ClientBulkWriteOptions options) {
         notNull("clientWriteModels", clientWriteModels);
         isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
         notNull("options", options);
