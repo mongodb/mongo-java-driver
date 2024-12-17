@@ -16,16 +16,17 @@
 
 package org.bson.types;
 
+import static org.bson.assertions.Assertions.isTrueArgument;
+import static org.bson.assertions.Assertions.notNull;
+
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.bson.assertions.Assertions.isTrueArgument;
-import static org.bson.assertions.Assertions.notNull;
 
 /**
  * <p>A globally unique identifier for objects.</p>
@@ -53,9 +54,8 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     private static final int OBJECT_ID_LENGTH = 12;
     private static final int LOW_ORDER_THREE_BYTES = 0x00ffffff;
 
-    // Use primitives to represent the 5-byte random value.
-    private static final int RANDOM_VALUE1;
-    private static final short RANDOM_VALUE2;
+    // Use upper bytes of a long to represent the 5-byte random value.
+    private static final long RANDOM_VALUE;
 
     private static final AtomicInteger NEXT_COUNTER;
 
@@ -67,18 +67,12 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * The timestamp
      */
     private final int timestamp;
+
     /**
-     * The counter.
+     * The final 8 bytes of the ObjectID are 5 bytes probabilistically unique to the machine and
+     * process, followed by a 3 byte incrementing counter initialized to a random value.
      */
-    private final int counter;
-    /**
-     * the first four bits of randomness.
-     */
-    private final int randomValue1;
-    /**
-     * The last two bits of randomness.
-     */
-    private final short randomValue2;
+    private final long nonce;
 
     /**
      * Gets a new object id.
@@ -101,7 +95,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @since 4.1
      */
     public static ObjectId getSmallestWithDate(final Date date) {
-        return new ObjectId(dateToTimestampSeconds(date), 0, (short) 0, 0, false);
+        return new ObjectId(dateToTimestampSeconds(date), 0L);
     }
 
     /**
@@ -152,7 +146,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @param date the date
      */
     public ObjectId(final Date date) {
-        this(dateToTimestampSeconds(date), NEXT_COUNTER.getAndIncrement() & LOW_ORDER_THREE_BYTES, false);
+        this(dateToTimestampSeconds(date), RANDOM_VALUE | (NEXT_COUNTER.getAndIncrement() & LOW_ORDER_THREE_BYTES));
     }
 
     /**
@@ -163,7 +157,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @throws IllegalArgumentException if the high order byte of counter is not zero
      */
     public ObjectId(final Date date, final int counter) {
-        this(dateToTimestampSeconds(date), counter, true);
+        this(dateToTimestampSeconds(date), getNonceFromUntrustedCounter(counter));
     }
 
     /**
@@ -174,25 +168,19 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @throws IllegalArgumentException if the high order byte of counter is not zero
      */
     public ObjectId(final int timestamp, final int counter) {
-        this(timestamp, counter, true);
+        this(timestamp, getNonceFromUntrustedCounter(counter));
     }
 
-    private ObjectId(final int timestamp, final int counter, final boolean checkCounter) {
-        this(timestamp, RANDOM_VALUE1, RANDOM_VALUE2, counter, checkCounter);
+    private ObjectId(final int timestamp, final long nonce) {
+        this.timestamp = timestamp;
+        this.nonce = nonce;
     }
 
-    private ObjectId(final int timestamp, final int randomValue1, final short randomValue2, final int counter,
-                     final boolean checkCounter) {
-        if ((randomValue1 & 0xff000000) != 0) {
-            throw new IllegalArgumentException("The random value must be between 0 and 16777215 (it must fit in three bytes).");
-        }
-        if (checkCounter && ((counter & 0xff000000) != 0)) {
+    private static long getNonceFromUntrustedCounter(final int counter) {
+        if ((counter & 0xff000000) != 0) {
             throw new IllegalArgumentException("The counter must be between 0 and 16777215 (it must fit in three bytes).");
         }
-        this.timestamp = timestamp;
-        this.counter = counter & LOW_ORDER_THREE_BYTES;
-        this.randomValue1 = randomValue1;
-        this.randomValue2 = randomValue2;
+        return RANDOM_VALUE | counter;
     }
 
     /**
@@ -226,12 +214,11 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         notNull("buffer", buffer);
         isTrueArgument("buffer.remaining() >=12", buffer.remaining() >= OBJECT_ID_LENGTH);
 
-        // Note: Cannot use ByteBuffer.getInt because it depends on tbe buffer's byte order
-        // and ObjectId's are always in big-endian order.
-        timestamp = makeInt(buffer.get(), buffer.get(), buffer.get(), buffer.get());
-        randomValue1 = makeInt((byte) 0, buffer.get(), buffer.get(), buffer.get());
-        randomValue2 = makeShort(buffer.get(), buffer.get());
-        counter = makeInt((byte) 0, buffer.get(), buffer.get(), buffer.get());
+        ByteOrder originalOrder = buffer.order();
+        buffer.order(ByteOrder.BIG_ENDIAN);
+        this.timestamp = buffer.getInt();
+        this.nonce = buffer.getLong();
+        buffer.order(originalOrder);
     }
 
     /**
@@ -240,9 +227,8 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @return the byte array
      */
     public byte[] toByteArray() {
-        ByteBuffer buffer = ByteBuffer.allocate(OBJECT_ID_LENGTH);
-        putToByteBuffer(buffer);
-        return buffer.array();  // using .allocate ensures there is a backing array that can be returned
+        // using .allocate ensures there is a backing array that can be returned
+        return ByteBuffer.allocate(OBJECT_ID_LENGTH).putInt(this.timestamp).putLong(this.nonce).array();
     }
 
     /**
@@ -257,18 +243,12 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         notNull("buffer", buffer);
         isTrueArgument("buffer.remaining() >=12", buffer.remaining() >= OBJECT_ID_LENGTH);
 
-        buffer.put(int3(timestamp));
-        buffer.put(int2(timestamp));
-        buffer.put(int1(timestamp));
-        buffer.put(int0(timestamp));
-        buffer.put(int2(randomValue1));
-        buffer.put(int1(randomValue1));
-        buffer.put(int0(randomValue1));
-        buffer.put(short1(randomValue2));
-        buffer.put(short0(randomValue2));
-        buffer.put(int2(counter));
-        buffer.put(int1(counter));
-        buffer.put(int0(counter));
+        ByteOrder originalOrder = buffer.order();
+        buffer
+            .order(ByteOrder.BIG_ENDIAN)
+            .putInt(this.timestamp)
+            .putLong(this.nonce)
+            .order(originalOrder);
     }
 
     /**
@@ -313,49 +293,26 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
             return false;
         }
 
-        ObjectId objectId = (ObjectId) o;
-
-        if (counter != objectId.counter) {
+        ObjectId other = (ObjectId) o;
+        if (timestamp != other.timestamp) {
             return false;
         }
-        if (timestamp != objectId.timestamp) {
-            return false;
-        }
-
-        if (randomValue1 != objectId.randomValue1) {
-            return false;
-        }
-
-        if (randomValue2 != objectId.randomValue2) {
-            return false;
-        }
-
-        return true;
+        return nonce == other.nonce;
     }
 
     @Override
     public int hashCode() {
-        int result = timestamp;
-        result = 31 * result + counter;
-        result = 31 * result + randomValue1;
-        result = 31 * result + randomValue2;
-        return result;
+        return 31 * timestamp + Long.hashCode(nonce);
     }
 
     @Override
     public int compareTo(final ObjectId other) {
-        if (other == null) {
-            throw new NullPointerException();
+        int cmp = Integer.compareUnsigned(this.timestamp, other.timestamp);
+        if (cmp != 0) {
+            return cmp;
         }
 
-        byte[] byteArray = toByteArray();
-        byte[] otherByteArray = other.toByteArray();
-        for (int i = 0; i < OBJECT_ID_LENGTH; i++) {
-            if (byteArray[i] != otherByteArray[i]) {
-                return ((byteArray[i] & 0xff) < (otherByteArray[i] & 0xff)) ? -1 : 1;
-            }
-        }
-        return 0;
+        return Long.compareUnsigned(nonce, other.nonce);
     }
 
     @Override
@@ -407,8 +364,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     static {
         try {
             SecureRandom secureRandom = new SecureRandom();
-            RANDOM_VALUE1 = secureRandom.nextInt(0x01000000);
-            RANDOM_VALUE2 = (short) secureRandom.nextInt(0x00008000);
+            RANDOM_VALUE = secureRandom.nextLong() & ~LOW_ORDER_THREE_BYTES;
             NEXT_COUNTER = new AtomicInteger(secureRandom.nextInt());
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -443,46 +399,4 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     private static int dateToTimestampSeconds(final Date time) {
         return (int) (time.getTime() / 1000);
     }
-
-    // Big-Endian helpers, in this class because all other BSON numbers are little-endian
-
-    private static int makeInt(final byte b3, final byte b2, final byte b1, final byte b0) {
-        // CHECKSTYLE:OFF
-        return (((b3) << 24) |
-                ((b2 & 0xff) << 16) |
-                ((b1 & 0xff) << 8) |
-                ((b0 & 0xff)));
-        // CHECKSTYLE:ON
-    }
-
-    private static short makeShort(final byte b1, final byte b0) {
-        // CHECKSTYLE:OFF
-        return (short) (((b1 & 0xff) << 8) | ((b0 & 0xff)));
-        // CHECKSTYLE:ON
-    }
-
-    private static byte int3(final int x) {
-        return (byte) (x >> 24);
-    }
-
-    private static byte int2(final int x) {
-        return (byte) (x >> 16);
-    }
-
-    private static byte int1(final int x) {
-        return (byte) (x >> 8);
-    }
-
-    private static byte int0(final int x) {
-        return (byte) (x);
-    }
-
-    private static byte short1(final short x) {
-        return (byte) (x >> 8);
-    }
-
-    private static byte short0(final short x) {
-        return (byte) (x);
-    }
-
 }
