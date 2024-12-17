@@ -325,11 +325,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     *  @param finalCallback A callback that accepts the start model index of the next batch, provided that the operation
-     * {@linkplain ExhaustiveClientBulkWriteCommandOkResponse#operationMayContinue(ConcreteClientBulkWriteOptions) may continue}
-     * and there are unexecuted {@linkplain ClientNamespacedWriteModel models} left.
+     * @see #executeBatch(int, WriteConcern, WriteBinding, ResultAccumulator)
      */
-    @Nullable
     private void executeBatchAsync(
             final int batchStartModelIndex,
             final WriteConcern effectiveWriteConcern,
