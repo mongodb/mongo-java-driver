@@ -354,18 +354,13 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     retryWritesSetting, effectiveWriteConcern, connectionDescription, sessionContext);
                             retryState.breakAndThrowIfRetryAnd(() -> !effectiveRetryWrites);
                             resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
-                            retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(),
-                                            true)
-                                    .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME,
-                                            false);
+                            retryState.attach(AttachmentKeys.maxWireVersion(), connectionDescription.getMaxWireVersion(), true)
+                                    .attach(AttachmentKeys.commandDescriptionSupplier(), () -> BULK_WRITE_COMMAND_NAME, false);
                             ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
-                                    retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext,
-                                    unexecutedModels, batchEncoder,
+                                    retryState, effectiveRetryWrites, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
                                     () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
                             executeBulkWriteCommandAndExhaustOkResponseAsync(
-                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern,
-                                    operationContext,
-                                    resultCallback);
+                                    retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContext, resultCallback);
                         }));
 
         beginAsync()
