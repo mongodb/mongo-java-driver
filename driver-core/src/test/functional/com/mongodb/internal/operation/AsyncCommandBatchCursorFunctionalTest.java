@@ -49,7 +49,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -143,11 +142,9 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         cursor.exhaust(futureCallback);
 
         //then
-        ExecutionException executionException = assertThrows(ExecutionException.class, () -> {
+        IllegalStateException illegalStateException = assertThrows(IllegalStateException.class, () -> {
             futureCallback.get(5, TimeUnit.SECONDS);
         }, "Expected an exception when operating on a closed cursor.");
-
-        IllegalStateException illegalStateException = (IllegalStateException) executionException.getCause();
         assertEquals("Cursor has been closed", illegalStateException.getMessage());
     }
 
