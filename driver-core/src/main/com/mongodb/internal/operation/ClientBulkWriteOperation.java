@@ -246,12 +246,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 nextBatchStartModelIndex.set(nextBatchStartModelIdx);
                 c.complete(c);
             }).finish(iterationCallback);
-        }, () -> shouldExecuteNextBatch(nextBatchStartModelIndex.getNullable())
-        ).finish(finalCallback);
-    }
-
-    private static boolean shouldExecuteNextBatch(@Nullable final Integer nextBatchStartModelIndex) {
-        return nextBatchStartModelIndex != null;
+        }, () -> nextBatchStartModelIndex.getNullable() != null)
+          .finish(finalCallback);
     }
 
     /**
@@ -419,6 +415,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 connection.getDescription());
     }
 
+    /**
+     * @see #executeBulkWriteCommandAndExhaustOkResponse(RetryState, ConnectionSource, Connection, ClientBulkWriteCommand, WriteConcern, OperationContext)
+     */
     private void executeBulkWriteCommandAndExhaustOkResponseAsync(
             final RetryState retryState,
             final AsyncConnectionSource connectionSource,
@@ -520,6 +519,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 options.getComment().orElse(null),
                 connectionSource,
                 connection)) {
+
            return cursor.exhaust();
         }
     }
