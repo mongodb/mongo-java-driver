@@ -233,13 +233,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     }
 
     /**
-     * To execute a batch means:
-     * <ul>
-     *     <li>execute a `bulkWrite` command, which creates a cursor;</li>
-     *     <li>consume the cursor, which may involve executing `getMore` commands.</li>
-     * </ul>
-     *
-     * {@link SingleResultCallback<Void>} propagates {@link MongoException} when a {@linkplain ClientBulkWriteException#getCause() top-level error} happens.
+     * @see #executeAllBatches(WriteConcern, WriteBinding, ResultAccumulator)
      */
     private void executeAllBatchesAsync(
             final WriteConcern effectiveWriteConcern,
