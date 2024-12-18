@@ -403,13 +403,13 @@ final class Operations<TDocument> {
     MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
-                        .comment(options.getComment()).let(options.getLet()));
+                        .comment(options.getComment()).let(options.getLet()).sort(options.getSort()));
     }
 
     MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
-                        .comment(options.getComment()).let(options.getLet()));
+                        .comment(options.getComment()).let(options.getLet()).sort(options.getSort()));
     }
 
     MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
@@ -475,7 +475,8 @@ final class Operations<TDocument> {
                         .collation(updateOneModel.getOptions().getCollation())
                         .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()))
                         .hint(toBsonDocument(updateOneModel.getOptions().getHint()))
-                        .hintString(updateOneModel.getOptions().getHintString());
+                        .hintString(updateOneModel.getOptions().getHintString())
+                        .sort(updateOneModel.getOptions().getSort());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
                 BsonValue update = updateManyModel.getUpdate() != null ? toBsonDocument(updateManyModel.getUpdate())
@@ -509,7 +510,8 @@ final class Operations<TDocument> {
                 options.isOrdered(), writeConcern, retryWrites)
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .comment(options.getComment())
-                .let(toBsonDocument(options.getLet()));
+                .let(toBsonDocument(options.getLet()))
+                .sort(options.getSort());
     }
 
     <TResult> CommandReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {
