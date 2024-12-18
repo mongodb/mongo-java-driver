@@ -195,10 +195,6 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void flush() {
-    }
-
-    @Override
     protected Context getContext() {
         return (Context) super.getContext();
     }

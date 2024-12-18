@@ -245,7 +245,8 @@ public abstract class UnifiedTest {
                         || schemaVersion.equals("1.16")
                         || schemaVersion.equals("1.17")
                         || schemaVersion.equals("1.18")
-                        || schemaVersion.equals("1.19"),
+                        || schemaVersion.equals("1.19")
+                        || schemaVersion.equals("1.21"),
                 String.format("Unsupported schema version %s", schemaVersion));
         if (runOnRequirements != null) {
             assumeTrue(runOnRequirementsMet(runOnRequirements, getMongoClientSettings(), getServerVersion()),
@@ -282,7 +283,16 @@ public abstract class UnifiedTest {
     @AfterEach
     public void cleanUp() {
         for (FailPoint failPoint : failPoints) {
-            failPoint.disableFailPoint();
+            try {
+                // BULK-TODO remove the try-catch block
+                failPoint.disableFailPoint();
+            } catch (Throwable e) {
+                for (Throwable suppressed : e.getSuppressed()) {
+                    if (suppressed instanceof TestAbortedException) {
+                        throw (TestAbortedException) suppressed;
+                    }
+                }
+            }
         }
         entities.close();
         if (testDef != null) {
@@ -408,6 +418,14 @@ public abstract class UnifiedTest {
 
     private static void assertOperationResult(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex,
             final OperationResult result) {
+        if (result.getException() instanceof org.opentest4j.TestAbortedException) {
+            // BULK-TODO remove
+            throw (org.opentest4j.TestAbortedException) result.getException();
+        }
+        if (result.getException() instanceof org.junit.AssumptionViolatedException) {
+            // BULK-TODO remove
+            throw (org.junit.AssumptionViolatedException) result.getException();
+        }
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
 
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
@@ -571,6 +589,8 @@ public abstract class UnifiedTest {
                     return crudHelper.createFindCursor(operation);
                 case "createChangeStream":
                     return crudHelper.createChangeStreamCursor(operation);
+                case "clientBulkWrite":
+                    return crudHelper.clientBulkWrite(operation);
                 case "close":
                     return crudHelper.close(operation);
                 case "iterateUntilDocumentOrError":

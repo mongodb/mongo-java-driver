@@ -18,24 +18,16 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
-import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonDocument;
-import org.bson.BsonElement;
-import org.bson.BsonWriter;
-import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.Codec;
-import org.bson.codecs.Encoder;
-import org.bson.codecs.EncoderContext;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BsonOutput;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
+import static com.mongodb.internal.connection.BsonWriterHelper.createBsonBinaryWriter;
+import static com.mongodb.internal.connection.BsonWriterHelper.encodeUsingRegistry;
 
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
@@ -45,12 +37,6 @@ abstract class RequestMessage {
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     static final int MESSAGE_PROLOGUE_LENGTH = 16;
-
-    // Allow an extra 16K to the maximum allowed size of a query or command document, so that, for example,
-    // a 16M document can be upserted via findAndModify
-    private static final int DOCUMENT_HEADROOM = 16 * 1024;
-
-    private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final String collectionName;
     private final MessageSettings settings;
@@ -128,12 +114,12 @@ abstract class RequestMessage {
      * @param bsonOutput the output
      * @param operationContext the session context
      */
-    public void encode(final BsonOutput bsonOutput, final OperationContext operationContext) {
+    public void encode(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         notNull("operationContext", operationContext);
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
         EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, operationContext);
-        backpatchMessageLength(messageStartPosition, bsonOutput);
+        backpatchLength(messageStartPosition, bsonOutput);
         this.encodingMetadata = encodingMetadata;
     }
 
@@ -165,23 +151,13 @@ abstract class RequestMessage {
      * @param operationContext the session context
      * @return the encoding metadata
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, OperationContext operationContext);
+    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(ByteBufferBsonOutput bsonOutput, OperationContext operationContext);
 
-    protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                               final FieldNameValidator validator, @Nullable final List<BsonElement> extraElements) {
-        addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
-                settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, extraElements);
-    }
-
-    /**
-     * Backpatches the message length into the beginning of the message.
-     *
-     * @param startPosition the start position of the message
-     * @param bsonOutput the output
-     */
-    protected void backpatchMessageLength(final int startPosition, final BsonOutput bsonOutput) {
-        int messageLength = bsonOutput.getPosition() - startPosition;
-        bsonOutput.writeInt32(bsonOutput.getPosition() - messageLength, messageLength);
+    protected int writeDocument(final BsonDocument document, final BsonOutput bsonOutput, final FieldNameValidator validator) {
+        BsonBinaryWriter writer = createBsonBinaryWriter(bsonOutput, validator, getSettings());
+        int documentStart = bsonOutput.getPosition();
+        encodeUsingRegistry(writer, document);
+        return bsonOutput.getPosition() - documentStart;
     }
 
     /**
@@ -191,21 +167,5 @@ abstract class RequestMessage {
      */
     protected String getCollectionName() {
         return collectionName;
-    }
-
-    @SuppressWarnings("unchecked")
-    Codec<BsonDocument> getCodec(final BsonDocument document) {
-        return (Codec<BsonDocument>) REGISTRY.get(document.getClass());
-    }
-
-    private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
-                                 final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize,
-                                 @Nullable final List<BsonElement> extraElements) {
-        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(maxDocumentSize),
-                bsonOutput, validator);
-        BsonWriter bsonWriter = extraElements == null
-                ? bsonBinaryWriter
-                : new ElementExtendingBsonWriter(bsonBinaryWriter, extraElements);
-        encoder.encode(bsonWriter, obj, encoderContext);
     }
 }

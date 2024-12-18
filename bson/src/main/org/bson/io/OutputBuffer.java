@@ -41,6 +41,16 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
     public void close() {
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The {@link #flush()} method of {@link OutputBuffer} does nothing.</p>
+     */
+    @Override
+    public void flush() throws IOException {
+        super.flush();
+    }
+
     @Override
     public void write(final byte[] bytes, final int offset, final int length) {
         writeBytes(bytes, offset, length);
