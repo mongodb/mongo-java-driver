@@ -19,6 +19,7 @@ package com.mongodb.client.model;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -40,6 +41,7 @@ public class UpdateOptions {
     private String hintString;
     private BsonValue comment;
     private Bson variables;
+    private BsonDocument sort;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -256,6 +258,32 @@ public class UpdateOptions {
         return this;
     }
 
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @since 5.3
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     */
+    @Nullable
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @since 5.3
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     */
+    public UpdateOptions sort(@Nullable final BsonDocument sort) {
+        this.sort = sort;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "UpdateOptions{"
@@ -267,6 +295,7 @@ public class UpdateOptions {
                 + ", hintString=" + hintString
                 + ", comment=" + comment
                 + ", let=" + variables
+                + ", sort=" + sort
                 + '}';
     }
 }

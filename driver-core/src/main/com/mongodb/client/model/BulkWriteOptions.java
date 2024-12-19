@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
+import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
@@ -31,6 +32,7 @@ public final class BulkWriteOptions {
     private Boolean bypassDocumentValidation;
     private BsonValue comment;
     private Bson variables;
+    private BsonDocument sort;
 
     /**
      * If true, then when a write fails, return without performing the remaining
@@ -147,6 +149,32 @@ public final class BulkWriteOptions {
         return this;
     }
 
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @since 5.3
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     */
+    @Nullable
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @since 5.3
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     */
+    public BulkWriteOptions sort(@Nullable final BsonDocument sort) {
+        this.sort = sort;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "BulkWriteOptions{"
@@ -154,6 +182,7 @@ public final class BulkWriteOptions {
                 + ", bypassDocumentValidation=" + bypassDocumentValidation
                 + ", comment=" + comment
                 + ", let=" + variables
+                + ", sort=" + sort
                 + '}';
     }
 }
