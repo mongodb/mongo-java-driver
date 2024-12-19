@@ -15,13 +15,21 @@
  */
 package com.mongodb.kotlin.client
 
+import com.mongodb.ClientBulkWriteException
 import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoClientSettings
+import com.mongodb.MongoException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
 import com.mongodb.client.MongoCluster as JMongoCluster
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions
+import com.mongodb.client.model.bulk.ClientBulkWriteResult
+import com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel
+import com.mongodb.client.model.bulk.ClientNamespacedUpdateManyModel
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
 import java.util.concurrent.TimeUnit
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
@@ -303,4 +311,104 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
         clientSession: ClientSession,
         pipeline: List<Bson> = emptyList()
     ): ChangeStreamIterable<T> = watch(clientSession, pipeline, T::class.java)
+
+    /**
+     * Executes a client-level bulk write operation. This method is functionally equivalent to [.bulkWrite] with the
+     * [default options][ClientBulkWriteOptions.clientBulkWriteOptions].
+     *
+     * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
+     * `models`, encoded size of `models`, and the size limits in effect, executing this operation may require multiple
+     * `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
+     * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
+     *
+     * This operation is not supported by MongoDB Atlas Serverless instances.
+     *
+     * @param models The [individual write operations][ClientNamespacedWriteModel].
+     * @return The [ClientBulkWriteResult] if the operation is successful.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful, and
+     *   there is at least one of the following pieces of information to report:
+     *   [ClientBulkWriteException.getWriteConcernErrors], [ClientBulkWriteException.getWriteErrors],
+     *   [ClientBulkWriteException.getPartialResult].
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3 @mongodb.server.release 8.0 @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    public fun bulkWrite(models: List<ClientNamespacedWriteModel>): ClientBulkWriteResult = wrapped.bulkWrite(models)
+
+    /**
+     * Executes a client-level bulk write operation.
+     *
+     * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
+     * `models`, encoded size of `models`, and the size limits in effect, executing this operation may require multiple
+     * `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
+     * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
+     *
+     * This operation is not supported by MongoDB Atlas Serverless instances.
+     *
+     * @param models The [individual write operations][ClientNamespacedWriteModel].
+     * @param options The options.
+     * @return The [ClientBulkWriteResult] if the operation is successful.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful, and
+     *   there is at least one of the following pieces of information to report:
+     *   [ClientBulkWriteException.getWriteConcernErrors], [ClientBulkWriteException.getWriteErrors],
+     *   [ClientBulkWriteException.getPartialResult].
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3 @mongodb.server.release 8.0 @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    public fun bulkWrite(
+        models: List<ClientNamespacedWriteModel>,
+        options: ClientBulkWriteOptions
+    ): ClientBulkWriteResult = wrapped.bulkWrite(models, options)
+
+    /**
+     * Executes a client-level bulk write operation. This method is functionally equivalent to [.bulkWrite] with the
+     * [default options][ClientBulkWriteOptions.clientBulkWriteOptions].
+     *
+     * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
+     * `models`, encoded size of `models`, and the size limits in effect, executing this operation may require multiple
+     * `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
+     * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
+     *
+     * This operation is not supported by MongoDB Atlas Serverless instances.
+     *
+     * @param clientSession The [client session][ClientSession] with which to associate this operation.
+     * @param models The [individual write operations][ClientNamespacedWriteModel].
+     * @return The [ClientBulkWriteResult] if the operation is successful.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful, and
+     *   there is at least one of the following pieces of information to report:
+     *   [ClientBulkWriteException.getWriteConcernErrors], [ClientBulkWriteException.getWriteErrors],
+     *   [ClientBulkWriteException.getPartialResult].
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3 @mongodb.server.release 8.0 @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    public fun bulkWrite(
+        clientSession: ClientSession,
+        models: List<ClientNamespacedWriteModel>
+    ): ClientBulkWriteResult = wrapped.bulkWrite(clientSession.wrapped, models)
+
+    /**
+     * Executes a client-level bulk write operation.
+     *
+     * This operation supports [retryable writes][com.mongodb.MongoClientSettings.getRetryWrites]. Depending on the
+     * number of `models`, encoded size of `models`, and the size limits in effect, executing this operation may require
+     * multiple `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
+     * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
+     *
+     * This operation is not supported by MongoDB Atlas Serverless instances.
+     *
+     * @param clientSession The [client session][ClientSession] with which to associate this operation.
+     * @param models The [individual write operations][ClientNamespacedWriteModel].
+     * @param options The options.
+     * @return The [ClientBulkWriteResult] if the operation is successful.
+     * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful, and
+     *   there is at least one of the following pieces of information to report:
+     *   [ClientBulkWriteException.getWriteConcernErrors], [ClientBulkWriteException.getWriteErrors],
+     *   [ClientBulkWriteException.getPartialResult].
+     * @throws MongoException Only if the operation is unsuccessful.
+     * @since 5.3 @mongodb.server.release 8.0 @mongodb.driver.manual reference/command/bulkWrite/ bulkWrite
+     */
+    public fun bulkWrite(
+        clientSession: ClientSession,
+        models: List<ClientNamespacedWriteModel>,
+        options: ClientBulkWriteOptions
+    ): ClientBulkWriteResult = wrapped.bulkWrite(clientSession.wrapped, models, options)
 }

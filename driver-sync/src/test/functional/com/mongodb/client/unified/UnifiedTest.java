@@ -403,18 +403,6 @@ public abstract class UnifiedTest {
 
     private static void assertOperationResult(final UnifiedTestContext context, final BsonDocument operation, final int operationIndex,
             final OperationResult result) {
-        if (result.getException() instanceof org.opentest4j.TestAbortedException) {
-            // BULK-TODO remove
-            if (result.getException().getMessage().contains("BULK-TODO Kotlin implement")) {
-                throw (org.opentest4j.TestAbortedException) result.getException();
-            }
-        }
-        if (result.getException() instanceof org.junit.AssumptionViolatedException) {
-            // BULK-TODO remove
-            if (result.getException().getMessage().contains("BULK-TODO Kotlin implement")) {
-                throw (org.junit.AssumptionViolatedException) result.getException();
-            }
-        }
         context.getAssertionContext().push(ContextElement.ofCompletedOperation(operation, result, operationIndex));
 
         if (!operation.getBoolean("ignoreResultAndError", BsonBoolean.FALSE).getValue()) {
