@@ -464,7 +464,8 @@ final class Operations<TDocument> {
                         .upsert(replaceOneModel.getReplaceOptions().isUpsert())
                         .collation(replaceOneModel.getReplaceOptions().getCollation())
                         .hint(toBsonDocument(replaceOneModel.getReplaceOptions().getHint()))
-                        .hintString(replaceOneModel.getReplaceOptions().getHintString());
+                        .hintString(replaceOneModel.getReplaceOptions().getHintString())
+                        .sort(toBsonDocument(replaceOneModel.getReplaceOptions().getSort()));
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
                 BsonValue update = updateOneModel.getUpdate() != null ? toBsonDocument(updateOneModel.getUpdate())
@@ -475,7 +476,8 @@ final class Operations<TDocument> {
                         .collation(updateOneModel.getOptions().getCollation())
                         .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()))
                         .hint(toBsonDocument(updateOneModel.getOptions().getHint()))
-                        .hintString(updateOneModel.getOptions().getHintString());
+                        .hintString(updateOneModel.getOptions().getHintString())
+                        .sort(toBsonDocument(updateOneModel.getOptions().getSort()));
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
                 BsonValue update = updateManyModel.getUpdate() != null ? toBsonDocument(updateManyModel.getUpdate())

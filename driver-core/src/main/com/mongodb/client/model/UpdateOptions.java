@@ -40,6 +40,7 @@ public class UpdateOptions {
     private String hintString;
     private BsonValue comment;
     private Bson variables;
+    private Bson sort;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -256,6 +257,35 @@ public class UpdateOptions {
         return this;
     }
 
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @since 5.3
+     * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
+     */
+    @Nullable
+    public Bson getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query. When multiple documents match the query, the sort order specifies the document to be
+     * updated first.
+     *
+     * <p>Note: The sort is not applicable to updateMany.</p>
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @since 5.3
+     * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
+     */
+    public UpdateOptions sort(@Nullable final Bson sort) {
+        this.sort = sort;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "UpdateOptions{"
@@ -267,6 +297,7 @@ public class UpdateOptions {
                 + ", hintString=" + hintString
                 + ", comment=" + comment
                 + ", let=" + variables
+                + ", sort=" + sort
                 + '}';
     }
 }

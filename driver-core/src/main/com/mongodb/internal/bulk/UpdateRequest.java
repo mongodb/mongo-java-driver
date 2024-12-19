@@ -40,6 +40,7 @@ public final class UpdateRequest extends WriteRequest {
     private List<BsonDocument> arrayFilters;
     @Nullable private BsonDocument hint;
     @Nullable private String hintString;
+    @Nullable private BsonDocument sort;
 
     public UpdateRequest(final BsonDocument filter, @Nullable final BsonValue update, final Type updateType) {
         if (updateType != Type.UPDATE && updateType != Type.REPLACE) {
@@ -126,6 +127,16 @@ public final class UpdateRequest extends WriteRequest {
 
     public UpdateRequest hintString(@Nullable final String hint) {
         this.hintString = hint;
+        return this;
+    }
+
+    @Nullable
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    public UpdateRequest sort(@Nullable final BsonDocument sort) {
+        this.sort = sort;
         return this;
     }
 }
