@@ -403,13 +403,13 @@ final class Operations<TDocument> {
     MixedBulkWriteOperation updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
-                        .comment(options.getComment()).let(options.getLet()).sort(options.getSort()));
+                        .comment(options.getComment()).let(options.getLet()));
     }
 
     MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return bulkWrite(singletonList(new UpdateOneModel<>(filter, update, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation())
-                        .comment(options.getComment()).let(options.getLet()).sort(options.getSort()));
+                        .comment(options.getComment()).let(options.getLet()));
     }
 
     MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
@@ -464,7 +464,8 @@ final class Operations<TDocument> {
                         .upsert(replaceOneModel.getReplaceOptions().isUpsert())
                         .collation(replaceOneModel.getReplaceOptions().getCollation())
                         .hint(toBsonDocument(replaceOneModel.getReplaceOptions().getHint()))
-                        .hintString(replaceOneModel.getReplaceOptions().getHintString());
+                        .hintString(replaceOneModel.getReplaceOptions().getHintString())
+                        .sort(toBsonDocument(replaceOneModel.getReplaceOptions().getSort()));
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
                 BsonValue update = updateOneModel.getUpdate() != null ? toBsonDocument(updateOneModel.getUpdate())
@@ -476,7 +477,7 @@ final class Operations<TDocument> {
                         .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()))
                         .hint(toBsonDocument(updateOneModel.getOptions().getHint()))
                         .hintString(updateOneModel.getOptions().getHintString())
-                        .sort(updateOneModel.getOptions().getSort());
+                        .sort(toBsonDocument(updateOneModel.getOptions().getSort()));
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
                 BsonValue update = updateManyModel.getUpdate() != null ? toBsonDocument(updateManyModel.getUpdate())
@@ -510,8 +511,7 @@ final class Operations<TDocument> {
                 options.isOrdered(), writeConcern, retryWrites)
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .comment(options.getComment())
-                .let(toBsonDocument(options.getLet()))
-                .sort(options.getSort());
+                .let(toBsonDocument(options.getLet()));
     }
 
     <TResult> CommandReadOperation<TResult> commandRead(final Bson command, final Class<TResult> resultClass) {

@@ -135,11 +135,6 @@ public final class UnifiedTestModifications {
                 .test("crud", "findOneAndUpdate-hint-unacknowledged", "Unacknowledged findOneAndUpdate with hint document on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint string on 4.4+ server")
                 .test("crud", "findOneAndDelete-hint-unacknowledged", "Unacknowledged findOneAndDelete with hint document on 4.4+ server");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5622")
-                .test("crud", "replaceOne-sort", "ReplaceOne with sort option")
-                .test("crud", "replaceOne-sort", "replaceOne with sort option unsupported (server-side error)")
-                .test("crud", "BulkWrite replaceOne-sort", "BulkWrite replaceOne with sort option")
-                .test("crud", "BulkWrite replaceOne-sort", "BulkWrite replaceOne with sort option unsupported (server-side error)");
 
         // gridfs
 

@@ -19,7 +19,6 @@ package com.mongodb.client.model;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.BsonDocument;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -41,7 +40,7 @@ public class UpdateOptions {
     private String hintString;
     private BsonValue comment;
     private Bson variables;
-    private BsonDocument sort;
+    private Bson sort;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -264,22 +263,25 @@ public class UpdateOptions {
      *
      * @return a document describing the sort criteria
      * @since 5.3
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
      */
     @Nullable
-    public BsonDocument getSort() {
+    public Bson getSort() {
         return sort;
     }
 
     /**
-     * Sets the sort criteria to apply to the query.
+     * Sets the sort criteria to apply to the query. When multiple documents match the query, the sort order specifies the document to be
+     * updated first.
+     *
+     * <p>Note: The sort is not applicable to updateMany.</p>
      *
      * @param sort the sort criteria, which may be null.
      * @return this
      * @since 5.3
-     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
      */
-    public UpdateOptions sort(@Nullable final BsonDocument sort) {
+    public UpdateOptions sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }

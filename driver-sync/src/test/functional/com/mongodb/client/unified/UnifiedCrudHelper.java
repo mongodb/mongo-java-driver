@@ -1196,6 +1196,9 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "collation":
                     options.collation(asCollation(cur.getValue().asDocument()));
                     break;
+                case "sort":
+                    options.sort(cur.getValue().asDocument());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
