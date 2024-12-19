@@ -21,8 +21,10 @@ import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
+import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.OperationTest;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -101,6 +103,69 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
             getReferenceCountAfterTimeout(c, 1);
             c.release();
         });
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with multiple batches")
+    void shouldExhaustCursorAsyncWithMultipleBatches() {
+        // given
+        BsonDocument commandResult = executeFindCommand(0, 3); // Fetch in batches of size 3
+        cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+       // when
+        FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
+        cursor.exhaust(futureCallback);
+
+        // then
+        List<List<Document>> resultBatches = futureCallback.get(5, TimeUnit.SECONDS);
+
+        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
+        assertEquals(4, resultBatches.size(), "Expected 4 batches for 10 documents with batch size of 3.");
+
+        int totalDocuments = resultBatches.stream().mapToInt(List::size).sum();
+        assertEquals(10, totalDocuments, "Expected a total of 10 documents.");
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with closed cursor")
+    void shouldExhaustCursorAsyncWithClosedCursor() {
+        // given
+        BsonDocument commandResult = executeFindCommand(0, 3);
+        cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+        cursor.close();
+
+        // when
+        FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
+        cursor.exhaust(futureCallback);
+
+        //then
+        IllegalStateException illegalStateException = assertThrows(IllegalStateException.class, () -> {
+            futureCallback.get(5, TimeUnit.SECONDS);
+        }, "Expected an exception when operating on a closed cursor.");
+        assertEquals("Cursor has been closed", illegalStateException.getMessage());
+    }
+
+    @Test
+    @DisplayName("should exhaust cursor with empty cursor")
+    void shouldExhaustCursorAsyncWithEmptyCursor() {
+        // given
+        getCollectionHelper().deleteMany(Filters.empty());
+
+        BsonDocument commandResult = executeFindCommand(0, 3); // No documents to fetch
+        cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, commandResult, 3, 0, DOCUMENT_DECODER,
+                null, connectionSource, connection);
+
+        // when
+        FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
+        cursor.exhaust(futureCallback);
+
+        // then
+        List<List<Document>> resultBatches = futureCallback.get(5, TimeUnit.SECONDS);
+        assertTrue(resultBatches.isEmpty(), "Expected no batches for an empty cursor.");
+        assertTrue(cursor.isClosed(), "Expected cursor to be closed.");
     }
 
     @Test
