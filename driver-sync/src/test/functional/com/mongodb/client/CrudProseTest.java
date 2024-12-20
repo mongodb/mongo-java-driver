@@ -599,7 +599,7 @@ public class CrudProseTest {
 
     /**
      * This method is used instead of {@link ClientSession#withTransaction(TransactionBody)}
-     * because reactive {@link com.mongodb.reactivestreams.client.ClientSession} do not support it.
+     * because reactive {@code com.mongodb.reactivestreams.client.ClientSession} do not support it.
      */
     private static ClientBulkWriteResult runInTransaction(final ClientSession session,
                                                           final Supplier<ClientBulkWriteResult> action) {

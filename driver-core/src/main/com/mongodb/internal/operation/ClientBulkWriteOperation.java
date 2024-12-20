@@ -246,8 +246,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 nextBatchStartModelIndex.set(nextBatchStartModelIdx);
                 c.complete(c);
             }).finish(iterationCallback);
-        }, () -> nextBatchStartModelIndex.getNullable() != null)
-          .finish(finalCallback);
+        }, () -> nextBatchStartModelIndex.getNullable() != null
+        ).finish(finalCallback);
     }
 
     /**
@@ -349,7 +349,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     () -> retryState.attach(AttachmentKeys.retryableCommandFlag(), true, true));
                             executeBulkWriteCommandAndExhaustOkResponseAsync(
                                     retryState, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContext, resultCallback);
-                        }));
+                        })
+        );
 
         beginAsync().<ExhaustiveClientBulkWriteCommandOkResponse>thenSupply(callback -> {
             retryingBatchExecutor.get(callback);
@@ -408,7 +409,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         }
         List<List<BsonDocument>> cursorExhaustBatches = doWithRetriesDisabledForCommand(retryState, "getMore", () ->
                 exhaustBulkWriteCommandOkResponseCursor(connectionSource, connection, bulkWriteCommandOkResponse));
-
         return createExhaustiveClientBulkWriteCommandOkResponse(
                 bulkWriteCommandOkResponse,
                 cursorExhaustBatches,
