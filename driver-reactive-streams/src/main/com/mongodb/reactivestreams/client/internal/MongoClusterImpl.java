@@ -20,6 +20,9 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.Cluster;
@@ -42,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -235,6 +239,42 @@ final class MongoClusterImpl implements MongoCluster {
             final Class<T> resultClass) {
         return new ChangeStreamPublisherImpl<>(notNull("clientSession", clientSession), mongoOperationPublisher.withDatabase("admin"),
                 resultClass, pipeline, ChangeStreamLevel.CLIENT);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> clientWriteModels) {
+        notNull("clientWriteModels", clientWriteModels);
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
+        return mongoOperationPublisher.clientBulkWrite(null, clientWriteModels, null);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+                                                      final ClientBulkWriteOptions options) {
+        notNull("clientWriteModels", clientWriteModels);
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
+        notNull("options", options);
+        return mongoOperationPublisher.clientBulkWrite(null, clientWriteModels, options);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
+                                                      final List<? extends ClientNamespacedWriteModel> clientWriteModels) {
+        notNull("clientSession", clientSession);
+        notNull("clientWriteModels", clientWriteModels);
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
+        return mongoOperationPublisher.clientBulkWrite(clientSession, clientWriteModels, null);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
+                                                      final List<? extends ClientNamespacedWriteModel> clientWriteModels,
+                                                      final ClientBulkWriteOptions options) {
+        notNull("clientSession", clientSession);
+        notNull("clientWriteModels", clientWriteModels);
+        isTrueArgument("`clientWriteModels` must not be empty", !clientWriteModels.isEmpty());
+        notNull("options", options);
+        return mongoOperationPublisher.clientBulkWrite(clientSession, clientWriteModels, options);
     }
 
 }

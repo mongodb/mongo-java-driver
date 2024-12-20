@@ -357,9 +357,17 @@ public final class CollectionHelper<T> {
     }
 
     public void deleteOne(final Bson filter) {
+        delete(filter, false);
+    }
+
+    public void deleteMany(final Bson filter) {
+        delete(filter, true);
+    }
+
+    private void delete(final Bson filter, final boolean multi) {
         new MixedBulkWriteOperation(namespace,
-                                    singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
-                                    true, WriteConcern.ACKNOWLEDGED, false)
+                singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry)).multi(multi)),
+                true, WriteConcern.ACKNOWLEDGED, false)
                 .execute(getBinding());
     }
 

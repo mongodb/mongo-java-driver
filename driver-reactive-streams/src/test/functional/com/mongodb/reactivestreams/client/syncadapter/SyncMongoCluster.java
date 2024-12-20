@@ -21,7 +21,6 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
@@ -29,8 +28,8 @@ import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -286,24 +285,22 @@ public class SyncMongoCluster implements MongoCluster {
     @Override
     public ClientBulkWriteResult bulkWrite(
             final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
-        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
-        throw Assertions.fail("BULK-TODO implement");
+        return requireNonNull(Mono.from(wrapped.bulkWrite(clientWriteModels)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public ClientBulkWriteResult bulkWrite(
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
-        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
-        throw Assertions.fail("BULK-TODO implement");
+        return requireNonNull(Mono.from(wrapped.bulkWrite(clientWriteModels, options)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
     public ClientBulkWriteResult bulkWrite(
             final ClientSession clientSession,
             final List<? extends ClientNamespacedWriteModel> clientWriteModels) throws ClientBulkWriteException {
-        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
-        throw Assertions.fail("BULK-TODO implement");
+        return requireNonNull(
+                Mono.from(wrapped.bulkWrite(unwrap(clientSession), clientWriteModels)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
 
     @Override
@@ -311,8 +308,8 @@ public class SyncMongoCluster implements MongoCluster {
             final ClientSession clientSession,
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             final ClientBulkWriteOptions options) throws ClientBulkWriteException {
-        org.junit.jupiter.api.Assumptions.assumeTrue(Boolean.parseBoolean(toString()), "BULK-TODO implement");
-        throw Assertions.fail("BULK-TODO implement");
+        return requireNonNull(Mono.from(wrapped.bulkWrite(unwrap(clientSession), clientWriteModels, options)).contextWrite(CONTEXT)
+                .block(TIMEOUT_DURATION));
     }
 
     private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {

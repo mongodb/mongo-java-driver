@@ -256,8 +256,9 @@ public abstract class AsyncFunctionsTestBase {
         await(wasCalledFuture, "Callback should have been called");
 
         // The following code can be used to debug variations:
-//        System.out.println("===VARIATION START");
+//        System.out.println("===VARIATION START: " + invocationTracker.getVariationCount());
 //        System.out.println("sync: " + expectedEvents);
+//        System.out.println("sync size: " + expectedEvents.size());
 //        System.out.println("callback called?: " + wasCalledFuture.isDone());
 //        System.out.println("value -- sync: " + expectedValue + " -- async: " + actualValue.get());
 //        System.out.println("excep -- sync: " + expectedException + " -- async: " + actualException.get());

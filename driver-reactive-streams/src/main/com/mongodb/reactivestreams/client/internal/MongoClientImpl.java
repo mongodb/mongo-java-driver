@@ -24,6 +24,9 @@ import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
@@ -227,6 +230,30 @@ public final class MongoClientImpl implements MongoClient {
     public <TResult> ChangeStreamPublisher<TResult> watch(
             final ClientSession clientSession, final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         return delegate.watch(clientSession, pipeline, resultClass);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> models) {
+        return delegate.bulkWrite(models);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final List<? extends ClientNamespacedWriteModel> models,
+                                                      final ClientBulkWriteOptions options) {
+        return delegate.bulkWrite(models, options);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
+                                                      final List<? extends ClientNamespacedWriteModel> models) {
+        return delegate.bulkWrite(clientSession, models);
+    }
+
+    @Override
+    public Publisher<ClientBulkWriteResult> bulkWrite(final ClientSession clientSession,
+                                                      final List<? extends ClientNamespacedWriteModel> models,
+                                                      final ClientBulkWriteOptions options) {
+        return delegate.bulkWrite(clientSession, models, options);
     }
 
     @Override
