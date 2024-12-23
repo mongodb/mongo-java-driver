@@ -120,6 +120,14 @@ package object search {
   type TextSearchOperator = com.mongodb.client.model.search.TextSearchOperator
 
   /**
+   * @see `SearchOperator.phrase(String, SearchPath)`
+   * @see `SearchOperator.phrase(Iterable, Iterable)`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type PhraseSearchOperator = com.mongodb.client.model.search.PhraseSearchOperator
+
+  /**
    * @see `SearchOperator.autocomplete(String, FieldSearchPath)`
    * @see `SearchOperator.autocomplete(Iterable, FieldSearchPath)`
    */
