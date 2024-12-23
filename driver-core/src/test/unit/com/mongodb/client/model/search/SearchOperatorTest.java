@@ -19,6 +19,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
@@ -577,6 +578,72 @@ final class SearchOperatorTest {
                                         fieldPath("fieldName1"),
                                         fieldPath("fieldName2")))
                                 .toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry())
+                )
+        );
+    }
+
+    @Test
+    void regex() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.regex(singleton(fieldPath("fieldName")), emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.regex(emptyList(), singleton("term"))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                        ),
+                        SearchOperator.regex(
+                                        fieldPath("fieldName"),
+                                        "term")
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", new BsonArray(asList(
+                                        fieldPath("fieldName").toBsonValue(),
+                                        wildcardPath("wildc*rd").toBsonValue())))
+                                        .append("query", new BsonArray(asList(
+                                                new BsonString("term1"),
+                                                new BsonString("term2"))))
+                        ),
+                        SearchOperator.regex(
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")),
+                                        asList(
+                                                "term1",
+                                                "term2"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                                        .append("allowAnalyzedField", new BsonBoolean(true))
+                        ),
+                        SearchOperator.regex(
+                                        singleton(fieldPath("fieldName")),
+                                        singleton("term"))
+                                .allowAnalyzedField(true)
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("phrase",
+                                new BsonDocument("path", fieldPath("fieldName").toBsonValue())
+                                        .append("query", new BsonString("term"))
+                                        .append("allowAnalyzedField", new BsonBoolean(false))
+                        ),
+                        SearchOperator.regex(
+                                        singleton(fieldPath("fieldName")),
+                                        singleton("term"))
+                                .allowAnalyzedField(false)
+                                .toBsonDocument()
                 )
         );
     }
