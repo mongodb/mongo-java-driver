@@ -31,7 +31,7 @@ import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
         ExistsSearchOperator, TextSearchOperator, AutocompleteSearchOperator,
-        NumberNearSearchOperator, DateNearSearchOperator, GeoNearSearchOperator,
+        NumberNearSearchOperator, DateNearSearchOperator, GeoNearSearchOperator, PhraseSearchOperator,
         ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore,
         GaussSearchScoreExpression, PathSearchScoreExpression,
         FacetSearchCollector,
@@ -81,11 +81,21 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     }
 
     @Override
-    public TextSearchOperator synonyms(final String name) {
+    public SearchConstructibleBsonElement synonyms(final String name) {
         return newWithMutatedValue(doc -> {
             doc.remove("fuzzy");
             doc.append("synonyms", notNull("name", name));
         });
+    }
+
+    @Override
+    public PhraseSearchOperator slop() {
+        return slop(0);
+    }
+
+    @Override
+    public PhraseSearchOperator slop(final int slop) {
+        return newWithAppendedValue("slop", notNull("slop", slop));
     }
 
     @Override
