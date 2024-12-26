@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -58,13 +59,28 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
             }
 
             private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> hosts) {
-                Collection<ServerAddress> newHosts = hosts;
+                Collection<ServerAddress> newHosts = new ArrayList<>(hosts);
+                List<ServerAddress> existingHostList = new ArrayList<>(getSettings().getHosts());
+                Integer numCurrentEndPoints = existingHostList.size();
+                System.out.println("hosts:" + hosts);
+                System.out.println("host list:" + existingHostList);
+                Integer numRemovedEndPoints = 0;
+                Iterator<ServerAddress> iterator = existingHostList.iterator();
+                while (iterator.hasNext()) {
+                    ServerAddress host = iterator.next();
+                    if (!hosts.contains(host)) {
+                        iterator.remove();
+                        numRemovedEndPoints++;
+                    }
+                }
                 Integer srvMaxHosts = getSettings().getSrvMaxHosts();
                 if (srvMaxHosts != null && srvMaxHosts > 0) {
                     if (srvMaxHosts < hosts.size()) {
                         List<ServerAddress> newHostsList = new ArrayList<>(hosts);
+                        newHostsList.removeAll(existingHostList);
                         Collections.shuffle(newHostsList, ThreadLocalRandom.current());
-                        newHosts = newHostsList.subList(0, srvMaxHosts);
+                        newHosts = existingHostList;
+                        newHosts.addAll(newHostsList.subList(0, srvMaxHosts - numCurrentEndPoints + numRemovedEndPoints));
                     }
                 }
                 return newHosts;
