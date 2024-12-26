@@ -20,13 +20,12 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 
 /**
- * @see SearchOperator#text(SearchPath, String)
- * @see SearchOperator#text(Iterable, Iterable)
- * @since 4.7
+ * @see SearchOperator#queryString(SearchPath, String)
+ * @since 5.3
  */
 @Sealed
 @Beta(Reason.CLIENT)
 public interface QueryStringSearchOperator extends SearchOperator {
     @Override
-    TextSearchOperator score(SearchScore modifier);
+    QueryStringSearchOperator score(SearchScore modifier);
 }
