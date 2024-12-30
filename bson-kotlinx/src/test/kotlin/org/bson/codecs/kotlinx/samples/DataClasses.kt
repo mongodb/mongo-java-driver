@@ -102,6 +102,12 @@ data class DataClassWithDefaults(
     val listSimple: List<String> = listOf("a", "b", "c")
 )
 
+@Serializable
+data class DataClassWithCamelCase(
+    val camelCaseKey: String,
+    val aBCd: String,
+)
+
 @Serializable data class DataClassWithNulls(val boolean: Boolean?, val string: String?, val listSimple: List<String?>?)
 
 @Serializable

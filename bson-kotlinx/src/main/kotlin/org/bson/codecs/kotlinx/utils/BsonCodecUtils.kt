@@ -15,8 +15,10 @@
  */
 package org.bson.codecs.kotlinx.utils
 
+import java.util.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.json.JsonNamingStrategy
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.AbstractBsonReader
 import org.bson.BsonWriter
@@ -28,6 +30,7 @@ import org.bson.codecs.kotlinx.BsonDocumentDecoder
 import org.bson.codecs.kotlinx.BsonEncoder
 import org.bson.codecs.kotlinx.BsonEncoderImpl
 import org.bson.codecs.kotlinx.BsonMapDecoder
+import org.bson.codecs.kotlinx.BsonNamingStrategy
 import org.bson.codecs.kotlinx.BsonPolymorphicDecoder
 import org.bson.codecs.kotlinx.JsonBsonArrayDecoder
 import org.bson.codecs.kotlinx.JsonBsonDecoderImpl
@@ -115,5 +118,18 @@ internal object BsonCodecUtils {
     ): BsonMapDecoder {
         return if (hasJsonDecoder) JsonBsonMapDecoder(descriptor, reader, serializersModule, configuration)
         else BsonMapDecoder(descriptor, reader, serializersModule, configuration)
+    }
+
+    internal val String.toSnakeCase
+        get() = replace(Regex("([A-Z])"), "_$1").lowercase(Locale.getDefault()).replace(Regex("^_"), "")
+
+    internal val String.toCamelCase
+        get() = replace(Regex("_([a-z])")) { it.value[1].uppercaseChar().toString() }
+
+    internal fun BsonNamingStrategy?.toJsonNamingStrategy(): JsonNamingStrategy? {
+        return when (this) {
+            BsonNamingStrategy.SNAKE_CASE -> JsonNamingStrategy.SnakeCase
+            else -> null
+        }
     }
 }

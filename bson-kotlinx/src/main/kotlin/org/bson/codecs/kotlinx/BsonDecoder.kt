@@ -42,6 +42,7 @@ import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDecoder
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonDocumentDecoder
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonMapDecoder
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.createBsonPolymorphicDecoder
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toCamelCase
 import org.bson.internal.NumberCodecHelper
 import org.bson.internal.StringCodecHelper
 import org.bson.types.ObjectId
@@ -116,7 +117,14 @@ internal sealed class AbstractBsonDecoder(
         val elementMetadata = elementsMetadata ?: error("elementsMetadata may not be null.")
         val name: String? =
             when (reader.state ?: error("State of reader may not be null.")) {
-                AbstractBsonReader.State.NAME -> reader.readName()
+                AbstractBsonReader.State.NAME ->
+                    reader.readName().let {
+                        if (configuration.bsonNamingStrategy == BsonNamingStrategy.SNAKE_CASE) {
+                            it.toCamelCase
+                        } else {
+                            it
+                        }
+                    }
                 AbstractBsonReader.State.VALUE -> reader.currentName
                 AbstractBsonReader.State.TYPE -> {
                     reader.readBsonType()
