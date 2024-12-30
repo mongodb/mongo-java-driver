@@ -85,7 +85,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private Boolean bypassDocumentValidation;
     private BsonValue comment;
     private BsonDocument variables;
-    private BsonDocument sort;
 
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests,
             final boolean ordered, final WriteConcern writeConcern, final boolean retryWrites) {
@@ -128,15 +127,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     public MixedBulkWriteOperation comment(@Nullable final BsonValue comment) {
         this.comment = comment;
-        return this;
-    }
-
-    public BsonDocument getSort() {
-        return sort;
-    }
-
-    public MixedBulkWriteOperation sort(@Nullable final BsonDocument sort) {
-        this.sort = sort;
         return this;
     }
 

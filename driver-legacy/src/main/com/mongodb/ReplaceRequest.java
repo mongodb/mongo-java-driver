@@ -18,8 +18,6 @@ package com.mongodb;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.bulk.UpdateRequest;
-import com.mongodb.lang.Nullable;
-import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Encoder;
 
@@ -30,7 +28,6 @@ class ReplaceRequest extends WriteRequest {
     private final Encoder<DBObject> codec;
     private final Encoder<DBObject> replacementCodec;
     private final Collation collation;
-    @Nullable private BsonDocument sort;
 
     ReplaceRequest(final DBObject query, final DBObject document, final boolean upsert, final Encoder<DBObject> codec,
                           final Encoder<DBObject> replacementCodec, final Collation collation) {
@@ -58,23 +55,12 @@ class ReplaceRequest extends WriteRequest {
         return collation;
     }
 
-    @Nullable
-    public BsonDocument getSort() {
-        return sort;
-    }
-
-    public ReplaceRequest sort(@Nullable final BsonDocument sort) {
-        this.sort = sort;
-        return this;
-    }
-
     @Override
     com.mongodb.internal.bulk.WriteRequest toNew(final DBCollection dbCollection) {
         return new UpdateRequest(new BsonDocumentWrapper<>(query, codec),
                 new BsonDocumentWrapper<>(document, replacementCodec),
                                                        com.mongodb.internal.bulk.WriteRequest.Type.REPLACE)
                 .upsert(isUpsert())
-                .collation(getCollation())
-                .sort(getSort());
+                .collation(getCollation());
     }
 }

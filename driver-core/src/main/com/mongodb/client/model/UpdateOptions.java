@@ -258,12 +258,18 @@ public class UpdateOptions {
     }
 
     /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
+     * Gets the sort criteria to apply to the operation.
      *
-     * @return a document describing the sort criteria
-     * @since 5.3
+     * <p>
+     * The sort criteria determines which document the operation updates if the query matches multiple documents.
+     * The first document matched by the sort criteria will be updated.
+     * The default is null, which means no specific sort criteria is applied.
+     *
+     * @return a document describing the sort criteria, or null if no sort is specified.
      * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
+     * @see #sort(Bson)
      */
     @Nullable
     public Bson getSort() {
@@ -271,15 +277,17 @@ public class UpdateOptions {
     }
 
     /**
-     * Sets the sort criteria to apply to the query. When multiple documents match the query, the sort order specifies the document to be
-     * updated first.
+     * Sets the sort criteria to apply to the operation. A null value means no sort criteria is set.
      *
-     * <p>Note: The sort is not applicable to updateMany.</p>
+     * <p>
+     * The sort criteria determines which document the operation updates if the query matches multiple documents.
+     * The first document matched by the specified sort criteria will be updated.
      *
      * @param sort the sort criteria, which may be null.
      * @return this
-     * @since 5.3
      * @mongodb.driver.manual reference/method/db.collection.updateOne/ Sort
+     * @mongodb.server.release 8.0
+     * @since 5.3
      */
     public UpdateOptions sort(@Nullable final Bson sort) {
         this.sort = sort;
