@@ -21,6 +21,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 
@@ -38,7 +40,6 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
     private final DnsSrvRecordMonitor dnsSrvRecordMonitor;
     private volatile MongoException srvResolutionException;
-
 
     public DnsMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
                                  final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
@@ -60,10 +61,9 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
 
             private Collection<ServerAddress> applySrvMaxHosts(final Collection<ServerAddress> hosts) {
                 Collection<ServerAddress> newHosts = new ArrayList<>(hosts);
-                List<ServerAddress> existingHostList = new ArrayList<>(getSettings().getHosts());
+                List<ServerAddress> existingHostList = DnsMultiServerCluster.this.getCurrentDescription().getServerDescriptions()
+                        .stream().map(ServerDescription::getAddress).collect(Collectors.toList());
                 Integer numCurrentEndPoints = existingHostList.size();
-                System.out.println("hosts:" + hosts);
-                System.out.println("host list:" + existingHostList);
                 Integer numRemovedEndPoints = 0;
                 Iterator<ServerAddress> iterator = existingHostList.iterator();
                 while (iterator.hasNext()) {
