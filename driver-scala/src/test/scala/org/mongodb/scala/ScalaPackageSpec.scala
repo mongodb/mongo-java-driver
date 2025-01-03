@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit
 import _root_.scala.concurrent.duration.Duration
 import com.mongodb.{ MongoCredential => JMongoCredential }
 import org.bson.BsonDocumentWrapper
-import org.bson.codecs.DocumentCodec
 import org.mongodb.scala
 import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
 import org.mongodb.scala.bson._
