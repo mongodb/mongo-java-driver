@@ -317,7 +317,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
     ): ChangeStreamFlow<T> = watch(clientSession, pipeline, T::class.java)
 
     /**
-     * Executes a client-level bulk write operation. This method is functionally equivalent to [bulkWrite] with the
+     * Executes a client-level bulk write operation. This method is functionally equivalent to
+     * [bulkWrite(models, options)][bulkWrite] with the
      * [default options][ClientBulkWriteOptions.clientBulkWriteOptions].
      *
      * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
@@ -351,7 +352,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * This operation is not supported by MongoDB Atlas Serverless instances.
      *
      * @param models The [individual write operations][ClientNamespacedWriteModel].
-     * @param options The options.
+     * @param options The [options][ClientBulkWriteOptions].
      * @return The [ClientBulkWriteResult] if the operation is successful.
      * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful, and
      *   there is at least one of the following pieces of information to report:
@@ -367,7 +368,8 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
     ): ClientBulkWriteResult = wrapped.bulkWrite(models, options).awaitSingle()
 
     /**
-     * Executes a client-level bulk write operation. This method is functionally equivalent to [bulkWrite] with the
+     * Executes a client-level bulk write operation. This method is functionally equivalent to
+     * [bulkWrite(clientSession, models, options)][bulkWrite] with the
      * [default options][ClientBulkWriteOptions.clientBulkWriteOptions].
      *
      * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
@@ -405,7 +407,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      *
      * @param clientSession The [client session][ClientSession] with which to associate this operation.
      * @param models The [individual write operations][ClientNamespacedWriteModel].
-     * @param options The options.
+     * @param options The [options][ClientBulkWriteOptions].
      * @return The [ClientBulkWriteResult] if the operation is successful.
      * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful, and
      *   there is at least one of the following pieces of information to report:
