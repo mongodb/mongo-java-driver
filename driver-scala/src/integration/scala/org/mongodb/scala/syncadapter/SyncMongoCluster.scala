@@ -1,6 +1,5 @@
 package org.mongodb.scala.syncadapter
 
-import com.mongodb.assertions.Assertions
 import com.mongodb.client.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
 import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.{ ClientSession, MongoCluster => JMongoCluster, MongoDatabase => JMongoDatabase }
@@ -129,33 +128,21 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
 
   override def bulkWrite(
       models: util.List[_ <: ClientNamespacedWriteModel]
-  ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
-  }
+  ): ClientBulkWriteResult = wrapped.bulkWrite(models.asScala.toList).toFuture().get()
 
   override def bulkWrite(
       models: util.List[_ <: ClientNamespacedWriteModel],
       options: ClientBulkWriteOptions
-  ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
-  }
+  ): ClientBulkWriteResult = wrapped.bulkWrite(models.asScala.toList, options).toFuture().get()
 
   override def bulkWrite(
       clientSession: ClientSession,
       models: util.List[_ <: ClientNamespacedWriteModel]
-  ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
-  }
+  ): ClientBulkWriteResult = wrapped.bulkWrite(unwrap(clientSession), models.asScala.toList).toFuture().get()
 
   override def bulkWrite(
       clientSession: ClientSession,
       models: util.List[_ <: ClientNamespacedWriteModel],
       options: ClientBulkWriteOptions
-  ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
-  }
+  ): ClientBulkWriteResult = wrapped.bulkWrite(unwrap(clientSession), models.asScala.toList, options).toFuture().get()
 }

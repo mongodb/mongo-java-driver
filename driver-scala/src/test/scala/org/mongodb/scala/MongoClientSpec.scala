@@ -19,6 +19,7 @@ package org.mongodb.scala
 import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient }
 import org.bson.BsonDocument
 import org.mockito.Mockito.verify
+import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
@@ -28,6 +29,7 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
   val wrapped = mock[JMongoClient]
   val clientSession = mock[ClientSession]
   val mongoClient = new MongoClient(wrapped)
+  val namespace = new MongoNamespace("db.coll")
 
   "MongoClient" should "have the same methods as the wrapped MongoClient" in {
     val wrapped = classOf[JMongoClient].getMethods.map(_.getName).toSet -- Seq("getSettings")
@@ -35,12 +37,7 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-
-      // TODO("BULK-TODO remove this if when bulkWrite is implemented and uncomment line 43")
-      if (!cleanedName.contains("bulkWrite")) {
-        assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
-      }
-      // assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
@@ -102,6 +99,37 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
     verify(wrapped).watch(pipeline.asJava, classOf[BsonDocument])
     verify(wrapped).watch(clientSession, pipeline.asJava, classOf[Document])
     verify(wrapped).watch(clientSession, pipeline.asJava, classOf[BsonDocument])
+  }
+
+  it should "call the underlying bulkWrite with models only" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+    mongoClient.bulkWrite(models) shouldBe a[SingleObservable[ClientBulkWriteResult]]
+    verify(wrapped).bulkWrite(models.asJava)
+  }
+
+  it should "call the underlying bulkWrite with models and options" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+    val options = ClientBulkWriteOptions.clientBulkWriteOptions()
+
+    mongoClient.bulkWrite(models, options)
+
+    verify(wrapped).bulkWrite(models.asJava, options)
+  }
+
+  it should "call the underlying bulkWrite with clientSession and models" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+
+    mongoClient.bulkWrite(clientSession, models)
+
+    verify(wrapped).bulkWrite(clientSession, models.asJava)
+  }
+
+  it should "call the underlying bulkWrite with clientSession, models, and options" in {
+    val models = List(ClientNamespacedWriteModel.insertOne(namespace, Document("key" -> "value")))
+    val options = ClientBulkWriteOptions.clientBulkWriteOptions()
+
+    mongoClient.bulkWrite(clientSession, models, options)
+    verify(wrapped).bulkWrite(clientSession, models.asJava, options)
   }
 
   it should "call the underlying getClusterDescription" in {
