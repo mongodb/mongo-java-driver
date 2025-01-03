@@ -17,9 +17,9 @@ package com.mongodb.kotlin.client
 
 import com.mongodb.ClientSessionOptions
 import com.mongodb.MongoNamespace
+import com.mongodb.client.MongoClient as JMongoClient
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
-import com.mongodb.client.MongoClient as JMongoClient
 import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.test.assertEquals
