@@ -317,8 +317,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
     ): ChangeStreamFlow<T> = watch(clientSession, pipeline, T::class.java)
 
     /**
-     * Executes a client-level bulk write operation. This method is functionally equivalent to `bulkWrite(models:
-     * List<ClientNamespacedWriteModel>, options: ClientBulkWriteOptions)` with the
+     * Executes a client-level bulk write operation. This method is functionally equivalent to [bulkWrite] with the
      * [default options][ClientBulkWriteOptions.clientBulkWriteOptions].
      *
      * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
@@ -368,8 +367,7 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
     ): ClientBulkWriteResult = wrapped.bulkWrite(models, options).awaitSingle()
 
     /**
-     * Executes a client-level bulk write operation. This method is functionally equivalent to `bulkWrite(clientSession:
-     * ClientSession, models: List<ClientNamespacedWriteModel>, options: ClientBulkWriteOptions)`with the
+     * Executes a client-level bulk write operation. This method is functionally equivalent to [bulkWrite] with the
      * [default options][ClientBulkWriteOptions.clientBulkWriteOptions].
      *
      * This operation supports [retryable writes][MongoClientSettings.getRetryWrites]. Depending on the number of
