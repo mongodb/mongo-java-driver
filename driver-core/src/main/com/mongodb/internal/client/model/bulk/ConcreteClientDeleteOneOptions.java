@@ -83,7 +83,7 @@ public final class ConcreteClientDeleteOneOptions implements ClientDeleteOneOpti
 
     @Override
     public String toString() {
-        return "ClientDeleteOptions{"
+        return "ClientDeleteOneOptions{"
                 + "collation=" + collation
                 + ", hint=" + hint
                 + ", hintString='" + hintString + '\''

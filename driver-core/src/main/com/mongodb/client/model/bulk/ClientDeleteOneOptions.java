@@ -22,7 +22,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
- * The options to apply when deleting document.
+ * The options to apply when deleting a document.
  *
  * @since 5.3
  */

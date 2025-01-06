@@ -113,7 +113,7 @@ public final class ConcreteClientUpdateOneOptions implements ClientUpdateOneOpti
 
     @Override
     public String toString() {
-        return "ClientUpdateOptions{"
+        return "ClientUpdateOneOptions{"
                 + "arrayFilters=" + arrayFilters
                 + ", collation=" + collation
                 + ", hint=" + hint

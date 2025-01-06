@@ -1248,7 +1248,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
         }
 
-        private void encodeUpdateWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel model) {
+        private void encodeUpdateWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel<?> model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
             model.getUpdate().ifPresent(value -> {

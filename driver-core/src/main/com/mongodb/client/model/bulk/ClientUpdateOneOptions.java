@@ -23,7 +23,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
- * The options to apply when updating document.
+ * The options to apply when updating a document.
  *
  * @since 5.3
  */
