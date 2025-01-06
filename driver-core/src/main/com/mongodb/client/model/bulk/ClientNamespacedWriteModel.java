@@ -62,8 +62,8 @@ public interface ClientNamespacedWriteModel {
 
     /**
      * Creates a model for updating at most one document in the {@code namespace} matching the {@code filter}.
-     * This method is functionally equivalent to {@link #updateOne(MongoNamespace, Bson, Bson, ClientUpdateOptions)}
-     * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
+     * This method is functionally equivalent to {@link #updateOne(MongoNamespace, Bson, Bson, ClientUpdateOneOptions)}
+     * with the {@linkplain ClientUpdateOneOptions#clientUpdateOneOptions() default options}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
@@ -91,7 +91,7 @@ public interface ClientNamespacedWriteModel {
      * @see Updates
      */
     static ClientNamespacedUpdateOneModel updateOne(
-            final MongoNamespace namespace, final Bson filter, final Bson update, final ClientUpdateOptions options) {
+            final MongoNamespace namespace, final Bson filter, final Bson update, final ClientUpdateOneOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
@@ -101,8 +101,8 @@ public interface ClientNamespacedWriteModel {
 
     /**
      * Creates a model for updating at most one document in the {@code namespace} matching the {@code filter}.
-     * This method is functionally equivalent to {@link #updateOne(MongoNamespace, Bson, Iterable, ClientUpdateOptions)}
-     * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
+     * This method is functionally equivalent to {@link #updateOne(MongoNamespace, Bson, Iterable, ClientUpdateOneOptions)}
+     * with the {@linkplain ClientUpdateOneOptions#clientUpdateOneOptions() default options}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
@@ -131,7 +131,7 @@ public interface ClientNamespacedWriteModel {
      * @see Aggregates
      */
     static ClientNamespacedUpdateOneModel updateOne(
-            final MongoNamespace namespace, final Bson filter, final Iterable<? extends Bson> updatePipeline, final ClientUpdateOptions options) {
+            final MongoNamespace namespace, final Bson filter, final Iterable<? extends Bson> updatePipeline, final ClientUpdateOneOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
@@ -141,8 +141,8 @@ public interface ClientNamespacedWriteModel {
 
     /**
      * Creates a model for updating all documents in the {@code namespace} matching the {@code filter}.
-     * This method is functionally equivalent to {@link #updateMany(MongoNamespace, Bson, Bson, ClientUpdateOptions)}
-     * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default}.
+     * This method is functionally equivalent to {@link #updateMany(MongoNamespace, Bson, Bson, ClientUpdateManyOptions)}
+     * with the {@linkplain ClientUpdateManyOptions#clientUpdateManyOptions() default}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
@@ -170,7 +170,7 @@ public interface ClientNamespacedWriteModel {
      * @see Updates
      */
     static ClientNamespacedUpdateManyModel updateMany(
-            final MongoNamespace namespace, final Bson filter, final Bson update, final ClientUpdateOptions options) {
+            final MongoNamespace namespace, final Bson filter, final Bson update, final ClientUpdateManyOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("update", update);
@@ -180,8 +180,8 @@ public interface ClientNamespacedWriteModel {
 
     /**
      * Creates a model for updating all documents in the {@code namespace} matching the {@code filter}.
-     * This method is functionally equivalent to {@link #updateMany(MongoNamespace, Bson, Iterable, ClientUpdateOptions)}
-     * with the {@linkplain ClientUpdateOptions#clientUpdateOptions() default options}.
+     * This method is functionally equivalent to {@link #updateMany(MongoNamespace, Bson, Iterable, ClientUpdateManyOptions)}
+     * with the {@linkplain ClientUpdateManyOptions#clientUpdateManyOptions() default options}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
@@ -210,7 +210,7 @@ public interface ClientNamespacedWriteModel {
      * @see Aggregates
      */
     static ClientNamespacedUpdateManyModel updateMany(
-            final MongoNamespace namespace, final Bson filter, final Iterable<? extends Bson> updatePipeline, final ClientUpdateOptions options) {
+            final MongoNamespace namespace, final Bson filter, final Iterable<? extends Bson> updatePipeline, final ClientUpdateManyOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("updatePipeline", updatePipeline);
@@ -261,8 +261,8 @@ public interface ClientNamespacedWriteModel {
 
     /**
      * Creates a model for deleting at most one document from the {@code namespace} matching the {@code filter}.
-     * This method is functionally equivalent to {@link #deleteOne(MongoNamespace, Bson, ClientDeleteOptions)}
-     * with the {@linkplain ClientDeleteOptions#clientDeleteOptions() default options}.
+     * This method is functionally equivalent to {@link #deleteOne(MongoNamespace, Bson, ClientDeleteOneOptions)}
+     * with the {@linkplain ClientDeleteOneOptions#clientDeleteOneOptions() default options}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
@@ -284,7 +284,7 @@ public interface ClientNamespacedWriteModel {
      * @return The requested {@link ClientNamespacedDeleteOneModel}.
      * @see Filters
      */
-    static ClientNamespacedDeleteOneModel deleteOne(final MongoNamespace namespace, final Bson filter, final ClientDeleteOptions options) {
+    static ClientNamespacedDeleteOneModel deleteOne(final MongoNamespace namespace, final Bson filter, final ClientDeleteOneOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);
@@ -293,8 +293,8 @@ public interface ClientNamespacedWriteModel {
 
     /**
      * Creates a model for deleting all documents from the {@code namespace} matching the {@code filter}.
-     * This method is functionally equivalent to {@link #deleteMany(MongoNamespace, Bson, ClientDeleteOptions)}
-     * with the {@linkplain ClientDeleteOptions#clientDeleteOptions() default options}.
+     * This method is functionally equivalent to {@link #deleteMany(MongoNamespace, Bson, ClientDeleteManyOptions)}
+     * with the {@linkplain ClientDeleteManyOptions#clientDeleteManyOptions() default options}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
@@ -316,7 +316,7 @@ public interface ClientNamespacedWriteModel {
      * @return The requested {@link ClientNamespacedDeleteManyModel}.
      * @see Filters
      */
-    static ClientNamespacedDeleteManyModel deleteMany(final MongoNamespace namespace, final Bson filter, final ClientDeleteOptions options) {
+    static ClientNamespacedDeleteManyModel deleteMany(final MongoNamespace namespace, final Bson filter, final ClientDeleteManyOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("options", options);

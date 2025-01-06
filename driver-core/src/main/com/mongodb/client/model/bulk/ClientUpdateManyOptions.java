@@ -18,7 +18,7 @@ package com.mongodb.client.model.bulk;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.Filters;
-import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -28,14 +28,14 @@ import org.bson.conversions.Bson;
  * @since 5.3
  */
 @Sealed
-public interface ClientUpdateOptions {
+public interface ClientUpdateManyOptions {
     /**
      * Creates the default options.
      *
      * @return The default options.
      */
-    static ClientUpdateOptions clientUpdateOptions() {
-        return new ConcreteClientUpdateOptions();
+    static ClientUpdateManyOptions clientUpdateManyOptions() {
+        return new ConcreteClientUpdateManyOptions();
     }
 
     /**
@@ -45,7 +45,7 @@ public interface ClientUpdateOptions {
      * @return {@code this}.
      * @see Filters
      */
-    ClientUpdateOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
+    ClientUpdateManyOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
 
     /**
      * Sets the collation.
@@ -53,7 +53,7 @@ public interface ClientUpdateOptions {
      * @param collation The collation. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientUpdateOptions collation(@Nullable Collation collation);
+    ClientUpdateManyOptions collation(@Nullable Collation collation);
 
     /**
      * Sets the index specification,
@@ -62,7 +62,7 @@ public interface ClientUpdateOptions {
      * @param hint The index specification. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientUpdateOptions hint(@Nullable Bson hint);
+    ClientUpdateManyOptions hint(@Nullable Bson hint);
 
     /**
      * Sets the index name,
@@ -71,7 +71,7 @@ public interface ClientUpdateOptions {
      * @param hintString The index name. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientUpdateOptions hintString(@Nullable String hintString);
+    ClientUpdateManyOptions hintString(@Nullable String hintString);
 
     /**
      * Enables or disables creation of a document if no documents match the filter.
@@ -79,5 +79,5 @@ public interface ClientUpdateOptions {
      * @param upsert The upsert flag. {@code null} represents the server default.
      * @return {@code this}.
      */
-    ClientUpdateOptions upsert(@Nullable Boolean upsert);
+    ClientUpdateManyOptions upsert(@Nullable Boolean upsert);
 }

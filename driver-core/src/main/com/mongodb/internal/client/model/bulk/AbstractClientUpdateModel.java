@@ -15,7 +15,6 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientUpdateOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -27,26 +26,22 @@ import static java.util.Optional.ofNullable;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public abstract class AbstractClientUpdateModel {
+public abstract class AbstractClientUpdateModel<T> {
     private final Bson filter;
     @Nullable
     private final Bson update;
     @Nullable
     private final Iterable<? extends Bson> updatePipeline;
-    private final ConcreteClientUpdateOptions options;
 
     AbstractClientUpdateModel(
             final Bson filter,
             @Nullable
             final Bson update,
-            @Nullable
-            final Iterable<? extends Bson> updatePipeline,
-            @Nullable final ClientUpdateOptions options) {
+            @Nullable final Iterable<? extends Bson> updatePipeline) {
         this.filter = filter;
         assertTrue(update == null ^ updatePipeline == null);
         this.update = update;
         this.updatePipeline = updatePipeline;
-        this.options = options == null ? ConcreteClientUpdateOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOptions) options;
     }
 
     public final Bson getFilter() {
@@ -61,18 +56,16 @@ public abstract class AbstractClientUpdateModel {
         return ofNullable(updatePipeline);
     }
 
-    public final ConcreteClientUpdateOptions getOptions() {
-        return options;
-    }
-
     abstract String getToStringDescription();
+
+    abstract T getOptions();
 
     @Override
     public final String toString() {
         return getToStringDescription()
                 + "{filter=" + filter
                 + ", update=" + (update != null ? update : updatePipeline)
-                + ", options=" + options
+                + ", options=" + getOptions()
                 + '}';
     }
 }

@@ -15,16 +15,25 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
-import com.mongodb.client.model.bulk.ClientDeleteOptions;
+import com.mongodb.client.model.bulk.ClientDeleteManyOptions;
+import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientDeleteManyModel extends AbstractClientDeleteModel implements ClientWriteModel {
-    public ConcreteClientDeleteManyModel(final Bson filter, @Nullable final ClientDeleteOptions options) {
-        super(filter, options);
+public final class ConcreteClientDeleteManyModel extends AbstractClientDeleteModel<ConcreteClientDeleteManyOptions> implements ClientWriteModel {
+    private final @Nullable ConcreteClientDeleteManyOptions options;
+
+    public ConcreteClientDeleteManyModel(final Bson filter, final @Nullable ClientDeleteManyOptions options) {
+        super(filter);
+        this.options = options == null ? ConcreteClientDeleteManyOptions.MUTABLE_EMPTY : (ConcreteClientDeleteManyOptions) options;
+    }
+
+    @Nullable
+    public ConcreteClientDeleteManyOptions getOptions() {
+        return options;
     }
 
     @Override

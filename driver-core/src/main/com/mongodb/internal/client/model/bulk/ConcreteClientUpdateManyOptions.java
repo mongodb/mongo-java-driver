@@ -16,7 +16,8 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.bulk.ClientUpdateOptions;
+import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
+import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -27,8 +28,8 @@ import static java.util.Optional.ofNullable;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
-    static final ConcreteClientUpdateOptions MUTABLE_EMPTY = new ConcreteClientUpdateOptions();
+public final class ConcreteClientUpdateManyOptions implements ClientUpdateManyOptions {
+    static final ConcreteClientUpdateManyOptions MUTABLE_EMPTY = new ConcreteClientUpdateManyOptions();
 
     @Nullable
     private Iterable<? extends Bson> arrayFilters;
@@ -41,11 +42,11 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
     @Nullable
     private Boolean upsert;
 
-    public ConcreteClientUpdateOptions() {
+    public ConcreteClientUpdateManyOptions() {
     }
 
     @Override
-    public ClientUpdateOptions arrayFilters(@Nullable final Iterable<? extends Bson> arrayFilters) {
+    public ClientUpdateManyOptions arrayFilters(@Nullable final Iterable<? extends Bson> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
@@ -58,7 +59,7 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
     }
 
     @Override
-    public ClientUpdateOptions collation(@Nullable final Collation collation) {
+    public ClientUpdateManyOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -71,7 +72,7 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
     }
 
     @Override
-    public ClientUpdateOptions hint(@Nullable final Bson hint) {
+    public ClientUpdateManyOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
         this.hintString = null;
         return this;
@@ -85,7 +86,7 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
     }
 
     @Override
-    public ClientUpdateOptions hintString(@Nullable final String hintString) {
+    public ClientUpdateManyOptions hintString(@Nullable final String hintString) {
         this.hintString = hintString;
         this.hint = null;
         return this;
@@ -99,7 +100,7 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
     }
 
     @Override
-    public ClientUpdateOptions upsert(@Nullable final Boolean upsert) {
+    public ClientUpdateManyOptions upsert(@Nullable final Boolean upsert) {
         this.upsert = upsert;
         return this;
     }
@@ -113,7 +114,7 @@ public final class ConcreteClientUpdateOptions implements ClientUpdateOptions {
 
     @Override
     public String toString() {
-        return "ClientUpdateOptions{"
+        return "ClientUpdateManyOptions{"
                 + "arrayFilters=" + arrayFilters
                 + ", collation=" + collation
                 + ", hint=" + hint

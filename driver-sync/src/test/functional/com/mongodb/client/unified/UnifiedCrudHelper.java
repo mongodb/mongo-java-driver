@@ -77,9 +77,11 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
-import com.mongodb.client.model.bulk.ClientDeleteOptions;
+import com.mongodb.client.model.bulk.ClientDeleteManyOptions;
+import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
 import com.mongodb.client.model.bulk.ClientReplaceOptions;
-import com.mongodb.client.model.bulk.ClientUpdateOptions;
+import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
+import com.mongodb.client.model.bulk.ClientUpdateOneOptions;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
@@ -121,9 +123,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
-import static com.mongodb.client.model.bulk.ClientDeleteOptions.clientDeleteOptions;
+import static com.mongodb.client.model.bulk.ClientDeleteManyOptions.clientDeleteManyOptions;
+import static com.mongodb.client.model.bulk.ClientDeleteOneOptions.clientDeleteOneOptions;
 import static com.mongodb.client.model.bulk.ClientReplaceOptions.clientReplaceOptions;
-import static com.mongodb.client.model.bulk.ClientUpdateOptions.clientUpdateOptions;
+import static com.mongodb.client.model.bulk.ClientUpdateManyOptions.clientUpdateManyOptions;
+import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -1857,34 +1861,34 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getDocument("update"),
-                                getClientUpdateOptions(arguments))
+                                getClientUpdateOneOptions(arguments))
                         : ClientNamespacedWriteModel.updateOne(
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
-                                getClientUpdateOptions(arguments));
+                                getClientUpdateOneOptions(arguments));
             case "updateMany":
                 return arguments.isDocument("update")
                         ? ClientNamespacedWriteModel.updateMany(
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getDocument("update"),
-                                getClientUpdateOptions(arguments))
+                                getClientUpdateManyOptions(arguments))
                         : ClientNamespacedWriteModel.updateMany(
                                 namespace,
                                 arguments.getDocument("filter"),
                                 arguments.getArray("update").stream().map(BsonValue::asDocument).collect(toList()),
-                                getClientUpdateOptions(arguments));
+                                getClientUpdateManyOptions(arguments));
             case "deleteOne":
                 return ClientNamespacedWriteModel.deleteOne(
                         namespace,
                         arguments.getDocument("filter"),
-                        getClientDeleteOptions(arguments));
+                        getClientDeleteOneOptions(arguments));
             case "deleteMany":
                 return ClientNamespacedWriteModel.deleteMany(
                         namespace,
                         arguments.getDocument("filter"),
-                        getClientDeleteOptions(arguments));
+                        getClientDeleteManyOptions(arguments));
             default:
                 throw new UnsupportedOperationException("Unsupported client write model type: " + modelType);
         }
@@ -1918,8 +1922,8 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         return options;
     }
 
-    private static ClientUpdateOptions getClientUpdateOptions(final BsonDocument arguments) {
-        ClientUpdateOptions options = clientUpdateOptions();
+    private static ClientUpdateOneOptions getClientUpdateOneOptions(final BsonDocument arguments) {
+        ClientUpdateOneOptions options = clientUpdateOneOptions();
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":
@@ -1949,8 +1953,63 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         return options;
     }
 
-    private static ClientDeleteOptions getClientDeleteOptions(final BsonDocument arguments) {
-        ClientDeleteOptions options = clientDeleteOptions();
+    private static ClientUpdateManyOptions getClientUpdateManyOptions(final BsonDocument arguments) {
+        ClientUpdateManyOptions options = clientUpdateManyOptions();
+        arguments.forEach((key, argument) -> {
+            switch (key) {
+                case "namespace":
+                case "filter":
+                case "update":
+                    break;
+                case "arrayFilters":
+                    options.arrayFilters(argument.asArray().stream().map(BsonValue::asDocument).collect(toList()));
+                    break;
+                case "collation":
+                    options.collation(asCollation(argument.asDocument()));
+                    break;
+                case "hint":
+                    if (argument.isDocument()) {
+                        options.hint(argument.asDocument());
+                    } else {
+                        options.hintString(argument.asString().getValue());
+                    }
+                    break;
+                case "upsert":
+                    options.upsert(argument.asBoolean().getValue());
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
+            }
+        });
+        return options;
+    }
+
+    private static ClientDeleteOneOptions getClientDeleteOneOptions(final BsonDocument arguments) {
+        ClientDeleteOneOptions options = clientDeleteOneOptions();
+        arguments.forEach((key, argument) -> {
+            switch (key) {
+                case "namespace":
+                case "filter":
+                    break;
+                case "collation":
+                    options.collation(asCollation(argument.asDocument()));
+                    break;
+                case "hint":
+                    if (argument.isDocument()) {
+                        options.hint(argument.asDocument());
+                    } else {
+                        options.hintString(argument.asString().getValue());
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
+            }
+        });
+        return options;
+    }
+
+    private static ClientDeleteManyOptions getClientDeleteManyOptions(final BsonDocument arguments) {
+        ClientDeleteManyOptions options = clientDeleteManyOptions();
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":

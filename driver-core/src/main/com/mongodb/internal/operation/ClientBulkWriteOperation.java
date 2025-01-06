@@ -51,7 +51,6 @@ import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.client.model.bulk.AbstractClientDeleteModel;
 import com.mongodb.internal.client.model.bulk.AbstractClientNamespacedWriteModel;
 import com.mongodb.internal.client.model.bulk.AbstractClientUpdateModel;
 import com.mongodb.internal.client.model.bulk.AcknowledgedSummaryClientBulkWriteResult;
@@ -59,8 +58,9 @@ import com.mongodb.internal.client.model.bulk.AcknowledgedVerboseClientBulkWrite
 import com.mongodb.internal.client.model.bulk.ClientWriteModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientBulkWriteOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteResult;
 import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientInsertOneResult;
@@ -73,8 +73,9 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateOneM
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateResult;
 import com.mongodb.internal.client.model.bulk.UnacknowledgedClientBulkWriteResult;
 import com.mongodb.internal.connection.AsyncConnection;
@@ -1247,7 +1248,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             });
         }
 
-        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel model) {
+        private void encodeUpdateWriteModelInternals(final BsonWriter writer, final AbstractClientUpdateModel model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
             model.getUpdate().ifPresent(value -> {
@@ -1259,7 +1260,33 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 value.forEach(pipelineStage -> encodeUsingRegistry(writer, pipelineStage));
                 writer.writeEndArray();
             });
-            ConcreteClientUpdateOptions options = model.getOptions();
+        }
+
+        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateOneModel model) {
+            encodeUpdateWriteModelInternals(writer, model);
+            
+            ConcreteClientUpdateOneOptions options = model.getOptions();
+            options.getArrayFilters().ifPresent(value -> {
+                writer.writeStartArray("arrayFilters");
+                value.forEach(filter -> encodeUsingRegistry(writer, filter));
+                writer.writeEndArray();
+            });
+            options.getCollation().ifPresent(value -> {
+                writer.writeName("collation");
+                encodeUsingRegistry(writer, value.asDocument());
+            });
+            options.getHint().ifPresent(hint -> {
+                writer.writeName("hint");
+                encodeUsingRegistry(writer, hint);
+            });
+            options.getHintString().ifPresent(value -> writer.writeString("hint", value));
+            options.isUpsert().ifPresent(value -> writer.writeBoolean("upsert", value));
+        }
+
+        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateManyModel model) {
+            encodeUpdateWriteModelInternals(writer, model);
+
+            ConcreteClientUpdateManyOptions options = model.getOptions();
             options.getArrayFilters().ifPresent(value -> {
                 writer.writeStartArray("arrayFilters");
                 value.forEach(filter -> encodeUsingRegistry(writer, filter));
@@ -1296,10 +1323,25 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             options.isUpsert().ifPresent(value -> writer.writeBoolean("upsert", value));
         }
 
-        private void encodeWriteModelInternals(final BsonWriter writer, final AbstractClientDeleteModel model) {
+        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientDeleteOneModel model) {
             writer.writeName("filter");
             encodeUsingRegistry(writer, model.getFilter());
-            ConcreteClientDeleteOptions options = model.getOptions();
+            ConcreteClientDeleteOneOptions options = model.getOptions();
+            options.getCollation().ifPresent(value -> {
+                writer.writeName("collation");
+                encodeUsingRegistry(writer, value.asDocument());
+            });
+            options.getHint().ifPresent(value -> {
+                writer.writeName("hint");
+                encodeUsingRegistry(writer, value);
+            });
+            options.getHintString().ifPresent(value -> writer.writeString("hint", value));
+        }
+
+        private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientDeleteManyModel model) {
+            writer.writeName("filter");
+            encodeUsingRegistry(writer, model.getFilter());
+            ConcreteClientDeleteManyOptions options = model.getOptions();
             options.getCollation().ifPresent(value -> {
                 writer.writeName("collation");
                 encodeUsingRegistry(writer, value.asDocument());
