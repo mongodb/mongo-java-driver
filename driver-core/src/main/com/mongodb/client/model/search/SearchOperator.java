@@ -20,6 +20,14 @@ import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.geojson.Point;
+
+import com.mongodb.lang.Nullable;
+
+import java.util.Date;
+import java.util.UUID;
+
+import org.bson.BsonBinary;
+import org.bson.BsonNull;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -27,6 +35,8 @@ import org.bson.conversions.Bson;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
+
+import org.bson.types.ObjectId;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.Iterables.concat;
@@ -290,6 +300,104 @@ public interface SearchOperator extends Bson {
         return new SearchConstructibleBsonElement("near", new Document("origin", notNull("origin", origin))
                 .append("path", combineToBsonValue(pathIterator, true))
                 .append("pivot", notNull("pivot", pivot)));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The boolean value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, final boolean value) {
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", value));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The object id value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final ObjectId value) {
+        if (value == null) {
+            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                    .append("value", BsonNull.VALUE));
+        }
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", value));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The number value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final Number value) {
+        if (value == null) {
+            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                    .append("value", BsonNull.VALUE));
+        }
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", value));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The date value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final Date value) {
+        if (value == null) {
+            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                    .append("value", BsonNull.VALUE));
+        }
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", value));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The string value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final String value) {
+        if (value == null) {
+            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                    .append("value", BsonNull.VALUE));
+        }
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", value));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
+     *
+     * @param path The indexed field to be searched.
+     * @param value The uuid value to query for.
+     * @return The requested {@link SearchOperator}.
+     * @mongodb.atlas.manual atlas-search/equals/ equals operator
+     */
+    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final UUID value) {
+        if (value == null) {
+            return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                    .append("value", BsonNull.VALUE));
+        }
+        return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
+                .append("value", new BsonBinary(value)));
     }
 
     /**

@@ -20,7 +20,11 @@ import com.mongodb.client.model.search.{ SearchOperator => JSearchOperator }
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.geojson.Point
 
+import org.bson.types.ObjectId;
+
 import java.time.{ Duration, Instant }
+import java.util.Date
+import java.util.UUID
 import collection.JavaConverters._
 
 /**
@@ -227,6 +231,72 @@ object SearchOperator {
    */
   def near(origin: Point, pivot: Number, paths: Iterable[_ <: FieldSearchPath]): GeoNearSearchOperator =
     JSearchOperator.near(origin, pivot, paths.asJava)
+
+  /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The boolean value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: Boolean): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The object id value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: ObjectId): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The number value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: Number): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The date value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: Date): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The string value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: String): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
+
+  /**
+   * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
+   *
+   * @param path The indexed field to be searched.
+   * @param value The uuid value to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
+   */
+  def equals(path: FieldSearchPath, value: UUID): EqualsSearchOperator =
+    JSearchOperator.equals(path, value)
 
   /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.
