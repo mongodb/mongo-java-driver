@@ -45,7 +45,7 @@ public interface ClientUpdateManyOptions extends BaseClientUpdateOptions {
      * @return {@code this}.
      * @see Filters
      */
-    BaseClientUpdateOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
+    ClientUpdateManyOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
 
     /**
      * Sets the collation.
