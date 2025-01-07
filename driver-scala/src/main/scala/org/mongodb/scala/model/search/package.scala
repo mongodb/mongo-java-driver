@@ -183,6 +183,13 @@ package object search {
   type GeoNearSearchOperator = com.mongodb.client.model.search.GeoNearSearchOperator
 
   /**
+   * @see `SearchOperator.moreLikeThis`
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type MoreLikeThisSearchOperator = com.mongodb.client.model.search.MoreLikeThisSearchOperator
+
+  /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]

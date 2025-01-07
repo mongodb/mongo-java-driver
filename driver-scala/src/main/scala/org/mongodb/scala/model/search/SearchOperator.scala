@@ -17,6 +17,7 @@ package org.mongodb.scala.model.search
 
 import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.search.{ SearchOperator => JSearchOperator }
+import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.geojson.Point
 
@@ -227,6 +228,25 @@ object SearchOperator {
    */
   def near(origin: Point, pivot: Number, paths: Iterable[_ <: FieldSearchPath]): GeoNearSearchOperator =
     JSearchOperator.near(origin, pivot, paths.asJava)
+
+  /**
+   * Returns a `SearchOperator` that returns documents similar to input documents.
+   *
+   * @param like The BSON document that is used to extract representative terms to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/morelikethis/ moreLikeThis operator]]
+   */
+  def moreLikeThis(like: BsonDocument): MoreLikeThisSearchOperator = JSearchOperator.moreLikeThis(like)
+
+  /**
+   * Returns a `SearchOperator` that returns documents similar to input documents.
+   *
+   * @param likes The BSON documents that are used to extract representative terms to query for.
+   * @return The requested `SearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/morelikethis/ moreLikeThis operator]]
+   */
+  def moreLikeThis(likes: Iterable[BsonDocument]): MoreLikeThisSearchOperator =
+    JSearchOperator.moreLikeThis(likes.asJava)
 
   /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.
