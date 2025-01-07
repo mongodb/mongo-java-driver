@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
@@ -33,6 +34,7 @@ public abstract class AbstractClientDeleteModel<T> implements ClientWriteModel {
 
     abstract String getToStringDescription();
 
+    @Nullable
     abstract T getOptions();
 
     @Override

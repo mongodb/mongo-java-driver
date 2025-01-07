@@ -17,7 +17,6 @@ package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
-import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 

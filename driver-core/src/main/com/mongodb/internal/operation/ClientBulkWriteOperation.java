@@ -1264,7 +1264,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
 
         private void encodeWriteModelInternals(final BsonWriter writer, final ConcreteClientUpdateOneModel model) {
             encodeUpdateWriteModelInternals(writer, model);
-            
             ConcreteClientUpdateOneOptions options = model.getOptions();
             options.getArrayFilters().ifPresent(value -> {
                 writer.writeStartArray("arrayFilters");

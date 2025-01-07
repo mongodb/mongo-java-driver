@@ -36,6 +36,7 @@ public final class ConcreteClientUpdateOneModel extends AbstractClientUpdateMode
         this.options = options == null ? ConcreteClientUpdateOneOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOneOptions) options;
     }
 
+    @Nullable
     public ConcreteClientUpdateOneOptions getOptions() {
         return options;
     }

@@ -16,7 +16,6 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
-import com.mongodb.client.model.bulk.ClientUpdateOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -37,6 +36,7 @@ public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateMod
         this.options = options == null ? ConcreteClientUpdateManyOptions.MUTABLE_EMPTY : (ConcreteClientUpdateManyOptions) options;
     }
 
+    @Nullable
     public ConcreteClientUpdateManyOptions getOptions() {
         return options;
     }

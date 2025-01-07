@@ -16,7 +16,6 @@
 package com.mongodb.internal.client.model.bulk;
 
 import com.mongodb.client.model.bulk.ClientDeleteManyOptions;
-import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
