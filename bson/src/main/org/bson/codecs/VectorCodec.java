@@ -21,21 +21,21 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.Vector;
+import org.bson.BinaryVector;
 
 /**
- * Encodes and decodes {@link Vector} objects.
+ * Encodes and decodes {@link BinaryVector} objects.
  *
  */
- final class VectorCodec implements Codec<Vector> {
+ final class VectorCodec implements Codec<BinaryVector> {
 
     @Override
-    public void encode(final BsonWriter writer, final Vector vectorToEncode, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final BinaryVector vectorToEncode, final EncoderContext encoderContext) {
         writer.writeBinaryData(new BsonBinary(vectorToEncode));
     }
 
     @Override
-    public Vector decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public BinaryVector decode(final BsonReader reader, final DecoderContext decoderContext) {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
@@ -48,8 +48,8 @@ import org.bson.Vector;
     }
 
     @Override
-    public Class<Vector> getEncoderClass() {
-        return Vector.class;
+    public Class<BinaryVector> getEncoderClass() {
+        return BinaryVector.class;
     }
 }
 

@@ -21,22 +21,22 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.Int8Vector;
+import org.bson.Int8BinaryVector;
 
 /**
- * Encodes and decodes {@link Int8Vector} objects.
+ * Encodes and decodes {@link Int8BinaryVector} objects.
  *
  * @since 5.3
  */
-final class Int8VectorCodec implements Codec<Int8Vector> {
+final class Int8VectorCodec implements Codec<Int8BinaryVector> {
 
     @Override
-    public void encode(final BsonWriter writer, final Int8Vector vectorToEncode, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final Int8BinaryVector vectorToEncode, final EncoderContext encoderContext) {
         writer.writeBinaryData(new BsonBinary(vectorToEncode));
     }
 
     @Override
-    public Int8Vector decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public Int8BinaryVector decode(final BsonReader reader, final DecoderContext decoderContext) {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
@@ -51,8 +51,8 @@ final class Int8VectorCodec implements Codec<Int8Vector> {
 
 
     @Override
-    public Class<Int8Vector> getEncoderClass() {
-        return Int8Vector.class;
+    public Class<Int8BinaryVector> getEncoderClass() {
+        return Int8BinaryVector.class;
     }
 }
 

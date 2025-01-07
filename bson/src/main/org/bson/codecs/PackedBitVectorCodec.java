@@ -21,21 +21,21 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.PackedBitVector;
+import org.bson.PackedBitBinaryVector;
 
 /**
- * Encodes and decodes {@link PackedBitVector} objects.
+ * Encodes and decodes {@link PackedBitBinaryVector} objects.
  *
  */
-final class PackedBitVectorCodec implements Codec<PackedBitVector> {
+final class PackedBitVectorCodec implements Codec<PackedBitBinaryVector> {
 
     @Override
-    public void encode(final BsonWriter writer, final PackedBitVector vectorToEncode, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final PackedBitBinaryVector vectorToEncode, final EncoderContext encoderContext) {
         writer.writeBinaryData(new BsonBinary(vectorToEncode));
     }
 
     @Override
-    public PackedBitVector decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public PackedBitBinaryVector decode(final BsonReader reader, final DecoderContext decoderContext) {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
@@ -51,8 +51,8 @@ final class PackedBitVectorCodec implements Codec<PackedBitVector> {
 
 
     @Override
-    public Class<PackedBitVector> getEncoderClass() {
-        return PackedBitVector.class;
+    public Class<PackedBitBinaryVector> getEncoderClass() {
+        return PackedBitBinaryVector.class;
     }
 }
 
