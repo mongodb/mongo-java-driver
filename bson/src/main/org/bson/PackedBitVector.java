@@ -16,6 +16,9 @@
 
 package org.bson;
 
+import org.bson.annotations.Beta;
+import org.bson.annotations.Reason;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -32,6 +35,7 @@ import static org.bson.assertions.Assertions.assertNotNull;
  * @see BsonBinary#asVector()
  * @since 5.3
  */
+@Beta(Reason.SERVER)
 public final class PackedBitVector extends Vector {
 
     private final byte padding;
@@ -53,6 +57,7 @@ public final class PackedBitVector extends Vector {
      * @return the underlying byte array representing this {@link PackedBitVector} vector.
      * @see #getPadding()
      */
+    @Beta(Reason.SERVER)
     public byte[] getData() {
         return assertNotNull(data);
     }
@@ -69,6 +74,7 @@ public final class PackedBitVector extends Vector {
      *
      * @return the padding value (between 0 and 7).
      */
+    @Beta(Reason.SERVER)
     public byte getPadding() {
         return this.padding;
     }
