@@ -20,12 +20,8 @@ import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * Represents a vector that is stored and retrieved using the BSON Binary Subtype 9 format.
- * This class supports multiple vector {@link DataType}'s and provides static methods to create
- * vectors.
- * <p>
- * Vectors are densely packed arrays of numbers, all the same type, which are stored efficiently
- * in BSON using a binary format.
+ * Binary Vectors are densely packed arrays of numbers, all the same type, which are stored and retrieved efficiently using the BSON Binary
+ * Subtype 9 format. This class supports multiple vector {@link DataType}'s and provides static methods to create vectors.
  * <p>
  * <b>NOTE:</b> This class should be treated as <b>sealed</b>: it must not be extended or implemented by consumers of the library.
  *
