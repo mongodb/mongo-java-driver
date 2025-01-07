@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AssertUtils {
+public class MongoAssertions {
 
     public static <T> void assertSubInterfaceReturnTypes(final String packageName,
                                                          final Class<T> baseClass) {
