@@ -28,7 +28,7 @@ import org.bson.conversions.Bson;
  * @since 5.3
  */
 @Sealed
-public interface ClientUpdateManyOptions {
+public interface ClientUpdateManyOptions extends BaseClientUpdateOptions {
     /**
      * Creates the default options.
      *

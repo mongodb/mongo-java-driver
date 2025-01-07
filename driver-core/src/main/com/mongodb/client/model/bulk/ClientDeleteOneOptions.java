@@ -27,7 +27,7 @@ import org.bson.conversions.Bson;
  * @since 5.3
  */
 @Sealed
-public interface ClientDeleteOneOptions {
+public interface ClientDeleteOneOptions extends BaseClientDeleteOptions{
     /**
      * Creates the default options.
      *
