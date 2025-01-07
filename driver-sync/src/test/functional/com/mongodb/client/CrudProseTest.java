@@ -72,7 +72,7 @@ import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientNamespacedWriteModel.insertOne;
-import static com.mongodb.client.model.bulk.ClientUpdateOptions.clientUpdateOptions;
+import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
 import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.nCopies;
@@ -297,12 +297,12 @@ public class CrudProseTest {
                                 NAMESPACE,
                                 Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "a"))),
                                 Updates.set("x", 1),
-                                clientUpdateOptions().upsert(true)),
+                                clientUpdateOneOptions().upsert(true)),
                         ClientNamespacedWriteModel.updateOne(
                                 NAMESPACE,
                                 Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "b"))),
                                 Updates.set("x", 1),
-                                clientUpdateOptions().upsert(true))),
+                                clientUpdateOneOptions().upsert(true))),
                         clientBulkWriteOptions().verboseResults(true)
                 );
 

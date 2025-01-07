@@ -23,7 +23,7 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientUpdateOneModel extends AbstractClientUpdateModel<ConcreteClientUpdateOneOptions> implements ClientWriteModel {
-    private final @Nullable ConcreteClientUpdateOneOptions options;
+    private final ConcreteClientUpdateOneOptions options;
 
     public ConcreteClientUpdateOneModel(
             final Bson filter,
@@ -36,7 +36,6 @@ public final class ConcreteClientUpdateOneModel extends AbstractClientUpdateMode
         this.options = options == null ? ConcreteClientUpdateOneOptions.MUTABLE_EMPTY : (ConcreteClientUpdateOneOptions) options;
     }
 
-    @Nullable
     public ConcreteClientUpdateOneOptions getOptions() {
         return options;
     }

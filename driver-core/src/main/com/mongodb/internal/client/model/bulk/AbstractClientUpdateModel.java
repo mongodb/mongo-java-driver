@@ -58,7 +58,6 @@ public abstract class AbstractClientUpdateModel<T> {
 
     abstract String getToStringDescription();
 
-    @Nullable
     abstract T getOptions();
 
     @Override
