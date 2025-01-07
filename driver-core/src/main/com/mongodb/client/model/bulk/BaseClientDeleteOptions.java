@@ -16,7 +16,6 @@
 
 package com.mongodb.client.model.bulk;
 
-import com.mongodb.annotations.Sealed;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -24,7 +23,6 @@ import org.bson.conversions.Bson;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-@Sealed
 interface BaseClientDeleteOptions {
 
     BaseClientDeleteOptions collation(@Nullable Collation collation);
