@@ -183,8 +183,8 @@ package object search {
   type GeoNearSearchOperator = com.mongodb.client.model.search.GeoNearSearchOperator
 
   /**
-   * @see `SearchOperator.text(String, SearchPath)`
-   * @see `SearchOperator.text(Iterable, Iterable)`
+   * @see `SearchOperator.wildcard(String, SearchPath)`
+   * @see `SearchOperator.wildcard(Iterable, Iterable)`
    */
   @Sealed
   @Beta(Array(Reason.CLIENT))
