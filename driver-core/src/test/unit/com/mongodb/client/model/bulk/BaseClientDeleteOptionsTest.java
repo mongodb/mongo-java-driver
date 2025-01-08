@@ -19,7 +19,7 @@ package com.mongodb.client.model.bulk;
 import com.mongodb.MongoAssertions;
 import org.junit.jupiter.api.Test;
 
-class ClientDeleteManyOptionsTest {
+class BaseClientDeleteOptionsTest {
 
     @Test
     void testAllSubInterfacesOverrideMethods() {
