@@ -79,7 +79,7 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientDeleteManyOptions;
 import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
-import com.mongodb.client.model.bulk.ClientReplaceOptions;
+import com.mongodb.client.model.bulk.ClientReplaceOneOptions;
 import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
 import com.mongodb.client.model.bulk.ClientUpdateOneOptions;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
@@ -125,7 +125,7 @@ import java.util.function.Supplier;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientDeleteManyOptions.clientDeleteManyOptions;
 import static com.mongodb.client.model.bulk.ClientDeleteOneOptions.clientDeleteOneOptions;
-import static com.mongodb.client.model.bulk.ClientReplaceOptions.clientReplaceOptions;
+import static com.mongodb.client.model.bulk.ClientReplaceOneOptions.clientReplaceOptions;
 import static com.mongodb.client.model.bulk.ClientUpdateManyOptions.clientUpdateManyOptions;
 import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
 import static java.lang.String.format;
@@ -1894,8 +1894,8 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         }
     }
 
-    private static ClientReplaceOptions getClientReplaceOptions(final BsonDocument arguments) {
-        ClientReplaceOptions options = clientReplaceOptions();
+    private static ClientReplaceOneOptions getClientReplaceOptions(final BsonDocument arguments) {
+        ClientReplaceOneOptions options = clientReplaceOptions();
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":

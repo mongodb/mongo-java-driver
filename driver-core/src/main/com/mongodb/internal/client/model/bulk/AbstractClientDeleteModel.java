@@ -22,24 +22,28 @@ import org.bson.conversions.Bson;
  */
 public abstract class AbstractClientDeleteModel<T> implements ClientWriteModel {
     private final Bson filter;
+    private final T options;
 
-    AbstractClientDeleteModel(final Bson filter) {
+    AbstractClientDeleteModel(final Bson filter, final T options) {
         this.filter = filter;
+        this.options = options;
     }
 
     public final Bson getFilter() {
         return filter;
     }
 
-    abstract String getToStringDescription();
+    public final T getOptions() {
+        return options;
+    }
 
-    abstract T getOptions();
+    abstract String getToStringDescription();
 
     @Override
     public final String toString() {
         return getToStringDescription()
                 + "{filter=" + filter
-                + ", options=" + getOptions()
+                + ", options=" + options
                 + '}';
     }
 }

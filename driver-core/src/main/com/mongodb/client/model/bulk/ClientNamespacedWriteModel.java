@@ -220,8 +220,8 @@ public interface ClientNamespacedWriteModel {
 
     /**
      * Creates a model for replacing at most one document in the {@code namespace} matching the {@code filter}.
-     * This method is functionally equivalent to {@link #replaceOne(MongoNamespace, Bson, Object, ClientReplaceOptions)}
-     * with the {@linkplain ClientReplaceOptions#clientReplaceOptions() default options}.
+     * This method is functionally equivalent to {@link #replaceOne(MongoNamespace, Bson, Object, ClientReplaceOneOptions)}
+     * with the {@linkplain ClientReplaceOneOptions#clientReplaceOptions() default options}.
      *
      * @param namespace The namespace.
      * @param filter The filter.
@@ -251,7 +251,7 @@ public interface ClientNamespacedWriteModel {
      * @see Filters
      */
     static <TDocument> ClientNamespacedReplaceOneModel replaceOne(
-            final MongoNamespace namespace, final Bson filter, final TDocument replacement, final ClientReplaceOptions options) {
+            final MongoNamespace namespace, final Bson filter, final TDocument replacement, final ClientReplaceOneOptions options) {
         notNull("namespace", namespace);
         notNull("filter", filter);
         notNull("replacement", replacement);

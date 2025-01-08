@@ -71,7 +71,7 @@ import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedReplaceOne
 import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientNamespacedUpdateOneModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneModel;
-import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientReplaceOneOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyModel;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyOptions;
 import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneModel;
@@ -1309,7 +1309,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             encodeUsingRegistry(writer, model.getFilter());
             writer.writeName("updateMods");
             encodeUsingRegistry(writer, model.getReplacement(), COLLECTIBLE_DOCUMENT_ENCODER_CONTEXT);
-            ConcreteClientReplaceOptions options = model.getOptions();
+            ConcreteClientReplaceOneOptions options = model.getOptions();
             options.getCollation().ifPresent(value -> {
                 writer.writeName("collation");
                 encodeUsingRegistry(writer, value.asDocument());

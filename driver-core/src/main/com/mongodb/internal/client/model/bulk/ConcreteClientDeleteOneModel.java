@@ -23,15 +23,8 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientDeleteOneModel extends AbstractClientDeleteModel<ConcreteClientDeleteOneOptions> implements ClientWriteModel {
-    private final ConcreteClientDeleteOneOptions options;
-
     public ConcreteClientDeleteOneModel(final Bson filter, @Nullable final ClientDeleteOneOptions options) {
-        super(filter);
-        this.options = options == null ? ConcreteClientDeleteOneOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOneOptions) options;
-    }
-
-    public ConcreteClientDeleteOneOptions getOptions() {
-        return options;
+        super(filter, options == null ? ConcreteClientDeleteOneOptions.MUTABLE_EMPTY : (ConcreteClientDeleteOneOptions) options);
     }
 
     @Override

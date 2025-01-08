@@ -23,8 +23,6 @@ import org.bson.conversions.Bson;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateModel<ConcreteClientUpdateManyOptions> implements ClientWriteModel {
-    private final ConcreteClientUpdateManyOptions options;
-
     public ConcreteClientUpdateManyModel(
             final Bson filter,
             @Nullable
@@ -32,18 +30,12 @@ public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateMod
             @Nullable
             final Iterable<? extends Bson> updatePipeline,
             @Nullable final ClientUpdateManyOptions options) {
-        super(filter, update, updatePipeline);
-        this.options = options == null ? ConcreteClientUpdateManyOptions.MUTABLE_EMPTY : (ConcreteClientUpdateManyOptions) options;
-    }
-
-    public ConcreteClientUpdateManyOptions getOptions() {
-        return options;
+        super(filter, update, updatePipeline,
+                options == null ? ConcreteClientUpdateManyOptions.MUTABLE_EMPTY : (ConcreteClientUpdateManyOptions) options);
     }
 
     @Override
     String getToStringDescription() {
         return "ClientUpdateManyModel";
     }
-
-
 }

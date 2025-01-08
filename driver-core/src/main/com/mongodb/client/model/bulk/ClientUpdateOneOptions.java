@@ -45,6 +45,7 @@ public interface ClientUpdateOneOptions extends BaseClientUpdateOptions{
      * @return {@code this}.
      * @see Filters
      */
+    @Override
     ClientUpdateOneOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
 
     /**
@@ -53,6 +54,7 @@ public interface ClientUpdateOneOptions extends BaseClientUpdateOptions{
      * @param collation The collation. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientUpdateOneOptions collation(@Nullable Collation collation);
 
     /**
@@ -62,6 +64,7 @@ public interface ClientUpdateOneOptions extends BaseClientUpdateOptions{
      * @param hint The index specification. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientUpdateOneOptions hint(@Nullable Bson hint);
 
     /**
@@ -71,6 +74,7 @@ public interface ClientUpdateOneOptions extends BaseClientUpdateOptions{
      * @param hintString The index name. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientUpdateOneOptions hintString(@Nullable String hintString);
 
     /**
@@ -79,5 +83,6 @@ public interface ClientUpdateOneOptions extends BaseClientUpdateOptions{
      * @param upsert The upsert flag. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientUpdateOneOptions upsert(@Nullable Boolean upsert);
 }

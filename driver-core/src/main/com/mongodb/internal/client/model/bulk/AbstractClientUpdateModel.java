@@ -32,16 +32,19 @@ public abstract class AbstractClientUpdateModel<T> {
     private final Bson update;
     @Nullable
     private final Iterable<? extends Bson> updatePipeline;
+    private final T options;
 
     AbstractClientUpdateModel(
             final Bson filter,
             @Nullable
             final Bson update,
-            @Nullable final Iterable<? extends Bson> updatePipeline) {
+            @Nullable final Iterable<? extends Bson> updatePipeline,
+            final T options) {
         this.filter = filter;
         assertTrue(update == null ^ updatePipeline == null);
         this.update = update;
         this.updatePipeline = updatePipeline;
+        this.options = options;
     }
 
     public final Bson getFilter() {
@@ -56,16 +59,18 @@ public abstract class AbstractClientUpdateModel<T> {
         return ofNullable(updatePipeline);
     }
 
-    abstract String getToStringDescription();
+    public final T getOptions() {
+        return options;
+    }
 
-    abstract T getOptions();
+    abstract String getToStringDescription();
 
     @Override
     public final String toString() {
         return getToStringDescription()
                 + "{filter=" + filter
                 + ", update=" + (update != null ? update : updatePipeline)
-                + ", options=" + getOptions()
+                + ", options=" + options
                 + '}';
     }
 }

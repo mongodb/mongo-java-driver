@@ -43,6 +43,7 @@ public interface ClientDeleteOneOptions extends BaseClientDeleteOptions{
      * @param collation The collation. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientDeleteOneOptions collation(@Nullable Collation collation);
 
     /**
@@ -52,6 +53,7 @@ public interface ClientDeleteOneOptions extends BaseClientDeleteOptions{
      * @param hint The index specification. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientDeleteOneOptions hint(@Nullable Bson hint);
 
     /**
@@ -61,5 +63,6 @@ public interface ClientDeleteOneOptions extends BaseClientDeleteOptions{
      * @param hintString The index name. {@code null} represents the server default.
      * @return {@code this}.
      */
+    @Override
     ClientDeleteOneOptions hintString(@Nullable String hintString);
 }
