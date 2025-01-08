@@ -27,7 +27,7 @@ import org.bson.BinaryVector;
  * Encodes and decodes {@link BinaryVector} objects.
  *
  */
- final class VectorCodec implements Codec<BinaryVector> {
+ final class BinaryVectorCodec implements Codec<BinaryVector> {
 
     @Override
     public void encode(final BsonWriter writer, final BinaryVector vectorToEncode, final EncoderContext encoderContext) {

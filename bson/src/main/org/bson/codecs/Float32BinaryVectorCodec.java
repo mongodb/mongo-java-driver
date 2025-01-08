@@ -21,39 +21,36 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.PackedBitBinaryVector;
+import org.bson.Float32BinaryVector;
 
 /**
- * Encodes and decodes {@link PackedBitBinaryVector} objects.
+ * Encodes and decodes {@link Float32BinaryVector} objects.
  *
  */
-final class PackedBitVectorCodec implements Codec<PackedBitBinaryVector> {
+final class Float32BinaryVectorCodec implements Codec<Float32BinaryVector> {
 
     @Override
-    public void encode(final BsonWriter writer, final PackedBitBinaryVector vectorToEncode, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final Float32BinaryVector vectorToEncode, final EncoderContext encoderContext) {
         writer.writeBinaryData(new BsonBinary(vectorToEncode));
     }
 
     @Override
-    public PackedBitBinaryVector decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public Float32BinaryVector decode(final BsonReader reader, final DecoderContext decoderContext) {
         byte subType = reader.peekBinarySubType();
 
         if (subType != BsonBinarySubType.VECTOR.getValue()) {
-            throw new BsonInvalidOperationException(
-                    "Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found: " + subType);
+            throw new BsonInvalidOperationException("Expected vector binary subtype " + BsonBinarySubType.VECTOR.getValue() + " but found: " + subType);
         }
 
         return reader.readBinaryData()
                 .asBinary()
                 .asVector()
-                .asPackedBitVector();
+                .asFloat32Vector();
     }
-
 
     @Override
-    public Class<PackedBitBinaryVector> getEncoderClass() {
-        return PackedBitBinaryVector.class;
+    public Class<Float32BinaryVector> getEncoderClass() {
+        return Float32BinaryVector.class;
     }
 }
-
 

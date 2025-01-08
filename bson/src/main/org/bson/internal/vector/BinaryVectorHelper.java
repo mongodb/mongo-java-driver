@@ -39,13 +39,13 @@ import java.nio.FloatBuffer;
  * @see BsonBinary#asVector()
  * @see BsonBinary#BsonBinary(BinaryVector)
  */
-public final class VectorHelper {
+public final class BinaryVectorHelper {
 
     private static final ByteOrder STORED_BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
     private static final String ERROR_MESSAGE_UNKNOWN_VECTOR_DATA_TYPE = "Unknown vector data type: ";
     private static final byte ZERO_PADDING = 0;
 
-    private VectorHelper() {
+    private BinaryVectorHelper() {
         //NOP
     }
 

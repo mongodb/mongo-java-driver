@@ -50,16 +50,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-class BinaryVectorCodecTest extends CodecTestCase {
+class BinaryBinaryVectorCodecTest extends CodecTestCase {
 
     private static Stream<Arguments> provideVectorsAndCodecs() {
         return Stream.of(
-                arguments(BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f}), new Float32VectorCodec(), Float32BinaryVector.class),
+                arguments(BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f}), new Float32BinaryVectorCodec(), Float32BinaryVector.class),
                 arguments(BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}), new Int8VectorCodec(), Int8BinaryVector.class),
-                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new PackedBitVectorCodec(), PackedBitBinaryVector.class),
-                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new VectorCodec(), BinaryVector.class),
-                arguments(BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}), new VectorCodec(), BinaryVector.class),
-                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new VectorCodec(), BinaryVector.class)
+                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new PackedBitBinaryVectorCodec(), PackedBitBinaryVector.class),
+                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new BinaryVectorCodec(), BinaryVector.class),
+                arguments(BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}), new BinaryVectorCodec(), BinaryVector.class),
+                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new BinaryVectorCodec(), BinaryVector.class)
         );
     }
 
@@ -129,7 +129,7 @@ class BinaryVectorCodecTest extends CodecTestCase {
         reader.readStartDocument();
 
         // when & then
-        Stream.of(new Float32VectorCodec(), new Int8VectorCodec(), new PackedBitVectorCodec())
+        Stream.of(new Float32BinaryVectorCodec(), new Int8VectorCodec(), new PackedBitBinaryVectorCodec())
                 .forEach(codec -> {
                     BsonInvalidOperationException exception = assertThrows(BsonInvalidOperationException.class, () ->
                             codec.decode(reader, DecoderContext.builder().build()));

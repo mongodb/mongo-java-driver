@@ -62,10 +62,10 @@ class ValueCodecProviderSpecification extends Specification {
         provider.get(Short, registry) instanceof ShortCodec
         provider.get(byte[], registry) instanceof ByteArrayCodec
         provider.get(Float, registry) instanceof FloatCodec
-        provider.get(BinaryVector, registry) instanceof VectorCodec
-        provider.get(Float32BinaryVector, registry) instanceof Float32VectorCodec
+        provider.get(BinaryVector, registry) instanceof BinaryVectorCodec
+        provider.get(Float32BinaryVector, registry) instanceof Float32BinaryVectorCodec
         provider.get(Int8BinaryVector, registry) instanceof Int8VectorCodec
-        provider.get(PackedBitBinaryVector, registry) instanceof PackedBitVectorCodec
+        provider.get(PackedBitBinaryVector, registry) instanceof PackedBitBinaryVectorCodec
 
         provider.get(Binary, registry) instanceof BinaryCodec
         provider.get(MinKey, registry) instanceof MinKeyCodec

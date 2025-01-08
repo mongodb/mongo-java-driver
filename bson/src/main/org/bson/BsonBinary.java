@@ -18,12 +18,12 @@ package org.bson;
 
 import org.bson.assertions.Assertions;
 import org.bson.internal.UuidHelper;
-import org.bson.internal.vector.VectorHelper;
+import org.bson.internal.vector.BinaryVectorHelper;
 
 import java.util.Arrays;
 import java.util.UUID;
 
-import static org.bson.internal.vector.VectorHelper.encodeVectorToBinary;
+import static org.bson.internal.vector.BinaryVectorHelper.encodeVectorToBinary;
 
 /**
  * A representation of the BSON Binary type.  Note that for performance reasons instances of this class are not immutable,
@@ -156,7 +156,7 @@ public class BsonBinary extends BsonValue {
             throw new BsonInvalidOperationException("type must be a Vector subtype.");
         }
 
-        return VectorHelper.decodeBinaryToVector(this.data);
+        return BinaryVectorHelper.decodeBinaryToVector(this.data);
     }
 
     /**
