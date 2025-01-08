@@ -587,11 +587,11 @@ final class SearchOperatorTest {
         assertAll(
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // queries must not be empty
-                        SearchOperator.text(singleton(fieldPath("fieldName")), emptyList())
+                        SearchOperator.wildcard(emptyList(), singleton(fieldPath("fieldName")))
                 ),
                 () -> assertThrows(IllegalArgumentException.class, () ->
                         // paths must not be empty
-                        SearchOperator.text(emptyList(), singleton("term"))
+                        SearchOperator.wildcard(singleton("term"), emptyList())
                 ),
                 () -> assertEquals(
                         new BsonDocument("wildcard",
