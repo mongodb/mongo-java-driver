@@ -25,10 +25,10 @@ import org.bson.BsonInvalidOperationException;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
-import org.bson.Float32Vector;
-import org.bson.Int8Vector;
-import org.bson.PackedBitVector;
-import org.bson.Vector;
+import org.bson.Float32BinaryVector;
+import org.bson.Int8BinaryVector;
+import org.bson.PackedBitBinaryVector;
+import org.bson.BinaryVector;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.io.OutputBuffer;
@@ -50,22 +50,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-class VectorCodecTest extends CodecTestCase {
+class BinaryBinaryVectorCodecTest extends CodecTestCase {
 
     private static Stream<Arguments> provideVectorsAndCodecs() {
         return Stream.of(
-                arguments(Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f}), new Float32VectorCodec(), Float32Vector.class),
-                arguments(Vector.int8Vector(new byte[]{10, 20, 30, 40}), new Int8VectorCodec(), Int8Vector.class),
-                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new PackedBitVectorCodec(), PackedBitVector.class),
-                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new VectorCodec(), Vector.class),
-                arguments(Vector.int8Vector(new byte[]{10, 20, 30, 40}), new VectorCodec(), Vector.class),
-                arguments(Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new VectorCodec(), Vector.class)
+                arguments(BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f}), new Float32BinaryVectorCodec(), Float32BinaryVector.class),
+                arguments(BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}), new Int8VectorCodec(), Int8BinaryVector.class),
+                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new PackedBitBinaryVectorCodec(), PackedBitBinaryVector.class),
+                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new BinaryVectorCodec(), BinaryVector.class),
+                arguments(BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}), new BinaryVectorCodec(), BinaryVector.class),
+                arguments(BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3), new BinaryVectorCodec(), BinaryVector.class)
         );
     }
 
     @ParameterizedTest
     @MethodSource("provideVectorsAndCodecs")
-    void shouldEncodeVector(final Vector vectorToEncode, final Codec<Vector> vectorCodec) throws IOException {
+    void shouldEncodeVector(final BinaryVector vectorToEncode, final Codec<BinaryVector> vectorCodec) throws IOException {
         // given
         BsonBinary bsonBinary = new BsonBinary(vectorToEncode);
         byte[] encodedVector = bsonBinary.getData();
@@ -98,7 +98,7 @@ class VectorCodecTest extends CodecTestCase {
 
     @ParameterizedTest
     @MethodSource("provideVectorsAndCodecs")
-    void shouldDecodeVector(final Vector vectorToDecode, final Codec<Vector> vectorCodec) {
+    void shouldDecodeVector(final BinaryVector vectorToDecode, final Codec<BinaryVector> vectorCodec) {
         // given
         OutputBuffer buffer = new BasicOutputBuffer();
         BsonWriter writer = new BsonBinaryWriter(buffer);
@@ -111,7 +111,7 @@ class VectorCodecTest extends CodecTestCase {
         reader.readStartDocument();
 
         // when
-        Vector decodedVector = vectorCodec.decode(reader, DecoderContext.builder().build());
+        BinaryVector decodedVector = vectorCodec.decode(reader, DecoderContext.builder().build());
 
         // then
         assertDoesNotThrow(reader::readEndDocument);
@@ -129,7 +129,7 @@ class VectorCodecTest extends CodecTestCase {
         reader.readStartDocument();
 
         // when & then
-        Stream.of(new Float32VectorCodec(), new Int8VectorCodec(), new PackedBitVectorCodec())
+        Stream.of(new Float32BinaryVectorCodec(), new Int8VectorCodec(), new PackedBitBinaryVectorCodec())
                 .forEach(codec -> {
                     BsonInvalidOperationException exception = assertThrows(BsonInvalidOperationException.class, () ->
                             codec.decode(reader, DecoderContext.builder().build()));
@@ -140,11 +140,11 @@ class VectorCodecTest extends CodecTestCase {
 
     @ParameterizedTest
     @MethodSource("provideVectorsAndCodecs")
-    void shouldReturnCorrectEncoderClass(final Vector vector,
-                                         final Codec<? extends Vector> codec,
-                                         final Class<? extends Vector> expectedEncoderClass) {
+    void shouldReturnCorrectEncoderClass(final BinaryVector vector,
+                                         final Codec<? extends BinaryVector> codec,
+                                         final Class<? extends BinaryVector> expectedEncoderClass) {
         // when
-        Class<? extends Vector> encoderClass = codec.getEncoderClass();
+        Class<? extends BinaryVector> encoderClass = codec.getEncoderClass();
 
         // then
         assertEquals(expectedEncoderClass, encoderClass);

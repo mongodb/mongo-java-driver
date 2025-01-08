@@ -24,7 +24,7 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.internal.operation.SearchIndexRequest;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.bson.Vector;
+import org.bson.BinaryVector;
 import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterAll;
@@ -67,7 +67,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-class AggregatesVectorSearchIntegrationTest {
+class AggregatesBinaryVectorSearchIntegrationTest {
     private static final String EXCEED_WAIT_ATTEMPTS_ERROR_MESSAGE =
             "Exceeded maximum attempts waiting for Search Index creation in Atlas cluster. Index document: %s";
 
@@ -112,67 +112,67 @@ class AggregatesVectorSearchIntegrationTest {
         assumeTrue(serverVersionAtLeast(6, 0));
 
         collectionHelper =
-                new CollectionHelper<>(new DocumentCodec(), new MongoNamespace("javaVectorSearchTest", AggregatesVectorSearchIntegrationTest.class.getSimpleName()));
+                new CollectionHelper<>(new DocumentCodec(), new MongoNamespace("javaVectorSearchTest", AggregatesBinaryVectorSearchIntegrationTest.class.getSimpleName()));
         collectionHelper.drop();
         collectionHelper.insertDocuments(
                 new Document()
                         .append("_id", 0)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{0, 1, 2, 3, 4}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{0, 1, 2, 3, 4}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{0.0001, 1.12345, 2.23456, 3.34567, 4.45678})
                         .append(FIELD_YEAR, 2016),
                 new Document()
                         .append("_id", 1)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{1, 2, 3, 4, 5}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{1.0001f, 2.12345f, 3.23456f, 4.34567f, 5.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{1, 2, 3, 4, 5}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{1.0001f, 2.12345f, 3.23456f, 4.34567f, 5.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{1.0001, 2.12345, 3.23456, 4.34567, 5.45678})
                         .append(FIELD_YEAR, 2017),
                 new Document()
                         .append("_id", 2)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{2, 3, 4, 5, 6}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{2.0002f, 3.12345f, 4.23456f, 5.34567f, 6.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{2, 3, 4, 5, 6}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{2.0002f, 3.12345f, 4.23456f, 5.34567f, 6.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{2.0002, 3.12345, 4.23456, 5.34567, 6.45678})
                         .append(FIELD_YEAR, 2018),
                 new Document()
                         .append("_id", 3)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{3, 4, 5, 6, 7}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{3.0003f, 4.12345f, 5.23456f, 6.34567f, 7.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{3, 4, 5, 6, 7}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{3.0003f, 4.12345f, 5.23456f, 6.34567f, 7.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{3.0003, 4.12345, 5.23456, 6.34567, 7.45678})
                         .append(FIELD_YEAR, 2019),
                 new Document()
                         .append("_id", 4)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{4, 5, 6, 7, 8}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{4.0004f, 5.12345f, 6.23456f, 7.34567f, 8.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{4, 5, 6, 7, 8}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{4.0004f, 5.12345f, 6.23456f, 7.34567f, 8.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{4.0004, 5.12345, 6.23456, 7.34567, 8.45678})
                         .append(FIELD_YEAR, 2020),
                 new Document()
                         .append("_id", 5)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{5, 6, 7, 8, 9}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{5.0005f, 6.12345f, 7.23456f, 8.34567f, 9.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{5, 6, 7, 8, 9}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{5.0005f, 6.12345f, 7.23456f, 8.34567f, 9.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{5.0005, 6.12345, 7.23456, 8.34567, 9.45678})
                         .append(FIELD_YEAR, 2021),
                 new Document()
                         .append("_id", 6)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{6, 7, 8, 9, 10}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{6.0006f, 7.12345f, 8.23456f, 9.34567f, 10.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{6, 7, 8, 9, 10}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{6.0006f, 7.12345f, 8.23456f, 9.34567f, 10.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{6.0006, 7.12345, 8.23456, 9.34567, 10.45678})
                         .append(FIELD_YEAR, 2022),
                 new Document()
                         .append("_id", 7)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{7, 8, 9, 10, 11}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{7.0007f, 8.12345f, 9.23456f, 10.34567f, 11.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{7, 8, 9, 10, 11}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{7.0007f, 8.12345f, 9.23456f, 10.34567f, 11.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{7.0007, 8.12345, 9.23456, 10.34567, 11.45678})
                         .append(FIELD_YEAR, 2023),
                 new Document()
                         .append("_id", 8)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{8, 9, 10, 11, 12}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{8.0008f, 9.12345f, 10.23456f, 11.34567f, 12.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{8, 9, 10, 11, 12}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{8.0008f, 9.12345f, 10.23456f, 11.34567f, 12.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{8.0008, 9.12345, 10.23456, 11.34567, 12.45678})
                         .append(FIELD_YEAR, 2024),
                 new Document()
                         .append("_id", 9)
-                        .append(VECTOR_FIELD_INT_8, Vector.int8Vector(new byte[]{9, 10, 11, 12, 13}))
-                        .append(VECTOR_FIELD_FLOAT_32, Vector.floatVector(new float[]{9.0009f, 10.12345f, 11.23456f, 12.34567f, 13.45678f}))
+                        .append(VECTOR_FIELD_INT_8, BinaryVector.int8Vector(new byte[]{9, 10, 11, 12, 13}))
+                        .append(VECTOR_FIELD_FLOAT_32, BinaryVector.floatVector(new float[]{9.0009f, 10.12345f, 11.23456f, 12.34567f, 13.45678f}))
                         .append(VECTOR_FIELD_LEGACY_DOUBLE_LIST, new double[]{9.0009, 10.12345, 11.23456, 12.34567, 13.45678})
                         .append(FIELD_YEAR, 2025)
         );
@@ -192,43 +192,43 @@ class AggregatesVectorSearchIntegrationTest {
 
     private static Stream<Arguments> provideSupportedVectors() {
         return Stream.of(
-                arguments(Vector.int8Vector(new byte[]{0, 1, 2, 3, 4}),
+                arguments(BinaryVector.int8Vector(new byte[]{0, 1, 2, 3, 4}),
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_INT_8).multi("ignored"),
                         approximateVectorSearchOptions(LIMIT * 2)),
-                arguments(Vector.int8Vector(new byte[]{0, 1, 2, 3, 4}),
+                arguments(BinaryVector.int8Vector(new byte[]{0, 1, 2, 3, 4}),
                         fieldPath(VECTOR_FIELD_INT_8),
                         approximateVectorSearchOptions(LIMIT * 2)),
 
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_FLOAT_32).multi("ignored"),
                         approximateVectorSearchOptions(LIMIT * 2)),
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         fieldPath(VECTOR_FIELD_FLOAT_32),
                         approximateVectorSearchOptions(LIMIT * 2)),
 
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_FLOAT_32).multi("ignored"),
                         exactVectorSearchOptions()),
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         fieldPath(VECTOR_FIELD_FLOAT_32),
                         exactVectorSearchOptions()),
 
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST).multi("ignored"),
                         exactVectorSearchOptions()),
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST),
                         exactVectorSearchOptions()),
 
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         // `multi` is used here only to verify that it is tolerated
                         fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST).multi("ignored"),
                         approximateVectorSearchOptions(LIMIT * 2)),
-                arguments(Vector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
+                arguments(BinaryVector.floatVector(new float[]{0.0001f, 1.12345f, 2.23456f, 3.34567f, 4.45678f}),
                         fieldPath(VECTOR_FIELD_LEGACY_DOUBLE_LIST),
                         approximateVectorSearchOptions(LIMIT * 2))
         );
@@ -236,7 +236,7 @@ class AggregatesVectorSearchIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("provideSupportedVectors")
-    void shouldSearchByVectorWithSearchScore(final Vector vector,
+    void shouldSearchByVectorWithSearchScore(final BinaryVector vector,
                                                       final FieldSearchPath fieldSearchPath,
                                                       final VectorSearchOptions vectorSearchOptions) {
         //given
@@ -264,7 +264,7 @@ class AggregatesVectorSearchIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("provideSupportedVectors")
-    void shouldSearchByVector(final Vector vector,
+    void shouldSearchByVector(final BinaryVector vector,
                                        final FieldSearchPath fieldSearchPath,
                                        final VectorSearchOptions vectorSearchOptions) {
         //given
@@ -289,7 +289,7 @@ class AggregatesVectorSearchIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("provideSupportedVectors")
-    void shouldSearchByVectorWithFilter(final Vector vector,
+    void shouldSearchByVectorWithFilter(final BinaryVector vector,
                                  final FieldSearchPath fieldSearchPath,
                                  final VectorSearchOptions vectorSearchOptions) {
         Consumer<Bson> asserter = filter -> {

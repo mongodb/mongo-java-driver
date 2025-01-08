@@ -23,30 +23,30 @@ import static org.bson.assertions.Assertions.assertNotNull;
 /**
  * Represents a vector of 32-bit floating-point numbers, where each element in the vector is a float.
  * <p>
- * The {@link Float32Vector} is used to store and retrieve data efficiently using the BSON Binary Subtype 9 format.
+ * The {@link Float32BinaryVector} is used to store and retrieve data efficiently using the BSON Binary Subtype 9 format.
  *
  * @mongodb.server.release 6.0
- * @see Vector#floatVector(float[])
- * @see BsonBinary#BsonBinary(Vector)
+ * @see BinaryVector#floatVector(float[])
+ * @see BsonBinary#BsonBinary(BinaryVector)
  * @see BsonBinary#asVector()
  * @since 5.3
  */
-public final class Float32Vector extends Vector {
+public final class Float32BinaryVector extends BinaryVector {
 
     private final float[] data;
 
-    Float32Vector(final float[] vectorData) {
+    Float32BinaryVector(final float[] vectorData) {
         super(DataType.FLOAT32);
         this.data = assertNotNull(vectorData);
     }
 
     /**
-     * Retrieve the underlying float array representing this {@link Float32Vector}, where each float
+     * Retrieve the underlying float array representing this {@link Float32BinaryVector}, where each float
      * represents an element of a vector.
      * <p>
      * NOTE: The underlying float array is not copied; changes to the returned array will be reflected in this instance.
      *
-     * @return the underlying float array representing this {@link Float32Vector} vector.
+     * @return the underlying float array representing this {@link Float32BinaryVector} vector.
      */
     public float[] getData() {
         return assertNotNull(data);
@@ -60,7 +60,7 @@ public final class Float32Vector extends Vector {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Float32Vector that = (Float32Vector) o;
+        Float32BinaryVector that = (Float32BinaryVector) o;
         return Arrays.equals(data, that.data);
     }
 

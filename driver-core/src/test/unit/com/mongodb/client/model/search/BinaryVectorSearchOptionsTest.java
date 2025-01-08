@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-final class VectorSearchOptionsTest {
+final class BinaryVectorSearchOptionsTest {
     @Test
     void approximateVectorSearchOptions() {
         assertEquals(

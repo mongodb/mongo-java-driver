@@ -20,7 +20,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
-public class VectorFunctionalTest extends AbstractVectorFunctionalTest {
+public class BinaryVectorFunctionalTest extends AbstractBinaryVectorFunctionalTest {
     @Override
     protected MongoClient getMongoClient(final MongoClientSettings settings) {
         return MongoClients.create(settings);

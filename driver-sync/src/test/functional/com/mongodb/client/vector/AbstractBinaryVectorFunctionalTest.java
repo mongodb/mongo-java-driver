@@ -28,10 +28,10 @@ import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
-import org.bson.Float32Vector;
-import org.bson.Int8Vector;
-import org.bson.PackedBitVector;
-import org.bson.Vector;
+import org.bson.Float32BinaryVector;
+import org.bson.Int8BinaryVector;
+import org.bson.PackedBitBinaryVector;
+import org.bson.BinaryVector;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.types.Binary;
@@ -48,14 +48,14 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
-import static org.bson.Vector.DataType.FLOAT32;
-import static org.bson.Vector.DataType.INT8;
-import static org.bson.Vector.DataType.PACKED_BIT;
+import static org.bson.BinaryVector.DataType.FLOAT32;
+import static org.bson.BinaryVector.DataType.INT8;
+import static org.bson.BinaryVector.DataType.PACKED_BIT;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public abstract class AbstractVectorFunctionalTest extends OperationTest {
+public abstract class AbstractBinaryVectorFunctionalTest extends OperationTest {
 
     private static final byte VECTOR_SUBTYPE = BsonBinarySubType.VECTOR.getValue();
     private static final String FIELD_VECTOR = "vector";
@@ -105,7 +105,7 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
         // when & then
         BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
             findExactlyOne(documentCollection)
-                    .get(FIELD_VECTOR, Vector.class);
+                    .get(FIELD_VECTOR, BinaryVector.class);
         });
         assertEquals("Padding must be 0 if vector is empty, but found: " + invalidPadding, exception.getMessage());
     }
@@ -120,7 +120,7 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
         // when & then
        BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
             findExactlyOne(documentCollection)
-                    .get(FIELD_VECTOR, Vector.class);
+                    .get(FIELD_VECTOR, BinaryVector.class);
         });
         assertEquals("Padding must be 0 for FLOAT32 data type, but found: " + invalidPadding, exception.getMessage());
     }
@@ -135,7 +135,7 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
         // when & then
         BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
             findExactlyOne(documentCollection)
-                    .get(FIELD_VECTOR, Vector.class);
+                    .get(FIELD_VECTOR, BinaryVector.class);
         });
         assertEquals("Padding must be 0 for INT8 data type, but found: " + invalidPadding, exception.getMessage());
     }
@@ -150,44 +150,44 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
         // when & then
         BsonInvalidOperationException exception = Assertions.assertThrows(BsonInvalidOperationException.class, ()-> {
             findExactlyOne(documentCollection)
-                    .get(FIELD_VECTOR, Vector.class);
+                    .get(FIELD_VECTOR, BinaryVector.class);
         });
         assertEquals("Padding must be between 0 and 7 bits, but found: " + invalidPadding, exception.getMessage());
     }
 
-    private static Stream<Vector> provideValidVectors() {
+    private static Stream<BinaryVector> provideValidVectors() {
         return Stream.of(
-                Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f}),
-                Vector.int8Vector(new byte[]{10, 20, 30, 40}),
-                Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3)
+                BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f}),
+                BinaryVector.int8Vector(new byte[]{10, 20, 30, 40}),
+                BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3)
         );
     }
 
     @ParameterizedTest
     @MethodSource("provideValidVectors")
-    void shouldStoreAndRetrieveValidVector(final Vector expectedVector) {
+    void shouldStoreAndRetrieveValidVector(final BinaryVector expectedVector) {
         // Given
         Document documentToInsert = new Document(FIELD_VECTOR, expectedVector)
                 .append("otherField", 1); // to test that the next field is not affected
         documentCollection.insertOne(documentToInsert);
 
         // when & then
-        Vector actualVector = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Vector.class);
+        BinaryVector actualVector = findExactlyOne(documentCollection)
+                .get(FIELD_VECTOR, BinaryVector.class);
 
         assertEquals(expectedVector, actualVector);
     }
 
     @ParameterizedTest
     @MethodSource("provideValidVectors")
-    void shouldStoreAndRetrieveValidVectorWithBsonBinary(final Vector expectedVector) {
+    void shouldStoreAndRetrieveValidVectorWithBsonBinary(final BinaryVector expectedVector) {
         // Given
         Document documentToInsert = new Document(FIELD_VECTOR, new BsonBinary(expectedVector));
         documentCollection.insertOne(documentToInsert);
 
         // when & then
-        Vector actualVector = findExactlyOne(documentCollection)
-                .get(FIELD_VECTOR, Vector.class);
+        BinaryVector actualVector = findExactlyOne(documentCollection)
+                .get(FIELD_VECTOR, BinaryVector.class);
 
         assertEquals(actualVector, actualVector);
     }
@@ -195,14 +195,14 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
     @Test
     void shouldStoreAndRetrieveValidVectorWithFloatVectorPojo() {
         // given
-        MongoCollection<FloatVectorPojo> floatVectorPojoMongoCollection = mongoClient
+        MongoCollection<Float32BinaryVectorPojo> floatVectorPojoMongoCollection = mongoClient
                 .getDatabase(getDatabaseName())
-                .getCollection(getCollectionName()).withDocumentClass(FloatVectorPojo.class);
-        Float32Vector vector = Vector.floatVector(new float[]{1.1f, 2.2f, 3.3f});
+                .getCollection(getCollectionName()).withDocumentClass(Float32BinaryVectorPojo.class);
+        Float32BinaryVector vector = BinaryVector.floatVector(new float[]{1.1f, 2.2f, 3.3f});
 
         // whe
-        floatVectorPojoMongoCollection.insertOne(new FloatVectorPojo(vector));
-        FloatVectorPojo floatVectorPojo = floatVectorPojoMongoCollection.find().first();
+        floatVectorPojoMongoCollection.insertOne(new Float32BinaryVectorPojo(vector));
+        Float32BinaryVectorPojo floatVectorPojo = floatVectorPojoMongoCollection.find().first();
 
         // then
         Assertions.assertNotNull(floatVectorPojo);
@@ -212,14 +212,14 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
     @Test
     void shouldStoreAndRetrieveValidVectorWithInt8VectorPojo() {
         // given
-        MongoCollection<Int8VectorPojo> floatVectorPojoMongoCollection = mongoClient
+        MongoCollection<Int8BinaryVectorPojo> floatVectorPojoMongoCollection = mongoClient
                 .getDatabase(getDatabaseName())
-                .getCollection(getCollectionName()).withDocumentClass(Int8VectorPojo.class);
-        Int8Vector vector = Vector.int8Vector(new byte[]{10, 20, 30, 40});
+                .getCollection(getCollectionName()).withDocumentClass(Int8BinaryVectorPojo.class);
+        Int8BinaryVector vector = BinaryVector.int8Vector(new byte[]{10, 20, 30, 40});
 
         // when
-        floatVectorPojoMongoCollection.insertOne(new Int8VectorPojo(vector));
-        Int8VectorPojo int8VectorPojo = floatVectorPojoMongoCollection.find().first();
+        floatVectorPojoMongoCollection.insertOne(new Int8BinaryVectorPojo(vector));
+        Int8BinaryVectorPojo int8VectorPojo = floatVectorPojoMongoCollection.find().first();
 
         // then
         Assertions.assertNotNull(int8VectorPojo);
@@ -229,15 +229,15 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
     @Test
     void shouldStoreAndRetrieveValidVectorWithPackedBitVectorPojo() {
         // given
-        MongoCollection<PackedBitVectorPojo> floatVectorPojoMongoCollection = mongoClient
+        MongoCollection<PackedBitBinaryVectorPojo> floatVectorPojoMongoCollection = mongoClient
                 .getDatabase(getDatabaseName())
-                .getCollection(getCollectionName()).withDocumentClass(PackedBitVectorPojo.class);
+                .getCollection(getCollectionName()).withDocumentClass(PackedBitBinaryVectorPojo.class);
 
-        PackedBitVector vector = Vector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3);
+        PackedBitBinaryVector vector = BinaryVector.packedBitVector(new byte[]{(byte) 0b10101010, (byte) 0b01010101}, (byte) 3);
 
         // when
-        floatVectorPojoMongoCollection.insertOne(new PackedBitVectorPojo(vector));
-        PackedBitVectorPojo packedBitVectorPojo = floatVectorPojoMongoCollection.find().first();
+        floatVectorPojoMongoCollection.insertOne(new PackedBitBinaryVectorPojo(vector));
+        PackedBitBinaryVectorPojo packedBitVectorPojo = floatVectorPojoMongoCollection.find().first();
 
         // then
         Assertions.assertNotNull(packedBitVectorPojo);
@@ -246,15 +246,15 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
 
     @ParameterizedTest
     @MethodSource("provideValidVectors")
-    void shouldStoreAndRetrieveValidVectorWithGenericVectorPojo(final Vector actualVector) {
+    void shouldStoreAndRetrieveValidVectorWithGenericVectorPojo(final BinaryVector actualVector) {
         // given
-        MongoCollection<VectorPojo> floatVectorPojoMongoCollection = mongoClient
+        MongoCollection<BinaryVectorPojo> floatVectorPojoMongoCollection = mongoClient
                 .getDatabase(getDatabaseName())
-                .getCollection(getCollectionName()).withDocumentClass(VectorPojo.class);
+                .getCollection(getCollectionName()).withDocumentClass(BinaryVectorPojo.class);
 
         // when
-        floatVectorPojoMongoCollection.insertOne(new VectorPojo(actualVector));
-        VectorPojo vectorPojo = floatVectorPojoMongoCollection.find().first();
+        floatVectorPojoMongoCollection.insertOne(new BinaryVectorPojo(actualVector));
+        BinaryVectorPojo vectorPojo = floatVectorPojoMongoCollection.find().first();
 
         //then
         Assertions.assertNotNull(vectorPojo);
@@ -268,78 +268,78 @@ public abstract class AbstractVectorFunctionalTest extends OperationTest {
         return documents.get(0);
     }
 
-    public static class VectorPojo {
-        private Vector vector;
+    public static class BinaryVectorPojo {
+        private BinaryVector vector;
 
-        public VectorPojo() {
+        public BinaryVectorPojo() {
         }
 
-        public VectorPojo(final Vector vector) {
+        public BinaryVectorPojo(final BinaryVector vector) {
             this.vector = vector;
         }
 
-        public Vector getVector() {
+        public BinaryVector getVector() {
             return vector;
         }
 
-        public void setVector(final Vector vector) {
+        public void setVector(final BinaryVector vector) {
             this.vector = vector;
         }
     }
 
-    public static class Int8VectorPojo {
-        private Int8Vector vector;
+    public static class Int8BinaryVectorPojo {
+        private Int8BinaryVector vector;
 
-        public Int8VectorPojo() {
+        public Int8BinaryVectorPojo() {
         }
 
-        public Int8VectorPojo(final Int8Vector vector) {
+        public Int8BinaryVectorPojo(final Int8BinaryVector vector) {
             this.vector = vector;
         }
 
-        public Vector getVector() {
+        public BinaryVector getVector() {
             return vector;
         }
 
-        public void setVector(final Int8Vector vector) {
+        public void setVector(final Int8BinaryVector vector) {
             this.vector = vector;
         }
     }
 
-    public static class PackedBitVectorPojo {
-        private PackedBitVector vector;
+    public static class PackedBitBinaryVectorPojo {
+        private PackedBitBinaryVector vector;
 
-        public PackedBitVectorPojo() {
+        public PackedBitBinaryVectorPojo() {
         }
 
-        public PackedBitVectorPojo(final PackedBitVector vector) {
+        public PackedBitBinaryVectorPojo(final PackedBitBinaryVector vector) {
             this.vector = vector;
         }
 
-        public Vector getVector() {
+        public BinaryVector getVector() {
             return vector;
         }
 
-        public void setVector(final PackedBitVector vector) {
+        public void setVector(final PackedBitBinaryVector vector) {
             this.vector = vector;
         }
     }
 
-    public static class FloatVectorPojo {
-        private Float32Vector vector;
+    public static class Float32BinaryVectorPojo {
+        private Float32BinaryVector vector;
 
-        public FloatVectorPojo() {
+        public Float32BinaryVectorPojo() {
         }
 
-        public FloatVectorPojo(final Float32Vector vector) {
+        public Float32BinaryVectorPojo(final Float32BinaryVector vector) {
             this.vector = vector;
         }
 
-        public Vector getVector() {
+        public BinaryVector getVector() {
             return vector;
         }
 
-        public void setVector(final Float32Vector vector) {
+        public void setVector(final Float32BinaryVector vector) {
             this.vector = vector;
         }
     }
