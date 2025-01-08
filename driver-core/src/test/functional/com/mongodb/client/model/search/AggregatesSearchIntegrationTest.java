@@ -83,6 +83,7 @@ import static com.mongodb.client.model.search.SearchOperator.exists;
 import static com.mongodb.client.model.search.SearchOperator.near;
 import static com.mongodb.client.model.search.SearchOperator.numberRange;
 import static com.mongodb.client.model.search.SearchOperator.text;
+import static com.mongodb.client.model.search.SearchOperator.wildcard;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.SearchPath.wildcardPath;
@@ -608,7 +609,11 @@ final class AggregatesSearchIntegrationTest {
                                         dateRange(fieldPath("fieldName6"))
                                                 .lte(Instant.ofEpochMilli(1)),
                                         near(0, 1.5, fieldPath("fieldName7"), fieldPath("fieldName8")),
-                                        near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9"))
+                                        near(Instant.ofEpochMilli(1), Duration.ofMillis(3), fieldPath("fieldName9")),
+                                        wildcard("term9", fieldPath("fieldName13"))
+                                                .score(function(logExpression(constantExpression(3)))),
+                                        wildcard(asList("term10", "term11"), asList(wildcardPath("wildc*rd"), fieldPath("fieldName14")))
+                                                .allowAnalyzedField()
                                 ))
                                 .minimumShouldMatch(1)
                                 .mustNot(singleton(

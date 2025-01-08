@@ -31,7 +31,7 @@ import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElement<SearchConstructibleBsonElement> implements
         MustCompoundSearchOperator, MustNotCompoundSearchOperator, ShouldCompoundSearchOperator, FilterCompoundSearchOperator,
         ExistsSearchOperator, TextSearchOperator, AutocompleteSearchOperator,
-        NumberNearSearchOperator, DateNearSearchOperator, GeoNearSearchOperator,
+        NumberNearSearchOperator, DateNearSearchOperator, GeoNearSearchOperator, WildcardSearchOperator,
         ValueBoostSearchScore, PathBoostSearchScore, ConstantSearchScore, FunctionSearchScore,
         GaussSearchScoreExpression, PathSearchScoreExpression,
         FacetSearchCollector,
@@ -116,6 +116,16 @@ final class SearchConstructibleBsonElement extends AbstractConstructibleBsonElem
     @Override
     public FilterCompoundSearchOperator filter(final Iterable<? extends SearchOperator> clauses) {
         return newCombined("filter", clauses);
+    }
+
+    @Override
+    public WildcardSearchOperator allowAnalyzedField() {
+        return newWithAppendedValue("allowAnalyzedField", false);
+    }
+
+    @Override
+    public WildcardSearchOperator allowAnalyzedField(final boolean allowAnalyzedField) {
+        return newWithAppendedValue("allowAnalyzedField", allowAnalyzedField);
     }
 
     private SearchConstructibleBsonElement newCombined(final String ruleName, final Iterable<? extends SearchOperator> clauses) {

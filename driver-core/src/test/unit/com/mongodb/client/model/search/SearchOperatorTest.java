@@ -19,6 +19,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
@@ -580,6 +581,73 @@ final class SearchOperatorTest {
                 )
         );
     }
+
+    @Test
+    void wildcard() {
+        assertAll(
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // queries must not be empty
+                        SearchOperator.text(singleton(fieldPath("fieldName")), emptyList())
+                ),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        // paths must not be empty
+                        SearchOperator.text(emptyList(), singleton("term"))
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                        ),
+                        SearchOperator.wildcard(
+                                        "term",
+                                        fieldPath("fieldName"))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonArray(asList(
+                                        new BsonString("term1"),
+                                        new BsonString("term2"))))
+                                        .append("path", new BsonArray(asList(
+                                                fieldPath("fieldName").toBsonValue(),
+                                                wildcardPath("wildc*rd").toBsonValue())))
+                        ),
+                        SearchOperator.wildcard(
+                                        asList(
+                                                "term1",
+                                                "term2"),
+                                        asList(
+                                                fieldPath("fieldName"),
+                                                wildcardPath("wildc*rd")))
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                        .append("allowAnalyzedField", new BsonBoolean(false))
+                        ),
+                        SearchOperator.wildcard(
+                                        singleton("term"),
+                                        singleton(fieldPath("fieldName")))
+                                .allowAnalyzedField()
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        new BsonDocument("wildcard",
+                                new BsonDocument("query", new BsonString("term"))
+                                        .append("path", fieldPath("fieldName").toBsonValue())
+                                        .append("allowAnalyzedField", new BsonBoolean(true))
+                        ),
+                        SearchOperator.wildcard(
+                                        singleton("term"),
+                                        singleton(fieldPath("fieldName")))
+                                .allowAnalyzedField(true)
+                                .toBsonDocument()
+                )
+        );
+    }
+
 
     private static SearchOperator docExamplePredefined() {
         return SearchOperator.exists(
