@@ -16,13 +16,13 @@
 
 package com.mongodb.client.model.bulk;
 
-import com.mongodb.MongoAssertions;
+import com.mongodb.MongoBaseInterfaceAssertions;
 import org.junit.jupiter.api.Test;
 
 class BaseClientUpdateOptionsTest {
 
     @Test
     void testAllSubInterfacesOverrideMethods() {
-        MongoAssertions.assertSubInterfaceReturnTypes("com.mongodb", BaseClientUpdateOptions.class);
+        MongoBaseInterfaceAssertions.assertSubtypeReturn("com.mongodb", BaseClientUpdateOptions.class);
     }
 }

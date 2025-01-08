@@ -28,7 +28,10 @@ public final class ConcreteClientDeleteOneModel extends AbstractClientDeleteMode
     }
 
     @Override
-    String getToStringDescription() {
-        return "ClientDeleteOneModel";
+    public String toString() {
+        return "ClientDeleteOneModel"
+                + "{filter=" + getFilter()
+                + ", options=" + getOptions()
+                + '}';
     }
 }

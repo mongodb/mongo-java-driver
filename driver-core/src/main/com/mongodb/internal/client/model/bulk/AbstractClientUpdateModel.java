@@ -62,15 +62,4 @@ public abstract class AbstractClientUpdateModel<O extends AbstractClientUpdateOp
     public final O getOptions() {
         return options;
     }
-
-    abstract String getToStringDescription();
-
-    @Override
-    public final String toString() {
-        return getToStringDescription()
-                + "{filter=" + filter
-                + ", update=" + (update != null ? update : updatePipeline)
-                + ", options=" + options
-                + '}';
-    }
 }

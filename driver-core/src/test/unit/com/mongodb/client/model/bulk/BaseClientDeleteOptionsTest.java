@@ -16,13 +16,13 @@
 
 package com.mongodb.client.model.bulk;
 
-import com.mongodb.MongoAssertions;
+import com.mongodb.MongoBaseInterfaceAssertions;
 import org.junit.jupiter.api.Test;
 
 class BaseClientDeleteOptionsTest {
 
     @Test
     void testAllSubInterfacesOverrideMethods() {
-        MongoAssertions.assertSubInterfaceReturnTypes("com.mongodb", BaseClientDeleteOptions.class);
+        MongoBaseInterfaceAssertions.assertSubtypeReturn("com.mongodb", BaseClientDeleteOptions.class);
     }
 }

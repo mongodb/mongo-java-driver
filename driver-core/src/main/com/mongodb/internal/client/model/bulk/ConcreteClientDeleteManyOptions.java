@@ -45,7 +45,11 @@ public final class ConcreteClientDeleteManyOptions extends AbstractClientDeleteO
     }
 
     @Override
-    String getToStringDescription() {
-        return "ConcreteClientDeleteManyOptions";
+    public String toString() {
+        return "ClientDeleteManyOptions{"
+                + "collation=" + getCollation().orElse(null)
+                + ", hint=" + getHint().orElse(null)
+                + ", hintString=" + getHintString().map(s -> '\'' + s + '\'') .orElse(null)
+                + '}';
     }
 }

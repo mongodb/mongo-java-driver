@@ -55,7 +55,13 @@ public final class ConcreteClientUpdateManyOptions extends AbstractClientUpdateO
     }
 
     @Override
-    String getToStringDescription() {
-        return "ConcreteClientUpdateManyOptions";
+    public String toString() {
+        return "ClientUpdateManyOptions{"
+                + "arrayFilters=" + getArrayFilters().orElse(null)
+                + ", collation=" + getCollation().orElse(null)
+                + ", hint=" + getHint().orElse(null)
+                + ", hintString=" + getHintString().map(s -> '\'' + s + '\'') .orElse(null)
+                + ", upsert=" + isUpsert().orElse(null)
+                + '}';
     }
 }

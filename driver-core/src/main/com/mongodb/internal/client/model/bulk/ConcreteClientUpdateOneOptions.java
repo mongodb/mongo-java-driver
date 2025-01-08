@@ -55,7 +55,13 @@ public final class ConcreteClientUpdateOneOptions extends AbstractClientUpdateOp
     }
 
     @Override
-    String getToStringDescription() {
-        return "ConcreteClientUpdateOneOptions";
+    public String toString() {
+        return "ClientUpdateOneOptions{"
+                + "arrayFilters=" + getArrayFilters().orElse(null)
+                + ", collation=" + getCollation().orElse(null)
+                + ", hint=" + getHint().orElse(null)
+                + ", hintString=" + getHintString().map(s -> '\'' + s + '\'') .orElse(null)
+                + ", upsert=" + isUpsert().orElse(null)
+                + '}';
     }
 }

@@ -19,47 +19,49 @@ package com.mongodb;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public final class MongoAssertions {
+public final class MongoBaseInterfaceAssertions {
 
-    private MongoAssertions() {
+    private MongoBaseInterfaceAssertions() {
         //NOP
     }
 
-    public static <T> void assertSubInterfaceReturnTypes(final String packageName,
-                                                         final Class<T> baseClass) {
+    public static <T> void assertSubtypeReturn(final String packageName,
+                                               final Class<T> baseClass) {
         Reflections reflections = new Reflections(packageName);
-        Set<Class<? extends T>> subInterfaces = reflections.getSubTypesOf(baseClass).stream()
-                .filter(Class::isInterface)
+        Set<Class<? extends T>> subtypes = reflections.getSubTypesOf(baseClass).stream()
+                .filter(aClass -> Modifier.isPublic(aClass.getModifiers()))
+                .filter(aClass -> !aClass.getPackage().getName().contains("internal"))
                 .collect(Collectors.toSet());
 
         Method[] baseMethods = baseClass.getDeclaredMethods();
 
-        for (Class<? extends T> subInterface : subInterfaces) {
+        for (Class<? extends T> subtype : subtypes) {
             for (Method baseMethod : baseMethods) {
                 Method method = assertDoesNotThrow(
-                        () -> subInterface.getDeclaredMethod(baseMethod.getName(), baseMethod.getParameterTypes()),
+                        () -> subtype.getDeclaredMethod(baseMethod.getName(), baseMethod.getParameterTypes()),
                         String.format(
-                                "%s does not override %s. The methods must be copied into the implementing interface.",
-                                subInterface.getName(),
-                                baseMethod.getName()
+                                "`%s` does not override `%s`. The methods must be copied into the implementing class/interface.",
+                                subtype,
+                                baseMethod
                         )
                 );
 
                 assertEquals(
-                        subInterface,
+                        subtype,
                         method.getReturnType(),
                         String.format(
-                                "Method %s in %s does not return %s. "
-                                        + "The return type must match the defining class.",
-                                method.getName(),
-                                subInterface.getName(),
-                                subInterface.getName()
+                                "Method `%s` in `%s` does not return `%s`. "
+                                        + "The return type must match the defining class/interface.",
+                                method,
+                                subtype,
+                                subtype
                         )
                 );
             }

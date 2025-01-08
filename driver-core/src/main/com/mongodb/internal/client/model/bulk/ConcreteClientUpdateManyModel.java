@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.client.model.bulk;
 
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -35,7 +36,11 @@ public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateMod
     }
 
     @Override
-    String getToStringDescription() {
-        return "ClientUpdateManyModel";
+    public String toString() {
+        return "ClientUpdateManyModel"
+                + "{filter=" + getFilter()
+                + ", update=" + (getUpdate().isPresent() ? getUpdate() : getUpdatePipeline().orElseThrow(Assertions::fail))
+                + ", options=" + getOptions()
+                + '}';
     }
 }

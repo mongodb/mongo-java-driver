@@ -79,15 +79,4 @@ public abstract class AbstractClientDeleteOptions {
     public Optional<String> getHintString() {
         return ofNullable(hintString);
     }
-
-    abstract String getToStringDescription();
-
-    @Override
-    public String toString() {
-        return getToStringDescription()
-                + "{collation=" + collation
-                + ", hint=" + hint
-                + ", hintString='" + hintString + '\''
-                + '}';
-    }
 }

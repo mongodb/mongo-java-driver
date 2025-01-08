@@ -109,17 +109,4 @@ public abstract class AbstractClientUpdateOptions {
     public Optional<Boolean> isUpsert() {
         return ofNullable(upsert);
     }
-
-    abstract String getToStringDescription();
-
-    @Override
-    public String toString() {
-        return getToStringDescription()
-                + "{arrayFilters=" + arrayFilters
-                + ", collation=" + collation
-                + ", hint=" + hint
-                + ", hintString='" + hintString + '\''
-                + ", upsert=" + upsert
-                + '}';
-    }
 }
