@@ -23,7 +23,6 @@ import org.mongodb.scala.model.geojson.Point
 import org.bson.types.ObjectId;
 
 import java.time.{ Duration, Instant }
-import java.util.Date
 import java.util.UUID
 import collection.JavaConverters._
 
@@ -269,11 +268,11 @@ object SearchOperator {
    * Returns a `SearchOperator` that performs a search for documents containing an ordered sequence of terms.
    *
    * @param path The indexed field to be searched.
-   * @param value The date value to query for.
+   * @param value The instant date value to query for.
    * @return The requested `SearchOperator`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/equals/ equals operator]]
    */
-  def equals(path: FieldSearchPath, value: Date): EqualsSearchOperator =
+  def equals(path: FieldSearchPath, value: Instant): EqualsSearchOperator =
     JSearchOperator.equals(path, value)
 
   /**

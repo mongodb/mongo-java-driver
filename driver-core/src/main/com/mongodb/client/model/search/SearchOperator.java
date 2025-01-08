@@ -353,11 +353,11 @@ public interface SearchOperator extends Bson {
      * Returns a {@link SearchOperator} that performs a search for documents containing an ordered sequence of terms.
      *
      * @param path The indexed field to be searched.
-     * @param value The date value to query for.
+     * @param value The instant date value to query for.
      * @return The requested {@link SearchOperator}.
      * @mongodb.atlas.manual atlas-search/equals/ equals operator
      */
-    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final Date value) {
+    static EqualsSearchOperator equals(final FieldSearchPath path, @Nullable final Instant value) {
         if (value == null) {
             return new SearchConstructibleBsonElement("equals", new Document("path", notNull("path", path).toValue())
                     .append("value", BsonNull.VALUE));

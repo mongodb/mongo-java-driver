@@ -595,7 +595,6 @@ final class SearchOperatorTest {
     @Test
     void equals() {
         ObjectId id = new ObjectId();
-        BsonDateTime date = new BsonDateTime(System.currentTimeMillis());
         UUID uuid = UUID.randomUUID();
         Optional<String> optionalValue = Optional.ofNullable(null);
         assertAll(
@@ -646,10 +645,10 @@ final class SearchOperatorTest {
                 () -> assertEquals(
                         new BsonDocument("equals",
                                 new BsonDocument("path", fieldPath("fieldName").toBsonValue())
-                                        .append("value", date)
+                                        .append("value", new BsonDateTime(Instant.EPOCH.toEpochMilli()))
                         ),
                         SearchOperator.equals(
-                                fieldPath("fieldName"), new Date(date.getValue())).toBsonDocument()
+                                fieldPath("fieldName"), Instant.EPOCH).toBsonDocument()
                 ),
                 () -> assertEquals(
                         new BsonDocument("equals",
