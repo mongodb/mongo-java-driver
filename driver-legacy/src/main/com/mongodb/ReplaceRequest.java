@@ -60,7 +60,7 @@ class ReplaceRequest extends WriteRequest {
         return new UpdateRequest(new BsonDocumentWrapper<>(query, codec),
                 new BsonDocumentWrapper<>(document, replacementCodec),
                                                        com.mongodb.internal.bulk.WriteRequest.Type.REPLACE)
-                .upsert(isUpsert())
-                .collation(getCollation());
+               .upsert(isUpsert())
+               .collation(getCollation());
     }
 }
