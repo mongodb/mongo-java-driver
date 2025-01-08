@@ -20,73 +20,32 @@ import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
-import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
-
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientDeleteOneOptions implements ClientDeleteOneOptions {
+public final class ConcreteClientDeleteOneOptions extends AbstractClientDeleteOptions implements ClientDeleteOneOptions {
     static final ConcreteClientDeleteOneOptions MUTABLE_EMPTY = new ConcreteClientDeleteOneOptions();
-
-    @Nullable
-    private Collation collation;
-    @Nullable
-    private Bson hint;
-    @Nullable
-    private String hintString;
 
     public ConcreteClientDeleteOneOptions() {
     }
 
     @Override
-    public ClientDeleteOneOptions collation(@Nullable final Collation collation) {
-        this.collation = collation;
-        return this;
-    }
-
-    /**
-     * @see #collation(Collation)
-     */
-    public Optional<Collation> getCollation() {
-        return ofNullable(collation);
+    public ConcreteClientDeleteOneOptions collation(@Nullable final Collation collation) {
+        return (ConcreteClientDeleteOneOptions) super.collation(collation);
     }
 
     @Override
-    public ClientDeleteOneOptions hint(@Nullable final Bson hint) {
-        this.hint = hint;
-        this.hintString = null;
-        return this;
-    }
-
-    /**
-     * @see #hint(Bson)
-     */
-    public Optional<Bson> getHint() {
-        return ofNullable(hint);
+    public ConcreteClientDeleteOneOptions hint(@Nullable final Bson hint) {
+        return (ConcreteClientDeleteOneOptions) super.hint(hint);
     }
 
     @Override
-    public ClientDeleteOneOptions hintString(@Nullable final String hintString) {
-        this.hintString = hintString;
-        this.hint = null;
-        return this;
-    }
-
-    /**
-     * @see #hintString(String)
-     */
-    public Optional<String> getHintString() {
-        return ofNullable(hintString);
+    public ConcreteClientDeleteOneOptions hintString(@Nullable final String hintString) {
+        return (ConcreteClientDeleteOneOptions) super.hintString(hintString);
     }
 
     @Override
-    public String toString() {
-        return "ClientDeleteOneOptions{"
-                + "collation=" + collation
-                + ", hint=" + hint
-                + ", hintString='" + hintString + '\''
-                + '}';
+    String getToStringDescription() {
+        return "ConcreteClientDeleteOneOptions";
     }
 }

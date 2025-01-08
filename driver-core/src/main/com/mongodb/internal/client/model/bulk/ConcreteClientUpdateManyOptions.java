@@ -20,105 +20,42 @@ import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
-import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
-
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public final class ConcreteClientUpdateManyOptions implements ClientUpdateManyOptions {
+public final class ConcreteClientUpdateManyOptions extends AbstractClientUpdateOptions implements ClientUpdateManyOptions {
     static final ConcreteClientUpdateManyOptions MUTABLE_EMPTY = new ConcreteClientUpdateManyOptions();
-
-    @Nullable
-    private Iterable<? extends Bson> arrayFilters;
-    @Nullable
-    private Collation collation;
-    @Nullable
-    private Bson hint;
-    @Nullable
-    private String hintString;
-    @Nullable
-    private Boolean upsert;
 
     public ConcreteClientUpdateManyOptions() {
     }
 
     @Override
-    public ClientUpdateManyOptions arrayFilters(@Nullable final Iterable<? extends Bson> arrayFilters) {
-        this.arrayFilters = arrayFilters;
-        return this;
-    }
-
-    /**
-     * @see #arrayFilters(Iterable)
-     */
-    public Optional<Iterable<? extends Bson>> getArrayFilters() {
-        return ofNullable(arrayFilters);
+    public ConcreteClientUpdateManyOptions arrayFilters(@Nullable final Iterable<? extends Bson> arrayFilters) {
+        return (ConcreteClientUpdateManyOptions) super.arrayFilters(arrayFilters);
     }
 
     @Override
-    public ClientUpdateManyOptions collation(@Nullable final Collation collation) {
-        this.collation = collation;
-        return this;
-    }
-
-    /**
-     * @see #collation(Collation)
-     */
-    public Optional<Collation> getCollation() {
-        return ofNullable(collation);
+    public ConcreteClientUpdateManyOptions collation(@Nullable final Collation collation) {
+        return (ConcreteClientUpdateManyOptions) super.collation(collation);
     }
 
     @Override
-    public ClientUpdateManyOptions hint(@Nullable final Bson hint) {
-        this.hint = hint;
-        this.hintString = null;
-        return this;
-    }
-
-    /**
-     * @see #hint(Bson)
-     */
-    public Optional<Bson> getHint() {
-        return ofNullable(hint);
+    public ConcreteClientUpdateManyOptions hint(@Nullable final Bson hint) {
+        return (ConcreteClientUpdateManyOptions) super.hint(hint);
     }
 
     @Override
-    public ClientUpdateManyOptions hintString(@Nullable final String hintString) {
-        this.hintString = hintString;
-        this.hint = null;
-        return this;
-    }
-
-    /**
-     * @see #hintString(String)
-     */
-    public Optional<String> getHintString() {
-        return ofNullable(hintString);
+    public ConcreteClientUpdateManyOptions hintString(@Nullable final String hintString) {
+        return (ConcreteClientUpdateManyOptions) super.hintString(hintString);
     }
 
     @Override
-    public ClientUpdateManyOptions upsert(@Nullable final Boolean upsert) {
-        this.upsert = upsert;
-        return this;
-    }
-
-    /**
-     * @see #isUpsert()
-     */
-    public Optional<Boolean> isUpsert() {
-        return ofNullable(upsert);
+    public ConcreteClientUpdateManyOptions upsert(@Nullable final Boolean upsert) {
+        return (ConcreteClientUpdateManyOptions) super.upsert(upsert);
     }
 
     @Override
-    public String toString() {
-        return "ClientUpdateManyOptions{"
-                + "arrayFilters=" + arrayFilters
-                + ", collation=" + collation
-                + ", hint=" + hint
-                + ", hintString='" + hintString + '\''
-                + ", upsert=" + upsert
-                + '}';
+    String getToStringDescription() {
+        return "ConcreteClientUpdateManyOptions";
     }
 }

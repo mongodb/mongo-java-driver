@@ -77,12 +77,14 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientDeleteManyOptions;
 import com.mongodb.client.model.bulk.ClientDeleteOneOptions;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.model.bulk.ClientReplaceOneOptions;
 import com.mongodb.client.model.bulk.ClientUpdateManyOptions;
 import com.mongodb.client.model.bulk.ClientUpdateOneOptions;
-import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
+import com.mongodb.client.model.bulk.ClientUpdateResult;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
@@ -90,8 +92,12 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.client.model.bulk.ClientBulkWriteResult;
-import com.mongodb.client.model.bulk.ClientUpdateResult;
+import com.mongodb.internal.client.model.bulk.AbstractClientDeleteOptions;
+import com.mongodb.internal.client.model.bulk.AbstractClientUpdateOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteManyOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientDeleteOneOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateManyOptions;
+import com.mongodb.internal.client.model.bulk.ConcreteClientUpdateOneOptions;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -123,11 +129,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
-import static com.mongodb.client.model.bulk.ClientDeleteManyOptions.clientDeleteManyOptions;
-import static com.mongodb.client.model.bulk.ClientDeleteOneOptions.clientDeleteOneOptions;
 import static com.mongodb.client.model.bulk.ClientReplaceOneOptions.clientReplaceOptions;
-import static com.mongodb.client.model.bulk.ClientUpdateManyOptions.clientUpdateManyOptions;
-import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -1923,38 +1925,16 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     private static ClientUpdateOneOptions getClientUpdateOneOptions(final BsonDocument arguments) {
-        ClientUpdateOneOptions options = clientUpdateOneOptions();
-        arguments.forEach((key, argument) -> {
-            switch (key) {
-                case "namespace":
-                case "filter":
-                case "update":
-                    break;
-                case "arrayFilters":
-                    options.arrayFilters(argument.asArray().stream().map(BsonValue::asDocument).collect(toList()));
-                    break;
-                case "collation":
-                    options.collation(asCollation(argument.asDocument()));
-                    break;
-                case "hint":
-                    if (argument.isDocument()) {
-                        options.hint(argument.asDocument());
-                    } else {
-                        options.hintString(argument.asString().getValue());
-                    }
-                    break;
-                case "upsert":
-                    options.upsert(argument.asBoolean().getValue());
-                    break;
-                default:
-                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
-            }
-        });
-        return options;
+        return fillAbstractClientUpdateOptions(new ConcreteClientUpdateOneOptions(), arguments);
     }
 
     private static ClientUpdateManyOptions getClientUpdateManyOptions(final BsonDocument arguments) {
-        ClientUpdateManyOptions options = clientUpdateManyOptions();
+        return fillAbstractClientUpdateOptions(new ConcreteClientUpdateManyOptions(), arguments);
+    }
+
+    private static <T extends AbstractClientUpdateOptions> T fillAbstractClientUpdateOptions(
+            final T options,
+            final BsonDocument arguments) {
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":
@@ -1985,31 +1965,16 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     private static ClientDeleteOneOptions getClientDeleteOneOptions(final BsonDocument arguments) {
-        ClientDeleteOneOptions options = clientDeleteOneOptions();
-        arguments.forEach((key, argument) -> {
-            switch (key) {
-                case "namespace":
-                case "filter":
-                    break;
-                case "collation":
-                    options.collation(asCollation(argument.asDocument()));
-                    break;
-                case "hint":
-                    if (argument.isDocument()) {
-                        options.hint(argument.asDocument());
-                    } else {
-                        options.hintString(argument.asString().getValue());
-                    }
-                    break;
-                default:
-                    throw new UnsupportedOperationException(format("Unsupported argument: key=%s, argument=%s", key, argument));
-            }
-        });
-        return options;
+        return fillAbstractClientDeleteOptions(new ConcreteClientDeleteOneOptions(), arguments);
     }
 
     private static ClientDeleteManyOptions getClientDeleteManyOptions(final BsonDocument arguments) {
-        ClientDeleteManyOptions options = clientDeleteManyOptions();
+        return fillAbstractClientDeleteOptions(new ConcreteClientDeleteManyOptions(), arguments);
+    }
+
+    private static <T extends AbstractClientDeleteOptions> T fillAbstractClientDeleteOptions(
+            final T options,
+            final BsonDocument arguments) {
         arguments.forEach((key, argument) -> {
             switch (key) {
                 case "namespace":

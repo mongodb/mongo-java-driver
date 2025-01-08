@@ -26,20 +26,20 @@ import static java.util.Optional.ofNullable;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public abstract class AbstractClientUpdateModel<T> {
+public abstract class AbstractClientUpdateModel<O extends AbstractClientUpdateOptions> {
     private final Bson filter;
     @Nullable
     private final Bson update;
     @Nullable
     private final Iterable<? extends Bson> updatePipeline;
-    private final T options;
+    private final O options;
 
     AbstractClientUpdateModel(
             final Bson filter,
             @Nullable
             final Bson update,
             @Nullable final Iterable<? extends Bson> updatePipeline,
-            final T options) {
+            final O options) {
         this.filter = filter;
         assertTrue(update == null ^ updatePipeline == null);
         this.update = update;
@@ -59,7 +59,7 @@ public abstract class AbstractClientUpdateModel<T> {
         return ofNullable(updatePipeline);
     }
 
-    public final T getOptions() {
+    public final O getOptions() {
         return options;
     }
 

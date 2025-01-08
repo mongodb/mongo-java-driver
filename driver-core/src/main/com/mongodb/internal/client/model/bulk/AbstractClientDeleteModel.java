@@ -20,11 +20,11 @@ import org.bson.conversions.Bson;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public abstract class AbstractClientDeleteModel<T> implements ClientWriteModel {
+public abstract class AbstractClientDeleteModel<O extends AbstractClientDeleteOptions> implements ClientWriteModel {
     private final Bson filter;
-    private final T options;
+    private final O options;
 
-    AbstractClientDeleteModel(final Bson filter, final T options) {
+    AbstractClientDeleteModel(final Bson filter, final O options) {
         this.filter = filter;
         this.options = options;
     }
@@ -33,7 +33,7 @@ public abstract class AbstractClientDeleteModel<T> implements ClientWriteModel {
         return filter;
     }
 
-    public final T getOptions() {
+    public final O getOptions() {
         return options;
     }
 
