@@ -303,7 +303,8 @@ public final class UnifiedTestModifications {
          * @param reason reason for skipping the test
          */
         public TestApplicator skipNoncompliantReactive(final String reason) {
-            return new TestApplicator(this, reason, SKIP);
+            return new TestApplicator(this, reason, SKIP)
+                    .when(this::isReactive);
         }
 
         /**
