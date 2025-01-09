@@ -130,24 +130,24 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
   override def bulkWrite(
       models: util.List[_ <: ClientNamespacedWriteModel]
   ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
+    org.junit.Assume.assumeTrue("TODO-JAVA-5531 implement", java.lang.Boolean.parseBoolean(toString))
+    throw Assertions.fail("TODO-JAVA-5531 implement")
   }
 
   override def bulkWrite(
       models: util.List[_ <: ClientNamespacedWriteModel],
       options: ClientBulkWriteOptions
   ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
+    org.junit.Assume.assumeTrue("TODO-JAVA-5531 implement", java.lang.Boolean.parseBoolean(toString))
+    throw Assertions.fail("TODO-JAVA-5531 implement")
   }
 
   override def bulkWrite(
       clientSession: ClientSession,
       models: util.List[_ <: ClientNamespacedWriteModel]
   ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
+    org.junit.Assume.assumeTrue("TODO-JAVA-5531 implement", java.lang.Boolean.parseBoolean(toString))
+    throw Assertions.fail("TODO-JAVA-5531 implement")
   }
 
   override def bulkWrite(
@@ -155,7 +155,7 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
       models: util.List[_ <: ClientNamespacedWriteModel],
       options: ClientBulkWriteOptions
   ): ClientBulkWriteResult = {
-    org.junit.Assume.assumeTrue("BULK-TODO implement", java.lang.Boolean.parseBoolean(toString))
-    throw Assertions.fail("BULK-TODO implement")
+    org.junit.Assume.assumeTrue("TODO-JAVA-5531 implement", java.lang.Boolean.parseBoolean(toString))
+    throw Assertions.fail("TODO-JAVA-5531 implement")
   }
 }
