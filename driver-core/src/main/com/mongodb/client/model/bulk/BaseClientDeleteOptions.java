@@ -16,18 +16,8 @@
 
 package com.mongodb.client.model.bulk;
 
-import com.mongodb.client.model.Collation;
-import com.mongodb.lang.Nullable;
-import org.bson.conversions.Bson;
-
 /**
  * The methods declared in this interface are part of the public API of subclasses or sub-interfaces.
  */
-interface BaseClientDeleteOptions {
-
-    BaseClientDeleteOptions collation(@Nullable Collation collation);
-
-    BaseClientDeleteOptions hint(@Nullable Bson hint);
-
-    BaseClientDeleteOptions hintString(@Nullable String hintString);
+interface BaseClientDeleteOptions extends BaseClientWriteModelOptions {
 }

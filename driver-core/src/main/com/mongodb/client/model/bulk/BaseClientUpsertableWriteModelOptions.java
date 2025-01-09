@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.mongodb.client.model.bulk;
 
 import com.mongodb.lang.Nullable;
-import org.bson.conversions.Bson;
 
 /**
  * The methods declared in this interface are part of the public API of subclasses or sub-interfaces.
  */
-interface BaseClientUpdateOptions extends BaseClientWriteModelOptions, BaseClientUpsertableWriteModelOptions {
-
-    BaseClientUpdateOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
+interface BaseClientUpsertableWriteModelOptions {
+    BaseClientUpsertableWriteModelOptions upsert(@Nullable Boolean upsert);
 }

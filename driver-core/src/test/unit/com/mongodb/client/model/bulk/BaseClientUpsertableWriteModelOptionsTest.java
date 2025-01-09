@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.mongodb.client.model.bulk;
 
-import com.mongodb.lang.Nullable;
-import org.bson.conversions.Bson;
+import com.mongodb.MongoBaseInterfaceAssertions;
+import org.junit.jupiter.api.Test;
 
-/**
- * The methods declared in this interface are part of the public API of subclasses or sub-interfaces.
- */
-interface BaseClientUpdateOptions extends BaseClientWriteModelOptions, BaseClientUpsertableWriteModelOptions {
-
-    BaseClientUpdateOptions arrayFilters(@Nullable Iterable<? extends Bson> arrayFilters);
+final class BaseClientUpsertableWriteModelOptionsTest {
+    @Test
+    void testAllSubInterfacesOverrideMethods() {
+        MongoBaseInterfaceAssertions.assertSubtypeReturn(BaseClientUpsertableWriteModelOptions.class);
+    }
 }
