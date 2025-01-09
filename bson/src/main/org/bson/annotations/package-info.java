@@ -15,6 +15,6 @@
  */
 
 /**
- * Contains annotations that can apply to any part of the bson code.
+ * Contains annotations that can apply to any part of the BSON library code.
  */
 package org.bson.annotations;
