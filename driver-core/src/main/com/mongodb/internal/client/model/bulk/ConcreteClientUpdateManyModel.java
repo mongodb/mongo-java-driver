@@ -39,7 +39,8 @@ public final class ConcreteClientUpdateManyModel extends AbstractClientUpdateMod
     public String toString() {
         return "ClientUpdateManyModel{"
                 + "filter=" + getFilter()
-                + ", update=" + (getUpdate().isPresent() ? getUpdate() : getUpdatePipeline().orElseThrow(Assertions::fail))
+                + ", update=" + getUpdate().map(Object::toString).orElseGet(() ->
+                        getUpdatePipeline().map(Object::toString).orElseThrow(Assertions::fail))
                 + ", options=" + getOptions()
                 + '}';
     }
