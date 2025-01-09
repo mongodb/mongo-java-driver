@@ -37,7 +37,7 @@ public final class MongoBaseInterfaceAssertions {
         Reflections reflections = new Reflections(packageName);
         Set<Class<? extends T>> subtypes = reflections.getSubTypesOf(baseClass).stream()
                 .filter(aClass -> Modifier.isPublic(aClass.getModifiers()))
-                .filter(aClass -> !aClass.getPackage().getName().contains("internal"))
+                .filter(aClass -> !aClass.getPackage().getName().contains(".internal"))
                 .collect(Collectors.toSet());
 
         Method[] baseMethods = baseClass.getDeclaredMethods();
